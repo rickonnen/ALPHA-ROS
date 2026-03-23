@@ -17,3 +17,12 @@ cp .env.example .env
     Algo asi debe quedar
 # 5. Por ultimo hacer correr en la terminal
 docker-compose up --build
+
+# 6. Equipos Listos Colocar Listo_nombre_epic
+    1. Binary Brain -
+    2. OiDevs -
+    3. StackOverflow -
+    4. SysInfo Squad -
+    5. Bug Hunters -
+    6. Digital Core -
+    7. ADA -
