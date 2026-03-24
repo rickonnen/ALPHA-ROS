@@ -22,7 +22,7 @@ cd ALPHA-ROS
 # 6. Equipos Listos Colocar Listo_nombre_epic
     1. Binary Brain -
     2. OiDevs -
-    3. StackOverflow -
+    3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
     5. Bug Hunters -
     6. Digital Core -
