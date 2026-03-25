@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * Tabs de pagos
+ * dev: Kevin isnado
+ * ultima modif: 25/03/2025 - horas: 6 pm
+ * descripcion: tabs de pagos
  */
 
 import {

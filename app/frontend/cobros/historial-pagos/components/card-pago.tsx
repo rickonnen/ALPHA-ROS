@@ -1,5 +1,7 @@
 /**
- * Card de pago elegante
+ * dev: Kevin isnado
+ * ultima modif: 25/03/2025 - horas: 6 pm
+ * descripcion: Card de pago
  */
 
 import { Card, CardContent } from "@/components/ui/card";

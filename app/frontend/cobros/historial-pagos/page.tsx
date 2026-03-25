@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * Historial de Pagos
+ * dev: Kevin isnado
+ * ultima modif: 25/03/2025 - horas: 6 pm
+ * descripcion: pagina historial de pagos
  */
 
 import TabsPagos from "./components/tabs-pagos";

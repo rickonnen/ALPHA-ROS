@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * dev: Kevin isnado
+ * ultima modif: 25/03/2025 - horas: 6 pm
+ * descripcion: lsita de pagos-paginacion-se muestran las 10 transacciones mas recientes
+ */
+
 import { useState } from "react";
 import CardPago from "./card-pago";
 import EstadoVacio from "./estado-vacio";
@@ -22,7 +28,7 @@ interface Pago {
   estado: "pendiente" | "realizado";
 }
 
-// MOCK (puedes duplicar para probar más páginas)
+// MOCK (se puede duplicar para probar más páginas)
 const pagosMock: Pago[] = Array.from({ length: 25 }, (_, i) => ({
   id: i + 1,
   fecha: "19/03/2026 - 14:30",
@@ -44,7 +50,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
 
   if (filtrados.length === 0) return <EstadoVacio />;
 
-  // 🔥 PAGINACIÓN
+  //PAGINACIÓN
   const totalPaginas = Math.ceil(filtrados.length / ITEMS_POR_PAGINA);
 
   const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
