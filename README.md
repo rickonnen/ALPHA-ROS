@@ -24,7 +24,7 @@ cd ALPHA-ROS
     2. OiDevs - Listo - Home Page
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
-    5. Bug Hunters -
+    5. Bug Hunters - Listo - Mapas
     6. Digital Core - Listo - Pagina de Publicacion
     7. ADA -
 
