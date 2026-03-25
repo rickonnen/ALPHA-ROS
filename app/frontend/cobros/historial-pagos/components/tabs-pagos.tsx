@@ -1,10 +1,8 @@
-/**
- * dev: Kevin Isnado
- * Date: 24/03/26
- * Description: Pagina principal de historial de pagos
- */
-
 "use client";
+
+/**
+ * Tabs de pagos
+ */
 
 import {
   Tabs,
@@ -18,12 +16,23 @@ import ListaPagos from "./lista-pagos";
 export default function TabsPagos() {
   return (
     <Tabs defaultValue="pendientes" className="w-full">
-      
-      <TabsList className="grid w-full grid-cols-2">
+
+      {/* Tabs */}
+      <TabsList className="grid grid-cols-3 w-full max-w-md bg-gray-100">
         <TabsTrigger value="pendientes">Pagos pendientes</TabsTrigger>
         <TabsTrigger value="realizados">Pagos realizados</TabsTrigger>
+
+        {/* TAB DESHABILITADO */}
+        <TabsTrigger
+          value="rechazados"
+          disabled
+          className="text-red-400 opacity-60 cursor-not-allowed"
+        >
+          Pagos rechazados
+        </TabsTrigger>
       </TabsList>
 
+      {/* CONTENIDO */}
       <TabsContent value="pendientes">
         <ListaPagos estado="pendiente" />
       </TabsContent>
