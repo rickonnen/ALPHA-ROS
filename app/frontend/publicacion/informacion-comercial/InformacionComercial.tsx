@@ -164,7 +164,7 @@ export default function InformacionComercial() {
           font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
           min-height: 100vh;
           display: flex;
-          flex-direction: column;
+          flex-direction: column; 
         }
 
         /* ════════════ NAVBAR ════════════ */

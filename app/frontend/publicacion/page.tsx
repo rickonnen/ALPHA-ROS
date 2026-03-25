@@ -2,4 +2,4 @@ import InformacionComercial from "@/app/frontend/publicacion/informacion-comerci
 
 export default function Page() {
   return <InformacionComercial />;
-}
+} 

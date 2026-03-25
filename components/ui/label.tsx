@@ -17,7 +17,7 @@ function Label({
         className
       )}
       {...props}
-    />
+    /> 
   )
 }
 
