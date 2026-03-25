@@ -9,19 +9,19 @@ datasource db {
 }
 
 model Caracteristica {
-  id_caracteristica         Int                         @id(map: "Caracteristica_pk") @default(autoincrement())
+  id_caracteristica         Int                         @id(map: "Caracteristica_pk")
   nombre_caracteristica     String?                     @db.VarChar(128)
   PublicacionCaracteristica PublicacionCaracteristica[]
 }
 
 model CategoriaNotificacion {
-  id_categoria     Int            @id(map: "CategoriaNotificacion_pk") @default(autoincrement())
+  id_categoria     Int            @id(map: "CategoriaNotificacion_pk")
   nombre_categoria String?        @db.VarChar(128)
   Notificacion     Notificacion[]
 }
 
 model Ciudad {
-  id_ciudad         Int                 @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
+  id_ciudad         Int                 @id(map: "Ciudad_pk") @db.SmallInt
   nombre_ciudad     String?             @db.VarChar(128)
   descripcion_corta String?             @map("descripcion-corta")
   url_banner        String?
@@ -32,7 +32,7 @@ model Ciudad {
 }
 
 model CiudadImagen {
-  id_ciudad_imagen  Int     @id(map: "CiudadImagen_pk") @default(autoincrement()) @db.SmallInt
+  id_ciudad_imagen  Int     @id(map: "CiudadImagen_pk") @db.SmallInt
   id_ciudad         Int?    @db.SmallInt
   orden             Int?    @db.SmallInt
   url_imagen_ciudad String?
@@ -40,8 +40,8 @@ model CiudadImagen {
 }
 
 model DetallePago {
-  id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
-  id_usuario      String?          @db.SmallInt
+  id_detalle      Int              @id(map: "DetallePago_pk") @db.SmallInt
+  id_usuario      Int?             @db.SmallInt
   id_plan         Int?             @db.SmallInt
   fecha_detalle   DateTime?        @db.Date
   estado          Int?             @db.SmallInt
@@ -51,26 +51,26 @@ model DetallePago {
 }
 
 model EstadoConstruccion {
-  id_estado_construccion     Int           @id(map: "EstadoConstruccion_pk") @default(autoincrement()) @db.SmallInt
+  id_estado_construccion     Int           @id(map: "EstadoConstruccion_pk") @db.SmallInt
   nombre_estado_construccion String?       @db.VarChar(128)
   Publicacion                Publicacion[]
 }
 
 model EstadoPublicacion {
-  id_estado     Int           @id(map: "EstadoPublicacion_pk") @default(autoincrement()) @db.SmallInt
+  id_estado     Int           @id(map: "EstadoPublicacion_pk") @db.SmallInt
   nombre_estado String?       @db.VarChar(128)
   Publicacion   Publicacion[]
 }
 
 model Etiquetas {
-  id_etiqueta     Int           @id(map: "Etiquetas_pk") @default(autoincrement()) @db.SmallInt
+  id_etiqueta     Int           @id(map: "Etiquetas_pk") @db.SmallInt
   nombre_etiqueta String?       @db.VarChar(128)
   color           String?       @db.VarChar(128)
   Publicacion     Publicacion[]
 }
 
 model Favorito {
-  id_usuario     String      @db.SmallInt
+  id_usuario     Int         @db.SmallInt
   id_publicacion Int
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
@@ -79,7 +79,7 @@ model Favorito {
 }
 
 model HistorialBusqueda {
-  id_usuario        String        @db.SmallInt
+  id_usuario        Int           @db.SmallInt
   id_ciudad         Int           @db.SmallInt
   id_tipo_operacion Int           @db.SmallInt
   fecha_busqueda    DateTime      @db.Timestamptz(6)
@@ -91,7 +91,7 @@ model HistorialBusqueda {
 }
 
 model HistorialVistos {
-  id_usuario     String      @db.SmallInt
+  id_usuario     Int         @db.SmallInt
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
@@ -101,14 +101,14 @@ model HistorialVistos {
 }
 
 model Imagen {
-  id_imagen      Int          @id(map: "Imagen_pk") @default(autoincrement())
+  id_imagen      Int          @id(map: "Imagen_pk")
   id_publicacion Int?
   url_imagen     String?
   Publicacion    Publicacion? @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_imagen_publicacion")
 }
 
 model Moneda {
-  id_moneda   Int           @id(map: "Moneda_pk") @default(autoincrement())
+  id_moneda   Int           @id(map: "Moneda_pk")
   nombre      String?       @db.VarChar(128)
   simbolo     String?       @db.Char(1)
   tasa_cambio Decimal?      @db.Decimal(10, 2)
@@ -117,7 +117,7 @@ model Moneda {
 
 model Notificacion {
   id_notificacion       String                 @id(map: "Notificacion_pk") @db.Uuid
-  id_usuario            String?                @db.SmallInt
+  id_usuario            Int?                   @db.SmallInt
   titulo                String?                @db.VarChar(256)
   mensaje               String?
   id_categoria          Int?
@@ -130,14 +130,14 @@ model Notificacion {
 }
 
 model Pais {
-  id_pais     Int         @id(map: "Pais_pk") @default(autoincrement()) @db.SmallInt
+  id_pais     Int         @id(map: "Pais_pk") @db.SmallInt
   nombre_pais String?     @db.VarChar(128)
   codigo_iso  String?     @db.Char(2)
   Ubicacion   Ubicacion[]
 }
 
 model PlanPublicacion {
-  id_plan            Int           @id(map: "PlanPublicacion_pk") @default(autoincrement()) @db.SmallInt
+  id_plan            Int           @id(map: "PlanPublicacion_pk") @db.SmallInt
   nombre_plan        String?       @db.VarChar(128)
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
@@ -145,10 +145,10 @@ model PlanPublicacion {
 }
 
 model Publicacion {
-  id_publicacion            Int                         @id(map: "Publicacion_pk") @default(autoincrement())
+  id_publicacion            Int                         @id(map: "Publicacion_pk")
   titulo                    String?                     @db.VarChar(256)
   descripcion               String?
-  id_usuario                String?                     @db.SmallInt
+  id_usuario                Int?                        @db.SmallInt
   precio                    Decimal?                    @db.Decimal(25, 2)
   superficie                Decimal?                    @db.Decimal(10, 2)
   habitaciones              Int?                        @db.SmallInt
@@ -190,7 +190,7 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  id_metodo Int     @id(map: "MetodoPago_pk") @db.SmallInt
   qr_URL    String?
 }
 
@@ -210,20 +210,20 @@ model Telefono {
 }
 
 model TipoInmueble {
-  id_tipo_inmueble Int           @id(map: "TipoInmueble_pk") @default(autoincrement()) @db.SmallInt
+  id_tipo_inmueble Int           @id(map: "TipoInmueble_pk") @db.SmallInt
   nombre_inmueble  String?       @db.VarChar(128)
   Publicacion      Publicacion[]
 }
 
 model TipoOperacion {
-  id_tipo_operacion Int                 @id(map: "TipoOperacion_pk") @default(autoincrement()) @db.SmallInt
+  id_tipo_operacion Int                 @id(map: "TipoOperacion_pk") @db.SmallInt
   nombre_operacion  String?             @db.VarChar(128)
   HistorialBusqueda HistorialBusqueda[]
   Publicacion       Publicacion[]
 }
 
 model Ubicacion {
-  id_ubicacion Int           @id(map: "Ubicacion_pk") @default(autoincrement())
+  id_ubicacion Int           @id(map: "Ubicacion_pk")
   id_pais      Int?          @db.SmallInt
   id_ciudad    Int?          @db.SmallInt
   direccion    String?       @db.VarChar(128)
@@ -238,7 +238,6 @@ model Ubicacion {
 
 model Usuario {
   id_usuario                   Int                 @id(map: "Usuario_pk") @default(autoincrement()) @db.SmallInt
-  username                     String?             @db.VarChar(128)
   email                        String?             @db.VarChar(320)
   password                     String?             @db.VarChar(256)
   nombres                      String?             @db.VarChar(100)
@@ -248,8 +247,9 @@ model Usuario {
   estado                       Int?                @db.SmallInt
   direccion                    String?             @db.VarChar(200)
   google_id                    String?             @db.VarChar(404)
-  cant_publicaciones_restantes Int?                @default(2)
+  cant_publicaciones_restantes Int?
   url_foto_perfil              String?
+  username                     String?             @db.VarChar(128)
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
@@ -261,7 +261,7 @@ model Usuario {
 }
 
 model UsuarioTelefono {
-  id_usuario   String   @db.SmallInt
+  id_usuario   Int      @db.SmallInt
   nro_telefono String   @db.VarChar(12)
   codigo_pais  Int      @db.SmallInt
   Telefono     Telefono @relation(fields: [nro_telefono, codigo_pais], references: [nro_telefono, codigo_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
@@ -271,14 +271,14 @@ model UsuarioTelefono {
 }
 
 model Video {
-  id_video       Int          @id(map: "Video_pk") @default(autoincrement()) @db.SmallInt
+  id_video       Int          @id(map: "Video_pk") @db.SmallInt
   id_publicacion Int?
   url_video      String?
   Publicacion    Publicacion? @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_video_publicacion")
 }
 
 model Zona {
-  id_zona     Int           @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
+  id_zona     Int           @id(map: "Zona_pk") @db.SmallInt
   nombre_zona String?       @db.VarChar(128)
   id_ciudad   Int?          @db.SmallInt
   coordenadas String?
