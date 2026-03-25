@@ -25,7 +25,7 @@ cd ALPHA-ROS
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
     5. Bug Hunters -
-    6. Digital Core -       - Pagina de Publicacion
+    6. Digital Core - Listo - Pagina de Publicacion
     7. ADA -
 
 
@@ -72,7 +72,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-
-probando el git commit
