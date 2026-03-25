@@ -25,7 +25,7 @@ cd ALPHA-ROS
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
     5. Bug Hunters -
-    6. Digital Core -
+    6. Digital Core - Listo - Pagina de Publicacion
     7. ADA -
 
 
