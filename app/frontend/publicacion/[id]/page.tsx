@@ -86,6 +86,7 @@ export default async function PerfilInmueblePage({
           objInfo={{
             strTipoInmueble:  objPerfil.TipoInmueble?.nombre_inmueble  ?? "—",
             strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion ?? "—",
+            strDepartamento:  objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
             strZona:          objPerfil.Zona?.nombre_zona               ?? "—",
             intHabitaciones:  objPerfil.habitaciones                    ?? 0,
             intBanos:         objPerfil.banos                           ?? 0,
@@ -110,12 +111,12 @@ export default async function PerfilInmueblePage({
 <footer className="flex flex-row justify-between items-center gap-3 pt-10 border-t border-black/10">
   <Button
     variant="outline"
-    className="flex-1 border-[#C26E5A] text-[#C26E5A] px-4 md:px-12 py-4 md:py-7 rounded-lg font-bold text-sm md:text-lg hover:bg-[#C26E5A]/5"
+    className="flex-1 md:flex-none border-[#C26E5A] text-[#C26E5A] px-4 md:px-12 py-4 md:py-7 rounded-lg font-bold text-sm md:text-lg hover:bg-[#C26E5A]/5"
   >
     Ver mis publicaciones
   </Button>
   <Button
-    className="flex-1 bg-[#C26E5A] text-white px-4 md:px-12 py-4 md:py-7 rounded-lg font-bold text-sm md:text-lg hover:bg-[#C26E5A]/90 transition-colors"
+    className="flex-1 md:flex-none bg-[#C26E5A] text-white px-4 md:px-12 py-4 md:py-7 rounded-lg font-bold text-sm md:text-lg hover:bg-[#C26E5A]/90 transition-colors"
   >
     Publicar otro inmueble
   </Button>

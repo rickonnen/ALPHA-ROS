@@ -15,7 +15,11 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
     include: {
       TipoInmueble:  true,
       TipoOperacion: true,
-      Ubicacion:     true,
+      Ubicacion:     {
+        include: {
+          Ciudad: true,
+        }
+      },
       Zona:          true,
       Video:         true,
       Imagen:        true,
