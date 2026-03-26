@@ -20,7 +20,7 @@ cd ALPHA-ROS
     npm install.
     npx prisma generate
 # 6. Equipos Listos Colocar Listo_nombre_epic
-    1. Binary Brain -
+    1. Binary Brain - Listo - Sign in/up,Notificaciones
     2. OiDevs - Listo - Home Page
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
