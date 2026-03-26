@@ -1,17 +1,22 @@
-//Esta es una pagina de ejemplo
-
-// CAMBIO A: Importamos el botón aquí arriba
+// Esta es una pagina de ejemplo
 import { Button } from "@/components/ui/button";
+
 export default function GuiaTipografia() {
+  // Variable para simular la sesión 
+  const bolIsLoggedIn = false;
+
   return (
     <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
-      <div className="max-w-4xl mx-auto">
+      
+      {/* Añadimos mt-16 para que el Header fijo no tape el título principal */}
+      <div className="max-w-4xl mx-auto mt-16">
+
         <h1 className="text-4xl font-bold mb-4 border-b pb-4">Guía de Tipografía del Proyecto</h1>
         <p className="mb-10 text-lg text-slate-600">
           Equipo: Por favor, utilicen estrictamente estas clases de Tailwind para mantener la consistencia en todo el frontend.
         </p>
 
-        {/* SECCIÓN TIPOGRAFÍA (Lo que ya tenías) */}
+        {/* SECCIÓN TIPOGRAFÍA */}
         <div className="space-y-6 mb-16">
           {/* H1 - Título Principal */}
           <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
@@ -74,7 +79,7 @@ export default function GuiaTipografia() {
           </div>
         </div>
 
-        {/* CAMBIO B: Nueva sección de Botones aquí */}
+        {/* SECCIÓN BOTONES */}
         <section>
           <h2 className="text-2xl font-bold mb-6">Botones (shadcn/ui)</h2>
           
@@ -96,9 +101,7 @@ export default function GuiaTipografia() {
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
                 Botón Especial
               </Button>
-              </div>
-
-          
+            </div>
         </section>
 
       </div>

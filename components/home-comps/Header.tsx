@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-//import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 interface HeaderProps {
   bolIsLoggedIn: boolean;
@@ -17,7 +17,7 @@ interface HeaderProps {
  * @return {object} Componente visual Header para Next.js.
  */
 export const Header = (objProps: HeaderProps) => {
-//  const bolHideHeader = useScrollDirection();
+   const bolHideHeader = useScrollDirection();
 
   // Variable del Logo según el estándar
   const btnLogoProbol = (
