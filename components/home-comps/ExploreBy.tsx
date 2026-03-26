@@ -1,5 +1,5 @@
 "use client";
-
+//Made by Fabricio Caceres Rengel and Maria Angela Velasquez Paredes
 import Link from "next/link";
 import { Home, Key, Tag } from "lucide-react";
 
