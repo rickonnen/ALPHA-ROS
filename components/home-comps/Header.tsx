@@ -10,16 +10,15 @@ interface HeaderProps {
 }
 
 /**
- * Dev: Rodrigo Zarate
- * Fecha: 25/03/2026
- * Funcionalidad: Renderizar el encabezado principal con flujos horizontales en ambos extremos.
+ * Dev: Rodrigo Zarate     Fecha: 24/03/2026
+ * Funcionalidad: Renderizar el encabezado principal con flujos horizontales en ambos extremos, utilizando tipografía Geist.
  * @param {object} objProps Propiedades que incluyen el estado de sesión del usuario.
  * @return {object} Componente visual Header para Next.js.
  */
 export const Header = (objProps: HeaderProps) => {
-   const bolHideHeader = useScrollDirection();
+  const bolHideHeader = useScrollDirection();
 
-  // Variable del Logo según el estándar
+  // Variable del Logo
   const btnLogoProbol = (
     <Link 
       href="/" 
@@ -31,12 +30,13 @@ export const Header = (objProps: HeaderProps) => {
   );
 
   return (
-    <header className={`fixed top-0 w-full z-50 bg-background text-foreground shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
+    
+    <header className={`font-sans fixed top-0 w-full z-50 bg-background text-foreground shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
       
-      {/* CONTENEDOR PRINCIPAL: px-[40px] asegura la distancia de ambos bordes */}
+      {/* CONTENEDOR PRINCIPAL: px-[40px] asegura la distancia de ambos bordes de pantalla */}
       <div className="w-full px-[40px] h-16 flex items-center justify-between">
         
-        {/* ================= LADO IZQUIERDO ================= */}
+        {/* LADO IZQUIERDO */}
         <div className="flex flex-row items-center gap-6">
           {btnLogoProbol}
           <Link href="/planes" className="text-xl font-semibold hover:text-primary transition-colors">
@@ -44,8 +44,8 @@ export const Header = (objProps: HeaderProps) => {
           </Link>
         </div>
 
-        {/* ================= LADO DERECHO ================= */}
-        {/* Todo el bloque derecho está blindado dentro de este único div flex */}
+        {/* LADO DERECHO */}
+        {/* Todo el bloque derecho dentro de este único div flex */}
         <div className="hidden lg:flex flex-row items-center gap-6">
           
           <Link href="/busqueda?strOperacion=compra" className="text-xl font-semibold hover:text-primary transition-colors">COMPRA</Link>
