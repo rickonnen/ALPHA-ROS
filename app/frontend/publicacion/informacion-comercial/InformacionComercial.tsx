@@ -1,6 +1,16 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
+import {
+  DESCRIPCION_MAXIMA,
+  DESCRIPCION_MINIMA,
+  PRECIO_MAXIMO,
+  TIPOS_OPERACION_UI,
+  TIPOS_PROPIEDAD_VALIDOS,
+  TITULO_MAXIMO,
+  TITULO_MINIMO,
+  toTipoOperacionBackend,
+} from "@/app/backend/publicacion/informacion-comercial/publicacion.constants";
 
 interface FormData {
   titulo: string;
@@ -10,6 +20,7 @@ interface FormData {
   descripcion: string;
 }
 
+
 interface FormErrors {
   titulo?: string;
   precio?: string;
@@ -18,13 +29,13 @@ interface FormErrors {
   descripcion?: string;
 }
 
-const TIPOS_PROPIEDAD = ["Casa", "Departamento", "Terreno", "Oficina"];
-const TIPOS_OPERACION = ["Venta", "Alquiler", "Anticrético"];
-const PRECIO_MAXIMO = 9_999_999;
-const TITULO_MIN = 10;
-const TITULO_MAX = 150;
-const DESC_MIN = 10;
-const DESC_MAX = 1500;
+const TIPOS_PROPIEDAD = TIPOS_PROPIEDAD_VALIDOS;
+const TIPOS_OPERACION = TIPOS_OPERACION_UI;
+interface BackendErrorResponse {
+  ok?: boolean;
+  mensaje?: string;
+  errores?: Partial<Record<keyof FormData, string>>;
+}
 
 export default function InformacionComercial() {
   const [form, setForm] = useState<FormData>({
@@ -38,6 +49,7 @@ export default function InformacionComercial() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [openDropdown, setOpenDropdown] = useState<"propiedad" | "operacion" | null>(null);
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const propiedadRef = useRef<HTMLDivElement>(null);
   const operacionRef = useRef<HTMLDivElement>(null);
@@ -57,8 +69,8 @@ export default function InformacionComercial() {
     switch (name) {
       case "titulo":
         if (!value.trim()) return "El título es obligatorio.";
-        if (value.trim().length < TITULO_MIN) return `Mínimo ${TITULO_MIN} caracteres.`;
-        if (value.length > TITULO_MAX) return `Máximo ${TITULO_MAX} caracteres.`;
+        if (value.trim().length < TITULO_MINIMO) return `Mínimo ${TITULO_MINIMO} caracteres.`;
+        if (value.length > TITULO_MAXIMO) return `Máximo ${TITULO_MAXIMO} caracteres.`;
         return undefined;
       case "precio": {
         if (!value) return "El precio es obligatorio.";
@@ -76,8 +88,8 @@ export default function InformacionComercial() {
         return value ? undefined : "Seleccione un tipo de operación.";
       case "descripcion":
         if (!value.trim()) return "La descripción es obligatoria.";
-        if (value.trim().length < DESC_MIN) return `Mínimo ${DESC_MIN} caracteres.`;
-        if (value.length > DESC_MAX) return `Máximo ${DESC_MAX} caracteres.`;
+        if (value.trim().length < DESCRIPCION_MINIMA) return `Mínimo ${DESCRIPCION_MINIMA} caracteres.`;
+        if (value.length > DESCRIPCION_MAXIMA) return `Máximo ${DESCRIPCION_MAXIMA} caracteres.`;
         return undefined;
     }
   }
@@ -140,14 +152,59 @@ export default function InformacionComercial() {
     setTouched({});
   }
 
-  function handleSiguiente() {
+  async function handleSiguiente() {
     const allTouched: Partial<Record<keyof FormData, boolean>> = {};
     (Object.keys(form) as (keyof FormData)[]).forEach((k) => (allTouched[k] = true));
     setTouched(allTouched);
     const newErrors = validateAll();
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-    console.log("Avanzar a Caracteristicas del Inmueble", form);
+
+    const payload = {
+      ...form,
+      tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
+    };
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/backend/publicacion/informacion-comercial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const responseBody = (await response.json().catch(() => null)) as BackendErrorResponse | null;
+
+      if (!response.ok) {
+        const backendErrors = responseBody?.errores ?? {};
+        const mappedErrors: FormErrors = {};
+        const fields: (keyof FormData)[] = [
+          "titulo",
+          "precio",
+          "tipoPropiedad",
+          "tipoOperacion",
+          "descripcion",
+        ];
+
+        fields.forEach((field) => {
+          const message = backendErrors[field];
+          if (typeof message === "string" && message.trim().length > 0) {
+            mappedErrors[field] = message;
+          }
+        });
+
+        setErrors(mappedErrors);
+        return;
+      }
+
+      setErrors({});
+      window.alert("Información comercial guardada correctamente.");
+    } catch {
+      window.alert("No se pudo enviar la información. Intenta nuevamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const hasErr = (n: keyof FormData) => touched[n] && !!errors[n];
@@ -167,7 +224,7 @@ export default function InformacionComercial() {
           flex-direction: column; 
         }
 
-        /* ════════════ NAVBAR ════════════ */
+        /* â•â•â•â•â•â•â•â•â•â•â•â• NAVBAR â•â•â•â•â•â•â•â•â•â•â•â• */
         .ic-nav {
           width: 100%;
           height: 44px;
@@ -250,7 +307,7 @@ export default function InformacionComercial() {
         }
         .ic-nav-perfil svg { width: 13px; height: 13px; }
 
-        /* ════════════ BODY: 2 zonas mitad y mitad ════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â• BODY: 2 zonas mitad y mitad â•â•â•â•â•â•â•â•â•â•â•â•
            La pagina (sin navbar) se divide en 50% beige / 50% gris.
            La card flota encima del corte con position absolute/sticky.
         */
@@ -284,7 +341,7 @@ export default function InformacionComercial() {
           line-height: 1.1;
         }
 
-        /* ════════════ CARD ════════════ */
+        /* â•â•â•â•â•â•â•â•â•â•â•â• CARD â•â•â•â•â•â•â•â•â•â•â•â• */
         .ic-card {
           background: #FFFFFF;
           border-radius: 8px;
@@ -308,7 +365,7 @@ export default function InformacionComercial() {
           margin-bottom: 20px;
         }
 
-        /* ── Fila titulo + precio ── */
+        /* â”€â”€ Fila titulo + precio â”€â”€ */
         .ic-row {
           display: flex; gap: 14px;
           align-items: flex-start;
@@ -317,7 +374,7 @@ export default function InformacionComercial() {
         .ic-field-titulo { flex: 1; }
         .ic-field-precio { width: 110px; flex-shrink: 0; }
 
-        /* ── Field ── */
+        /* â”€â”€ Field â”€â”€ */
         .ic-field {
           display: flex; flex-direction: column; gap: 5px;
           margin-bottom: 14px;
@@ -328,7 +385,7 @@ export default function InformacionComercial() {
           color: #1A1714; letter-spacing: -0.01em;
         }
 
-        /* ── Input ── */
+        /* â”€â”€ Input â”€â”€ */
         .ic-input {
           width: 100%; height: 40px;
           padding: 0 12px;
@@ -350,7 +407,7 @@ export default function InformacionComercial() {
           font-weight: 500; pointer-events: none;
         }
 
-        /* ── Textarea ── */
+        /* â”€â”€ Textarea â”€â”€ */
         .ic-textarea {
           width: 100%; min-height: 100px;
           padding: 10px 12px;
@@ -364,7 +421,7 @@ export default function InformacionComercial() {
         .ic-textarea:focus { border-color: #8A8480; }
         .ic-textarea.err { border-color: #C0503A; }
 
-        /* ── Dropdown ── */
+        /* â”€â”€ Dropdown â”€â”€ */
         .ic-dd-wrap { position: relative; }
 
         .ic-dd-btn {
@@ -416,12 +473,12 @@ export default function InformacionComercial() {
         .ic-chk { width: 13px; height: 13px; color: #C0503A; flex-shrink: 0; }
         .ic-chk-gap { width: 13px; flex-shrink: 0; }
 
-        /* ── Error / count ── */
+        /* â”€â”€ Error / count â”€â”€ */
         .ic-err { font-size: 0.74rem; color: #C0503A; line-height: 1.4; }
         .ic-cnt { font-size: 0.70rem; color: #8A8480; text-align: right; }
         .ic-cnt.over { color: #C0503A; }
 
-        /* ── Buttons ── */
+        /* â”€â”€ Buttons â”€â”€ */
         .ic-actions {
           display: flex; justify-content: flex-end; gap: 10px;
           margin-top: 20px;
@@ -442,8 +499,12 @@ export default function InformacionComercial() {
           background: #C0503A; border: 1.5px solid #C0503A; color: #fff;
         }
         .ic-btn-next:hover { background: #A8432F; border-color: #A8432F; }
+        .ic-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
 
-        /* ── Responsive ── */
+        /* â”€â”€ Responsive â”€â”€ */
         @media (max-width: 680px) {
           .ic-heading-wrap { padding: 22px 0 16px; }
           .ic-card { border-radius: 8px 8px 0 0; max-width: 100%; margin: 0; padding: 22px 18px 20px; }
@@ -520,13 +581,13 @@ export default function InformacionComercial() {
                   value={form.titulo}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  maxLength={TITULO_MAX}
+                  maxLength={TITULO_MAXIMO}
                   autoComplete="off"
                 />
                 {hasErr("titulo")
                   ? <span className="ic-err">{errors.titulo}</span>
                   : form.titulo.length > 0
-                    ? <span className="ic-cnt">{form.titulo.length}/{TITULO_MAX}</span>
+                    ? <span className="ic-cnt">{form.titulo.length}/{TITULO_MAXIMO}</span>
                     : null}
               </div>
 
@@ -631,12 +692,12 @@ export default function InformacionComercial() {
                 value={form.descripcion}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                maxLength={DESC_MAX}
+                maxLength={DESCRIPCION_MAXIMA}
               />
               {hasErr("descripcion")
                 ? <span className="ic-err">{errors.descripcion}</span>
-                : <span className={`ic-cnt${form.descripcion.length > DESC_MAX ? " over" : ""}`}>
-                    {form.descripcion.length}/{DESC_MAX}
+                : <span className={`ic-cnt${form.descripcion.length > DESCRIPCION_MAXIMA ? " over" : ""}`}>
+                    {form.descripcion.length}/{DESCRIPCION_MAXIMA}
                   </span>}
             </div>
 
@@ -645,8 +706,13 @@ export default function InformacionComercial() {
               <button type="button" className="ic-btn ic-btn-cancel" onClick={handleCancelar}>
                 Cancelar
               </button>
-              <button type="button" className="ic-btn ic-btn-next" onClick={handleSiguiente}>
-                Siguiente
+              <button
+                type="button"
+                className="ic-btn ic-btn-next"
+                onClick={handleSiguiente}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Guardando..." : "Siguiente"}
               </button>
             </div>
           </div>
