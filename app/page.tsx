@@ -1,8 +1,15 @@
+"use client";
+
 //Esta es una pagina de ejemplo
 
 // CAMBIO A: Importamos el botón aquí arriba
+import { useState } from "react";
+import FreePublicationLimitModal from "./frontend/publicacion/components/FreePublicationLimitModal";
 import { Button } from "@/components/ui/button";
 export default function GuiaTipografia() {
+  const [publicationCount, setPublicationCount] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
+
   return (
     <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
       <div className="max-w-4xl mx-auto">
@@ -96,12 +103,27 @@ export default function GuiaTipografia() {
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
                 Botón Especial
               </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setIsPremium(false);
+                  setPublicationCount(1);
+                }}
+              >
+                Publicar
+              </Button>
               </div>
 
           
         </section>
 
       </div>
+
+      <FreePublicationLimitModal
+        publicationCount={publicationCount}
+        isPremium={isPremium}
+        onBack={() => setPublicationCount(1)}
+      />
     </main>
   );
 }
