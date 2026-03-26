@@ -4,7 +4,7 @@ import FilterPanel from "@/components/home-comps/FilterPanel";
 // IMPORTACIONES FUTURAS (Tus compañeros descomentarán esto cuando acaben)
 // import HeroSection from "./components/home-comps/HeroSection";      // HU-02
 // import FeaturedProperties from "./components/home-comps/FeaturedProperties"; // HU-05
-// import ExploreBy from "./components/home-comps/ExploreBy";          // HU-06/07
+import ExploreBy from "@/components/home-comps/ExploreBy";
 // ----------------------------------------------------------------------
 
 export default function HomePage() {
@@ -50,16 +50,8 @@ export default function HomePage() {
 
       {/* ── SECCIÓN 4: EXPLORAR POR CIUDADES/TIPO ── */}
       <section className="w-full max-w-6xl mx-auto px-4 pb-20">
-        {/* Tu compañero reemplazará este div con su componente */}
-        <div className="w-full border-2 border-dashed border-[#C4BAA8] bg-[#E7E1D7]/30 rounded-2xl h-64 flex flex-col items-center justify-center text-[#A89F92] transition-colors hover:bg-[#E7E1D7]/50">
-          <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="font-medium text-[#1F3A4D]">Espacio para: Explorar por Ciudades/Tipos</p>
-          <p className="text-sm">El equipo integrará su componente aquí.</p>
-        </div>
+        <ExploreBy />
       </section>
-
     </main>
   );
 }
