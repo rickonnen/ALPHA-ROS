@@ -1,3 +1,8 @@
+/**
+ * Dev: Gonzales Hetor    Fecha: 25/03/2026
+ * Dev: Jose Alvarez    Fecha: 25/03/2026
+ * Funcionalidad: Panel del Filtro en la pagina del home.
+ */
 "use client";
 
 import { useState } from "react";
@@ -32,22 +37,22 @@ export default function FilterPanel() {
 
   return (
     <div className="w-full flex flex-col gap-3 font-geist">
-      {/* BARRA DE BÚSQUEDA PRINCIPAL */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-[#E7E1D7] border border-[#C4BAA8] shadow-[0_4px_20px_rgba(31,58,77,0.12)]">
+      {/* BARRA DE BÚSQUEDA PRINCIPAL (Responsiva: Columna en celular, Fila en PC) */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2 p-3 md:px-3 md:py-2 rounded-2xl md:rounded-full bg-[#E7E1D7] border border-[#C4BAA8] shadow-[0_4px_20px_rgba(31,58,77,0.12)]">
         
-        {/* Dropdown: Operación (CON CHECK porque es múltiple) */}
-        <div className="relative">
+        {/* Dropdown: Operación */}
+        <div className="relative flex-1 md:flex-none">
           <button 
             type="button"
             onClick={() => setOpenDropdown(openDropdown === "op" ? null : "op")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${openDropdown === "op" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"}`}
+            className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${openDropdown === "op" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"}`}
           >
             {operaciones.length > 0 ? `Operación (${operaciones.length})` : "Seleccionar Operación"}
             <svg className={`w-3.5 h-3.5 transition-transform ${openDropdown === "op" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
           </button>
           
           {openDropdown === "op" && (
-            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
+            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full md:w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
               {OPERACIONES.map(op => (
                 <button key={op} onClick={() => toggleOp(op)} className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-[#E7E1D7]/60 rounded-lg text-left">
                   <span className={operaciones.includes(op) ? "font-bold text-[#1F3A4D]" : "text-[#2E2E2E]"}>{op}</span>
@@ -60,21 +65,22 @@ export default function FilterPanel() {
           )}
         </div>
 
-        <div className="w-px h-5 bg-[#C4BAA8] flex-shrink-0" />
+        {/* Separador (Línea horizontal en móvil, vertical en PC) */}
+        <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
-        {/* Dropdown: Tipo (SIN CHECK porque es selección única) */}
-        <div className="relative">
+        {/* Dropdown: Tipo */}
+        <div className="relative flex-1 md:flex-none">
           <button 
             type="button"
             onClick={() => setOpenDropdown(openDropdown === "tipo" ? null : "tipo")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${openDropdown === "tipo" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"}`}
+            className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${openDropdown === "tipo" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"}`}
           >
             {tipo ?? "Seleccionar Inmueble"}
             <svg className={`w-3.5 h-3.5 transition-transform ${openDropdown === "tipo" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
           </button>
           
           {openDropdown === "tipo" && (
-            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
+            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full md:w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
               {TIPOS.map(t => (
                 <button 
                   key={t} 
@@ -88,26 +94,31 @@ export default function FilterPanel() {
           )}
         </div>
 
-        <div className="w-px h-5 bg-[#C4BAA8] flex-shrink-0" />
+        {/* Separador */}
+        <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
-        <input 
-          type="text" 
-          placeholder="Search..." 
-          className="flex-1 bg-transparent px-2 text-sm focus:outline-none text-[#2E2E2E] placeholder:text-[#A89F92]"
-          value={ciudad}
-          onChange={(e) => setCiudad(e.target.value)}
-        />
+        {/* Input y Botón (Siempre alineados en fila) */}
+        <div className="flex flex-1 items-center gap-2 px-1">
+          <input 
+            type="text" 
+            placeholder="Search..." 
+            className="flex-1 bg-transparent px-2 py-2 md:py-0 text-sm focus:outline-none text-[#2E2E2E] placeholder:text-[#A89F92]"
+            value={ciudad}
+            onChange={(e) => setCiudad(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()} /* ¡Agregué esto para que funcione con el teclado del celular! */
+          />
 
-        <button 
-          onClick={handleSearch} 
-          className="flex-shrink-0 w-8 h-8 rounded-full bg-[#C26E5A] hover:bg-[#b05f4c] active:scale-95 flex items-center justify-center transition-all shadow-sm"
-        >
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" /></svg>
-        </button>
+          <button 
+            onClick={handleSearch} 
+            className="flex-shrink-0 w-10 h-10 md:w-8 md:h-8 rounded-full bg-[#C26E5A] hover:bg-[#b05f4c] active:scale-95 flex items-center justify-center transition-all shadow-sm"
+          >
+            <svg className="w-5 h-5 md:w-4 md:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" /></svg>
+          </button>
+        </div>
       </div>
 
       {/* FILA DE ETIQUETAS (CHIPS) ABAJO */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex flex-wrap gap-2">
           {operaciones.map(op => (
             <span key={op} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F4EFE6] border border-[#C4BAA8] text-[#1F3A4D] animate-in fade-in duration-200 shadow-sm">
@@ -123,9 +134,9 @@ export default function FilterPanel() {
           )}
         </div>
 
-        <div className="flex gap-2 ml-auto">
+        <div className="flex flex-wrap gap-2 ml-auto">
           <Button variant="outline" size="sm" onClick={() => { setOperaciones([]); setTipo(null); setCiudad(""); }} className="rounded-lg text-xs border-[#C4BAA8] text-[#2E2E2E] hover:bg-[#E7E1D7]">Limpiar</Button>
-          <Button size="sm" className="rounded-lg text-xs bg-[#1F3A4D] text-white hover:bg-[#162d3d]">Avanzado</Button>
+          <Button size="sm" onClick={() => router.push("/busqueda?avanzado=true")} className="rounded-lg text-xs bg-[#1F3A4D] text-white hover:bg-[#162d3d]">Avanzado</Button>
         </div>
       </div>
     </div>
