@@ -1,12 +1,15 @@
 "use client";
 
+
 import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff, CheckSquare } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
 
+
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
+
 
 export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [nombre, setNombre] = useState("");
@@ -18,12 +21,83 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  // ── Validaciones ──────────────────────────────────────────
+
+  // ── Validaciones en tiempo real ──────────────────────────
+  function validateField(field: string, value: string) {
+    const newErrors = { ...errors };
+
+    if (field === "nombre") {
+      if (!value.trim()) {
+        newErrors.nombre = "El nombre es obligatorio";
+      } else if (/[0-9]/.test(value)) {
+        newErrors.nombre = "Ingresa un nombre válido";
+      } else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(value)) {
+        newErrors.nombre = "Ingresa un nombre válido";
+      } else if (!value.trim().replace(/\s/g, "").length) {
+        newErrors.nombre = "Ingresa un nombre válido";
+      } else {
+        delete newErrors.nombre;
+      }
+    }
+
+    if (field === "email") {
+      if (!value.trim()) {
+        newErrors.email = "El correo es obligatorio";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        newErrors.email = "Ingresa un correo electrónico válido";
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    if (field === "password") {
+      if (!value) {
+        newErrors.password = "La contraseña es obligatoria";
+      } else if (value.length < 8) {
+        newErrors.password = "La contraseña no cumple los requisitos mínimos";
+      } else if (value.length > 15) {
+        newErrors.password = "La contraseña debe tener entre 8 y 15 caracteres";
+      } else if (!/[A-Z]/.test(value)) {
+        newErrors.password = "Debe incluir al menos una mayúscula";
+      } else {
+        delete newErrors.password;
+      }
+
+      // Revalidar confirmPassword si tiene valor
+      if (confirmPassword) {
+        if (value !== confirmPassword) {
+          newErrors.confirmPassword = "Las contraseñas no coinciden";
+        } else {
+          delete newErrors.confirmPassword;
+        }
+      }
+    }
+
+    if (field === "confirmPassword") {
+      if (!value) {
+        newErrors.confirmPassword = "Debes confirmar tu contraseña";
+      } else if (password !== value) {
+        newErrors.confirmPassword = "Las contraseñas no coinciden";
+      } else {
+        delete newErrors.confirmPassword;
+      }
+    }
+
+    setErrors(newErrors);
+  }
+
+  // Función para validar todo al hacer submit
   function validate() {
     const newErrors: Record<string, string> = {};
 
     if (!nombre.trim())
       newErrors.nombre = "El nombre es obligatorio";
+    else if (/[0-9]/.test(nombre))
+      newErrors.nombre = "Ingresa un nombre válido";
+    else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(nombre))
+      newErrors.nombre = "Ingresa un nombre válido";
+    else if (!nombre.trim().replace(/\s/g, "").length)
+      newErrors.nombre = "Ingresa un nombre válido";
 
     if (!email.trim())
       newErrors.email = "El correo es obligatorio";
@@ -34,6 +108,8 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       newErrors.password = "La contraseña es obligatoria";
     else if (password.length < 8)
       newErrors.password = "La contraseña no cumple los requisitos mínimos";
+    else if (password.length > 15)
+      newErrors.password = "La contraseña debe tener entre 8 y 15 caracteres";
     else if (!/[A-Z]/.test(password))
       newErrors.password = "Debe incluir al menos una mayúscula";
 
@@ -45,9 +121,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     return newErrors;
   }
 
+  // Botón deshabilitado si hay errores activos
+  function hasErrors() {
+    return Object.keys(errors).length > 0;
+  }
+
+
   // ── Submit REAL ─────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -55,8 +138,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       return;
     }
 
+
     setErrors({});
     setLoading(true);
+
 
     try {
       // AQUÍ HACEMOS LA CONEXIÓN REAL
@@ -70,14 +155,18 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         }),
       });
 
+
       const data = await res.json();
+
 
       if (!res.ok) {
         throw new Error(data.error || "Error al registrar");
       }
 
+
       alert("¡Ahora sí! Usuario guardado en Supabase.");
       onSwitchToLogin(); // Redirigir al login si todo salió bien
+
 
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
@@ -86,14 +175,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     }
   }
 
+
   // ── UI ─────────────────────────────────────────────────────
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      
+     
       {/* Encabezado */}
       <div>
         <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>Crear tu cuenta</h2>
       </div>
+
 
       {/* Botón estilo Google*/}
       <button
@@ -123,13 +214,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         Continuar con Google
       </button>
 
+
       {/* Formulario */}
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
 
         {/* Error general */}
         {errors.general && (
           <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{errors.general}</p>
         )}
+
 
         {/* NOMBRE COMPLETO */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -150,7 +244,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type="text"
               placeholder="Tu nombre completo"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => {
+                setNombre(e.target.value);
+                validateField("nombre", e.target.value);
+              }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -164,6 +261,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.nombre}</p>
           )}
         </div>
+
 
         {/* CORREO ELECTRÓNICO */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -184,7 +282,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type="email"
               placeholder="ejemplo@correo.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                validateField("email", e.target.value);
+              }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -198,6 +299,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.email}</p>
           )}
         </div>
+
 
         {/* CONTRASEÑA */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -218,7 +320,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type={showPassword ? "text" : "password"}
               placeholder="Mínimo 8 caracteres"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                validateField("password", e.target.value);
+              }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -242,6 +347,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
           <PasswordStrength password={password} />
         </div>
 
+
         {/* CONFIRMAR CONTRASEÑA */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
@@ -261,7 +367,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type={showConfirm ? "text" : "password"}
               placeholder="Confirmar contraseña"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                validateField("confirmPassword", e.target.value);
+              }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -283,13 +392,15 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
           )}
         </div>
 
+
         {/* Boton enviar */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading|| hasErrors()}
           style={{
             width: "100%",
-            backgroundColor: "#C85A4F",
+            //NUEVO - se pone rosado claro cuando esta deshabilidato
+            backgroundColor: loading || hasErrors() ? "#e5a89f" : "#C85A4F",
             color: "white",
             fontWeight: "bold",
             padding: "12px",
@@ -302,6 +413,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         >
           {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
+
 
         {/* LINK A LOGIN */}
         <p style={{ textAlign: "center", fontSize: "12px", color: "#4b5563" }}>
@@ -321,6 +433,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             Iniciar sesión
           </button>
         </p>
+
 
       </form>
     </div>

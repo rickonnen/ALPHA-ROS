@@ -1,37 +1,62 @@
 "use client";
 
+
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // NUEVO: para redirigir al home
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
 }
 
+
 export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
+ const router = useRouter(); // NUEVO: instancia del router
+
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  // Validaciones 
+
+  // Validaciones
   function validate() {
     const newErrors: Record<string, string> = {};
+
 
     if (!email.trim())
       newErrors.email = "El correo es obligatorio";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       newErrors.email = "Ingresa un correo electrónico válido";
 
+
     if (!password)
       newErrors.password = "La contraseña es obligatoria";
+
 
     return newErrors;
   }
 
-  //  Submit 
+
+   // NUEVO: limpia el error de un campo cuando el usuario empieza a escribir
+  function clearError(field: string) {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
+  }
+
+
+  //  Submit
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -39,8 +64,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       return;
     }
 
+
     setErrors({});
     setLoading(true);
+
 
     try {
       // AQUÍ HACEMOS LA CONEXIÓN REAL
@@ -53,14 +80,18 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         }),
       });
 
+
       const data = await res.json();
+
 
       if (!res.ok) {
         throw new Error(data.error || "Error al iniciar sesión");
       }
 
-      alert("¡Bienvenido!");
+
+       router.push("/");
       // Se redirigir al home después de login exitoso
+
 
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
@@ -69,14 +100,16 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     }
   }
 
+
   //  UI
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      
+     
       {/*Encabezado de Bienvenida */}
       <div>
         <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>Bienvenido de vuelta</h2>
       </div>
+
 
       {/* Botón estilo Google, sin funcionalidad */}
       <button
@@ -106,13 +139,16 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         Continuar con Google
       </button>
 
+
       {/* Formulario */}
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
 
         {/* Error general */}
         {errors.general && (
           <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{errors.general}</p>
         )}
+
 
         {/* CORREO ELECTRÓNICO */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -133,7 +169,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               type="email"
               placeholder="ejemplo@correo.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -147,6 +183,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.email}</p>
           )}
         </div>
+
 
         {/* CONTRASEÑA */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -167,7 +204,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               type={showPassword ? "text" : "password"}
               placeholder="Tu contraseña"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -189,6 +226,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           )}
         </div>
 
+
         {/* Olvidé el enlace de contraseña*/}
         <div style={{ textAlign: "right" }}>
           <button
@@ -205,6 +243,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             ¿Olvide tu contraseña?
           </button>
         </div>
+
 
         {/* Boton enviar */}
         <button

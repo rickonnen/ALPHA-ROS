@@ -26,7 +26,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       />
       
       {/* Panel Lateral Deslizable (Color de fondo de tu diseño: #EAE3D9) */}
-      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-10 flex flex-col border-l-4 border-[#5BB1E4]">
+      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-10 flex flex-col">
         
         {/* Botón de cierre superior (Volver al inicio) */}
         <button 
