@@ -54,7 +54,7 @@ describe('DireccionForm', () => {
 
     it('debe mostrar el valor actual en el campo Superficie', () => {
       render(<DireccionForm {...defaultProps} areaValue="150.5" />);
-      expect(screen.getByLabelText(/superficie/i)).toHaveValue(150.5);
+      expect(screen.getByLabelText(/superficie/i)).toHaveValue('150.5');
     });
 
     it('el campo Dirección debe estar vacío por defecto', () => {
@@ -62,9 +62,10 @@ describe('DireccionForm', () => {
       expect(screen.getByLabelText(/dirección/i)).toHaveValue('');
     });
 
-    it('el campo Superficie debe ser de tipo numérico', () => {
+    // CAMBIADO: superficie ahora es type="text" con inputMode="decimal"
+    it('el campo Superficie debe tener inputMode decimal', () => {
       render(<DireccionForm {...defaultProps} />);
-      expect(screen.getByLabelText(/superficie/i)).toHaveAttribute('type', 'number');
+      expect(screen.getByLabelText(/superficie/i)).toHaveAttribute('inputMode', 'decimal');
     });
   });
 
@@ -122,6 +123,97 @@ describe('DireccionForm', () => {
       await userEvent.click(screen.getByLabelText(/superficie/i));
       await userEvent.tab();
       expect(onBlur).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // NUEVO: filtrado de entrada — Superficie
+  describe('filtrado de entrada — Superficie', () => {
+    it('debe ignorar letras al escribir en superficie', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/superficie/i), 'abc');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9.]*$/);
+      });
+    });
+
+    it('debe permitir número decimal válido en superficie', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/superficie/i), '150.5');
+      expect(onChange).toHaveBeenLastCalledWith('superficie', '150.5');
+    });
+
+    it('no debe permitir múltiples puntos en superficie', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/superficie/i), '1.5.3');
+      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
+      expect((lastCall.match(/\./g) ?? []).length).toBeLessThanOrEqual(1);
+    });
+
+    it('debe ignorar el signo negativo en superficie', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/superficie/i), '-5');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('-');
+      });
+    });
+
+    it('debe permitir solo dígitos y punto en superficie', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/superficie/i), '12@#.5!');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9.]*$/);
+      });
+    });
+  });
+
+  // NUEVO: filtrado de entrada — Dirección
+  describe('filtrado de entrada — Dirección', () => {
+    it('debe permitir letras con tildes', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/dirección/i), 'Ávila');
+      expect(onChange).toHaveBeenCalled();
+      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
+      expect(lastCall).toMatch(/[a-zA-ZáéíóúÁÉÍÓÚñÑ]/);
+    });
+
+    it('debe permitir el carácter #', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/dirección/i), 'Calle # 5');
+      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
+      expect(lastCall).toContain('#');
+    });
+
+    it('debe permitir números en la dirección', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/dirección/i), 'Av 123');
+      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
+      expect(lastCall).toMatch(/[0-9]/);
+    });
+
+    it('debe ignorar caracteres especiales no permitidos como @, $, !', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/dirección/i), '@$!');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toMatch(/[@$!]/);
+      });
+    });
+
+    it('debe ignorar caracteres como %, ^, &, *', async () => {
+      const onChange = jest.fn();
+      render(<DireccionForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/dirección/i), '%^&*');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toMatch(/[%^&*]/);
+      });
     });
   });
 

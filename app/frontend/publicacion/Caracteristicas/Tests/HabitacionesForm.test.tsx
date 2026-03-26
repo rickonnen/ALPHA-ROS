@@ -51,28 +51,32 @@ describe('HabitacionesForm', () => {
       expect(screen.getByLabelText(/nro de plantas/i)).toBeInTheDocument();
     });
 
-    it('todos los campos deben ser de tipo numérico', () => {
+    it('todos los campos deben ser de tipo texto con inputMode numérico', () => {
       render(<HabitacionesForm {...defaultProps} />);
-      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveAttribute('type', 'number');
-      expect(screen.getByLabelText(/nro de baños/i)).toHaveAttribute('type', 'number');
-      expect(screen.getByLabelText(/nro de garajes/i)).toHaveAttribute('type', 'number');
-      expect(screen.getByLabelText(/nro de plantas/i)).toHaveAttribute('type', 'number');
+      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveAttribute('inputMode', 'numeric');
+      expect(screen.getByLabelText(/nro de baños/i)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(/nro de baños/i)).toHaveAttribute('inputMode', 'numeric');
+      expect(screen.getByLabelText(/nro de garajes/i)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(/nro de garajes/i)).toHaveAttribute('inputMode', 'numeric');
+      expect(screen.getByLabelText(/nro de plantas/i)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(/nro de plantas/i)).toHaveAttribute('inputMode', 'numeric');
     });
 
     it('debe mostrar los campos vacíos por defecto', () => {
       render(<HabitacionesForm {...defaultProps} />);
-      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveValue(null);
-      expect(screen.getByLabelText(/nro de baños/i)).toHaveValue(null);
-      expect(screen.getByLabelText(/nro de garajes/i)).toHaveValue(null);
-      expect(screen.getByLabelText(/nro de plantas/i)).toHaveValue(null);
+      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveValue('');
+      expect(screen.getByLabelText(/nro de baños/i)).toHaveValue('');
+      expect(screen.getByLabelText(/nro de garajes/i)).toHaveValue('');
+      expect(screen.getByLabelText(/nro de plantas/i)).toHaveValue('');
     });
 
     it('debe reflejar los valores recibidos como props', () => {
       render(<HabitacionesForm {...defaultProps} bedroomsValue="3" bathroomsValue="2" garagesValue="1" floorsValue="2" />);
-      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveValue(3);
-      expect(screen.getByLabelText(/nro de baños/i)).toHaveValue(2);
-      expect(screen.getByLabelText(/nro de garajes/i)).toHaveValue(1);
-      expect(screen.getByLabelText(/nro de plantas/i)).toHaveValue(2);
+      expect(screen.getByLabelText(/nro de habitaciones/i)).toHaveValue('3');
+      expect(screen.getByLabelText(/nro de baños/i)).toHaveValue('2');
+      expect(screen.getByLabelText(/nro de garajes/i)).toHaveValue('1');
+      expect(screen.getByLabelText(/nro de plantas/i)).toHaveValue('2');
     });
   });
 
@@ -135,6 +139,120 @@ describe('HabitacionesForm', () => {
       await userEvent.click(screen.getByLabelText(/nro de plantas/i));
       await userEvent.tab();
       expect(onBlur).toHaveBeenCalledWith('plantas');
+    });
+  });
+
+  describe('filtrado de entrada', () => {
+    it('debe ignorar letras al escribir en habitaciones', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de habitaciones/i), 'abc');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9]*$/);
+      });
+    });
+
+    it('debe ignorar el signo negativo en habitaciones', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de habitaciones/i), '-3');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('-');
+      });
+    });
+
+    it('debe ignorar el punto decimal en habitaciones', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de habitaciones/i), '1.5');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('.');
+      });
+    });
+
+    it('debe ignorar la letra e en habitaciones', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de habitaciones/i), '1e5');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('e');
+      });
+    });
+
+    it('debe ignorar letras al escribir en baños', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de baños/i), 'abc');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9]*$/);
+      });
+    });
+
+    it('debe ignorar el signo negativo en baños', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de baños/i), '-2');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('-');
+      });
+    });
+
+    it('debe ignorar letras al escribir en garajes', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de garajes/i), 'xyz');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9]*$/);
+      });
+    });
+
+    it('debe ignorar el punto decimal en garajes', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de garajes/i), '1.5');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('.');
+      });
+    });
+
+    it('debe ignorar la letra e en garajes', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de garajes/i), '1e5');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('e');
+      });
+    });
+
+    it('debe ignorar letras al escribir en plantas', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de plantas/i), 'abc');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).toMatch(/^[0-9]*$/);
+      });
+    });
+
+    it('debe ignorar el signo negativo en plantas', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de plantas/i), '-2');
+      onChange.mock.calls.forEach(([, valor]) => {
+        expect(valor).not.toContain('-');
+      });
+    });
+
+    it('debe permitir dígitos válidos en todos los campos', async () => {
+      const onChange = jest.fn();
+      render(<HabitacionesForm {...defaultProps} onChange={onChange} />);
+      await userEvent.type(screen.getByLabelText(/nro de habitaciones/i), '3');
+      await userEvent.type(screen.getByLabelText(/nro de baños/i), '2');
+      await userEvent.type(screen.getByLabelText(/nro de garajes/i), '1');
+      await userEvent.type(screen.getByLabelText(/nro de plantas/i), '2');
+      expect(onChange).toHaveBeenCalledWith('habitaciones', '3');
+      expect(onChange).toHaveBeenCalledWith('banios', '2');
+      expect(onChange).toHaveBeenCalledWith('garajes', '1');
+      expect(onChange).toHaveBeenCalledWith('plantas', '2');
     });
   });
 

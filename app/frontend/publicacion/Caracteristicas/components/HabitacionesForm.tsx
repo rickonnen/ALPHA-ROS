@@ -19,7 +19,16 @@ interface HabitacionesFormProps {
   onBlur:   (field: string) => void;
 }
 
+const soloEnteroPositivo = (value: string): string =>
+  value.replace(/[^0-9]/g, '')
+
 export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, garagesValue, errors, touched, onChange, onBlur }: HabitacionesFormProps) {
+
+  const makeChangeHandler = (field: string) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onChange(field, soloEnteroPositivo(e.target.value))
+    }
+
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3">
 
@@ -29,9 +38,11 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
         </label>
         <input
           id="habitaciones"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={bedroomsValue}
-          onChange={(e) => onChange('habitaciones', e.target.value)}
+          onChange={makeChangeHandler('habitaciones')}
           onBlur={() => onBlur('habitaciones')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
@@ -46,9 +57,11 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
         </label>
         <input
           id="banios"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={bathroomsValue}
-          onChange={(e) => onChange('banios', e.target.value)}
+          onChange={makeChangeHandler('banios')}
           onBlur={() => onBlur('banios')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
@@ -63,9 +76,11 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
         </label>
         <input
           id="garajes"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={garagesValue}
-          onChange={(e) => onChange('garajes', e.target.value)}
+          onChange={makeChangeHandler('garajes')}
           onBlur={() => onBlur('garajes')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
@@ -80,9 +95,11 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
         </label>
         <input
           id="plantas"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={floorsValue}
-          onChange={(e) => onChange('plantas', e.target.value)}
+          onChange={makeChangeHandler('plantas')}
           onBlur={() => onBlur('plantas')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />

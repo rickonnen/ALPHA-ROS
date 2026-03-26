@@ -12,6 +12,25 @@ interface DireccionFormProps {
 }
 
 export function DireccionForm({ addressValue, areaValue, addressError, areaError, addressTouched, areaTouched, onChange, onBlur }: DireccionFormProps) {
+
+  // Solo letras, números, #, -, . y espacios
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const filtered = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9#\-. ]/g, '')
+    onChange('direccion', filtered)
+  }
+
+  // Solo dígitos y un punto decimal, sin negativos
+  const handleAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value
+    const filtered = raw.replace(/[^0-9.]/g, '')
+    // Evita múltiples puntos
+    const parts = filtered.split('.')
+    const normalized = parts.length > 2
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : filtered
+    onChange('superficie', normalized)
+  }
+
   return (
     <div className="flex gap-4 items-start">
 
@@ -24,7 +43,7 @@ export function DireccionForm({ addressValue, areaValue, addressError, areaError
             id="direccion"
             type="text"
             value={addressValue}
-            onChange={(e) => onChange('direccion', e.target.value)}
+            onChange={handleAddressChange}
             onBlur={() => onBlur('direccion')}
             className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm outline-none focus:border-gray-500"
           />
@@ -48,9 +67,10 @@ export function DireccionForm({ addressValue, areaValue, addressError, areaError
         <div className="relative">
           <input
             id="superficie"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={areaValue}
-            onChange={(e) => onChange('superficie', e.target.value)}
+            onChange={handleAreaChange}
             onBlur={() => onBlur('superficie')}
             placeholder="0.00 m²"
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
