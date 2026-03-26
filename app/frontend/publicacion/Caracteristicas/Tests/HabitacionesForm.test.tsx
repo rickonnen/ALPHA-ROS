@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { HabitacionesForm } from '../components/HabitacionesForm';
+import { HabitacionesForm } from '../Components/HabitacionesForm';
 import { MAX_VALOR_NUMERICO } from '../Hooks/useCaracteristicasForm';
 
 const defaultProps = {

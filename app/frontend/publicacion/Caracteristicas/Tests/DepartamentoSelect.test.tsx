@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DepartamentoSelect } from '../components/DepartamentoSelect';
+import { DepartamentoSelect } from '../Components/DepartamentoSelect';
 import { DEPARTAMENTOS } from '../Hooks/useCaracteristicasForm';
 
 const defaultProps = {

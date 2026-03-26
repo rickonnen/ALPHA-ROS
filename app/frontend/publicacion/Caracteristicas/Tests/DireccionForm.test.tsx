@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DireccionForm } from '../components/DireccionForm';
+import { DireccionForm } from '../Components/DireccionForm';
 
 const defaultProps = {
   addressValue:   '',

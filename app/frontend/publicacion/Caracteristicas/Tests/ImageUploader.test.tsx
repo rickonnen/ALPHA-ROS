@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ImageUploader } from '../components/ImageUploader';
+import { ImageUploader } from '../Components/ImageUploader';
 import {
   MAX_IMAGENES,
   MIN_IMAGENES,
