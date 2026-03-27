@@ -1,5 +1,6 @@
 "use client"
 
+import Link from 'next/link';
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -89,9 +90,11 @@ export default function PaymentVerificationPage() {
               <div className="border-b border-gray-100 my-2"></div>
               <Button variant="ghost" className="w-full text-gray-400 justify-start hover:bg-gray-50">-</Button>
             </div>
-            <Button className="bg-[#333333] hover:bg-black text-white w-fit px-6 mt-auto">
-              VOLVER
-            </Button>
+            <Link href="/">
+              <Button className="bg-[#333333] hover:bg-black text-white w-fit px-6 mt-auto">
+                VOLVER
+              </Button>
+            </Link>
           </aside>
 
           <div className="flex-1 p-10 lg:p-14">
