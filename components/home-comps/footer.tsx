@@ -111,7 +111,7 @@ export default function Footer() {
               className="inline-flex h-11 w-11 items-center justify-center rounded-sm transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
             >
               <img
-                src="https://www.svgrepo.com/show/500854/facebook.svg"
+                src="https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774561359/facebook-svgrepo-com_hy7ihi.svg"
                 alt="Facebook icon"
                 className="h-12 w-12"
                 style={{ transform: "scale(1.12)" }}
@@ -120,14 +120,14 @@ export default function Footer() {
             </a>
 
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/propbol.inmo/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
               className="inline-flex h-11 w-11 items-center justify-center rounded-sm transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
             >
               <img
-                src="https://www.svgrepo.com/show/521711/instagram.svg"
+                src="https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774561338/instagram-svgrepo-com_lcvpan.svg"
                 alt="Instagram icon"
                 className="h-10 w-10"
                 loading="lazy"
@@ -135,14 +135,14 @@ export default function Footer() {
             </a>
 
             <a
-              href="https://tiktok.com"
+              href="https://www.tiktok.com/@propbolinmo"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
               className="inline-flex h-11 w-11 items-center justify-center rounded-sm transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
             >
               <img
-                src="https://www.svgrepo.com/show/473806/tiktok.svg"
+                src="https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774561358/brand-tiktok-svgrepo-com_y0fovq.svg"
                 alt="TikTok icon"
                 className="h-8 w-8"
                 style={{ transform: "scale(1.12)" }}
