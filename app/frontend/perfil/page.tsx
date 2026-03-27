@@ -4,19 +4,39 @@
       - @param {PerfilPage()} - ubicacion default de Mi Perfil
       - @return {perfil-view} - muestra los datos del usuario 
 */
+/* Dev: David Chavez Totora - xdev/davidc 
+    Fecha: 25/03/2026
+    Funcionalidad: Adaptación Mobile + Cambio a Azul Primary
+*/
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 27/03/2026
+    Funcionalidad: Página principal de Mi Perfil
+      - Consume GET /backend/perfil/get?id_usuario=...
+      - Distribuye los datos reales a cada vista
+      - TODO: reemplazar ID_USUARIO_HARDCODEADO por el id real
+              que llegue desde el header/auth cuando esté listo
+*/
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
 import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
+// Importan sus respectivas vistas
+//import SeguridadView from "./views/seguridad-view";
+//import PublicacionesView from "./views/publicaciones-view";
+//import FavoritoView from "./views/favorito-view";
+//import HistorialView from "./views/historial-view";
+
+// ID TEMPORAL: falta el id de los de sign in
+const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
 
 const HeaderMock = () => (
-  <header className="w-full h-[70px] bg-white border-b flex items-center px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
-    <span>[ Componente Header - Equipo Externo ]</span>
-    <Button variant="ghost" asChild>
+  <header className="w-full h-[70px] bg-white border-b flex items-center px-6 md:px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
+    <span className="text-sm md:text-base">[ Componente Header - Equipo Externo ]</span>
+    <Button variant="ghost" asChild className="hidden md:flex">
       <Link href="/">
         <Home className="mr-2 h-4 w-4" /> Inicio
       </Link>
@@ -26,80 +46,165 @@ const HeaderMock = () => (
 
 export default function PerfilPage() {
   const [view, setView] = useState("perfil");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const user = {
-    usuario: "ArvirzuzztS",
-    nombres: "David",
-    apellidos: "Chavez",
-    email: "virzuzz12345@gmail.com",
-    direccion: "Av. Principal lado del vecino #123, Cochabamba",
-    url_foto: "https://github.com/shadcn.png",
-    telefono1: "+591 67231718",
-    telefono2: "+591 0000000",
-    telefono3: "No registrado"
-  };
+  const [usuario, setUsuario] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // ##################################################################
-  // aqui sustituyen como hice con sus componentes de views
+  useEffect(() => {
+    const fetchUsuario = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `/backend/perfil/get?id_usuario=${ID_USUARIO_HARDCODEADO}`
+        );
+        if (!res.ok) throw new Error("No se pudo cargar el perfil");
+        const json = await res.json();
+        setUsuario(json.data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsuario();
+  }, []);
+
+  const menuItems = [
+    { id: "perfil", name: "MI PERFIL" },
+    { id: "seguridad", name: "SEGURIDAD" },
+    { id: "publicaciones", name: "PUBLICACIONES" },
+    { id: "favoritos", name: "FAVORITOS" },
+    { id: "historial", name: "HISTORIAL" },
+  ];
+
+  const telefonos = usuario?.UsuarioTelefono?.map(
+    (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
+  ) ?? [];
+
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-    perfil: <PerfilView user={user} />,
-    seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>,
-    publicaciones: <PublicacionesView />,
-    favoritos: <div className="p-8">Vista de Favoritos - Equipo D</div>,
-    historial: <div className="p-8">Vista de Historial - Equipo E</div>,
+
+    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
+    seguridad: <div className="p-8">Vista de Seguridad</div>,
+    publicaciones: <PublicacionesView />, 
+    favoritos: <div className="p-8">Vista de Favoritos</div>,
+    historial: <div className="p-8">Vista de Historial</div>,
   };
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <HeaderMock />
 
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        
-        <div id="info" className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          <img 
-            src={user.url_foto} 
-            alt="User" 
-            className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[var(--secondary)] shadow-md"
-          />
-          <div className="text-center md:text-left">
-            <h1 className="font-[900] text-4xl md:text-5xl text-[var(--foreground)] tracking-tight">
-              {user.nombres} {user.apellidos}
-            </h1>
-            <h2 className="text-slate-500 text-xl md:text-2xl font-medium">{user.email}</h2>
-          </div>
-        </div>
+      <main className="mx-auto max-w-5xl px-4 py-6 md:py-8">
 
-        <div className="flex flex-col md:flex-row gap-0 items-stretch">
-          <nav id="btns" className="flex flex-col w-full md:w-64 z-10 relative">
-            {[
-              { id: "perfil", name: "MI PERFIL" },
-              { id: "seguridad", name: "SEGURIDAD" },
-              { id: "publicaciones", name: "PUBLICACIONES" },
-              { id: "favoritos", name: "FAVORITOS" },
-              { id: "historial", name: "HISTORIAL" },
-            ].map((btn) => {
-              const isSelected = view === btn.id;
-              return (
-                <button
-                  key={btn.id}
-                  onClick={() => setView(btn.id)}
-                  className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
-                    isSelected 
-                      ? "bg-[var(--secondary)] text-white md:rounded-l-2xl md:-mr-[1px] shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.2)] z-20" 
-                      : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--secondary)] hover:pl-8 border-transparent z-10"
-                  }`}
-                >
-                  {btn.name}
-                </button>
-              );
-            })}
-          </nav>
-          
-          <div id="dinamic" 
-            className="flex-grow bg-[var(--secondary)] text-white md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            {VIEWS_COMPONENTS[view] || VIEWS_COMPONENTS.perfil}
+        {loading && (
+          <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
+            <Loader2 className="animate-spin h-6 w-6" />
+            <span className="text-sm font-medium">Cargando perfil...</span>
           </div>
-        </div>
+        )}
+
+        {error && (
+          <div className="text-center py-20 text-red-500 font-semibold">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && usuario && (
+          <>
+            <div id="info" className="flex items-center justify-between gap-6 mb-6 md:mb-8">
+              <div className="flex items-center gap-4 md:gap-6">
+                <img
+                  src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}
+                  alt="User"
+                  className="w-20 h-20 md:w-40 md:h-40 rounded-full border-4 border-[var(--primary)]"
+                />
+                <div className="text-left">
+                  <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
+                    {usuario.nombres} {usuario.apellidos}
+                  </h1>
+                  <h2 className="text-slate-500 text-sm md:text-2xl font-medium">
+                    {usuario.email}
+                  </h2>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="md:hidden border-[var(--primary)] text-[var(--primary)]"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </div>
+
+            {isMenuOpen && (
+              <div className="fixed inset-0 z-[100] bg-black/50 md:hidden animate-in fade-in duration-300">
+                <div className="absolute right-0 top-0 h-full w-64 bg-white p-6 shadow-xl animate-in slide-in-from-right duration-300">
+                  <div className="flex justify-between items-center mb-8">
+                    <span className="font-black text-[var(--primary)] text-xs tracking-widest">MENÚ</span>
+                    <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
+                      <X className="h-6 w-6" />
+                    </Button>
+                  </div>
+                  <nav className="flex flex-col gap-2">
+                    {menuItems.map((btn) => (
+                      <button
+                        key={btn.id}
+                        onClick={() => { setView(btn.id); setIsMenuOpen(false); }}
+                        className={`text-left px-4 py-3 rounded-lg text-xs font-bold transition-colors ${
+                          view === btn.id
+                            ? "bg-[var(--primary)] text-white"
+                            : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {btn.name}
+                      </button>
+                    ))}
+                    <hr className="my-4" />
+                    <button className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors">
+                      <LogOut className="h-4 w-4" /> CERRAR SESIÓN
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col md:flex-row gap-0 items-stretch">
+              <nav id="btns" className="hidden md:flex flex-col w-64 z-10 relative">
+                {menuItems.map((btn) => {
+                  const isSelected = view === btn.id;
+                  return (
+                    <button
+                      key={btn.id}
+                      onClick={() => setView(btn.id)}
+                      className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
+                        isSelected
+                          ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
+                          : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"
+                      }`}
+                    >
+                      {btn.name}
+                    </button>
+                  );
+                })}
+                <button className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors">
+                  <LogOut className="h-4 w-4" /> SALIR
+                </button>
+              </nav>
+
+              <div
+                id="dinamic"
+                className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px]"
+              >
+                {VIEWS_COMPONENTS[view] ?? VIEWS_COMPONENTS.perfil}
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
