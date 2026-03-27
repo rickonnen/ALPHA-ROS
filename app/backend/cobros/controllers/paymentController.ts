@@ -1,0 +1,90 @@
+// app/backend/cobros/controllers/paymentController.ts
+import { PrismaClient } from '@prisma/client';
+
+const objPrisma = new PrismaClient();
+
+// Mapeo de estados según la lógica acordada
+const objStatuses = {
+  intPending: 1,
+  intAccepted: 2,
+  intRejected: 3
+};
+
+/**
+ * Dev: Nicole Belen Arias Murillo
+ * Fecha: 26/03/2026
+ * Funcionalidad: Recuperar pagos filtrados por su estado actual.
+ * @param {string} strStatusName - Nombre del estado para filtrar.
+ * @return {array} arrPayments - Array de registros de detalles de pago.
+ */
+export const getPaymentsByStatus = async (strStatusName: string) => {
+  const objStatusMap: Record<string, number> = {
+    'Pendiente': objStatuses.intPending,
+    'Aceptado': objStatuses.intAccepted,
+    'Rechazado': objStatuses.intRejected
+  };
+
+  return await objPrisma.detallePago.findMany({
+    where: {
+      estado: objStatusMap[strStatusName] || objStatuses.intPending,
+    },
+    include: {
+      Usuario: {
+        select: {
+          nombres: true,
+          apellidos: true,
+          email: true
+        }
+      },
+      PlanPublicacion: {
+        select: {
+          nombre_plan: true
+        }
+      }
+    },
+  });
+};
+
+/**
+ * Dev: Rene Gabriel Vera Portanda 
+ * Fecha: 27/03/2026
+ * Funcionalidad: Actualiza el estado de un pago específico. La asignación del plan se maneja automáticamente en PostgreSQL.
+ * @param {number} intId - Identificador único para el detalle del pago.
+ * @param {string} strNewStatusName - El nuevo nombre de estado.
+ * @return {object} objUpdatedPayment - El registro actualizado de la base de datos de pagos.
+ */
+export const updatePaymentStatus = async (intId: number, strNewStatusName: string) => {
+  const objStatusMap: Record<string, number> = {
+    'Aceptado': objStatuses.intAccepted,
+    'Rechazado': objStatuses.intRejected
+  };
+  
+  const intNewStatus = objStatusMap[strNewStatusName];
+
+  if (!intNewStatus) {
+    throw new Error(`El estado proporcionado '${strNewStatusName}' no es válido para la actualización.`);
+  }
+
+  try {
+    // Prisma actualizará el estado. 
+    // Si cambia de 1 (Pendiente) a 2 (Aceptado), el Trigger trg_pago_aprobado_update 
+    // en Supabase se disparará de forma invisible y sumará las publicaciones al usuario.
+    const objUpdatedPayment = await objPrisma.detallePago.update({
+      where: { id_detalle: intId },
+      data: {
+        estado: intNewStatus,
+      },
+    });
+
+    console.log(`Estado del pago ${intId} actualizado a ${strNewStatusName}.`);
+    return objUpdatedPayment;
+
+  } catch (error: any) {
+    // Prisma lanza un error P2025 si el registro no existe
+    if (error.code === 'P2025') {
+      throw new Error(`No se encontró el pago con id ${intId}`);
+    }
+    console.error("Error al actualizar el estado del pago:", error);
+    throw error;
+  }
+};
