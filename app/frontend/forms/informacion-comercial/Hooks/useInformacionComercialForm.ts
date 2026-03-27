@@ -65,15 +65,34 @@ export function useInformacionComercialForm() {
   }
 
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw   = e.target.value.replace(/[^\d.]/g, "");
-    const parts = raw.split(".");
-    const clean = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : raw;
-    setForm((prev) => ({ ...prev, precio: clean }));
-    if (touched.precio) {
-      setErrors((prev) => ({ ...prev, precio: validateField("precio", clean) }));
-    }
-  }
+  const raw = e.target.value.replace(/[^\d.]/g, "");
+  const parts = raw.split(".");
+  const clean = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : raw;
 
+  // Bloquear más de 2 decimales
+  if (parts.length === 2 && parts[1].length > 2) return;
+
+  // Bloquear más de 7 dígitos enteros
+  const entero = clean.split(".")[0];
+  if (entero.length > 7) {
+  setTouched((prev) => ({ ...prev, precio: true }));
+  setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
+  return;
+}
+
+  // Bloquear si supera el límite máximo
+  const num = parseFloat(clean);
+  if (!isNaN(num) && num > PRECIO_MAXIMO) {
+  setTouched((prev) => ({ ...prev, precio: true }));
+  setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
+  return;
+}
+
+  setForm((prev) => ({ ...prev, precio: clean }));
+  if (touched.precio) {
+    setErrors((prev) => ({ ...prev, precio: validateField("precio", clean) }));
+  }
+}
   function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));

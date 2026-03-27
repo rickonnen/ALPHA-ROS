@@ -23,13 +23,12 @@ export default function PrecioInput({
           type="text"
           inputMode="decimal"
           className={`${styles.icInput}${hasError ? ` ${styles.icInputErr}` : ""}`}
-          placeholder="0.00"
+          placeholder="0.00 Bs."
           value={value}
           onChange={onChange}
           onBlur={onBlur}
           autoComplete="off"
         />
-        <span className={styles.icPrecioSfx}>Bs.</span>
       </div>
       {hasError && errorMsg && (
         <span className={styles.icErr}>{errorMsg}</span>
