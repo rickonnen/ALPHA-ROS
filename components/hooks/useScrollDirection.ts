@@ -9,10 +9,11 @@ import { useState, useEffect } from 'react';
 export const useScrollDirection = () => {
   // bolIsHidden determina si el header debe esconderse
   const [bolIsHidden, setBolIsHidden] = useState(false);
-  // intLastScrollY guarda la última posición 
-  const [intLastScrollY, setIntLastScrollY] = useState(0);
 
   useEffect(() => {
+    // intLastScrollY guarda la última posición 
+    let intLastScrollY = window.scrollY;
+
     // Función que evalúa la posición actual
     const handleScroll = () => {
       const intCurrentScrollY = window.scrollY;
@@ -27,15 +28,15 @@ export const useScrollDirection = () => {
         setBolIsHidden(false);
       }
 
-      setIntLastScrollY(intCurrentScrollY);
+      intLastScrollY = intCurrentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [intLastScrollY]);
+  }, []);
 
   return bolIsHidden;
 };
