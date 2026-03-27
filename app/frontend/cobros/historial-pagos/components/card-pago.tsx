@@ -4,7 +4,6 @@
  * descripcion: Card de pago
  */
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 interface Pago {
@@ -17,54 +16,66 @@ interface Pago {
 
 export default function CardPago({ pago }: { pago: Pago }) {
   return (
-    <Card className="w-full border border-gray-200 shadow-sm">
+    <div className="bg-[#F4EFE6] border border-[#E5E0D8] p-4 space-y-3">
 
-      <CardContent className="p-4 space-y-3">
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
 
-        {/* Header */}
-        <div className="flex justify-between items-center">
+        <h2 className="font-bold text-sm text-[#2E2E2E] uppercase">
+          {pago.estado === "pendiente"
+            ? "TRANSACCIÓN PENDIENTE"
+            : "TRANSACCIÓN REALIZADA"}
+        </h2>
 
-          <h2 className="font-semibold text-gray-800">
-            {pago.estado === "pendiente"
-              ? "Transacción pendiente"
-              : "Transacción realizada"}
-          </h2>
+        {pago.estado === "pendiente" ? (
+          <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">
+            VERIFICANDO PAGO
+          </span>
+        ) : (
+          <span className="text-sm text-[#2E2E2E] font-medium">
+            {pago.fecha}
+          </span>
+        )}
+      </div>
 
-          <span
-            className={`text-xs px-2 py-1 rounded-md font-medium
-              ${pago.estado === "pendiente"
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-green-100 text-green-700"
-              }`}
-          >
-            {pago.estado === "pendiente"
-              ? "Verificando pago"
-              : "Pagado"}
+      {/* INFO */}
+      <div className="text-sm space-y-2">
+
+        <div className="flex justify-between">
+          <span className="text-[#6B7280]">Fecha:</span>
+          <span className="text-[#2E2E2E]">{pago.fecha}</span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-[#6B7280]">Detalle:</span>
+          <span className="text-[#2E2E2E]">{pago.detalle}</span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-[#6B7280]">
+            {pago.estado === "pendiente" ? "Monto:" : "Total pagado:"}
+          </span>
+
+          <span className="text-[#2E2E2E]">
+            ${pago.monto}{" "}
+            <span className="text-gray-400">(≈ Bs {pago.monto * 7})</span>
           </span>
         </div>
 
-        {/* Info */}
-        <div className="text-sm text-gray-600 space-y-1">
-          <p><strong>Fecha y hora:</strong> {pago.fecha}</p>
-          <p><strong>Detalle:</strong> {pago.detalle}</p>
+      </div>
 
-          <p>
-            <strong>Total:</strong> ${pago.monto} 
-            <span className="text-gray-400 ml-2">(≈ Bs {pago.monto * 7})</span>
-          </p>
-        </div>
-
-        {/* Botón deshabilitado */}
-        {pago.estado === "realizado" && (
+      {/* BOTÓN SOLO EN REALIZADOS */}
+      {pago.estado === "realizado" && (
+        <div className="flex justify-end">
           <Button
             disabled
-            className="mt-2 bg-red-200 text-red-600 cursor-not-allowed"
+            className="bg-[#D6B0AA] text-white text-xs cursor-not-allowed"
           >
-            Descargar comprobante (No disponible)
+            DESCARGAR COMPROBANTE
           </Button>
-        )}
+        </div>
+      )}
 
-      </CardContent>
-    </Card>
+    </div>
   );
 }

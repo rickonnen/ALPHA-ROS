@@ -3,22 +3,12 @@
 /**
  * dev: Kevin isnado
  * ultima modif: 25/03/2025 - horas: 6 pm
- * descripcion: lsita de pagos-paginacion-se muestran las 10 transacciones mas recientes
+ * descripcion: lista de pagos - paginacion - se muestran las 10 transacciones mas recientes
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CardPago from "./card-pago";
 import EstadoVacio from "./estado-vacio";
-import ErrorState from "./error-state";
-
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
 interface Pago {
   id: number;
@@ -28,76 +18,106 @@ interface Pago {
   estado: "pendiente" | "realizado";
 }
 
-// MOCK (se puede duplicar para probar más páginas)
-const pagosMock: Pago[] = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 1,
-  fecha: "19/03/2026 - 14:30",
-  detalle: `Plan ${i + 1}`,
-  monto: 100 + i * 5,
-  estado: i % 2 === 0 ? "pendiente" : "realizado",
-}));
-
-const ITEMS_POR_PAGINA = 10;
+const ITEMS = 10;
 
 export default function ListaPagos({ estado }: { estado: "pendiente" | "realizado" }) {
-  
   const [pagina, setPagina] = useState(1);
+  const [pagos, setPagos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const error = false;
-  if (error) return <ErrorState />;
+  // 🔌 FETCH AL BACKEND
+  useEffect(() => {
+    obtenerPagos();
+  }, [estado]);
 
-  const filtrados = pagosMock.filter((p) => p.estado === estado);
+  const obtenerPagos = async () => {
+    setLoading(true);
 
-  if (filtrados.length === 0) return <EstadoVacio />;
+    try {
+      const res = await fetch(
+        `/backend/cobros/historial-pagos?estado=${estado}`
+      );
 
-  //PAGINACIÓN
-  const totalPaginas = Math.ceil(filtrados.length / ITEMS_POR_PAGINA);
+      const data = await res.json();
 
-  const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
-  const fin = inicio + ITEMS_POR_PAGINA;
+      setPagos(data);
+      setError("");
+    } catch (err) {
+      setError("No fue posible cargar el historial de pagos. Intente nuevamente.");
+    }
 
-  const datosPagina = filtrados.slice(inicio, fin);
+    setLoading(false);
+  };
+
+  // 🔄 ADAPTAR DATOS A TU UI
+  const pagosAdaptados: Pago[] = pagos.map((p: any) => ({
+    id: p.id_detalle,
+    fecha: p.fecha_detalle,
+    detalle: p.metodo_pago,
+    monto: 100, // temporal (luego conectamos con PlanPublicacion)
+    estado: p.estado === 0 ? "pendiente" : "realizado",
+  }));
+
+  // ⏳ LOADING
+  if (loading) {
+    return <p className="text-sm text-gray-500">Cargando...</p>;
+  }
+
+  // ❌ ERROR (HU)
+  if (error) {
+    return (
+      <p className="text-sm text-red-500">
+        No fue posible cargar el historial de pagos. Intente nuevamente.
+      </p>
+    );
+  }
+
+  // 📭 SIN DATOS (HU)
+  if (pagosAdaptados.length === 0) {
+    return <EstadoVacio />;
+  }
+
+  // 📄 PAGINACIÓN (igual que tu lógica)
+  const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);
+  const inicio = (pagina - 1) * ITEMS;
+  const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="mt-4 space-y-3">
+
+      {/* BARRA SUPERIOR (DESHABILITADA) */}
+      <div className="bg-[#E8A5A0] text-white text-sm px-4 py-2 flex justify-between items-center opacity-80">
+        <span>Últimos 30 días (17/02/2026 - 19/03/2026)</span>
+      </div>
 
       {/* LISTA */}
-      {datosPagina.map((pago) => (
-        <CardPago key={pago.id} pago={pago} />
+      {datos.map(p => (
+        <CardPago key={p.id} pago={p} />
       ))}
 
       {/* PAGINACIÓN */}
-      <Pagination>
-        <PaginationContent>
+      <div className="flex justify-end gap-2 text-sm text-[#2E2E2E]">
 
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => setPagina((p) => Math.max(p - 1, 1))}
-              className="cursor-pointer"
-            />
-          </PaginationItem>
+        <button onClick={() => setPagina(p => Math.max(p - 1, 1))}>
+          ←
+        </button>
 
-          {Array.from({ length: totalPaginas }).map((_, i) => (
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setPagina(i + 1)}
-                isActive={pagina === i + 1}
-                className="cursor-pointer"
-              >
-                {i + 1}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
+        {Array.from({ length: totalPaginas }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setPagina(i + 1)}
+            className={pagina === i + 1 ? "font-bold" : ""}
+          >
+            {i + 1}
+          </button>
+        ))}
 
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => setPagina((p) => Math.min(p + 1, totalPaginas))}
-              className="cursor-pointer"
-            />
-          </PaginationItem>
+        <button onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))}>
+          →
+        </button>
 
-        </PaginationContent>
-      </Pagination>
+      </div>
 
     </div>
   );

@@ -5,7 +5,7 @@
  */
 export default function EstadoVacio() {
   return (
-    <div className="text-center py-10 text-gray-500">
+    <div className="text-center py-10 text-gray-500 text-sm">
       No existen pagos registrados.
     </div>
   );
