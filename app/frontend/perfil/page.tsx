@@ -10,7 +10,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
-
+import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
 
 const HeaderMock = () => (
@@ -43,8 +43,8 @@ export default function PerfilPage() {
   // aqui sustituyen como hice con sus componentes de views
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
     perfil: <PerfilView user={user} />,
-    seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>, 
-    publicaciones: <div className="p-8">Vista de Publicaciones - Equipo C</div>,
+    seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>,
+    publicaciones: <PublicacionesView />,
     favoritos: <div className="p-8">Vista de Favoritos - Equipo D</div>,
     historial: <div className="p-8">Vista de Historial - Equipo E</div>,
   };
