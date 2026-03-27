@@ -17,8 +17,8 @@ const arrNavLinks = [
 ];
 
 /**
- * Dev: Rodrigo Zarate     Fecha: 27/03/2026
- * Dev: Erick Eduardo Arnez Torrico
+ * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 27/03/2026
+ * Dev: Erick Eduardo Arnez Torrico      Fecha: 26/03/2026
  * Funcionalidad: Renderizar el encabezado principal responsivo con menú desplegable para móviles.
  * Incluye ocultamiento automático inteligente al hacer scroll, animaciones interactivas 
  * unificadas (crecimiento y resplandor color terracota), fondo crema personalizado, 
@@ -74,8 +74,8 @@ export const Header = (objProps: HeaderProps) => {
     };
   }, [bolIsMobileMenuOpen]);
 
-  const strLinkClassesDesktop = "text-xl font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block";
-  const strLinkClassesMobile = "text-xl font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a]";
+  const strLinkClassesDesktop = "text-[15px] font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block";
+  const strLinkClassesMobile = "text-[15px] font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a]";
 
   // Variable del Logo (Reutilizable tanto en PC como en Celular)
   const btnLogoProbol = (
@@ -138,7 +138,7 @@ export const Header = (objProps: HeaderProps) => {
           ))}
 
           <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} className="transition-transform duration-300 hover:scale-110">
-            <Button className="text-xl px-6 h-10 font-semibold bg-[#c26e5a] text-white transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">PUBLICAR</Button>
+            <Button className="text-[15px] px-6 h-10 font-semibold bg-[#c26e5a] text-white transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">PUBLICAR</Button>
           </Link>
 
           <button 
@@ -152,7 +152,7 @@ export const Header = (objProps: HeaderProps) => {
           <Link href={objProps.bolIsLoggedIn ? "/perfil" : "/login"} className="transition-transform duration-300 hover:scale-110">
             <Button variant="ghost" className="flex items-center gap-3 h-10 px-2 bg-slate-200 rounded-full pr-4 transition-all duration-300 hover:bg-slate-200 hover:shadow-[0_0_12px_#c26e5a]">
               <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png" alt="Perfil" className="w-13 h-13 rounded-full object-contain" />
-              <span className="text-sm font-semibold uppercase text-slate-700">
+              <span className="text-[15px] font-semibold uppercase text-slate-700">
                 {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
               </span>
             </Button>
@@ -196,7 +196,7 @@ export const Header = (objProps: HeaderProps) => {
             </button>
 
             <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} onClick={closeMobileMenu}>
-              <Button className="w-full text-xl h-12 font-normal bg-[#c26e5a] text-white mt-2 transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">
+              <Button className="w-full text-[15px] h-12 font-normal bg-[#c26e5a] text-white mt-2 transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">
                 PUBLICAR INMUEBLE
               </Button>
             </Link>
