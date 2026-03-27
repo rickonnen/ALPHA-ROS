@@ -21,10 +21,13 @@ export default function BreadCrumbSeguridad({
   items,
 }: BreadcrumbSeguridadProps) {
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb className="font-sans">
+      <BreadcrumbList className="font-sans text-[12px] font-semibold uppercase tracking-[0.02em] text-white/70">
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
+          <BreadcrumbLink
+            asChild
+            className="text-white/75 hover:text-white transition-colors"
+          >
             <Link href="/frontend/perfil?view=seguridad">SEGURIDAD</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
@@ -33,11 +36,16 @@ export default function BreadCrumbSeguridad({
           <Fragment key={`${item.label}-${index}`}>
             <BreadcrumbItem>
               {item.href ? (
-                <BreadcrumbLink asChild>
+                <BreadcrumbLink
+                  asChild
+                  className="text-white/75 hover:text-white transition-colors"
+                >
                   <Link href={item.href}>{item.label}</Link>
                 </BreadcrumbLink>
               ) : (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                <BreadcrumbPage className="text-slate-300">
+                  {item.label}
+                </BreadcrumbPage>
               )}
             </BreadcrumbItem>
 
