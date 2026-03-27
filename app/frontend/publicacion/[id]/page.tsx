@@ -22,14 +22,31 @@ export default async function PerfilInmueblePage({
 
   if (!objPerfil) return notFound();
 
-  // Task 4.5: Extraer video ID de YouTube
-  const strVideoUrl = objPerfil.Video?.[0]?.url_video ?? null;
-  const strVideoId = strVideoUrl
-    ? strVideoUrl.includes("youtu.be/")
-      ? strVideoUrl.split("youtu.be/")[1]?.split("?")[0]
-      : strVideoUrl.split("v=")[1]?.split("&")[0]
-    : null;
+  // Task 4.5: Extraer video ID según plataforma (YouTube, YouTube Shorts, Instagram Reel)
+const strVideoUrl = objPerfil.Video?.[0]?.url_video ?? null;
 
+const bolEsYoutube = strVideoUrl
+  ? strVideoUrl.includes("youtube.com") || strVideoUrl.includes("youtu.be")
+  : false;
+
+const bolEsInstagram = strVideoUrl
+  ? strVideoUrl.includes("instagram.com/reel") || strVideoUrl.includes("instagram.com/p")
+  : false;
+
+// Extraer ID de YouTube — soporta youtube.com/watch, youtu.be y youtube.com/shorts
+const strVideoId = bolEsYoutube && strVideoUrl
+  ? strVideoUrl.includes("youtu.be/")
+    ? strVideoUrl.split("youtu.be/")[1]?.split("?")[0]
+    : strVideoUrl.includes("/shorts/")
+      ? strVideoUrl.split("/shorts/")[1]?.split("?")[0]
+      : strVideoUrl.split("v=")[1]?.split("&")[0]
+  : null;
+
+const strReelId = bolEsInstagram && strVideoUrl
+  ? strVideoUrl.includes("/reel/")
+    ? strVideoUrl.split("/reel/")[1]?.split("/")[0]
+    : strVideoUrl.split("/p/")[1]?.split("/")[0]
+  : null;
   // Task 4.8: Dirección desde relación Ubicacion
   const strDireccion = objPerfil.Ubicacion?.direccion ?? "Dirección no disponible";
 
@@ -49,9 +66,10 @@ export default async function PerfilInmueblePage({
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
 
         <MediaGallery
-          arrImagenes={arrImagenes}
-          strVideoId={strVideoId ?? undefined}
-        />
+  arrImagenes={arrImagenes}
+  strVideoId={strVideoId ?? undefined}
+  strReelId={strReelId ?? undefined}
+/>
 
 {/* Task 4.3: Precio y Superficie */}
 <div className="flex flex-row justify-between items-center py-8 border-y border-black/10 mb-10 gap-4">

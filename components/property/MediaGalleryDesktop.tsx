@@ -4,6 +4,7 @@
  * Funcionalidad: Grilla desktop con flechas y lightbox (HU4 - Tasks 4.4, 4.5, 4.11)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
+ * @param strReelId       - ID del Reel de Instagram (opcional)
  * @param intCurrentIndex - Índice actual del carrusel
  * @param strFallback     - URL imagen de empresa por defecto
  * @param onPrev          - Navegar imagen anterior
@@ -17,6 +18,7 @@ import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 interface MediaGalleryDesktopProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
+  strReelId?:      string;
   intCurrentIndex: number;
   strFallback:     string;
   onPrev:          () => void;
@@ -28,6 +30,7 @@ interface MediaGalleryDesktopProps {
 export const MediaGalleryDesktop = ({
   arrImagenesSafe,
   strVideoId,
+  strReelId,
   intCurrentIndex,
   strFallback,
   onPrev,
@@ -86,13 +89,20 @@ export const MediaGalleryDesktop = ({
 
     {/* Columna derecha */}
     <div className="flex flex-col gap-4">
-      {/* Task 4.5: Slot 2 — video si existe, imagen 2 si no */}
+      {/* Task 4.5: Slot 2 — YouTube, Instagram Reel, o imagen 2 */}
       <div className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-inner">
         {strVideoId ? (
           <iframe
             className="w-full h-full border-0"
             src={`https://www.youtube.com/embed/${strVideoId}`}
             title="Video del inmueble"
+            allowFullScreen
+          />
+        ) : strReelId ? (
+          <iframe
+            className="w-full h-full border-0"
+            src={`https://www.instagram.com/reel/${strReelId}/embed`}
+            title="Reel del inmueble"
             allowFullScreen
           />
         ) : (
@@ -108,15 +118,15 @@ export const MediaGalleryDesktop = ({
           </>
         )}
       </div>
-      {/* Task 4.4: Slot 3 — imagen 2 si hay video, imagen 3 si no */}
+      {/* Task 4.4: Slot 3 — imagen 2 si hay video o reel, imagen 3 si no */}
       <div
         className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:opacity-90 transition"
-        onClick={() => onOpenLightbox(strVideoId ? 1 : 2)}
+        onClick={() => onOpenLightbox(strVideoId || strReelId ? 1 : 2)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={strVideoId ? (arrImagenesSafe[1] || strFallback) : (arrImagenesSafe[2] || strFallback)}
-          onError={(e) => onImgError(e, strVideoId ? 1 : 2)}
+          src={strVideoId || strReelId ? (arrImagenesSafe[1] || strFallback) : (arrImagenesSafe[2] || strFallback)}
+          onError={(e) => onImgError(e, strVideoId || strReelId ? 1 : 2)}
           className="w-full h-full object-cover"
           alt="Vista adicional"
         />

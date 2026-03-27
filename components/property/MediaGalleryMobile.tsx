@@ -1,11 +1,12 @@
 /**
  * Dev: Marcela C.
  * Date: 25/03/2026
- * Funcionalidad: Carrusel mobile con video como último slide (HU4 - Tasks 4.4, 4.5, 4.12)
+ * Funcionalidad: Carrusel mobile con video o reel como último slide (HU4 - Tasks 4.4, 4.5, 4.12)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
+ * @param strReelId       - ID del Reel de Instagram (opcional)
  * @param intCurrentIndex - Índice actual del carrusel
- * @param intTotalSlides  - Total de slides (imágenes + video si existe)
+ * @param intTotalSlides  - Total de slides (imágenes + video/reel si existe)
  * @param onPrev          - Navegar slide anterior
  * @param onNext          - Navegar slide siguiente
  * @param onOpenLightbox  - Abrir lightbox en índice dado
@@ -14,11 +15,10 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-
-
 interface MediaGalleryMobileProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
+  strReelId?:      string;
   intCurrentIndex: number;
   intTotalSlides:  number;
   onPrev:          () => void;
@@ -30,6 +30,7 @@ interface MediaGalleryMobileProps {
 export const MediaGalleryMobile = ({
   arrImagenesSafe,
   strVideoId,
+  strReelId,
   intCurrentIndex,
   intTotalSlides,
   onPrev,
@@ -37,28 +38,40 @@ export const MediaGalleryMobile = ({
   onOpenLightbox,
   onImgError,
 }: MediaGalleryMobileProps) => {
-  // Task 4.5: El video ocupa el último slide del carrusel
-  const bolEsSlideVideo = strVideoId && intCurrentIndex === arrImagenesSafe.length;
+  // Task 4.5: El video o reel ocupa el último slide del carrusel
+  const bolEsSlideVideo = (strVideoId || strReelId) && intCurrentIndex === arrImagenesSafe.length;
 
   return (
     // Task 4.12: Solo visible en mobile
     <div className="md:hidden relative h-70 bg-[#E7E1D7] rounded-2xl overflow-hidden">
-      {/* Task 4.5: Último slide = video, resto = imágenes */}
+      {/* Task 4.5: Último slide = YouTube, Instagram Reel, o imagen */}
       {bolEsSlideVideo ? (
-        <iframe
-          className="w-full h-full border-0"
-          src={`https://www.youtube.com/embed/${strVideoId}`}
-          title="Video del inmueble"
-          allowFullScreen
-        />
+        strVideoId ? (
+          <iframe
+            className="w-full h-full border-0"
+            src={`https://www.youtube.com/embed/${strVideoId}`}
+            title="Video del inmueble"
+            allowFullScreen
+          />
+        ) : (
+          <iframe
+            className="w-full h-full border-0"
+            src={`https://www.instagram.com/reel/${strReelId}/embed`}
+            title="Reel del inmueble"
+            allowFullScreen
+          />
+        )
       ) : (
-        <img
-          src={arrImagenesSafe[intCurrentIndex]}
-          onError={(e) => onImgError(e, intCurrentIndex)}
-          onClick={() => onOpenLightbox(intCurrentIndex)}
-          className="w-full h-full object-cover cursor-pointer"
-          alt={`Imagen ${intCurrentIndex + 1}`}
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={arrImagenesSafe[intCurrentIndex]}
+            onError={(e) => onImgError(e, intCurrentIndex)}
+            onClick={() => onOpenLightbox(intCurrentIndex)}
+            className="w-full h-full object-cover cursor-pointer"
+            alt={`Imagen ${intCurrentIndex + 1}`}
+          />
+        </>
       )}
       {/* Task 4.4: Flecha izquierda */}
       {intCurrentIndex > 0 && (
@@ -69,7 +82,7 @@ export const MediaGalleryMobile = ({
           <ChevronLeft className="w-5 h-5 text-[#2E2E2E]" />
         </button>
       )}
-      {/* Task 4.4: Flecha derecha — navega hasta slide de video */}
+      {/* Task 4.4: Flecha derecha — navega hasta slide de video o reel */}
       {intCurrentIndex < intTotalSlides - 1 && (
         <button
           onClick={onNext}
@@ -78,7 +91,7 @@ export const MediaGalleryMobile = ({
           <ChevronRight className="w-5 h-5 text-[#2E2E2E]" />
         </button>
       )}
-      {/* Task 4.4: Indicadores — un punto por imagen + uno para el video */}
+      {/* Task 4.4: Indicadores — un punto por imagen + uno para video o reel */}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-10">
         {Array.from({ length: intTotalSlides }).map((_, intIdx) => (
           <div

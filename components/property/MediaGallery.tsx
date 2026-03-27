@@ -15,9 +15,10 @@ import { MediaGalleryLightbox } from "./MediaGalleryLightbox";
 interface MediaGalleryProps {
   arrImagenes: string[];
   strVideoId?: string;
+  strReelId?:  string;
 }
 
-export const MediaGallery = ({ arrImagenes, strVideoId }: MediaGalleryProps) => {
+export const MediaGallery = ({ arrImagenes, strVideoId, strReelId }: MediaGalleryProps) => {
   const strFallback = "/company-placeholder.png"; // Task 4.11: fallback empresa
   const [intCurrentIndex, setIntCurrentIndex]   = useState(0);
   const [intLightboxIndex, setIntLightboxIndex] = useState<number | null>(null);
@@ -26,9 +27,8 @@ export const MediaGallery = ({ arrImagenes, strVideoId }: MediaGalleryProps) => 
 
   // Task 4.11: Si no hay imágenes usar fallback
   const arrImagenesSafe = arrImagenes.length > 0 ? arrImagenes : [strFallback];
-  // Task 4.5: Total slides = imágenes + 1 si hay video
-  const intTotalSlides  = arrImagenesSafe.length + (strVideoId ? 1 : 0);
-
+  // Task 4.5: Total slides = imágenes + 1 si hay video o reel
+const intTotalSlides = arrImagenesSafe.length + (strVideoId || strReelId ? 1 : 0);
   // Task 4.11: Guardar índice de imagen rota y mostrar fallback
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>, intIdx?: number) => {
     e.currentTarget.src = strFallback;
@@ -59,6 +59,7 @@ const handleOpenLightbox = (intIdx: number) => {
         <MediaGalleryDesktop
           arrImagenesSafe={arrImagenesSafe}
           strVideoId={strVideoId}
+          strReelId={strReelId}
           intCurrentIndex={intCurrentIndex}
           strFallback={strFallback}
           onPrev={handlePrev}
@@ -70,6 +71,7 @@ const handleOpenLightbox = (intIdx: number) => {
         <MediaGalleryMobile
           arrImagenesSafe={arrImagenesSafe}
           strVideoId={strVideoId}
+          strReelId={strReelId}
           intCurrentIndex={intCurrentIndex}
           intTotalSlides={intTotalSlides}
           onPrev={handlePrev}
