@@ -111,7 +111,7 @@ export const Header = (objProps: HeaderProps) => {
         {/* LADO IZQUIERDO: Logo + Planes */}
         <div className="hidden lg:flex flex-row items-center gap-6">
           {btnLogoProbol}
-          <Link href="/planes" className="text-xl font-normal hover:text-primary transition-colors">
+          <Link href="/frontend/cobros/pricing" className="text-xl font-normal hover:text-primary transition-colors">
             PLANES DE PUBLICACIÓN
           </Link>
         </div>
@@ -222,7 +222,7 @@ export const Header = (objProps: HeaderProps) => {
         ANTICRÉTICO
       </Link>
 
-      <Link href="/planes" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
+      <Link href="/frontend/cobros/pricing" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
         PLANES DE PUBLICACIÓN
       </Link>
     </div>
