@@ -137,7 +137,7 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
                       {/* Botón Aceptar: Usa primary y su foreground */}
                       <Button 
                         onClick={() => handleOpenAcceptModal(objPayment)}
-                        variant="default" // Cambiado a default para usar color primary
+                        variant="default" 
                         size="sm" 
                         className="h-8 px-3 flex items-center gap-1.5"
                       >
@@ -147,7 +147,7 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
                       {/* Botón Rechazar: Usa destructive para el rechazo */}
                       <Button 
                         onClick={() => handleOpenRejectModal(objPayment)}
-                        variant="default" // Usamos el color destructive que ya tienes en CSS
+                        variant="default" 
                         size="sm" 
                         className="h-8 px-3 flex items-center gap-1.5"
                       >
