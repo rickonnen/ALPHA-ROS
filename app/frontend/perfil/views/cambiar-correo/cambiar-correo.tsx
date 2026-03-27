@@ -3,13 +3,16 @@ import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 export default function CambiarCorreoView() {
   return (
     <div className="m-4">
       <HeaderCorreo />
       <CorreoActual />
-      <NuevoCorreo/>
+      <NuevoCorreo />
+      <Contrasena />
+      <BotonesAccion />
     </div>
   );
 }
@@ -102,5 +105,82 @@ function NuevoCorreo() {
           : "Ingresa el correo al que enviaremos el código."}
       </p>
     </section>
+  );
+}
+
+function Contrasena() {
+  const [strPassword, setStrPassword] = useState("");
+  const [bolShowPassword, setBolShowPassword] = useState(false);
+  const [bolTouchedPassword, setBolTouchedPassword] = useState(false);
+
+  const bolShowError = bolTouchedPassword && strPassword.trim() === "";
+
+  return (
+    <section className="mt-6">
+      <Label
+        htmlFor="contrasena-input"
+        className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
+      >
+        Contraseña
+      </Label>
+      <div className="relative">
+        <Input
+          id="contrasena-input"
+          type={bolShowPassword ? "text" : "password"}
+          value={strPassword}
+          placeholder="••••••••••••"
+          autoComplete="current-password"
+          onChange={(e) => setStrPassword(e.target.value)}
+          onBlur={() => setBolTouchedPassword(true)}
+          className={`h-12 rounded-lg border bg-white/10 pr-10 px-3 text-base md:text-base text-white/90 placeholder:text-white/40 focus-visible:ring-2 transition-colors ${
+            bolShowError
+              ? "border-red-400/70 focus-visible:ring-red-400/40"
+              : "border-white/25 focus-visible:ring-white/30"
+          }`}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setBolShowPassword((prev) => !prev)}
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-white/45 hover:text-white/70 hover:bg-white/10"
+        >
+          {bolShowPassword ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      <p
+        className={`mt-1 text-xs transition-colors ${bolShowError ? "text-red-300/80" : "text-white/55"}`}
+      >
+        {bolShowError
+          ? "Ingresa tu contraseña actual para confirmar el cambio."
+          : "Necesitamos verificar tu identidad."}
+      </p>
+    </section>
+  );
+}
+
+function BotonesAccion() {
+  return (
+    <div className="mt-8 flex gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
+      >
+        Cancelar
+      </Button>
+
+      <Button
+        type="button"
+        className="w-36 h-10 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
+      >
+        Confirmar cambio
+      </Button>
+    </div>
   );
 }
