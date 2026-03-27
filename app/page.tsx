@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import Banner from "@/components/home-comps/banner";
 import FilterPanel from "@/components/home-comps/FilterPanel";
 import ExploreBy from "@/components/home-comps/ExploreBy";
