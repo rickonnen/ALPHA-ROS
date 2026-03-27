@@ -1,11 +1,11 @@
 /**
  * Dev: Gonzales Hetor    Fecha: 25/03/2026
  * Dev: Jose Alvarez    Fecha: 25/03/2026
- * Funcionalidad: Panel del Filtro en la pagina del home.
+ * Funcionalidad: Panel del Filtro en la pagina del home con cierre al clic externo.
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"; 
 
@@ -17,11 +17,26 @@ const TIPOS: TipoInmueble[] = ["Casa", "Departamento", "Cuarto", "Terreno", "Esp
 
 export default function FilterPanel() {
   const router = useRouter();
+  const panelRef = useRef<HTMLDivElement>(null); // Referencia para el contenedor principal
   
   const [operaciones, setOperaciones] = useState<Operacion[]>([]);
   const [tipo, setTipo] = useState<TipoInmueble | null>(null);
   const [ciudad, setCiudad] = useState("");
   const [openDropdown, setOpenDropdown] = useState<"op" | "tipo" | null>(null);
+
+  // Lógica para cerrar el dropdown al hacer clic afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const toggleOp = (val: Operacion) => {
     setOperaciones(prev => prev.includes(val) ? prev.filter(i => i !== val) : [...prev, val]);
@@ -36,8 +51,8 @@ export default function FilterPanel() {
   };
 
   return (
-    <div className="w-full flex flex-col gap-3 font-geist">
-      {/* BARRA DE BÚSQUEDA PRINCIPAL (Responsiva: Columna en celular, Fila en PC) */}
+    <div ref={panelRef} className="w-full flex flex-col gap-3 font-geist">
+      {/* BARRA DE BÚSQUEDA PRINCIPAL */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2 p-3 md:px-3 md:py-2 rounded-2xl md:rounded-full bg-[#E7E1D7] border border-[#C4BAA8] shadow-[0_4px_20px_rgba(31,58,77,0.12)]">
         
         {/* Dropdown: Operación */}
@@ -54,7 +69,7 @@ export default function FilterPanel() {
           {openDropdown === "op" && (
             <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full md:w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
               {OPERACIONES.map(op => (
-                <button key={op} onClick={() => toggleOp(op)} className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-[#E7E1D7]/60 rounded-lg text-left">
+                <button key={op} type="button" onClick={() => toggleOp(op)} className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-[#E7E1D7]/60 rounded-lg text-left">
                   <span className={operaciones.includes(op) ? "font-bold text-[#1F3A4D]" : "text-[#2E2E2E]"}>{op}</span>
                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${operaciones.includes(op) ? "bg-[#1F3A4D] border-[#1F3A4D]" : "border-[#A89F92] bg-[#F4EFE6]"}`}>
                     {operaciones.includes(op) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
@@ -65,7 +80,6 @@ export default function FilterPanel() {
           )}
         </div>
 
-        {/* Separador (Línea horizontal en móvil, vertical en PC) */}
         <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
         {/* Dropdown: Tipo */}
@@ -84,6 +98,7 @@ export default function FilterPanel() {
               {TIPOS.map(t => (
                 <button 
                   key={t} 
+                  type="button"
                   onClick={() => { setTipo(t); setOpenDropdown(null); }} 
                   className={`w-full px-3 py-2 text-sm rounded-lg text-left transition-colors ${tipo === t ? "bg-[#E7E1D7] text-[#1F3A4D] font-bold" : "text-[#2E2E2E] hover:bg-[#E7E1D7]/60"}`}
                 >
@@ -94,10 +109,8 @@ export default function FilterPanel() {
           )}
         </div>
 
-        {/* Separador */}
         <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
-        {/* Input y Botón (Siempre alineados en fila) */}
         <div className="flex flex-1 items-center gap-2 px-1">
           <input 
             type="text" 
@@ -105,7 +118,7 @@ export default function FilterPanel() {
             className="flex-1 bg-transparent px-2 py-2 md:py-0 text-sm focus:outline-none text-[#2E2E2E] placeholder:text-[#A89F92]"
             value={ciudad}
             onChange={(e) => setCiudad(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()} /* ¡Agregué esto para que funcione con el teclado del celular! */
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
 
           <button 

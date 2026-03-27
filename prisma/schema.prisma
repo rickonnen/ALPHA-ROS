@@ -571,6 +571,7 @@ model Etiquetas {
 model Favorito {
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
 
@@ -771,7 +772,7 @@ model Usuario {
   estado                       Int?                @db.SmallInt
   direccion                    String?             @db.VarChar(200)
   google_id                    String?             @db.VarChar(404)
-  cant_publicaciones_restantes Int?                @default(2)
+  cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?             @db.VarChar(128)
   id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
@@ -781,8 +782,8 @@ model Usuario {
   HistorialVistos              HistorialVistos[]
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
-  Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction)
   users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+  Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   UsuarioTelefono              UsuarioTelefono[]
 
   @@schema("public")
