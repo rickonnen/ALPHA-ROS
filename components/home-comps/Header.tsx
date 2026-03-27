@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useScrollDirection } from '../hooks/useScrollDirection';
@@ -21,16 +21,60 @@ export const Header = (objProps: HeaderProps) => {
   
   // Estado para controlar el menú de celular
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
+  const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
+  const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!bolIsMobileMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const targetNode = event.target as Node | null;
+
+      if (!targetNode) {
+        return;
+      }
+
+      if (refMobileMenuPanel.current?.contains(targetNode)) {
+        return;
+      }
+
+      if (refMobileMenuButton.current?.contains(targetNode)) {
+        return;
+      }
+
+      setBolIsMobileMenuOpen(false);
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setBolIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleEscapeKey);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [bolIsMobileMenuOpen]);
 
   // Variable del Logo (Reutilizable tanto en PC como en Celular)
   const btnLogoProbol = (
-    <Link 
-      href="/" 
-      className="flex items-center justify-center w-32 h-10 bg-slate-300 rounded-md hover:bg-slate-400 transition-colors"
-      title="Ir al inicio"
-    >
-       <span className="text-sm font-bold text-slate-600">LOGO PROBOL</span>
-    </Link>
+    <Link
+            href="/"
+            aria-label="Go to home page"
+            className="inline-flex rounded-sm transition-opacity duration-200 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+          >
+            <img
+              src="/logo-principal.svg"
+              alt="Portal logo"
+              className="h-10 w-auto object-contain lg:h-6 xl:h-8 2xl:h-12"
+            />
+          </Link>
   );
 
   return (
@@ -45,11 +89,13 @@ export const Header = (objProps: HeaderProps) => {
         </div>
 
         {/* DERECHA: Botón Hamburguesa */}
-        <div className="flex lg:hidden">
+        <div className="flex lg:hidden" ref={refMobileMenuButton}>
           <Button 
             variant="ghost" 
             className="p-2" 
-            onClick={() => setBolIsMobileMenuOpen(!bolIsMobileMenuOpen)}
+            onClick={() => setBolIsMobileMenuOpen((prevState) => !prevState)}
+            aria-expanded={bolIsMobileMenuOpen}
+            aria-controls="mobile-header-menu"
             aria-label="Abrir menú"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,16 +111,16 @@ export const Header = (objProps: HeaderProps) => {
         {/* LADO IZQUIERDO: Logo + Planes */}
         <div className="hidden lg:flex flex-row items-center gap-6">
           {btnLogoProbol}
-          <Link href="/frontend/cobros/pricing" className="text-xl font-semibold hover:text-primary transition-colors">
+          <Link href="/frontend/cobros/pricing" className="text-xl font-normal hover:text-primary transition-colors">
             PLANES DE PUBLICACIÓN
           </Link>
         </div>
 
         {/* LADO DERECHO: Navegación Completa */}
         <div className="hidden lg:flex flex-row items-center gap-6">
-          <Link href="/busqueda?strOperacion=compra" className="text-xl font-semibold hover:text-primary transition-colors">COMPRA</Link>
-          <Link href="/busqueda?strOperacion=alquiler" className="text-xl font-semibold hover:text-primary transition-colors">ALQUILER</Link>
-          <Link href="/busqueda?strOperacion=anticretico" className="text-xl font-semibold hover:text-primary transition-colors">ANTICRÉTICO</Link>
+          <Link href="/busqueda?strOperacion=compra" className="text-xl font-normal hover:text-primary transition-colors">COMPRA</Link>
+          <Link href="/busqueda?strOperacion=alquiler" className="text-xl font-normal hover:text-primary transition-colors">ALQUILER</Link>
+          <Link href="/busqueda?strOperacion=anticretico" className="text-xl font-normal hover:text-primary transition-colors">ANTICRÉTICO</Link>
 
           <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"}>
             <Button className="text-xl px-6 h-10 font-semibold bg-secondary hover:bg-secondary/90 text-white transition-colors">PUBLICAR</Button>
@@ -85,12 +131,20 @@ export const Header = (objProps: HeaderProps) => {
             onClick={() => !objProps.bolIsLoggedIn && alert('Debe iniciar sesión primero')}
             title="Notificaciones"
           >
-            <span className="text-xl opacity-70">🔔</span>
+            <img
+               src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png"
+               alt="Notificaciones"
+               className="w-5 h-5 object-contain"
+            />
           </button>
 
           <Link href={objProps.bolIsLoggedIn ? "/perfil" : "/login"}>
             <Button variant="ghost" className="flex items-center gap-3 h-10 px-2 hover:bg-slate-100 transition-colors bg-slate-200 rounded-full pr-4">
-              <div className="w-8 h-8 bg-slate-300 rounded-full"></div>
+              <img
+                  src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
+                  alt="Perfil"
+                  className="w-13 h-13 rounded-full object-contain"
+              />
               <span className="text-sm font-semibold uppercase text-slate-700">
                 {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
               </span>
@@ -100,58 +154,80 @@ export const Header = (objProps: HeaderProps) => {
 
       </div>
 
-      {/* MENÚ DESPLEGABLE MÓVIL (Dropdown) */}
-      {bolIsMobileMenuOpen && (
-        <div className="lg:hidden absolute top-16 left-0 w-full bg-slate-800 text-white shadow-xl flex flex-col px-8 py-6 gap-6 z-50">
-          
-          {/* Iniciar sesión / Mi Perfil */}
-          <Link 
-            href={objProps.bolIsLoggedIn ? "/perfil" : "/login"}
-            onClick={() => setBolIsMobileMenuOpen(false)}
-            className="flex items-center gap-4 border-b border-slate-700 pb-4"
-          >
-            <div className="w-10 h-10 bg-slate-600 rounded-full"></div>
-            <span className="text-xl font-semibold uppercase">
-              {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
-            </span>
-          </Link>
+{/* MENÚ DESPLEGABLE MÓVIL (Dropdown) */}
+{bolIsMobileMenuOpen && (
+  <>
+    {/* Overlay para cerrar al tocar fuera */}
+    <div
+      className="lg:hidden fixed inset-0 z-40 bg-black/20"
+      onClick={() => setBolIsMobileMenuOpen(false)}
+    />
 
-          {/* Notificaciones */}
-          <button 
-            className="flex items-center gap-4 text-left border-b border-slate-700 pb-4"
-            onClick={() => {
-              !objProps.bolIsLoggedIn && alert('Debe iniciar sesión primero');
-              setBolIsMobileMenuOpen(false);
-            }}
-          >
-            <span className="text-2xl">🔔</span>
-            <span className="text-xl font-semibold">NOTIFICACIONES</span>
-          </button>
+    {/* Panel del menú */}
+    <div
+      id="mobile-header-menu"
+      ref={refMobileMenuPanel}
+      className="lg:hidden absolute top-16 left-0 w-full bg-slate-800 text-white shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Iniciar sesión / Mi Perfil */}
+      <Link 
+        href={objProps.bolIsLoggedIn ? "/perfil" : "/login"}
+        onClick={() => setBolIsMobileMenuOpen(false)}
+        className="flex items-center gap-4 border-b border-slate-700 pb-4"
+      >
+        <img
+           src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
+           alt="Perfil"
+           className="w-10 h-10 rounded-full object-contain"
+        />
+        <span className="text-xl font-normal uppercase">
+          {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
+        </span>
+      </Link>
 
-          <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} onClick={() => setBolIsMobileMenuOpen(false)}>
-            <Button className="w-full text-xl h-12 font-bold bg-white text-slate-900 hover:bg-slate-200 mt-2">
-              PUBLICAR INMUEBLE
-            </Button>
-          </Link>
+      {/* Notificaciones */}
+      <button 
+        className="flex items-center gap-4 text-left border-b border-slate-700 pb-4"
+        onClick={() => {
+          if (!objProps.bolIsLoggedIn) {
+            alert('Debe iniciar sesión primero');
+          }
+          setBolIsMobileMenuOpen(false);
+        }}
+      >
+         <img
+             src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png"
+             alt="Notificaciones"
+             className="w-6 h-6 object-contain"
+          />
+        <span className="text-xl font-normal">NOTIFICACIONES</span>
+      </button>
 
-          <Link href="/busqueda?strOperacion=compra" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
-            COMPRA
-          </Link>
+      <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} onClick={() => setBolIsMobileMenuOpen(false)}>
+        <Button className="w-full text-xl h-12 font-normal bg-white text-slate-900 hover:bg-slate-200 mt-2">
+          PUBLICAR INMUEBLE
+        </Button>
+      </Link>
 
-          <Link href="/busqueda?strOperacion=alquiler" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
-            ALQUILER
-          </Link>
+      <Link href="/busqueda?strOperacion=compra" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
+        COMPRA
+      </Link>
 
-          <Link href="/busqueda?strOperacion=anticretico" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
-            ANTICRÉTICO
-          </Link>
+      <Link href="/busqueda?strOperacion=alquiler" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
+        ALQUILER
+      </Link>
 
-          <Link href="/frontend/cobros/pricing" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
-            PLANES DE PUBLICACIÓN
-          </Link>
+      <Link href="/busqueda?strOperacion=anticretico" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
+        ANTICRÉTICO
+      </Link>
 
-        </div>
-      )}
+      <Link href="/frontend/cobros/pricing" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
+        PLANES DE PUBLICACIÓN
+      </Link>
+    </div>
+  </>
+)}
     </header>
   );
 };
