@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DireccionForm } from '../Components/DireccionForm';
 
@@ -30,9 +30,9 @@ describe('DireccionForm', () => {
       expect(screen.getByLabelText(/superficie/i)).toBeInTheDocument();
     });
 
-    it('el campo Superficie debe tener placeholder "0.00 m²"', () => {
+    it('el campo Superficie debe mostrar m² como unidad fija', () => {
       render(<DireccionForm {...defaultProps} />);
-      expect(screen.getByPlaceholderText('0.00 m²')).toBeInTheDocument();
+      expect(screen.getByText('m²')).toBeInTheDocument();
     });
 
     it('debe renderizar el ícono de geolocalización', () => {
@@ -53,8 +53,8 @@ describe('DireccionForm', () => {
     });
 
     it('debe mostrar el valor actual en el campo Superficie', () => {
-      render(<DireccionForm {...defaultProps} areaValue="150.5" />);
-      expect(screen.getByLabelText(/superficie/i)).toHaveValue('150.5');
+      render(<DireccionForm {...defaultProps} areaValue="1.500" />);
+      expect(screen.getByLabelText(/superficie/i)).toHaveValue('1.500');
     });
 
     it('el campo Dirección debe estar vacío por defecto', () => {
@@ -62,7 +62,6 @@ describe('DireccionForm', () => {
       expect(screen.getByLabelText(/dirección/i)).toHaveValue('');
     });
 
-    // CAMBIADO: superficie ahora es type="text" con inputMode="decimal"
     it('el campo Superficie debe tener inputMode decimal', () => {
       render(<DireccionForm {...defaultProps} />);
       expect(screen.getByLabelText(/superficie/i)).toHaveAttribute('inputMode', 'decimal');
@@ -126,7 +125,6 @@ describe('DireccionForm', () => {
     });
   });
 
-  // NUEVO: filtrado de entrada — Superficie
   describe('filtrado de entrada — Superficie', () => {
     it('debe ignorar letras al escribir en superficie', async () => {
       const onChange = jest.fn();
@@ -137,19 +135,20 @@ describe('DireccionForm', () => {
       });
     });
 
-    it('debe permitir número decimal válido en superficie', async () => {
+    it('debe formatear con separador de miles', async () => {
       const onChange = jest.fn();
       render(<DireccionForm {...defaultProps} onChange={onChange} />);
-      await userEvent.type(screen.getByLabelText(/superficie/i), '150.5');
-      expect(onChange).toHaveBeenLastCalledWith('superficie', '150.5');
+      const input = screen.getByLabelText(/superficie/i);
+      fireEvent.change(input, { target: { value: '1000' } });
+      expect(onChange).toHaveBeenCalledWith('superficie', '1.000');
     });
 
-    it('no debe permitir múltiples puntos en superficie', async () => {
+    it('no debe permitir múltiples puntos seguidos', async () => {
       const onChange = jest.fn();
       render(<DireccionForm {...defaultProps} onChange={onChange} />);
-      await userEvent.type(screen.getByLabelText(/superficie/i), '1.5.3');
-      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
-      expect((lastCall.match(/\./g) ?? []).length).toBeLessThanOrEqual(1);
+      const input = screen.getByLabelText(/superficie/i);
+      fireEvent.change(input, { target: { value: '1000000' } });
+      expect(onChange).toHaveBeenCalledWith('superficie', '1.000.000');
     });
 
     it('debe ignorar el signo negativo en superficie', async () => {
@@ -161,17 +160,16 @@ describe('DireccionForm', () => {
       });
     });
 
-    it('debe permitir solo dígitos y punto en superficie', async () => {
+    it('debe permitir solo dígitos en superficie', async () => {
       const onChange = jest.fn();
       render(<DireccionForm {...defaultProps} onChange={onChange} />);
-      await userEvent.type(screen.getByLabelText(/superficie/i), '12@#.5!');
+      await userEvent.type(screen.getByLabelText(/superficie/i), '12@#!');
       onChange.mock.calls.forEach(([, valor]) => {
         expect(valor).toMatch(/^[0-9.]*$/);
       });
     });
   });
 
-  // NUEVO: filtrado de entrada — Dirección
   describe('filtrado de entrada — Dirección', () => {
     it('debe permitir letras con tildes', async () => {
       const onChange = jest.fn();
@@ -185,9 +183,9 @@ describe('DireccionForm', () => {
     it('debe permitir el carácter #', async () => {
       const onChange = jest.fn();
       render(<DireccionForm {...defaultProps} onChange={onChange} />);
-      await userEvent.type(screen.getByLabelText(/dirección/i), 'Calle # 5');
-      const lastCall = onChange.mock.calls.at(-1)?.[1] ?? '';
-      expect(lastCall).toContain('#');
+      const input = screen.getByLabelText(/dirección/i);
+      fireEvent.change(input, { target: { value: 'Calle # 5' } });
+      expect(onChange).toHaveBeenCalledWith('direccion', 'Calle # 5');
     });
 
     it('debe permitir números en la dirección', async () => {

@@ -13,23 +13,17 @@ interface DireccionFormProps {
 
 export function DireccionForm({ addressValue, areaValue, addressError, areaError, addressTouched, areaTouched, onChange, onBlur }: DireccionFormProps) {
 
-  // Solo letras, números, #, -, . y espacios
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const filtered = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9#\-. ]/g, '')
     onChange('direccion', filtered)
   }
 
-  // Solo dígitos y un punto decimal, sin negativos
   const handleAreaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
-    const filtered = raw.replace(/[^0-9.]/g, '')
-    // Evita múltiples puntos
-    const parts = filtered.split('.')
-    const normalized = parts.length > 2
-      ? parts[0] + '.' + parts.slice(1).join('')
-      : filtered
-    onChange('superficie', normalized)
-  }
+  const raw = e.target.value
+  const onlyNums = raw.replace(/[^0-9]/g, '')
+  const formatted = onlyNums.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  onChange('superficie', formatted)
+}
 
   return (
     <div className="flex gap-4 items-start">
@@ -72,9 +66,11 @@ export function DireccionForm({ addressValue, areaValue, addressError, areaError
             value={areaValue}
             onChange={handleAreaChange}
             onBlur={() => onBlur('superficie')}
-            placeholder="0.00 m²"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 pr-8 text-sm outline-none focus:border-gray-500"
           />
+          <span className="absolute right-3 top-2 text-sm text-gray-400 pointer-events-none">
+            m²
+          </span>
         </div>
         {areaTouched && areaError && (
           <span className="text-red-500 text-xs">{areaError}</span>

@@ -84,7 +84,8 @@ function esNumeroEnteroValido(valor: string): boolean {
 }
 
 function esNumeroDecimalPositivo(valor: string): boolean {
-  return /^\d+(\.\d+)?$/.test(valor) && parseFloat(valor) > 0;
+  const limpio = valor.replace(/\./g, '')
+  return /^\d+$/.test(limpio) && parseInt(limpio, 10) > 0;
 }
 
 // ─── Validación ───────────────────────────────────────────────────────────────
@@ -175,12 +176,12 @@ export function useCaracteristicasForm() {
       valuesRef.current = updated;
       setValues(updated);
 
-      if (touched[field]) {
-        setErrors(prev => ({
-          ...prev,
-          [field]: validate(updated)[field],
-        }));
-      }
+     if (touched[field] && field !== 'superficie') {
+      setErrors(prev => ({
+      ...prev,
+      [field]: validate(updated)[field],
+      }));
+}
     },
     [touched],
   );

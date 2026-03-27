@@ -20,7 +20,7 @@ describe('DepartamentoSelect', () => {
   describe('render', () => {
     it('debe renderizar el label Departamento', () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      expect(screen.getByLabelText(/departamento/i)).toBeInTheDocument();
+      expect(screen.getByText(/departamento/i)).toBeInTheDocument();
     });
 
     it('debe mostrar el placeholder "Seleccione una opción"', () => {
@@ -28,16 +28,16 @@ describe('DepartamentoSelect', () => {
       expect(screen.getByText('Seleccione una opción')).toBeInTheDocument();
     });
 
-    it('debe renderizar exactamente 10 opciones (9 departamentos + placeholder)', async () => {
+    it('debe renderizar exactamente 9 opciones al abrir', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       const options = screen.getAllByRole('option');
-      expect(options.length).toBe(10);
+      expect(options.length).toBe(9);
     });
 
     it('debe mostrar los 9 departamentos de Bolivia', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       DEPARTAMENTOS.forEach(({ label }) => {
         expect(screen.getByText(label)).toBeInTheDocument();
       });
@@ -45,55 +45,55 @@ describe('DepartamentoSelect', () => {
 
     it('debe mostrar Beni como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Beni')).toBeInTheDocument();
     });
 
     it('debe mostrar Chuquisaca como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Chuquisaca')).toBeInTheDocument();
     });
 
     it('debe mostrar Cochabamba como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Cochabamba')).toBeInTheDocument();
     });
 
     it('debe mostrar La Paz como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('La Paz')).toBeInTheDocument();
     });
 
     it('debe mostrar Oruro como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Oruro')).toBeInTheDocument();
     });
 
     it('debe mostrar Pando como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Pando')).toBeInTheDocument();
     });
 
     it('debe mostrar Potosí como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Potosí')).toBeInTheDocument();
     });
 
     it('debe mostrar Santa Cruz como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Santa Cruz')).toBeInTheDocument();
     });
 
     it('debe mostrar Tarija como opción', async () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       expect(screen.getByText('Tarija')).toBeInTheDocument();
     });
   });
@@ -101,22 +101,22 @@ describe('DepartamentoSelect', () => {
   describe('valor seleccionado', () => {
     it('debe mostrar valor vacío cuando no hay selección', () => {
       render(<DepartamentoSelect {...defaultProps} />);
-      expect(screen.getByLabelText(/departamento/i)).toHaveValue('');
+      expect(screen.getByText('Seleccione una opción')).toBeInTheDocument();
     });
 
     it('debe reflejar cochabamba como valor seleccionado', () => {
       render(<DepartamentoSelect {...defaultProps} value="cochabamba" />);
-      expect(screen.getByLabelText(/departamento/i)).toHaveValue('cochabamba');
+      expect(screen.getByText('Cochabamba')).toBeInTheDocument();
     });
 
     it('debe reflejar santa_cruz como valor seleccionado', () => {
       render(<DepartamentoSelect {...defaultProps} value="santa_cruz" />);
-      expect(screen.getByLabelText(/departamento/i)).toHaveValue('santa_cruz');
+      expect(screen.getByText('Santa Cruz')).toBeInTheDocument();
     });
 
     it('debe reflejar la_paz como valor seleccionado', () => {
       render(<DepartamentoSelect {...defaultProps} value="la_paz" />);
-      expect(screen.getByLabelText(/departamento/i)).toHaveValue('la_paz');
+      expect(screen.getByText('La Paz')).toBeInTheDocument();
     });
   });
 
@@ -124,28 +124,31 @@ describe('DepartamentoSelect', () => {
     it('debe llamar onChange con ("departamento", "cochabamba") al seleccionar Cochabamba', async () => {
       const onChange = jest.fn();
       render(<DepartamentoSelect {...defaultProps} onChange={onChange} />);
-      await userEvent.selectOptions(screen.getByLabelText(/departamento/i), 'cochabamba');
+      await userEvent.click(screen.getByRole('combobox'));
+      await userEvent.click(screen.getByText('Cochabamba'));
       expect(onChange).toHaveBeenCalledWith('departamento', 'cochabamba');
     });
 
     it('debe llamar onChange con ("departamento", "santa_cruz") al seleccionar Santa Cruz', async () => {
       const onChange = jest.fn();
       render(<DepartamentoSelect {...defaultProps} onChange={onChange} />);
-      await userEvent.selectOptions(screen.getByLabelText(/departamento/i), 'santa_cruz');
+      await userEvent.click(screen.getByRole('combobox'));
+      await userEvent.click(screen.getByText('Santa Cruz'));
       expect(onChange).toHaveBeenCalledWith('departamento', 'santa_cruz');
     });
 
     it('debe llamar onChange exactamente una vez al seleccionar un departamento', async () => {
       const onChange = jest.fn();
       render(<DepartamentoSelect {...defaultProps} onChange={onChange} />);
-      await userEvent.selectOptions(screen.getByLabelText(/departamento/i), 'beni');
+      await userEvent.click(screen.getByRole('combobox'));
+      await userEvent.click(screen.getByText('Beni'));
       expect(onChange).toHaveBeenCalledTimes(1);
     });
 
     it('debe llamar onBlur con "departamento" al salir del selector', async () => {
       const onBlur = jest.fn();
       render(<DepartamentoSelect {...defaultProps} onBlur={onBlur} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       await userEvent.tab();
       expect(onBlur).toHaveBeenCalledWith('departamento');
     });
@@ -153,7 +156,7 @@ describe('DepartamentoSelect', () => {
     it('debe llamar onBlur exactamente una vez al salir del selector', async () => {
       const onBlur = jest.fn();
       render(<DepartamentoSelect {...defaultProps} onBlur={onBlur} />);
-      await userEvent.click(screen.getByLabelText(/departamento/i));
+      await userEvent.click(screen.getByRole('combobox'));
       await userEvent.tab();
       expect(onBlur).toHaveBeenCalledTimes(1);
     });
