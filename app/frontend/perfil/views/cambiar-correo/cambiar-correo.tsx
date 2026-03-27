@@ -1,12 +1,15 @@
 "use client";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff} from "lucide-react";
-
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 export default function CambiarCorreoView() {
   return (
     <div className="m-4">
       <HeaderCorreo />
-      
+      <CorreoActual />
+      <NuevoCorreo/>
     </div>
   );
 }
@@ -29,5 +32,75 @@ function HeaderCorreo() {
         </div>
       </div>
     </CardHeader>
+  );
+}
+
+function CorreoActual() {
+  const correoActual = "pepito@email.com";
+  return (
+    <section className="mt-6">
+      <Label
+        htmlFor="correo-actual-read-only"
+        className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
+      >
+        Correo Actual
+      </Label>
+      <div className="relative">
+        <Input
+          id="correo-actual-read-only"
+          value={correoActual}
+          type="email"
+          readOnly
+          className="h-12 rounded-lg border border-white/20 bg-white/10 pr-10 text-base md:text-base text-white/55 placeholder:text-white/35 cursor-not-allowed caret-transparent focus-visible:ring-2 focus-visible:ring-white/25"
+        />
+        <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+      </div>
+      <p className="mt-1 text-xs text-white/55">No editable</p>
+    </section>
+  );
+}
+
+function NuevoCorreo() {
+  const [strNewEmail, setStrNewEmail] = useState("");
+  const [bolTouchedEmail, setBolTouchedEmail] = useState(false);
+
+  const bolIsValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(strNewEmail.trim());
+  const bolShowError =
+    bolTouchedEmail && strNewEmail.trim() !== "" && !bolIsValidEmail;
+
+  return (
+    <section className="mt-6">
+      <Label
+        htmlFor="nuevo-correo-input"
+        className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
+      >
+        Nuevo Correo
+      </Label>
+      <div className="relative">
+        <Input
+          id="nuevo-correo-input"
+          type="email"
+          value={strNewEmail}
+          placeholder="nuevo@email.com"
+          autoComplete="email"
+          spellCheck={false}
+          onChange={(e) => setStrNewEmail(e.target.value)}
+          onBlur={() => setBolTouchedEmail(true)}
+          className={`h-12 rounded-lg border bg-white/10 px-3 text-base md:text-base text-white/90 placeholder:text-white/40 focus-visible:ring-2 transition-colors ${
+            bolShowError
+              ? "border-red-400/70 focus-visible:ring-red-400/40"
+              : "border-white/25 focus-visible:ring-white/30"
+          }`}
+        />
+      </div>
+
+      <p
+        className={`mt-1 text-xs transition-colors ${bolShowError ? "text-red-300/80" : "text-white/55"}`}
+      >
+        {bolShowError
+          ? "Ingresa un correo válido (ej: nombre@dominio.com)"
+          : "Ingresa el correo al que enviaremos el código."}
+      </p>
+    </section>
   );
 }
