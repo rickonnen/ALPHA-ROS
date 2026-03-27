@@ -7,9 +7,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +24,8 @@ import PublicacionCard, { Publicacion } from "./publicacion-card";
 
 // ID TEMPORAL: falta el id de los de sign in
 const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
+
+const ITEMS_POR_PAGINA = 4;
 
 // Mock de datos hasta que el GET /backend/publicaciones esté listo
 const MOCK_PUBLICACIONES: Publicacion[] = [
@@ -55,15 +57,36 @@ const MOCK_PUBLICACIONES: Publicacion[] = [
     tipo: "Alquiler",
     imagen: null,
   },
+  {
+    id: "5",
+    titulo: "Local comercial - Sopocachi",
+    zona: "Sopocachi",
+    tipo: "Alquiler",
+    imagen: null,
+  },
+  {
+    id: "6",
+    titulo: "Casa en venta - Sacaba",
+    zona: "Sacaba",
+    tipo: "Venta",
+    imagen: null,
+  },
+  {
+    id: "7",
+    titulo: "Departamento en alquiler - Alalay",
+    zona: "Alalay",
+    tipo: "Alquiler",
+    imagen: null,
+  },
 ];
 
 export default function PublicacionesView() {
-  const router = useRouter();
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
 
   useEffect(() => {
     // TODO: reemplazar con GET /backend/publicaciones?id_usuario=... cuando esté listo
@@ -82,12 +105,17 @@ export default function PublicacionesView() {
     cargarPublicaciones();
   }, []);
 
-  // Abre el modal de confirmación
+  // Cálculo de paginación
+  const totalPaginas = Math.ceil(publicaciones.length / ITEMS_POR_PAGINA);
+  const publicacionesPaginadas = publicaciones.slice(
+    (paginaActual - 1) * ITEMS_POR_PAGINA,
+    paginaActual * ITEMS_POR_PAGINA,
+  );
+
   const handleEliminar = (id: string) => {
     setIdAEliminar(id);
   };
 
-  // Confirma y ejecuta la eliminación
   const confirmarEliminar = async () => {
     if (!idAEliminar) return;
     try {
@@ -95,7 +123,7 @@ export default function PublicacionesView() {
       setError(null);
 
       const res = await fetch(
-        `/backend/perfil/delete?id_publicacion=${idAEliminar}&id_usuario=${ID_USUARIO_HARDCODEADO}`,
+        `/backend/publicacion/delete?id_publicacion=${idAEliminar}&id_usuario=${ID_USUARIO_HARDCODEADO}`,
         { method: "DELETE" },
       );
 
@@ -104,9 +132,15 @@ export default function PublicacionesView() {
         throw new Error(data.error || "Error al eliminar");
       }
 
-      // Actualiza la lista sin recargar
-      setPublicaciones((prev) => prev.filter((p) => p.id !== idAEliminar));
+      const nuevas = publicaciones.filter((p) => p.id !== idAEliminar);
+      setPublicaciones(nuevas);
       setIdAEliminar(null);
+
+      // Ajustar página si quedó vacía
+      const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
+      if (paginaActual > nuevoTotal && nuevoTotal > 0) {
+        setPaginaActual(nuevoTotal);
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -158,9 +192,9 @@ export default function PublicacionesView() {
             </p>
           )}
 
-          {/* Lista de publicaciones */}
+          {/* Lista de publicaciones paginadas */}
           {!cargando &&
-            publicaciones.map((pub) => (
+            publicacionesPaginadas.map((pub) => (
               <PublicacionCard
                 key={pub.id}
                 publicacion={pub}
@@ -169,7 +203,48 @@ export default function PublicacionesView() {
               />
             ))}
 
-          {/* TODO: feat paginación */}
+          {/* Paginación */}
+          {!cargando && totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/60 hover:text-white disabled:opacity-30"
+                onClick={() => setPaginaActual((p) => p - 1)}
+                disabled={paginaActual === 1}
+              >
+                ‹
+              </Button>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                (num) => (
+                  <Button
+                    key={num}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPaginaActual(num)}
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                      paginaActual === num
+                        ? "bg-white text-[var(--primary)]"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {num}
+                  </Button>
+                ),
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/60 hover:text-white disabled:opacity-30"
+                onClick={() => setPaginaActual((p) => p + 1)}
+                disabled={paginaActual === totalPaginas}
+              >
+                ›
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
