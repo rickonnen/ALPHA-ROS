@@ -33,7 +33,6 @@ export default function CardPago({ pago }: { pago: Pago }) {
           </span>
         ) : (
           <span className="text-sm text-[#2E2E2E] font-medium">
-            {pago.fecha}
           </span>
         )}
       </div>

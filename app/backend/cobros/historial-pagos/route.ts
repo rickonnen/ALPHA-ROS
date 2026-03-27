@@ -16,9 +16,16 @@ export async function GET(req: NextRequest) {
     const pagos = await prisma.detallePago.findMany({
       where: {
         id_usuario: userId,
-        ...(estado && {
-          estado: estado === "pendiente" ? 0 : 1,
+
+        ...(estado === "pendiente" && {
+          estado: 1, // pendiente
         }),
+        ...(estado === "realizado" && {
+          estado: 2, // verificado
+        }),
+        ...(estado === "rechazado" && {
+          estado: 3,
+}),
       },
       orderBy: {
         fecha_detalle: "desc",

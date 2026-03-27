@@ -53,10 +53,15 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
   // ADAPTAR DATOS A UI
   const pagosAdaptados: Pago[] = pagos.map((p: any) => ({
     id: p.id_detalle,
-    fecha: p.fecha_detalle,
+    fecha: p.fecha_detalle.split("T")[0],
     detalle: p.metodo_pago,
-    monto: 100, // temporal (luego conectamos con PlanPublicacion)
-    estado: p.estado === 0 ? "pendiente" : "realizado",
+    monto: 100,
+    estado:
+      p.estado === 2
+        ? "realizado"
+        : p.estado === 3
+        ? "rechazado"
+        : "pendiente",
   }));
 
   // LOADING
