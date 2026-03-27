@@ -1,10 +1,15 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 type TipoInmueble = {
   id_tipo_inmueble: number
@@ -24,14 +29,13 @@ const MOCK_TIPOS: TipoInmueble[] = [
   { id_tipo_inmueble: 5, nombre_inmueble: 'Terreno Mortuorio' },
 ]
 
-export function FilterTipoInmueble({ selected, onChange }: Props) {
-  const [open, setOpen] = useState(false)
-  const [tipos, setTipos] = useState<TipoInmueble[]>(MOCK_TIPOS)
+export function FilterTipoInmueble2({ selected, onChange }: Props) {
 
-  // Cuando tengas el endpoint listo, descomenta esto y borra MOCK_TIPOS:
-  // useEffect(() => {
-  //   fetch('/api/filter_search_page/tipos-inmueble')
-  //     .then((r) => r.json())
+  const [tipos, setTipos] = useState<TipoInmueble[]>(MOCK_TIPOS)
+  
+  // useEffect(()=> {
+  //   fetch('api/filter_search_page/tipos-inmueble')
+  //     .then((r)=> r.json())
   //     .then(setTipos)
   // }, [])
 
@@ -42,7 +46,6 @@ export function FilterTipoInmueble({ selected, onChange }: Props) {
         : [...selected, id]
     )
   }
-
   const label =
     selected.length === 0
       ? 'Tipo Inmueble'
@@ -54,76 +57,65 @@ export function FilterTipoInmueble({ selected, onChange }: Props) {
   const labelTruncated =
     label.length > 30 ? label.slice(0, 30) + '..' : label
 
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  return (  
+    <div className="rounded-xl bg-[#f0ebe0] p-3 flex flex-col gap-2">
 
-  useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-          if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-              setOpen(false)
-          }
-      }
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => {
-          document.removeEventListener('mousedown', handleClickOutside)
-      }
-  }, [])
-
-  return (
-    <div className="relative w-full " ref={dropdownRef}>
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={cn(
-          'flex w-full items-center justify-between',
-          'rounded-md border border-input bg-background',
-          'px-3 py-2 text-sm text-foreground',
-          'hover:bg-accent transition-colors'
-        )}
-      >
-        <span className="truncate">{labelTruncated}</span>
-        <ChevronDown
-          className={cn(
-            'ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150  ',
-            open && 'rotate-180'
-          )}
-        />
-      </button>
-
-      {/* Lista desplegable */}
-      {open && (
-        <div
-          className={cn(
-            'absolute z-10 mt-1 w-full',
-            'rounded-md border border-input bg-background shadow-sm'
-          )}
-        >
-          {tipos.map((tipo) => {
-            const id = `tipo-inmueble-${tipo.id_tipo_inmueble}`
-            const isChecked = selected.includes(tipo.id_tipo_inmueble)
-
-            return (
-              <label 
-                key={tipo.id_tipo_inmueble}
-                htmlFor={id}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2',
-                  'border-b border-input last:border-b-0',
-                  'cursor-pointer hover:bg-accent transition-colors',
-                  'text-left'
-                )}
-              >
-                <Checkbox
+      <Accordion type="single" collapsible className="w-full flex flex-col gap-2">
+      <AccordionItem value="tipo-inmueble" className="border-none flex flex-col gap-2 ">
+        
+          <AccordionTrigger className="
+              bg-white rounded-2xl border border-[#e0d9cc]
+              px-4 py-3 text-sm font-normal text-foreground
+              hover:no-underline hover:bg-gray-50 
+            ">
+            
+            <span className="truncate text-left">{labelTruncated}</span>
+            
+          </AccordionTrigger>
+        
+        <AccordionContent className="pb-0">
+          <div className="bg-white rounded-2xl border p-5 shadow-sm">
+            {tipos.map((tipo, index) => {
+              const id = `tipo-inmueble-${tipo.id_tipo_inmueble}`
+              const isChecked = selected.includes(tipo.id_tipo_inmueble)
+              const isLast = index === tipos.length - 1 
+              return (             
+                <Label 
+                  key={tipo.id_tipo_inmueble}
+                  htmlFor={id}
+                  className={cn(
+                      'flex items-center gap-3 px-4 py-3',
+                      'cursor-pointer transition-colors font-normal',
+                      'rounded-2xl',
+                      !isLast && 'border-[#f0ebe0]',
+                      isChecked
+                        ? 'bg-[#f5f1ea] rounded-2xl'
+                        : 'hover:bg-[#f9f7f3]'
+                    )}
+                >
+                  <Checkbox
                   id={id}
                   checked={isChecked}
                   onCheckedChange={() => toggle(tipo.id_tipo_inmueble)}
-                />
-                <span className="text-sm select-none flex-1">{tipo.nombre_inmueble}</span>
-              </label> 
-            )
-          })}
-        </div>
-      )}
+                  className={cn(
+                        'h-5 w-5 border-[#b0a898]',
+                        'rounded-full',
+                        // sobreescribe el rounded del span interno de shadcn
+                        '[&_button]:rounded-full',
+                        'data-[state=checked]:bg-[#1e3a4f]',
+                        'data-[state=checked]:border-[#1e3a4f]',
+                      )}
+                  />
+                  <span className="text-sm text-foreground select-none">{tipo.nombre_inmueble}</span>
+                </Label>
+              )
+            })}    
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+     </Accordion>
     </div>
+    
+  
   )
 }
