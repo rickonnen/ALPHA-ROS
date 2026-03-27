@@ -2,12 +2,12 @@
  * Funcionalidad: Loading silhouettes (Task 4.9).
  */
 import { Skeleton } from "@/components/ui/skeleton";
-
+//
 export const PropertySkeleton = () => {
   return (
     <div className="space-y-10 animate-pulse">
       <Skeleton className="h-12 w-2/3 bg-[#E7E1D7] rounded-lg" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[400px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-100">
         <Skeleton className="md:col-span-2 h-full bg-[#E7E1D7] rounded-2xl" />
         <div className="hidden md:flex flex-col gap-4">
           <Skeleton className="h-1/2 bg-[#E7E1D7] rounded-2xl" />
