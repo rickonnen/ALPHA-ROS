@@ -1,10 +1,11 @@
 'use client'
 
 import { useCaracteristicasForm } from './Hooks/useCaracteristicasForm'
-import { DireccionForm }      from './Components/DireccionForm'
-import { DepartamentoSelect } from './Components/DepartamentoSelect'
-import { HabitacionesForm }   from './Components/HabitacionesForm'
-import { Button }             from '@/components/ui/button'
+import { DireccionForm }          from './Components/DireccionForm'
+import { DepartamentoSelect }     from './Components/DepartamentoSelect'
+import { HabitacionesForm }       from './Components/HabitacionesForm'
+import { ImageUploader }          from './Components/ImageUploader'
+import { Button }                 from '@/components/ui/button'
 
 export default function CaracteristicasPage() {
   const {
@@ -14,6 +15,8 @@ export default function CaracteristicasPage() {
     handleChange,
     handleBlur,
     handleSubmit,
+    handleAgregarImagenes,
+    handleEliminarImagen,
   } = useCaracteristicasForm()
 
   const onChange = handleChange as (field: string, value: string) => void
@@ -102,8 +105,17 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Espacio reservado para ImageUploader — Tarea 2.5 */}
-          {/* TODO: agregar <ImageUploader /> cuando esté conectado a Supabase Storage */}
+          {/* ImageUploader — Tarea 2.5 */}
+          <ImageUploader
+            files={values.imagenes}
+            onChange={handleAgregarImagenes}
+            onRemove={handleEliminarImagen}
+            error={errors.imagenes}
+            touched={touched.imagenes ?? false}
+          />
+
+          {/* Espacio reservado para VideoUrlInput — Tarea 2.X */}
+          {/* TODO: agregar <VideoUrlInput /> cuando esté listo */}
 
           {/* Botones de navegación */}
           <div

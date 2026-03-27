@@ -1,219 +1,312 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ImageUploader } from '../Components/ImageUploader';
+/**
+ * TDD – ImageUploader
+ *
+ * Criterios cubiertos:
+ *  CA-8   Abre explorador de archivos al hacer clic en el ícono
+ *  CA-9   Muestra vista previa tras carga válida
+ *  CA-10  Deshabilita carga y avisa al llegar a 5 imágenes
+ *  CA-21  Solo acepta JPG y PNG
+ *  CA-22  Mínimo 1, máximo 5 imágenes
+ *  CA-23  Rechaza imágenes con resolución < 1280×720
+ *  CA-24  Solo acepta relación de aspecto 4:3 o 16:9
+ *  CA-25  Rechaza archivos > 10 MB
+ *
+ * Escenarios negativos: 6, 7, 8, 9, 10
+ * Escenarios positivos: 6, 7
+ */
+
+import React from 'react'
 import {
-  MAX_IMAGENES,
-  MIN_IMAGENES,
-  TAMANO_MAXIMO_IMAGEN_MB,
-  MIN_RESOLUCION_ANCHO,
-  MIN_RESOLUCION_ALTO,
-} from '../Hooks/useCaracteristicasForm';
+  render,
+  screen,
+  fireEvent,
+  act,
+} from '@testing-library/react'
+import { ImageUploader } from '../Components/ImageUploader'
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
-const createFile = (name: string, type = 'image/jpeg', sizeMB = 1) =>
-  new File([new ArrayBuffer(sizeMB * 1024 * 1024)], name, { type });
+function makeFile(name: string, type: string, sizeBytes = 1_000_000): File {
+  const blob = new Blob([new ArrayBuffer(sizeBytes)], { type })
+  return new File([blob], name, { type })
+}
 
-// ─── Props base ───────────────────────────────────────────────────────────────
+function mockImageDimensions(width: number, height: number) {
+  const OriginalImage = global.Image
 
-const defaultProps = {
-  images:     [] as File[],
-  error:      undefined as string | undefined,
-  touched:    false,
-  canAddMore: true,
-  onAdd:      jest.fn(),
-  onRemove:   jest.fn(),
-};
+  // @ts-expect-error — reemplazamos Image globalmente solo en tests
+  global.Image = class {
+    width  = 0
+    height = 0
+    onload: (() => void) | null = null
+    private _src = ''
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+    get src(): string { return this._src }
+
+    set src(value: string) {
+      this._src = value
+      setTimeout(() => {
+        this.width  = width
+        this.height = height
+        this.onload?.()
+      }, 0)
+    }
+  }
+
+  return () => { global.Image = OriginalImage }
+}
+
+// ─── suite principal ──────────────────────────────────────────────────────────
 
 describe('ImageUploader', () => {
 
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    // jsdom no tiene estas propiedades — hay que definirlas antes de espiarlas
+    let counter = 0
+    global.URL.createObjectURL = jest.fn(() => `blob:fake-url-${++counter}`)
+    global.URL.revokeObjectURL = jest.fn()
+  })
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
 
-  describe('render', () => {
-    it('debe renderizar el label "Insertar imagen de la propiedad"', () => {
-      render(<ImageUploader {...defaultProps} />);
-      expect(screen.getByText(/insertar imagen de la propiedad/i)).toBeInTheDocument();
-    });
+  // ── CA-8 ─────────────────────────────────────────────────────────────────
 
-    it('debe renderizar un input de tipo file', () => {
-      render(<ImageUploader {...defaultProps} />);
-      expect(document.querySelector('input[type="file"]')).toBeInTheDocument();
-    });
+  it('renderiza el área de carga con un input de tipo file oculto', () => {
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    expect(input).toBeInTheDocument()
+    expect(input.accept).toMatch(/image\/jpeg/)
+    expect(input.accept).toMatch(/image\/png/)
+  })
 
-    it('el input file debe aceptar solo JPG y PNG', () => {
-      render(<ImageUploader {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]');
-      expect(fileInput).toHaveAttribute('accept', expect.stringMatching(/image\/jpeg|image\/png|\.jpg|\.png/i));
-    });
+  it('el botón/ícono de carga activa el input de archivo (CA-8)', () => {
+    render(<ImageUploader />)
+    const input    = document.querySelector('input[type="file"]') as HTMLInputElement
+    const clickSpy = jest.spyOn(input, 'click')
+    fireEvent.click(screen.getByRole('button', { name: 'Subir imagen' }))
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+  })
 
-    it('el input file debe soportar selección múltiple', () => {
-      render(<ImageUploader {...defaultProps} />);
-      const fileInput = document.querySelector('input[type="file"]');
-      expect(fileInput).toHaveAttribute('multiple');
-    });
+  // ── CA-21 ────────────────────────────────────────────────────────────────
 
-    it('debe mostrar el ícono de archivo interactivo', () => {
-      render(<ImageUploader {...defaultProps} />);
-      const fileIcon = screen.getByRole('button', { name: /archivo|subir|imagen|file/i });
-      expect(fileIcon).toBeInTheDocument();
-    });
+  it('rechaza un archivo con formato no soportado (CA-21 / Neg-6)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it('el input file debe estar habilitado cuando canAddMore es true', () => {
-      render(<ImageUploader {...defaultProps} canAddMore={true} />);
-      const fileInput = document.querySelector('input[type="file"]');
-      expect(fileInput).not.toBeDisabled();
-    });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('doc.pdf', 'application/pdf')] } })
+    })
 
-    it('no debe mostrar miniaturas cuando no hay imágenes cargadas', () => {
-      render(<ImageUploader {...defaultProps} />);
-      expect(screen.queryAllByRole('img')).toHaveLength(0);
-    });
-  });
+    expect(
+      await screen.findByText(/solo se aceptan.*jpg.*png|formato.*no.*permitido/i),
+    ).toBeInTheDocument()
+    restore()
+  })
 
-  // ── Vista previa ─────────────────────────────────────────────────────────────
+  // ── CA-25 ────────────────────────────────────────────────────────────────
 
-  describe('vista previa', () => {
-    it('debe mostrar una miniatura al cargar una imagen', () => {
-      render(<ImageUploader {...defaultProps} images={[createFile('foto.jpg')]} />);
-      expect(screen.getAllByRole('img')).toHaveLength(1);
-    });
+  it('rechaza imagen que supera 10 MB (CA-25 / Neg-7)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it('debe mostrar tres miniaturas al cargar tres imágenes', () => {
-      const images = [createFile('foto1.jpg'), createFile('foto2.jpg'), createFile('foto3.jpg')];
-      render(<ImageUploader {...defaultProps} images={images} />);
-      expect(screen.getAllByRole('img')).toHaveLength(3);
-    });
+    await act(async () => {
+      fireEvent.change(input, {
+        target: { files: [makeFile('grande.jpg', 'image/jpeg', 11 * 1024 * 1024)] },
+      })
+    })
 
-    it(`debe mostrar ${MAX_IMAGENES} miniaturas al llegar al máximo`, () => {
-      const images = Array.from({ length: MAX_IMAGENES }, (_, i) => createFile(`foto${i}.jpg`));
-      render(<ImageUploader {...defaultProps} images={images} canAddMore={false} />);
-      expect(screen.getAllByRole('img')).toHaveLength(MAX_IMAGENES);
-    });
-  });
+    expect(
+      await screen.findByText(/peso máximo.*10\s*mb|supera.*10\s*mb/i),
+    ).toBeInTheDocument()
+    restore()
+  })
 
-  // ── Agregar imágenes ─────────────────────────────────────────────────────────
+  // ── CA-23 ────────────────────────────────────────────────────────────────
 
-  describe('agregar imágenes', () => {
-    it('debe llamar onAdd con el archivo seleccionado', async () => {
-      const onAdd = jest.fn();
-      render(<ImageUploader {...defaultProps} onAdd={onAdd} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      const image = createFile('foto.jpg');
-      await userEvent.upload(fileInput, image);
-      expect(onAdd).toHaveBeenCalledWith([image]);
-    });
+  it('rechaza imagen con resolución menor a 1280×720 (CA-23 / Neg-8)', async () => {
+    const restore = mockImageDimensions(800, 600)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it('debe llamar onAdd con múltiples archivos seleccionados', async () => {
-      const onAdd = jest.fn();
-      render(<ImageUploader {...defaultProps} onAdd={onAdd} />);
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      const images = [createFile('foto1.jpg'), createFile('foto2.jpg')];
-      await userEvent.upload(fileInput, images);
-      expect(onAdd).toHaveBeenCalledWith(images);
-    });
-  });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('baja_res.jpg', 'image/jpeg')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-  // ── Límite de imágenes ───────────────────────────────────────────────────────
+    expect(
+      await screen.findByText(/resolución mínima.*1280.*720/i),
+    ).toBeInTheDocument()
+    restore()
+  })
 
-  describe('límite de imágenes', () => {
-    it('debe deshabilitar el input file cuando canAddMore es false', () => {
-      const images = Array.from({ length: MAX_IMAGENES }, (_, i) => createFile(`foto${i}.jpg`));
-      render(<ImageUploader {...defaultProps} images={images} canAddMore={false} />);
-      expect(document.querySelector('input[type="file"]')).toBeDisabled();
-    });
+  // ── CA-24 ────────────────────────────────────────────────────────────────
 
-    it(`debe mostrar mensaje de límite alcanzado cuando hay ${MAX_IMAGENES} imágenes`, () => {
-      const images = Array.from({ length: MAX_IMAGENES }, (_, i) => createFile(`foto${i}.jpg`));
-      render(<ImageUploader {...defaultProps} images={images} canAddMore={false} />);
-      expect(screen.getByText(new RegExp(`límite|máximo|${MAX_IMAGENES}`, 'i'))).toBeInTheDocument();
-    });
+  it('rechaza imagen con relación de aspecto incorrecta (CA-24)', async () => {
+    const restore = mockImageDimensions(1500, 800) // ratio ≈ 1.875, ni 4:3 ni 16:9
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it('debe mantener el input habilitado con menos del máximo de imágenes', () => {
-      const images = Array.from({ length: MAX_IMAGENES - 1 }, (_, i) => createFile(`foto${i}.jpg`));
-      render(<ImageUploader {...defaultProps} images={images} canAddMore={true} />);
-      expect(document.querySelector('input[type="file"]')).not.toBeDisabled();
-    });
-  });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('raro.jpg', 'image/jpeg')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-  // ── Eliminar imágenes ────────────────────────────────────────────────────────
+    expect(
+      await screen.findByText(/relación de aspecto.*4:3.*16:9|proporción.*no.*aceptada/i),
+    ).toBeInTheDocument()
+    restore()
+  })
 
-  describe('eliminar imágenes', () => {
-    it('debe mostrar un botón de eliminar por cada imagen cargada', () => {
-      const images = [createFile('foto1.jpg'), createFile('foto2.jpg')];
-      render(<ImageUploader {...defaultProps} images={images} />);
-      const removeButtons = screen.getAllByRole('button', { name: /eliminar|borrar|quitar|remove/i });
-      expect(removeButtons).toHaveLength(2);
-    });
+  it('acepta imagen con relación de aspecto 16:9 sin mostrar error (CA-24 / Pos-6)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it('debe llamar onRemove con índice 0 al eliminar la primera imagen', async () => {
-      const onRemove = jest.fn();
-      const images = [createFile('foto1.jpg'), createFile('foto2.jpg')];
-      render(<ImageUploader {...defaultProps} images={images} onRemove={onRemove} />);
-      const removeButtons = screen.getAllByRole('button', { name: /eliminar|borrar|quitar|remove/i });
-      await userEvent.click(removeButtons[0]);
-      expect(onRemove).toHaveBeenCalledWith(0);
-    });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('foto.jpg', 'image/jpeg')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-    it('debe llamar onRemove con índice 1 al eliminar la segunda imagen', async () => {
-      const onRemove = jest.fn();
-      const images = [createFile('foto1.jpg'), createFile('foto2.jpg')];
-      render(<ImageUploader {...defaultProps} images={images} onRemove={onRemove} />);
-      const removeButtons = screen.getAllByRole('button', { name: /eliminar|borrar|quitar|remove/i });
-      await userEvent.click(removeButtons[1]);
-      expect(onRemove).toHaveBeenCalledWith(1);
-    });
+    expect(
+      screen.queryByText(/relación de aspecto|proporción.*no.*aceptada/i),
+    ).not.toBeInTheDocument()
+    restore()
+  })
 
-    it('debe llamar onRemove exactamente una vez al hacer click', async () => {
-      const onRemove = jest.fn();
-      render(<ImageUploader {...defaultProps} images={[createFile('foto.jpg')]} onRemove={onRemove} />);
-      await userEvent.click(screen.getByRole('button', { name: /eliminar|borrar|quitar|remove/i }));
-      expect(onRemove).toHaveBeenCalledTimes(1);
-    });
-  });
+  it('acepta imagen con relación de aspecto 4:3 sin mostrar error (CA-24 / Pos-6)', async () => {
+    const restore = mockImageDimensions(1280, 960)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-  // ── Errores inline ───────────────────────────────────────────────────────────
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('foto43.png', 'image/png')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-  describe('errores inline', () => {
-    it(`debe mostrar error cuando no hay imágenes y el campo fue tocado`, () => {
-      render(<ImageUploader {...defaultProps} error={`Debes subir al menos ${MIN_IMAGENES} imagen.`} touched={true} />);
-      expect(screen.getByText(`Debes subir al menos ${MIN_IMAGENES} imagen.`)).toBeInTheDocument();
-    });
+    expect(
+      screen.queryByText(/relación de aspecto|proporción.*no.*aceptada/i),
+    ).not.toBeInTheDocument()
+    restore()
+  })
 
-    it('NO debe mostrar error si el campo no fue tocado', () => {
-      render(<ImageUploader {...defaultProps} error={`Debes subir al menos ${MIN_IMAGENES} imagen.`} touched={false} />);
-      expect(screen.queryByText(`Debes subir al menos ${MIN_IMAGENES} imagen.`)).not.toBeInTheDocument();
-    });
+  // ── CA-9 ─────────────────────────────────────────────────────────────────
 
-    it('debe mostrar error cuando el formato no es JPG ni PNG', () => {
-      render(<ImageUploader {...defaultProps} error="Solo se permiten imágenes JPG y PNG." touched={true} />);
-      expect(screen.getByText('Solo se permiten imágenes JPG y PNG.')).toBeInTheDocument();
-    });
+  it('muestra vista previa de imagen válida (CA-9 / Pos-6)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-    it(`debe mostrar error cuando la imagen supera ${TAMANO_MAXIMO_IMAGEN_MB}MB`, () => {
-      render(<ImageUploader {...defaultProps} error={`Cada imagen no debe superar ${TAMANO_MAXIMO_IMAGEN_MB}MB.`} touched={true} />);
-      expect(screen.getByText(`Cada imagen no debe superar ${TAMANO_MAXIMO_IMAGEN_MB}MB.`)).toBeInTheDocument();
-    });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('inmueble.jpg', 'image/jpeg')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
 
-    it(`debe mostrar error cuando la resolución es menor a ${MIN_RESOLUCION_ANCHO}x${MIN_RESOLUCION_ALTO}px`, () => {
-      render(<ImageUploader {...defaultProps} error={`La resolución mínima es ${MIN_RESOLUCION_ANCHO}x${MIN_RESOLUCION_ALTO}px.`} touched={true} />);
-      expect(screen.getByText(`La resolución mínima es ${MIN_RESOLUCION_ANCHO}x${MIN_RESOLUCION_ALTO}px.`)).toBeInTheDocument();
-    });
+    const preview = await screen.findByRole('img', { name: 'Vista previa 1' })
+    expect(preview).toBeInTheDocument()
+    expect(preview.getAttribute('src')).toMatch(/^blob:fake-url-/)
+    restore()
+  })
 
-    it('debe mostrar error cuando se superan las 5 imágenes', () => {
-      render(<ImageUploader {...defaultProps} error={`No puedes subir más de ${MAX_IMAGENES} imágenes.`} touched={true} />);
-      expect(screen.getByText(`No puedes subir más de ${MAX_IMAGENES} imágenes.`)).toBeInTheDocument();
-    });
+  // ── CA-10 / CA-22 ────────────────────────────────────────────────────────
 
-    it('NO debe mostrar error si no existe error aunque el campo fue tocado', () => {
-      render(<ImageUploader {...defaultProps} error={undefined} touched={true} />);
-      expect(screen.queryByText(/permiten|superar|resolución|mínima/i)).not.toBeInTheDocument();
-    });
-  });
+  it('deshabilita el botón y muestra aviso al cargar 5 imágenes (CA-10 / CA-22 / Neg-9)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
 
-});
+    for (let i = 1; i <= 5; i++) {
+      await act(async () => {
+        fireEvent.change(input, {
+          target: { files: [makeFile(`img${i}.jpg`, 'image/jpeg')] },
+        })
+        await new Promise((r) => setTimeout(r, 50))
+      })
+    }
+
+    expect(
+      screen.getByRole('button', { name: 'Subir imagen' }),
+    ).toBeDisabled()
+
+    expect(
+      screen.getByText(/límite.*5.*imágenes|máximo.*alcanzado/i),
+    ).toBeInTheDocument()
+    restore()
+  })
+
+  it('muestra 5 vistas previas al cargar el máximo permitido (Pos-7)', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+
+    for (let i = 1; i <= 5; i++) {
+      await act(async () => {
+        fireEvent.change(input, {
+          target: { files: [makeFile(`img${i}.jpg`, 'image/jpeg')] },
+        })
+        await new Promise((r) => setTimeout(r, 50))
+      })
+    }
+
+    for (let i = 1; i <= 5; i++) {
+      expect(screen.getByRole('img', { name: `Vista previa ${i}` })).toBeInTheDocument()
+    }
+    restore()
+  })
+
+  // ── Neg-10 ───────────────────────────────────────────────────────────────
+
+  it('muestra error externo cuando touched=true y no hay imágenes (CA-22 / Neg-10)', () => {
+    render(<ImageUploader error="Se requiere mínimo una imagen" touched />)
+    expect(screen.getByText(/se requiere mínimo una imagen/i)).toBeInTheDocument()
+  })
+
+  // ── Eliminación ──────────────────────────────────────────────────────────
+
+  it('permite eliminar una imagen y re-habilita el botón de carga', async () => {
+    const restore = mockImageDimensions(1920, 1080)
+    render(<ImageUploader />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+
+    for (let i = 1; i <= 5; i++) {
+      await act(async () => {
+        fireEvent.change(input, {
+          target: { files: [makeFile(`img${i}.jpg`, 'image/jpeg')] },
+        })
+        await new Promise((r) => setTimeout(r, 50))
+      })
+    }
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Eliminar imagen 1' }))
+    })
+
+    expect(screen.getAllByRole('img', { name: /vista previa/i })).toHaveLength(4)
+    expect(
+      screen.getByRole('button', { name: 'Subir imagen' }),
+    ).not.toBeDisabled()
+    restore()
+  })
+
+  // ── onChange ─────────────────────────────────────────────────────────────
+
+  it('llama a onChange con la lista de archivos tras una carga válida', async () => {
+    const restore  = mockImageDimensions(1920, 1080)
+    const onChange = jest.fn()
+    render(<ImageUploader onChange={onChange} />)
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [makeFile('casa.jpg', 'image/jpeg')] } })
+      await new Promise((r) => setTimeout(r, 50))
+    })
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.any(File)]),
+    )
+    restore()
+  })
+})
