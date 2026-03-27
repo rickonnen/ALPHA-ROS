@@ -1,19 +1,17 @@
 "use client";
 
-
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // NUEVO: para redirigir al home
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-
+import { useAuth } from "./AuthContext";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
 }
 
-
 export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
- const router = useRouter(); // NUEVO: instancia del router
-
+  const router = useRouter();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,42 +19,59 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
+  // Validaciones en tiempo real
+  function validateField(field: string, value: string) {
+    const newErrors = { ...errors };
 
-  // Validaciones
+    if (field === "email") {
+      if (!value.trim()) {
+        newErrors.email = "El correo es obligatorio";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        newErrors.email = "Ingresa un correo electrónico válido";
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    if (field === "password") {
+      if (!value) {
+        newErrors.password = "La contraseña es obligatoria";
+      } else {
+        delete newErrors.password;
+      }
+    }
+
+    setErrors(newErrors);
+  }
+
+  // Validaciones finales
   function validate() {
     const newErrors: Record<string, string> = {};
-
 
     if (!email.trim())
       newErrors.email = "El correo es obligatorio";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       newErrors.email = "Ingresa un correo electrónico válido";
 
-
     if (!password)
       newErrors.password = "La contraseña es obligatoria";
-
 
     return newErrors;
   }
 
-
-   // NUEVO: limpia el error de un campo cuando el usuario empieza a escribir
-  function clearError(field: string) {
-    if (errors[field]) {
-      setErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
-    }
+  // Botón deshabilitado si hay errores activos
+  function hasErrors() {
+    return Object.keys(errors).length > 0;
   }
 
-
-  //  Submit
+  // Submit
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Prevenir múltiples submits
+    if (loading) {
+      return;
+    }
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -64,35 +79,12 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       return;
     }
 
-
     setErrors({});
     setLoading(true);
 
-
     try {
-      // AQUÍ HACEMOS LA CONEXIÓN REAL
-      const res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
-
-
-      const data = await res.json();
-
-
-      if (!res.ok) {
-        throw new Error(data.error || "Error al iniciar sesión");
-      }
-
-
-       router.push("/");
-      // Se redirigir al home después de login exitoso
-
-
+      await login(email, password);
+      router.push("/");
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
     } finally {
@@ -111,23 +103,26 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       </div>
 
 
-      {/* Botón estilo Google, sin funcionalidad */}
+      {/* Botón estilo Google */}
       <button
         type="button"
+        disabled={loading}
+        onClick={(e) => e.preventDefault()}
         style={{
           width: "100%",
-          backgroundColor: "#0F172A",
+          backgroundColor: loading ? "#9ca3af" : "#0F172A",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
           border: "none",
-          cursor: "pointer",
+          cursor: loading ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          marginBottom: "16px"
+          marginBottom: "16px",
+          opacity: loading ? 0.6 : 1
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -169,7 +164,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               type="email"
               placeholder="ejemplo@correo.com"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                validateField("email", e.target.value);
+              }}
               style={{
                 width: "100%",
                 fontSize: "14px",
@@ -204,9 +202,12 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               type={showPassword ? "text" : "password"}
               placeholder="Tu contraseña"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); clearError("password"); }}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                validateField("password", e.target.value);
+              }}
               style={{
-                width: "100%",
+                flex: 1,
                 fontSize: "14px",
                 outline: "none",
                 border: "none",
@@ -216,7 +217,8 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af" }}
+              style={{ backgroundColor: "transparent", border: "none", padding: "0", cursor: "pointer", color: "#9ca3af", display: "flex", alignItems: "center" }}
+              aria-label="Toggle password visibility"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -248,10 +250,10 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
         {/* Boton enviar */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || hasErrors()}
           style={{
             width: "100%",
-            backgroundColor: "#C85A4F",
+            backgroundColor: loading || hasErrors() ? "#e5a89f" : "#C85A4F",
             color: "white",
             fontWeight: "bold",
             padding: "12px",

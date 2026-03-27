@@ -1,18 +1,24 @@
 "use client";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // Importamos X de lucide-react para un icono de cierre limpio
 import { X } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: "login" | "register";
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
   // Estado para alternar entre Login y Registro dentro del panel
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
+
+  // Actualizar el estado cuando initialMode cambia
+  useEffect(() => {
+    setIsLogin(initialMode === "login");
+  }, [initialMode]);
 
   if (!isOpen) return null;
 

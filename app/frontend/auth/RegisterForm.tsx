@@ -2,16 +2,19 @@
 
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff, CheckSquare } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
+import { useAuth } from "./AuthContext";
 
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
 
-
 export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
+  const router = useRouter();
+  const { signup } = useAuth();
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,12 +32,20 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     if (field === "nombre") {
       if (!value.trim()) {
         newErrors.nombre = "El nombre es obligatorio";
+      } else if (value.length > 40) {
+        newErrors.nombre = "El nombre no puede exceder 40 caracteres";
       } else if (/[0-9]/.test(value)) {
         newErrors.nombre = "Ingresa un nombre válido";
       } else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(value)) {
         newErrors.nombre = "Ingresa un nombre válido";
-      } else if (!value.trim().replace(/\s/g, "").length) {
-        newErrors.nombre = "Ingresa un nombre válido";
+      } else if (/\s{2,}/.test(value)) {
+        newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
+      } else if (value.trim().replace(/\s/g, "").length < 3) {
+        newErrors.nombre = "El nombre debe tener al menos 3 letras";
+      } else if (/(.)\1/.test(value.trim().replace(/\s/g, ""))) {
+        newErrors.nombre = "No se permiten letras repetidas consecutivamente";
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(value.trim())) {
+        newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
       } else {
         delete newErrors.nombre;
       }
@@ -92,12 +103,20 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
     if (!nombre.trim())
       newErrors.nombre = "El nombre es obligatorio";
+    else if (nombre.length > 40)
+      newErrors.nombre = "El nombre no puede exceder 40 caracteres";
     else if (/[0-9]/.test(nombre))
       newErrors.nombre = "Ingresa un nombre válido";
     else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(nombre))
       newErrors.nombre = "Ingresa un nombre válido";
-    else if (!nombre.trim().replace(/\s/g, "").length)
-      newErrors.nombre = "Ingresa un nombre válido";
+    else if (/\s{2,}/.test(nombre))
+      newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
+    else if (nombre.trim().replace(/\s/g, "").length < 3)
+      newErrors.nombre = "El nombre debe tener al menos 3 letras";
+    else if (/(.)\1/.test(nombre.trim().replace(/\s/g, "")))
+      newErrors.nombre = "No se permiten letras repetidas consecutivamente";
+    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(nombre.trim()))
+      newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
 
     if (!email.trim())
       newErrors.email = "El correo es obligatorio";
@@ -131,6 +150,10 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // Prevenir múltiples submits
+    if (loading) {
+      return;
+    }
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -138,36 +161,13 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       return;
     }
 
-
     setErrors({});
     setLoading(true);
 
-
     try {
-      // AQUÍ HACEMOS LA CONEXIÓN REAL
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: nombre,    // Enviamos 'nombre' como 'name' para el backend
-          email: email,
-          password: password,
-        }),
-      });
-
-
-      const data = await res.json();
-
-
-      if (!res.ok) {
-        throw new Error(data.error || "Error al registrar");
-      }
-
-
-      alert("¡Ahora sí! Usuario guardado en Supabase.");
-      onSwitchToLogin(); // Redirigir al login si todo salió bien
-
-
+      await signup(nombre, email, password);
+      alert("¡Usuario registrado exitosamente!");
+      router.push("/");
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
     } finally {
@@ -189,20 +189,23 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       {/* Botón estilo Google*/}
       <button
         type="button"
+        disabled={loading}
+        onClick={(e) => e.preventDefault()}
         style={{
           width: "100%",
-          backgroundColor: "#0F172A",
+          backgroundColor: loading ? "#9ca3af" : "#0F172A",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
           border: "none",
-          cursor: "pointer",
+          cursor: loading ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          marginBottom: "16px"
+          marginBottom: "16px",
+          opacity: loading ? 0.6 : 1
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -244,9 +247,11 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type="text"
               placeholder="Tu nombre completo"
               value={nombre}
+              maxLength={40}
               onChange={(e) => {
-                setNombre(e.target.value);
-                validateField("nombre", e.target.value);
+                const value = e.target.value.slice(0, 40);
+                setNombre(value);
+                validateField("nombre", value);
               }}
               style={{
                 width: "100%",
@@ -320,9 +325,11 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               type={showPassword ? "text" : "password"}
               placeholder="Mínimo 8 caracteres"
               value={password}
+              maxLength={15}
               onChange={(e) => {
-                setPassword(e.target.value);
-                validateField("password", e.target.value);
+                const value = e.target.value.slice(0, 15);
+                setPassword(value);
+                validateField("password", value);
               }}
               style={{
                 width: "100%",
@@ -335,7 +342,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af" }}
+              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -362,14 +369,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             gap: "10px",
             backgroundColor: errors.confirmPassword ? "#fee2e2" : "white"
           }}>
-            <CheckSquare size={18} style={{ color: "#9ca3af" }} />
+            <Lock size={18} style={{ color: "#9ca3af" }} />
             <input
               type={showConfirm ? "text" : "password"}
               placeholder="Confirmar contraseña"
               value={confirmPassword}
+              maxLength={15}
               onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                validateField("confirmPassword", e.target.value);
+                const value = e.target.value.slice(0, 15);
+                setConfirmPassword(value);
+                validateField("confirmPassword", value);
               }}
               style={{
                 width: "100%",
@@ -382,7 +391,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af" }}
+              style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
