@@ -43,7 +43,7 @@ export default function BreadCrumbSeguridad({
                   <Link href={item.href}>{item.label}</Link>
                 </BreadcrumbLink>
               ) : (
-                <BreadcrumbPage className="text-slate-300">
+                <BreadcrumbPage className="text-white">
                   {item.label}
                 </BreadcrumbPage>
               )}
