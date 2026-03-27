@@ -26,7 +26,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 🔌 FETCH AL BACKEND
+  //FETCH AL BACKEND
   useEffect(() => {
     obtenerPagos();
   }, [estado]);
@@ -78,7 +78,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
     return <EstadoVacio />;
   }
 
-  // 📄 PAGINACIÓN (igual que tu lógica)
+  //PAGINACIÓN (igual que tu lógica)
   const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);
   const inicio = (pagina - 1) * ITEMS;
   const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
