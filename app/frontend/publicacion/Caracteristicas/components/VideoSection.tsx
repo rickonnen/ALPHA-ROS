@@ -10,7 +10,11 @@ type PreviewData = {
     id: string | null;
 };
 
-export function VideoSection() {
+interface VideoSectionProps {
+    onURLChange: (url: string) => void;
+} 
+
+export function VideoSection({ onURLChange }: VideoSectionProps) {
     const [url, setUrl] = useState("")
     const [preview, setPreview] = useState<PreviewData>({ platform: null, id: null })
 
@@ -52,34 +56,35 @@ export function VideoSection() {
         
         const ytId = extractYoutubeId(newUrl);
         if (ytId) {
-            setPreview({ platform: 'youtube', id: ytId });
+            setPreview({ platform: 'youtube', id: ytId })
+            onURLChange(newUrl); // Informamos al padre del cambio de URL válida
             return;
         }
 
         const igId = extractInstagramId(newUrl);
         if (igId) {
             setPreview({ platform: 'instagram', id: igId });
+            onURLChange(newUrl); // Informamos al padre del cambio de URL válida
             return;
         }
 
         setPreview({ platform: null, id: null });
+        onURLChange(""); // Informamos al padre que la URL no es válida
     }
 
     return (
         <div className="flex flex-col gap-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
             <Label htmlFor="video">
                 <h2 className="text-lg font-bold">
-                    URL de YouTube o Reel de Instagram
+                    URL o Reel (Vista previa de la propiedad)
                 </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                    Pega el enlace para generar la vista previa automática.
-                </p>
+                
             </Label>
             
             <div className="relative flex items-center gap-2">
                 <Input 
                     id="video"
-                    placeholder="Pega el link aquí..." 
+                    placeholder="Pega el link de youtube o instagram aquí..." 
                     value={url}
                     onChange={handleInputChange}
                     className={url && !preview.id ? "border-red-500 focus-visible:ring-red-500" : ""}
@@ -115,7 +120,6 @@ export function VideoSection() {
                                 title="Instagram Reel player"
                                 className="w-full h-full border-0"
                                 scrolling="no"
-                                allowTransparency
                             ></iframe>
                         )}
                     </div>
