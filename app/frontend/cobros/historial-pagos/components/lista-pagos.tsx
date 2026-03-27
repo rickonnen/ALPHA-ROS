@@ -2,7 +2,7 @@
 
 /**
  * dev: Kevin isnado
- * ultima modif: 25/03/2025 - horas: 6 pm
+ * ultima modif: 27/03/2025 - horas: 12 pm
  * descripcion: lista de pagos - paginacion - se muestran las 10 transacciones mas recientes
  */
 
@@ -50,7 +50,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
     setLoading(false);
   };
 
-  // 🔄 ADAPTAR DATOS A TU UI
+  // ADAPTAR DATOS A UI
   const pagosAdaptados: Pago[] = pagos.map((p: any) => ({
     id: p.id_detalle,
     fecha: p.fecha_detalle,
@@ -59,12 +59,12 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
     estado: p.estado === 0 ? "pendiente" : "realizado",
   }));
 
-  // ⏳ LOADING
+  // LOADING
   if (loading) {
     return <p className="text-sm text-gray-500">Cargando...</p>;
   }
 
-  // ❌ ERROR (HU)
+  // ERROR
   if (error) {
     return (
       <p className="text-sm text-red-500">
@@ -73,7 +73,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
     );
   }
 
-  // 📭 SIN DATOS (HU)
+  //SIN DATOS
   if (pagosAdaptados.length === 0) {
     return <EstadoVacio />;
   }
