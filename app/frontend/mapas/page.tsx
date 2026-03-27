@@ -7,7 +7,6 @@ import { useState, useEffect } from "react"
 import MarkerClusterGroup from "react-leaflet-cluster"
 import "leaflet/dist/leaflet.css"
 
-// IMPORTACIÓN DE SHADCN
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
@@ -21,7 +20,6 @@ L.Icon.Default.mergeOptions({
 const DEFAULT_CENTER: [number, number] = [-17.3943, -66.1569];
 const DEFAULT_ZOOM = 15;
 
-// --- ICONOS PERSONALIZADOS HU2 ---
 const createPriceIcon = (precio: string, isHovered: boolean) => {
   return L.divIcon({
     className: "custom-price-marker",
@@ -51,7 +49,31 @@ const createClusterIcon = (cluster: any) => {
   });
 };
 
-// COMPONENTE PARA MOVER LA CÁMARA
+// --- VERSIÓN SEGURA: SOLO REA-26 Y REA-27 ---
+function HoverMapSync({ hoveredId, locations }: any) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!hoveredId) return;
+
+    const loc = locations.find((l: any) => l.id === hoveredId);
+    if (!loc) return;
+
+    const latLng = L.latLng(loc.lat, loc.lng);
+
+    // REA-27: Si el marcador YA es visible, no hace nada
+    if (map.getBounds().contains(latLng)) {
+      return; 
+    }
+
+    // REA-26: Si NO es visible, centra la cámara
+    map.flyTo(latLng, 17, { duration: 1.0 });
+
+  }, [hoveredId, locations, map]);
+
+  return null;
+}
+
 function ChangeView({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -66,8 +88,6 @@ export default function FilterAndSearchPage() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      
-      {/* SECCIÓN FILTROS (HU1) */}
       <aside className="w-48 shrink-0 border-r p-6 bg-slate-50/50 hidden md:flex flex-col gap-6">
         <h2 className="font-semibold tracking-tight uppercase text-slate-400 text-[10px]">Filtros</h2>
         <div className="space-y-4 text-xs text-slate-500 font-medium">
@@ -76,7 +96,6 @@ export default function FilterAndSearchPage() {
         </div>
       </aside>
 
-      {/* SECCIÓN LISTA */}
       <main className="flex-1 overflow-y-auto border-r p-6">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">{locations.length} inmuebles</h1>
@@ -89,9 +108,9 @@ export default function FilterAndSearchPage() {
               key={loc.id}
               onMouseEnter={() => setHoveredId(loc.id)}
               onMouseLeave={() => setHoveredId(null)}
-              onClick={() => setSelectedPos([loc.lat, loc.lng])} // Mover al hacer clic en lista
+              onClick={() => setSelectedPos([loc.lat, loc.lng])}
               className={`p-4 transition-all cursor-pointer border-2 shadow-sm
-                ${hoveredId === loc.id ? "border-blue-500 bg-blue-50/5" : "border-slate-100"}`}
+                ${hoveredId === loc.id ? "border-blue-500 bg-blue-50/50" : "border-slate-100"}`}
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -110,7 +129,6 @@ export default function FilterAndSearchPage() {
         </div>
       </main>
 
-      {/* SECCIÓN MAPA (HU2) */}
       <div className="w-[45%] shrink-0 relative">
         <Map 
           locations={locations} 
@@ -141,6 +159,9 @@ function Map({ locations, hoveredId, selectedPos, setSelectedPos }: {
   return (
     <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
       {selectedPos && <ChangeView center={selectedPos} />}
+      
+      <HoverMapSync hoveredId={hoveredId} locations={locations} />
+
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       
       <MarkerClusterGroup disableClusteringAtZoom={17} iconCreateFunction={createClusterIcon}>
@@ -151,7 +172,7 @@ function Map({ locations, hoveredId, selectedPos, setSelectedPos }: {
             icon={createPriceIcon(location.precio, hoveredId === location.id)}
             zIndexOffset={hoveredId === location.id ? 1000 : 0}
             eventHandlers={{
-              click: () => setSelectedPos([location.lat, location.lng]) // Mover al hacer clic en globito
+              click: () => setSelectedPos([location.lat, location.lng])
             }}
           >
             <Popup>
