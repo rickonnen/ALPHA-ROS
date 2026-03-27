@@ -21,7 +21,7 @@ export default function FreePublicationLimitModal({
   plansHref = "/pagina-cobros",
   title = "Has excedido tus publicaciones gratuitas",
   description =
-    "Tu plan gratuito te permite hasta 2 publicaciones gratuitas. Para seguir publicando, revisa nuestros planes de pago.",
+    "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
   const hasExceededFreePosts = !isPremium && publicationCount >= freeLimit;
   const [isMounted, setIsMounted] = useState(hasExceededFreePosts);
@@ -67,32 +67,33 @@ export default function FreePublicationLimitModal({
         <div className="text-center">
           <h2
             id="free-publication-limit-title"
-            className="text-3xl font-semibold leading-tight text-slate-900"
+            className="text-2xl font-semibold leading-tight text-slate-900 sm:text-3xl"
           >
             {title}
           </h2>
           <p
             id="free-publication-limit-description"
-            className="mx-auto mt-3 max-w-100 text-sm leading-relaxed text-slate-600 "
+            className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-600 sm:text-base"
           >
             {description}
           </p>
         </div>
 
-        <div className="mt-6 flex flex-col gap-40 sm:flex-row sm:justify-center">
+        {/* Contenedor de botones actualizado */}
+        <div className="mt-8 flex flex-row items-center justify-between gap-4">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex min-h-11 w-full items-center justify-center  px-5 py-2.5 text-sm font-medium text-red-600 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 hover:scale-110 sm:w-auto"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 hover:scale-110"
           >
-            {"<    Atras"}
+            {"< Atrás"}
           </button>
 
           <Link
             href={plansHref}
-            className="inline-flex min-h-11 w-full items-center justify-center border border-red-600 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 sm:w-auto"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-md border border-red-600 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 hover:scale-110"
           >
-            {"Ver Planes  >"}
+            {"Ver Planes >"}
           </Link>
         </div>
       </div>

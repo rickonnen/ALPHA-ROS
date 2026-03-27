@@ -493,7 +493,7 @@ model webauthn_credentials {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Caracteristica {
-  id_caracteristica         Int                         @id(map: "Caracteristica_pk")
+  id_caracteristica         Int                         @id(map: "Caracteristica_pk") @default(autoincrement())
   nombre_caracteristica     String?                     @db.VarChar(128)
   PublicacionCaracteristica PublicacionCaracteristica[]
 
@@ -502,7 +502,7 @@ model Caracteristica {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CategoriaNotificacion {
-  id_categoria     Int            @id(map: "CategoriaNotificacion_pk")
+  id_categoria     Int            @id(map: "CategoriaNotificacion_pk") @default(autoincrement())
   nombre_categoria String?        @db.VarChar(128)
   Notificacion     Notificacion[]
 
@@ -559,7 +559,7 @@ model EstadoConstruccion {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model EstadoPublicacion {
-  id_estado     Int           @id(map: "EstadoPublicacion_pk") @db.SmallInt
+  id_estado     Int           @id(map: "EstadoPublicacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_estado String?       @db.VarChar(128)
   Publicacion   Publicacion[]
 
@@ -615,7 +615,7 @@ model HistorialVistos {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Imagen {
-  id_imagen      Int          @id(map: "Imagen_pk")
+  id_imagen      Int          @id(map: "Imagen_pk") @default(autoincrement())
   id_publicacion Int?
   url_imagen     String?
   Publicacion    Publicacion? @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_imagen_publicacion")
@@ -663,7 +663,7 @@ model Pais {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PlanPublicacion {
-  id_plan            Int           @id(map: "PlanPublicacion_pk") @db.SmallInt
+  id_plan            Int           @id(map: "PlanPublicacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_plan        String?       @db.VarChar(128)
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
@@ -674,7 +674,7 @@ model PlanPublicacion {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Publicacion {
-  id_publicacion            Int                         @id(map: "Publicacion_pk")
+  id_publicacion            Int                         @id(map: "Publicacion_pk") @default(autoincrement())
   titulo                    String?                     @db.VarChar(256)
   descripcion               String?
   precio                    Decimal?                    @db.Decimal(25, 2)
@@ -724,7 +724,7 @@ model PublicacionCaracteristica {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model QrUrl {
-  id_metodo Int     @id(map: "MetodoPago_pk") @db.SmallInt
+  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
   qr_URL    String?
 
   @@schema("public")
@@ -827,7 +827,7 @@ model UsuarioTelefono {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Video {
-  id_video       Int          @id(map: "Video_pk") @db.SmallInt
+  id_video       Int          @id(map: "Video_pk") @default(autoincrement()) @db.SmallInt
   id_publicacion Int?
   url_video      String?
   Publicacion    Publicacion? @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_video_publicacion")

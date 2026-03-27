@@ -107,7 +107,7 @@ export default function GuiaTipografia() {
                 variant="destructive"
                 onClick={() => {
                   setIsPremium(false);
-                  setPublicationCount(1);
+                  setPublicationCount(2);
                 }}
               >
                 Publicar
