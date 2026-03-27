@@ -29,7 +29,7 @@ export const Header = (objProps: HeaderProps) => {
       return;
     }
 
-    const handlePointerDownOutside = (event: PointerEvent) => {
+    const handleClickOutside = (event: MouseEvent) => {
       const targetNode = event.target as Node | null;
 
       if (!targetNode) {
@@ -53,11 +53,11 @@ export const Header = (objProps: HeaderProps) => {
       }
     };
 
-    document.addEventListener('pointerdown', handlePointerDownOutside, true);
+    document.addEventListener('click', handleClickOutside);
     document.addEventListener('keydown', handleEscapeKey);
 
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDownOutside, true);
+      document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [bolIsMobileMenuOpen]);
@@ -84,16 +84,16 @@ export const Header = (objProps: HeaderProps) => {
       <div className="w-full px-4 lg:px-[40px] h-16 flex items-center justify-between">
         
         {/* VISTA MÓVIL (Celulares) */}
-        <div className="flex lg:hidden" ref={refMobileMenuButton}>
+        <div className="flex lg:hidden">
           {btnLogoProbol}
         </div>
 
         {/* DERECHA: Botón Hamburguesa */}
-        <div className="flex lg:hidden">
+        <div className="flex lg:hidden" ref={refMobileMenuButton}>
           <Button 
             variant="ghost" 
             className="p-2" 
-            onClick={() => setBolIsMobileMenuOpen(!bolIsMobileMenuOpen)}
+            onClick={() => setBolIsMobileMenuOpen((prevState) => !prevState)}
             aria-expanded={bolIsMobileMenuOpen}
             aria-controls="mobile-header-menu"
             aria-label="Abrir menú"
@@ -181,7 +181,7 @@ export const Header = (objProps: HeaderProps) => {
            alt="Perfil"
            className="w-10 h-10 rounded-full object-contain"
         />
-        <span className="text-xl font-semibold uppercase">
+        <span className="text-xl font-normal uppercase">
           {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
         </span>
       </Link>
@@ -201,28 +201,28 @@ export const Header = (objProps: HeaderProps) => {
              alt="Notificaciones"
              className="w-6 h-6 object-contain"
           />
-        <span className="text-xl font-semibold">NOTIFICACIONES</span>
+        <span className="text-xl font-normal">NOTIFICACIONES</span>
       </button>
 
       <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} onClick={() => setBolIsMobileMenuOpen(false)}>
-        <Button className="w-full text-xl h-12 font-bold bg-white text-slate-900 hover:bg-slate-200 mt-2">
+        <Button className="w-full text-xl h-12 font-normal bg-white text-slate-900 hover:bg-slate-200 mt-2">
           PUBLICAR INMUEBLE
         </Button>
       </Link>
 
-      <Link href="/busqueda?strOperacion=compra" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
+      <Link href="/busqueda?strOperacion=compra" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
         COMPRA
       </Link>
 
-      <Link href="/busqueda?strOperacion=alquiler" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
+      <Link href="/busqueda?strOperacion=alquiler" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
         ALQUILER
       </Link>
 
-      <Link href="/busqueda?strOperacion=anticretico" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors">
+      <Link href="/busqueda?strOperacion=anticretico" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors">
         ANTICRÉTICO
       </Link>
 
-      <Link href="/planes" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-semibold hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
+      <Link href="/planes" onClick={() => setBolIsMobileMenuOpen(false)} className="text-xl font-normal hover:text-slate-300 transition-colors border-t border-slate-700 pt-6 mt-2">
         PLANES DE PUBLICACIÓN
       </Link>
     </div>
