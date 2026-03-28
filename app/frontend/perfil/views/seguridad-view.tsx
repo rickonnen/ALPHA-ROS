@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
 // import TelefonosView from "./telefono-view";
-
-export default function SeguridadView() {
+interface SeguridadProps {
+  id_usuario: string;
+  email_actual: string;
+};
+export default function SeguridadView({id_usuario, email_actual}:SeguridadProps) {
   const [subView, setSubView] = useState("menu");
 
   const VIEWS: Record<string, React.ReactNode> = {
-
     menu: (
       <div className="space-y-4">
         <button
@@ -85,15 +88,20 @@ export default function SeguridadView() {
 
     correo: (
       <div>
-        <button onClick={() => setSubView("menu")}>← Volver2222</button>
-        <p className="mt-4">Vista Correo...</p>
+        <CambiarCorreoView
+          onBack={() => setSubView("menu")}
+          email_actual={email_actual}
+          id_usuario={id_usuario}
+        />
       </div>
     ),
   };
 
   return (
-    <div className="p-8 space-y-6 text-white">
-      <h1 className="text-2xl font-bold">Seguridad</h1>
+    <div
+      className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}
+    >
+      {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
       {VIEWS[subView] || VIEWS.menu}
     </div>
   );

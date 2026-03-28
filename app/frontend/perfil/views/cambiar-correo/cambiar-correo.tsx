@@ -1,18 +1,38 @@
 "use client";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-export default function CambiarCorreoView() {
+
+interface CambiarCorreoProps {
+  onBack: () => void;
+  id_usuario: string;
+  email_actual: string;
+}
+
+export default function CambiarCorreoView({
+  onBack,
+  id_usuario,
+  email_actual,
+}: CambiarCorreoProps) {
   return (
     <div className="m-4">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="mb-4 px-0 text-white/80 hover:text-white hover:bg-transparent"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a Seguridad
+      </Button>
       <HeaderCorreo />
-      <CorreoActual />
+      <CorreoActual email_actual={email_actual} />
       <NuevoCorreo />
       <Contrasena />
-      <BotonesAccion />
+      <BotonesAccion onClick={onBack} />
     </div>
   );
 }
@@ -37,9 +57,10 @@ function HeaderCorreo() {
     </CardHeader>
   );
 }
-
-function CorreoActual() {
-  const correoActual = "pepito@email.com";
+interface CorreoActualProps {
+  email_actual: string;
+}
+function CorreoActual({ email_actual }: CorreoActualProps) {
   return (
     <section className="mt-6">
       <Label
@@ -51,7 +72,7 @@ function CorreoActual() {
       <div className="relative">
         <Input
           id="correo-actual-read-only"
-          value={correoActual}
+          value={email_actual}
           type="email"
           readOnly
           className="h-12 rounded-lg border border-white/20 bg-white/10 pr-10 text-base md:text-base text-white/55 placeholder:text-white/35 cursor-not-allowed caret-transparent focus-visible:ring-2 focus-visible:ring-white/25"
@@ -163,14 +184,17 @@ function Contrasena() {
     </section>
   );
 }
-
-function BotonesAccion() {
+interface BotonesAccionProps {
+  onClick: () => void;
+}
+function BotonesAccion({ onClick }: BotonesAccionProps) {
   return (
     <div className="mt-8 flex gap-3">
       <Button
         type="button"
         variant="outline"
         className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
+        onClick={onClick}
       >
         Cancelar
       </Button>
@@ -180,6 +204,7 @@ function BotonesAccion() {
         className="w-36 h-10 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
       >
         Confirmar cambio
+        {/*Aun falta darle funcionalidad a confirmar cambio*/}
       </Button>
     </div>
   );
