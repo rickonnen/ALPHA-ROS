@@ -8,8 +8,10 @@ import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 interface SeguridadProps{
   id_usuario: string;
   email: string;
+  telefonos: string[];
 };
-export default function SeguridadView({id_usuario, email}: SeguridadProps) {
+
+export default function SeguridadView({id_usuario, email, telefonos}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
 
   const VIEWS: Record<string, React.ReactNode> = {
@@ -67,7 +69,11 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
 
 
     telefonos: (
-      <TelefonosView />
+      <TelefonosView
+        telefonos={telefonos}
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")} 
+      />
     ),
 
     perfil: (
