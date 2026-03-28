@@ -39,7 +39,7 @@ interface PerfilViewProps {
     direccion?: string | null;
     url_foto_perfil?: string | null;
   };
-  telefonos: string[]; // ej: ["+591 67231718", "+591 0000000"]
+  telefonos: string[];
 }
 
 export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
