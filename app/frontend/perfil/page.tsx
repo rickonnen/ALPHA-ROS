@@ -84,10 +84,12 @@ export default function PerfilPage() {
     (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
   ) ?? [];
 
+  
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-
-    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad: <SeguridadView />,
+    perfil: usuario ? (
+      <PerfilView usuario={usuario} telefonos={telefonos} />
+    ) : null,
+    seguridad: <SeguridadView email_actual="hardcode@hardcode.com" id_usuario={ID_USUARIO_HARDCODEADO}/>, // Mapeo de vistas disponibles según el menú seleccionado
     publicaciones: <PublicacionesView />,
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,

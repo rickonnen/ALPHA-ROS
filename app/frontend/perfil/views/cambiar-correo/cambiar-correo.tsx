@@ -1,18 +1,69 @@
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 26/03/2026
+    Funcionalidad: Primera versión mockeada de la vista "Cambiar correo"
+      - Se implementa la estructura base de la pantalla:
+        header, correo actual, nuevo correo, contraseña y botones de acción
+      - Se agregan validaciones visuales iniciales para correo y contraseña
+      - Se mantiene flujo local de UI sin integración completa al backend
+*/
+
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 27/03/2026
+    Funcionalidad: Integración con flujo de Seguridad y eliminación de hardcodeo
+      - Se corrige navegación de retorno mediante callback (onBack)
+      - Se ajusta el flujo: Home > Mi Perfil > Seguridad > Cambiar correo
+      - Se parametriza la vista para recibir datos dinámicos:
+        id_usuario y email_actual
+      - Se reemplaza uso de valores fijos por props recibidas desde la vista padre
+*/
+
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 27/03/2026
+    Funcionalidad: Contrato de props del componente CambiarCorreoView
+      - @param {() => void} onBack:
+        callback para volver a la subvista principal de Seguridad
+      - @param {string} id_usuario:
+        identificador del usuario para futuras operaciones de actualización
+      - @param {string} email_actual:
+        correo actual mostrado en campo de solo lectura
+      - @return {JSX.Element}:
+        formulario de cambio de correo con validaciones visuales básicas
+*/
 "use client";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-export default function CambiarCorreoView() {
+
+interface CambiarCorreoProps {
+  onBack: () => void;
+  id_usuario: string;
+  email_actual: string;
+}
+
+export default function CambiarCorreoView({
+  onBack,
+  id_usuario,
+  email_actual,
+}: CambiarCorreoProps) {
   return (
     <div className="m-4">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="mb-4 px-0 text-white/80 hover:text-white hover:bg-transparent"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a Seguridad
+      </Button>
       <HeaderCorreo />
-      <CorreoActual />
+      <CorreoActual email_actual={email_actual} />
       <NuevoCorreo />
       <Contrasena />
-      <BotonesAccion />
+      <BotonesAccion onClick={onBack} />
     </div>
   );
 }
@@ -37,9 +88,10 @@ function HeaderCorreo() {
     </CardHeader>
   );
 }
-
-function CorreoActual() {
-  const correoActual = "pepito@email.com";
+interface CorreoActualProps {
+  email_actual: string;
+}
+function CorreoActual({ email_actual }: CorreoActualProps) {
   return (
     <section className="mt-6">
       <Label
@@ -51,7 +103,7 @@ function CorreoActual() {
       <div className="relative">
         <Input
           id="correo-actual-read-only"
-          value={correoActual}
+          value={email_actual}
           type="email"
           readOnly
           className="h-12 rounded-lg border border-white/20 bg-white/10 pr-10 text-base md:text-base text-white/55 placeholder:text-white/35 cursor-not-allowed caret-transparent focus-visible:ring-2 focus-visible:ring-white/25"
@@ -163,14 +215,17 @@ function Contrasena() {
     </section>
   );
 }
-
-function BotonesAccion() {
+interface BotonesAccionProps {
+  onClick: () => void;
+}
+function BotonesAccion({ onClick }: BotonesAccionProps) {
   return (
     <div className="mt-8 flex gap-3">
       <Button
         type="button"
         variant="outline"
         className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
+        onClick={onClick}
       >
         Cancelar
       </Button>
@@ -180,6 +235,7 @@ function BotonesAccion() {
         className="w-36 h-10 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
       >
         Confirmar cambio
+        {/*Aun falta darle funcionalidad a confirmar cambio*/}
       </Button>
     </div>
   );
