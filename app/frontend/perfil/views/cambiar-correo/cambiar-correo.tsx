@@ -53,6 +53,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import ResultModal from "@/components/ui/modal";
 import { useState } from "react";
 
 interface CambiarCorreoProps {
@@ -72,6 +73,14 @@ export default function CambiarCorreoView({
   const [strPassword, setStrPassword] = useState("");
   const [bolTrySubmit, setBolTrySubmit] = useState(false);
   const [bolValidandoContrasena, setBolValidandoContrasena] = useState(false);
+  const [bolShowErrorModal, setBolShowErrorModal] = useState(false);
+  const [strErrorModalMessage, setStrErrorModalMessage] = useState("");
+
+  const handleCloseErrorModal = () => {
+    setBolShowErrorModal(false);
+    setStrErrorModalMessage("");
+  };
+
   return (
     <div className="m-4">
       <Button
@@ -104,12 +113,13 @@ export default function CambiarCorreoView({
       <BotonesAccion
         onClick={onBack}
         onConfirm={async () => {
-          setBolValidandoContrasena(true);
+          if (bolValidandoContrasena) return;
           const bolEmailVacio = strNewEmail.trim() === "";
           const bolPassVacia = strPassword.trim() === "";
           const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             strNewEmail.trim(),
           );
+          
 
           if (bolEmailVacio || bolPassVacia || bolEmailInvalido) {
             setBolTrySubmit(true);
@@ -117,6 +127,7 @@ export default function CambiarCorreoView({
           }
 
           try {
+            setBolValidandoContrasena(true);
             const res = await fetch("/backend/perfil/validarContrasenaActual", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -129,22 +140,34 @@ export default function CambiarCorreoView({
             const json = await res.json();
 
             if (!res.ok || !json.ok) {
-              // cambiar luego por el modal del dylan
-              alert(json.error || "No se pudo validar la contraseña.");
+              setStrErrorModalMessage(
+                json.error || "No se pudo validar la contraseña.",
+              );
+              setBolShowErrorModal(true);
               return;
             }
 
             onContinue(strNewEmail.trim());
           } catch (error) {
             console.error("Error en validación de contraseña:", error);
-            //cambiar por el modal del dylan
-            alert("Error de red al validar la contraseña.");
-          } finally{
+            setStrErrorModalMessage("Error de red al validar la contraseña.");
+            setBolShowErrorModal(true);
+          } finally {
             setBolValidandoContrasena(false);
           }
         }}
         bolValidandoContrasena={bolValidandoContrasena}
       />
+
+      {bolShowErrorModal && (
+        <ResultModal
+          type="error"
+          title="No se pudo continuar"
+          message={strErrorModalMessage}
+          onClose={handleCloseErrorModal}
+          onRetry={handleCloseErrorModal}
+        />
+      )}
     </div>
   );
 }
