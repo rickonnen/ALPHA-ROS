@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { PaymentDataTable } from "../_components/PaymentDataTable"
-import { PaymentRecord } from "../_components/paymentTypes"
+import { PaymentDataTable } from "@/components/admin/PaymentDataTable"
+import { PaymentRecord } from "@/components/admin/paymentTypes"
 
 /**
  * Dev: René Gabriel Vera Portanda
