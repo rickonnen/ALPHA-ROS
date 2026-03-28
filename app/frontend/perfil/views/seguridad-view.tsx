@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import TelefonosView from "./telefono-view";
-
+import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
 
-
-export default function SeguridadView() {
+interface SeguridadProps{
+  id_usuario: string;
+  email: string;
+};
+export default function SeguridadView({id_usuario, email}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
 
   const VIEWS: Record<string, React.ReactNode> = {
@@ -85,7 +88,7 @@ export default function SeguridadView() {
       <div>
         <CambiarCorreoView
           onBack={() => setSubView("menu")}
-          email_actual={email_actual}
+          email_actual={email}
           id_usuario={id_usuario}
         />
       </div>
