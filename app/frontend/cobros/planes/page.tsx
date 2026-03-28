@@ -43,7 +43,7 @@ export default async function PlanesPublicacion() {
                 <p className="text-2xl font-bold mb-8 text-foreground">$ {plan.precio_plan?.toString()}</p>
                 <p className="text-muted-foreground">+ {plan.cant_publicaciones} cupos de publicación</p>
               </CardContent>
-              <CardFooter className="pt-8">
+              <CardFooter className="pt-8 bg-transparent">
                 <Button className="w-full font-bold">
                   Continuar
                 </Button>
