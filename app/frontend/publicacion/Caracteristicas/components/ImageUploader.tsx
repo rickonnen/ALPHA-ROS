@@ -15,12 +15,8 @@ const RATIO_TOLERANCE = 0.02
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-interface ImageEntry {
-  file:       File
-  previewUrl: string
-}
-
 export interface ImageUploaderProps {
+  files?:    File[]
   onChange?: (files: File[]) => void
   onRemove?: (index: number) => void
   error?:    string
@@ -70,12 +66,12 @@ function validateImageDimensions(
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function ImageUploader({ onChange, onRemove, error, touched }: ImageUploaderProps) {
+export function ImageUploader({ files = [], onChange, onRemove, error, touched }: ImageUploaderProps) {
   const inputRef                    = useRef<HTMLInputElement>(null)
-  const [images,     setImages]     = useState<ImageEntry[]>([])
   const [fieldError, setFieldError] = useState<string | null>(null)
 
-  const limitReached = images.length >= MAX_FILES
+  // ── Estado controlado externamente por el hook ────────────────────────────
+  const limitReached = files.length >= MAX_FILES
 
   // ── Manejo de archivo seleccionado ──────────────────────────────────────────
 
@@ -99,7 +95,7 @@ export function ImageUploader({ onChange, onRemove, error, touched }: ImageUploa
     }
 
     // CA-22: límite
-    if (images.length >= MAX_FILES) return
+    if (files.length >= MAX_FILES) return
 
     // CA-23 + CA-24: dimensiones y aspecto
     const { ok, error: dimError } = await validateImageDimensions(file)
@@ -108,20 +104,12 @@ export function ImageUploader({ onChange, onRemove, error, touched }: ImageUploa
       return
     }
 
-    const previewUrl = URL.createObjectURL(file)
-    const next       = [...images, { file, previewUrl }]
-    setImages(next)
     onChange?.([file])
   }
 
   // ── Eliminar imagen ──────────────────────────────────────────────────────────
 
   const handleRemove = (index: number) => {
-    const entry = images[index]
-    if (entry) URL.revokeObjectURL(entry.previewUrl)
-
-    const next = images.filter((_, i) => i !== index)
-    setImages(next)
     setFieldError(null)
     onRemove?.(index)
   }
@@ -182,16 +170,16 @@ export function ImageUploader({ onChange, onRemove, error, touched }: ImageUploa
       )}
 
       {/* Vistas previas */}
-      {images.length > 0 && (
+      {files.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
-          {images.map((entry, idx) => (
+          {files.map((file, idx) => (
             <div
-              key={entry.previewUrl}
+              key={`${file.name}-${idx}`}
               className="relative rounded-lg overflow-hidden border border-gray-200 aspect-video bg-gray-50"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={entry.previewUrl}
+                src={URL.createObjectURL(file)}
                 alt={`Vista previa ${idx + 1}`}
                 aria-label={`Vista previa ${idx + 1}`}
                 className="w-full h-full object-cover"
@@ -210,9 +198,9 @@ export function ImageUploader({ onChange, onRemove, error, touched }: ImageUploa
       )}
 
       {/* Contador — solo visible cuando hay imágenes */}
-      {images.length > 0 && (
+      {files.length > 0 && (
         <p className="text-xs text-gray-400 text-right">
-          {images.length} / {MAX_FILES} imágenes
+          {files.length} / {MAX_FILES} imágenes
         </p>
       )}
 
