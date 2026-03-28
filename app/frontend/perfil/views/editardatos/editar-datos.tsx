@@ -22,10 +22,15 @@
  */
 /** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
  * Fecha: 28/03/2026
- * Funcionalidad: Implementacion combobox para pais
+ * Funcionalidad: Implementacion combobox para pais + Boton volver a seguridad + Redireccion al perfil tras guardar
+ */
+/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+ * Fecha: 28/03/2026
+ * Fix: Redireccion al perfil tras guardar
  */
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ResultModal from "@/components/ui/ResultModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
+
 
 interface EditProfileProps {
   usuario: {
@@ -55,6 +61,7 @@ interface EditProfileProps {
 }
 
 export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProfileProps) {
+  const router = useRouter();
   const [strNombres, setStrNombres] = useState(usuario.nombres ?? "");
   const [strApellidos, setStrApellidos] = useState(usuario.apellidos ?? "");
   const [strDireccion, setStrDireccion] = useState(usuario.direccion ?? "");
@@ -102,7 +109,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     }
     setBolLoading(true);
     try {
-      const res = await fetch("/backend/perfil/update", {
+      const res = await fetch("/backend/perfil/updateUsuario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -333,9 +340,13 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
             setObjModal(null);
             if (bolFueExito && objData) {
               onGuardar(objData);
+              router.push("/frontend/perfil");
             }
           }}
-          onRetry={objModal.type === "error" ? handleGuardar : undefined}
+          onRetry={objModal.type === "error" ? () => {
+            setObjModal(null);
+            handleGuardar();
+          } : undefined}
         />
       )}
     </>
