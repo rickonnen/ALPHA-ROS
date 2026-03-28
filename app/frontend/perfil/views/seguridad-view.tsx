@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import TelefonosView from "./telefono-view";
+
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
-// import TelefonosView from "./telefono-view";
+
 
 export default function SeguridadView() {
   const [subView, setSubView] = useState("menu");
@@ -61,12 +63,9 @@ export default function SeguridadView() {
       </div>
     ),
 
-    // VISTA TEMPORAL DE TELÉFONOS
+
     telefonos: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Teléfonos (Archivo pendiente por crear)...</p>
-      </div>
+      <TelefonosView />
     ),
 
     perfil: (
