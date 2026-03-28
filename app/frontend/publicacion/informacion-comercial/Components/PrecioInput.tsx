@@ -1,6 +1,7 @@
 "use client";
 
 import styles from "../InformacionComercial.module.css";
+import priceStyles from "./PrecioInput.module.css";
 
 interface PrecioInputProps {
   value:     string;
@@ -14,9 +15,9 @@ export default function PrecioInput({
   value, hasError, errorMsg, onChange, onBlur,
 }: PrecioInputProps) {
   return (
-    <div className={`${styles.icField} ${styles.icFieldPrecio}`} style={{ marginBottom: 0 }}>
+    <div className={`${styles.icField} ${priceStyles.fieldPrecio}`}>
       <label className={styles.icLabel} htmlFor="precio">Precio</label>
-      <div className={styles.icPrecioWrap}>
+      <div className={priceStyles.precioWrap}>
         <input
           id="precio"
           name="precio"

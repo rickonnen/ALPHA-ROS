@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
 
-/* ── Root ────────────────────────────────────────────────────────────────────── */
 .icRoot {
   font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
   min-height: 100vh;
@@ -9,7 +8,6 @@
   background: #EAE4D8;
 }
 
-/* ── Navbar ──────────────────────────────────────────────────────────────────── */
 .icNav {
   width: 100%;
   height: 44px;
@@ -67,6 +65,7 @@
   cursor: pointer;
   text-decoration: none;
 }
+
 .icNavLink:hover { color: #fff; }
 
 .icNavPublicar {
@@ -84,7 +83,10 @@
   margin-right: 6px;
   flex-shrink: 0;
 }
-.icNavPublicar:hover { background: #6B6560; }
+
+.icNavPublicar:hover {
+  background: #6B6560;
+}
 
 .icNavRight {
   display: flex;
@@ -126,7 +128,6 @@
   white-space: nowrap;
 }
 
-/* ── Body: fondo 2 zonas ─────────────────────────────────────────────────────── */
 .icBody {
   flex: 1;
   background: linear-gradient(to bottom, #EAE4D8 50%, #CFC9BB 50%);
@@ -150,7 +151,6 @@
   line-height: 1.1;
 }
 
-/* ── Card ────────────────────────────────────────────────────────────────────── */
 .icCard {
   background: #FFFFFF;
   border-radius: 8px;
@@ -174,7 +174,6 @@
   margin-bottom: 20px;
 }
 
-/* ── Fila título + precio ────────────────────────────────────────────────────── */
 .icRow {
   display: flex;
   flex-direction: row;
@@ -188,12 +187,6 @@
   min-width: 0;
 }
 
-.icFieldPrecio {
-  width: 110px;
-  flex-shrink: 0;
-}
-
-/* ── Field ───────────────────────────────────────────────────────────────────── */
 .icField {
   display: flex;
   flex-direction: column;
@@ -208,7 +201,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Input ───────────────────────────────────────────────────────────────────── */
 .icInput {
   width: 100%;
   height: 40px;
@@ -222,45 +214,11 @@
   outline: none;
   transition: border-color 0.15s;
 }
+
 .icInput::placeholder { color: #B8B2AC; }
 .icInput:focus { border-color: #8A8480; }
 .icInputErr { border-color: #C0503A; }
 
-/* ── Precio ──────────────────────────────────────────────────────────────────── */
-.icPrecioWrap {
-  position: relative;
-  width: 100%;
-}
-
-.icInputPrecio {
-  width: 100%;
-  height: 40px;
-  padding: 0 32px 0 12px;
-  font-family: inherit;
-  font-size: 0.88rem;
-  color: #1A1714;
-  background: #fff;
-  border: 1px solid #D4CFC6;
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.icInputPrecio::placeholder { color: #B8B2AC; }
-.icInputPrecio:focus { border-color: #8A8480; }
-.icInputPrecioErr { border-color: #C0503A; }
-
-.icPrecioSfx {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.75rem;
-  color: #8A8480;
-  font-weight: 500;
-  pointer-events: none;
-}
-
-/* ── Textarea ────────────────────────────────────────────────────────────────── */
 .icTextarea {
   width: 100%;
   min-height: 100px;
@@ -276,93 +234,11 @@
   transition: border-color 0.15s;
   line-height: 1.5;
 }
+
 .icTextarea::placeholder { color: #B8B2AC; }
 .icTextarea:focus { border-color: #8A8480; }
 .icTextareaErr { border-color: #C0503A; }
 
-/* ── Dropdown ────────────────────────────────────────────────────────────────── */
-.icDdWrap { position: relative; }
-
-.icDdBtn {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: inherit;
-  font-size: 0.88rem;
-  color: #1A1714;
-  background: #fff;
-  border: 1px solid #D4CFC6;
-  border-radius: 6px;
-  cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s;
-}
-.icDdBtnPh { color: #B8B2AC; }
-.icDdBtn:focus { outline: none; border-color: #8A8480; }
-.icDdBtnOpen {
-  border-color: #8A8480;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-.icDdBtnErr { border-color: #C0503A; }
-
-.icChevron {
-  width: 14px;
-  height: 14px;
-  color: #8A8480;
-  flex-shrink: 0;
-  transition: transform 0.18s;
-}
-.icChevronOpen { transform: rotate(180deg); }
-
-.icDdMenu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border: 1px solid #8A8480;
-  border-top: none;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  z-index: 50;
-  overflow: hidden;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.11);
-}
-
-.icDdHdr {
-  padding: 7px 12px 4px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #1A1714;
-  letter-spacing: 0.02em;
-}
-
-.icDdOpt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  font-size: 0.88rem;
-  color: #1A1714;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.icDdOpt:hover { background: #F5F1EC; }
-.icDdOptSel { font-weight: 500; }
-
-.icChk {
-  width: 13px;
-  height: 13px;
-  color: #C0503A;
-  flex-shrink: 0;
-}
-.icChkGap { width: 13px; flex-shrink: 0; }
-
-/* ── Error / contador ────────────────────────────────────────────────────────── */
 .icErr {
   font-size: 0.74rem;
   color: #C0503A;
@@ -374,9 +250,9 @@
   color: #8A8480;
   text-align: right;
 }
+
 .icCntOver { color: #C0503A; }
 
-/* ── Botones ─────────────────────────────────────────────────────────────────── */
 .icActions {
   display: flex;
   justify-content: flex-end;
@@ -404,6 +280,7 @@
   border: 1.5px solid #C0503A;
   color: #C0503A;
 }
+
 .icBtnCancel:hover { background: rgba(192, 80, 58, 0.07); }
 
 .icBtnNext {
@@ -411,9 +288,12 @@
   border: 1.5px solid #C0503A;
   color: #fff;
 }
-.icBtnNext:hover { background: #A8432F; border-color: #A8432F; }
 
-/* ── Responsive tablet ≤680px ────────────────────────────────────────────────── */
+.icBtnNext:hover {
+  background: #A8432F;
+  border-color: #A8432F;
+}
+
 @media (max-width: 680px) {
   .icBody { padding: 0 16px; }
   .icHeadingWrap { padding: 24px 0 16px; max-width: 100%; }
@@ -423,10 +303,8 @@
   .icNavPublicar { display: none; }
   .icNavPlanes { display: none; }
   .icRow { flex-direction: row; gap: 10px; }
-  .icFieldPrecio { width: 100px; }
 }
 
-/* ── Responsive móvil ≤480px ─────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .icBody { padding: 0 10px; }
   .icHeadingWrap { padding: 18px 0 12px; }
@@ -435,40 +313,9 @@
   .icCardTitle { font-size: 0.75rem; }
   .icRow { flex-direction: column; gap: 8px; }
   .icFieldTitulo { width: 100%; }
-  .icFieldPrecio { width: 100%; }
   .icInput { height: 38px; font-size: 0.84rem; }
-  .icInputPrecio { height: 38px; font-size: 0.84rem; }
-  .icDdBtn { height: 38px; font-size: 0.84rem; }
   .icTextarea { font-size: 0.84rem; min-height: 85px; }
   .icActions { flex-direction: row; gap: 8px; }
   .icBtn { flex: 1; height: 38px; font-size: 0.84rem; }
   .icNavPerfil span { display: none; }
-}
-/* ── Shadcn Select overrides ─────────────────────────────────────────────────── */
-.icDdMenu {
-  border: 1px solid #D4CFC6 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10) !important;
-  background: #fff !important;
-  padding: 4px 0 !important;
-  min-width: var(--radix-select-trigger-width) !important;
-}
-
-.icDdOpt {
-  padding: 10px 16px !important;
-  font-size: 0.88rem !important;
-  color: #1A1714 !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.icDdOpt:hover {
-  background: #F5F1EC !important;
-}
-
-/* El checkmark de shadcn ya viene incluido — solo ajustamos color */
-.icDdOpt [data-state="checked"] {
-  color: #C0503A !important;
 }

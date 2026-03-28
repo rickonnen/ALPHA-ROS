@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import styles from "../InformacionComercial.module.css";
+import dropdownStyles from "./Dropdown.Select.module.css";
 
 interface DropdownSelectProps {
   id: string;
@@ -22,8 +23,6 @@ interface DropdownSelectProps {
   onClose?: () => void;
 }
 
-const dropdownFont = "Geist, ui-sans-serif, system-ui, sans-serif";
-
 export default function DropdownSelect({
   id,
   label,
@@ -34,6 +33,10 @@ export default function DropdownSelect({
   onSelect,
   onClose,
 }: DropdownSelectProps) {
+  const triggerClassName = `${dropdownStyles.trigger} ${
+    hasError ? dropdownStyles.triggerError : dropdownStyles.triggerDefault
+  } ${!value ? dropdownStyles.triggerPlaceholder : dropdownStyles.triggerValue}`;
+
   return (
     <div className={styles.icField}>
       <label htmlFor={id} className={styles.icLabel}>
@@ -53,10 +56,7 @@ export default function DropdownSelect({
       >
         <SelectTrigger
           id={id}
-          className={`w-full h-10 px-3 text-[0.88rem] bg-white rounded-md border transition-colors outline-none
-            ${hasError ? "border-[#C0503A]" : "border-[#D4CFC6] focus:border-[#8A8480]"}
-            ${!value ? "text-[#B8B2AC]" : "text-[#1A1714]"}`}
-          style={{ fontFamily: dropdownFont }}
+          className={triggerClassName}
         >
           <SelectValue placeholder="Seleccione una opción" />
         </SelectTrigger>
@@ -66,18 +66,17 @@ export default function DropdownSelect({
           side="bottom"
           sideOffset={2}
           avoidCollisions={true}
-          className="w-[var(--radix-select-trigger-width)] bg-white border border-[#D4CFC6] rounded-md shadow-md p-0 z-[100]"
-          style={{ fontFamily: dropdownFont }}
+          className={dropdownStyles.content}
         >
           <SelectGroup>
-            <SelectLabel className="pl-8 pr-4 py-2 text-[0.88rem] font-bold text-[#1A1714]">
+            <SelectLabel className={dropdownStyles.contentLabel}>
               Opciones
             </SelectLabel>
             {options.map((opt) => (
               <SelectItem
                 key={opt}
                 value={opt}
-                className="pl-8 pr-4 py-2.5 text-[0.88rem] text-[#1A1714] cursor-pointer hover:bg-[#E5E5E5] focus:bg-[#E5E5E5] focus:text-[#1A1714] data-[highlighted]:bg-[#E5E5E5] data-[state=checked]:font-medium [&>span:first-child]:left-2 [&>span:first-child]:right-auto"
+                className={dropdownStyles.item}
               >
                 {opt}
               </SelectItem>
