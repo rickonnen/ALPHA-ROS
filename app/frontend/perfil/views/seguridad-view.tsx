@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import TelefonosView from "./telefono-view";
+import ChangePasswordForm from "./contrasena-view";
 
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
 
@@ -31,7 +32,7 @@ export default function SeguridadView() {
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Password</p>
-            <p className="text-sm text-gray-300">**</p>
+            <p className="text-sm text-gray-300">********</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -75,12 +76,9 @@ export default function SeguridadView() {
     ),
 
     password: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Password...</p>
-      </div>
+      <ChangePasswordForm onCancel={() => setSubView("menu")} />
     ),
-
+/*
     correo: (
       <div>
         <CambiarCorreoView
@@ -90,6 +88,7 @@ export default function SeguridadView() {
         />
       </div>
     ),
+*/
   };
 
   return (
