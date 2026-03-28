@@ -26,7 +26,7 @@ import PerfilView from "./views/perfil-view";
 // Importan sus respectivas vistas
 import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
-//import FavoritoView from "./views/favorito-view";
+import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
@@ -94,7 +94,7 @@ export default function PerfilPage() {
         telefonos={telefonos}
       />
     ),
-    favoritos: <div className="p-8">Vista de Favoritos</div>,
+    favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
     historial: <div className="p-8">Vista de Historial</div>,
   };
 
