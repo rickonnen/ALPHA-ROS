@@ -20,8 +20,12 @@
  * Fecha: 28/03/2026
  * Funcionalidad: Integracion de ResultModal
  */
+/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+ * Fecha: 28/03/2026
+ * Funcionalidad: Implementacion combobox para pais
+ */
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ResultModal from "@/components/ui/ResultModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,15 +44,20 @@ interface EditProfileProps {
     apellidos?: string | null;
     direccion?: string | null;
     url_foto_perfil?: string | null;
+    id_pais?: number | null;
   };
   onGuardar: (data: any) => void;
   onCancelar: () => void;
 }
+
 export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProfileProps) {
   const [strNombres, setStrNombres] = useState(usuario.nombres ?? "");
   const [strApellidos, setStrApellidos] = useState(usuario.apellidos ?? "");
   const [strDireccion, setStrDireccion] = useState(usuario.direccion ?? "");
   const [strFotoUrl, setStrFotoUrl] = useState(usuario.url_foto_perfil ?? "");
+  const [intPaisId, setIntPaisId] = useState<number | null>(usuario.id_pais ?? null);
+  const [arrPaises, setArrPaises] = useState<{ id_pais: number; nombre_pais: string }[]>([]);
+  const [bolLoadingPaises, setBolLoadingPaises] = useState(false);
   const [bolLoading, setBolLoading] = useState(false);
   const [objModal, setObjModal] = useState<{
     type: "success" | "error";
@@ -57,15 +66,36 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   } | null>(null);
   const [objData, setObjData] = useState<any>(null);
 
+  useEffect(() => {
+    const fetchPaises = async () => {
+      setBolLoadingPaises(true);
+      try {
+        const res = await fetch("/backend/paises");
+        const json = await res.json();
+        setArrPaises(json.data ?? []);
+      } catch {
+        console.error("Error al cargar países");
+      } finally {
+        setBolLoadingPaises(false);
+      }
+    };
+    fetchPaises();
+  }, []);
+
   const handleGuardar = async () => {
-    if (!strNombres.trim() || !strApellidos.trim() || strNombres.trim().length < 3 || strApellidos.trim().length < 3) {
-  setObjModal({
-    type: "error",
-    title: "Campos inválidos",
-    message: "El nombre y apellido deben tener al menos 3 caracteres.",
-  });
-  return;
-  }
+    if (
+      !strNombres.trim() ||
+      !strApellidos.trim() ||
+      strNombres.trim().length < 3 ||
+      strApellidos.trim().length < 3
+    ) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: "El nombre y apellido deben tener al menos 3 caracteres.",
+      });
+      return;
+    }
     setBolLoading(true);
     try {
       const res = await fetch("/backend/perfil/update", {
@@ -77,6 +107,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
           apellidos: strApellidos.trim(),
           direccion: strDireccion,
           url_foto_perfil: strFotoUrl,
+          id_pais: intPaisId,
         }),
       });
       const json = await res.json();
@@ -203,6 +234,27 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                     onChange={(e) => setStrDireccion(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
                   />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="pais" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                    País
+                  </Label>
+                  <select
+                    id="pais"
+                    value={intPaisId ?? ""}
+                    onChange={(e) => setIntPaisId(e.target.value ? Number(e.target.value) : null)}
+                    disabled={bolLoadingPaises}
+                    className="bg-white/10 border border-white/20 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50"
+                  >
+                    <option value="" className="bg-[#1e1e2e] text-white/50">
+                      {bolLoadingPaises ? "Cargando..." : "Selecciona un país"}
+                    </option>
+                    {arrPaises.map((pais) => (
+                      <option key={pais.id_pais} value={pais.id_pais} className="bg-[#1e1e2e] text-white">
+                        {pais.nombre_pais}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">

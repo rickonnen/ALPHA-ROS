@@ -1156,8 +1156,7 @@ model Pais {
   nombre_pais String?     @db.VarChar(128)
   codigo_iso  String?     @db.Char(2)
   Ubicacion   Ubicacion[]
-
-  @@schema("public")
+  Usuario     Usuario[]
 
   @@schema("public")
 }
@@ -1308,7 +1307,7 @@ model Usuario {
   url_foto_perfil              String?
   username                     String?             @db.VarChar(128)
   id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
-  id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
+  id_pais                      Int?                @db.SmallInt
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
@@ -1316,7 +1315,7 @@ model Usuario {
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
   users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
-  users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+  Pais                         Pais?               @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   UsuarioTelefono              UsuarioTelefono[]
 
