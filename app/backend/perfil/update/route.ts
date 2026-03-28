@@ -15,6 +15,10 @@
  * @param {String} url_foto_perfil - URL de la nueva foto de perfil
  * @return {Object} - Datos actualizados del usuario en la base de datos
  */
+/*  Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+    Fecha: 28/03/2026
+    Correcciones para llegar a los criterios de aceptacion
+*/
 
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
@@ -59,6 +63,18 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (strNombres.length < 3) {
+  return NextResponse.json(
+    { error: "El nombre debe tener al menos 3 caracteres." },
+    { status: 400 }
+  );
+}
+    if (strApellidos.length < 3) {
+  return NextResponse.json(
+    { error: "El apellido debe tener al menos 3 caracteres." },
+    { status: 400 }
+  );
+}
     const objUsuarioActualizado = await prisma.usuario.update({
       where: { id_usuario },
       data: {

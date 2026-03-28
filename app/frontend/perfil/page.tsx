@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
 import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
-import EditProfile from "./views/editardatos/editar-datos";
 // Importan sus respectivas vistas
 //import SeguridadView from "./views/seguridad-view";
 //import PublicacionesView from "./views/publicaciones-view";
@@ -88,16 +87,7 @@ export default function PerfilPage() {
   const VIEWS_COMPONENTS: Record<string, React.ReactNode | null> = {
 
     perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad: usuario ? (
-      <EditProfile usuario={usuario}
-        onGuardar={(objDatosActualizados) => {
-          // Actualizamos estado local para reflejar cambios sin re-fetch
-          setUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
-          setView("perfil");
-        }}
-        onCancelar={() => setView("perfil")}
-      />
-    ) : null,
+    seguridad:<div className="p-8">Vista de Seguridad </div>,
     publicaciones: <PublicacionesView />, 
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
