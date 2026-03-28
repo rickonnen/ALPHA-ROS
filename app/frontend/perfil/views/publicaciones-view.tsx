@@ -6,10 +6,6 @@
 */
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
 
 // ID TEMPORAL: falta el id de los de sign in
@@ -123,7 +123,7 @@ export default function PublicacionesView() {
       setError(null);
 
       const res = await fetch(
-        `/backend/publicacion/delete?id_publicacion=${idAEliminar}&id_usuario=${ID_USUARIO_HARDCODEADO}`,
+        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${ID_USUARIO_HARDCODEADO}`,
         { method: "DELETE" },
       );
 
