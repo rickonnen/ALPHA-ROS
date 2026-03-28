@@ -5,18 +5,19 @@
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
+import ChangePasswordForm from "./contrasena-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
+import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
 
 interface SeguridadProps {
   id_usuario: string;
   email: string;
   telefonos: string[];
-}
-
-
-export default function SeguridadView({ id_usuario, email, telefonos }: SeguridadProps) {
+};
+export default function SeguridadView({id_usuario, email, telefonos}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
+  const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function SeguridadView({ id_usuario, email, telefonos }: Segurida
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Password</p>
-            <p className="text-sm text-gray-300">**</p>
+            <p className="text-sm text-gray-300">********</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -71,7 +72,9 @@ export default function SeguridadView({ id_usuario, email, telefonos }: Segurida
         >
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
-            <p className="text-sm text-gray-300">+591 70054545 +591 54454444487</p>
+            <p className="text-sm text-gray-300">
+              +591 70054545  +591 54454444487
+            </p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -83,7 +86,7 @@ export default function SeguridadView({ id_usuario, email, telefonos }: Segurida
       <TelefonosView
         telefonos={telefonos}
         id_usuario={id_usuario}
-        onBack={() => setSubView("menu")} 
+        onBack={() => setSubView("menu")}
       />
     ),
 
@@ -99,19 +102,28 @@ export default function SeguridadView({ id_usuario, email, telefonos }: Segurida
     ) : null,
 
     password: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Password...</p>
-      </div>
+      <ChangePasswordForm onCancel={() => setSubView("menu")} />
     ),
-
+/*
     correo: (
       <CambiarCorreoView
         onBack={() => setSubView("menu")}
+        onContinue={(nuevoEmail) => {
+          setStrNuevoEmailPendiente(nuevoEmail);
+          setSubView("confirmar-correo");
+        }}
         email_actual={email}
         id_usuario={id_usuario}
       />
     ),
+    "confirmar-correo": (
+      <ConfirmarCorreoView
+        id_usuario={id_usuario}
+        nuevo_email={strNuevoEmailPendiente}
+        onBack={() => setSubView("correo")}
+      />
+    ),
+*/
   };
 
   return (
