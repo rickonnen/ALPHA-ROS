@@ -88,7 +88,7 @@ export default function PerfilPage() {
 
     perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
     seguridad: <SeguridadView />,
-    publicaciones: <div className="p-8">Vista de Publicaciones</div>,
+    publicaciones: <PublicacionesView />,
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
   };
