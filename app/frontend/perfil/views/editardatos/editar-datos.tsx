@@ -45,6 +45,10 @@ interface EditProfileProps {
     direccion?: string | null;
     url_foto_perfil?: string | null;
     id_pais?: number | null;
+    Pais?: {
+      nombre_pais?: string|null;
+      codigo_iso?: string|null
+    } | null;
   };
   onGuardar: (data: any) => void;
   onCancelar: () => void;
@@ -70,7 +74,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     const fetchPaises = async () => {
       setBolLoadingPaises(true);
       try {
-        const res = await fetch("/backend/paises");
+        const res = await fetch("/backend/perfil/update/updatePais");
         const json = await res.json();
         setArrPaises(json.data ?? []);
       } catch {
@@ -258,21 +262,29 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="usuario" className="text-xs font-black tracking-widest text-white/60 uppercase">
-                    Usuario
-                  </Label>
-                  <Badge className="text-xs font-black tracking-widest bg-white/10 text-white/40 border-white/20 hover:bg-white/10">
-                    No editable
-                  </Badge>
-                </div>
-                <Input
-                  id="usuario"
-                  value={usuario.username ?? ""}
-                  disabled
-                  className="bg-white/5 border-white/10 text-white/40 cursor-not-allowed"
-                />
-              </div>
+              <div className="flex items-center gap-2">
+              <Label htmlFor="usuario" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                Usuario
+              </Label>
+              <Badge className="text-xs font-black tracking-widest bg-white/10 text-white/40 border-white/20 hover:bg-white/10">
+                No editable
+             </Badge>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-md px-3 py-2">
+          <span className="text-sm text-white/40 flex-1">
+          {usuario.username ?? ""}
+          </span>
+            {usuario.Pais?.codigo_iso && (
+              <img
+            src={`https://flagcdn.com/24x18/${usuario.Pais.codigo_iso.toLowerCase()}.png`}
+            alt={usuario.Pais.nombre_pais ?? ""}
+            width={24}
+            height={18}
+            className="rounded-sm shadow-md opacity-60"
+              />
+          )}
+        </div>
+        </div>
             </div>
           </div>
           <Separator className="bg-white/20" />

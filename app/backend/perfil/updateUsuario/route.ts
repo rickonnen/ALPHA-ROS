@@ -19,21 +19,24 @@
     Fecha: 28/03/2026
     Correcciones para llegar a los criterios de aceptacion
 */
-
+/*  Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+    Fecha: 28/03/2026
+    Funcionalidad: Agrega id_pais al update
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id_usuario, nombres, apellidos, direccion, url_foto_perfil } = body;
+    const { id_usuario, nombres, apellidos, direccion, url_foto_perfil, id_pais } = body; // agrega id_pais
     if (!id_usuario) {
       return NextResponse.json(
         { error: "Falta el campo id_usuario" },
         { status: 400 }
       );
     }
-    // nombre y apellido no pueden quedar vacios
     const strNombres = nombres?.trim();
     const strApellidos = apellidos?.trim();
     if (!strNombres || strNombres === "") {
@@ -48,8 +51,6 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // nombre y apellido solo pueden contener letras
     const regexSoloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
     if (!regexSoloLetras.test(strNombres)) {
       return NextResponse.json(
@@ -64,17 +65,17 @@ export async function PUT(req: NextRequest) {
       );
     }
     if (strNombres.length < 3) {
-  return NextResponse.json(
-    { error: "El nombre debe tener al menos 3 caracteres." },
-    { status: 400 }
-  );
-}
+      return NextResponse.json(
+        { error: "El nombre debe tener al menos 3 caracteres." },
+        { status: 400 }
+      );
+    }
     if (strApellidos.length < 3) {
-  return NextResponse.json(
-    { error: "El apellido debe tener al menos 3 caracteres." },
-    { status: 400 }
-  );
-}
+      return NextResponse.json(
+        { error: "El apellido debe tener al menos 3 caracteres." },
+        { status: 400 }
+      );
+    }
     const objUsuarioActualizado = await prisma.usuario.update({
       where: { id_usuario },
       data: {
@@ -82,6 +83,7 @@ export async function PUT(req: NextRequest) {
         apellidos: strApellidos,
         direccion,
         url_foto_perfil,
+        id_pais: id_pais ?? null, // agrega id_pais
       },
     });
 

@@ -5,7 +5,7 @@
 */
 /*  Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
     Fecha: 28/03/2026
-    Funcionalidad: Agrega include de Pais para el campo país en editar perfil
+    Funcionalidad: Agrega include de Pais para el campo pais en editar perfil
 */
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
