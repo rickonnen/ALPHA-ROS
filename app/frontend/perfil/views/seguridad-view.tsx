@@ -5,6 +5,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
+import ChangePasswordForm from "./contrasena-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
@@ -51,7 +52,7 @@ export default function SeguridadView({id_usuario, email, telefonos}: SeguridadP
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Password</p>
-            <p className="text-sm text-gray-300">**</p>
+            <p className="text-sm text-gray-300">********</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -101,12 +102,9 @@ export default function SeguridadView({id_usuario, email, telefonos}: SeguridadP
     ) : null,
 
     password: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Password...</p>
-      </div>
+      <ChangePasswordForm onCancel={() => setSubView("menu")} />
     ),
-
+/*
     correo: (
       <CambiarCorreoView
         onBack={() => setSubView("menu")}
@@ -125,6 +123,7 @@ export default function SeguridadView({id_usuario, email, telefonos}: SeguridadP
         onBack={() => setSubView("correo")}
       />
     ),
+*/
   };
 
   return (
