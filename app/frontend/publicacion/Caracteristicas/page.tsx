@@ -29,21 +29,23 @@ export default function CaracteristicasPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F4EFE6] p-8 font-[family-name:var(--font-geist-sans)]">
-      {/* Título principal — color primario #1F3A4D */}
-      <h1 className="text-4xl font-bold mb-6 text-[#1F3A4D]">
+    <main className="min-h-screen bg-[#F4EFE6] px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]">
+
+      {/* Título principal */}
+      <h1 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6 text-[#1F3A4D]">
         Crear publicación
       </h1>
 
-      <div className="max-w-2xl mx-auto bg-white rounded-xl p-8">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
+
         {/* Título de la sección */}
-        <h2 className="text-center font-semibold text-lg tracking-wide mb-6 uppercase text-[#2E2E2E]">
+        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#2E2E2E]">
           Caracteristicas del inmueble
         </h2>
 
         <div className="flex flex-col gap-4">
 
-          {/* Campos: Dirección y Superficie — Tarea 2.1.1 */}
+          {/* Dirección y Superficie — Tarea 2.1.1 */}
           <DireccionForm
             addressValue={values.direccion}
             areaValue={values.superficie}
@@ -55,7 +57,7 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Selector: Departamento — Tarea 2.1.1 */}
+          {/* Departamento — Tarea 2.1.1 */}
           <DepartamentoSelect
             value={values.departamento}
             error={errors.departamento}
@@ -64,7 +66,7 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Campo: Zona — Tarea 2.1.1 */}
+          {/* Zona — Tarea 2.1.1 */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="zona" className="text-sm font-medium text-[#2E2E2E]">
               Zona
@@ -83,7 +85,7 @@ export default function CaracteristicasPage() {
             )}
           </div>
 
-          {/* Campos numéricos: Habitaciones, Baños, Garajes, Plantas — Tarea 2.1.2 */}
+          {/* Habitaciones, Baños, Garajes, Plantas — Tarea 2.1.2 */}
           <HabitacionesForm
             bedroomsValue={values.habitaciones}
             bathroomsValue={values.banios}
@@ -105,9 +107,8 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* ImageUploader — Tarea 2.5 */}
+          {/* Imágenes — Tarea 2.5 */}
           <ImageUploader
-            files={values.imagenes}
             onChange={handleAgregarImagenes}
             onRemove={handleEliminarImagen}
             error={errors.imagenes}
@@ -129,7 +130,7 @@ export default function CaracteristicasPage() {
               onClick={() => {
                 // TODO: navegar a sección 1 conservando datos (Tarea 2.9)
               }}
-              className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-8 py-5 text-base font-semibold"
+              className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
             >
               Regresar
             </Button>
@@ -138,7 +139,7 @@ export default function CaracteristicasPage() {
             <Button
               type="button"
               onClick={onSubmit}
-              className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-8 py-5 text-base font-semibold"
+              className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
             >
               Publicar
             </Button>
