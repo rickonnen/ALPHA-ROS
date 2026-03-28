@@ -22,7 +22,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
-
+import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
 // Importan sus respectivas vistas
 import SeguridadView from "./views/seguridad-view";
@@ -84,9 +84,8 @@ export default function PerfilPage() {
     (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
   ) ?? [];
 
-  // ##################################################################
-  // aqui sustituyen como hice con sus componentes de views
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
+
     perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
     seguridad: <SeguridadView />,
     publicaciones: <div className="p-8">Vista de Publicaciones</div>,
