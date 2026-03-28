@@ -1,43 +1,37 @@
+/* Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+    Fecha: 27/03/2026
+    Fix: Fetch de usuario para conectar a la vista de editar perfil
+*/
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
-// IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
+import EditProfile from "./editardatos/editar-datos";
 
-interface SeguridadProps{
+interface SeguridadProps {
   id_usuario: string;
+  email: string;
+  telefonos: string[];
 };
-export default function SeguridadView({id_usuario}: SeguridadProps) {
+export default function SeguridadView({id_usuario, email, telefonos}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
-  const [email, setEmail] = useState("");
-  const [loadingEmail, setLoadingEmail] = useState(true);
+  const [objUsuario, setObjUsuario] = useState<any>(null);
+
   useEffect(() => {
-    const fetchEmail = async () => {
+    const fetchUsuario = async () => {
       try {
-        setLoadingEmail(true);
-
-        const res = await fetch(
-          `/backend/perfil/getUsuario?id_usuario=${id_usuario}`,
-        );
-
-        if (!res.ok) {
-          throw new Error("No se pudo obtener el correo del usuario");
-        }
-
+        const res = await fetch(`/backend/perfil/getUsuario?id_usuario=${id_usuario}`);
         const json = await res.json();
-        setEmail(json?.data?.email ?? "");
-      } catch (error) {
-        console.error("Error cargando email en SeguridadView:", error);
-        setEmail("");
-      } finally {
-        setLoadingEmail(false);
+        setObjUsuario(json.data);
+      } catch {
+        console.error("Error al cargar usuario");
       }
     };
-
-    fetchEmail();
+    fetchUsuario();
   }, [id_usuario]);
+
   const VIEWS: Record<string, React.ReactNode> = {
     menu: (
       <div className="space-y-4">
@@ -47,13 +41,10 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
         >
           <div className="text-left">
             <p className="font-semibold">Editar Perfil</p>
-            <p className="text-sm text-gray-300">
-              Cambiar nombre, foto y datos personales
-            </p>
+            <p className="text-sm text-gray-300">Cambiar nombre, foto y datos personales</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
           onClick={() => setSubView("password")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
@@ -64,28 +55,16 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
-          onClick={() => {
-            if (loadingEmail) return;
-            setSubView("correo");
-          }}
-          disabled={loadingEmail}
-          className={`w-full flex justify-between items-center p-4 rounded-xl transition ${
-            loadingEmail
-              ? "bg-white/5 text-white/40 cursor-not-allowed"
-              : "bg-white/10 hover:bg-white/20"
-          }`}
+          onClick={() => setSubView("correo")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
-            <p className="text-sm text-gray-300">
-              {loadingEmail ? "Cargando..." : email || "Sin correo registrado"}
-            </p>
+            <p className="text-sm text-gray-300">{email}</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
           onClick={() => setSubView("telefonos")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
@@ -93,7 +72,7 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
             <p className="text-sm text-gray-300">
-              +591 70054545 +591 54454444487
+              +591 70054545  +591 54454444487
             </p>
           </div>
           <span className="text-gray-400">›</span>
@@ -101,14 +80,25 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
       </div>
     ),
 
-    telefonos: <TelefonosView />,
 
-    perfil: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Editar Perfil...</p>
-      </div>
+    telefonos: (
+      <TelefonosView
+        telefonos={telefonos}
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")}
+      />
     ),
+
+    perfil: objUsuario ? (
+      <EditProfile
+        usuario={objUsuario}
+        onGuardar={(objDatosActualizados) => {
+          setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
+          setSubView("menu");
+        }}
+        onCancelar={() => setSubView("menu")}
+      />
+    ) : null,
 
     password: (
       <div>
@@ -124,7 +114,7 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
           setStrNuevoEmailPendiente(nuevoEmail);
           setSubView("confirmar-correo");
         }}
-        email_actual={email || ""}
+        email_actual={email}
         id_usuario={id_usuario}
       />
     ),
@@ -138,9 +128,7 @@ export default function SeguridadView({id_usuario}: SeguridadProps) {
   };
 
   return (
-    <div
-      className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}
-    >
+    <div className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}>
       {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
       {VIEWS[subView] || VIEWS.menu}
     </div>
