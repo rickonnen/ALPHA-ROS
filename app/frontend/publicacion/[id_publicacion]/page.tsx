@@ -8,17 +8,17 @@
 import { notFound } from "next/navigation";
 import { Tag, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MediaGallery } from "@/components/property/MediaGallery";
-import { PropertyDetails } from "@/components/property/PropertyDetails";
+import { MediaGallery } from "@/app/frontend/publicacion/[id_publicacion]/components/MediaGallery";
+import { PropertyDetails } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/app/backend/publicacion/getPerfilInmueble";
 
 export default async function PerfilInmueblePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id_publicacion: string }>;
 }) {
-  const { id } = await params;
-  const objPerfil = await getPerfilInmueble(Number(id));
+  const { id_publicacion } = await params;
+  const objPerfil = await getPerfilInmueble(Number(id_publicacion));
 
   if (!objPerfil) return notFound();
 
