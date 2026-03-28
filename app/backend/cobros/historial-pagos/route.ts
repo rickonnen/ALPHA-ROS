@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 export async function GET(req: NextRequest) {
   try {
     const estado = req.nextUrl.searchParams.get("estado");
-    const userId = "424b14c0-6dd7-4486-9096-59afd041785f"; //usuario id puesto manuelamente 
+    const userId = "d4c4d9c0-ded9-4186-890e-a9f19fd67d5e"; //usuario id puesto manuelamente 
     const pagos = await prisma.detallePago.findMany({
       where: {
         id_usuario: userId,
