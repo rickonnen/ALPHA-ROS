@@ -2,9 +2,10 @@
 
 // CAMBIO A: Importamos el botón aquí arriba
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 export default function GuiaTipografia() {
   return (
-    <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
+    <main className="min-h-screen bg-background text-foreground p-8 md:p-16"> 
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-4 border-b pb-4">Guía de Tipografía del Proyecto</h1>
         <p className="mb-10 text-lg text-slate-600">
@@ -85,7 +86,9 @@ export default function GuiaTipografia() {
             <div className="flex flex-wrap gap-4 items-center">
               <Button>Confirmar</Button>
               <Button variant="secondary">cancelar</Button>
-              <Button variant="destructive">Eliminar cuenta</Button>
+              <Button variant="destructive" asChild>
+                <Link href="/frontend/perfil">
+                Ir a mi perfil</Link></Button>
               <Button variant="outline">filtrar</Button>
               <Button variant="outline">descargar</Button>
               <Button variant="outline">exportar a pdf</Button>
