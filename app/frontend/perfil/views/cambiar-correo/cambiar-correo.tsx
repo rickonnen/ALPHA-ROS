@@ -48,6 +48,9 @@ export default function CambiarCorreoView({
   id_usuario,
   email_actual,
 }: CambiarCorreoProps) {
+  const [strNewEmail, setStrNewEmail] = useState("");
+  const [strPassword, setStrPassword] = useState("");
+  const [bolTrySubmit, setBolTrySubmit] = useState(false);
   return (
     <div className="m-4">
       <Button
@@ -61,9 +64,41 @@ export default function CambiarCorreoView({
       </Button>
       <HeaderCorreo />
       <CorreoActual email_actual={email_actual} />
-      <NuevoCorreo />
-      <Contrasena />
-      <BotonesAccion onClick={onBack} />
+      <NuevoCorreo
+        strNewEmail={strNewEmail}
+        onEmailChange={(value) => {
+          setStrNewEmail(value);
+          if (bolTrySubmit) setBolTrySubmit(false);
+        }}
+        bolTrySubmit={bolTrySubmit}
+      />
+      <Contrasena
+        strPassword={strPassword}
+        onPasswordChange={(value) => {
+          setStrPassword(value);
+          if (bolTrySubmit) setBolTrySubmit(false);
+        }}
+        bolTrySubmit={bolTrySubmit}
+      />
+      <BotonesAccion
+        onClick={onBack}
+        onConfirm={() => {
+          const bolEmailVacio = strNewEmail.trim() === "";
+          const bolPassVacia = strPassword.trim() === "";
+          const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            strNewEmail.trim(),
+          );
+
+          if (bolEmailVacio || bolPassVacia || bolEmailInvalido) {
+            setBolTrySubmit(true);
+            return;
+          }
+          console.log(
+            "Aqui deberia de hacer la validacion de que el correo sea correcto",
+            { id_usuario, strNewEmail, strPassword },
+          );
+        }}
+      />
     </div>
   );
 }
@@ -114,14 +149,23 @@ function CorreoActual({ email_actual }: CorreoActualProps) {
     </section>
   );
 }
-
-function NuevoCorreo() {
-  const [strNewEmail, setStrNewEmail] = useState("");
+interface NuevoCorreoProps {
+  strNewEmail: string;
+  onEmailChange: (value: string) => void;
+  bolTrySubmit: boolean;
+}
+function NuevoCorreo({
+  strNewEmail,
+  onEmailChange,
+  bolTrySubmit,
+}: NuevoCorreoProps) {
   const [bolTouchedEmail, setBolTouchedEmail] = useState(false);
 
+  const bolEmailVacio = strNewEmail.trim() === "";
   const bolIsValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(strNewEmail.trim());
-  const bolShowError =
-    bolTouchedEmail && strNewEmail.trim() !== "" && !bolIsValidEmail;
+  const bolShowRequired = (bolTouchedEmail || bolTrySubmit) && bolEmailVacio;
+  const bolShowFormatError =
+    (bolTouchedEmail || bolTrySubmit) && !bolEmailVacio && !bolIsValidEmail;
 
   return (
     <section className="mt-6">
@@ -139,34 +183,49 @@ function NuevoCorreo() {
           placeholder="nuevo@email.com"
           autoComplete="email"
           spellCheck={false}
-          onChange={(e) => setStrNewEmail(e.target.value)}
+          onChange={(e) => onEmailChange(e.target.value)}
           onBlur={() => setBolTouchedEmail(true)}
-          className={`h-12 rounded-lg border bg-white/10 px-3 text-base md:text-base text-white/90 placeholder:text-white/40 focus-visible:ring-2 transition-colors ${
-            bolShowError
+          className={
+            "h-12 rounded-lg border bg-white/10 px-3 text-base md:text-base text-white/90 placeholder:text-white/40 focus-visible:ring-2 transition-colors " +
+            (bolShowRequired || bolShowFormatError
               ? "border-red-400/70 focus-visible:ring-red-400/40"
-              : "border-white/25 focus-visible:ring-white/30"
-          }`}
+              : "border-white/25 focus-visible:ring-white/30")
+          }
         />
       </div>
 
       <p
-        className={`mt-1 text-xs transition-colors ${bolShowError ? "text-red-300/80" : "text-white/55"}`}
+        className={
+          "mt-1 text-xs transition-colors " +
+          (bolShowRequired || bolShowFormatError
+            ? "text-red-300/80"
+            : "text-white/55")
+        }
       >
-        {bolShowError
-          ? "Ingresa un correo válido (ej: nombre@dominio.com)"
-          : "Ingresa el correo al que enviaremos el código."}
+        {bolShowRequired
+          ? "Rellena este campo."
+          : bolShowFormatError
+            ? "Ingresa un correo válido (ej: nombre@dominio.com)"
+            : "Ingresa el correo al que enviaremos el código."}
       </p>
     </section>
   );
 }
-
-function Contrasena() {
-  const [strPassword, setStrPassword] = useState("");
+interface ContrasenaProps {
+  strPassword: string;
+  onPasswordChange: (value: string) => void;
+  bolTrySubmit: boolean;
+}
+function Contrasena({
+  strPassword,
+  onPasswordChange,
+  bolTrySubmit,
+}: ContrasenaProps) {
   const [bolShowPassword, setBolShowPassword] = useState(false);
   const [bolTouchedPassword, setBolTouchedPassword] = useState(false);
 
-  const bolShowError = bolTouchedPassword && strPassword.trim() === "";
-
+  const bolShowError =
+    (bolTouchedPassword || bolTrySubmit) && strPassword.trim() === "";
   return (
     <section className="mt-6">
       <Label
@@ -182,7 +241,7 @@ function Contrasena() {
           value={strPassword}
           placeholder="••••••••••••"
           autoComplete="current-password"
-          onChange={(e) => setStrPassword(e.target.value)}
+          onChange={(e) => onPasswordChange(e.target.value)}
           onBlur={() => setBolTouchedPassword(true)}
           className={`h-12 rounded-lg border bg-white/10 pr-10 px-3 text-base md:text-base text-white/90 placeholder:text-white/40 focus-visible:ring-2 transition-colors ${
             bolShowError
@@ -217,8 +276,9 @@ function Contrasena() {
 }
 interface BotonesAccionProps {
   onClick: () => void;
+  onConfirm: () => void;
 }
-function BotonesAccion({ onClick }: BotonesAccionProps) {
+function BotonesAccion({ onClick, onConfirm }: BotonesAccionProps) {
   return (
     <div className="mt-8 flex gap-3">
       <Button
@@ -232,7 +292,8 @@ function BotonesAccion({ onClick }: BotonesAccionProps) {
 
       <Button
         type="button"
-        className="w-36 h-10 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
+        className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20"
+        onClick={onConfirm}
       >
         Confirmar cambio
         {/*Aun falta darle funcionalidad a confirmar cambio*/}
