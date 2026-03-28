@@ -15,7 +15,6 @@ export async function GET(req: NextRequest) {
     const pagos = await prisma.detallePago.findMany({
       where: {
         id_usuario: userId,
-
         ...(estado === "pendiente" && {
           estado: 1,
         }),
@@ -26,11 +25,9 @@ export async function GET(req: NextRequest) {
           estado: 3,
         }),
       },
-
       include: {
-        PlanPublicacion: true, // 👈 AQUI TRAES EL PLAN
+        PlanPublicacion: true,
       },
-
       orderBy: {
         fecha_detalle: "desc",
       },

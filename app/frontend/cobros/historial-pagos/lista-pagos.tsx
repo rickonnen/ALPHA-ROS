@@ -72,7 +72,7 @@ export default function ListaPagos({ estado }: { estado: "pendiente" | "realizad
     return <EstadoVacio />;
   }
 
-  //PAGINACIÓN (igual que tu lógica)
+  //PAGINACIÓN
   const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);
   const inicio = (pagina - 1) * ITEMS;
   const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
