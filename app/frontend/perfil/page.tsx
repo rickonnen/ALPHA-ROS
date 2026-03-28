@@ -96,7 +96,7 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <HeaderMock />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 md:py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
 
         {loading && (
           <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
@@ -113,7 +113,7 @@ export default function PerfilPage() {
 
         {!loading && !error && usuario && (
           <>
-            <div id="info" className="flex items-center justify-between gap-6 mb-6 md:mb-8">
+            <div id="info" className="flex items-center justify-between gap-6 mb-5 md:mb-5">
               <div className="flex items-center gap-4 md:gap-6">
                 <img
                   src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}
