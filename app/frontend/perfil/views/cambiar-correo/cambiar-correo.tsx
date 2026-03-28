@@ -104,12 +104,13 @@ export default function CambiarCorreoView({
       <BotonesAccion
         onClick={onBack}
         onConfirm={async () => {
-          setBolValidandoContrasena(true);
+          if (bolValidandoContrasena) return;
           const bolEmailVacio = strNewEmail.trim() === "";
           const bolPassVacia = strPassword.trim() === "";
           const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             strNewEmail.trim(),
           );
+          
 
           if (bolEmailVacio || bolPassVacia || bolEmailInvalido) {
             setBolTrySubmit(true);
@@ -117,6 +118,7 @@ export default function CambiarCorreoView({
           }
 
           try {
+            setBolValidandoContrasena(true);
             const res = await fetch("/backend/perfil/validarContrasenaActual", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
