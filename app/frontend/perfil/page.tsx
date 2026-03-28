@@ -25,7 +25,7 @@ import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
 
 import PerfilView from "./views/perfil-view";
 // Importan sus respectivas vistas
-//import SeguridadView from "./views/seguridad-view";
+import SeguridadView from "./views/seguridad-view";
 //import PublicacionesView from "./views/publicaciones-view";
 //import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
@@ -88,7 +88,7 @@ export default function PerfilPage() {
   // aqui sustituyen como hice con sus componentes de views
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
     perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad: <div className="p-8">Vista de Seguridad</div>,
+    seguridad: <SeguridadView />,
     publicaciones: <div className="p-8">Vista de Publicaciones</div>,
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
