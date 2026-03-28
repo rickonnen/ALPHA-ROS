@@ -102,7 +102,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     }
     setBolLoading(true);
     try {
-      const res = await fetch("/backend/perfil/update", {
+      const res = await fetch("/backend/perfil/updateUsuario", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
