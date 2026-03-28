@@ -3,7 +3,9 @@
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -28,12 +30,16 @@ export default function DropdownSelect({
     <div className={styles.icField}>
       <label htmlFor={id} className={styles.icLabel}>{label}</label>
       <Select
-        value={value}
-        onValueChange={(val) => {
-          onSelect(val);
-          onClose?.();
-        }}
-      >
+  value={value}
+  onValueChange={(val) => {
+    onSelect(val);
+  }}
+  onOpenChange={(open) => {
+    if (!open && !value) {
+      onClose?.();
+    }
+  }}
+>
         <SelectTrigger
           id={id}
           className={`w-full h-10 px-3 text-[0.88rem] bg-white rounded-md border transition-colors outline-none
@@ -44,27 +50,27 @@ export default function DropdownSelect({
         </SelectTrigger>
 
         <SelectContent
-          position="popper"
-          side="bottom"
-          sideOffset={2}
-          avoidCollisions={true}
-          className="w-[var(--radix-select-trigger-width)] bg-white border border-[#D4CFC6] rounded-md shadow-md p-0 z-[100]"
-        >
-          {options.map((opt) => (
-           <SelectItem
-  key={opt}
-  value={opt}
-  className="pl-8 pr-4 py-2.5 text-[0.88rem] text-[#1A1714] cursor-pointer 
-    focus:bg-[#F5F1EC] focus:text-[#1A1714]
-    data-[state=checked]:font-medium
-    [&>span:first-child]:left-2 
-    [&>span:first-child]:right-auto"
+  position="popper"
+  side="bottom"
+  sideOffset={2}
+  avoidCollisions={true}
+  className="w-[var(--radix-select-trigger-width)] bg-white border border-[#D4CFC6] rounded-md shadow-md p-0 z-[100]"
 >
-  {opt}
-</SelectItem>
-
-          ))}
-        </SelectContent>
+  <SelectGroup>
+    <SelectLabel className="pl-8 pr-4 py-2 text-[0.88rem] font-bold text-[#1A1714]">
+  Opciones
+</SelectLabel>
+    {options.map((opt) => (
+      <SelectItem
+        key={opt}
+        value={opt}
+        className="pl-8 pr-4 py-2.5 text-[0.88rem] text-[#1A1714] cursor-pointer focus:bg-[#F5F1EC] focus:text-[#1A1714] data-[state=checked]:font-medium [&>span:first-child]:left-2 [&>span:first-child]:right-auto"
+      >
+        {opt}
+      </SelectItem>
+    ))}
+  </SelectGroup>
+</SelectContent>
       </Select>
 
       {hasError && errorMsg && (

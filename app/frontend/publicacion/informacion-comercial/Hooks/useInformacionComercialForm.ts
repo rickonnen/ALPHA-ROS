@@ -65,41 +65,38 @@ export function useInformacionComercialForm() {
   }
 
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
-  const raw = e.target.value.replace(/[^\d.]/g, "");
-  const parts = raw.split(".");
-  const clean = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : raw;
+    const raw = e.target.value.replace(/[^\d.]/g, "");
+    const parts = raw.split(".");
+    const clean = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : raw;
 
-  // Bloquear más de 2 decimales
-  if (parts.length === 2 && parts[1].length > 2) return;
+    if (parts.length === 2 && parts[1].length > 2) return;
 
-  // Bloquear más de 7 dígitos enteros
-  const entero = clean.split(".")[0];
-  if (entero.length > 7) {
-  setTouched((prev) => ({ ...prev, precio: true }));
-  setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
-  return;
-}
+    const entero = clean.split(".")[0];
+    if (entero.length > 7) {
+      setTouched((prev) => ({ ...prev, precio: true }));
+      setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
+      return;
+    }
 
-  // Bloquear si supera el límite máximo
-  const num = parseFloat(clean);
-  if (!isNaN(num) && num > PRECIO_MAXIMO) {
-  setTouched((prev) => ({ ...prev, precio: true }));
-  setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
-  return;
-}
+    const num = parseFloat(clean);
+    if (!isNaN(num) && num > PRECIO_MAXIMO) {
+      setTouched((prev) => ({ ...prev, precio: true }));
+      setErrors((prev) => ({ ...prev, precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.` }));
+      return;
+    }
 
-  setForm((prev) => ({ ...prev, precio: clean }));
-  if (touched.precio) {
-    setErrors((prev) => ({ ...prev, precio: validateField("precio", clean) }));
+    setForm((prev) => ({ ...prev, precio: clean }));
+    if (touched.precio) {
+      setErrors((prev) => ({ ...prev, precio: validateField("precio", clean) }));
+    }
   }
-}
+
   function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name as keyof FormData, value) }));
   }
 
-  // Muestra error al cerrar dropdown sin seleccionar
   function handleDropdownBlur(name: "tipoPropiedad" | "tipoOperacion") {
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name, form[name]) }));
@@ -127,6 +124,14 @@ export function useInformacionComercialForm() {
     setTouched({});
   }
 
+  // Mapeo de valores UI a valores backend
+  function mapTipoOperacionBackend(value: string): string {
+    const mapa: Record<string, string> = {
+      "Anticrético": "Anticretico",
+    };
+    return mapa[value] ?? value;
+  }
+
   function handleSiguiente() {
     const allTouched: Partial<Record<keyof FormData, boolean>> = {};
     (Object.keys(form) as (keyof FormData)[]).forEach((k) => (allTouched[k] = true));
@@ -134,7 +139,19 @@ export function useInformacionComercialForm() {
     const newErrors = validateAll();
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-    console.log("Avanzar a Características del Inmueble", form);
+
+    // Guardar temporalmente en sessionStorage para enviar al backend al publicar
+    sessionStorage.setItem("informacionComercial", JSON.stringify({
+      titulo:        form.titulo,
+      precio:        Number(form.precio),
+      tipoPropiedad: form.tipoPropiedad,
+      tipoOperacion: mapTipoOperacionBackend(form.tipoOperacion),
+      descripcion:   form.descripcion,
+    }));
+
+    // TODO: cuando tu compañero tenga la ruta lista:
+    // router.push("/frontend/forms/caracteristicas-inmueble")
+    console.log("Datos guardados en sessionStorage, avanzar al paso 2");
   }
 
   const hasErr = (n: keyof FormData) => touched[n] && !!errors[n];
