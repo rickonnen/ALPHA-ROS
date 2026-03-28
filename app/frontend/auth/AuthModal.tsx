@@ -61,9 +61,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
         {/* Que formulario mostrar */}
         <div className="overflow-y-auto pr-2">
           {isLogin ? (
-            <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
+            <LoginForm onSwitchToRegister={() => setIsLogin(false)} onClose={onClose} />
           ) : (
-            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
+            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} />
           )}
         </div>
       </div>

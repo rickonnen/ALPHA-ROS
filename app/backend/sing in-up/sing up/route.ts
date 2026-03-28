@@ -1,51 +1,72 @@
-// app/api/auth/signup/route.ts
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 const supabaseAdmin = createClient(
-  'https://prjzzqorracgcjrvxdjj.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByanp6cW9ycmFjZ2NqcnZ4ZGpqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzQ0ODE3NSwiZXhwIjoyMDg5MDI0MTc1fQ.NY9gPySuIhsG6QvObuP2AxblzqG70eHW7lEWNC_loP4' 
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name } = await request.json();
+    console.log("Iniciando signup, SUPABASE_URL:", process.env.SUPABASE_URL);
+    console.log("SERVICE_ROLE_KEY exists:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1. Crear en Auth
+    // se recibe el 'name' que contendrá el nombre completo
+    const { email, password, name } = await request.json();
+    console.log("Datos recibidos:", { email, password: "***", name });
+
+    // 1. Crear el usuario en Supabase Auth
+    console.log("Creando usuario en Auth...");
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { name }
+      user_metadata: { name } 
     });
 
     if (authError) {
+      console.error("Error en Auth:", authError);
       return NextResponse.json({ error: "Error en Auth: " + authError.message }, { status: 400 });
     }
 
-    // 2. Insertar en tabla (Estructura mínima de 5 columnas)
-    const { error: dbError } = await supabaseAdmin
-      .from('users')
+    console.log("Usuario creado en Auth con ID:", authData.user.id);
+
+    // 2. Insertar en tu tabla pública 'Usuario'
+    console.log("Insertando en tabla Usuario...");
+    console.log("Objeto a insertar:", {
+      id_usuario: authData.user.id,
+      email: email,
+      nombres: name,
+      rol: 2,
+      estado: 1
+    });
+    
+    const { data: dbData, error: dbError } = await supabaseAdmin
+      .from('Usuario')
       .insert([
         {
-          id: authData.user.id,
+          id_usuario: authData.user.id,
           email: email,
-          name: name,
-          password: password,
-          role_id: 2 // Asegúrate que en tu tabla 'roles' el ID 1 exista
+          nombres: name,
+          rol: 2,
+          estado: 1
         }
       ]);
 
+    console.log("Respuesta del insert:", { data: dbData, error: dbError });
+
     if (dbError) {
-      // Si falla la tabla, eliminamos el usuario de Auth para poder reintentar
+      console.error("Error en DB:", dbError);
+
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      console.error("DETALLE DEL ERROR:", dbError);
       return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "¡Éxito total!" }, { status: 200 });
+    console.log("Usuario insertado en tabla Usuario");
+    return NextResponse.json({ message: "¡Registro exitoso!" }, { status: 200 });
 
   } catch (err) {
-    return NextResponse.json({ error: "Error crítico de servidor" }, { status: 500 });
+    console.error("Error en el servidor:", err);
+    return NextResponse.json({ error: "Error crítico de servidor: " + String(err) }, { status: 500 });
   }
 }

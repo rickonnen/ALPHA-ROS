@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
+  onClose?: () => void;
 }
 
-export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
+export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
   const router = useRouter();
   const { login } = useAuth();
 
@@ -18,6 +20,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Validaciones en tiempo real
   function validateField(field: string, value: string) {
@@ -84,12 +87,21 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
     try {
       await login(email, password);
-      router.push("/");
+      setShowSuccess(true);
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
     } finally {
       setLoading(false);
     }
+  }
+
+  // Manejar cierre del modal de éxito
+  function handleSuccessClose() {
+    setShowSuccess(false);
+    if (onClose) {
+      onClose();
+    }
+    router.push("/");
   }
 
 
@@ -267,6 +279,14 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           {loading ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
       </form>
+
+      {/* Modal de éxito */}
+      <SuccessModal
+        isOpen={showSuccess}
+        message="¡Sesión iniciada exitosamente! Bienvenido."
+        onClose={handleSuccessClose}
+        autoCloseDuration={2000}
+      />
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function TestAuthPage() {
           {user ? (
             <>
               <button
-                onClick={() => setShowProtected(true)}
+                onClick={() => alert("Notificaciones: Próximamente")}
                 title="Notificaciones"
                 aria-label="Notificaciones"
                 className="text-gray-600 hover:text-[#B47B65] transition-colors"

@@ -1,18 +1,17 @@
 "use client";
-
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff, CheckSquare } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
+import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
-
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
+  onClose?: () => void;
 }
 
-export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
+export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormProps) {
   const router = useRouter();
   const { signup } = useAuth();
   const [nombre, setNombre] = useState("");
@@ -23,6 +22,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
 
   // ── Validaciones en tiempo real ──────────────────────────
@@ -42,8 +42,8 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
       } else if (value.trim().replace(/\s/g, "").length < 3) {
         newErrors.nombre = "El nombre debe tener al menos 3 letras";
-      } else if (/(.)\1/.test(value.trim().replace(/\s/g, ""))) {
-        newErrors.nombre = "No se permiten letras repetidas consecutivamente";
+      } else if (/(.)\1\1/.test(value.trim().replace(/\s/g, ""))) {
+        newErrors.nombre = "No se permiten 3 o más letras repetidas consecutivamente";
       } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(value.trim())) {
         newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
       } else {
@@ -113,8 +113,8 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
     else if (nombre.trim().replace(/\s/g, "").length < 3)
       newErrors.nombre = "El nombre debe tener al menos 3 letras";
-    else if (/(.)\1/.test(nombre.trim().replace(/\s/g, "")))
-      newErrors.nombre = "No se permiten letras repetidas consecutivamente";
+    else if (/(.)\\1\\1/.test(nombre.trim().replace(/\s/g, "")))
+      newErrors.nombre = "No se permiten 3 o más letras repetidas consecutivamente";
     else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(nombre.trim()))
       newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
 
@@ -166,13 +166,21 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
     try {
       await signup(nombre, email, password);
-      alert("¡Usuario registrado exitosamente!");
-      router.push("/");
+      setShowSuccess(true);
     } catch (err: any) {
       setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
     } finally {
       setLoading(false);
     }
+  }
+
+  // Manejar cierre del modal de éxito
+  function handleSuccessClose() {
+    setShowSuccess(false);
+    if (onClose) {
+      onClose();
+    }
+    router.push("/");
   }
 
 
@@ -445,6 +453,14 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
 
       </form>
+
+      {/* Modal de éxito */}
+      <SuccessModal
+        isOpen={showSuccess}
+        message="Tu cuenta ha sido creada exitosamente. ¡Bienvenido!"
+        onClose={handleSuccessClose}
+        autoCloseDuration={2000}
+      />
     </div>
   );
 }

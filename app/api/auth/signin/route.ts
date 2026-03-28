@@ -1,4 +1,13 @@
+import { createClient } from '@supabase/supabase-js';
+import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from "next/server";
+
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,34 +21,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Aquí iría la lógica de login con tu base de datos
-    // Por ahora, simulamos un usuario exitoso
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: "Usuario de Prueba",
+    // Autenticar con Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
       email,
+      password
+    });
+
+    if (authError || !authData.user) {
+      return NextResponse.json(
+        { error: "Email o contraseña incorrectos" },
+        { status: 401 }
+      );
+    }
+
+    // Obtener datos del usuario desde la tabla Usuario con Prisma
+    const userData = await prisma.usuario.findUnique({
+      where: { id_usuario: authData.user.id },
+      select: { id_usuario: true, nombres: true, email: true, rol: true }
+    });
+
+    if (!userData) {
+      return NextResponse.json(
+        { error: "Error al obtener datos del usuario" },
+        { status: 400 }
+      );
+    }
+
+    const user = {
+      id: userData.id_usuario,
+      name: userData.nombres,
+      email: userData.email,
     };
 
-    // Crear respuesta con cookie
     const response = NextResponse.json(
       { user, message: "Sesión iniciada exitosamente" },
       { status: 200 }
     );
 
-    // Guardar token/sesión en cookie
-    response.cookies.set("auth_token", JSON.stringify(user), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 días
-    });
-
     return response;
   } catch (error) {
-    console.error("Signin error:", error);
     return NextResponse.json(
-      { error: "Error en el servidor" },
+      { error: "Error en el servidor: " + String(error) },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
