@@ -28,9 +28,9 @@ export default function PaymentVerificationPage() {
   const loadPayments = async () => {
     try {
       const [objResPending, objResAccepted, objResRejected] = await Promise.all([
-        fetch('/backend/cobros?status=Pendiente'),
-        fetch('/backend/cobros?status=Aceptado'),
-        fetch('/backend/cobros?status=Rechazado')
+        fetch('/backend/historial-pagos?status=Pendiente'),
+        fetch('/backend/cobros/historial-pagos?status=Aceptado'),
+        fetch('/backend/cobros/historial-pagos?status=Rechazado')
       ]);
 
       const arrDataPending = await objResPending.json();
