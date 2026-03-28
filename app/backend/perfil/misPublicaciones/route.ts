@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!id_usuario) {
     return NextResponse.json(
       { error: "Falta el parámetro id_usuario" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    
+
     const data = publicaciones.map((pub: any) => ({
       id: String(pub.id_publicacion),
       titulo: pub.titulo,
