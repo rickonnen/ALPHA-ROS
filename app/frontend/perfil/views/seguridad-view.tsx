@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TelefonosView from "./telefono-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
@@ -8,11 +7,37 @@ import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 
 interface SeguridadProps{
   id_usuario: string;
-  email: string;
 };
-export default function SeguridadView({id_usuario, email}: SeguridadProps) {
+export default function SeguridadView({id_usuario}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
+  const [email, setEmail] = useState("");
+  const [loadingEmail, setLoadingEmail] = useState(true);
+  useEffect(() => {
+    const fetchEmail = async () => {
+      try {
+        setLoadingEmail(true);
+
+        const res = await fetch(
+          `/backend/perfil/getUsuario?id_usuario=${id_usuario}`,
+        );
+
+        if (!res.ok) {
+          throw new Error("No se pudo obtener el correo del usuario");
+        }
+
+        const json = await res.json();
+        setEmail(json?.data?.email ?? "");
+      } catch (error) {
+        console.error("Error cargando email en SeguridadView:", error);
+        setEmail("");
+      } finally {
+        setLoadingEmail(false);
+      }
+    };
+
+    fetchEmail();
+  }, [id_usuario]);
   const VIEWS: Record<string, React.ReactNode> = {
     menu: (
       <div className="space-y-4">
@@ -41,12 +66,22 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
         </button>
 
         <button
-          onClick={() => setSubView("correo")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
+          onClick={() => {
+            if (loadingEmail) return;
+            setSubView("correo");
+          }}
+          disabled={loadingEmail}
+          className={`w-full flex justify-between items-center p-4 rounded-xl transition ${
+            loadingEmail
+              ? "bg-white/5 text-white/40 cursor-not-allowed"
+              : "bg-white/10 hover:bg-white/20"
+          }`}
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
-            <p className="text-sm text-gray-300">{email}</p>
+            <p className="text-sm text-gray-300">
+              {loadingEmail ? "Cargando..." : email || "Sin correo registrado"}
+            </p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -89,7 +124,7 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
           setStrNuevoEmailPendiente(nuevoEmail);
           setSubView("confirmar-correo");
         }}
-        email_actual={email}
+        email_actual={email || ""}
         id_usuario={id_usuario}
       />
     ),

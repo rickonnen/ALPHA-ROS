@@ -71,6 +71,7 @@ export default function CambiarCorreoView({
   const [strNewEmail, setStrNewEmail] = useState("");
   const [strPassword, setStrPassword] = useState("");
   const [bolTrySubmit, setBolTrySubmit] = useState(false);
+  const [bolValidandoContrasena, setBolValidandoContrasena] = useState(false);
   return (
     <div className="m-4">
       <Button
@@ -102,7 +103,8 @@ export default function CambiarCorreoView({
       />
       <BotonesAccion
         onClick={onBack}
-        onConfirm={() => {
+        onConfirm={async () => {
+          setBolValidandoContrasena(true);
           const bolEmailVacio = strNewEmail.trim() === "";
           const bolPassVacia = strPassword.trim() === "";
           const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
@@ -113,12 +115,35 @@ export default function CambiarCorreoView({
             setBolTrySubmit(true);
             return;
           }
-          console.log(
-            "Aqui deberia de hacer la validacion de que el correo sea correcto",
-            { id_usuario, strNewEmail, strPassword },
-          );
-          onContinue(strNewEmail.trim());
+
+          try {
+            const res = await fetch("/backend/perfil/validarContrasenaActual", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id_usuario,
+                password_actual: strPassword,
+              }),
+            });
+
+            const json = await res.json();
+
+            if (!res.ok || !json.ok) {
+              // cambiar luego por el modal del dylan
+              alert(json.error || "No se pudo validar la contraseña.");
+              return;
+            }
+
+            onContinue(strNewEmail.trim());
+          } catch (error) {
+            console.error("Error en validación de contraseña:", error);
+            //cambiar por el modal del dylan
+            alert("Error de red al validar la contraseña.");
+          } finally{
+            setBolValidandoContrasena(false);
+          }
         }}
+        bolValidandoContrasena={bolValidandoContrasena}
       />
     </div>
   );
@@ -298,8 +323,13 @@ function Contrasena({
 interface BotonesAccionProps {
   onClick: () => void;
   onConfirm: () => void;
+  bolValidandoContrasena: boolean;
 }
-function BotonesAccion({ onClick, onConfirm }: BotonesAccionProps) {
+function BotonesAccion({
+  onClick,
+  onConfirm,
+  bolValidandoContrasena,
+}: BotonesAccionProps) {
   return (
     <div className="mt-8 flex gap-3">
       <Button
@@ -307,17 +337,18 @@ function BotonesAccion({ onClick, onConfirm }: BotonesAccionProps) {
         variant="outline"
         className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
         onClick={onClick}
+        disabled={bolValidandoContrasena}
       >
         Cancelar
       </Button>
 
       <Button
         type="button"
-        className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20"
+        className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
         onClick={onConfirm}
+        disabled={bolValidandoContrasena}
       >
-        Confirmar cambio
-        {/*Aun falta darle funcionalidad a confirmar cambio*/}
+        {bolValidandoContrasena ? "Verificando..." : "Confirmar cambio"}
       </Button>
     </div>
   );
