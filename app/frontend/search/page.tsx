@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 // Importamos tu componente de la flechita
-import { SortSelect } from "./componentes/SortSelect"; 
+import { SortSelect } from "@/components/ui/Search/SortSelect";
 
 export default function SearchPage() {
   // El estado del mapa que creó Diego
