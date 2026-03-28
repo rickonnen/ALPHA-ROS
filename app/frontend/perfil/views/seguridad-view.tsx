@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
+import TelefonosView from "./telefono-view";
+
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
-// import TelefonosView from "./telefono-view";
-interface SeguridadProps {
-  id_usuario: string;
-  email_actual: string;
-};
-export default function SeguridadView({id_usuario, email_actual}:SeguridadProps) {
+
+
+export default function SeguridadView() {
   const [subView, setSubView] = useState("menu");
 
   const VIEWS: Record<string, React.ReactNode> = {
@@ -64,12 +62,9 @@ export default function SeguridadView({id_usuario, email_actual}:SeguridadProps)
       </div>
     ),
 
-    // VISTA TEMPORAL DE TELÉFONOS
+
     telefonos: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Teléfonos (Archivo pendiente por crear)...</p>
-      </div>
+      <TelefonosView />
     ),
 
     perfil: (
