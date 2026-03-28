@@ -22,11 +22,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
-import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
 // Importan sus respectivas vistas
-//import SeguridadView from "./views/seguridad-view";
-//import PublicacionesView from "./views/publicaciones-view";
+import SeguridadView from "./views/seguridad-view";
+import PublicacionesView from "./views/publicaciones-view";
 //import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
 
@@ -57,7 +56,7 @@ export default function PerfilPage() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/backend/perfil/get?id_usuario=${ID_USUARIO_HARDCODEADO}`
+          `/backend/perfil/getUsuario?id_usuario=${ID_USUARIO_HARDCODEADO}`
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -84,11 +83,11 @@ export default function PerfilPage() {
     (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
   ) ?? [];
 
-  const VIEWS_COMPONENTS: Record<string, React.ReactNode | null> = {
-
-    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad:<div className="p-8">Vista de Seguridad </div>,
-    publicaciones: <PublicacionesView />, 
+  
+  const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
+    perfil: usuario ? (<PerfilView usuario={usuario} telefonos={telefonos} />) : null,
+    publicaciones: usuario ? (<PublicacionesView id_usuario={usuario.id_usuario} />) : null,
+    seguridad: <SeguridadView email="hardcode@hardcode.com" id_usuario={ID_USUARIO_HARDCODEADO}/>,
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
   };
