@@ -1,4 +1,3 @@
-"use client";
 
 /**
  * Component: TelefonosView
@@ -12,6 +11,20 @@
  * guardar cambios (éxito o error simulado).
  */
 
+/**
+ * Author: Miguel Angel Condori
+ * Date: (2026-03-28):
+ *  Se añadió navegación con botón "Volver a Seguridad" mediante onBack.
+ *  Se mejoró la UI de botones eliminando fondos sólidos y usando estilos con borde.
+ *  Se implementó AlertDialog para confirmación de eliminación de teléfonos.
+ *  Se añadió estado para manejar el teléfono seleccionado a eliminar.
+ *  Se mejoró el AlertDialog de guardado con feedback visual (éxito/error).
+ *  Se ajustó la alineación y tamaño de botones dentro de los dialogs.
+ */
+
+
+"use client";
+
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,27 +36,59 @@ import {
   AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogAction,
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
-export default function TelefonosView() {
+import { ArrowLeft } from "lucide-react";
+
+interface TelefonosViewProps {
+  id_usuario: string;
+  telefonos: string[];
+  onBack: () => void;
+};
+
+export default function TelefonosView({ id_usuario, telefonos, onBack }: TelefonosViewProps) {
+
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(true);
 
-  //simulando comportamiento
-  const handleGuardar = () => {
-    
-    const ok = Math.random() > 0.5;
 
+  const [openDelete, setOpenDelete] = useState(false);
+  const [telefonoAEliminar, setTelefonoAEliminar] = useState<number | null>(null);
+
+  const handleGuardar = () => {
+    const ok = Math.random() > 0.5;
     setSuccess(ok);
     setOpen(true);
+  };
+
+
+  const handleEliminarClick = (index: number) => {
+    setTelefonoAEliminar(index);
+    setOpenDelete(true);
+  };
+
+  const handleConfirmDelete = () => {
+    console.log("Eliminar telefono:", telefonoAEliminar);
+    setOpenDelete(false);
   };
 
   return (
     <div className="space-y-6 text-white">
 
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="px-0 text-white/80 hover:text-white hover:bg-transparent"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Volver a Seguridad
+      </Button>
+
+
       <div className="flex items-start gap-3">
         <div className="text-2xl">📞</div>
-
         <div>
           <h2 className="text-xl font-bold">
             Gestionar teléfonos
@@ -54,9 +99,10 @@ export default function TelefonosView() {
         </div>
       </div>
 
-      <Card>
+      {/* CARD */}
+      <Card className="bg-white/10 border border-white/20 backdrop-blur-md">
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle className="text-base text-white">
             Teléfonos registrados
           </CardTitle>
         </CardHeader>
@@ -64,18 +110,19 @@ export default function TelefonosView() {
         <CardContent className="space-y-5">
 
           <div className="space-y-1">
-            <label className="text-xs text-gray-400 tracking-widest">
+            <label className="text-xs text-white/60 tracking-widest">
               TELÉFONO 1
             </label>
 
             <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
               <input
-                value="+591 70012345"
+                value={telefonos[0] || ""}
+                placeholder={telefonos[0] ? "" : "Sin teléfono"}
                 readOnly
-                className="h-10 px-3 rounded-md border bg-gray-50 text-sm text-black w-full"
+                className="h-10 px-3 rounded-md border border-white/20 bg-white/10 text-sm text-white placeholder:text-white/40 w-full"
               />
 
-              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm">
+              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm border-white/25 bg-transparent text-white/80 hover:bg-white/10">
                 Editar
               </Button>
 
@@ -83,25 +130,28 @@ export default function TelefonosView() {
             </div>
           </div>
 
+
           <div className="space-y-1">
-            <label className="text-xs text-gray-400 tracking-widest">
+            <label className="text-xs text-white/60 tracking-widest">
               TELÉFONO 2
             </label>
 
             <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
               <input
-                value="+591 71234567"
+                value={telefonos[1] || ""}
+                placeholder={telefonos[1] ? "" : "Sin teléfono"}
                 readOnly
-                className="h-10 px-3 rounded-md border bg-gray-50 text-sm text-black w-full"
+                className="h-10 px-3 rounded-md border border-white/20 bg-white/10 text-sm text-white placeholder:text-white/40 w-full"
               />
 
-              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm">
+              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm border-white/25 bg-transparent text-white/80 hover:bg-white/10">
                 Editar
               </Button>
 
               <Button
                 variant="outline"
-                className="h-10 w-full border-red-300 text-red-500 hover:bg-red-50 text-xs sm:text-sm"
+                onClick={() => handleEliminarClick(1)}
+                className="h-10 w-full border-red-400/40 bg-transparent text-red-300 hover:bg-red-500/10 text-xs sm:text-sm"
               >
                 <span className="sm:hidden">🗑</span>
                 <span className="hidden sm:inline">Eliminar</span>
@@ -109,25 +159,28 @@ export default function TelefonosView() {
             </div>
           </div>
 
+
           <div className="space-y-1">
-            <label className="text-xs text-gray-400 tracking-widest">
+            <label className="text-xs text-white/60 tracking-widest">
               TELÉFONO 3
             </label>
 
             <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
               <input
-                placeholder="No registrado"
+                value={telefonos[2] || ""}
+                placeholder={telefonos[2] ? "" : "Sin teléfono"}
                 readOnly
-                className="h-10 px-3 rounded-md border bg-gray-100 text-sm text-black w-full"
+                className="h-10 px-3 rounded-md border border-white/20 bg-white/5 text-sm text-white placeholder:text-white/40 w-full"
               />
 
-              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm">
+              <Button variant="outline" className="h-10 w-full text-xs sm:text-sm border-white/25 bg-transparent text-white/80 hover:bg-white/10">
                 Editar
               </Button>
 
               <Button
                 variant="outline"
-                className="h-10 w-full border-red-300 text-red-400 text-xs sm:text-sm"
+                onClick={() => handleEliminarClick(2)}
+                className="h-10 w-full border-red-400/40 bg-transparent text-red-300 hover:bg-red-500/10 text-xs sm:text-sm"
               >
                 <span className="sm:hidden">🗑</span>
                 <span className="hidden sm:inline">Eliminar</span>
@@ -136,7 +189,7 @@ export default function TelefonosView() {
           </div>
 
           <div className="flex justify-center pt-2">
-            <button className="h-10 w-full sm:w-auto px-4 border-2 border-dashed rounded-md text-gray-400 hover:bg-gray-50 transition text-sm">
+            <button className="h-10 w-full sm:w-auto px-4 border-2 border-dashed border-white/30 rounded-md text-white/50 hover:bg-white/10 transition text-sm">
               + Agregar teléfono
             </button>
           </div>
@@ -147,19 +200,21 @@ export default function TelefonosView() {
       <div className="flex gap-3 justify-center sm:justify-start">
         <Button
           variant="outline"
-          className="border-orange-300 text-orange-400 hover:bg-orange-50"
+          className="border-white/30 bg-transparent text-white/70 hover:bg-white/10"
         >
           Cancelar
         </Button>
 
-        <Button className="font-semibold" onClick={handleGuardar}>
+        <Button
+          className="font-semibold bg-transparent border border-white/30 text-white hover:bg-white/10"
+          onClick={handleGuardar}
+        >
           Guardar cambios
         </Button>
       </div>
 
       <AlertDialog open={open}>
-        <AlertDialogContent className="text-center">
-
+        <AlertDialogContent className="text-center bg-white border border-gray-200 text-black">
 
           <div className="flex justify-center mb-2">
             <div
@@ -183,14 +238,46 @@ export default function TelefonosView() {
               : "No pudimos actualizar el teléfono, por favor inténtalo de nuevo."}
           </p>
 
-          <AlertDialogFooter className="flex justify-center mt-4">
+          <AlertDialogFooter className="mt-4">
+            <div className="w-full flex justify-center">
+              <AlertDialogAction
+                onClick={() => setOpen(false)}
+                className={`px-6 ${
+                  success
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-red-500 hover:bg-red-600 text-white"
+                }`}
+              >
+                Aceptar
+              </AlertDialogAction>
+            </div>
+          </AlertDialogFooter>
+
+        </AlertDialogContent>
+      </AlertDialog>
+
+
+      <AlertDialog open={openDelete}>
+        <AlertDialogContent className="text-center bg-white border border-gray-200 text-black">
+
+          <AlertDialogTitle className="text-lg font-bold">
+            ¿Eliminar publicación?
+          </AlertDialogTitle>
+
+          <p className="text-sm text-gray-500">
+            Esta acción no se puede deshacer. El teléfono será eliminado permanentemente.
+          </p>
+
+          <AlertDialogFooter className="flex justify-center gap-2 mt-4">
+            <AlertDialogCancel onClick={() => setOpenDelete(false)}>
+              Cancelar
+            </AlertDialogCancel>
+
             <AlertDialogAction
-              onClick={() => setOpen(false)}
-              className={`w-full ${
-                success ? "" : "bg-red-500 hover:bg-red-600"
-              }`}
+              onClick={handleConfirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
             >
-              Aceptar
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
 

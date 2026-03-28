@@ -11,9 +11,11 @@ import EditProfile from "./editardatos/editar-datos";
 interface SeguridadProps {
   id_usuario: string;
   email: string;
+  telefonos: string[];
 }
 
-export default function SeguridadView({ id_usuario, email }: SeguridadProps) {
+
+export default function SeguridadView({ id_usuario, email, telefonos }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [objUsuario, setObjUsuario] = useState<any>(null);
 
@@ -76,7 +78,14 @@ export default function SeguridadView({ id_usuario, email }: SeguridadProps) {
       </div>
     ),
 
-    telefonos: <TelefonosView />,
+
+    telefonos: (
+      <TelefonosView
+        telefonos={telefonos}
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")} 
+      />
+    ),
 
     perfil: objUsuario ? (
       <EditProfile
