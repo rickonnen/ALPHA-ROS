@@ -57,7 +57,7 @@ export default function PerfilPage() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/backend/perfil/get?id_usuario=${ID_USUARIO_HARDCODEADO}`
+          `/backend/perfil/getUsuario?id_usuario=${ID_USUARIO_HARDCODEADO}`
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -88,7 +88,7 @@ export default function PerfilPage() {
 
     perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
     seguridad: <SeguridadView />,
-    publicaciones: <div className="p-8">Vista de Publicaciones</div>,
+    publicaciones: <PublicacionesView />,
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
   };
