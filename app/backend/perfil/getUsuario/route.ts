@@ -3,7 +3,11 @@
     Funcionalidad: GET /backend/perfil/get?id_usuario=...
       - Retorna los datos del usuario + sus teléfonos
 */
-
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 28/03/2026
+    Funcionalidad: GET /backend/perfil/getUsuario?id_usuario=...
+      - Se anadio el retorno del pais del usuario
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -30,6 +34,7 @@ export async function GET(req: NextRequest) {
           },
         },
         Rol: true,
+        Pais: true,
       },
     });
 
