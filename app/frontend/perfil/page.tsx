@@ -87,7 +87,13 @@ export default function PerfilPage() {
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
     perfil: usuario ? (<PerfilView usuario={usuario} telefonos={telefonos} />) : null,
     publicaciones: usuario ? (<PublicacionesView id_usuario={usuario.id_usuario} />) : null,
-    seguridad: <SeguridadView email_actual="hardcode@hardcode.com" id_usuario={ID_USUARIO_HARDCODEADO}/>,
+    seguridad: (
+      <SeguridadView
+        id_usuario={ID_USUARIO_HARDCODEADO}
+        email={usuario?.email ?? ""}
+        telefonos={telefonos}
+      />
+    ),
     favoritos: <div className="p-8">Vista de Favoritos</div>,
     historial: <div className="p-8">Vista de Historial</div>,
   };

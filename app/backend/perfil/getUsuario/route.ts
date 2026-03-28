@@ -1,9 +1,17 @@
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 27/03/2026
     Funcionalidad: GET /backend/perfil/get?id_usuario=...
-      - Retorna los datos del usuario + sus teléfonos
+      - Retorna los datos del usuario + sus teléfonos + su país
 */
-
+/*  Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+    Fecha: 28/03/2026
+    Funcionalidad: Agrega include de Pais para el campo pais en editar perfil
+*/
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 28/03/2026
+    Funcionalidad: GET /backend/perfil/getUsuario?id_usuario=...
+      - Se anadio el retorno del pais del usuario
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -25,11 +33,10 @@ export async function GET(req: NextRequest) {
       where: { id_usuario },
       include: {
         UsuarioTelefono: {
-          include: {
-            Telefono: true,
-          },
+          include: { Telefono: true },
         },
         Rol: true,
+        Pais: true,
       },
     });
 
