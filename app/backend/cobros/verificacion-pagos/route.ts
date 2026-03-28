@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPaymentsByStatus, updatePaymentStatus } from '../../controllers/admin/paymentController';
+import { getPaymentsByStatus, updatePaymentStatus } from './paymentController';
 
 /**
  * Dev: René Gabriel Vera Portanda
