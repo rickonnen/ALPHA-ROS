@@ -444,3 +444,31 @@
   .icBtn { flex: 1; height: 38px; font-size: 0.84rem; }
   .icNavPerfil span { display: none; }
 }
+/* ── Shadcn Select overrides ─────────────────────────────────────────────────── */
+.icDdMenu {
+  border: 1px solid #D4CFC6 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10) !important;
+  background: #fff !important;
+  padding: 4px 0 !important;
+  min-width: var(--radix-select-trigger-width) !important;
+}
+
+.icDdOpt {
+  padding: 10px 16px !important;
+  font-size: 0.88rem !important;
+  color: #1A1714 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.icDdOpt:hover {
+  background: #F5F1EC !important;
+}
+
+/* El checkmark de shadcn ya viene incluido — solo ajustamos color */
+.icDdOpt [data-state="checked"] {
+  color: #C0503A !important;
+}

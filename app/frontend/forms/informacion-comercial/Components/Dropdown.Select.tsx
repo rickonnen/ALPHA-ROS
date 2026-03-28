@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import styles from "../InformacionComercial.module.css";
 
 interface DropdownSelectProps {
@@ -10,90 +16,57 @@ interface DropdownSelectProps {
   value:     string;
   hasError:  boolean;
   errorMsg?: string;
-  isOpen:    boolean;
-  onToggle:  () => void;
   onSelect:  (opt: string) => void;
-  onClose:   () => void;
+  onClose?:  () => void;
 }
 
 export default function DropdownSelect({
   id, label, options, value,
-  hasError, errorMsg, isOpen,
-  onToggle, onSelect, onClose,
+  hasError, errorMsg, onSelect, onClose,
 }: DropdownSelectProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (isOpen && !wrapRef.current?.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, onClose]);
-
-  const btnClass = [
-    styles.icDdBtn,
-    !value   ? styles.icDdBtnPh   : "",
-    isOpen   ? styles.icDdBtnOpen : "",
-    hasError ? styles.icDdBtnErr  : "",
-  ].filter(Boolean).join(" ");
-
-  const chevronClass = [
-    styles.icChevron,
-    isOpen ? styles.icChevronOpen : "",
-  ].filter(Boolean).join(" ");
-
   return (
     <div className={styles.icField}>
-      <label className={styles.icLabel} htmlFor={id}>{label}</label>
-      <div className={styles.icDdWrap} ref={wrapRef}>
-        <button
+      <label htmlFor={id} className={styles.icLabel}>{label}</label>
+      <Select
+        value={value}
+        onValueChange={(val) => {
+          onSelect(val);
+          onClose?.();
+        }}
+      >
+        <SelectTrigger
           id={id}
-          type="button"
-          className={btnClass}
-          onClick={onToggle}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
+          className={`w-full h-10 px-3 text-[0.88rem] bg-white rounded-md border transition-colors outline-none
+            ${hasError ? "border-[#C0503A]" : "border-[#D4CFC6] focus:border-[#8A8480]"}
+            ${!value ? "text-[#B8B2AC]" : "text-[#1A1714]"}`}
         >
-          <span>{value || "Seleccione una opción"}</span>
-          <svg
-            className={chevronClass}
-            viewBox="0 0 16 16" fill="none"
-            stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"
-          >
-            <polyline points="4 6 8 10 12 6"/>
-          </svg>
-        </button>
+          <SelectValue placeholder="Seleccione una opción" />
+        </SelectTrigger>
 
-        {isOpen && (
-          <div className={styles.icDdMenu} role="listbox">
-            <div className={styles.icDdHdr}>Opciones</div>
-            {options.map((opt) => (
-              <div
-                key={opt}
-                role="option"
-                aria-selected={value === opt}
-                className={`${styles.icDdOpt}${value === opt ? ` ${styles.icDdOptSel}` : ""}`}
-                onClick={() => onSelect(opt)}
-              >
-                {value === opt ? (
-                  <svg className={styles.icChk} viewBox="0 0 14 14" fill="none"
-                    stroke="currentColor" strokeWidth="2.5"
-                    strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="2 7 5.5 10.5 12 4"/>
-                  </svg>
-                ) : (
-                  <span className={styles.icChkGap}/>
-                )}
-                {opt}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        <SelectContent
+          position="popper"
+          side="bottom"
+          sideOffset={2}
+          avoidCollisions={true}
+          className="w-[var(--radix-select-trigger-width)] bg-white border border-[#D4CFC6] rounded-md shadow-md p-0 z-[100]"
+        >
+          {options.map((opt) => (
+           <SelectItem
+  key={opt}
+  value={opt}
+  className="pl-8 pr-4 py-2.5 text-[0.88rem] text-[#1A1714] cursor-pointer 
+    focus:bg-[#F5F1EC] focus:text-[#1A1714]
+    data-[state=checked]:font-medium
+    [&>span:first-child]:left-2 
+    [&>span:first-child]:right-auto"
+>
+  {opt}
+</SelectItem>
+
+          ))}
+        </SelectContent>
+      </Select>
+
       {hasError && errorMsg && (
         <span className={styles.icErr}>{errorMsg}</span>
       )}

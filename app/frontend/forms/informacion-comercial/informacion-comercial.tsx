@@ -27,7 +27,6 @@ export default function InformacionComercial() {
     handleSiguiente,
   } = useInformacionComercialForm();
 
-  const [openDropdown, setOpenDropdown] = useState<"propiedad" | "operacion" | null>(null);
 
   return (
     <div className={styles.icRoot}>
@@ -121,11 +120,9 @@ export default function InformacionComercial() {
             value={form.tipoPropiedad}
             hasError={!!hasErr("tipoPropiedad")}
             errorMsg={errors.tipoPropiedad}
-            isOpen={openDropdown === "propiedad"}
-            onToggle={() => setOpenDropdown((p) => p === "propiedad" ? null : "propiedad")}
-            onSelect={(opt) => { handleSelectPropiedad(opt); setOpenDropdown(null); }}
-            onClose={() => { setOpenDropdown(null); handleDropdownBlur("tipoPropiedad"); }}
-          />
+            onSelect={(opt) => handleSelectPropiedad(opt)}
+            onClose={() => handleDropdownBlur("tipoPropiedad")}
+            />
 
           {/* Tipo de Operación */}
           <DropdownSelect
@@ -135,10 +132,8 @@ export default function InformacionComercial() {
             value={form.tipoOperacion}
             hasError={!!hasErr("tipoOperacion")}
             errorMsg={errors.tipoOperacion}
-            isOpen={openDropdown === "operacion"}
-            onToggle={() => setOpenDropdown((p) => p === "operacion" ? null : "operacion")}
-            onSelect={(opt) => { handleSelectOperacion(opt); setOpenDropdown(null); }}
-            onClose={() => { setOpenDropdown(null); handleDropdownBlur("tipoOperacion"); }}
+            onSelect={(opt) => handleSelectOperacion(opt)}
+            onClose={() => handleDropdownBlur("tipoOperacion")}
           />
 
           {/* Descripción */}
