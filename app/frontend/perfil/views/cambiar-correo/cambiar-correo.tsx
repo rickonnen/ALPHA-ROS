@@ -1,3 +1,34 @@
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 26/03/2026
+    Funcionalidad: Primera versión mockeada de la vista "Cambiar correo"
+      - Se implementa la estructura base de la pantalla:
+        header, correo actual, nuevo correo, contraseña y botones de acción
+      - Se agregan validaciones visuales iniciales para correo y contraseña
+      - Se mantiene flujo local de UI sin integración completa al backend
+*/
+
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 27/03/2026
+    Funcionalidad: Integración con flujo de Seguridad y eliminación de hardcodeo
+      - Se corrige navegación de retorno mediante callback (onBack)
+      - Se ajusta el flujo: Home > Mi Perfil > Seguridad > Cambiar correo
+      - Se parametriza la vista para recibir datos dinámicos:
+        id_usuario y email_actual
+      - Se reemplaza uso de valores fijos por props recibidas desde la vista padre
+*/
+
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
+    Fecha: 27/03/2026
+    Funcionalidad: Contrato de props del componente CambiarCorreoView
+      - @param {() => void} onBack:
+        callback para volver a la subvista principal de Seguridad
+      - @param {string} id_usuario:
+        identificador del usuario para futuras operaciones de actualización
+      - @param {string} email_actual:
+        correo actual mostrado en campo de solo lectura
+      - @return {JSX.Element}:
+        formulario de cambio de correo con validaciones visuales básicas
+*/
 "use client";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
