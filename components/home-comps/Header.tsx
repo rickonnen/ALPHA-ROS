@@ -29,7 +29,6 @@ const arrNavLinks = [
 export const Header = (objProps: HeaderProps) => {
   const bolHideHeader = useScrollDirection();
   
-  // Estado para controlar el menú de celular
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
@@ -74,15 +73,13 @@ export const Header = (objProps: HeaderProps) => {
     };
   }, [bolIsMobileMenuOpen]);
 
-  const strLinkClassesDesktop = "text-[15px] font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block";
-  const strLinkClassesMobile = "text-[15px] font-normal transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a]";
-
-  // Variable del Logo (Reutilizable tanto en PC como en Celular)
+  const strLinkClassesDesktop = "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
+  const strLinkClassesMobile = "text-[15px] font-normal text-[#E7E1D7] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D]";
   const btnLogoProbol = (
     <Link
       href="/"
       aria-label="Go to home page"
-      className="inline-flex rounded-sm transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+      className="inline-flex rounded-md transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
     >
       <img
         src="/logo-principal.svg"
@@ -93,21 +90,17 @@ export const Header = (objProps: HeaderProps) => {
   );
 
   return (
-    <header className={`font-sans fixed top-0 w-full z-50 bg-[#e7e1d7] text-foreground shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
-      
-      {/* Contenedor Principal */}
+      <header className={`font-sans fixed top-0 w-full z-50 bg-[#E7E1D7] text-[#2E2E2E] shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="w-full px-4 lg:px-[40px] h-20 flex items-center justify-between">
         
-        {/* VISTA MÓVIL (Celulares) */}
         <div className="flex lg:hidden">
           {btnLogoProbol}
         </div>
 
-        {/* DERECHA: Botón Hamburguesa */}
         <div className="flex lg:hidden" ref={refMobileMenuButton}>
           <Button 
             variant="ghost" 
-            className="p-2 transition-all duration-300 hover:shadow-[0_0_12px_#c26e5a] hover:text-[#c26e5a] hover:scale-110" 
+            className="p-2 rounded-md transition-all duration-300 hover:shadow-[0_0_12px_#c26e5a] hover:text-[#c26e5a] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]" 
             onClick={() => setBolIsMobileMenuOpen((bolPrev) => !bolPrev)}
             aria-expanded={bolIsMobileMenuOpen}
             aria-label="Abrir menú"
@@ -120,8 +113,6 @@ export const Header = (objProps: HeaderProps) => {
           </Button>
         </div>
 
-        {/* VISTA DESKTOP (Computadoras) */}
-        {/* LADO IZQUIERDO: Logo + Planes */}
         <div className="hidden lg:flex flex-row items-center gap-6">
           {btnLogoProbol}
           <Link href="/frontend/cobros/pricing" className={strLinkClassesDesktop}>
@@ -129,7 +120,6 @@ export const Header = (objProps: HeaderProps) => {
           </Link>
         </div>
 
-        {/* LADO DERECHO: Navegación Completa */}
         <div className="hidden lg:flex flex-row items-center gap-6">
           {arrNavLinks.map((objLink) => (
             <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>
@@ -137,22 +127,21 @@ export const Header = (objProps: HeaderProps) => {
             </Link>
           ))}
 
-          <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} className="transition-transform duration-300 hover:scale-110">
-            <Button className="text-[15px] px-6 h-10 font-semibold bg-[#c26e5a] text-white transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">PUBLICAR</Button>
+          <Link href={objProps.bolIsLoggedIn ? "/frontend/publicacion" : "/login"} className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md">
+            <Button className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">PUBLICAR</Button>
           </Link>
 
           <button 
-            className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-slate-300 hover:shadow-[0_0_12px_#c26e5a] hover:scale-110"
-            onClick={() => !objProps.bolIsLoggedIn && alert('Debe iniciar sesión primero')}
+            className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
             title="Notificaciones"
           >
             <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png" alt="Notificaciones" className="w-5 h-5 object-contain" />
           </button>
 
-          <Link href={objProps.bolIsLoggedIn ? "/perfil" : "/login"} className="transition-transform duration-300 hover:scale-110">
-            <Button variant="ghost" className="flex items-center gap-3 h-10 px-2 bg-slate-200 rounded-full pr-4 transition-all duration-300 hover:bg-slate-200 hover:shadow-[0_0_12px_#c26e5a]">
+          <Link href={objProps.bolIsLoggedIn ? "/perfil" : "/login"} className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-full">
+              <Button variant="ghost" className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none">
               <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png" alt="Perfil" className="w-13 h-13 rounded-full object-contain" />
-              <span className="text-[15px] font-semibold uppercase text-slate-700">
+              <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
                 {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
               </span>
             </Button>
@@ -160,20 +149,16 @@ export const Header = (objProps: HeaderProps) => {
         </div>
       </div>
 
-      {/* MENÚ DESPLEGABLE MÓVIL (Dropdown) */}
       {bolIsMobileMenuOpen && (
         <>
-          {/* Overlay para cerrar al tocar fuera */}
           <div className="lg:hidden fixed inset-0 z-40 bg-black/20" onClick={closeMobileMenu} />
 
-          {/* Panel del menú */}
           <div
             id="mobile-header-menu"
             ref={refMobileMenuPanel}
-            className="lg:hidden absolute top-20 left-0 w-full bg-slate-800 text-white shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
+            className="lg:hidden absolute top-20 left-0 w-full bg-[#1F3A4D] text-[#E7E1D7] shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
             onClick={(objEvent) => objEvent.stopPropagation()}
           >
-            {/* Iniciar sesión / Mi Perfil */}
             <Link 
               href={objProps.bolIsLoggedIn ? "/perfil" : "/login"}
               onClick={closeMobileMenu}
@@ -183,7 +168,6 @@ export const Header = (objProps: HeaderProps) => {
               <span className="uppercase">{objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}</span>
             </Link>
 
-            {/* Notificaciones */}
             <button 
               className={`flex items-center gap-4 text-left border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
               onClick={() => {
@@ -191,15 +175,20 @@ export const Header = (objProps: HeaderProps) => {
                 closeMobileMenu();
               }}
             >
-               <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png" alt="Notificaciones" className="w-6 h-6 object-contain" />
+              <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png" alt="Notificaciones" className="w-6 h-6 object-contain" />
               <span>NOTIFICACIONES</span>
             </button>
 
-            <Link href={objProps.bolIsLoggedIn ? "/publicacion" : "/login"} onClick={closeMobileMenu}>
-              <Button className="w-full text-[15px] h-12 font-normal bg-[#c26e5a] text-white mt-2 transition-all duration-300 hover:bg-[#c26e5a]/90 hover:shadow-[0_0_15px_#c26e5a]">
-                PUBLICAR INMUEBLE
-              </Button>
-            </Link>
+            <Link
+  href="/frontend/publicacion"
+  prefetch={false}
+  onClick={closeMobileMenu}
+  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D] rounded-md"
+>
+  <Button className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
+    PUBLICAR 
+  </Button>
+</Link>
 
             {arrNavLinks.map((objLink) => (
               <Link key={objLink.strLabel} href={objLink.strHref} onClick={closeMobileMenu} className={strLinkClassesMobile}>

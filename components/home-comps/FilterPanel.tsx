@@ -16,80 +16,95 @@ const arrPropertyTypes = ["Casa", "Departamento", "Cuarto", "Terreno", "Espacio 
 
 export default function FilterPanel() {
   const objRouter = useRouter();
-  const refPanel = useRef<HTMLDivElement>(null); 
+  const objPanelRef = useRef<HTMLDivElement>(null); 
+  const objActiveItemRef = useRef<HTMLLIElement>(null);
 
-  const [arrOperaciones, setArrOperaciones] = useState<string[]>([]);
-  const [strTipo, setStrTipo] = useState<string | null>(null);
-  const [strOpenDropdown, setStrOpenDropdown] = useState<"op" | "tipo" | null>(null);
+  const [arrOperations, setArrOperations] = useState<string[]>([]);
+  const [strPropertyType, setStrPropertyType] = useState<string | null>(null);
+  const [strOpenDropdown, setStrOpenDropdown] = useState<"operation" | "type" | null>(null);
 
-  // Lógica de búsqueda predictiva extraída (Sin parámetros)
   const {
-    strCiudad,
-    setStrCiudad,
+    strCity,
+    setStrCity,
     arrSuggestions,
     bolShowSuggestions,
     setBolShowSuggestions,
     bolNoResults,
+    setBolNoResults,
+    intSelectedIndex,
+    setIntSelectedIndex,
+    intMaxCityLength,
     handleCityChange,
+    handleSelectSuggestion,
+    handleKeyDown,
   } = useCitySearch(); 
 
-  // Cierre de menús al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (objEvent: MouseEvent) => {
-      if (refPanel.current && !refPanel.current.contains(objEvent.target as Node)) {
+      if (objPanelRef.current && !objPanelRef.current.contains(objEvent.target as Node)) {
         setStrOpenDropdown(null);
         setBolShowSuggestions(false);
+        setBolNoResults(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setBolShowSuggestions]);
+  }, [setBolShowSuggestions, setBolNoResults]);
 
-  const toggleOp = (strVal: string) => {
-    setArrOperaciones((arrPrev) =>
+  useEffect(() => {
+    if (objActiveItemRef.current) {
+      objActiveItemRef.current.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+    }
+  }, [intSelectedIndex]);
+
+  const toggleOperation = (strVal: string) => {
+    setArrOperations((arrPrev) =>
       arrPrev.includes(strVal) ? arrPrev.filter((strItem) => strItem !== strVal) : [...arrPrev, strVal]
     );
   };
 
   const handleSearch = () => {
     const objParams = new URLSearchParams();
-    if (arrOperaciones.length > 0) objParams.set("operaciones", arrOperaciones.join(","));
-    if (strTipo) objParams.set("tipo", strTipo);
-    if (strCiudad.trim()) objParams.set("ciudad", strCiudad.trim());
+    if (arrOperations.length > 0) objParams.set("operaciones", arrOperations.join(","));
+    if (strPropertyType) objParams.set("tipo", strPropertyType);
+    if (strCity.trim()) objParams.set("ciudad", strCity.trim());
     objRouter.push(`/busqueda?${objParams.toString()}`);
   };
 
+  const strDropdownBaseClass = "w-full flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
+  const strDropdownActiveStyle = "bg-[#F4EFE6] text-[#2E2E2E] border-[#C4BAA8]";
+  const strDropdownInactiveStyle = "bg-[#1F3A4D] text-[#E7E1D7] border-[#1F3A4D]";
+  
+  const strChipClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F4EFE6] border border-[#C4BAA8] text-[#2E2E2E] animate-in fade-in duration-200 shadow-sm focus-within:ring-2 focus-within:ring-[#1F3A4D] focus-within:ring-offset-2 focus-within:ring-offset-[#E7E1D7]";
+
   return (
-    <div ref={refPanel} className="w-full flex flex-col gap-3 font-geist">
+    <div ref={objPanelRef} className="w-full flex flex-col gap-3 font-geist">
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2 p-3 md:px-3 md:py-2 rounded-2xl md:rounded-full bg-[#E7E1D7] border border-[#C4BAA8] shadow-[0_4px_20px_rgba(31,58,77,0.12)]">
         
-        {/* Dropdown: Operación */}
         <div className="relative flex-1 md:flex-none">
           <button
             type="button"
-            onClick={() => setStrOpenDropdown(strOpenDropdown === "op" ? null : "op")}
-            className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${
-              strOpenDropdown === "op" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"
-            }`}
+            onClick={() => setStrOpenDropdown(strOpenDropdown === "operation" ? null : "operation")}
+            className={`${strDropdownBaseClass} ${strOpenDropdown === "operation" ? strDropdownActiveStyle : strDropdownInactiveStyle}`}
           >
-            {arrOperaciones.length > 0 ? `Operación (${arrOperaciones.length})` : "Seleccionar Operación"}
-            <svg className={`w-3.5 h-3.5 transition-transform ${strOpenDropdown === "op" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {arrOperations.length > 0 ? `Operación (${arrOperations.length})` : "Seleccionar Operación"}
+            <svg className={`w-3.5 h-3.5 transition-transform ${strOpenDropdown === "operation" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          {strOpenDropdown === "op" && (
+          {strOpenDropdown === "operation" && (
             <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full md:w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
-              {arrOperationOptions.map((strOp) => (
+              {arrOperationOptions.map((strOperationOption) => (
                 <button
-                  key={strOp}
+                  key={strOperationOption}
                   type="button"
-                  onClick={() => toggleOp(strOp)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-[#E7E1D7]/60 rounded-lg text-left"
+                  onClick={() => toggleOperation(strOperationOption)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-[#E7E1D7]/60 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4EFE6]"
                 >
-                  <span className={arrOperaciones.includes(strOp) ? "font-bold text-[#1F3A4D]" : "text-[#2E2E2E]"}>{strOp}</span>
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${arrOperaciones.includes(strOp) ? "bg-[#1F3A4D] border-[#1F3A4D]" : "border-[#A89F92] bg-[#F4EFE6]"}`}>
-                    {arrOperaciones.includes(strOp) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  <span className={arrOperations.includes(strOperationOption) ? "font-bold text-[#2E2E2E]" : "text-[#2E2E2E]"}>{strOperationOption}</span>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${arrOperations.includes(strOperationOption) ? "bg-[#1F3A4D] border-[#1F3A4D]" : "border-[#A89F92] bg-[#F4EFE6]"}`}>
+                    {arrOperations.includes(strOperationOption) && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                   </div>
                 </button>
               ))}
@@ -99,31 +114,30 @@ export default function FilterPanel() {
 
         <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
-        {/* Dropdown: Tipo */}
         <div className="relative flex-1 md:flex-none">
           <button
             type="button"
-            onClick={() => setStrOpenDropdown(strOpenDropdown === "tipo" ? null : "tipo")}
-            className={`w-full flex items-center justify-between gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-150 ${
-              strOpenDropdown === "tipo" ? "bg-[#F4EFE6] text-[#1F3A4D] border-[#C4BAA8]" : "bg-[#1F3A4D] text-[#F4EFE6] border-[#1F3A4D]"
-            }`}
+            onClick={() => setStrOpenDropdown(strOpenDropdown === "type" ? null : "type")}
+            className={`${strDropdownBaseClass} ${strOpenDropdown === "type" ? strDropdownActiveStyle : strDropdownInactiveStyle}`}
           >
-            {strTipo ?? "Seleccionar Inmueble"}
-            <svg className={`w-3.5 h-3.5 transition-transform ${strOpenDropdown === "tipo" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {strPropertyType ?? "Seleccionar Inmueble"}
+            <svg className={`w-3.5 h-3.5 transition-transform ${strOpenDropdown === "type" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
-          {strOpenDropdown === "tipo" && (
+          {strOpenDropdown === "type" && (
             <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full md:w-52 bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-lg overflow-hidden p-1">
-              {arrPropertyTypes.map((strType) => (
+              {arrPropertyTypes.map((strPropertyOption) => (
                 <button
-                  key={strType}
+                  key={strPropertyOption}
                   type="button"
-                  onClick={() => { setStrTipo(strType); setStrOpenDropdown(null); }}
-                  className={`w-full px-3 py-2 text-sm rounded-lg text-left transition-colors ${strTipo === strType ? "bg-[#E7E1D7] text-[#1F3A4D] font-bold" : "text-[#2E2E2E] hover:bg-[#E7E1D7]/60"}`}
+                  onClick={() => { setStrPropertyType(strPropertyOption); setStrOpenDropdown(null); }}
+                  className={`w-full px-3 py-2 text-sm rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4EFE6] ${
+                  strPropertyType === strPropertyOption ? "bg-[#E7E1D7] text-[#2E2E2E] font-bold" : "text-[#2E2E2E] hover:bg-[#E7E1D7]/60"
+                }`}
                 >
-                  {strType}
+                  {strPropertyOption}
                 </button>
               ))}
             </div>
@@ -132,86 +146,134 @@ export default function FilterPanel() {
 
         <div className="h-px w-full md:w-px md:h-5 bg-[#C4BAA8] flex-shrink-0" />
 
-        {/* Input Predictivo */}
         <div className="relative flex flex-1 items-center gap-2 px-1">
           <input
             type="text"
             placeholder="Search for..."
-            className="flex-1 bg-transparent px-2 py-2 md:py-0 text-sm focus:outline-none text-[#2E2E2E] placeholder:text-[#A89F92]"
-            value={strCiudad}
+            className="flex-1 bg-transparent px-2 py-2 md:py-0 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md text-[#2E2E2E] placeholder:text-[#A89F92]"
+            value={strCity}
+            maxLength={intMaxCityLength}
             onChange={(objEvent) => handleCityChange(objEvent.target.value)}
-            onKeyDown={(objEvent) => objEvent.key === "Enter" && handleSearch()}
+            onFocus={() => {
+              if (strCity.trim().length >= 2) {
+                if (arrSuggestions.length > 0) setBolShowSuggestions(true);
+                else setBolNoResults(true); 
+              }
+            }}
+            onKeyDown={(objEvent) => {
+              if (bolShowSuggestions && arrSuggestions.length > 0) {
+                handleKeyDown(objEvent as any);
+                return;
+              }
+
+              if (objEvent.key === "Enter") {
+                handleSearch();
+              }
+            }}
           />
 
           <button
             type="button"
             onClick={handleSearch}
-            className="flex-shrink-0 w-10 h-10 md:w-8 md:h-8 rounded-full bg-[#C26E5A] hover:bg-[#b05f4c] active:scale-95 flex items-center justify-center transition-all shadow-sm"
+            className="flex-shrink-0 w-10 h-10 md:w-8 md:h-8 rounded-full bg-[#1F3A4D] hover:bg-[#162d3d] active:scale-95 flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
           >
-            <svg className="w-5 h-5 md:w-4 md:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 md:w-4 md:h-4 text-[#E7E1D7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
             </svg>
           </button>
 
-          {/* Sugerencias Mapbox */}
           {bolShowSuggestions && (
-            <ul className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-2xl overflow-hidden">
-              {arrSuggestions.map((objItem) => (
-                <li
-                  key={objItem.strId}
-                  onClick={() => { setStrCiudad(objItem.strName); setBolShowSuggestions(false); }}
-                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#E7E1D7] cursor-pointer border-b border-[#E7E1D7] last:border-0 transition-colors"
-                >
-                  <img src={objItem.strIcon} alt="BO" className="h-4 w-5" />
-                  <span className="text-[#2E2E2E]">{objItem.strName}</span>
-                </li>
-              ))}
+            <ul className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] shadow-2xl overflow-y-auto max-h-[120px] md:max-h-[180px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#C4BAA8] hover:[&::-webkit-scrollbar-thumb]:bg-[#A89F92] [&::-webkit-scrollbar-thumb]:rounded-full">
+              {arrSuggestions.map((objSuggestion, intIndex) => {
+                const arrParts = objSuggestion.strFullName.split(',');
+                const strSecondary = arrParts.slice(1).join(',').replace(/Bolivia/gi, '').replace(/,\s*$/, '').trim();
+                const bolIsSelected = intSelectedIndex === intIndex;
+
+                return (
+                  <li
+                    key={objSuggestion.strId}
+                    ref={bolIsSelected ? objActiveItemRef : null}
+                    onMouseEnter={() => setIntSelectedIndex(intIndex)}
+                    onClick={() => handleSelectSuggestion(objSuggestion)}
+                    tabIndex={0}
+                    onKeyDown={(objEvent) => {
+                      if (objEvent.key === 'Enter') {
+                        handleSelectSuggestion(objSuggestion);
+                      }
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[#E7E1D7] last:border-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-inset ${
+                      bolIsSelected ? "bg-[#E7E1D7]" : "hover:bg-[#E7E1D7]"
+                    }`}
+                  >
+                    <img src={objSuggestion.strIcon} alt="BO" className="h-4 w-5 flex-shrink-0" />
+                    
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-sm font-medium text-[#2E2E2E] truncate">
+                        {objSuggestion.strName}
+                      </span>
+                      
+                      {(objSuggestion.strTypePlace || strSecondary) && (
+                        <span className="text-xs text-[#A89F92] truncate flex items-center gap-1.5 mt-0.5">
+                          {objSuggestion.strTypePlace && (
+                            <span className="font-semibold text-[#8b8276] bg-[#E7E1D7] px-1.5 py-0.5 rounded-md text-[10px] uppercase tracking-wider">
+                              {objSuggestion.strTypePlace}
+                            </span>
+                          )}
+                          {strSecondary && (
+                            <span className="truncate">
+                              {strSecondary.replace(/^,\s*/, '')}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
-          {bolNoResults && strCiudad.trim().length >= 2 && (
-            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-[#F4EFE6] border border-[#C4BAA8] rounded-xl p-3 text-sm text-[#C26E5A] shadow-xl">
-              No se encontraron resultados en Bolivia
+          {bolNoResults && strCity.trim().length >= 2 && (
+            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-[#F4EFE6] border border-[#C4BAA8] rounded-xl p-3 text-sm text-[#2E2E2E] shadow-xl">
+            No se encontraron resultados
             </div>
           )}
         </div>
-      </div>
+      </div>  
 
-      {/* CHIPS Y ACCIONES */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex flex-wrap gap-2">
-          {arrOperaciones.map((strOp) => (
-            <span key={strOp} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F4EFE6] border border-[#C4BAA8] text-[#1F3A4D] animate-in fade-in duration-200 shadow-sm">
-              {strOp}
-              <button type="button" onClick={() => toggleOp(strOp)} className="hover:text-red-500 font-bold transition-colors">✕</button>
+          {arrOperations.map((strOperationOption) => (
+            <span key={strOperationOption} className={strChipClass}>
+              {strOperationOption}
+              <button type="button" onClick={() => toggleOperation(strOperationOption)} className="hover:text-red-500 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full px-1">✕</button>
             </span>
           ))}
-          {strTipo && (
-            <span key={strTipo} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F4EFE6] border border-[#C4BAA8] text-[#1F3A4D] animate-in fade-in duration-200 shadow-sm">
-              {strTipo}
-              <button type="button" onClick={() => setStrTipo(null)} className="hover:text-red-500 font-bold transition-colors">✕</button>
+          {strPropertyType && (
+            <span key={strPropertyType} className={strChipClass}>
+              {strPropertyType}
+              <button type="button" onClick={() => setStrPropertyType(null)} className="hover:text-red-500 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full px-1">✕</button>
             </span>
           )}
         </div>
 
         <div className="flex flex-wrap gap-2 ml-auto">
           <Button
-            variant="outline"
             size="sm"
             onClick={() => {
-              setArrOperaciones([]);
-              setStrTipo(null);
-              setStrCiudad("");
+              setArrOperations([]);
+              setStrPropertyType(null);
+              setStrCity("");
             }}
-            className="rounded-lg text-xs border-[#C4BAA8] text-[#2E2E2E] hover:bg-[#E7E1D7]"
-          >
+            className="rounded-lg text-xs bg-[#c26e5a] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+            >
             Limpiar
           </Button>
           <Button
             size="sm"
             onClick={() => objRouter.push("/busqueda?avanzado=true")}
-            className="rounded-lg text-xs bg-[#1F3A4D] text-white hover:bg-[#162d3d]"
-          >
+            className="rounded-lg text-xs bg-[#1F3A4D] text-[#E7E1D7] transition-all duration-300 hover:bg-[#162d3d] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+            >
             Avanzado
           </Button>
         </div>
