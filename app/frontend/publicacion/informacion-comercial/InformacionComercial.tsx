@@ -74,9 +74,10 @@ export default function InformacionComercial() {
         return undefined;
       case "precio": {
         if (!value) return "El precio es obligatorio.";
-        const num = parseFloat(value);
-        if (isNaN(num) || !/^\d+(\.\d{1,2})?$/.test(value))
-          return "Ingrese un valor válido (ej: 1000.50).";
+        const normalizedPrice = value.replace(/\./g, "").replace(",", ".");
+        const num = Number(normalizedPrice);
+        if (!/^\d+(\.\d{1,2})?$/.test(normalizedPrice) || isNaN(num))
+          return "Ingrese un valor válido (ej: 1.000,50).";
         if (num <= 0) return "El precio debe ser mayor a 0.";
         if (num > PRECIO_MAXIMO)
           return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
@@ -111,14 +112,27 @@ export default function InformacionComercial() {
     }
   }
 
-  // Solo permite digitos y un punto decimal
+  function formatPriceWithThousands(value: string): string {
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  // Permite decimales con coma y formatea miles con punto
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/[^\d.]/g, "");
-    const parts = raw.split(".");
-    const clean = parts.length > 2 ? parts[0] + "." + parts.slice(1).join("") : raw;
-    setForm((prev) => ({ ...prev, precio: clean }));
+    const rawValue = e.target.value.replace(/[^\d,]/g, "");
+    const hasComma = rawValue.includes(",");
+    const [rawIntegerPart = "", ...rest] = rawValue.split(",");
+    const rawDecimalPart = rest.join("").slice(0, 2);
+
+    const integerDigits = rawIntegerPart.replace(/\D/g, "");
+    const formattedInteger = integerDigits ? formatPriceWithThousands(integerDigits) : "";
+
+    const formattedPrice = hasComma
+      ? `${formattedInteger || "0"},${rawDecimalPart}`
+      : formattedInteger;
+
+    setForm((prev) => ({ ...prev, precio: formattedPrice }));
     if (touched.precio) {
-      setErrors((prev) => ({ ...prev, precio: validateField("precio", clean) }));
+      setErrors((prev) => ({ ...prev, precio: validateField("precio", formattedPrice) }));
     }
   }
 
@@ -162,6 +176,7 @@ export default function InformacionComercial() {
 
     const payload = {
       ...form,
+      precio: form.precio.replace(/\./g, "").replace(",", "."),
       tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
     };
 
@@ -468,7 +483,7 @@ export default function InformacionComercial() {
           font-size: 0.88rem; color: #1A1714;
           cursor: pointer; transition: background 0.1s;
         }
-        .ic-dd-opt:hover { background: #F5F1EC; }
+        .ic-dd-opt:hover { background: #E0E0E0; }
         .ic-dd-opt.sel { font-weight: 500; }
         .ic-chk { width: 13px; height: 13px; color: #C0503A; flex-shrink: 0; }
         .ic-chk-gap { width: 13px; flex-shrink: 0; }
@@ -598,7 +613,7 @@ export default function InformacionComercial() {
                     id="precio" name="precio"
                     type="text" inputMode="decimal"
                     className={`ic-input${hasErr("precio") ? " err" : ""}`}
-                    placeholder="0.00"
+                    placeholder="1.000,50"
                     value={form.precio}
                     onChange={handlePrecioChange}
                     onBlur={handleBlur}

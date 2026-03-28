@@ -22,7 +22,7 @@ export const TIPOS_OPERACION_BACKEND = [
 ] as const;
 
 const OPERATION_LABELS: Record<string, string> = {
-  Anticretico: "Anticr\u00e9tico",
+  Anticretico: "Anticretico",
 };
 
 export const TIPOS_OPERACION_UI = TIPOS_OPERACION_BACKEND.map(
