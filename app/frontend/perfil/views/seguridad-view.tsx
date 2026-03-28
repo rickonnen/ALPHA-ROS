@@ -1,16 +1,34 @@
+/* Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+    Fecha: 27/03/2026
+    Fix: Fetch de usuario para conectar a la vista de editar perfil
+*/
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
-// IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
+import EditProfile from "./editardatos/editar-datos";
 
-interface SeguridadProps{
+interface SeguridadProps {
   id_usuario: string;
   email: string;
-};
-export default function SeguridadView({id_usuario, email}: SeguridadProps) {
+}
+
+export default function SeguridadView({ id_usuario, email }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
+  const [objUsuario, setObjUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUsuario = async () => {
+      try {
+        const res = await fetch(`/backend/perfil/getUsuario?id_usuario=${id_usuario}`);
+        const json = await res.json();
+        setObjUsuario(json.data);
+      } catch {
+        console.error("Error al cargar usuario");
+      }
+    };
+    fetchUsuario();
+  }, [id_usuario]);
 
   const VIEWS: Record<string, React.ReactNode> = {
     menu: (
@@ -21,13 +39,10 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
         >
           <div className="text-left">
             <p className="font-semibold">Editar Perfil</p>
-            <p className="text-sm text-gray-300">
-              Cambiar nombre, foto y datos personales
-            </p>
+            <p className="text-sm text-gray-300">Cambiar nombre, foto y datos personales</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
           onClick={() => setSubView("password")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
@@ -38,44 +53,41 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
           onClick={() => setSubView("correo")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
-            <p className="text-sm text-gray-300">gmail@gmail.com</p>
+            <p className="text-sm text-gray-300">{email}</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
         <button
           onClick={() => setSubView("telefonos")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
         >
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
-            <p className="text-sm text-gray-300">
-              +591 70054545  +591 54454444487
-            </p>
+            <p className="text-sm text-gray-300">+591 70054545 +591 54454444487</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
       </div>
     ),
 
+    telefonos: <TelefonosView />,
 
-    telefonos: (
-      <TelefonosView />
-    ),
-
-    perfil: (
-      <div>
-        <button onClick={() => setSubView("menu")}>← Volver</button>
-        <p className="mt-4">Vista Editar Perfil...</p>
-      </div>
-    ),
+    perfil: objUsuario ? (
+      <EditProfile
+        usuario={objUsuario}
+        onGuardar={(objDatosActualizados) => {
+          setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
+          setSubView("menu");
+        }}
+        onCancelar={() => setSubView("menu")}
+      />
+    ) : null,
 
     password: (
       <div>
@@ -85,20 +97,16 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
     ),
 
     correo: (
-      <div>
-        <CambiarCorreoView
-          onBack={() => setSubView("menu")}
-          email_actual={email}
-          id_usuario={id_usuario}
-        />
-      </div>
+      <CambiarCorreoView
+        onBack={() => setSubView("menu")}
+        email_actual={email}
+        id_usuario={id_usuario}
+      />
     ),
   };
 
   return (
-    <div
-      className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}
-    >
+    <div className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}>
       {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
       {VIEWS[subView] || VIEWS.menu}
     </div>
