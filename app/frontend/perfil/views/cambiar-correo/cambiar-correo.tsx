@@ -16,18 +16,36 @@
         id_usuario y email_actual
       - Se reemplaza uso de valores fijos por props recibidas desde la vista padre
 */
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc
+    Fecha: 28/03/2026
+    Funcionalidad: Validaciones de formulario + transición al paso de confirmación
+      - Se centraliza estado del formulario en el componente padre:
+        strNewEmail, strPassword y bolTrySubmit
+      - Se aplica validación visual de requeridos y formato de correo
+      - Se corrige flujo de acciones:
+        Cancelar -> onBack
+        Confirmar cambio -> onContinue(nuevoEmail) cuando pasa validaciones
+      - Se integra navegación de flujo interno:
+        Cambiar correo -> Confirmar correo (subsubview)
+*/
 
-/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc 
-    Fecha: 27/03/2026
-    Funcionalidad: Contrato de props del componente CambiarCorreoView
-      - @param {() => void} onBack:
+/*  Dev: Jaime Sebastian Chavarria Fuertes - xdev/sow-sebasc
+    Fecha: 28/03/2026
+    Funcionalidad: Actualización de contrato de props y transición al paso OTP
+      - Se amplía el contrato de CambiarCorreoView con:
+        @param {(nuevoEmail: string) => void} onContinue:
+        callback para avanzar a la subsubvista "Confirmar correo" pasando el nuevo correo validado
+      - Se mantiene:
+        @param {() => void} onBack:
         callback para volver a la subvista principal de Seguridad
-      - @param {string} id_usuario:
+        @param {string} id_usuario:
         identificador del usuario para futuras operaciones de actualización
-      - @param {string} email_actual:
+        @param {string} email_actual:
         correo actual mostrado en campo de solo lectura
+      - Se actualiza el flujo local:
+        si correo/contraseña cumplen validaciones visuales -> onContinue(strNewEmail.trim())
       - @return {JSX.Element}:
-        formulario de cambio de correo con validaciones visuales básicas
+        formulario de cambio de correo con validaciones visuales básicas y transición al paso de confirmación OTP
 */
 "use client";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -39,12 +57,14 @@ import { useState } from "react";
 
 interface CambiarCorreoProps {
   onBack: () => void;
+  onContinue: (nuevoEmail: string) => void;
   id_usuario: string;
   email_actual: string;
 }
 
 export default function CambiarCorreoView({
   onBack,
+  onContinue,
   id_usuario,
   email_actual,
 }: CambiarCorreoProps) {
@@ -97,6 +117,7 @@ export default function CambiarCorreoView({
             "Aqui deberia de hacer la validacion de que el correo sea correcto",
             { id_usuario, strNewEmail, strPassword },
           );
+          onContinue(strNewEmail.trim());
         }}
       />
     </div>

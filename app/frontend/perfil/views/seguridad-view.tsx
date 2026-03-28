@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TelefonosView from "./telefono-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
+import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 // IMPORT COMENTADO TEMPORALMENTE PARA QUE NO FALLE:
 
 interface SeguridadProps{
@@ -11,7 +12,7 @@ interface SeguridadProps{
 };
 export default function SeguridadView({id_usuario, email}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
-
+  const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const VIEWS: Record<string, React.ReactNode> = {
     menu: (
       <div className="space-y-4">
@@ -45,7 +46,7 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
-            <p className="text-sm text-gray-300">gmail@gmail.com</p>
+            <p className="text-sm text-gray-300">{email}</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
@@ -57,7 +58,7 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
             <p className="text-sm text-gray-300">
-              +591 70054545  +591 54454444487
+              +591 70054545 +591 54454444487
             </p>
           </div>
           <span className="text-gray-400">›</span>
@@ -65,10 +66,7 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
       </div>
     ),
 
-
-    telefonos: (
-      <TelefonosView />
-    ),
+    telefonos: <TelefonosView />,
 
     perfil: (
       <div>
@@ -85,13 +83,22 @@ export default function SeguridadView({id_usuario, email}: SeguridadProps) {
     ),
 
     correo: (
-      <div>
-        <CambiarCorreoView
-          onBack={() => setSubView("menu")}
-          email_actual={email}
-          id_usuario={id_usuario}
-        />
-      </div>
+      <CambiarCorreoView
+        onBack={() => setSubView("menu")}
+        onContinue={(nuevoEmail) => {
+          setStrNuevoEmailPendiente(nuevoEmail);
+          setSubView("confirmar-correo");
+        }}
+        email_actual={email}
+        id_usuario={id_usuario}
+      />
+    ),
+    "confirmar-correo": (
+      <ConfirmarCorreoView
+        id_usuario={id_usuario}
+        nuevo_email={strNuevoEmailPendiente}
+        onBack={() => setSubView("correo")}
+      />
     ),
   };
 
