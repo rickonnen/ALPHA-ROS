@@ -21,8 +21,10 @@ export const TIPOS_OPERACION_BACKEND = [
   "Anticretico",
 ] as const;
 
-const OPERATION_LABELS: Record<string, string> = {
-  Anticretico: "Anticretico",
+const OPERATION_LABELS: Record<(typeof TIPOS_OPERACION_BACKEND)[number], string> = {
+  Venta: "Venta",
+  Alquiler: "Alquiler",
+  Anticretico: "Anticrético",
 };
 
 export const TIPOS_OPERACION_UI = TIPOS_OPERACION_BACKEND.map(

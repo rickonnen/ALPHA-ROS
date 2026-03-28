@@ -23,7 +23,7 @@ export default function PrecioInput({
           type="text"
           inputMode="decimal"
           className={`${styles.icInput}${hasError ? ` ${styles.icInputErr}` : ""}`}
-          placeholder="0.00 Bs."
+          placeholder="0,00 Bs."
           value={value}
           onChange={onChange}
           onBlur={onBlur}

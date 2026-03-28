@@ -1,10 +1,9 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
 import styles from "./InformacionComercial.module.css";
 import { useInformacionComercialForm } from "./Hooks/useInformacionComercialForm";
 import DropdownSelect from "./Components/Dropdown.Select";
-import PrecioInput    from "./Components/PrecioInput";
+import PrecioInput from "./Components/PrecioInput";
 import {
   TIPOS_PROPIEDAD,
   TIPOS_OPERACION,
@@ -25,13 +24,16 @@ export default function InformacionComercial() {
     handleDropdownBlur,
     handleCancelar,
     handleSiguiente,
+    isSubmitting,
+    submitStatus,
+    submitMessage,
   } = useInformacionComercialForm();
 
 
   return (
     <div className={styles.icRoot}>
 
-      {/* ── NAVBAR ── */}
+      {/* NAVBAR */}
       <nav className={styles.icNav}>
         <button className={styles.icNavX} aria-label="Cerrar">
           <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -72,7 +74,7 @@ export default function InformacionComercial() {
         </div>
       </nav>
 
-      {/* ── BODY ── */}
+      {/* BODY */}
       <div className={styles.icBody}>
 
         <div className={styles.icHeadingWrap}>
@@ -157,13 +159,31 @@ export default function InformacionComercial() {
 
           {/* Acciones */}
           <div className={styles.icActions}>
-            <button type="button" className={`${styles.icBtn} ${styles.icBtnCancel}`} onClick={handleCancelar}>
+            <button
+              type="button"
+              className={`${styles.icBtn} ${styles.icBtnCancel}`}
+              onClick={handleCancelar}
+              disabled={isSubmitting}
+            >
               Cancelar
             </button>
-            <button type="button" className={`${styles.icBtn} ${styles.icBtnNext}`} onClick={handleSiguiente}>
-              Siguiente
+            <button
+              type="button"
+              className={`${styles.icBtn} ${styles.icBtnNext}`}
+              onClick={handleSiguiente}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Guardando..." : "Siguiente"}
             </button>
           </div>
+          {(submitMessage || errors.general) && (
+            <span
+              className={submitStatus === "success" ? styles.icCnt : styles.icErr}
+              role="status"
+            >
+              {submitMessage || errors.general}
+            </span>
+          )}
         </div>
       </div>
     </div>
