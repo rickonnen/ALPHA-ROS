@@ -34,7 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 interface EditProfileProps {
   usuario: {
@@ -46,8 +46,8 @@ interface EditProfileProps {
     url_foto_perfil?: string | null;
     id_pais?: number | null;
     Pais?: {
-      nombre_pais?: string|null;
-      codigo_iso?: string|null
+      nombre_pais?: string | null;
+      codigo_iso?: string | null;
     } | null;
   };
   onGuardar: (data: any) => void;
@@ -160,6 +160,17 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader>
+          <div className="flex items-center gap-3 mb-1">
+            <Button
+              variant="ghost"
+              onClick={onCancelar}
+              disabled={bolLoading}
+              className="p-0 text-white/60 hover:text-white hover:bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              <span className="text-xs font-black tracking-widest uppercase">Seguridad</span>
+            </Button>
+          </div>
           <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight">
             Editar Perfil
           </CardTitle>
@@ -262,29 +273,29 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2">
-              <Label htmlFor="usuario" className="text-xs font-black tracking-widest text-white/60 uppercase">
-                Usuario
-              </Label>
-              <Badge className="text-xs font-black tracking-widest bg-white/10 text-white/40 border-white/20 hover:bg-white/10">
-                No editable
-             </Badge>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-md px-3 py-2">
-          <span className="text-sm text-white/40 flex-1">
-          {usuario.username ?? ""}
-          </span>
-            {usuario.Pais?.codigo_iso && (
-              <img
-            src={`https://flagcdn.com/24x18/${usuario.Pais.codigo_iso.toLowerCase()}.png`}
-            alt={usuario.Pais.nombre_pais ?? ""}
-            width={24}
-            height={18}
-            className="rounded-sm shadow-md opacity-60"
-              />
-          )}
-        </div>
-        </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="usuario" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                    Usuario
+                  </Label>
+                  <Badge className="text-xs font-black tracking-widest bg-white/10 text-white/40 border-white/20 hover:bg-white/10">
+                    No editable
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-md px-3 py-2">
+                  <span className="text-sm text-white/40 flex-1">
+                    {usuario.username ?? ""}
+                  </span>
+                  {usuario.Pais?.codigo_iso && (
+                    <img
+                      src={`https://flagcdn.com/24x18/${usuario.Pais.codigo_iso.toLowerCase()}.png`}
+                      alt={usuario.Pais.nombre_pais ?? ""}
+                      width={24}
+                      height={18}
+                      className="rounded-sm shadow-md opacity-60"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           <Separator className="bg-white/20" />
