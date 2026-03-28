@@ -1,11 +1,24 @@
 /*  Dev: Candy Camila Ordoñez Pinto
     Fecha: 27/03/2026
     Funcionalidad: Vista de Mis Publicaciones dentro del perfil del usuario
-      - @param {call} - espera a ser llamada desde el menú del perfil
+      - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
       - @return {PublicacionesView} - muestra la lista de publicaciones del usuario
 */
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 27/03/2026
+    Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
+      - @param {publicacion} - datos de la publicación (titulo, zona, tipo, imagen)
+      - @param {onEliminar} - función callback para eliminar la publicación
+      - @param {onInfo} - función callback para ver el detalle de la publicación
+      - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
+*/
+
 "use client";
 
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,71 +29,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
 
-// ID TEMPORAL: falta el id de los de sign in
-const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
+interface PublicacionesViewProps {
+  id_usuario: string;
+}
 
-const ITEMS_POR_PAGINA = 4;
+const ITEMS_POR_PAGINA = 3;
 
-// Mock de datos hasta que el GET /backend/publicaciones esté listo
-const MOCK_PUBLICACIONES: Publicacion[] = [
-  {
-    id: "1",
-    titulo: "Casa en alquiler - Zona Sur",
-    zona: "Zona Sur",
-    tipo: "Alquiler",
-    imagen: null,
-  },
-  {
-    id: "2",
-    titulo: "Departamento en venta - Quillacollo",
-    zona: "Quillacollo",
-    tipo: "Venta",
-    imagen: null,
-  },
-  {
-    id: "3",
-    titulo: "Terreno en venta - Tiquipaya",
-    zona: "Tiquipaya",
-    tipo: "Venta",
-    imagen: null,
-  },
-  {
-    id: "4",
-    titulo: "Oficina en alquiler - Centro",
-    zona: "Centro",
-    tipo: "Alquiler",
-    imagen: null,
-  },
-  {
-    id: "5",
-    titulo: "Local comercial - Sopocachi",
-    zona: "Sopocachi",
-    tipo: "Alquiler",
-    imagen: null,
-  },
-  {
-    id: "6",
-    titulo: "Casa en venta - Sacaba",
-    zona: "Sacaba",
-    tipo: "Venta",
-    imagen: null,
-  },
-  {
-    id: "7",
-    titulo: "Departamento en alquiler - Alalay",
-    zona: "Alalay",
-    tipo: "Alquiler",
-    imagen: null,
-  },
-];
-
-export default function PublicacionesView() {
+export default function PublicacionesView({
+  id_usuario,
+}: PublicacionesViewProps) {
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -89,23 +48,25 @@ export default function PublicacionesView() {
   const [paginaActual, setPaginaActual] = useState(1);
 
   useEffect(() => {
-    // TODO: reemplazar con GET /backend/publicaciones?id_usuario=... cuando esté listo
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
-        await new Promise((r) => setTimeout(r, 800));
-        setPublicaciones(MOCK_PUBLICACIONES);
-      } catch (error) {
-        console.error("Error al cargar publicaciones:", error);
+        const res = await fetch(
+          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}`,
+        );
+        if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
+        const json = await res.json();
+        setPublicaciones(json.data);
+      } catch (err) {
+        console.error("Error al cargar publicaciones:", err);
       } finally {
         setCargando(false);
       }
     };
 
     cargarPublicaciones();
-  }, []);
+  }, [id_usuario]);
 
-  // Cálculo de paginación
   const totalPaginas = Math.ceil(publicaciones.length / ITEMS_POR_PAGINA);
   const publicacionesPaginadas = publicaciones.slice(
     (paginaActual - 1) * ITEMS_POR_PAGINA,
@@ -123,7 +84,7 @@ export default function PublicacionesView() {
       setError(null);
 
       const res = await fetch(
-        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${ID_USUARIO_HARDCODEADO}`,
+        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
         { method: "DELETE" },
       );
 
@@ -136,7 +97,6 @@ export default function PublicacionesView() {
       setPublicaciones(nuevas);
       setIdAEliminar(null);
 
-      // Ajustar página si quedó vacía
       const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
       if (paginaActual > nuevoTotal && nuevoTotal > 0) {
         setPaginaActual(nuevoTotal);
