@@ -10,13 +10,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-
 import ListaPagos from "./lista-pagos";
 
 export default function TabsPagos() {
   return (
     <Tabs defaultValue="pendientes" className="w-full">
-
       <TabsList className="flex gap-2 bg-transparent p-0">
 
         {/* PENDIENTES */}
@@ -50,7 +48,6 @@ export default function TabsPagos() {
         >
           PAGOS REALIZADOS
         </TabsTrigger>
-
         {/* RECHAZADOS (DESHABILITADO) */}
         <TabsTrigger
           value="rechazados"
@@ -63,17 +60,13 @@ export default function TabsPagos() {
         >
           PAGOS RECHAZADOS
         </TabsTrigger>
-
       </TabsList>
-
       <TabsContent value="pendientes">
         <ListaPagos estado="pendiente" />
       </TabsContent>
-
       <TabsContent value="realizados">
         <ListaPagos estado="realizado" />
       </TabsContent>
-
     </Tabs>
   );
 }

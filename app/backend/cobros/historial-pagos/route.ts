@@ -6,7 +6,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
@@ -18,20 +17,24 @@ export async function GET(req: NextRequest) {
         id_usuario: userId,
 
         ...(estado === "pendiente" && {
-          estado: 1, // pendiente
+          estado: 1,
         }),
         ...(estado === "realizado" && {
-          estado: 2, // verificado
+          estado: 2,
         }),
         ...(estado === "rechazado" && {
           estado: 3,
-}),
+        }),
       },
+
+      include: {
+        PlanPublicacion: true, // 👈 AQUI TRAES EL PLAN
+      },
+
       orderBy: {
         fecha_detalle: "desc",
       },
     });
-
     return NextResponse.json(pagos);
   } catch (error) {
     return NextResponse.json(
