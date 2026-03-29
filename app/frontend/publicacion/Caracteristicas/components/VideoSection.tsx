@@ -22,11 +22,12 @@ type PreviewData = {
 
 interface VideoSectionProps {
   onURLChange: (url: string) => void;
+  defaultUrl?: string;
 }
 
-export function VideoSection({ onURLChange }: VideoSectionProps) {
+export function VideoSection({ onURLChange, defaultUrl }: VideoSectionProps) {
   // Prefijo str para estados de string, obj para estados de objetos
-  const [strUrl, setStrUrl] = useState("")
+  const [strUrl, setStrUrl] = useState(defaultUrl)
   const [objPreview, setObjPreview] = useState<PreviewData>({ platform: null, id: null })
 
   /**
