@@ -107,7 +107,7 @@ const strReelId = bolEsInstagram && strVideoUrl
             <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
               Descripción
             </h2>
-            <p className="whitespace-pre-line text-lg leading-relaxed opacity-90">
+            <p className="whitespace-pre-line text-base leading-relaxed opacity-90">
               {objPerfil.descripcion}
             </p>
           </div>
