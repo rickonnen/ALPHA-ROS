@@ -723,11 +723,11 @@ model Rol {
 }
 
 model Telefono {
+  id_telefono     Int               @id(map: "Telefono_pk") @default(autoincrement()) @db.SmallInt
   nro_telefono    String            @db.VarChar(12)
   codigo_pais     Int               @db.SmallInt
   UsuarioTelefono UsuarioTelefono[]
 
-  @@id([nro_telefono, codigo_pais], map: "Telefono_pk")
   @@schema("public")
 }
 
@@ -794,13 +794,13 @@ model Usuario {
 }
 
 model UsuarioTelefono {
-  nro_telefono String   @db.VarChar(12)
-  codigo_pais  Int      @db.SmallInt
-  id_usuario   String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  Telefono     Telefono @relation(fields: [nro_telefono, codigo_pais], references: [nro_telefono, codigo_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
-  Usuario      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
+  id_uste     Int      @id(map: "UsuarioTelefono_pk") @default(autoincrement()) @db.SmallInt
+  id_telefono Int      @db.SmallInt
+  id_usuario  String   @db.Uuid
+  estado      Int?     @default(1) @db.SmallInt
+  Telefono    Telefono @relation(fields: [id_telefono], references: [id_telefono], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
+  Usuario     Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
 
-  @@id([id_usuario, nro_telefono, codigo_pais], map: "UsuarioTelefono_pk")
   @@schema("public")
 }
 
