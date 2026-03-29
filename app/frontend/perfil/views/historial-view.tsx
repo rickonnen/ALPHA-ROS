@@ -22,7 +22,9 @@ export default function HistorialView() {
       <h2 className="text-2xl font-bold mb-4">Historial</h2>
 
       {historial.length === 0 ? (
-        <p>No hay historial</p>
+        <p className="text-center text-gray-300">
+          No historial available yet
+        </p>
       ) : (
         <div className="space-y-4">
           {historial.map((item) => (
