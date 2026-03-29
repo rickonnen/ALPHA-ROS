@@ -115,7 +115,7 @@ export const Header = (objProps: HeaderProps) => {
 
         <div className="hidden lg:flex flex-row items-center gap-6">
           {btnLogoProbol}
-          <Link href="/frontend/cobros/pricing" className={strLinkClassesDesktop}>
+          <Link href="/frontend/cobros/planes" className={strLinkClassesDesktop}>
             PLANES DE PUBLICACIÓN
           </Link>
         </div>
@@ -195,7 +195,7 @@ export const Header = (objProps: HeaderProps) => {
               </Link>
             ))}
 
-            <Link href="/frontend/cobros/pricing" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
+            <Link href="/frontend/cobros/plames" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
