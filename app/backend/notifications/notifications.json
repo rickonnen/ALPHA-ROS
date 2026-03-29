@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "title": "Recordatorio",
+    "message": "Tienes una nueva cita agendada para mañana",
+    "read": true
+  },
+  {
+    "id": 2,
+    "title": "Mensaje inmobiliario",
+    "message": "Nueva propiedad disponible en tu zona",
+    "read": true
+  },
+  {
+    "id": 3,
+    "title": "Nuevo mensaje",
+    "message": "Un agente quiere contactarse contigo",
+    "read": true
+  },
+  {
+    "id": 4,
+    "title": "Nuevo favorito",
+    "message": "Alguien guardó tu propiedad",
+    "read": true
+  },
+  {
+    "id": 5,
+    "title": "Pago recibido 5",
+    "message": "Has recibido un pago de Bs. 500",
+    "read": true
+  },
+  {
+    "id": 6,
+    "title": "Pago recibido 6",
+    "message": "Has recibido un pago de Bs. 600",
+    "read": true
+  },
+  {
+    "id": 7,
+    "title": "Pago recibido 7",
+    "message": "Has recibido un pago de Bs. 700",
+    "read": true
+  },
+  {
+    "id": 8,
+    "title": "Pago recibido 8",
+    "message": "Has recibido un pago de Bs. 800",
+    "read": true
+  },
+  {
+    "id": 9,
+    "title": "Pago recibido 9",
+    "message": "Has recibido un pago de Bs. 900",
+    "read": true
+  },
+  {
+    "id": 10,
+    "title": "Pago recibido 1000",
+    "message": "Has recibido un pago de Bs. 1000",
+    "read": true
+  }
+]
