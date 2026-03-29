@@ -96,7 +96,7 @@ export default function DropdownSelect({
               <SelectItem
                 key={strOpt}
                 value={strOpt}
-                className="py-[12px] pr-[16px] pl-[32px] text-[0.88rem] text-[#1A1714] cursor-pointer focus:bg-[#F5F1EC] focus:text-[#1A1714] data-[state=checked]:font-medium [&>span:first-child]:left-2"
+                className="py-[12px] pr-[16px] pl-[32px] text-[0.88rem] text-[#1A1714] cursor-pointer hover:bg-[#E5E5E5] focus:bg-[#E5E5E5] focus:text-[#1A1714] data-[highlighted]:bg-[#E5E5E5] data-[state=checked]:font-medium [&>span:first-child]:left-2"
               >
                 {strOpt}
               </SelectItem>
