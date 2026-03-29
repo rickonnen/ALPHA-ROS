@@ -55,6 +55,15 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
     cargarHistorial();
   }, [id_usuario]);
 
+  const handleEliminar = (id_publicacion: number) => {
+    const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
+    setHistorial(nuevos);
+    const nuevoTotal = Math.ceil(nuevos.length / ITEMS_POR_PAGINA);
+    if (paginaActual > nuevoTotal && nuevoTotal > 0) {
+      setPaginaActual(nuevoTotal);
+    }
+  };
+
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
@@ -115,6 +124,18 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
                     onClick={() => alert(`Publicación: ${item.Publicacion.titulo}`)}
                   >
                     Info
+                  </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-400 hover:text-red-200"
+                    onClick={() => {
+                      if (confirm("¿Eliminar del historial?")) {
+                        handleEliminar(item.id_publicacion);
+                      }
+                    }}
+                  >
+                    Eliminar
                   </Button>
                 </div>
               </div>
