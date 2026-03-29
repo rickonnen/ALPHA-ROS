@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Geist } from "next/font/google";
+import { buscarPublicaciones, type FiltrosPublicacion } from "@/app/frontend/search/search-services";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -15,7 +16,12 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
 const TIPOS_INMUEBLE = ["Casa", "Departamento", "Terreno", "Local Comercial", "Oficina"];
 const OPERACIONES = ["En venta", "En alquiler", "Anticrético"];
 
-export default function FiltrosInmueble() {
+interface Props {
+  filtrosAvanzados: { habitaciones: string; banos: string; piscina: string };
+  onResultados: (resultados: any[]) => void;
+}
+
+export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Props) {
   const [ubicacion, setUbicacion] = useState("");
   const [sugerencias, setSugerencias] = useState<MapboxFeature[]>([]);
   const [abierto, setAbierto] = useState(false);
@@ -23,6 +29,7 @@ export default function FiltrosInmueble() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(false);
   const [buscado, setBuscado] = useState(false);
+  const [buscando, setBuscando] = useState(false);
 
   const [operacion, setOperacion] = useState("En venta");
   const [tipo, setTipo] = useState("");
@@ -35,10 +42,7 @@ export default function FiltrosInmueble() {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setAbierto(false);
         setAbiertoOperacion(false);
         setAbiertoTipo(false);
@@ -90,11 +94,8 @@ export default function FiltrosInmueble() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
-
     val = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s,]/g, "");
-
     setUbicacion(val);
-
     setTimeout(() => buscar(val), 300);
   };
 
@@ -102,6 +103,24 @@ export default function FiltrosInmueble() {
     setUbicacion(feature.place_name);
     setSugerencias([]);
     setAbierto(false);
+  };
+
+  const handleAplicar = async () => {
+    setBuscando(true);
+    try {
+      const filtros: FiltrosPublicacion = {
+        ubicacion,
+        operacion,
+        tipoInmueble: tipo,
+        ...filtrosAvanzados,
+      };
+      const resultados = await buscarPublicaciones(filtros);
+      onResultados(resultados);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBuscando(false);
+    }
   };
 
   return (
@@ -131,15 +150,13 @@ export default function FiltrosInmueble() {
                   Error al obtener sugerencias
                 </li>
               )}
-
               {!error && buscado && sugerencias.length === 0 && (
                 <li className="px-3 py-2 text-sm text-gray-500">
                   No se encontraron resultados
                 </li>
               )}
-
               {!error &&
-                sugerencias.map((feat, i) => (
+                sugerencias.map((feat) => (
                   <li
                     key={feat.id}
                     onMouseDown={() => handleSelect(feat)}
@@ -179,7 +196,6 @@ export default function FiltrosInmueble() {
           )}
         </div>
 
-
         <div className="relative">
           <button
             onClick={() => setAbiertoTipo(!abiertoTipo)}
@@ -208,8 +224,12 @@ export default function FiltrosInmueble() {
         </div>
       </div>
 
-      <button className="mt-4 w-full py-2 bg-[#1F3A4D] hover:bg-[#C26E5A] text-white text-sm rounded-md cursor-pointer">
-        Aplicar filtros
+      <button
+        onClick={handleAplicar}
+        disabled={buscando}
+        className="mt-4 w-full py-2 bg-[#1F3A4D] hover:bg-[#C26E5A] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm rounded-md cursor-pointer transition-colors"
+      >
+        {buscando ? "Buscando..." : "Aplicar filtros"}
       </button>
     </div>
   );

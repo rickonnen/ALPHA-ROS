@@ -79,7 +79,11 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
   );
 }
 
-export default function FiltrosAvanzado() {
+interface Props {
+  onChange: (valores: { habitaciones: string; banos: string; piscina: string }) => void;
+}
+
+export default function FiltrosAvanzado({ onChange }: Props) {
   const [abierto, setAbierto] = useState(false);
 
   const [habitaciones, setHabitaciones] = useState("");
@@ -87,6 +91,11 @@ export default function FiltrosAvanzado() {
   const [piscina, setPiscina] = useState("");
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const actualizar = (campo: string, valor: string) => {
+    const nuevo = { habitaciones, banos, piscina, [campo]: valor };
+    onChange(nuevo);
+  };
 
   return (
     <div
@@ -112,21 +121,21 @@ export default function FiltrosAvanzado() {
             label="Número total de habitaciones"
             opciones={HABITACIONES}
             valor={habitaciones}
-            onChange={setHabitaciones}
+            onChange={(v) => { setHabitaciones(v); actualizar("habitaciones", v); }}
           />
 
           <SubDropdown
             label="Baños"
             opciones={BANOS}
             valor={banos}
-            onChange={setBanos}
+            onChange={(v) => { setBanos(v); actualizar("banos", v); }}
           />
 
           <SubDropdown
             label="Piscina"
             opciones={PISCINA}
             valor={piscina}
-            onChange={setPiscina}
+            onChange={(v) => { setPiscina(v); actualizar("piscina", v); }}
           />
         </div>
       )}

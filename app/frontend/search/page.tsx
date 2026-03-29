@@ -3,7 +3,8 @@ import AdvancedFilters from "@/components/ui/advanced-filters"
 
 export default function Search() {
     return <>
-    <Filters/>
     <AdvancedFilters/>
+    <Filters/>
+
     </>
 }
