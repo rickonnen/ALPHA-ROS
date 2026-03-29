@@ -10,24 +10,15 @@ export interface PublicacionCreadaResult {
 export async function crearInformacionComercial(
   input: PublicacionCreateInput
 ): Promise<PublicacionCreadaResult> {
-  // Calcular siguiente ID manualmente (id_publicacion no tiene autoincrement)
-  const ultimo = await prisma.publicacion.findFirst({
-    orderBy: { id_publicacion: "desc" },
-    select: { id_publicacion: true },
-  });
-  const nuevoId = (ultimo?.id_publicacion ?? 0) + 1;
-
   const publicacion = await prisma.publicacion.create({
     data: {
-      id_publicacion: nuevoId,
-      titulo:         input.titulo,
-      descripcion:    input.descripcion,
-      precio:         input.precio,
-      // FK opcionales — se conectan cuando tengamos los IDs reales de la BD
-       id_tipo_inmueble:  input.id_tipo_inmueble,
-       id_tipo_operacion: input.id_tipo_operacion,
-      // id_estado:         input.id_estado,
-      // id_usuario:        input.id_usuario,  // requiere UUID válido en tabla Usuario
+      titulo:            input.titulo,
+      descripcion:       input.descripcion,
+      precio:            input.precio,
+      id_tipo_inmueble:  input.id_tipo_inmueble,
+      id_tipo_operacion: input.id_tipo_operacion,
+      // id_estado:      input.id_estado,
+      // id_usuario:     input.id_usuario, // requiere UUID válido en tabla Usuario
     },
     select: {
       id_publicacion: true,

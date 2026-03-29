@@ -1,7 +1,7 @@
 "use client";
 
-import styles from "../InformacionComercial.module.css";
-import priceStyles from "./PrecioInput.module.css";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface PrecioInputProps {
   value:     string;
@@ -15,24 +15,28 @@ export default function PrecioInput({
   value, hasError, errorMsg, onChange, onBlur,
 }: PrecioInputProps) {
   return (
-    <div className={`${styles.icField} ${priceStyles.fieldPrecio}`}>
-      <label className={styles.icLabel} htmlFor="precio">Precio</label>
-      <div className={priceStyles.precioWrap}>
-        <input
-          id="precio"
-          name="precio"
-          type="text"
-          inputMode="decimal"
-          className={`${styles.icInput}${hasError ? ` ${styles.icInputErr}` : ""}`}
-          placeholder="0,00 Bs."
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-          autoComplete="off"
-        />
-      </div>
+    <div className="flex flex-col gap-1.5 mb-4 w-full sm:w-[110px] flex-1 sm:flex-initial">
+      <Label htmlFor="precio" className="text-[0.82rem] font-medium text-[#1A1714]">
+        Precio
+      </Label>
+      <Input
+        id="precio"
+        name="precio"
+        type="text"
+        inputMode="decimal"
+        placeholder="0,00 Bs."
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        autoComplete="off"
+        className={`h-10 text-[0.88rem] text-[#1A1714] ${
+          hasError
+            ? "border-[#C0503A] focus-visible:ring-0"
+            : "border-[#D4CFC6] focus-visible:ring-0"
+        }`}
+      />
       {hasError && errorMsg && (
-        <span className={styles.icErr}>{errorMsg}</span>
+        <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errorMsg}</span>
       )}
     </div>
   );
