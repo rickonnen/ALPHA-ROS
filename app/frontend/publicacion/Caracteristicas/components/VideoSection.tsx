@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * @Dev: Stefany Saavedra, Andres Choque
+ * @Dev: StefanyS, AndresC
  * @Fecha: 28/03/2026
  * @Funcionalidad: Componente de sección de video para el formulario de publicación de inmueble.
  * Permite al usuario ingresar una URL de YouTube o Instagram Reel y muestra una vista previa.
@@ -30,7 +30,7 @@ export function VideoSection({ onURLChange }: VideoSectionProps) {
   const [objPreview, setObjPreview] = useState<PreviewData>({ platform: null, id: null })
 
   /**
-   * @Dev: Stefany Saavedra
+   * @Dev: StefanyS
    * @Fecha: 28/03/2026
    * @Funcionalidad: Extrae el ID de un video de YouTube desde distintos formatos de URL.
    * @param {string} strInputUrl - URL ingresada por el usuario.
@@ -56,7 +56,7 @@ export function VideoSection({ onURLChange }: VideoSectionProps) {
   }
 
   /**
-   * @Dev: Andres Choque
+   * @Dev: AndresC
    * @Fecha: 28/03/2026
    * @Funcionalidad: Extrae el ID de un Reel o post de Instagram desde la URL.
    * @param {string} strInputUrl - URL ingresada por el usuario.
@@ -73,7 +73,7 @@ export function VideoSection({ onURLChange }: VideoSectionProps) {
   }
 
   /**
-   * @Dev: Stefany Saavedra
+   * @Dev: StefanyS
    * @Fecha: 28/03/2026
    * @Funcionalidad: Maneja el cambio en el input de URL, valida la plataforma y actualiza la vista previa.
    * @param {ChangeEvent<HTMLInputElement>} e - Evento de cambio del input.
@@ -103,7 +103,7 @@ export function VideoSection({ onURLChange }: VideoSectionProps) {
 
   return (
     /**
-     * @Dev: Andres Choque
+     * @Dev: AndresC
      * @Fecha: 28/03/2026
      * @Funcionalidad: Renderiza el label e input vacío base del componente (Shadcn UI).
      */
