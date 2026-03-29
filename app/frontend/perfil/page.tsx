@@ -94,6 +94,7 @@ export default function PerfilPage() {
         id_usuario={ID_USUARIO_HARDCODEADO}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
+        onSuccess={() => setView("perfil")}
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,

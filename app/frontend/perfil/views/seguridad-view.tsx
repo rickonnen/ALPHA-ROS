@@ -14,8 +14,9 @@ interface SeguridadProps {
   id_usuario: string;
   email: string;
   telefonos: string[];
+  onSuccess: () => void;
 };
-export default function SeguridadView({id_usuario, email, telefonos}: SeguridadProps) {
+export default function SeguridadView({id_usuario, email, telefonos, onSuccess}: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
@@ -102,7 +103,12 @@ export default function SeguridadView({id_usuario, email, telefonos}: SeguridadP
     ) : null,
 
     password: (
-      <ChangePasswordForm id_usuario={id_usuario} email={email} onCancel={() => setSubView("menu")} />
+      <ChangePasswordForm 
+        id_usuario={id_usuario} 
+        email={email} 
+        onCancel={() => setSubView("menu")}
+        onSuccess={onSuccess}
+      />
     ),
 
     correo: (
