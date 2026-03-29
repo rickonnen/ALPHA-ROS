@@ -19,6 +19,7 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -62,9 +63,9 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     return newErrors;
   }
 
-  // Botón deshabilitado si hay errores activos
-  function hasErrors() {
-    return Object.keys(errors).length > 0;
+  // Botón deshabilitado si hay errores activos O campos vacíos
+  function isFormValid() {
+    return email.trim() !== "" && password !== "" && Object.keys(errors).length === 0;
   }
 
   // Submit
@@ -83,13 +84,14 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     }
 
     setErrors({});
+    setGeneralError("");
     setLoading(true);
 
     try {
       await login(email, password);
       setShowSuccess(true);
     } catch (err: any) {
-      setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
+      setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -152,8 +154,8 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
 
 
         {/* Error general */}
-        {errors.general && (
-          <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{errors.general}</p>
+        {generalError && (
+          <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
         )}
 
 
@@ -262,10 +264,10 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
         {/* Boton enviar */}
         <button
           type="submit"
-          disabled={loading || hasErrors()}
+          disabled={loading || !isFormValid()}
           style={{
             width: "100%",
-            backgroundColor: loading || hasErrors() ? "#e5a89f" : "#C85A4F",
+            backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C85A4F",
             color: "white",
             fontWeight: "bold",
             padding: "12px",
