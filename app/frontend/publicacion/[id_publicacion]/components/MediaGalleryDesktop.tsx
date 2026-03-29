@@ -84,58 +84,46 @@ export const MediaGalleryDesktop = ({
         ))}
       </div>
     </div>
-    {/* Columna derecha */}
+    {/* Columna derecha: Slots 2 y 3 */}
     <div className="flex flex-col gap-4">
-      {/* Task 4.5: Slot 2 — YouTube, Instagram Reel, o imagen 2 */}
-      <div className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-inner">
+      {/* Slot 2: Video o Imagen 2 */}
+      <div className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-inner relative">
         {strVideoId ? (
-          <iframe
-            className="w-full h-full border-0"
-            src={`https://www.youtube.com/embed/${strVideoId}`}
-            title="Video del inmueble"
-            allowFullScreen
-          />
+          <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${strVideoId}`} title="Video" allowFullScreen />
         ) : strReelId ? (
-          <iframe
-            className="w-full h-full border-0"
-            src={`https://www.instagram.com/reel/${strReelId}/embed`}
-            title="Reel del inmueble"
-            allowFullScreen
-          />
+          <iframe className="w-full h-full border-0" src={`https://www.instagram.com/reel/${strReelId}/embed`} title="Reel" allowFullScreen />
         ) : (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-    src={arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] || strFallback}
-    onError={(e) => onImgError(e, (intCurrentIndex + 1) % arrImagenesSafe.length)}
-    onClick={() => onOpenLightbox((intCurrentIndex + 1) % arrImagenesSafe.length)}
-    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
-    alt="Vista secundaria"
-  />
-          </>
+          <img
+            src={arrImagenesSafe.length > 1 ? arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] : strFallback}
+            onError={(e) => onImgError(e)}
+            onClick={() => arrImagenesSafe.length > 1 && onOpenLightbox((intCurrentIndex + 1) % arrImagenesSafe.length)}
+            className={`w-full h-full object-cover transition ${arrImagenesSafe.length > 1 ? "cursor-pointer hover:opacity-90" : ""}`}
+            alt="Vista secundaria"
+          />
         )}
       </div>
-      {/* Task 4.4: Slot 3 — imagen 2 si hay video o reel, imagen 3 si no */}
+
+      {/* Slot 3: Imagen 2 (si hay video) o Imagen 3 (si no hay video) */}
       <div
-        className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:opacity-90 transition"
-        onClick={() => onOpenLightbox(strVideoId || strReelId ? 1 : 2)}
+        className={`h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm transition ${
+          ((strVideoId || strReelId) && arrImagenesSafe.length > 1) || (!strVideoId && !strReelId && arrImagenesSafe.length > 2) ? "cursor-pointer hover:opacity-90" : ""
+        }`}
+        onClick={() => {
+          if ((strVideoId || strReelId) && arrImagenesSafe.length > 1) onOpenLightbox(1);
+          else if (!strVideoId && !strReelId && arrImagenesSafe.length > 2) onOpenLightbox(2);
+        }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-    src={
-      strVideoId || strReelId
-        ? arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] || strFallback
-        : arrImagenesSafe[(intCurrentIndex + 2) % arrImagenesSafe.length] || strFallback
-    }
-    onError={(e) => onImgError(e,
-      strVideoId || strReelId
-        ? (intCurrentIndex + 1) % arrImagenesSafe.length
-        : (intCurrentIndex + 2) % arrImagenesSafe.length
-    )}
-    className="w-full h-full object-cover"
-    alt="Vista adicional"
-  />
-</div>
+          src={
+            strVideoId || strReelId
+              ? (arrImagenesSafe.length > 1 ? arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] : strFallback)
+              : (arrImagenesSafe.length > 2 ? arrImagenesSafe[(intCurrentIndex + 2) % arrImagenesSafe.length] : strFallback)
+          }
+          onError={(e) => onImgError(e)}
+          className="w-full h-full object-cover"
+          alt="Vista adicional"
+        />
+      </div>
     </div>
   </div>
 );

@@ -178,10 +178,7 @@ async function guardarPublicacionCompleta(
       `
     }
 
-    return {
-      success:       true,
-      idPublicacion,
-    }
+    return { success: true, idPublicacion: resultado[0].id_publicacion }
 
   } catch (err) {
     console.error('[guardarPublicacionCompleta] Error en DB:', err)

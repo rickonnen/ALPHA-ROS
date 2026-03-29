@@ -80,9 +80,10 @@ export default function CaracteristicasPage() {
           sessionStorage.removeItem("informacionComercialDraft")
           sessionStorage.removeItem("videoUrl")
           setSubmitOk(true)
+          console.log("ID generado por la DB:", result.idPublicacion);
           
           // --- ÚNICO CAMBIO: REDIRECCIÓN ---
-          router.push("/frontend/publicacion/[id_publicacion]") 
+          router.push(`/frontend/publicacion/${result.idPublicacion}`);
           // ---------------------------------
           
         } else {

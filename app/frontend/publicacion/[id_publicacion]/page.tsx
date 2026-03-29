@@ -10,7 +10,7 @@ import { notFound } from "next/navigation";
 import { Tag, Ruler } from "lucide-react";
 import { MediaGallery } from "@/app/frontend/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
-import { getPerfilInmueble } from "@/app/backend/publicacion/getPerfilInmueble";
+import { getPerfilInmueble } from "@/app/backend/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyActions";
 
 export default async function PerfilInmueblePage({
@@ -18,8 +18,20 @@ export default async function PerfilInmueblePage({
 }: {
   params: Promise<{ id_publicacion: string }>;
 }) {
+  // 1. Esperamos los parámetros
   const { id_publicacion } = await params;
-  const objPerfil = await getPerfilInmueble(Number(id_publicacion));
+  
+  // 2. Convertimos a número de forma segura
+  const intId = parseInt(id_publicacion, 10);
+
+  // 3. Validamos: si no es un número, mandamos a 404 de una vez
+  if (isNaN(intId)) {
+    return notFound();
+  }
+
+  // 4. Llamamos a la DB con el número validado
+  const objPerfil = await getPerfilInmueble(intId);
+  
   if (!objPerfil) return notFound();
   // Task 4.5: Extraer video ID según plataforma (YouTube, YouTube Shorts, Instagram Reel)
 const strVideoUrl = objPerfil.Video?.[0]?.url_video ?? null;
