@@ -36,6 +36,7 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   try {
     const { numero, id_usuario } = await req.json();
+
     if (!numero || !id_usuario) {
       return NextResponse.json(
         { error: "Faltan datos obligatorios" },
@@ -56,6 +57,17 @@ export async function POST(req: Request) {
     const nro_telefono = phone.nationalNumber;
 
     const resultado = await prisma.$transaction(async (tx) => {
+
+      const cantidadActivos = await tx.usuarioTelefono.count({
+        where: {
+          id_usuario,
+          estado: 1,
+        },
+      });
+
+      if (cantidadActivos >= 3) {
+        throw new Error("MAX_TELEFONOS");
+      }
 
       let telefono = await tx.telefono.findFirst({
         where: {
@@ -80,7 +92,6 @@ export async function POST(req: Request) {
           estado: 1,
         },
       });
-
 
       if (existeActivo) {
         throw new Error("TELEFONO_YA_ACTIVO");
@@ -114,6 +125,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "El usuario ya tiene este teléfono activo" },
         { status: 409 }
+      );
+    }
+
+    if (error instanceof Error && error.message === "MAX_TELEFONOS") {
+      return NextResponse.json(
+        { error: "El usuario ya tiene el máximo de teléfonos (3)" },
+        { status: 400 }
       );
     }
 
