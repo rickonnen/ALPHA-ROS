@@ -22,12 +22,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
-import PublicacionesView from "./views/publicaciones-view";
 import PerfilView from "./views/perfil-view";
 // Importan sus respectivas vistas
 import SeguridadView from "./views/seguridad-view";
-//import PublicacionesView from "./views/publicaciones-view";
-//import FavoritoView from "./views/favorito-view";
+import PublicacionesView from "./views/publicaciones-view";
+import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
@@ -57,7 +56,7 @@ export default function PerfilPage() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/backend/perfil/get?id_usuario=${ID_USUARIO_HARDCODEADO}`
+          `/backend/perfil/getUsuario?id_usuario=${ID_USUARIO_HARDCODEADO}`
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -84,12 +83,18 @@ export default function PerfilPage() {
     (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
   ) ?? [];
 
+  
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-
-    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad: <SeguridadView />,
-    publicaciones: <div className="p-8">Vista de Publicaciones</div>,
-    favoritos: <div className="p-8">Vista de Favoritos</div>,
+    perfil: usuario ? (<PerfilView usuario={usuario} telefonos={telefonos} />) : null,
+    publicaciones: usuario ? (<PublicacionesView id_usuario={usuario.id_usuario} />) : null,
+    seguridad: (
+      <SeguridadView
+        id_usuario={ID_USUARIO_HARDCODEADO}
+        email={usuario?.email ?? ""}
+        telefonos={telefonos}
+      />
+    ),
+    favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
     historial: <div className="p-8">Vista de Historial</div>,
   };
 
@@ -97,7 +102,7 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <HeaderMock />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 md:py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
 
         {loading && (
           <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
@@ -114,7 +119,7 @@ export default function PerfilPage() {
 
         {!loading && !error && usuario && (
           <>
-            <div id="info" className="flex items-center justify-between gap-6 mb-6 md:mb-8">
+            <div id="info" className="flex items-center justify-between gap-6 mb-5 md:mb-5">
               <div className="flex items-center gap-4 md:gap-6">
                 <img
                   src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}

@@ -1,25 +1,41 @@
 /* Dev: Camila - xdev/sow-camila
     Fecha: 28/03/2026
-    Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)*/
+    Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
+*/
 "use client";
+import { useState, useEffect } from "react";
+import TelefonosView from "./telefono-view";
+import ChangePasswordForm from "./contrasena-view";
+import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
+import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
+import EditProfile from "./editardatos/editar-datos";
 
-import { useState } from "react";
-
-// interface 
-export interface SeguridadProps {
-  id_usuario?: string;
-  email_actual?: string;
-  usuario?: any;
-  telefonos?: string[];
-}
-
-export default function SeguridadView({ id_usuario, email_actual, usuario, telefonos = [] }: SeguridadProps) {
+interface SeguridadProps {
+  id_usuario: string;
+  email: string;
+  telefonos: string[];
+};
+export default function SeguridadView({ id_usuario, email, telefonos }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
+  const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
+  const [objUsuario, setObjUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUsuario = async () => {
+      try {
+        const res = await fetch(`/backend/perfil/getUsuario?id_usuario=${id_usuario}`);
+        const json = await res.json();
+        setObjUsuario(json.data);
+      } catch {
+        console.error("Error al cargar usuario");
+      }
+    };
+    fetchUsuario();
+  }, [id_usuario]);
 
   const VIEWS: Record<string, React.ReactNode> = {
     menu: (
       <div className="space-y-4">
-        {/* editar perfil */}
         <button
           onClick={() => setSubView("perfil")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
@@ -30,8 +46,6 @@ export default function SeguridadView({ id_usuario, email_actual, usuario, telef
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
-        {/* password */}
         <button
           onClick={() => setSubView("password")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
@@ -42,20 +56,16 @@ export default function SeguridadView({ id_usuario, email_actual, usuario, telef
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
-        {/* correo */}
         <button
           onClick={() => setSubView("correo")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
-            <p className="text-sm text-gray-300">{usuario?.email || email_actual || "gmail@gmail.com"}</p>
+            <p className="text-sm text-gray-300">{email}</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
-
-        {/* telefonos */}
         <button
           onClick={() => setSubView("telefonos")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
@@ -63,7 +73,7 @@ export default function SeguridadView({ id_usuario, email_actual, usuario, telef
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
             <p className="text-sm text-gray-300">
-              {telefonos.length > 0 ? telefonos.join(" - ") : "+591 70054545"}
+              {telefonos.length > 0 ? telefonos.join(' · ') : 'Sin teléfonos'}
             </p>
           </div>
           <span className="text-gray-400">›</span>
@@ -71,45 +81,53 @@ export default function SeguridadView({ id_usuario, email_actual, usuario, telef
       </div>
     ),
 
-    perfil: (
-      <div>
-        <button onClick={() => setSubView("menu")} className="text-gray-400 hover:text-white transition-colors">
-          ← Volver
-        </button>
-        <p className="mt-4">Vista Editar Perfil (Cargando)...</p>
-      </div>
+
+    telefonos: (
+      <TelefonosView
+        telefonos={telefonos}
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")}
+      />
     ),
 
+    perfil: objUsuario ? (
+      <EditProfile
+        usuario={objUsuario}
+        onGuardar={(objDatosActualizados) => {
+          setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
+          setSubView("menu");
+        }}
+        onCancelar={() => setSubView("menu")}
+      />
+    ) : null,
+
     password: (
-      <div>
-        <button onClick={() => setSubView("menu")} className="text-gray-400 hover:text-white transition-colors">
-          ← Volver
-        </button>
-        <p className="mt-4">Vista Password (Cargando)...</p>
-      </div>
+      <ChangePasswordForm onCancel={() => setSubView("menu")} />
     ),
 
     correo: (
-      <div>
-        <button onClick={() => setSubView("menu")} className="text-gray-400 hover:text-white transition-colors">
-          ← Volver2222
-        </button>
-        <p className="mt-4">Vista Correo (Cargando)...</p>
-      </div>
+      <CambiarCorreoView
+        onBack={() => setSubView("menu")}
+        onContinue={(nuevoEmail) => {
+          setStrNuevoEmailPendiente(nuevoEmail);
+          setSubView("confirmar-correo");
+        }}
+        email_actual={email}
+        id_usuario={id_usuario}
+      />
+    ),
+    "confirmar-correo": (
+      <ConfirmarCorreoView
+        id_usuario={id_usuario}
+        nuevo_email={strNuevoEmailPendiente}
+        onBack={() => setSubView("correo")}
+      />
     ),
 
-    telefonos: (
-      <div>
-        <button onClick={() => setSubView("menu")} className="text-gray-400 hover:text-white transition-colors">
-          ← Volver
-        </button>
-        <p className="mt-4">Vista Teléfonos (Cargando)...</p>
-      </div>
-    ),
   };
 
   return (
-    <div className="p-8 space-y-6 text-white">
+    <div className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}>
       {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
       {VIEWS[subView] || VIEWS.menu}
     </div>

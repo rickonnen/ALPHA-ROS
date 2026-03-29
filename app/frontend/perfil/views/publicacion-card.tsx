@@ -4,9 +4,8 @@
       - @param {publicacion} - datos de la publicación a mostrar
       - @return {PublicacionCard} - muestra miniatura, título, zona y tipo
 */
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export interface Publicacion {
   id: string;
@@ -33,11 +32,9 @@ export default function PublicacionCard({
         {/* Miniatura */}
         <div className="w-16 h-16 rounded-md overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center">
           {publicacion.imagen ? (
-            <Image
+            <img
               src={publicacion.imagen}
               alt={publicacion.titulo}
-              width={64}
-              height={64}
               className="object-cover w-full h-full"
             />
           ) : (
@@ -59,15 +56,15 @@ export default function PublicacionCard({
           <Button
             variant="outline"
             size="sm"
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-black border-white/60 hover:bg-white/80"
             onClick={() => onInfo(publicacion.id)}
           >
-            Info.
+            <span className="hidden md:inline">Información</span>
+            <span className="md:hidden">Info.</span>
           </Button>
           <Button
-            variant="outline"
             size="sm"
-            className="text-red-400 border-red-400/30 hover:bg-red-400/10"
+            className="bg-[#C26E5A] text-white border-none hover:bg-[#a85a47]"
             onClick={() => onEliminar(publicacion.id)}
           >
             Eliminar

@@ -15,6 +15,13 @@
       - @param {usuario} - objeto Usuario de Prisma
       - @param {telefonos} - array de strings "+591 xxxxxxx"
 */
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 28/03/2026
+    Funcionalidad: Vista del pais
+      - Se muestra el id_pais con el codigo_iso se genera la bandera
+      - @param {usuario} - objeto Usuario de Prisma
+      - @param {bandera img} - una bandera generada con el codigo_iso
+*/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function DetailBlock({ label, value }: { label: string; value: string }) {
@@ -38,8 +45,12 @@ interface PerfilViewProps {
     email?: string | null;
     direccion?: string | null;
     url_foto_perfil?: string | null;
+    Pais?: {
+      nombre_pais?: string | null;
+      codigo_iso?: string | null;
+    } | null;
   };
-  telefonos: string[]; // ej: ["+591 67231718", "+591 0000000"]
+  telefonos: string[];
 }
 
 export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
@@ -50,9 +61,27 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
           Información Personal
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 px-6 md:px-8 pb-8">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 px-6 md:px-8">
         <div className="flex flex-col gap-6">
-          <DetailBlock label="Usuario" value={usuario.username ?? "-"} />
+          <div className="group flex flex-col transition-all duration-300 ease-out hover:-translate-y-1 cursor-default border-b border-white/10 pb-4">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 transition-colors duration-300 group-hover:text-white/80">
+              Usuario
+            </label>
+            <div className="flex items-center gap-2">
+              <p className="text-base md:text-lg font-semibold tracking-tight transition-all duration-300 group-hover:text-white group-hover:scale-[1.02] origin-left">
+                {usuario.username ?? "-"}
+              </p>
+              {usuario.Pais?.codigo_iso && (
+                <img
+                  src={`https://flagcdn.com/24x18/${usuario.Pais.codigo_iso.toLowerCase()}.png`}
+                  alt={usuario.Pais.nombre_pais ?? ""}
+                  width={24}
+                  height={18}
+                  className="rounded-sm shadow-md opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                />
+              )}
+            </div>
+          </div>
           <DetailBlock
             label="Nombre y Apellido"
             value={`${usuario.nombres ?? ""} ${usuario.apellidos ?? ""}`.trim() || "-"}
