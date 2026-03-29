@@ -3,9 +3,26 @@ import { useState } from 'react';
 import PropertyCard, { Property } from '@/components/search/property-card';
 import PriceDropdown from '@/components/search/priceDropdown';
 
+type Currency = "USD" | "BS";
+
+type AppliedPriceFilter = {
+    minPrice?: number;
+    maxPrice?: number;
+}
+
 export default function SearchPage() {
   // este es un estado para el mapa como ejemplo
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+
+  const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
+    setAppliedPriceFilter(priceFilter);
+  };
+
+  const handleCurrencyChange = (currency: Currency) => {
+    setSelectedCurrency(currency);
+  };
 
 
   // prueba mockeado 
@@ -92,7 +109,12 @@ const PROPERTIES_MOCK: Property[] = [
             {/* hasta aca el boton del mapa */}
             {/* dentro de este es espacio es para que pongan los componentes de filtro y esto se va a ver en el desktop */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center text-gray-400">
-              <PriceDropdown />
+              <PriceDropdown 
+                selectedCurrency={selectedCurrency}
+                appliedPriceFilter={appliedPriceFilter}
+                onCurrencyChange={handleCurrencyChange}
+                onApplyRange={handleApplyRange}   
+              />
             </div>
             {/* hasta aca */}
           </div>
@@ -126,7 +148,13 @@ const PROPERTIES_MOCK: Property[] = [
           {/* esto es la parte logica para las cards, cuando sea movil 1 columna, desktop con mapa cerrado 2 columnas, desktop con mapa abierto 1 columna para que quepa en su espacio reducido */}
           {/* si tiene que editar algo para que funcione lo hacer nomas */}
           <div className={`grid grid-cols-1 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-6`}>
-              {PROPERTIES_MOCK.map((prop) => (<PropertyCard key={prop.id} property={prop} />))}
+              {PROPERTIES_MOCK.map((prop) => (
+                <PropertyCard 
+                  key={prop.id} 
+                  property={prop} 
+                  selectedCurrency={selectedCurrency}
+                />
+              ))}
           </div>
         </main>
 

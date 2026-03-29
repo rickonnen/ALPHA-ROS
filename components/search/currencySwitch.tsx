@@ -7,7 +7,7 @@ import type { Currency } from './priceDropdown';
 
 type CurrencySwitchProps = {
     currentCurrency: Currency,
-    setCurrentCurrency: React.Dispatch<React.SetStateAction<Currency>>;
+    setCurrentCurrency: (currency: Currency) => void;
 }
 
 export default function CurrencySwitch({
@@ -15,25 +15,32 @@ export default function CurrencySwitch({
     setCurrentCurrency,
 }: CurrencySwitchProps) {
     return (
-        <div className="flex items-center">
-            <Button 
-                className = "flex-1/2 rounded-l-lg rounded-r-none border-r-0"
-                type="button" 
+        <div className="flex items-center w-full rounded-lg overflow-hidden border border-border">
+            <Button
+                className={`w-1/2 ${
+                    currentCurrency === "USD"
+                        ? "bg-emerald-500 text-white hover:bg-emerald-600 border-emerald-500"
+                        : ""
+                } rounded-none rounded-l-lg border-r-0`}
+                type="button"
                 variant={currentCurrency === "USD" ? "default" : "outline"}
                 onClick={() => setCurrentCurrency("USD")}
-            > 
-                USD 
+            >
+                USD
             </Button>
 
-            <Button 
-                className = "flex-1/2 rounded-l-none rounded-r-lg border-l-0 w-full"
-                type="button" 
+            <Button
+                className={`w-1/2 ${
+                    currentCurrency === "BS"
+                        ? "bg-emerald-500 text-white hover:bg-emerald-600 border-emerald-500"
+                        : ""
+                } rounded-none rounded-r-lg border-l-0`}
+                type="button"
                 variant={currentCurrency === "BS" ? "default" : "outline"}
                 onClick={() => setCurrentCurrency("BS")}
-            > 
+            >
                 BS
             </Button>
-
         </div>
     );
 }

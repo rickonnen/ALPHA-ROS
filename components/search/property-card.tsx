@@ -10,6 +10,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 
+type Currency = "USD" | "BS";
 // defini esta interfaz para los datos pero esto no se si deberia ir aqui, pero por ahora aqui
 export interface Property {
   id: number;
@@ -29,11 +30,23 @@ export interface Property {
 
 interface PropertyCardProps {
   property: Property;
+  selectedCurrency: Currency;
 }
 
-export default function PropertyCard({ property }: PropertyCardProps) {
+export default function PropertyCard({ property, selectedCurrency }: PropertyCardProps) {
   
-  const displayPrice = `${property.currencySymbol} ${property.price.toLocaleString('es-BO')}`;
+    const exchangeRate = 6.96;
+
+    const convertedPrice =
+    selectedCurrency === "USD"
+        ? property.price
+        : Math.round(property.price * exchangeRate * 100) / 100;
+
+    const displayCurrencySymbol = selectedCurrency === "USD" ? "$us" : "Bs";
+
+    const displayPrice = `${displayCurrencySymbol} ${convertedPrice.toLocaleString("es-BO")}`;
+
+  
   const isContactAvailable = !!property.whatsappContact;
 
   return (

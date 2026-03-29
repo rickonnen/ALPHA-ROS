@@ -12,13 +12,30 @@ import {
 
 export type Currency = "USD" | "BS";
 
-export default function PriceDropdown(){
+type AppliedPriceFilter = {
+    minPrice?: number;
+    maxPrice?: number;
+}
 
-    const [currentCurrency, setCurrentCurrency] = useState<Currency>("USD");
+type PriceDropdownProps = {
+    selectedCurrency: Currency;
+    appliedPriceFilter: AppliedPriceFilter | null;
+    onCurrencyChange: (currency: Currency) => void;
+    onApplyRange: (filter: AppliedPriceFilter) => void;
+}
+
+export default function PriceDropdown({ 
+        selectedCurrency,
+        appliedPriceFilter,
+        onCurrencyChange,
+        onApplyRange 
+    }: PriceDropdownProps){
 
     const [priceError, setPriceError] = useState<string | null>(null);
     const [minPriceInput, setMinPriceInput] = useState("");
     const [maxPriceInput, setMaxPriceInput] = useState("");
+    const [accordionValue, setAccordionValue] = useState<string | undefined>(undefined);
+    const [hasAppliedRange, setHasAppliedRange] = useState(false);
 
     const maxAllowedPrice = 999999999;
 
@@ -29,7 +46,7 @@ export default function PriceDropdown(){
         const parsedMaxPrice =
             maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput);
 
-        if (currentCurrency !== "USD" && currentCurrency !== "BS") {
+        if (selectedCurrency !== "USD" && selectedCurrency !== "BS") {
             setPriceError("Moneda invalida");
             return;
         }
@@ -74,30 +91,74 @@ export default function PriceDropdown(){
         }
 
         setPriceError(null);
+
+        onApplyRange({
+            minPrice: parsedMinPrice,
+            maxPrice: parsedMaxPrice,
+        });
+
+        setAccordionValue(undefined);
+        setHasAppliedRange(true);
+    };
+
+    const formatPriceValue = (value: number) => {
+  return value.toLocaleString("es-BO");
+};
+
+    const getTriggerLabel = () => {
+        if (!hasAppliedRange) {
+            return "Precio";
+        }
+
+        const minPrice = appliedPriceFilter?.minPrice;
+        const maxPrice = appliedPriceFilter?.maxPrice;
+
+        const hasMinPrice = minPrice !== undefined;
+        const hasMaxPrice = maxPrice !== undefined;
+
+        if (!hasMinPrice && !hasMaxPrice) {
+            return selectedCurrency;
+        }
+
+        if (hasMinPrice && hasMaxPrice) {
+            return `${selectedCurrency} ${formatPriceValue(minPrice)} - ${formatPriceValue(maxPrice)}`;
+        }
+
+        if (hasMinPrice) {
+            return `${selectedCurrency} desde ${formatPriceValue(minPrice)}`;
+        }
+
+        return `${selectedCurrency} hasta ${formatPriceValue(maxPrice!)}`;
     };
 
     return (
         <div className="w-full max-w-lg">
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion 
+                type="single" 
+                collapsible 
+                className="w-full"
+                value={accordionValue}
+                onValueChange={(value) => setAccordionValue(value || undefined)}
+            >
                 <AccordionItem value="price" className="border-none ">
 
-                    <div className="border-2 border-[#1F3A4D] rounded-xl w-full overflow-hidden bg-[#E7E1D7]">
-                        <AccordionTrigger className="text-xl justify-center px-2">
-                            Precio
+                    <div className="border-2 border-black rounded-xl w-full overflow-hidden bg-[#F4EFE6]">
+                        <AccordionTrigger className="text-xl text-black text-left px-4 py-3">
+                            {getTriggerLabel()}
                         </AccordionTrigger>
                     </div>
 
                     <AccordionContent className="pt-2">
-                        <div className="flex flex-col p-4 border-2 border-[#1F3A4D] rounded-xl">
+                        <div className="flex flex-col p-4 border-2 border-black rounded-xl">
                             <CurrencySwitch 
-                                currentCurrency={currentCurrency}
-                                setCurrentCurrency={setCurrentCurrency}
+                                currentCurrency={selectedCurrency}
+                                setCurrentCurrency={onCurrencyChange}
                             />
                             <div className="flex justify-center gap-1 mt-3">
                                 <input
                                     type="number"
-                                    placeholder={`Min ${currentCurrency}`}
-                                    className={`border w-full h-7 bg-[#F4EFE6] rounded-sm ${
+                                    placeholder={`Min ${selectedCurrency}`}
+                                    className={`border w-full h-7 bg-white rounded-sm pl-2 text-left ${
                                         priceError?.toLowerCase().includes("mínimo") ||
                                         priceError?.toLowerCase().includes("minimo")
                                             ? "border-red-500"
@@ -111,8 +172,8 @@ export default function PriceDropdown(){
                                 />
                                 <input
                                     type="number"
-                                    placeholder={`Max ${currentCurrency}`}
-                                    className={`border w-full h-7 bg-[#F4EFE6] rounded-sm ${
+                                    placeholder={`Max ${selectedCurrency}`}
+                                    className={`border w-full h-7 bg-white rounded-sm pl-2 text-left ${
                                         priceError?.toLowerCase().includes("máximo") ||
                                         priceError?.toLowerCase().includes("maximo")
                                             ? "border-red-500"
@@ -131,7 +192,7 @@ export default function PriceDropdown(){
                             </div>
 
                             <Button
-                                className={`w-full hover:bg-black ${priceError ? "mt-3" : "mt-4"}`}
+                                className={`w-full text-base hover:bg-black ${priceError ? "mt-3" : "mt-4"}`}
                                 type="button"
                                 onClick={handleApplyRange}
                             >
