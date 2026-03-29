@@ -80,6 +80,37 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
             No hay publicaciones en tu historial.
           </p>
         )}
+
+        {!cargando && historial.filter(i => i.Publicacion).length > 0 && (
+          <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            {historial.filter(i => i.Publicacion).map((item) => (
+              <div
+                key={item.id_publicacion}
+                className="flex items-center justify-between bg-white/10 rounded-md p-3 mb-2"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.Publicacion?.Imagen?.[0]?.url_imagen ?? "https://via.placeholder.com/80"}
+                    alt={item.Publicacion.titulo ?? ""}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div>
+                    <p className="font-bold text-sm">{item.Publicacion.titulo ?? "Sin título"}</p>
+                    <p className="text-sm text-white/70">
+                      {item.Publicacion.Moneda?.simbolo} {item.Publicacion.precio ?? "Sin precio"}
+                    </p>
+                    <p className="text-xs text-white/50">
+                      {item.Publicacion.TipoOperacion?.nombre_operacion ?? ""}
+                    </p>
+                    <p className="text-xs text-white/40">
+                      Visto: {item.fecha ? new Date(item.fecha).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
