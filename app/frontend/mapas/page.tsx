@@ -26,36 +26,83 @@ const createPriceIcon = (precio: string, isHovered: boolean) => {
   return L.divIcon({
     className: "custom-price-marker",
     html: `
-      <div class="relative flex flex-col items-center">
-        <div class="absolute -top-12 flex flex-col items-center transition-all duration-300 ${isHovered ? 'scale-110 z-50' : 'z-40'}">
-          <div class="shadow-xl border border-slate-200 rounded-lg px-2.5 py-1 font-bold text-[12px] 
-            ${isHovered ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-slate-900'}">
-            ${precio}
-          </div>
-          <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] 
-            ${isHovered ? 'border-t-blue-600' : 'border-t-white'}"></div>
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <div style="
+          background: ${isHovered ? '#0f172a' : 'white'};
+          color: ${isHovered ? 'white' : '#0f172a'};
+          font-weight: 700;
+          font-size: 12px;
+          font-family: sans-serif;
+          padding: 5px 10px;
+          border-radius: 20px;
+          border: 2px solid ${isHovered ? '#0f172a' : '#e2e8f0'};
+          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+          white-space: nowrap;
+          position: relative;
+        ">
+          ${precio}
+          <div style="
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 7px solid ${isHovered ? '#0f172a' : 'white'};
+          "></div>
         </div>
-        <img src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png" 
-             class="w-[26px] h-[41px] ${isHovered ? 'filter saturate(1.5)' : 'opacity-95'}" />
+        <div style="
+          margin-top: 7px;
+          width: 8px;
+          height: 8px;
+          background: ${isHovered ? '#0f172a' : '#94a3b8'};
+          border-radius: 50%;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        "></div>
       </div>`,
-    iconSize: [26, 41],
-    iconAnchor: [13, 41],
+    iconSize: [60, 50],
+    iconAnchor: [30, 50],
+    popupAnchor: [0, -50],
   });
 };
 
 const createClusterIcon = (cluster: any) => {
   return L.divIcon({
-    html: `<div class="flex items-center justify-center w-11 h-11 bg-blue-600 text-white font-bold rounded-full border-4 border-white shadow-lg text-sm">${cluster.getChildCount()}</div>`,
+    html: `<div style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: #0f172a;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: sans-serif;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    ">${cluster.getChildCount()}</div>`,
     className: 'custom-cluster-icon',
     iconSize: L.point(44, 44, true),
   });
 };
 
 // COMPONENTE PARA MOVER LA CÁMARA
-function ChangeView({ center }: { center: [number, number] }) {
+function ChangeView({ center }: { center: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo(center, 17, { duration: 1.5 });
+    if (!center) return;
+    const point = L.latLng(center[0], center[1]);
+    if (!map.getBounds().contains(point)) {
+      // Si no está visible, vuela a zoom 17 (rompe el cluster)
+      map.flyTo(center, 17, { duration: 1.5 });
+    } else if (map.getZoom() < 17) {
+      // Si está visible pero en cluster, acerca hasta zoom 17
+      map.flyTo(center, 17, { duration: 1.5 });
+    }
   }, [center, map]);
   return null;
 }
@@ -63,6 +110,7 @@ function ChangeView({ center }: { center: [number, number] }) {
 export default function FilterAndSearchPage() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
+  const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -87,8 +135,14 @@ export default function FilterAndSearchPage() {
           {locations.map((loc) => (
             <Card 
               key={loc.id}
-              onMouseEnter={() => setHoveredId(loc.id)}
-              onMouseLeave={() => setHoveredId(null)}
+              onMouseEnter={() => {
+                  setHoveredId(loc.id);
+                  setHoveredPos([loc.lat, loc.lng]);
+              }}
+              onMouseLeave={() => {
+                  setHoveredId(null);
+                  setHoveredPos(null); // ← nuevo
+              }}
               onClick={() => setSelectedPos([loc.lat, loc.lng])} // Mover al hacer clic en lista
               className={`p-4 transition-all cursor-pointer border-2 shadow-sm
                 ${hoveredId === loc.id ? "border-blue-500 bg-blue-50/5" : "border-slate-100"}`}
@@ -115,7 +169,8 @@ export default function FilterAndSearchPage() {
         <Map 
           locations={locations} 
           hoveredId={hoveredId} 
-          selectedPos={selectedPos} 
+          selectedPos={selectedPos}
+          hoveredPos={hoveredPos} 
           setSelectedPos={setSelectedPos} 
         />
       </div>
@@ -123,10 +178,11 @@ export default function FilterAndSearchPage() {
   )
 }
 
-function Map({ locations, hoveredId, selectedPos, setSelectedPos }: { 
+function Map({ locations, hoveredId, selectedPos, hoveredPos, setSelectedPos }: { 
   locations: Location[], 
   hoveredId: number | null,
   selectedPos: [number, number] | null,
+  hoveredPos: [number, number] | null, // ← nuevo
   setSelectedPos: (pos: [number, number]) => void
 }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -140,7 +196,7 @@ function Map({ locations, hoveredId, selectedPos, setSelectedPos }: {
 
   return (
     <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
-      {selectedPos && <ChangeView center={selectedPos} />}
+      {selectedPos && <ChangeView center={hoveredPos ?? selectedPos} />}
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       
       <MarkerClusterGroup disableClusteringAtZoom={17} iconCreateFunction={createClusterIcon}>
