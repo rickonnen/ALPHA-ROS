@@ -37,9 +37,14 @@ export default function HistorialView() {
                 <button className="bg-blue-500 text-white px-3 py-1 rounded">
                   Info
                 </button>
-
-                <button className="bg-red-500 text-white px-3 py-1 rounded">
-                  Eliminar
+                  
+                <button 
+                  onClick={() => {
+                    setHistorial(historial.filter(h => h.id !== item.id));
+                 }}
+                 className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                 Eliminar
                 </button>
               </div>
 
