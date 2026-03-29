@@ -115,7 +115,7 @@ export const Header = (objProps: HeaderProps) => {
 
         <div className="hidden lg:flex flex-row items-center gap-6">
           {btnLogoProbol}
-          <Link href="/frontend/cobros/pricing" className={strLinkClassesDesktop}>
+          <Link href="/frontend/cobros/planes" className={strLinkClassesDesktop}>
             PLANES DE PUBLICACIÓN
           </Link>
         </div>
@@ -138,17 +138,16 @@ export const Header = (objProps: HeaderProps) => {
             <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774551632/notification_dchcxp.png" alt="Notificaciones" className="w-5 h-5 object-contain" />
           </button>
 
-          <Link href={objProps.bolIsLoggedIn ? "/perfil" : "/login"} className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-full">
+          <Link href={/*objProps.bolIsLoggedIn*/ true ? "/frontend/perfil" : "/login"} className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-full">
               <Button variant="ghost" className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none">
               <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png" alt="Perfil" className="w-13 h-13 rounded-full object-contain" />
               <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
-                {objProps.bolIsLoggedIn ? "MI PERFIL" : "INICIAR SESIÓN"}
+                {/*objProps.bolIsLoggedIn*/ true ? "MI PERFIL" : "INICIAR SESIÓN"}
               </span>
             </Button>
           </Link>
         </div>
       </div>
-
       {bolIsMobileMenuOpen && (
         <>
           <div className="lg:hidden fixed inset-0 z-40 bg-black/20" onClick={closeMobileMenu} />
@@ -196,7 +195,7 @@ export const Header = (objProps: HeaderProps) => {
               </Link>
             ))}
 
-            <Link href="/frontend/cobros/pricing" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
+            <Link href="/frontend/cobros/planes" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
