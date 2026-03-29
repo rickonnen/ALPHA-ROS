@@ -7,10 +7,10 @@
  */
 import { notFound } from "next/navigation";
 import { Tag, Ruler } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { MediaGallery } from "@/app/frontend/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/app/backend/publicacion/getPerfilInmueble";
+import { PropertyActions } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyActions";
 
 export default async function PerfilInmueblePage({
   params,
@@ -53,8 +53,8 @@ const strReelId = bolEsInstagram && strVideoUrl
   // Task 4.4: Mapear URLs reales desde modelo Imagen ← AQUÍ, antes del return
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   return (
-<main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 overflow-x-hidden font-[family-name:var(--font-geist-sans)]">
-        <div className="max-w-6xl mx-auto overflow-x-hidden">
+<main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
+  <div className="max-w-6xl mx-auto">
 
         {/* Task 4.3: Título */}
         <header className="mb-10">
@@ -126,20 +126,7 @@ const strReelId = bolEsInstagram && strVideoUrl
         </section>
 
         {/* Task 4.10: Botones — rutas las conecta otro dev */}
-<footer className="flex flex-row justify-between items-center gap-3 pt-10 border-t border-black/10">
-  <Button
-    variant="outline"
-    className="flex-1 md:flex-none min-w-0 border-[#C26E5A] text-[#C26E5A] px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs md:text-lg hover:bg-[#C26E5A]/5"
-  >
-    Ver mis publicaciones
-  </Button>
-  <Button
-    className="flex-1 md:flex-none min-w-0 bg-[#C26E5A] text-white px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs md:text-lg hover:bg-[#C26E5A]/90 transition-colors"
-  >
-    Publicar otro inmueble
-  </Button>
-</footer>
-
+<PropertyActions />
       </div>
     </main>
   );

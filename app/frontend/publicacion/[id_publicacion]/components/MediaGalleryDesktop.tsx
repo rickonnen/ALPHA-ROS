@@ -1,6 +1,6 @@
 /**
- * Dev: Marcela C.
- * Date: 25/03/2026
+ * Dev: Gustavo Montaño C.
+ * Date: 26/03/2026
  * Funcionalidad: Grilla desktop con flechas y lightbox (HU4 - Tasks 4.4, 4.5, 4.11)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
@@ -109,12 +109,12 @@ export const MediaGalleryDesktop = ({
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={arrImagenesSafe[1] || strFallback}
-              onError={(e) => onImgError(e, 1)}
-              onClick={() => onOpenLightbox(1)}
-              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
-              alt="Vista secundaria"
-            />
+    src={arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] || strFallback}
+    onError={(e) => onImgError(e, (intCurrentIndex + 1) % arrImagenesSafe.length)}
+    onClick={() => onOpenLightbox((intCurrentIndex + 1) % arrImagenesSafe.length)}
+    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
+    alt="Vista secundaria"
+  />
           </>
         )}
       </div>
@@ -125,12 +125,20 @@ export const MediaGalleryDesktop = ({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={strVideoId || strReelId ? (arrImagenesSafe[1] || strFallback) : (arrImagenesSafe[2] || strFallback)}
-          onError={(e) => onImgError(e, strVideoId || strReelId ? 1 : 2)}
-          className="w-full h-full object-cover"
-          alt="Vista adicional"
-        />
-      </div>
+    src={
+      strVideoId || strReelId
+        ? arrImagenesSafe[(intCurrentIndex + 1) % arrImagenesSafe.length] || strFallback
+        : arrImagenesSafe[(intCurrentIndex + 2) % arrImagenesSafe.length] || strFallback
+    }
+    onError={(e) => onImgError(e,
+      strVideoId || strReelId
+        ? (intCurrentIndex + 1) % arrImagenesSafe.length
+        : (intCurrentIndex + 2) % arrImagenesSafe.length
+    )}
+    className="w-full h-full object-cover"
+    alt="Vista adicional"
+  />
+</div>
     </div>
   </div>
 );

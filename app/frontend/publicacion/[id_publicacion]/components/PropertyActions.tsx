@@ -24,7 +24,7 @@ export const PropertyActions = () => {
       <Button
         type="button"
         className="flex-1 md:flex-none min-w-0 bg-[#C26E5A] text-white px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs md:text-lg hover:bg-[#C26E5A]/90 transition-colors"
-        onClick={() => router.push("/publicacion/crear")}
+        onClick={() => router.push("/publicacion/informacion-comercial")}
       >
         Publicar otro inmueble
       </Button>
