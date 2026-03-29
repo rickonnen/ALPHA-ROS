@@ -114,20 +114,58 @@ export default function CambiarCorreoView({
         onClick={onBack}
         onConfirm={async () => {
           if (bolValidandoContrasena) return;
-          const bolEmailVacio = strNewEmail.trim() === "";
-          const bolPassVacia = strPassword.trim() === "";
-          const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-            strNewEmail.trim(),
-          );
-          
 
-          if (bolEmailVacio || bolPassVacia || bolEmailInvalido) {
+          const strNuevoEmail = strNewEmail.trim().toLowerCase();
+          const bolEmailVacio = strNuevoEmail === "";
+          const bolEmailInvalido = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            strNuevoEmail,
+          );
+
+          if (bolEmailVacio || bolEmailInvalido) {
             setBolTrySubmit(true);
             return;
           }
 
           try {
             setBolValidandoContrasena(true);
+
+            const resPrecheck = await fetch(
+              "/backend/perfil/prevalidarCambioCorreo",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id_usuario,
+                  nuevo_email: strNuevoEmail,
+                }),
+              },
+            );
+
+            const jsonPrecheck = await resPrecheck.json();
+
+            if (
+              !resPrecheck.ok ||
+              !jsonPrecheck.ok ||
+              !jsonPrecheck.canProceed
+            ) {
+              setStrErrorModalMessage(
+                jsonPrecheck.message ||
+                  "No se pudo continuar con el cambio de correo.",
+              );
+              setBolShowErrorModal(true);
+              return;
+            }
+
+            const bolPassVacia = strPassword.trim() === "";
+            if (bolPassVacia) {
+              setBolTrySubmit(true);
+              setStrErrorModalMessage(
+                "Ingresa tu contraseña actual para continuar.",
+              );
+              setBolShowErrorModal(true);
+              return;
+            }
+
             const res = await fetch("/backend/perfil/validarContrasenaActual", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -141,16 +179,18 @@ export default function CambiarCorreoView({
 
             if (!res.ok || !json.ok) {
               setStrErrorModalMessage(
-                json.error || "No se pudo validar la contraseña.",
+                json.error || "Error en la consistencia de datos",
               );
               setBolShowErrorModal(true);
               return;
             }
 
-            onContinue(strNewEmail.trim());
+            onContinue(strNuevoEmail);
           } catch (error) {
-            console.error("Error en validación de contraseña:", error);
-            setStrErrorModalMessage("Error de red al validar la contraseña.");
+            console.error("Error en validación de cambio de correo:", error);
+            setStrErrorModalMessage(
+              "Error de red al validar el cambio de correo.",
+            );
             setBolShowErrorModal(true);
           } finally {
             setBolValidandoContrasena(false);
