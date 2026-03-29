@@ -323,10 +323,10 @@ function handleCancelar() {
     }));
 
     // Limpiar el borrador ya que los datos finales están guardados
-    sessionStorage.removeItem(DRAFT_KEY);
+    
 
     // TODO: reemplazar "???" con la ruta del formulario de Características del Inmueble
-    router.push("http://localhost:3000//frontend/publicacion/Caracteristicas");
+    router.push("/frontend/publicacion/Caracteristicas");
   }
 
   // Retorna true si el campo fue tocado y tiene error
