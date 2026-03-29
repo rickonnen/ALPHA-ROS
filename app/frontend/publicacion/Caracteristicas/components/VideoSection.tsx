@@ -10,10 +10,10 @@
  * @return {JSX.Element} Sección con input de URL y vista previa del video.
  */
 
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Link2Icon } from "lucide-react"
-import { useState, ChangeEvent } from "react"
+import { Input }                        from "@/components/ui/input"
+import { Label }                        from "@/components/ui/label"
+import { Link2Icon }                    from "lucide-react"
+import { useState, ChangeEvent, useEffect } from "react"
 
 // PascalCase para tipos e interfaces - Estándar Alpha-Ros
 type PreviewData = {
@@ -72,7 +72,7 @@ export function VideoSection({ onURLChange, defaultUrl = "" }: VideoSectionProps
   }
 
   /**
-   * Calcula el preview inicial a partir de defaultUrl para restaurar la vista previa
+   * @Funcionalidad: Calcula el preview a partir de una URL para restaurar la vista previa
    * cuando el usuario vuelve a esta sección desde sessionStorage.
    * @param {string} strDefault - URL guardada en sessionStorage.
    * @return {PreviewData} Objeto con plataforma e ID del video, o null si no hay URL válida.
@@ -86,10 +86,19 @@ export function VideoSection({ onURLChange, defaultUrl = "" }: VideoSectionProps
     return { platform: null, id: null };
   }
 
-  // Prefijo str para estados de string, obj para estados de objetos
-  // Se inicializan con defaultUrl para restaurar el estado desde sessionStorage
-  const [strUrl, setStrUrl]         = useState(defaultUrl)
-  const [objPreview, setObjPreview] = useState<PreviewData>(() => getInitialPreview(defaultUrl))
+  // Iniciar vacío para evitar hydration error — se restaura en el useEffect
+  const [strUrl, setStrUrl]         = useState("")
+  const [objPreview, setObjPreview] = useState<PreviewData>({ platform: null, id: null })
+
+  // Restaurar URL y vista previa desde defaultUrl tras el montaje en cliente
+  // Evita hydration error al no usar sessionStorage en el servidor
+  useEffect(() => {
+    if (defaultUrl) {
+      setStrUrl(defaultUrl)
+      setObjPreview(getInitialPreview(defaultUrl))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultUrl])
 
   /**
    * @Dev: StefanyS

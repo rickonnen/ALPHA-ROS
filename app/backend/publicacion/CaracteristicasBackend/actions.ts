@@ -70,13 +70,16 @@ export async function publicarConImagenes(
   const strDescripcion   = formData.get('descripcion')   as string
   const strTipoPropiedad = formData.get('tipoPropiedad') as string
   const strTipoOperacion = formData.get('tipoOperacion') as string
+  // URL del video — Historia 3 (opcional)
+  const strVideoUrl      = formData.get('videoUrl')      as string | null
 
   return guardarPublicacionCompleta(data, {
-    titulo:           strTitulo,
-    precio:           parseFloat(strPrecio),
-    descripcion:      strDescripcion,
-    id_tipo_inmueble: TIPO_INMUEBLE_IDS[strTipoPropiedad] ?? null,
+    titulo:            strTitulo,
+    precio:            parseFloat(strPrecio),
+    descripcion:       strDescripcion,
+    id_tipo_inmueble:  TIPO_INMUEBLE_IDS[strTipoPropiedad] ?? null,
     id_tipo_operacion: TIPO_OPERACION_IDS[strTipoOperacion] ?? null,
+    videoUrl:          strVideoUrl || null,
   })
 }
 
@@ -90,6 +93,7 @@ async function guardarPublicacionCompleta(
     descripcion:       string;
     id_tipo_inmueble:  number | null;
     id_tipo_operacion: number | null;
+    videoUrl:          string | null;
   },
 ): Promise<ActionResult> {
 
@@ -166,6 +170,14 @@ async function guardarPublicacionCompleta(
       `
     }
 
+    // 5. Guardar URL del video si fue proporcionada — Historia 3
+    if (paso1.videoUrl) {
+      await prisma.$executeRaw`
+        INSERT INTO "Video" (id_publicacion, url_video)
+        VALUES (${idPublicacion}, ${paso1.videoUrl})
+      `
+    }
+
     return {
       success:       true,
       idPublicacion,
@@ -190,5 +202,6 @@ export async function guardarCaracteristicas(
     descripcion:       '',
     id_tipo_inmueble:  null,
     id_tipo_operacion: null,
+    videoUrl:          null,
   })
 }

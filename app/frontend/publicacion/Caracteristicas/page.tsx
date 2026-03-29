@@ -1,29 +1,15 @@
-/**
- * Dev: Andrea Coca Pereira
- * Fecha: 29/03/2026
- * Funcionalidad: Título principal de la página "Crear publicación",
- *   ajustado responsivamente para mobile, tablet y desktop.
- * @return {JSX.Element} Encabezado con padding progresivo según breakpoint.
- */
-/**
- * Dev: Andrea Coca Pereira
- * Fecha: 29/03/2026
- * Funcionalidad: Página principal de creación de publicación inmobiliaria.
- *   Se mejora el fondo visual dividiendo el color en dos tonos para mejorar
- *   la experiencia visual del usuario en todos los dispositivos.
- * @return {JSX.Element} Formulario de características del inmueble con fondo bicolor.
- */
 'use client'
 
-import { useState }                from 'react'
-import { useCaracteristicasForm }  from './Hooks/useCaracteristicasForm'
-import { DireccionForm }           from './components/DireccionForm'
-import { DepartamentoSelect }      from './components/DepartamentoSelect'
-import { HabitacionesForm }        from './components/HabitacionesForm'
-import { ImageUploader }           from './components/ImageUploader'
-import { Button }                  from '@/components/ui/button'
-import { publicarConImagenes }     from '@/app/backend/publicacion/CaracteristicasBackend/actions'
-import { useRouter } from "next/navigation";
+import { useState } from 'react'
+import { useCaracteristicasForm } from './Hooks/useCaracteristicasForm'
+import { DireccionForm } from './components/DireccionForm'
+import { DepartamentoSelect } from './components/DepartamentoSelect'
+import { HabitacionesForm } from './components/HabitacionesForm'
+import { ImageUploader } from './components/ImageUploader'
+import { VideoSection } from './components/VideoSection'
+import { Button } from '@/components/ui/button'
+import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBackend/actions'
+import { useRouter } from "next/navigation"
 
 export default function CaracteristicasPage() {
   const {
@@ -36,117 +22,99 @@ export default function CaracteristicasPage() {
     handleAgregarImagenes,
     handleEliminarImagen,
   } = useCaracteristicasForm()
-const router = useRouter();
+
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError,  setSubmitError]  = useState<string | null>(null)
-  const [submitOk,     setSubmitOk]     = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitOk, setSubmitOk] = useState(false)
+
+  const [strVideoUrl, setStrVideoUrl] = useState(() => {
+    if (typeof window === "undefined") return ""
+    return sessionStorage.getItem("videoUrl") ?? ""
+  })
 
   const onChange = handleChange as (field: string, value: string) => void
-  const onBlur   = handleBlur   as (field: string) => void
+  const onBlur = handleBlur as (field: string) => void
+
+  const handleVideoUrl = (url: string) => {
+    setStrVideoUrl(url)
+    sessionStorage.setItem("videoUrl", url)
+  }
 
   const onSubmit = () => {
-  setSubmitError(null)
+    setSubmitError(null)
 
-  handleSubmit(async (formValues) => {
-    setIsSubmitting(true)
+    handleSubmit(async (formValues) => {
+      setIsSubmitting(true)
 
-    try {
-      // Leer datos del paso 1 guardados en sessionStorage
-      const strPaso1 = sessionStorage.getItem("informacionComercial")
-      if (!strPaso1) {
-        setSubmitError("Faltan datos del paso 1. Regresa y completa el formulario.")
+      try {
+        const strPaso1 = sessionStorage.getItem("informacionComercial")
+        if (!strPaso1) {
+          setSubmitError("Faltan datos del paso 1. Regresa y completa el formulario.")
+          setIsSubmitting(false)
+          return
+        }
+        const objPaso1 = JSON.parse(strPaso1)
+
+        const formData = new FormData()
+        formData.append('titulo', objPaso1.titulo)
+        formData.append('precio', objPaso1.precio)
+        formData.append('tipoPropiedad', objPaso1.tipoPropiedad)
+        formData.append('tipoOperacion', objPaso1.tipoOperacion)
+        formData.append('descripcion', objPaso1.descripcion)
+        formData.append('direccion', formValues.direccion)
+        formData.append('superficie', formValues.superficie.replace(/\./g, ''))
+        formData.append('departamento', formValues.departamento)
+        formData.append('zona', formValues.zona)
+        formData.append('habitaciones', formValues.habitaciones)
+        formData.append('banios', formValues.banios)
+        formData.append('plantas', formValues.plantas)
+        formData.append('garajes', formValues.garajes)
+        formValues.imagenes.forEach((file) => formData.append('imagenes', file))
+        formData.append('videoUrl', strVideoUrl)
+
+        const result = await publicarConImagenes(formData)
+
+        if (result.success) {
+          sessionStorage.removeItem("informacionComercial")
+          sessionStorage.removeItem("informacionComercialDraft")
+          sessionStorage.removeItem("videoUrl")
+          setSubmitOk(true)
+          
+          // --- ÚNICO CAMBIO: REDIRECCIÓN ---
+          router.push("/frontend/publicacion/[id_publicacion]") 
+          // ---------------------------------
+          
+        } else {
+          const firstError = Object.values(result.errors).flat()[0] ?? null
+          setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : JSON.stringify(err)
+        setSubmitError(`Error: ${msg}`)
+      } finally {
         setIsSubmitting(false)
-        return
       }
-      const objPaso1 = JSON.parse(strPaso1)
-
-      const formData = new FormData()
-      // Datos del paso 1
-      formData.append('titulo',        objPaso1.titulo)
-      formData.append('precio',        objPaso1.precio)
-      formData.append('tipoPropiedad', objPaso1.tipoPropiedad)
-      formData.append('tipoOperacion', objPaso1.tipoOperacion)
-      formData.append('descripcion',   objPaso1.descripcion)
-      // Datos del paso 2
-      formData.append('direccion',    formValues.direccion)
-      formData.append('superficie',   formValues.superficie.replace(/\./g, ''))
-      formData.append('departamento', formValues.departamento)
-      formData.append('zona',         formValues.zona)
-      formData.append('habitaciones', formValues.habitaciones)
-      formData.append('banios',       formValues.banios)
-      formData.append('plantas',      formValues.plantas)
-      formData.append('garajes',      formValues.garajes)
-      formValues.imagenes.forEach((file) => formData.append('imagenes', file))
-
-      const result = await publicarConImagenes(formData)
-
-      if (result.success) {
-        // Limpiar sessionStorage al publicar exitosamente
-        sessionStorage.removeItem("informacionComercial")
-        sessionStorage.removeItem("informacionComercialDraft")
-        setSubmitOk(true)
-      } else {
-        const firstError = Object.values(result.errors).flat()[0] ?? null
-        setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : JSON.stringify(err)
-      setSubmitError(`Error: ${msg}`)
-    } finally {
-      setIsSubmitting(false)
-    }
-  })
-}
-
-  // ── Pantalla de éxito ──────────────────────────────────────────────────────
-  if (submitOk) {
-    return (
-      <main className="min-h-screen bg-[#F4EFE6] flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl p-8 max-w-md w-full text-center flex flex-col gap-4">
-          <div className="text-5xl">✓</div>
-          <h2 className="text-xl font-semibold text-[#1F3A4D]">
-            ¡Publicación registrada con éxito!
-          </h2>
-          <p className="text-sm text-gray-500">
-            Tu inmueble ya está guardado y visible en la plataforma.
-          </p>
-          <Button
-            type="button"
-            className="bg-[#C26E5A] hover:bg-[#a85a48] text-white mt-2"
-            onClick={() => setSubmitOk(false)}
-          >
-            Crear otra publicación
-          </Button>
-        </div>
-      </main>
-    )
+    })
   }
+
   return (
-
     <main
-  className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
-  style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #CFC9BB 35%)" }}
->
-
-      {/* Título principal */}
-
+      className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
+      style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #CFC9BB 35%)" }}
+    >
       <div className="w-full max-w-2xl">
-        {/* Padding progresivo: sin indent en mobile, medio en tablet, mayor en desktop */}
-          <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-36">
-             Crear publicación
-          </h1>
+        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-36">
+          Crear publicación
+        </h1>
       </div>
 
       <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
-
-        {/* Título de la sección */}
         <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#2E2E2E]">
           Caracteristicas del inmueble
         </h2>
 
         <div className="flex flex-col gap-4">
-
-          {/* Dirección y Superficie — Tarea 2.1.1 */}
           <DireccionForm
             addressValue={values.direccion}
             areaValue={values.superficie}
@@ -158,7 +126,6 @@ const router = useRouter();
             onBlur={onBlur}
           />
 
-          {/* Departamento — Tarea 2.1.1 */}
           <DepartamentoSelect
             value={values.departamento}
             error={errors.departamento}
@@ -167,7 +134,6 @@ const router = useRouter();
             onBlur={onBlur}
           />
 
-          {/* Zona — Tarea 2.1.1 */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="zona" className="text-sm font-medium text-[#2E2E2E]">
               Zona
@@ -186,7 +152,6 @@ const router = useRouter();
             )}
           </div>
 
-          {/* Habitaciones, Baños, Garajes, Plantas — Tarea 2.1.2 */}
           <HabitacionesForm
             bedroomsValue={values.habitaciones}
             bathroomsValue={values.banios}
@@ -194,21 +159,20 @@ const router = useRouter();
             garagesValue={values.garajes}
             errors={{
               habitaciones: errors.habitaciones,
-              banios:       errors.banios,
-              plantas:      errors.plantas,
-              garajes:      errors.garajes,
+              banios: errors.banios,
+              plantas: errors.plantas,
+              garajes: errors.garajes,
             }}
             touched={{
               habitaciones: touched.habitaciones ?? false,
-              banios:       touched.banios       ?? false,
-              plantas:      touched.plantas      ?? false,
-              garajes:      touched.garajes      ?? false,
+              banios: touched.banios ?? false,
+              plantas: touched.plantas ?? false,
+              garajes: touched.garajes ?? false,
             }}
             onChange={onChange}
             onBlur={onBlur}
           />
 
-          {/* Imágenes — Tarea 2.5 */}
           <ImageUploader
             files={values.imagenes}
             onChange={handleAgregarImagenes}
@@ -217,8 +181,10 @@ const router = useRouter();
             touched={touched.imagenes ?? false}
           />
 
-          {/* Espacio reservado para VideoUrlInput — Tarea 2.X */}
-          {/* TODO: agregar <VideoUrlInput /> cuando esté listo */}
+          <VideoSection
+            onURLChange={handleVideoUrl}
+            defaultUrl={strVideoUrl}
+          />
 
           {submitError && (
             <p className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-md px-3 py-2">
@@ -230,21 +196,18 @@ const router = useRouter();
             data-testid="form-actions"
             className="flex justify-end gap-3 mt-4"
           >
-            {/* Regresar — borde y texto terracota */}
             <Button
               type="button"
               variant="outline"
               disabled={isSubmitting}
               onClick={() => {
-                // TODO: navegar a sección 1 conservando datos (Tarea 2.9)
-                router.push("/frontend/publicacion/informacion-comercial");
+                router.push("/frontend/publicacion/informacion-comercial")
               }}
               className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
             >
               Regresar
             </Button>
 
-            {/* Publicar — fondo terracota */}
             <Button
               type="button"
               disabled={isSubmitting}
@@ -254,7 +217,6 @@ const router = useRouter();
               {isSubmitting ? 'Publicando...' : 'Publicar'}
             </Button>
           </div>
-
         </div>
       </div>
     </main>
