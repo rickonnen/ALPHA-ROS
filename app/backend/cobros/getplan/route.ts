@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// 1. Instanciamos el cliente (Singleton Pattern sugerido para Next.js)
+//para poder agregar automaticamente la descripcion, qr y precio a cobros 
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
@@ -9,14 +9,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const planIdString = searchParams.get('planId');
 
-    // 2. Validación de entrada
     if (!planIdString) {
       return NextResponse.json({ error: "Falta el ID del plan" }, { status: 400 });
     }
 
     const planId = parseInt(planIdString);
 
-    // 3. Consulta directa con PrismaClient
     const plan = await prisma.planPublicacion.findUnique({
       where: { id_plan: planId }
     });
@@ -25,7 +23,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Plan no encontrado" }, { status: 404 });
     }
 
-    // 4. Mapeo de datos para el "Front Bonito"
     return NextResponse.json({
       nombre: plan.nombre_plan,
       total: Number(plan.precio_plan), // Conversión de Decimal a Number

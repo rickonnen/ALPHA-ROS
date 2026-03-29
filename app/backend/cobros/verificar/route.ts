@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+//funcion para verificar el pago para el admin poder ver
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
         estado: 1 // 1 = Pendiente
       }
     });
-
+    //si el usuario le da segundo click al boton aparece aca
     if (pagoExistente) {
       return NextResponse.json({
         titulo: "Verificando Pago",

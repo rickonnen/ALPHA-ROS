@@ -19,8 +19,6 @@ export default function PaginaSectorPagos() {
     </Suspense>
   );
 }
-//los amigos de rodrigo no hicieron login asi que wamos a simular pe
-
 
 function ContenidoPaginaCobros() {
   const searchParams = useSearchParams();
@@ -116,7 +114,7 @@ function ContenidoPaginaCobros() {
     setMensaje('QR guardado en tu dispositivo.');
   };
 
-  // PANTALLA DE CARGA (discutir con qas si mantener o nel)
+
   if (estaCargando) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 font-geist">
@@ -149,7 +147,7 @@ function ContenidoPaginaCobros() {
 
       {/* BOTÓN VOLVER (Posicionado abajo a la izquierda) */}
       <div className="ml-10 mb-5">
-        <Link href="/frontend/cobros/pricing">
+        <Link href="/frontend/cobros/planes">
           <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
             Volver
           </button>
