@@ -1,13 +1,13 @@
 'use client'
 
-import { useState }                from 'react'
-import { useCaracteristicasForm }  from './Hooks/useCaracteristicasForm'
-import { DireccionForm }           from './Components/DireccionForm'
-import { DepartamentoSelect }      from './Components/DepartamentoSelect'
-import { HabitacionesForm }        from './Components/HabitacionesForm'
-import { ImageUploader }           from './Components/ImageUploader'
-import { Button }                  from '@/components/ui/button'
-import { publicarConImagenes }     from '@/app/backend/publicacion/CaracteristicasBackend/actions'
+import { useState }               from 'react'
+import { useCaracteristicasForm } from './Hooks/useCaracteristicasForm'
+import { DireccionForm }          from './Components/DireccionForm'
+import { DepartamentoSelect }     from './Components/DepartamentoSelect'
+import { HabitacionesForm }       from './Components/HabitacionesForm'
+import { ImageUploader }          from './Components/ImageUploader'
+import { Button }                 from '@/components/ui/button'
+import { publicarConImagenes }    from '@/app/backend/publicacion/CaracteristicasBackend/actions'
 
 export default function CaracteristicasPage() {
   const {
@@ -33,10 +33,7 @@ export default function CaracteristicasPage() {
 
     handleSubmit(async (formValues) => {
       setIsSubmitting(true)
-
       try {
-        // Construir FormData para enviarlo a la Server Action
-        // (los File[] viajan como FormData, Cloudinary se ejecuta en el servidor)
         const formData = new FormData()
         formData.append('direccion',    formValues.direccion)
         formData.append('superficie',   formValues.superficie.replace(/\./g, ''))
@@ -65,16 +62,15 @@ export default function CaracteristicasPage() {
     })
   }
 
-  // ── Pantalla de éxito ──────────────────────────────────────────────────────
   if (submitOk) {
     return (
       <main className="min-h-screen bg-[#F4EFE6] flex items-center justify-center px-4">
         <div className="bg-white rounded-xl p-8 max-w-md w-full text-center flex flex-col gap-4">
           <div className="text-5xl">✓</div>
-          <h2 className="text-xl font-semibold text-[#1F3A4D]">
+          <h2 className="text-3xl font-semibold text-[#1F3A4D]">
             ¡Publicación registrada con éxito!
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-base text-gray-500">
             Tu inmueble ya está guardado y visible en la plataforma.
           </p>
           <Button
@@ -92,21 +88,20 @@ export default function CaracteristicasPage() {
   return (
     <main className="min-h-screen bg-[#F4EFE6] px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]">
 
-      {/* Título principal */}
-      <h1 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6 text-[#1F3A4D]">
+      {/* H1: text-3xl mobile, text-5xl desktop */}
+      <h1 className="text-3xl sm:text-3xl font-bold mb-4 sm:mb-6 text-[#1F3A4D]">
         Crear publicación
       </h1>
 
       <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
 
-        {/* Título de la sección */}
-        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#2E2E2E]">
+        {/* Subtítulo sección: text-xl font-medium */}
+        <h2 className="text-center font-medium text-xl tracking-wide mb-4 sm:mb-6 uppercase text-[#2E2E2E]">
           Caracteristicas del inmueble
         </h2>
 
         <div className="flex flex-col gap-4">
 
-          {/* Dirección y Superficie — Tarea 2.1.1 */}
           <DireccionForm
             addressValue={values.direccion}
             areaValue={values.superficie}
@@ -118,7 +113,6 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Departamento — Tarea 2.1.1 */}
           <DepartamentoSelect
             value={values.departamento}
             error={errors.departamento}
@@ -127,7 +121,6 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Zona — Tarea 2.1.1 */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="zona" className="text-sm font-medium text-[#2E2E2E]">
               Zona
@@ -146,7 +139,6 @@ export default function CaracteristicasPage() {
             )}
           </div>
 
-          {/* Habitaciones, Baños, Garajes, Plantas — Tarea 2.1.2 */}
           <HabitacionesForm
             bedroomsValue={values.habitaciones}
             bathroomsValue={values.banios}
@@ -168,7 +160,6 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          {/* Imágenes — Tarea 2.5 */}
           <ImageUploader
             files={values.imagenes}
             onChange={handleAgregarImagenes}
@@ -177,11 +168,8 @@ export default function CaracteristicasPage() {
             touched={touched.imagenes ?? false}
           />
 
-          {/* Espacio reservado para VideoUrlInput — Tarea 2.X */}
-          {/* TODO: agregar <VideoUrlInput /> cuando esté listo */}
-
           {submitError && (
-            <p className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-md px-3 py-2">
+            <p className="text-sm text-red-500 text-center bg-red-50 border border-red-200 rounded-md px-3 py-2">
               {submitError}
             </p>
           )}
@@ -190,7 +178,6 @@ export default function CaracteristicasPage() {
             data-testid="form-actions"
             className="flex justify-end gap-3 mt-4"
           >
-            {/* Regresar — borde y texto terracota */}
             <Button
               type="button"
               variant="outline"
@@ -198,17 +185,16 @@ export default function CaracteristicasPage() {
               onClick={() => {
                 // TODO: navegar a sección 1 conservando datos (Tarea 2.9)
               }}
-              className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
+              className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm font-semibold"
             >
               Regresar
             </Button>
 
-            {/* Publicar — fondo terracota */}
             <Button
               type="button"
               disabled={isSubmitting}
               onClick={onSubmit}
-              className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold disabled:opacity-60"
+              className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-4 sm:py-5 text-sm font-semibold disabled:opacity-60"
             >
               {isSubmitting ? 'Publicando...' : 'Publicar'}
             </Button>
