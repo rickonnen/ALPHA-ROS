@@ -41,17 +41,6 @@ const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
 // User 2
 //const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
 
-const HeaderMock = () => (
-  <header className="w-full h-[70px] bg-white border-b flex items-center px-6 md:px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
-    <span className="text-sm md:text-base">[ Componente Header - Equipo Externo ]</span>
-    <Button variant="ghost" asChild className="hidden md:flex">
-      <Link href="/">
-        <Home className="mr-2 h-4 w-4" /> Inicio
-      </Link>
-    </Button>
-  </header>
-);
-
 export default function PerfilPage() {
   const [view, setView] = useState("perfil");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -109,7 +98,6 @@ export default function PerfilPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <HeaderMock />
 
       <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
 
