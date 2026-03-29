@@ -34,7 +34,9 @@ export default function HistorialView() {
               </div>
 
               <div className="flex gap-2">
-                <button className="bg-blue-500 text-white px-3 py-1 rounded">
+                <button
+                    onClick={() => alert(`Viewing: ${item.titulo}`)} 
+                    className="bg-blue-500 text-white px-3 py-1 rounded">
                   Info
                 </button>
                   
@@ -45,8 +47,7 @@ export default function HistorialView() {
                      setHistorial(historial.filter(h => h.id !== item.id));
                    }
                  }}
-                 className="bg-red-500 text-white px-3 py-1 rounded"
-                >
+                 className="bg-red-500 text-white px-3 py-1 rounded">
                  Eliminar
                 </button>
               </div>
