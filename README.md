@@ -21,11 +21,11 @@ cd ALPHA-ROS
     npx prisma generate
 # 6. Equipos Listos Colocar Listo_nombre_epic
     1. Binary Brain -
-    2. OiDevs -  - Home Page
+    2. OiDevs - Listo - Home Page
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
     5. Bug Hunters -
-    6. Digital Core -       - Pagina de Publicacion
+    6. Digital Core - Listo - Pagina de Publicacion
     7. ADA -
 
 
