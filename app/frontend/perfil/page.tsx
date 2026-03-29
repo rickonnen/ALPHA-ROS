@@ -16,6 +16,10 @@
       - TODO: reemplazar ID_USUARIO_HARDCODEADO por el id real
               que llegue desde el header/auth cuando esté listo
 */
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 29/03/2026
+    Funcionalidad: FIX bd y cambios en Telefono
+*/
 "use client";
 
 import { useState, useEffect } from "react";
@@ -85,7 +89,7 @@ export default function PerfilPage() {
   ];
 
   const telefonos = usuario?.UsuarioTelefono?.map(
-    (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
+      (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
   ) ?? [];
 
   

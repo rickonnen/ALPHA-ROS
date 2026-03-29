@@ -12,6 +12,10 @@
     Funcionalidad: GET /backend/perfil/getUsuario?id_usuario=...
       - Se anadio el retorno del pais del usuario
 */
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 29/03/2026
+    Funcionalidad: FIX bd y cambios en Telefono
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -33,6 +37,7 @@ export async function GET(req: NextRequest) {
       where: { id_usuario },
       include: {
         UsuarioTelefono: {
+          where: { estado: 1 },
           include: { Telefono: true },
         },
         Rol: true,
