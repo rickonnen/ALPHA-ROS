@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
-// Singleton 
-
+// Singleton
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }

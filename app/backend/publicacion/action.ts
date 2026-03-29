@@ -6,10 +6,17 @@
  * gestionando transacciones atómicas y validando la restricción de cupos (HU5).
  */
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 // Uso del prefijo 'str' para variables de tipo texto (UUID)
 const strUserId = "8cb1d337-7122-4b22-8f46-31c8af92b5a6"; 
+
+// Tipo para los datos del formulario de publicación
+interface PublicacionFormData {
+  titulo: string;
+  precio: number;
+  [key: string]: unknown;
+}
 
 // ==========================================
 // HERRAMIENTA 1: El Flujo Definitivo (Crear de cero)
@@ -18,10 +25,10 @@ const strUserId = "8cb1d337-7122-4b22-8f46-31c8af92b5a6";
 /**
  * Verifica si el usuario tiene cupos disponibles y crea una nueva publicación,
  * descontando el cupo utilizado en la misma transacción.
- * * @param {any} objDatosFormulario - Objeto que contiene los datos de la publicación (título, precio, etc.).
+ * @param {PublicacionFormData} objDatosFormulario - Objeto que contiene los datos de la publicación.
  * @returns {Promise<object>} Objeto con el estado de la operación y el ID de la publicación o la razón del error.
  */
-export async function verificarYCrearPublicacion(objDatosFormulario: any) {
+export async function verificarYCrearPublicacion(objDatosFormulario: PublicacionFormData) {
   try {
     // Uso del prefijo 'int' porque el resultado final es el ID numérico de la publicación
     const intResultado = await prisma.$transaction(async (tx) => {
@@ -56,9 +63,9 @@ export async function verificarYCrearPublicacion(objDatosFormulario: any) {
     
     return { success: true, id_publicacion: intResultado };
     
-  } catch (objError: any) {
-    if (objError.message === "LIMITE_ALCANZADO") {
-        return { success: false, reason: "LIMITE_ALCANZADO" };
+  } catch (objError: unknown) {
+    if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {
+      return { success: false, reason: "LIMITE_ALCANZADO" };
     }
     return { success: false, reason: "ERROR_SERVIDOR" };
   }
@@ -72,7 +79,7 @@ export async function verificarYCrearPublicacion(objDatosFormulario: any) {
 /**
  * Verifica si el usuario tiene cupos disponibles y se apropia de una publicación existente,
  * vinculando el id del usuario a la publicación y descontando el cupo utilizado.
- * * @param {number} intIdPublicacionCreada - ID numérico de la publicación que ya existe en la base de datos.
+ * @param {number} intIdPublicacionCreada - ID numérico de la publicación que ya existe en la base de datos.
  * @returns {Promise<object>} Objeto con el estado de la operación y el ID de la publicación actualizada.
  */
 export async function asociarPublicacionExistente(intIdPublicacionCreada: number) {
@@ -104,9 +111,9 @@ export async function asociarPublicacionExistente(intIdPublicacionCreada: number
     
     return { success: true, id_publicacion: intResultado };
     
-  } catch (objError: any) {
-    if (objError.message === "LIMITE_ALCANZADO") {
-        return { success: false, reason: "LIMITE_ALCANZADO" };
+  } catch (objError: unknown) {
+    if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {
+      return { success: false, reason: "LIMITE_ALCANZADO" };
     }
     return { success: false, reason: "ERROR_SERVIDOR" };
   }
