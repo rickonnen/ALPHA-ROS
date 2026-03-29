@@ -1,5 +1,5 @@
 ﻿/**
- * @Dev: [Tu nombre aquí]
+ * @Dev: [OliverG]
  * @Fecha: 28/03/2026
  * @Funcionalidad: Hook personalizado que centraliza toda la lógica del formulario
  * de Información Comercial. Maneja estados, validaciones, formato de precio,
@@ -7,7 +7,7 @@
  * @return {object} Estados y handlers necesarios para el formulario
  */
 
-import { useState } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   DESC_MAX,
@@ -33,6 +33,9 @@ const FORM_FIELDS: FormField[] = [
 
 // Regex para validar formato de precio boliviano (ej: 1.234,56)
 const PRICE_FORMAT_REGEX = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/;
+
+// Key del borrador en sessionStorage
+const DRAFT_KEY = "informacionComercialDraft";
 
 /**
  * @Funcionalidad: Verifica si un nombre de campo pertenece al formulario
@@ -97,6 +100,34 @@ export function useInformacionComercialForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
+  // Indica si el componente ya está montado en el cliente
+  // Evita el error de hydration al mostrar datos del sessionStorage
+  const [bolMounted, setBolMounted] = useState(false);
+
+  // Recuperar borrador del sessionStorage solo en el cliente tras el montaje
+  // Usa startTransition igual que el hook del paso 2 para evitar hydration error
+  useEffect(() => {
+    const strSaved = sessionStorage.getItem(DRAFT_KEY);
+    if (strSaved) {
+      try {
+        const objSaved = JSON.parse(strSaved) as FormData;
+        startTransition(() => {
+          setForm({ ...FORM_INICIAL, ...objSaved });
+        });
+      } catch {
+        sessionStorage.removeItem(DRAFT_KEY);
+      }
+    }
+    setTimeout(() => {
+    setBolMounted(true);
+  },0);
+  }, []);
+
+  // Guardar borrador automáticamente cada vez que el form cambia
+  useEffect(() => {
+    if (!bolMounted) return;
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+  }, [form, bolMounted]);
 
   /**
    * @Funcionalidad: Valida un campo individual según las reglas de negocio
@@ -244,21 +275,24 @@ export function useInformacionComercialForm() {
   }
 
   /**
-   * @Funcionalidad: Cancela el formulario con confirmación si hay datos ingresados
+   * @Funcionalidad: Cancela el formulario con confirmación si hay datos ingresados.
+   * Limpia también el borrador guardado en sessionStorage.
    */
-  function handleCancelar() {
-    if (isSubmitting) return;
-    const bolHasData = Object.values(form).some((value) => value.trim() !== "");
-    // Pedir confirmación solo si hay datos que se perderían
-    if (bolHasData) {
-      if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
-    }
-    setForm(FORM_INICIAL);
-    setErrors({});
-    setTouched({});
-    setSubmitStatus(null);
-    setSubmitMessage("");
+function handleCancelar() {
+  if (isSubmitting) return;
+  const bolHasData = Object.values(form).some((value) => value.trim() !== "");
+  if (bolHasData) {
+    if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
   }
+  sessionStorage.removeItem(DRAFT_KEY);
+  setForm(FORM_INICIAL);
+  setErrors({});
+  setTouched({});
+  setSubmitStatus(null);
+  setSubmitMessage("");
+  // Redirigir al home
+  router.push("/");
+}
 
   /**
    * @Funcionalidad: Valida el formulario, guarda los datos temporalmente en sessionStorage
@@ -279,7 +313,7 @@ export function useInformacionComercialForm() {
     setErrors(objLocalErrors);
     if (Object.keys(objLocalErrors).length > 0) return;
 
-    // Guardar datos del paso 1 en sessionStorage para combinar con el paso 2 al publicar
+    // Guardar datos finales validados del paso 1 para que el paso 2 los lea al publicar
     sessionStorage.setItem("informacionComercial", JSON.stringify({
       titulo:        form.titulo,
       precio:        toBackendPrice(form.precio),
@@ -288,8 +322,11 @@ export function useInformacionComercialForm() {
       descripcion:   form.descripcion,
     }));
 
+    // Limpiar el borrador ya que los datos finales están guardados
+    sessionStorage.removeItem(DRAFT_KEY);
+
     // TODO: reemplazar "???" con la ruta del formulario de Características del Inmueble
-    router.push("???");
+    router.push("http://localhost:3000//frontend/publicacion/Caracteristicas");
   }
 
   // Retorna true si el campo fue tocado y tiene error
@@ -300,6 +337,7 @@ export function useInformacionComercialForm() {
     errors,
     touched,
     hasErr,
+    bolMounted,
     validateField,
     handleChange,
     handlePrecioChange,

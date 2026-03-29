@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * @Dev: [OliverG]
+ * @Dev: [Tu nombre aquí]
  * @Fecha: 28/03/2026
  * @Funcionalidad: Página principal del formulario de Información Comercial para
  * la publicación de inmuebles. Renderiza el navbar, el formulario con sus campos
@@ -24,6 +24,7 @@ export default function Page() {
     form,
     errors,
     hasErr,
+    bolMounted,
     handleChange,
     handlePrecioChange,
     handleBlur,
@@ -142,8 +143,8 @@ export default function Page() {
                 {hasErr("titulo") ? (
                   // Mensaje de error inline
                   <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errors.titulo}</span>
-                ) : form.titulo.length > 0 ? (
-                  // Contador de caracteres
+                ) : bolMounted && form.titulo.length > 0 ? (
+                  // Contador de caracteres — solo visible tras el montaje en cliente
                   <span className="ml-auto text-[0.70rem] text-[#8A8480]">{form.titulo.length}/{TITULO_MAX}</span>
                 ) : null}
               </div>
@@ -206,8 +207,8 @@ export default function Page() {
             />
             {hasErr("descripcion")
               ? <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errors.descripcion}</span>
-              : <span className={`text-[0.70rem] text-right ${form.descripcion.length > DESC_MAX ? "text-[#C0503A]" : "text-[#8A8480]"}`}>
-                  {form.descripcion.length}/{DESC_MAX}
+              : <span className={`text-[0.70rem] text-right ${bolMounted && form.descripcion.length > DESC_MAX ? "text-[#C0503A]" : "text-[#8A8480]"}`}>
+                  {bolMounted ? form.descripcion.length : 0}/{DESC_MAX}
                 </span>}
           </div>
 
