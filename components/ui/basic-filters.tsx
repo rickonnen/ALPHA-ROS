@@ -10,7 +10,7 @@ interface MapboxFeature {
   place_name: string;
 }
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "";
 
 const TIPOS_INMUEBLE = ["Casa", "Departamento", "Terreno", "Local Comercial", "Oficina"];
 const OPERACIONES = ["En venta", "En alquiler", "Anticrético"];
