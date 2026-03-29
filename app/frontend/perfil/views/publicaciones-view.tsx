@@ -12,13 +12,28 @@
       - @param {onInfo} - función callback para ver el detalle de la publicación
       - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
 */
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 28/03/2026
+    Funcionalidad: Botón "+ Agregar" en la vista Mis Publicaciones
+      - Agrega botón en la parte superior derecha del header de la sección
+      - Al hacer clic redirige a /publicaciones/nueva usando useRouter de Next.js
+      - @return {void} - solo navegación, no incluye el formulario
+*/
+
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 28/03/2026
+    Funcionalidad: Vista de Mis Publicaciones dentro del perfil del usuario
+      - Consume GET /backend/perfil/misPublicaciones?id_usuario=...&page=...&limit=...
+      - Lista hasta 10 publicaciones por página con scroll interno (max-h 300px)
+      - Paginación con numeritos si hay más de 10
+      - El botón Eliminar (dentro de PublicacionCard) abre un AlertDialog de confirmación
+        con ícono de advertencia antes de ejecutar el DELETE
+      - Botón "+ Agregar" en el header redirige a /publicaciones/nueva
+      - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
+*/
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,17 +44,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
 
 interface PublicacionesViewProps {
   id_usuario: string;
 }
 
-const ITEMS_POR_PAGINA = 2;
+const ITEMS_POR_PAGINA = 10;
 
 export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
+  const router = useRouter();
+  const [totalPaginas, setTotalPaginas] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -48,30 +70,31 @@ export default function PublicacionesView({
   const [paginaActual, setPaginaActual] = useState(1);
 
   useEffect(() => {
+    let activo = true;
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
         const res = await fetch(
-          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}`,
+          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
         );
         if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
         const json = await res.json();
-        setPublicaciones(json.data);
+        if (activo) {
+          setPublicaciones(json.data);
+          setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+        }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
+        if (activo) setError("No se pudieron cargar las publicaciones");
       } finally {
-        setCargando(false);
+        if (activo) setCargando(false);
       }
     };
-
     cargarPublicaciones();
-  }, [id_usuario]);
-
-  const totalPaginas = Math.ceil(publicaciones.length / ITEMS_POR_PAGINA);
-  const publicacionesPaginadas = publicaciones.slice(
-    (paginaActual - 1) * ITEMS_POR_PAGINA,
-    paginaActual * ITEMS_POR_PAGINA,
-  );
+    return () => {
+      activo = false;
+    };
+  }, [id_usuario, paginaActual]);
 
   const handleEliminar = (id: string) => {
     setIdAEliminar(id);
@@ -84,7 +107,7 @@ export default function PublicacionesView({
       setError(null);
 
       const res = await fetch(
-        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
+        `/backend/perfil/deletePublicacion?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
         { method: "DELETE" },
       );
 
@@ -120,14 +143,23 @@ export default function PublicacionesView({
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full">
-            Mis publicaciones
-          </CardTitle>
-          {/* TODO: feat botón agregar */}
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-xl font-bold tracking-tight">
+              Mis publicaciones
+            </CardTitle>
+            <Button
+              onClick={() => router.push("/publicaciones/nueva")}
+              size="sm"
+              className="flex-shrink-0 bg-[#C26E5A] hover:bg-[#a85a47] text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+            >
+              + Agregar
+            </Button>
+          </div>
+          <div className="border-b border-white/20 w-full mt-1" />
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-3 pt-4">
+        <CardContent className="flex flex-col pt-4">
           {/* Error */}
           {error && (
             <p className="text-red-400 text-sm text-center py-2">{error}</p>
@@ -139,7 +171,7 @@ export default function PublicacionesView({
               {[1, 2, 3].map((i) => (
                 <Skeleton
                   key={i}
-                  className="h-24 w-full rounded-md bg-white/10"
+                  className="h-24 mb-2 w-full rounded-md bg-white/10"
                 />
               ))}
             </>
@@ -153,15 +185,18 @@ export default function PublicacionesView({
           )}
 
           {/* Lista de publicaciones paginadas */}
-          {!cargando &&
-            publicacionesPaginadas.map((pub) => (
-              <PublicacionCard
-                key={pub.id}
-                publicacion={pub}
-                onEliminar={handleEliminar}
-                onInfo={handleInfo}
-              />
-            ))}
+          {!cargando && publicaciones.length > 0 && (
+            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+              {publicaciones.map((pub) => (
+                <PublicacionCard
+                  key={pub.id}
+                  publicacion={pub}
+                  onEliminar={handleEliminar}
+                  onInfo={handleInfo}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Paginación */}
           {!cargando && totalPaginas > 1 && (
@@ -215,8 +250,26 @@ export default function PublicacionesView({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 text-red-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2">
               Esta acción no se puede deshacer. La publicación será eliminada
               permanentemente.
             </AlertDialogDescription>
