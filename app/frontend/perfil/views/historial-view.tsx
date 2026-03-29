@@ -63,6 +63,23 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col">
+        {error && (
+          <p className="text-red-400 text-sm text-center py-2">{error}</p>
+        )}
+
+        {cargando && (
+          <>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 mb-2 w-full rounded-md bg-white/10" />
+            ))}
+          </>
+        )}
+
+        {!cargando && historial.length === 0 && (
+          <p className="text-white/40 text-sm text-center py-8">
+            No hay publicaciones en tu historial.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
