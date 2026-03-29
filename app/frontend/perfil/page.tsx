@@ -23,7 +23,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
 import PerfilView from "./views/perfil-view";
-
+import HistorialView from "./views/historial-view";
+const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
 const HeaderMock = () => (
   <header className="w-full h-[70px] bg-white border-b flex items-center px-6 md:px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
     <span className="text-sm md:text-base">[ Componente Header - Equipo Externo ]</span>
@@ -77,11 +78,11 @@ export default function PerfilPage() {
 
   
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-    perfil: <PerfilView user={user} />,
+    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
     seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>, 
     publicaciones: <div className="p-8">Vista de Publicaciones - Equipo C</div>,
     favoritos: <div className="p-8">Vista de Favoritos - Equipo D</div>,
-    historial: <div className="p-8">Vista de Historial - Equipo E</div>,
+    historial: <HistorialView />,
   };
 
   return (
@@ -195,6 +196,8 @@ export default function PerfilPage() {
             {VIEWS_COMPONENTS[view] || VIEWS_COMPONENTS.perfil}
           </div>
         </div>
+          </>
+        )}
       </main>
     </div>
   );
