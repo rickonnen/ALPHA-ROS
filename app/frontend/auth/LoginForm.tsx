@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
+import { signIn } from "next-auth/react"
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -118,8 +119,53 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
       {/* Botón estilo Google */}
       <button
         type="button"
-        disabled={loading}
-        onClick={(e) => e.preventDefault()}
+  onClick={async () => {
+  const width = 500
+  const height = 600
+  const left = window.screenX + (window.outerWidth - width) / 2
+  const top = window.screenY + (window.outerHeight - height) / 2
+
+  // Obtener CSRF token
+  const res = await fetch("/api/auth/csrf")
+  const { csrfToken } = await res.json()
+
+  const form = document.createElement("form")
+  form.method = "POST"
+  form.action = "/api/auth/signin/google"
+  form.target = "Google Sign In"
+
+  const input = document.createElement("input")
+  input.type = "hidden"
+  input.name = "csrfToken"
+  input.value = csrfToken
+
+  form.appendChild(input)
+  document.body.appendChild(form)
+
+  const popup = window.open(
+    "",
+    "Google Sign In",
+    `width=${width},height=${height},left=${left},top=${top}`
+  )
+
+  form.submit()
+  document.body.removeChild(form)
+
+  // Detectar cuando el popup se cierra
+  const checkClosed = setInterval(() => {
+    if (popup?.closed) {
+      clearInterval(checkClosed)
+      // Verificar si el login fue exitoso
+      fetch("/api/auth/session")
+        .then(r => r.json())
+        .then(session => {
+          if (!session?.user) {
+            setErrors({ general: "Inicio de sesión cancelado." })
+          }
+        })
+    }
+  }, 500)
+}}
         style={{
           width: "100%",
           backgroundColor: loading ? "#9ca3af" : "#0F172A",
