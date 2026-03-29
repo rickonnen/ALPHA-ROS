@@ -90,11 +90,17 @@ export default function PerfilPage() {
 
   
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
-    seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>, 
-    publicaciones: <div className="p-8">Vista de Publicaciones - Equipo C</div>,
-    favoritos: <div className="p-8">Vista de Favoritos - Equipo D</div>,
-    historial: <HistorialView />,
+    perfil: usuario ? (<PerfilView usuario={usuario} telefonos={telefonos} />) : null,
+    publicaciones: usuario ? (<PublicacionesView id_usuario={usuario.id_usuario} />) : null,
+    seguridad: (
+      <SeguridadView
+        id_usuario={ID_USUARIO_HARDCODEADO}
+        email={usuario?.email ?? ""}
+        telefonos={telefonos}
+      />
+    ),
+    favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
+    historial: <div className="p-8">Vista de Historial</div>,
   };
 
   return (
@@ -177,37 +183,36 @@ export default function PerfilPage() {
               </div>
             )}
 
-        <div className="flex flex-col md:flex-row gap-0 items-stretch">
-          <nav id="btns" className="flex flex-col w-full md:w-64 z-10 relative">
-            {[
-              { id: "perfil", name: "MI PERFIL" },
-              { id: "seguridad", name: "SEGURIDAD" },
-              { id: "publicaciones", name: "PUBLICACIONES" },
-              { id: "favoritos", name: "FAVORITOS" },
-              { id: "historial", name: "HISTORIAL" },
-            ].map((btn) => {
-              const isSelected = view === btn.id;
-              return (
-                <button
-                  key={btn.id}
-                  onClick={() => setView(btn.id)}
-                  className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
-                    isSelected 
-                      ? "bg-[var(--secondary)] text-white md:rounded-l-2xl md:-mr-[1px] shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.2)] z-20" 
-                      : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--secondary)] hover:pl-8 border-transparent z-10"
-                  }`}
-                >
-                  {btn.name}
+            <div className="flex flex-col md:flex-row gap-0 items-stretch">
+              <nav id="btns" className="hidden md:flex flex-col w-64 z-10 relative">
+                {menuItems.map((btn) => {
+                  const isSelected = view === btn.id;
+                  return (
+                    <button
+                      key={btn.id}
+                      onClick={() => setView(btn.id)}
+                      className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
+                        isSelected
+                          ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
+                          : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"
+                      }`}
+                    >
+                      {btn.name}
+                    </button>
+                  );
+                })}
+                <button className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors">
+                  <LogOut className="h-4 w-4" /> SALIR
                 </button>
-              );
-            })}
-          </nav>
-          
-          <div id="dinamic" 
-            className="flex-grow bg-[var(--secondary)] text-white md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            {VIEWS_COMPONENTS[view] || VIEWS_COMPONENTS.perfil}
-          </div>
-        </div>
+              </nav>
+
+              <div
+                id="dinamic"
+                className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px]"
+              >
+                {VIEWS_COMPONENTS[view] ?? VIEWS_COMPONENTS.perfil}
+              </div>
+            </div>
           </>
         )}
       </main>
