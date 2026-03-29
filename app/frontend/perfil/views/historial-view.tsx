@@ -73,7 +73,7 @@ export default function HistorialView() {
               disabled={page === 1}
               className="bg-gray-500 px-3 py-1 rounded"
             >
-              Prev
+              anterior
             </button>
 
             <button 
@@ -81,7 +81,7 @@ export default function HistorialView() {
               disabled={end >= historial.length}
               className="bg-gray-500 px-3 py-1 rounded"
             >
-              Next
+              posterior
             </button>
           </div>
         </>
