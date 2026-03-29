@@ -1,3 +1,14 @@
+/**
+ * Dev: Gabriel Paredes 
+ * Date modification: 29/03/2026
+ * Funcionalidad: Componente de formulario para ingresar habitaciones,
+ *                baños, garajes y plantas de un inmueble con validación.
+ *                Corrección de bug: ajuste del gap entre columnas del grid
+ *                para evitar desalineación en pantallas móviles pequeñas.
+ * @param {HabitacionesFormProps} props - Valores, errores, touched, onChange y onBlur
+ * @return {JSX.Element} Grid de inputs numéricos para características del inmueble
+ */
+
 interface HabitacionesFormProps {
   bedroomsValue:  string;
   bathroomsValue: string;
@@ -30,7 +41,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
     }
 
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3 items-end">
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="habitaciones" className="text-sm font-medium text-[#2E2E2E]">
