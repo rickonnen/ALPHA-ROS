@@ -38,6 +38,23 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
 
+  useEffect(() => {
+    const cargarHistorial = async () => {
+      try {
+        setCargando(true);
+        const res = await fetch(`/api/historial?id_usuario=${id_usuario}`);
+        if (!res.ok) throw new Error("No se pudo cargar el historial");
+        const json = await res.json();
+        setHistorial(json);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargarHistorial();
+  }, [id_usuario]);
+
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
