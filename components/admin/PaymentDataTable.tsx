@@ -53,7 +53,7 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
     if (!objSelectedPayment) return;
     
     try {
-      const objResponse = await fetch('/backend/cobros', {
+      const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,7 +79,7 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
     if (!objSelectedPayment) return;
 
     try {
-      const objResponse = await fetch('/backend/cobros', {
+      const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
