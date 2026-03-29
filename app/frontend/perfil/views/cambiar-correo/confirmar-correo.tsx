@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ShieldCheck, Mail, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import ResultModal from "@/components/ui/modal";
 interface ConfirmarCorreoProps {
   id_usuario: string;
   nuevo_email: string;
@@ -55,6 +55,15 @@ export default function ConfirmarCorreoView({
   const [bolSubmitting, setBolSubmitting] = useState(false);
   const arrRefs = useRef<Array<HTMLInputElement | null>>([]);
 
+  const [bolShowResultModal, setBolShowResultModal] = useState(false);
+  const [strModalType, setStrModalType] = useState<"success" | "error">(
+    "error",
+  );
+  const [strModalTitle, setStrModalTitle] = useState("");
+  const [strModalMessage, setStrModalMessage] = useState("");
+  const [bolRedirectToPerfilOnClose, setBolRedirectToPerfilOnClose] =
+    useState(false);
+
   const strOtp = useMemo(() => arrOtp.join(""), [arrOtp]);
   const bolOtpCompleto = arrOtp.every((digit) => digit !== "");
 
@@ -70,6 +79,31 @@ export default function ConfirmarCorreoView({
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${String(s).padStart(2, "0")}`;
+  };
+
+  const openErrorModal = (message: string) => {
+    setStrModalType("error");
+    setStrModalTitle("No se pudo continuar");
+    setStrModalMessage(message);
+    setBolShowResultModal(true);
+  };
+
+  const openSuccessModal = (message: string, bolRedirect = false) => {
+    setStrModalType("success");
+    setStrModalTitle("Operación exitosa");
+    setStrModalMessage(message);
+    setBolRedirectToPerfilOnClose(bolRedirect);
+    setBolShowResultModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setBolShowResultModal(false);
+    setStrModalTitle("");
+    setStrModalMessage("");
+
+    if (bolRedirectToPerfilOnClose) {
+      window.location.assign("/frontend/perfil");
+    }
   };
 
   const handleOtpChange = (idx: number, value: string) => {
@@ -89,7 +123,6 @@ export default function ConfirmarCorreoView({
       arrRefs.current[idx + 1]?.focus();
     }
   };
-
   const handleOtpKeyDown = (
     idx: number,
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -119,20 +152,61 @@ export default function ConfirmarCorreoView({
   };
 
   const handleReenviar = async () => {
-    // TODO: llamar endpoint backend para reenviar OTP
-    setArrOtp(Array(OTP_LENGTH).fill(""));
-    setIntTimeLeft(OTP_EXP_SECONDS);
-    arrRefs.current[0]?.focus();
-    console.log("Reenviar OTP", { id_usuario, nuevo_email });
-  };
-
-  const handleConfirmar = async () => {
-    if (!bolOtpCompleto) return;
-
     try {
       setBolSubmitting(true);
-      // TODO: llamar endpoint backend para verificar OTP
-      console.log("Verificar OTP", { id_usuario, nuevo_email, otp: strOtp });
+      const res = await fetch("/backend/perfil/verificationCode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_usuario,
+          nuevo_email,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        openErrorModal(json.message || "No se pudo reenviar el código.");
+        return;
+      }
+
+      setArrOtp(Array(OTP_LENGTH).fill(""));
+      setIntTimeLeft(OTP_EXP_SECONDS);
+      arrRefs.current[0]?.focus();
+      openSuccessModal("Código reenviado correctamente.", false);
+    } catch (error) {
+      console.error("Error al reenviar OTP:", error);
+      openErrorModal("Error de red al reenviar código.");
+    } finally {
+      setBolSubmitting(false);
+    }
+  };
+  const handleConfirmar = async () => {
+    if (!bolOtpCompleto) return;
+    try {
+      setBolSubmitting(true);
+
+      const res = await fetch("/backend/perfil/verificarOtp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_usuario,
+          nuevo_email,
+          otp: strOtp,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        openErrorModal(json.message || "No se pudo verificar el código.");
+        return;
+      }
+
+      openSuccessModal("Correo actualizado correctamente.", true);
+    } catch (error) {
+      console.error("Error al verificar OTP:", error);
+      openErrorModal("Error de red al verificar el código.");
     } finally {
       setBolSubmitting(false);
     }
@@ -145,7 +219,6 @@ export default function ConfirmarCorreoView({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
             <ShieldCheck className="h-6 w-6 text-emerald-600" />
           </div>
-
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight">
               Confirmar nuevo correo electronico
@@ -211,6 +284,7 @@ export default function ConfirmarCorreoView({
           type="button"
           variant="outline"
           onClick={handleReenviar}
+          disabled={bolSubmitting}
           className="h-11 min-w-40 rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10"
         >
           <RefreshCcw className="mr-2 h-4 w-4" />
@@ -226,6 +300,16 @@ export default function ConfirmarCorreoView({
           {bolSubmitting ? "Verificando..." : "Confirmar"}
         </Button>
       </div>
+
+      {bolShowResultModal && (
+        <ResultModal
+          type={strModalType}
+          title={strModalTitle}
+          message={strModalMessage}
+          onClose={handleCloseModal}
+          onRetry={handleCloseModal}
+        />
+      )}
     </div>
   );
 }

@@ -11,26 +11,67 @@ export async function POST(req: NextRequest) {
 
     if (!id_usuario || !password_actual) {
       return NextResponse.json(
-        { ok: false, error: "Faltan campos id_usuario o password_actual" },
+        {
+          ok: false,
+          reason: "MISSING_FIELDS",
+          error: "Faltan campos id_usuario o password_actual",
+        },
         { status: 400 },
       );
     }
 
-    const usuario = await prisma.usuario.findUnique({
-      where: { id_usuario },
-      select: { email: true },
-    });
+    const [usuarioPublico, usuarioAuth, identidadGoogle] = await Promise.all([
+      prisma.usuario.findUnique({
+        where: { id_usuario },
+        select: { email: true },
+      }),
+      prisma.users.findUnique({
+        where: { id: id_usuario },
+        select: { email: true },
+      }),
+      prisma.identities.findFirst({
+        where: {
+          user_id: id_usuario,
+          provider: "google",
+        },
+        select: { id: true },
+      }),
+    ]);
 
-    if (!usuario) {
+    if (!usuarioPublico) {
       return NextResponse.json(
-        { ok: false, error: "Usuario no encontrado" },
+        {
+          ok: false,
+          reason: "USER_NOT_FOUND",
+          error: "Usuario no encontrado",
+        },
         { status: 404 },
       );
     }
 
-    if (!usuario.email) {
+    if (identidadGoogle) {
       return NextResponse.json(
-        { ok: false, error: "El usuario no tiene correo registrado" },
+        {
+          ok: false,
+          reason: "GOOGLE_PROVIDER_BLOCKED",
+          error:
+            "No puedes cambiar el correo porque tu cuenta fue creada con un proveedor externo (Google).",
+        },
+        { status: 403 },
+      );
+    }
+
+    const emailLogin = (usuarioAuth?.email ?? usuarioPublico.email ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (!emailLogin) {
+      return NextResponse.json(
+        {
+          ok: false,
+          reason: "EMAIL_NOT_FOUND",
+          error: "El usuario no tiene correo registrado",
+        },
         { status: 400 },
       );
     }
@@ -39,9 +80,12 @@ export async function POST(req: NextRequest) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      //esto es porque faltan variables de entorno en el supabase, pero mejor solo responder internal server error
       return NextResponse.json(
-        { ok: false, error: "Error interno del servidor" },
+        {
+          ok: false,
+          reason: "MISSING_SUPABASE_ENV",
+          error: "Error interno del servidor",
+        },
         { status: 500 },
       );
     }
@@ -49,13 +93,17 @@ export async function POST(req: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email: usuario.email,
+      email: emailLogin,
       password: password_actual,
     });
 
     if (error) {
       return NextResponse.json(
-        { ok: false, error: "La contraseña actual es incorrecta" },
+        {
+          ok: false,
+          reason: "INVALID_PASSWORD",
+          error: "La contraseña actual es incorrecta",
+        },
         { status: 401 },
       );
     }
@@ -69,7 +117,11 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error al validar contraseña actual:", error);
     return NextResponse.json(
-      { ok: false, error: "Error interno del servidor" },
+      {
+        ok: false,
+        reason: "INTERNAL_ERROR",
+        error: "Error interno del servidor",
+      },
       { status: 500 },
     );
   }
