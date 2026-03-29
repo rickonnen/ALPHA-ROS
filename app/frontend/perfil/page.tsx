@@ -27,7 +27,7 @@ import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
-//import HistorialView from "./views/historial-view";
+import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
 // Final User 3
@@ -100,7 +100,7 @@ export default function PerfilPage() {
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
-    historial: <div className="p-8">Vista de Historial</div>,
+    historial: <HistorialView id_usuario={ID_USUARIO_HARDCODEADO} />,
   };
 
   return (
