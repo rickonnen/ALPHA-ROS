@@ -533,7 +533,7 @@ model CiudadImagen {
 model DetallePago {
   id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
   id_plan         Int?             @db.SmallInt
-  fecha_detalle   DateTime?        @db.Date
+  fecha_detalle   DateTime?        @default(now()) @db.Timestamptz(6)
   estado          Int?             @db.SmallInt
   metodo_pago     String?          @db.VarChar(50)
   id_usuario      String?          @db.Uuid
@@ -652,7 +652,10 @@ model PlanPublicacion {
   nombre_plan        String?       @db.VarChar(128)
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
+  activo             Boolean?      @default(false)
+  id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
 
   @@schema("public")
 }
@@ -706,8 +709,9 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
-  qr_URL    String?
+  id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL          String?
+  PlanPublicacion PlanPublicacion[]
 
   @@schema("public")
 }
