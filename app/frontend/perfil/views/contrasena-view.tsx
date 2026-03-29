@@ -23,9 +23,10 @@ import ResultModal from "@/components/ui/modal";
 interface ChangePasswordFormProps {
   onCancel: () => void;
   id_usuario: string;
+  email: string;
 }
 
-export default function ChangePasswordForm({ onCancel, id_usuario }: ChangePasswordFormProps) {
+export default function ChangePasswordForm({ onCancel, id_usuario, email }: ChangePasswordFormProps) {
   const [strCurrentPassword, setStrCurrentPassword] = useState("");
   const [strNewPassword, setStrNewPassword] = useState("");
   const [strConfirmPassword, setStrConfirmPassword] = useState("");
@@ -114,7 +115,7 @@ export default function ChangePasswordForm({ onCancel, id_usuario }: ChangePassw
       setStrErrorConfirm("Las contraseñas no concuerdan.");
       return;
     }
-
+/*
     // Prioridad 5 — verificar contraseña actual con el backend
     try {
       if (strCurrentPassword !== "Hola123*") {
@@ -131,6 +132,40 @@ export default function ChangePasswordForm({ onCancel, id_usuario }: ChangePassw
     } finally {
       setBolValidando(false);
     }
+*/
+    // Prioridad 5 — verificar contraseña actual con el backend
+    try {
+      setBolValidando(true);
+
+      const res = await fetch("/backend/perfil/validarContrasenaActual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_usuario: id_usuario,
+          email: email,
+          password_actual: strCurrentPassword
+        })
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        setStrErrorModalMessage(json.error || "La contraseña actual es incorrecta.");
+        setBolShowErrorModal(true);
+        return;
+      }
+
+      // Contraseña correcta
+      setBolShowModal(true);
+
+    } catch (error) {
+      console.error("Error al validar contraseña:", error);
+      setStrErrorModalMessage("Error de red al validar la contraseña.");
+      setBolShowErrorModal(true);
+    } finally {
+      setBolValidando(false);
+    }
+
   };
 
   return (
@@ -263,7 +298,7 @@ export default function ChangePasswordForm({ onCancel, id_usuario }: ChangePassw
           disabled={bolValidando}
           className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
         >
-          {bolValidando ? "Verificando..." : "Guardar contraseña"}
+          {bolValidando ? "Verificando..." : "Guardar"}
         </Button>
       </div>
 
@@ -294,4 +329,4 @@ export default function ChangePasswordForm({ onCancel, id_usuario }: ChangePassw
 
   </div>
 );
-}
+} 

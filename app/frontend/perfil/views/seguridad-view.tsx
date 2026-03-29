@@ -102,7 +102,7 @@ export default function SeguridadView({id_usuario, email, telefonos}: SeguridadP
     ) : null,
 
     password: (
-      <ChangePasswordForm onCancel={() => setSubView("menu")} />
+      <ChangePasswordForm id_usuario={id_usuario} email={email} onCancel={() => setSubView("menu")} />
     ),
 
     correo: (
