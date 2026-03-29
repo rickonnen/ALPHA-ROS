@@ -187,7 +187,7 @@ export function PaymentDataTable({
                         </Button>
                         <Button 
                           onClick={() => handleOpenRejectModal(objPayment)}
-                          variant="destructive" 
+                          variant="default" 
                           size="sm" 
                           className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95"
                         >
