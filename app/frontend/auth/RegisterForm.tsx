@@ -22,6 +22,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -114,7 +115,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
       newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
     else if (nombre.trim().replace(/\s/g, "").length < 3)
       newErrors.nombre = "El nombre debe tener al menos 3 letras";
-    else if (/(.)\\1\\1/.test(nombre.trim().replace(/\s/g, "")))
+    else if (/(.)\1\1/.test(nombre.trim().replace(/\s/g, "")))
       newErrors.nombre = "No se permiten 3 o más letras repetidas consecutivamente";
     else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(nombre.trim()))
       newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
@@ -141,9 +142,15 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     return newErrors;
   }
 
-  // Botón deshabilitado si hay errores activos
-  function hasErrors() {
-    return Object.keys(errors).length > 0;
+  // Botón deshabilitado si hay errores activos O campos vacíos
+  function isFormValid() {
+    return (
+      nombre.trim() !== "" &&
+      email.trim() !== "" &&
+      password !== "" &&
+      confirmPassword !== "" &&
+      Object.keys(errors).length === 0
+    );
   }
 
 
@@ -163,13 +170,14 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     }
 
     setErrors({});
+    setGeneralError("");
     setLoading(true);
 
     try {
       await signup(nombre, email, password);
       setShowSuccess(true);
     } catch (err: any) {
-      setErrors({ general: err.message || "Ocurrió un error. Intentá de nuevo." });
+      setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -185,7 +193,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
   }
 
 
-  // ── UI ─────────────────────────────────────────────────────
+  // UI 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
      
@@ -277,8 +285,8 @@ onClick={async () => {
 
 
         {/* Error general */}
-        {errors.general && (
-          <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{errors.general}</p>
+        {generalError && (
+          <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
         )}
 
 
@@ -459,11 +467,11 @@ onClick={async () => {
         {/* Boton enviar */}
         <button
           type="submit"
-          disabled={loading|| hasErrors()}
+          disabled={loading || !isFormValid()}
           style={{
             width: "100%",
             //NUEVO - se pone rosado claro cuando esta deshabilidato
-            backgroundColor: loading || hasErrors() ? "#e5a89f" : "#C85A4F",
+            backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C85A4F",
             color: "white",
             fontWeight: "bold",
             padding: "12px",
