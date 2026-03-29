@@ -38,9 +38,12 @@ export default function HistorialView() {
                   Info
                 </button>
                   
-                <button 
+                <button
                   onClick={() => {
-                    setHistorial(historial.filter(h => h.id !== item.id));
+                    const confirmDelete = confirm("Are you sure you want to delete this item?");
+                    if (confirmDelete) {
+                     setHistorial(historial.filter(h => h.id !== item.id));
+                   }
                  }}
                  className="bg-red-500 text-white px-3 py-1 rounded"
                 >
