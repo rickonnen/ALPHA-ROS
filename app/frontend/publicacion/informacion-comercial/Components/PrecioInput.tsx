@@ -34,8 +34,8 @@ export default function PrecioInput({
 }: PrecioInputProps) {
   return (
     // En mobile ocupa todo el ancho, en desktop se fija a 110px
-    <div className="flex flex-col gap-1.5 mb-4 w-full sm:w-[110px] flex-1 sm:flex-initial">
-      <Label htmlFor="precio" className="text-[0.82rem] font-medium text-[#1A1714]">
+    <div className="flex flex-col gap-1.5 mb-4 w-full sm:w-[130px] flex-1 sm:flex-initial">
+      <Label htmlFor="precio" className="text-[0.875rem] font-medium text-[#1A1714]">
         Precio
       </Label>
       <Input

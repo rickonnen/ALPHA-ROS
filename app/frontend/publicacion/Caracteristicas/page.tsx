@@ -102,16 +102,17 @@ export default function CaracteristicasPage() {
   return (
     <main
       className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
-      style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #CFC9BB 35%)" }}
+      
+      style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
     >
       <div className="w-full max-w-2xl">
-        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-36">
+        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-60">
           Crear publicación
         </h1>
       </div>
 
       <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
-        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#2E2E2E]">
+        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#1F3A4D]">
           Caracteristicas del inmueble
         </h2>
 

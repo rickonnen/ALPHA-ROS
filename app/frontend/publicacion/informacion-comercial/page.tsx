@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * @Dev: [Tu nombre aquí]
+ * @Dev: [OliverG]
  * @Fecha: 28/03/2026
  * @Funcionalidad: Página principal del formulario de Información Comercial para
  * la publicación de inmuebles. Renderiza el navbar, el formulario con sus campos
@@ -115,10 +115,11 @@ export default function Page() {
           </p>
 
           {/* ── Fila: Título del Aviso + Precio ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px] gap-3.5 w-full items-start">
+          {/* En mobile se apilan vertical, en desktop van lado a lado */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3.5 w-full mb-1">
 
             {/* Campo Título del Aviso */}
-            <div className="flex flex-col gap-1.5 w-full min-w-0">
+            <div className="flex flex-col gap-1.5 w-full min-w-0 flex-1">
               <label className="text-[0.82rem] font-medium text-[#1A1714]" htmlFor="titulo">
                 Título del Aviso
               </label>
@@ -127,7 +128,6 @@ export default function Page() {
                 name="titulo"
                 type="text"
                 className={`w-full h-10 px-3 text-[0.88rem] text-[#1A1714] bg-white border rounded-[6px] outline-none transition-colors placeholder:text-[#B8B2AC] ${
-                  // Borde rojo si hay error, gris por defecto
                   hasErr("titulo")
                     ? "border-[#C0503A]"
                     : "border-[#D4CFC6] focus:border-[#8A8480]"
@@ -150,8 +150,8 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Campo Precio */}
-            <div className="w-full">
+            {/* Campo Precio — ancho fijo en desktop, completo en mobile */}
+            <div className="w-full sm:w-[130px] sm:flex-shrink-0">
               <PrecioInput
                 value={form.precio}
                 hasError={!!hasErr("precio")}
@@ -223,7 +223,7 @@ export default function Page() {
             >
               Cancelar
             </button>
-            {/* Botón Siguiente — valida y envía al backend */}
+            {/* Botón Siguiente — valida y guarda en sessionStorage */}
             <button
               type="button"
               onClick={handleSiguiente}

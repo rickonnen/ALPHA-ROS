@@ -54,7 +54,7 @@ export default function DropdownSelect({
     <div className="flex flex-col gap-[5px] mb-[14px] w-full items-stretch">
       <Label
         htmlFor={id}
-        className="text-[0.82rem] font-medium text-[#1A1714] tracking-[-0.01em] font-['Geist',_ui-sans-serif,_system-ui,_sans-serif]"
+        className="text-[0.875rem] font-medium text-[#1A1714] tracking-[-0.01em] font-['Geist',_ui-sans-serif,_system-ui,_sans-serif]"
       >
         {label}
       </Label>
