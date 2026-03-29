@@ -2,109 +2,96 @@
 
 import Link from "next/link";
 import { Home, Key, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
 
-// ── 1. TYPES ─────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------
+//  Tipos
+// ---------------------------------------------------------------
 interface CategoryItem {
-  name: string;
-  count: number;
+  strName:  string;
+  intCount: number;
 }
 
 interface ExploreCategory {
-  id: string;
-  title: string;
-  total: number;
-  icon: React.ReactNode;
-  items: CategoryItem[];
-  linkHref: string;
-  linkLabel: string;
+  strId:        string;
+  strTitle:     string;
+  intTotal:     number;
+  objIcon:      React.ReactNode;
+  arrItems:     CategoryItem[];
+  strLinkHref:  string;
+  strLinkLabel: string;
 }
 
-// ── 2. MOCK DATA ──────────────────────────────────────────────────────────────
-// Temporary data — replace with real DB queries via Prisma when ready.
-const MOCK_DATA = {
-  rentals: [
-    { name: "Cochabamba", count: 350 },
-    { name: "Santa Cruz",  count: 290 },
-    { name: "La Paz",      count: 200 },
-    { name: "Sucre",       count: 120 },
-    { name: "Tarija",      count: 85  },
-  ],
-  sales: [
-    { name: "Cochabamba", count: 220 },
-    { name: "Santa Cruz",  count: 185 },
-    { name: "La Paz",      count: 150 },
-    { name: "Sucre",       count: 120 },
-    { name: "Tarija",      count: 85  },
-  ],
-  propertyTypes: [
-    { name: "Casas",        count: 750 },
-    { name: "Departamentos",count: 620 },
-    { name: "Cuartos",      count: 310 },
-    { name: "Terrenos",     count: 180 },
-    { name: "Oficinas",     count: 95  },
-  ],
+// ---------------------------------------------------------------
+//  Helpers
+// ---------------------------------------------------------------
+const getTotalCount = (arrItems: CategoryItem[]) =>
+  arrItems.reduce((intSum, objItem) => intSum + objItem.intCount, 0);
+
+const strDisplayName: Record<string, string> = {
+  Casa:         "Casas",
+  Departamento: "Departamentos",
+  Cuarto:       "Cuartos",
+  Terreno:      "Terrenos",
+  Oficina:      "Oficinas",
 };
 
-// ── 3. DERIVED TOTALS ─────────────────────────────────────────────────────────
-const getTotalCount = (items: CategoryItem[]) =>
-  items.reduce((sum, item) => sum + item.count, 0);
+// ---------------------------------------------------------------
+//  Funciones fetch → API Routes
+// ---------------------------------------------------------------
+async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
+  const res = await fetch("/backend/home/explore/alquiler");
+  const { data } = await res.json();
+  return data.map((row: { ciudad: string; total: number }) => ({
+    strName:  row.ciudad,
+    intCount: Number(row.total),
+  }));
+}
 
-// ── 4. CATEGORY CONFIG ────────────────────────────────────────────────────────
-const categories: ExploreCategory[] = [
-  {
-    id:         "rentals",
-    title:      "Alquileres",
-    total:      getTotalCount(MOCK_DATA.rentals),
-    icon:       <Key className="w-4 h-4" />,
-    items:      MOCK_DATA.rentals,
-    linkHref:   "/busqueda?operacion=Alquiler",
-    linkLabel:  "Ver todas las ciudades",
-  },
-  {
-    id:         "sales",
-    title:      "En venta",
-    total:      getTotalCount(MOCK_DATA.sales),
-    icon:       <Home className="w-4 h-4" />,
-    items:      MOCK_DATA.sales,
-    linkHref:   "/busqueda?operacion=Venta",
-    linkLabel:  "Ver todas las ciudades",
-  },
-  {
-    id:         "property-types",
-    title:      "Tipo de inmueble",
-    total:      getTotalCount(MOCK_DATA.propertyTypes),
-    icon:       <Tag className="w-4 h-4" />,
-    items:      MOCK_DATA.propertyTypes,
-    linkHref:   "/busqueda",
-    linkLabel:  "Ver todos los tipos",
-  },
-];
+async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
+  const res = await fetch("/backend/home/explore/venta");
+  const { data } = await res.json();
+  return data.map((row: { ciudad: string; total: number }) => ({
+    strName:  row.ciudad,
+    intCount: Number(row.total),
+  }));
+}
 
-// ── 5. SUB-COMPONENTS ─────────────────────────────────────────────────────────
+async function fetchTiposInmueble(): Promise<CategoryItem[]> {
+  const res = await fetch("/backend/home/explore/tipos");
+  const { data } = await res.json();
+  return data.map((row: { tipo_inmueble: string; total: number }) => ({
+    strName:  strDisplayName[row.tipo_inmueble] ?? row.tipo_inmueble,
+    intCount: Number(row.total),
+  }));
+}
 
-function CategoryRow({ item, index }: { item: CategoryItem; index: number }) {
+// ---------------------------------------------------------------
+//  Sub-componentes (sin cambios)
+// ---------------------------------------------------------------
+function CategoryRow({ objItem, intIndex }: { objItem: CategoryItem; intIndex: number }) {
   return (
     <div
       className="group/row flex justify-between items-center px-3 py-2.5 rounded-lg
-                 bg-white/50 hover:bg-white transition-all duration-200
-                 hover:shadow-sm cursor-default"
-      style={{ animationDelay: `${index * 60}ms` }}
+           bg-[#F4EFE6] hover:bg-[#E7E1D7] transition-all duration-200
+           hover:shadow-sm cursor-default"
+      style={{ animationDelay: `${intIndex * 60}ms` }}
     >
-      <span className="text-sm text-[#3D3530] font-medium group-hover/row:text-[#1F3A4D] transition-colors duration-200">
-        {item.name}
+      <span className="text-sm text-[#2E2E2E] font-medium group-hover/row:text-[#1F3A4D] transition-colors duration-200">
+        {objItem.strName}
       </span>
       <span
         className="text-sm font-bold text-[#1F3A4D] tabular-nums
-                   bg-[#E7E1D7]/60 group-hover/row:bg-[#1F3A4D] group-hover/row:text-white
-                   px-2 py-0.5 rounded-md transition-all duration-200"
+           bg-[#E7E1D7]/60 group-hover/row:bg-[#1F3A4D] group-hover/row:text-[#E7E1D7]
+           px-2 py-0.5 rounded-md transition-all duration-200"
       >
-        {item.count.toLocaleString("es-BO")}
+        {objItem.intCount.toLocaleString("es-BO")}
       </span>
     </div>
   );
 }
 
-function ExploreCard({ category }: { category: ExploreCategory }) {
+function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
   return (
     <div
       className="group relative flex flex-col rounded-2xl overflow-hidden
@@ -113,52 +100,49 @@ function ExploreCard({ category }: { category: ExploreCategory }) {
                  transition-all duration-400 ease-out
                  hover:-translate-y-1.5"
     >
-      {/* Subtle top gradient accent on hover */}
       <div
         className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#C26E5A] via-[#D4956A] to-[#1F3A4D]
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       />
 
-      {/* ── Header ── */}
       <div className="flex items-center justify-between px-5 py-4 bg-[#1F3A4D]">
-        <div className="flex items-center gap-2.5 text-white">
+        <div className="flex items-center gap-2.5 text-[#E7E1D7]">
           <span
             className="flex items-center justify-center w-7 h-7 rounded-lg
-                       bg-white/15 group-hover:bg-[#C26E5A]/80
-                       transition-colors duration-300"
+            bg-[#E7E1D7]/15 group-hover:bg-[#C26E5A]/80
+            transition-colors duration-300"
           >
-            {category.icon}
+            {objCategory.objIcon}
           </span>
           <span className="font-semibold text-base tracking-tight">
-            {category.title}
+            {objCategory.strTitle}
           </span>
         </div>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium leading-none mb-0.5">
+          <p className="text-[10px] uppercase tracking-widest text-[#E7E1D7]/60 font-medium leading-none mb-0.5">
             total
           </p>
-          <p className="text-sm font-bold text-white/90 tabular-nums">
-            {category.total.toLocaleString("es-BO")}
+          <p className="text-sm font-bold text-[#E7E1D7] tabular-nums">
+            {objCategory.intTotal.toLocaleString("es-BO")}
           </p>
         </div>
       </div>
 
-      {/* ── List ── */}
       <div className="flex-1 px-4 py-4 space-y-1.5">
-        {category.items.map((item, index) => (
-          <CategoryRow key={item.name} item={item} index={index} />
+        {objCategory.arrItems.map((objItem, intIndex) => (
+          <CategoryRow key={objItem.strName} objItem={objItem} intIndex={intIndex} />
         ))}
       </div>
 
-      {/* ── Footer link ── */}
       <div className="px-5 py-4 border-t border-[#D6CFC3]/70">
         <Link
-          href={category.linkHref}
-          className="group/link inline-flex items-center gap-1.5
+          href={objCategory.strLinkHref}
+          className="group/link inline-flex items-center gap-1.5 rounded-sm
                      text-sm font-semibold text-[#C26E5A]
-                     hover:text-[#1F3A4D] transition-colors duration-200"
+                     hover:text-[#1F3A4D] transition-colors duration-200
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F5F1EA]"
         >
-          {category.linkLabel}
+          {objCategory.strLinkLabel}
           <svg
             className="w-4 h-4 translate-x-0 group-hover/link:translate-x-1 transition-transform duration-200"
             fill="none"
@@ -173,19 +157,111 @@ function ExploreCard({ category }: { category: ExploreCategory }) {
   );
 }
 
-// ── 6. MAIN COMPONENT ─────────────────────────────────────────────────────────
+// ---------------------------------------------------------------
+//  Skeleton mientras cargan los datos
+// ---------------------------------------------------------------
+function ExploreCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-2xl overflow-hidden bg-[#F5F1EA] border border-[#D6CFC3] shadow-sm animate-pulse">
+      <div className="px-5 py-4 bg-[#1F3A4D] flex justify-between items-center">
+        <div className="h-4 w-24 bg-[#E7E1D7]/30 rounded" />
+        <div className="h-4 w-12 bg-[#E7E1D7]/30 rounded" />
+      </div>
+      <div className="flex-1 px-4 py-4 space-y-1.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex justify-between px-3 py-2.5 rounded-lg bg-[#F4EFE6]">
+            <div className="h-3 w-28 bg-[#D6CFC3] rounded" />
+            <div className="h-3 w-10 bg-[#D6CFC3] rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="px-5 py-4 border-t border-[#D6CFC3]/70">
+        <div className="h-3 w-36 bg-[#D6CFC3] rounded" />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------
+//  Componente principal
+// ---------------------------------------------------------------
 export default function ExploreBy() {
+  const [arrRentals,       setArrRentals]       = useState<CategoryItem[]>([]);
+  const [arrSales,         setArrSales]         = useState<CategoryItem[]>([]);
+  const [arrPropertyTypes, setArrPropertyTypes] = useState<CategoryItem[]>([]);
+  const [blnLoading,       setBlnLoading]       = useState(true);
+  const [strError,         setStrError]         = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [arrAlquiler, arrVenta, arrTipos] = await Promise.all([
+          fetchTop5CiudadesAlquiler(),
+          fetchTop5CiudadesVenta(),
+          fetchTiposInmueble(),
+        ]);
+        setArrRentals(arrAlquiler);
+        setArrSales(arrVenta);
+        setArrPropertyTypes(arrTipos);
+      } catch (err) {
+        console.error("Error cargando datos de exploración:", err);
+        setStrError("No se pudieron cargar los datos.");
+      } finally {
+        setBlnLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const arrCategories: ExploreCategory[] = [
+    {
+      strId:        "rentals",
+      strTitle:     "Alquileres",
+      intTotal:     getTotalCount(arrRentals),
+      objIcon:      <Key className="w-4 h-4" />,
+      arrItems:     arrRentals,
+      strLinkHref:  "/busqueda?operacion=Alquiler",
+      strLinkLabel: "Ver todas las ciudades",
+    },
+    {
+      strId:        "sales",
+      strTitle:     "En venta",
+      intTotal:     getTotalCount(arrSales),
+      objIcon:      <Home className="w-4 h-4" />,
+      arrItems:     arrSales,
+      strLinkHref:  "/busqueda?operacion=Venta",
+      strLinkLabel: "Ver todas las ciudades",
+    },
+    {
+      strId:        "property-types",
+      strTitle:     "Tipo de inmueble",
+      intTotal:     getTotalCount(arrPropertyTypes),
+      objIcon:      <Tag className="w-4 h-4" />,
+      arrItems:     arrPropertyTypes,
+      strLinkHref:  "/busqueda",
+      strLinkLabel: "Ver todos los tipos",
+    },
+  ];
+
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-[#1F3A4D] mb-6 tracking-tight">
+      <h2 className="text-2xl font-bold text-[#2E2E2E] mb-6 tracking-tight">
         Explorar por:
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {categories.map((category) => (
-          <ExploreCard key={category.id} category={category} />
-        ))}
-      </div>
+      {strError ? (
+        <p className="text-sm text-red-500">{strError}</p>
+      ) : blnLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {Array.from({ length: 3 }).map((_, i) => <ExploreCardSkeleton key={i} />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {arrCategories.map((objCategory) => (
+            <ExploreCard key={objCategory.strId} objCategory={objCategory} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
