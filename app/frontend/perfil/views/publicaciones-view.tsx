@@ -83,7 +83,7 @@ export default function PublicacionesView({
       activo = false;
     };
   }, [id_usuario, paginaActual]);
-  
+
   const handleEliminar = (id: string) => {
     setIdAEliminar(id);
   };
@@ -95,7 +95,7 @@ export default function PublicacionesView({
       setError(null);
 
       const res = await fetch(
-        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
+        `/backend/perfil/deletePublicacion?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
         { method: "DELETE" },
       );
 
