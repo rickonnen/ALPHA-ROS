@@ -6,9 +6,38 @@
 import { useState } from "react";
 import FreePublicationLimitModal from "./frontend/publicacion/components/FreePublicationLimitModal";
 import { Button } from "@/components/ui/button";
+
+// NUEVO: Importamos  función del backend
+import { verificarYCrearPublicacion } from "@/app/backend/publicacion/action";
+
 export default function GuiaTipografia() {
   const [publicationCount, setPublicationCount] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
+  const [cargando, setCargando] = useState(false); // Añadimos esto para evitar doble clic
+
+  // NUEVO: Función que ejecuta la prueba conectada a  Base de Datos
+  const handlePublicar = async () => {
+    setCargando(true);
+    
+    // Enviamos datos falsos (dummy) a tu backend
+    const respuesta = await verificarYCrearPublicacion({
+      titulo: "Casa de prueba desde la Guía",
+      precio: 150000
+    });
+
+    if (!respuesta.success && respuesta.reason === "LIMITE_ALCANZADO") {
+      // Si el backend dice que no hay cupo, usamos  estados para disparar el modal
+      setIsPremium(false);
+      setPublicationCount(2); 
+    } else if (respuesta.success) {
+      // Si el backend lo guardó correctamente, mostramos una alerta
+      alert("¡Éxito! Publicación guardada en la base de datos y cupo descontado.");
+    } else {
+      alert("Ocurrió un error en el servidor.");
+    }
+
+    setCargando(false);
+  };
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
@@ -103,18 +132,17 @@ export default function GuiaTipografia() {
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
                 Botón Especial
               </Button>
+              
+              {/* ESTE ES EL BOTÓN QUE AHORA LLAMA AL BACKEND */}
               <Button
                 variant="destructive"
-                onClick={() => {
-                  setIsPremium(false);
-                  setPublicationCount(2);
-                }}
+                onClick={handlePublicar}
+                disabled={cargando}
               >
-                Publicar
+                {cargando ? "Cargando..." : "Publicar"}
               </Button>
-              </div>
+            </div>
 
-          
         </section>
 
       </div>
