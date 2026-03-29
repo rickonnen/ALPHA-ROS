@@ -72,7 +72,7 @@ export default function PublicacionCard({
           </Button>
           <Button
             size="sm"
-            className="bg-[#C26E5A] text-white border-none hover:bg-[#a85a47]"
+            className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80"
             onClick={() => onEliminar(publicacion.id)}
           >
             Eliminar

@@ -151,7 +151,7 @@ export default function PublicacionesView({
             <Button
               onClick={() => router.push("/publicaciones/nueva")}
               size="sm"
-              className="flex-shrink-0 bg-[#C26E5A] hover:bg-[#a85a47] text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
             >
               + Agregar
             </Button>
