@@ -6,6 +6,7 @@
  * @Funcionalidad: Componente de sección de video para el formulario de publicación de inmueble.
  * Permite al usuario ingresar una URL de YouTube o Instagram Reel y muestra una vista previa.
  * @param {VideoSectionProps} onURLChange - Callback que notifica al componente padre la URL válida ingresada.
+ * @param {VideoSectionProps} defaultUrl - URL inicial para restaurar el valor guardado en sessionStorage.
  * @return {JSX.Element} Sección con input de URL y vista previa del video.
  */
 
@@ -25,10 +26,7 @@ interface VideoSectionProps {
   defaultUrl?: string;
 }
 
-export function VideoSection({ onURLChange, defaultUrl }: VideoSectionProps) {
-  // Prefijo str para estados de string, obj para estados de objetos
-  const [strUrl, setStrUrl] = useState(defaultUrl)
-  const [objPreview, setObjPreview] = useState<PreviewData>({ platform: null, id: null })
+export function VideoSection({ onURLChange, defaultUrl = "" }: VideoSectionProps) {
 
   /**
    * @Dev: StefanyS
@@ -72,6 +70,26 @@ export function VideoSection({ onURLChange, defaultUrl }: VideoSectionProps) {
     if (match && match[1]) return match[1];
     return null;
   }
+
+  /**
+   * Calcula el preview inicial a partir de defaultUrl para restaurar la vista previa
+   * cuando el usuario vuelve a esta sección desde sessionStorage.
+   * @param {string} strDefault - URL guardada en sessionStorage.
+   * @return {PreviewData} Objeto con plataforma e ID del video, o null si no hay URL válida.
+   */
+  const getInitialPreview = (strDefault: string): PreviewData => {
+    if (!strDefault) return { platform: null, id: null };
+    const strYtId = extractYoutubeId(strDefault);
+    if (strYtId) return { platform: 'youtube', id: strYtId };
+    const strIgId = extractInstagramId(strDefault);
+    if (strIgId) return { platform: 'instagram', id: strIgId };
+    return { platform: null, id: null };
+  }
+
+  // Prefijo str para estados de string, obj para estados de objetos
+  // Se inicializan con defaultUrl para restaurar el estado desde sessionStorage
+  const [strUrl, setStrUrl]         = useState(defaultUrl)
+  const [objPreview, setObjPreview] = useState<PreviewData>(() => getInitialPreview(defaultUrl))
 
   /**
    * @Dev: StefanyS
