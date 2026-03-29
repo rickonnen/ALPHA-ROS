@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from "react";
 type HistorialItem = {
-  id: number;
-  titulo: string;
-  precio: string;
+  id_publicacion: number;
+  fecha: string;
+  Publicacion: {
+    titulo: string | null;
+    precio: number | null;
+    Moneda: { simbolo: string } | null;
+    TipoOperacion: { nombre_operacion: string | null } | null;
+    Imagen: { url_imagen: string | null }[];
+  };
 };
 export default function HistorialView() {
 
   const [historial, setHistorial] = useState<HistorialItem[]>([]);
   const [page, setPage] = useState(1);
   useEffect(() => {
-  fetch("/api/historial")
+  fetch(`/api/historial?id_usuario=a1b2c3d4-0003-0003-0003-000000000003`)
     .then((res) => res.json())
     .then((data) => {
       console.log("DATA:", data); // para verificar
@@ -20,7 +26,7 @@ export default function HistorialView() {
     .catch((error) => console.error("Error:", error));
   }, []);
   
-  const itemsPerPage = 1;
+  const itemsPerPage = 5;
 
   const start = (page - 1) * itemsPerPage;
   const end = start + itemsPerPage;
@@ -39,16 +45,22 @@ export default function HistorialView() {
         <>
           <div className="space-y-4">
             {currentItems.map((item) => (
-              <div key={item.id} className="bg-white text-black p-4 rounded-lg flex justify-between items-center">
-                
-                <div>
-                  <h3 className="font-bold">{item.titulo}</h3>
-                  <p>{item.precio}</p>
-                </div>
-
+              <div key={item.id_publicacion} className="bg-white text-black p-4 rounded-lg flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={item.Publicacion.Imagen[0]?.url_imagen ?? "https://via.placeholder.com/80"}
+                    alt={item.Publicacion.titulo ?? ""}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div>
+                    <h3 className="font-bold">{item.Publicacion.titulo ?? "Sin título"}</h3>
+                    <p>{item.Publicacion.Moneda?.simbolo} {item.Publicacion.precio ?? "Sin precio"}</p>
+                    <p className="text-sm text-gray-500">{item.Publicacion.TipoOperacion?.nombre_operacion ?? ""}</p>
+                  </div>
+                  </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => alert(`Viewing: ${item.titulo}`)} 
+                    onClick={() => alert(`Viewing: ${item.Publicacion.titulo}`)}
                     className="bg-blue-500 text-white px-3 py-1 rounded">
                     Info
                   </button>
@@ -57,7 +69,7 @@ export default function HistorialView() {
                     onClick={() => {
                       const confirmDelete = confirm("Are you sure you want to delete this item?");
                       if (confirmDelete) {
-                        setHistorial(historial.filter(h => h.id !== item.id));
+                        setHistorial(historial.filter(h => h.id_publicacion !== item.id_publicacion));
                       }
                     }}
                     className="bg-red-500 text-white px-3 py-1 rounded">
