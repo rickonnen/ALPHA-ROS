@@ -22,6 +22,10 @@
       - @param {usuario} - objeto Usuario de Prisma
       - @param {bandera img} - una bandera generada con el codigo_iso
 */
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 29/03/2026
+    Funcionalidad: FIX bd y cambios en Telefono
+*/
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function DetailBlock({ label, value }: { label: string; value: string }) {
@@ -49,6 +53,13 @@ interface PerfilViewProps {
       nombre_pais?: string | null;
       codigo_iso?: string | null;
     } | null;
+    UsuarioTelefono?: {
+      estado?: number | null;
+      Telefono?: {
+        nro_telefono?: string | null;
+        codigo_pais?: number | null;
+      } | null;
+    }[];
   };
   telefonos: string[];
 }

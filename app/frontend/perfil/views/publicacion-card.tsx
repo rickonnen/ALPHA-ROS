@@ -4,6 +4,14 @@
       - @param {publicacion} - datos de la publicación a mostrar
       - @return {PublicacionCard} - muestra miniatura, título, zona y tipo
 */
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 28/03/2026
+    Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
+      - @param {publicacion} - datos de la publicación (titulo, zona, tipo, imagen)
+      - @param {onEliminar}  - callback para abrir el AlertDialog de confirmación
+      - @param {onInfo}      - callback para ver el detalle de la publicación
+      - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
+*/
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -27,8 +35,8 @@ export default function PublicacionCard({
   onInfo,
 }: PublicacionCardProps) {
   return (
-    <Card className="border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
-      <CardContent className="flex items-center gap-4 p-4">
+    <Card className="border mb-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
+      <CardContent className="flex items-center gap-4 px-4">
         {/* Miniatura */}
         <div className="w-16 h-16 rounded-md overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center">
           {publicacion.imagen ? (
@@ -51,8 +59,8 @@ export default function PublicacionCard({
           <p className="text-xs text-white/50">Tipo: {publicacion.tipo}</p>
         </div>
 
-        {/* Botones - responsabilidad del siguiente feat */}
-        <div className="flex gap-2 flex-shrink-0">
+        {/* Botones */}
+        <div className="flex gap-2 flex-shrink-0 items-center">
           <Button
             variant="outline"
             size="sm"
@@ -64,7 +72,7 @@ export default function PublicacionCard({
           </Button>
           <Button
             size="sm"
-            className="bg-[#C26E5A] text-white border-none hover:bg-[#a85a47]"
+            className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80"
             onClick={() => onEliminar(publicacion.id)}
           >
             Eliminar

@@ -1,6 +1,6 @@
-/* Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
-    Fecha: 27/03/2026
-    Fix: Fetch de usuario para conectar a la vista de editar perfil
+/* Dev: Camila - xdev/sow-camila
+    Fecha: 28/03/2026
+    Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
 */
 "use client";
 import { useState, useEffect } from "react";
@@ -16,7 +16,8 @@ interface SeguridadProps {
   telefonos: string[];
   onSuccess: () => void;
 };
-export default function SeguridadView({id_usuario, email, telefonos, onSuccess}: SeguridadProps) {
+//export default function SeguridadView({id_usuario, email, telefonos, onSuccess}: SeguridadProps) {
+export default function SeguridadView({ id_usuario, email, telefonos }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
@@ -39,7 +40,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
       <div className="space-y-4">
         <button
           onClick={() => setSubView("perfil")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Editar Perfil</p>
@@ -49,7 +50,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         </button>
         <button
           onClick={() => setSubView("password")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Password</p>
@@ -59,7 +60,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         </button>
         <button
           onClick={() => setSubView("correo")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
@@ -69,12 +70,12 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         </button>
         <button
           onClick={() => setSubView("telefonos")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 transition"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
             <p className="text-sm text-gray-300">
-              +591 70054545  +591 54454444487
+              {telefonos.length > 0 ? telefonos.join(' · ') : 'Sin teléfonos'}
             </p>
           </div>
           <span className="text-gray-400">›</span>
@@ -104,11 +105,8 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
 
     password: (
       <ChangePasswordForm 
-        id_usuario={id_usuario} 
-        email={email} 
-        onCancel={() => setSubView("menu")}
-        onSuccess={onSuccess}
-      />
+      id_usuario={id_usuario} 
+      onCancel={() => setSubView("menu")} />
     ),
 
     correo: (

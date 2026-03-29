@@ -16,6 +16,10 @@
       - TODO: reemplazar ID_USUARIO_HARDCODEADO por el id real
               que llegue desde el header/auth cuando esté listo
 */
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 29/03/2026
+    Funcionalidad: FIX bd y cambios en Telefono
+*/
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,23 +31,15 @@ import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
-//import HistorialView from "./views/historial-view";
+import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
-//const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
-const ID_USUARIO_HARDCODEADO = "5c684c90-c84f-4dfb-a99c-017dcd614e32";
+// Final User 3
+//const ID_USUARIO_HARDCODEADO = "5c684c90-c84f-4dfb-a99c-017dcd614e32";
+// User 1
+const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
+// User 2
 //const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
-
-const HeaderMock = () => (
-  <header className="w-full h-[70px] bg-white border-b flex items-center px-6 md:px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
-    <span className="text-sm md:text-base">[ Componente Header - Equipo Externo ]</span>
-    <Button variant="ghost" asChild className="hidden md:flex">
-      <Link href="/">
-        <Home className="mr-2 h-4 w-4" /> Inicio
-      </Link>
-    </Button>
-  </header>
-);
 
 export default function PerfilPage() {
   const [view, setView] = useState("perfil");
@@ -82,7 +78,7 @@ export default function PerfilPage() {
   ];
 
   const telefonos = usuario?.UsuarioTelefono?.map(
-    (ut: any) => `+${ut.codigo_pais} ${ut.nro_telefono}`
+      (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
   ) ?? [];
 
   
@@ -98,12 +94,11 @@ export default function PerfilPage() {
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
-    historial: <div className="p-8">Vista de Historial</div>,
+    historial: <HistorialView id_usuario={ID_USUARIO_HARDCODEADO} />,
   };
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <HeaderMock />
 
       <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
 
