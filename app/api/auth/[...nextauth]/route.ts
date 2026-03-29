@@ -1,85 +1,111 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { prisma } from "@/lib/prisma"
-import { NextRequest } from "next/server"
-const authOptions = {
+
+const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
+
+  session: {
+    strategy: "jwt",
+  },
 
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
-        params: {
-          prompt: "select_account"
-        }
-      }
+        params: { prompt: "select_account" },
+      },
     }),
   ],
 
   callbacks: {
+
+    // 🔥 SIGN IN
     async signIn({ user, account }: any) {
-      if (account?.provider !== "google") return false
-      if (!user.email) return false
 
       try {
-        const usuarioExistente = await prisma.usuario.findFirst({
-          where: { email: user.email },
-        })
 
-        if (usuarioExistente) {
-          if (!usuarioExistente.google_id) {
-            await prisma.usuario.update({
-              where: { id_usuario: usuarioExistente.id_usuario },
-              data: { google_id: account.providerAccountId },
+        if (account?.provider === "google") {
+
+          const { createClient } = await import("@supabase/supabase-js")
+
+          const supabase = createClient(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+
+          // 🔎 Verificar si ya existe
+          const { data: existing } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("email", user.email)
+            .maybeSingle()
+
+          // 🆕 Crear usuario si no existe
+          if (!existing) {
+
+            await supabase.from("Usuario").insert({
+              id_usuario: account.providerAccountId,
+              email: user.email,
+              nombres: user.name?.split(" ")[0] ?? "",
+              apellidos:
+                user.name?.split(" ").slice(1).join(" ") ?? "",
+              google_id: account.providerAccountId,
+              url_foto_perfil: user.image ?? null,
+              rol: 2,
+              estado: 1,
             })
+
+            console.log("Usuario creado en tabla Usuario")
+
           }
-          return true
+
         }
 
-        const nombreCompleto = user.name ?? ""
-        const partes = nombreCompleto.trim().split(" ")
-        const nombres = partes[0] ?? ""
-        const apellidos = partes.slice(1).join(" ") ?? ""
-
-        const rolCliente = await prisma.rol.findFirst({
-          where: { nombre_rol: "Cliente" },
-        })
-
-        await prisma.usuario.create({
-          data: {
-            id_usuario: user.id,
-            email: user.email,
-            nombres,
-            apellidos,
-            google_id: account.providerAccountId,
-            url_foto_perfil: user.image ?? null,
-            rol: rolCliente?.id_rol ?? null,
-            estado: 1,
-          },
-        })
-
         return true
+
       } catch (error) {
-        console.error("Error en signIn callback:", error)
+
+        console.error("Error signIn:", error)
         return false
+
       }
+
     },
 
-    async session({ session, token }: any) {
-      if (token.sub) {
-        session.user.id = token.sub
+    // 🔥 JWT (GUARDAR ID CORRECTO)
+    async jwt({ token, account }: any) {
+
+      if (account) {
+
+        token.id = account.providerAccountId
+
       }
-      return session
+
+      return token
+
     },
+
+    // 🔥 SESSION (ENVIAR ID AL FRONTEND)
+    async session({ session, token }: any) {
+
+      if (session.user) {
+
+        session.user.id = token.id as string
+
+      }
+
+      return session
+
+    },
+
   },
 
-pages: {
-  signIn: "/",
-  error: "/",
-},
-}
+  pages: {
+    signIn: "/",
+    error: "/",
+  },
 
-const handler = NextAuth(authOptions)
+})
 
 export { handler as GET, handler as POST }
