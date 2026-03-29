@@ -49,6 +49,7 @@ export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
   const router = useRouter();
+  const [totalPaginas, setTotalPaginas] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -57,31 +58,32 @@ export default function PublicacionesView({
   const [paginaActual, setPaginaActual] = useState(1);
 
   useEffect(() => {
+    let activo = true;
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
         const res = await fetch(
-          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}`,
+          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
         );
         if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
         const json = await res.json();
-        setPublicaciones(json.data);
+        if (activo) {
+          setPublicaciones(json.data);
+          setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+        }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
+        if (activo) setError("No se pudieron cargar las publicaciones");
       } finally {
-        setCargando(false);
+        if (activo) setCargando(false);
       }
     };
-
     cargarPublicaciones();
-  }, [id_usuario]);
-
-  const totalPaginas = Math.ceil(publicaciones.length / ITEMS_POR_PAGINA);
-  const publicacionesPaginadas = publicaciones.slice(
-    (paginaActual - 1) * ITEMS_POR_PAGINA,
-    paginaActual * ITEMS_POR_PAGINA,
-  );
-
+    return () => {
+      activo = false;
+    };
+  }, [id_usuario, paginaActual]);
+  
   const handleEliminar = (id: string) => {
     setIdAEliminar(id);
   };
@@ -171,7 +173,7 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando &&
-            publicacionesPaginadas.map((pub) => (
+            publicaciones.map((pub) => (
               <PublicacionCard
                 key={pub.id}
                 publicacion={pub}
