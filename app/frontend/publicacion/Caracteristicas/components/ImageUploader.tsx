@@ -1,18 +1,20 @@
 /**
- * Dev: Gabriel Paredes
+ * Dev: Gabriel Paredes 
  * Date modification: 29/03/2026
  * Funcionalidad: Componente para subir imágenes de un inmueble con
  *                validación de formato, peso, resolución y aspecto.
  *                Corrección: muestra mensaje de error en rojo cuando
  *                el usuario intenta agregar una imagen superando el
  *                límite máximo de 5 imágenes permitidas.
+ *                Aviso: informa al usuario que las imágenes deben
+ *                volver a seleccionarse si recarga la página.
  * @param {ImageUploaderProps} props - files, onChange, onRemove, error, touched
  * @return {JSX.Element} Uploader de imágenes con previsualizaciones y validaciones
  */
 
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect, startTransition } from 'react'
 import { File as FileIcon, X } from 'lucide-react'
 
 // ─── Constantes (CA-21 / CA-22 / CA-23 / CA-24 / CA-25) ──────────────────────
@@ -80,7 +82,16 @@ function validateImageDimensions(
 
 export function ImageUploader({ files = [], onChange, onRemove, error, touched }: ImageUploaderProps) {
   const inputRef                    = useRef<HTMLInputElement>(null)
-  const [fieldError, setFieldError] = useState<string | null>(null)
+  const [fieldError,  setFieldError]  = useState<string | null>(null)
+  // Tarea 2.9: inicializar con lazy useState para evitar setState dentro de useEffect
+  const [wasVisited,  setWasVisited]  = useState<boolean>(false)
+
+  useEffect(() => {
+    try {
+      const hasSession = !!sessionStorage.getItem('caracteristicasInmueble')
+      if (hasSession) startTransition(() => setWasVisited(true))
+    } catch { /* SSR */ }
+  }, [])
 
   // ── Estado controlado externamente por el hook ────────────────────────────
   const limitReached = files.length >= MAX_FILES
@@ -89,6 +100,7 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setFieldError(null)
+    setWasVisited(false)
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -130,6 +142,7 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
       return
     }
     setFieldError(null)
+    setWasVisited(false)
     inputRef.current?.click()
   }
 
@@ -227,6 +240,13 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         <p className="text-xs text-gray-400 text-right">
           {files.length} / {MAX_FILES} imágenes
         </p>
+      )}
+
+      {/* Aviso: aparece solo si el usuario ya estuvo aquí antes y no hay imágenes */}
+      {wasVisited && files.length === 0 && (
+        <span className="text-red-500" style={{ fontSize: '14px' }}>
+          Por favor, inserte su imagen de nuevo.
+        </span>
       )}
 
     </div>

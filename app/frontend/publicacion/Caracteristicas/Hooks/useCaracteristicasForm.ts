@@ -1,4 +1,15 @@
-import { useState, useCallback, useRef } from 'react';
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 29/03/2026
+ * Funcionalidad: Hook personalizado que centraliza la lógica del formulario
+ *                de Características del Inmueble. Maneja estados, validaciones
+ *                e imágenes.
+ *                Persiste los valores en sessionStorage para
+ *                conservarlos al navegar de vuelta desde la sección 2 a la 1.
+ * @return {object} Estados y handlers necesarios para el formulario
+ */
+
+import { useState, useCallback, useRef, useEffect, startTransition } from 'react';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +76,9 @@ export const MAX_VALOR_NUMERICO       = 50;
 export const MIN_RESOLUCION_ANCHO     = 1280;
 export const MIN_RESOLUCION_ALTO      = 720;
 
+// Tarea 2.9: clave de sessionStorage para los datos del paso 2
+const SESSION_KEY = 'caracteristicasInmueble';
+
 const INITIAL_VALUES: CaracteristicasFormValues = {
   direccion:    '',
   superficie:   '',
@@ -86,6 +100,26 @@ function esNumeroEnteroValido(valor: string): boolean {
 function esNumeroDecimalPositivo(valor: string): boolean {
   const limpio = valor.replace(/\./g, '')
   return /^\d+$/.test(limpio) && parseInt(limpio, 10) > 0;
+}
+
+// Tarea 2.9: leer valores guardados del sessionStorage (sin imágenes, no serializables)
+function leerSesion(): Partial<Omit<CaracteristicasFormValues, 'imagenes'>> {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+// Tarea 2.9: guardar valores en sessionStorage (sin imágenes)
+function guardarSesion(values: CaracteristicasFormValues): void {
+  try {
+    const { imagenes: _, ...rest } = values
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(rest))
+  } catch {
+    // sessionStorage no disponible (SSR), ignorar
+  }
 }
 
 // ─── Validación ───────────────────────────────────────────────────────────────
@@ -164,10 +198,29 @@ function validate(values: CaracteristicasFormValues): CaracteristicasFormErrors 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useCaracteristicasForm() {
+
+  // Tarea 2.9: arrancar siempre con INITIAL_VALUES para que servidor y cliente
+  // rendericen lo mismo. Tras el montaje, un useEffect restaura desde sessionStorage
+  // usando startTransition para que React no lo trate como render síncrono urgente.
   const [values, setValues]   = useState<CaracteristicasFormValues>(INITIAL_VALUES);
   const [errors, setErrors]   = useState<CaracteristicasFormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof CaracteristicasFormValues, boolean>>>({});
   const valuesRef = useRef(values);
+
+  useEffect(() => {
+    const saved = leerSesion()
+    if (Object.keys(saved).length === 0) return
+    const restored = { ...INITIAL_VALUES, ...saved }
+    startTransition(() => {
+      valuesRef.current = restored
+      setValues(restored)
+    })
+  }, [])
+
+  // Tarea 2.9: guardar en sessionStorage cada vez que cambian los valores
+  useEffect(() => {
+    guardarSesion(valuesRef.current)
+  }, [values])
 
   // Actualiza campos de texto/select
   const handleChange = useCallback(
@@ -176,12 +229,12 @@ export function useCaracteristicasForm() {
       valuesRef.current = updated;
       setValues(updated);
 
-     if (touched[field] && field !== 'superficie') {
-      setErrors(prev => ({
-      ...prev,
-      [field]: validate(updated)[field],
-      }));
-}
+      if (touched[field] && field !== 'superficie') {
+        setErrors(prev => ({
+          ...prev,
+          [field]: validate(updated)[field],
+        }));
+      }
     },
     [touched],
   );
@@ -253,8 +306,9 @@ export function useCaracteristicasForm() {
     [],
   );
 
-  // Resetea todo al estado inicial
+  // Resetea todo al estado inicial y limpia sessionStorage
   const handleReset = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY)
     setValues(INITIAL_VALUES);
     setErrors({});
     setTouched({});

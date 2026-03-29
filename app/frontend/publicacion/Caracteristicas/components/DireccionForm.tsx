@@ -1,3 +1,12 @@
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 29/03/2026
+ * Funcionalidad: Componente de formulario para ingresar dirección y superficie
+ *                de un inmueble con validación y filtrado de caracteres.
+ *                Corrección: tamaño de letra de mensajes de error ajustado a 14px.
+ * @param {DireccionFormProps} props - Valores, errores, touched, onChange y onBlur
+ * @return {JSX.Element} Inputs de dirección y superficie con validación
+ */
 import { MapPin } from "lucide-react"
 
 interface DireccionFormProps {
@@ -51,7 +60,7 @@ export function DireccionForm({ addressValue, areaValue, addressError, areaError
           </button>
         </div>
         {addressTouched && addressError && (
-          <span className="text-red-500 text-xs">{addressError}</span>
+          <span className="text-red-500 text-sm">{addressError}</span>
         )}
       </div>
 
@@ -76,7 +85,7 @@ export function DireccionForm({ addressValue, areaValue, addressError, areaError
           </span>
         </div>
         {areaTouched && areaError && (
-          <span className="text-red-500 text-xs">{areaError}</span>
+          <span className="text-red-500 text-sm">{areaError}</span>
         )}
       </div>
 

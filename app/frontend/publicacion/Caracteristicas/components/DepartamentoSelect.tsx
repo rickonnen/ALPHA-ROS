@@ -1,3 +1,12 @@
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 29/03/2026
+ * Funcionalidad: Componente dropdown para seleccionar el departamento
+ *                de Bolivia con validación y accesibilidad.
+ *                Corrección: tamaño de letra de mensajes de error ajustado a 14px.
+ * @param {DepartamentoSelectProps} props - value, error, touched, onChange y onBlur
+ * @return {JSX.Element} Dropdown accesible de departamentos con validación
+ */
 import { useState, useRef, useEffect } from 'react'
 import { Departamento, DEPARTAMENTOS } from '../Hooks/useCaracteristicasForm'
 
@@ -10,7 +19,8 @@ interface DepartamentoSelectProps {
 }
 
 export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: DepartamentoSelectProps) {
-  const [open, setOpen] = useState(false)
+  const [open,        setOpen]        = useState(false)
+  const [wasOpened,   setWasOpened]   = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const selectedLabel = DEPARTAMENTOS.find(d => d.value === value)?.label
@@ -19,12 +29,13 @@ export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: 
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
-        onBlur('departamento')
+        // Solo disparar onBlur si el usuario abrió el dropdown al menos una vez
+        if (wasOpened) onBlur('departamento')
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onBlur])
+  }, [onBlur, wasOpened])
 
   const handleSelect = (val: string) => {
     onChange('departamento', val)
@@ -53,7 +64,10 @@ export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: 
         aria-expanded={open}
         aria-controls="departamento-listbox"
         onKeyDown={handleKeyDown}
-        onClick={() => setOpen(prev => !prev)}
+        onClick={() => {
+          setOpen(prev => !prev)
+          setWasOpened(true)
+        }}
         className={`
           w-full border rounded-md px-3 py-2 text-sm bg-white text-left
           flex items-center justify-between outline-none
@@ -102,7 +116,7 @@ export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: 
       )}
 
       {touched && error && (
-        <span className="text-red-500 text-xs">{error}</span>
+        <span className="text-red-500 text-sm">{error}</span>
       )}
     </div>
   )
