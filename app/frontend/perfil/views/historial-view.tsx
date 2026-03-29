@@ -1,3 +1,12 @@
+/*  Dev: Luis - xdev/sow-luisc
+    Fecha: 28/03/2026
+    Funcionalidad: Vista de Historial dentro del perfil del usuario
+      - Consume GET /api/historial?id_usuario=...
+      - Lista hasta 5 items por página con scroll interno (max-h 300px)
+      - Paginación con numeritos si hay más de 5
+      - Botón eliminar remueve el item del historial en frontend
+      - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
+*/
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,26 +21,53 @@ type HistorialItem = {
     Imagen: { url_imagen: string | null }[];
   };
 };
-export default function HistorialView() {
 
-  const [historial, setHistorial] = useState<HistorialItem[]>([]);
-  const [page, setPage] = useState(1);
-  useEffect(() => {
-  fetch(`/api/historial?id_usuario=a1b2c3d4-0003-0003-0003-000000000003`)
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("DATA:", data); // para verificar
-      setHistorial(data);
-    })
-    .catch((error) => console.error("Error:", error));
-  }, []);
-  
-  const itemsPerPage = 5;
+interface HistorialViewProps {
+  id_usuario: string;
+}
 
-  const start = (page - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
+const ITEMS_POR_PAGINA = 5;
 
-  const currentItems = historial.slice(start, end);
+export default function HistorialView({ id_usuario }: HistorialViewProps) {
+
+const [historial, setHistorial] = useState<HistorialItem[]>([]);
+const [cargando, setCargando] = useState(true);
+const [error, setError] = useState<string | null>(null);
+const [paginaActual, setPaginaActual] = useState(1);
+
+useEffect(() => {
+  const cargarHistorial = async () => {
+    try {
+      setCargando(true);
+      const res = await fetch(`/api/historial?id_usuario=${id_usuario}`);
+      if (!res.ok) throw new Error("No se pudo cargar el historial");
+      const json = await res.json();
+      setHistorial(json);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+  cargarHistorial();
+}, [id_usuario]);
+
+const totalPaginas = Math.ceil(historial.length / ITEMS_POR_PAGINA);
+const historialPaginado = historial
+  .filter((item) => item.Publicacion)
+  .slice(
+    (paginaActual - 1) * ITEMS_POR_PAGINA,
+    paginaActual * ITEMS_POR_PAGINA
+  );
+
+const handleEliminar = (id_publicacion: number) => {
+  const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
+  setHistorial(nuevos);
+  const nuevoTotal = Math.ceil(nuevos.length / ITEMS_POR_PAGINA);
+  if (paginaActual > nuevoTotal && nuevoTotal > 0) {
+    setPaginaActual(nuevoTotal);
+  }
+};
 
   return (
     <div className="p-8">
@@ -44,11 +80,11 @@ export default function HistorialView() {
       ) : (
         <>
           <div className="space-y-4">
-            {currentItems.map((item) => (
+            {historialPaginado.map((item) => (
               <div key={item.id_publicacion} className="bg-white text-black p-4 rounded-lg flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <img
-                    src={item.Publicacion.Imagen[0]?.url_imagen ?? "https://via.placeholder.com/80"}
+                    src={item.Publicacion?.Imagen?.[0]?.url_imagen ?? "https://via.placeholder.com/80"}
                     alt={item.Publicacion.titulo ?? ""}
                     className="w-16 h-16 object-cover rounded"
                   />
@@ -82,18 +118,18 @@ export default function HistorialView() {
           </div>
 
           <div className="mt-4 flex gap-2">
-            <button 
-              onClick={() => setPage(page - 1)} 
-              disabled={page === 1}
-              className="bg-gray-500 px-3 py-1 rounded"
+            <button
+              onClick={() => setPaginaActual((p) => p - 1)}
+              disabled={paginaActual === 1}
+              className="bg-gray-500 px-3 py-1 rounded disabled:opacity-50"
             >
               anterior
             </button>
-
-            <button 
-              onClick={() => setPage(page + 1)} 
-              disabled={end >= historial.length}
-              className="bg-gray-500 px-3 py-1 rounded"
+            <span className="px-3 py-1">Página {paginaActual}</span>
+            <button
+              onClick={() => setPaginaActual((p) => p + 1)}
+              disabled={paginaActual === totalPaginas}
+              className="bg-gray-500 px-3 py-1 rounded disabled:opacity-50"
             >
               posterior
             </button>
