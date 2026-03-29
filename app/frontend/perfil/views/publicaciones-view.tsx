@@ -12,13 +12,16 @@
       - @param {onInfo} - función callback para ver el detalle de la publicación
       - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
 */
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 28/03/2026
+    Funcionalidad: Botón "+ Agregar" en la vista Mis Publicaciones
+      - Agrega botón en la parte superior derecha del header de la sección
+      - Al hacer clic redirige a /publicaciones/nueva usando useRouter de Next.js
+      - @return {void} - solo navegación, no incluye el formulario
+*/
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +32,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
 
 interface PublicacionesViewProps {
@@ -40,6 +48,7 @@ const ITEMS_POR_PAGINA = 2;
 export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
+  const router = useRouter();
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -124,7 +133,15 @@ export default function PublicacionesView({
           <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full">
             Mis publicaciones
           </CardTitle>
-          {/* TODO: feat botón agregar */}
+          {
+            <Button
+              onClick={() => router.push("/publicaciones/nueva")}
+              size="sm"
+              className="flex-shrink-0 bg-[#C26E5A] hover:bg-[#a85a47] text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+            >
+              + Agregar
+            </Button>
+          }
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3 pt-4">
