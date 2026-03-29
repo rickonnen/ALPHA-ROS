@@ -20,7 +20,7 @@ async function isAdmin(): Promise<boolean> {
     // Se fuerza el ID del Admin si no hay Cookies
     if (!strUserId) {
       console.log(" Cookie no encontrada. Usando ID de bypass para pruebas.");
-      strUserId = "f4e6b95f-8e7a-4bdc-ac2f-32728061da69"; 
+      strUserId = "4ce5fb58-95d8-4b43-8e49-4d75711f1837"; 
     }
   
     const objUser = await objPrisma.usuario.findUnique({
