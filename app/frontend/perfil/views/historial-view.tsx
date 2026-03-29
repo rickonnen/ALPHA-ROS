@@ -54,7 +54,13 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
     };
     cargarHistorial();
   }, [id_usuario]);
-
+  const totalPaginas = Math.ceil(historial.length / ITEMS_POR_PAGINA);
+  const historialPaginado = historial
+    .filter((item) => item.Publicacion)
+    .slice(
+      (paginaActual - 1) * ITEMS_POR_PAGINA,
+      paginaActual * ITEMS_POR_PAGINA
+    );
   const handleEliminar = (id_publicacion: number) => {
     const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
     setHistorial(nuevos);
@@ -92,7 +98,7 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
 
         {!cargando && historial.filter(i => i.Publicacion).length > 0 && (
           <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
-            {historial.filter(i => i.Publicacion).map((item) => (
+            {historialPaginado.map((item) => (
               <div
                 key={item.id_publicacion}
                 className="flex items-center justify-between bg-white/10 rounded-md p-3 mb-2"
@@ -140,6 +146,45 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      {!cargando && totalPaginas > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/60 hover:text-white disabled:opacity-30"
+              onClick={() => setPaginaActual((p) => p - 1)}
+              disabled={paginaActual === 1}
+            >
+              ‹
+            </Button>
+
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+              <Button
+                key={num}
+                variant="ghost"
+                size="sm"
+                onClick={() => setPaginaActual(num)}
+                className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                  paginaActual === num
+                    ? "bg-white text-[var(--primary)]"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                {num}
+              </Button>
+            ))}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/60 hover:text-white disabled:opacity-30"
+              onClick={() => setPaginaActual((p) => p + 1)}
+              disabled={paginaActual === totalPaginas}
+            >
+              ›
+            </Button>
           </div>
         )}
       </CardContent>
