@@ -195,7 +195,7 @@ export const Header = (objProps: HeaderProps) => {
               </Link>
             ))}
 
-            <Link href="/frontend/cobros/plames" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
+            <Link href="/frontend/cobros/planes" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
