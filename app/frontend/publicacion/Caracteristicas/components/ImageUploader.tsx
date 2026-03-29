@@ -1,3 +1,15 @@
+/**
+ * Dev: Gabriel Paredes
+ * Date modification: 29/03/2026
+ * Funcionalidad: Componente para subir imágenes de un inmueble con
+ *                validación de formato, peso, resolución y aspecto.
+ *                Corrección: muestra mensaje de error en rojo cuando
+ *                el usuario intenta agregar una imagen superando el
+ *                límite máximo de 5 imágenes permitidas.
+ * @param {ImageUploaderProps} props - files, onChange, onRemove, error, touched
+ * @return {JSX.Element} Uploader de imágenes con previsualizaciones y validaciones
+ */
+
 'use client'
 
 import React, { useRef, useState } from 'react'
@@ -95,7 +107,10 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
     }
 
     // CA-22: límite
-    if (files.length >= MAX_FILES) return
+    if (files.length >= MAX_FILES) {
+      setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
+      return
+    }
 
     // CA-23 + CA-24: dimensiones y aspecto
     const { ok, error: dimError } = await validateImageDimensions(file)
@@ -105,6 +120,17 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
     }
 
     onChange?.([file])
+  }
+
+  // ── Trigger manual con validación de límite ──────────────────────────────────
+
+  const handleButtonClick = () => {
+    if (limitReached) {
+      setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
+      return
+    }
+    setFieldError(null)
+    inputRef.current?.click()
   }
 
   // ── Eliminar imagen ──────────────────────────────────────────────────────────
@@ -141,8 +167,7 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
       <button
         type="button"
         aria-label="Subir imagen"
-        disabled={limitReached}
-        onClick={() => inputRef.current?.click()}
+        onClick={handleButtonClick}
         className={[
           'flex items-center justify-between w-full',
           'border border-gray-300 rounded-md px-3 py-2',
