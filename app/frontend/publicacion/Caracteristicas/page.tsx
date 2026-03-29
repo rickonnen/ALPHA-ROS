@@ -5,6 +5,14 @@
  *   ajustado responsivamente para mobile, tablet y desktop.
  * @return {JSX.Element} Encabezado con padding progresivo según breakpoint.
  */
+/**
+ * Dev: Andrea Coca Pereira
+ * Fecha: 29/03/2026
+ * Funcionalidad: Página principal de creación de publicación inmobiliaria.
+ *   Se mejora el fondo visual dividiendo el color en dos tonos para mejorar
+ *   la experiencia visual del usuario en todos los dispositivos.
+ * @return {JSX.Element} Formulario de características del inmueble con fondo bicolor.
+ */
 'use client'
 
 import { useState }                from 'react'
@@ -97,7 +105,10 @@ export default function CaracteristicasPage() {
   }
   return (
 
-    <main className="min-h-screen bg-[#F4EFE6] px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]">
+    <main
+  className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
+  style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #CFC9BB 35%)" }}
+>
 
       {/* Título principal */}
 
