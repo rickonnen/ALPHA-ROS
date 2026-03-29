@@ -1,25 +1,31 @@
+// app/backend/cobros/route.ts
 import { NextResponse } from 'next/server';
 import { getPaymentsByStatus, updatePaymentStatus } from './paymentController';
 
 /**
- * Dev: René Gabriel Vera Portanda
- * Fecha: 26/03/2026
- * Funcionalidad: Recupera la lista de pagos filtrada por estado para rellenar las tablas de la interfaz de usuario.
- * @param {object} objRequest - El objeto de solicitud HTTP entrante que contiene los parámetros de la URL.
- * @return {object} objNextResponse - Respuesta JSON con el arreglo de pagos o un mensaje de error.
+ * Dev: Nicole Belen Arias Murillo
+ * Fecha: 29/03/2026
+ * Funcionalidad: Recupera la lista de pagos con filtros y paginación.
+ * @param {object} objRequest - El objeto de solicitud HTTP.
+ * @return {object} objNextResponse - JSON con los datos mapeados y metadatos de paginación.
  */
 export async function GET(objRequest: Request) {
   try {
     const { searchParams: objSearchParams } = new URL(objRequest.url);
+    
+    // Parámetros de la URL
     const strStatus = objSearchParams.get('status') || 'Pendiente';
+    const intPage = Number(objSearchParams.get('page')) || 1;
+    const intLimit = Number(objSearchParams.get('limit')) || 10;
 
-    const arrPayments = await getPaymentsByStatus(strStatus);
+    // Llamamos al controlador con la lógica de skip/take
+    const objResult = await getPaymentsByStatus(strStatus, intPage, intLimit);
 
-    // Si no hay registros, devolvemos una lista vacía (el front manejará el mensaje)
-    return NextResponse.json(arrPayments, { status: 200 });
+    // objResult ahora contiene: { arrPayments, intTotalCount, intTotalPages }
+    return NextResponse.json(objResult, { status: 200 });
+    
   } catch (objError) {
     console.error('Error en GET /backend/cobros:', objError);
-    // Mensaje de error controlado
     return NextResponse.json(
       { error: 'Error al cargar los registros de pagos' }, 
       { status: 500 }
@@ -28,18 +34,17 @@ export async function GET(objRequest: Request) {
 }
 
 /**
- * Dev: René Gabriel Vera Portanda
- * Fecha: 26/03/2026
- * Funcionalidad: Actualiza el estado de un pago específico cuando un administrador lo acepta o lo rechaza.
- * @param {object} objRequest - El objeto de solicitud HTTP entrante que contiene la carga del cuerpo.
- * @return {object} objNextResponse - Respuesta JSON con el registro de pago actualizado o un mensaje de error.
+ * Dev: Nicole Belen Arias Murillo
+ * Fecha: 29/03/2026
+ * Funcionalidad: Actualiza el estado de un pago (Aceptado/Rechazado).
+ * @param {object} objRequest - El objeto de solicitud HTTP.
+ * @return {object} objNextResponse - JSON con el registro actualizado.
  */
 export async function PATCH(objRequest: Request) {
   try {
     const objBody = await objRequest.json();
     const { id: intId, status: strStatus } = objBody;
 
-    // Validamos que vengan los datos obligatorios desde el cliente
     if (!intId || !strStatus) {
       return NextResponse.json(
         { error: 'ID y estado son obligatorios' }, 
@@ -47,13 +52,12 @@ export async function PATCH(objRequest: Request) {
       );
     }
 
-    // Convertimos el ID a número para actualizar en la BD (SmallInt)
     const objUpdatedPayment = await updatePaymentStatus(Number(intId), strStatus);
 
     return NextResponse.json(objUpdatedPayment, { status: 200 });
+    
   } catch (objError) {
     console.error('Error en PATCH /backend/cobros:', objError);
-    // Error controlado en caso de fallo en la actualización
     return NextResponse.json(
       { error: 'No se pudo actualizar el estado del pago' }, 
       { status: 500 }

@@ -9,40 +9,55 @@ const objStatuses = {
   intAccepted: 2,
   intRejected: 3
 };
-
 /**
  * Dev: Nicole Belen Arias Murillo
- * Fecha: 26/03/2026
- * Funcionalidad: Recuperar pagos filtrados por su estado actual.
+ * Fecha: 29/03/2026
+ * Funcionalidad: Recuperar pagos filtrados por estado con paginación de servidor.
  * @param {string} strStatusName - Nombre del estado para filtrar.
- * @return {array} arrPayments - Array de registros de detalles de pago.
+ * @param {number} intPage - Número de página actual (por defecto 1).
+ * @param {number} intPageSize - Cantidad de registros por página (por defecto 10).
+ * @return {object} objResult - Objeto con el arreglo de pagos y el total de registros.
  */
-export const getPaymentsByStatus = async (strStatusName: string) => {
+export const getPaymentsByStatus = async (
+  strStatusName: string, 
+  intPage: number = 1, 
+  intPageSize: number = 10
+) => {
   const objStatusMap: Record<string, number> = {
     'Pendiente': objStatuses.intPending,
     'Aceptado': objStatuses.intAccepted,
     'Rechazado': objStatuses.intRejected
   };
 
-  return await objPrisma.detallePago.findMany({
-    where: {
-      estado: objStatusMap[strStatusName] || objStatuses.intPending,
-    },
-    include: {
-      Usuario: {
-        select: {
-          nombres: true,
-          apellidos: true,
-          email: true
+  const intStatusId = objStatusMap[strStatusName] || objStatuses.intPending;
+  const intSkip = (intPage - 1) * intPageSize;
+
+  // Ejecutamos ambas consultas en paralelo para ahorrar tiempo
+  const [arrPayments, intTotalCount] = await Promise.all([
+    objPrisma.detallePago.findMany({
+      where: { estado: intStatusId },
+      include: {
+        Usuario: {
+          select: { nombres: true, apellidos: true, email: true }
+        },
+        PlanPublicacion: {
+          select: { nombre_plan: true }
         }
       },
-      PlanPublicacion: {
-        select: {
-          nombre_plan: true
-        }
-      }
-    },
-  });
+      skip: intSkip,
+      take: intPageSize,
+      orderBy: { id_detalle: 'desc' } // Los más recientes aparecen primero
+    }),
+    objPrisma.detallePago.count({
+      where: { estado: intStatusId }
+    })
+  ]);
+
+  return {
+    arrPayments,
+    intTotalCount,
+    intTotalPages: Math.ceil(intTotalCount / intPageSize)
+  };
 };
 
 /**
@@ -87,4 +102,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
+  
 };
