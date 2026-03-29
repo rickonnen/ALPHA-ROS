@@ -30,7 +30,7 @@ import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
-const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
+//const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
 
 const HeaderMock = () => (
   <header className="w-full h-[70px] bg-white border-b flex items-center px-6 md:px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
