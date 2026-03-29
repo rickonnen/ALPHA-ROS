@@ -55,6 +55,15 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
     cargarHistorial();
   }, [id_usuario]);
 
+  const handleEliminar = (id_publicacion: number) => {
+    const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
+    setHistorial(nuevos);
+    const nuevoTotal = Math.ceil(nuevos.length / ITEMS_POR_PAGINA);
+    if (paginaActual > nuevoTotal && nuevoTotal > 0) {
+      setPaginaActual(nuevoTotal);
+    }
+  };
+
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
@@ -79,6 +88,59 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
           <p className="text-white/40 text-sm text-center py-8">
             No hay publicaciones en tu historial.
           </p>
+        )}
+
+        {!cargando && historial.filter(i => i.Publicacion).length > 0 && (
+          <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            {historial.filter(i => i.Publicacion).map((item) => (
+              <div
+                key={item.id_publicacion}
+                className="flex items-center justify-between bg-white/10 rounded-md p-3 mb-2"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.Publicacion?.Imagen?.[0]?.url_imagen ?? "https://via.placeholder.com/80"}
+                    alt={item.Publicacion.titulo ?? ""}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                  <div>
+                    <p className="font-bold text-sm">{item.Publicacion.titulo ?? "Sin título"}</p>
+                    <p className="text-sm text-white/70">
+                      {item.Publicacion.Moneda?.simbolo} {item.Publicacion.precio ?? "Sin precio"}
+                    </p>
+                    <p className="text-xs text-white/50">
+                      {item.Publicacion.TipoOperacion?.nombre_operacion ?? ""}
+                    </p>
+                    <p className="text-xs text-white/40">
+                      Visto: {item.fecha ? new Date(item.fecha).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-300 hover:text-blue-100"
+                    onClick={() => alert(`Publicación: ${item.Publicacion.titulo}`)}
+                  >
+                    Info
+                  </Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-400 hover:text-red-200"
+                    onClick={() => {
+                      if (confirm("¿Eliminar del historial?")) {
+                        handleEliminar(item.id_publicacion);
+                      }
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
