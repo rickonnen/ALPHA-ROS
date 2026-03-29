@@ -1,0 +1,240 @@
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 27/03/2026
+    Funcionalidad: Vista de Mis Publicaciones dentro del perfil del usuario
+      - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
+      - @return {PublicacionesView} - muestra la lista de publicaciones del usuario
+*/
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 27/03/2026
+    Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
+      - @param {publicacion} - datos de la publicación (titulo, zona, tipo, imagen)
+      - @param {onEliminar} - función callback para eliminar la publicación
+      - @param {onInfo} - función callback para ver el detalle de la publicación
+      - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
+*/
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import PublicacionCard, { Publicacion } from "./publicacion-card";
+
+interface PublicacionesViewProps {
+  id_usuario: string;
+}
+
+const ITEMS_POR_PAGINA = 2;
+
+export default function PublicacionesView({
+  id_usuario,
+}: PublicacionesViewProps) {
+  const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+
+  useEffect(() => {
+    const cargarPublicaciones = async () => {
+      try {
+        setCargando(true);
+        const res = await fetch(
+          `/backend/perfil/misPublicaciones?id_usuario=${id_usuario}`,
+        );
+        if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
+        const json = await res.json();
+        setPublicaciones(json.data);
+      } catch (err) {
+        console.error("Error al cargar publicaciones:", err);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarPublicaciones();
+  }, [id_usuario]);
+
+  const totalPaginas = Math.ceil(publicaciones.length / ITEMS_POR_PAGINA);
+  const publicacionesPaginadas = publicaciones.slice(
+    (paginaActual - 1) * ITEMS_POR_PAGINA,
+    paginaActual * ITEMS_POR_PAGINA,
+  );
+
+  const handleEliminar = (id: string) => {
+    setIdAEliminar(id);
+  };
+
+  const confirmarEliminar = async () => {
+    if (!idAEliminar) return;
+    try {
+      setEliminando(true);
+      setError(null);
+
+      const res = await fetch(
+        `/backend/perfil/misPublicaciones?id_publicacion=${idAEliminar}&id_usuario=${id_usuario}`,
+        { method: "DELETE" },
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Error al eliminar");
+      }
+
+      const nuevas = publicaciones.filter((p) => p.id !== idAEliminar);
+      setPublicaciones(nuevas);
+      setIdAEliminar(null);
+
+      const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
+      if (paginaActual > nuevoTotal && nuevoTotal > 0) {
+        setPaginaActual(nuevoTotal);
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "No se pudo eliminar la publicación.";
+      setError(message);
+    } finally {
+      setEliminando(false);
+    }
+  };
+
+  const handleInfo = (id: string) => {
+    // TODO: conectar con el equipo de detalle de publicación
+    console.log("Ver info de publicación:", id);
+  };
+
+  return (
+    <>
+      <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full">
+            Mis publicaciones
+          </CardTitle>
+          {/* TODO: feat botón agregar */}
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-3 pt-4">
+          {/* Error */}
+          {error && (
+            <p className="text-red-400 text-sm text-center py-2">{error}</p>
+          )}
+
+          {/* Estado de carga */}
+          {cargando && (
+            <>
+              {[1, 2, 3].map((i) => (
+                <Skeleton
+                  key={i}
+                  className="h-24 w-full rounded-md bg-white/10"
+                />
+              ))}
+            </>
+          )}
+
+          {/* Lista vacía */}
+          {!cargando && publicaciones.length === 0 && (
+            <p className="text-white/40 text-sm text-center py-8">
+              No tienes publicaciones registradas.
+            </p>
+          )}
+
+          {/* Lista de publicaciones paginadas */}
+          {!cargando &&
+            publicacionesPaginadas.map((pub) => (
+              <PublicacionCard
+                key={pub.id}
+                publicacion={pub}
+                onEliminar={handleEliminar}
+                onInfo={handleInfo}
+              />
+            ))}
+
+          {/* Paginación */}
+          {!cargando && totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/60 hover:text-white disabled:opacity-30"
+                onClick={() => setPaginaActual((p) => p - 1)}
+                disabled={paginaActual === 1}
+              >
+                ‹
+              </Button>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                (num) => (
+                  <Button
+                    key={num}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPaginaActual(num)}
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                      paginaActual === num
+                        ? "bg-white text-[var(--primary)]"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {num}
+                  </Button>
+                ),
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/60 hover:text-white disabled:opacity-30"
+                onClick={() => setPaginaActual((p) => p + 1)}
+                disabled={paginaActual === totalPaginas}
+              >
+                ›
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modal de confirmación */}
+      <AlertDialog
+        open={!!idAEliminar}
+        onOpenChange={() => setIdAEliminar(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La publicación será eliminada
+              permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={eliminando}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarEliminar}
+              disabled={eliminando}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {eliminando ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
