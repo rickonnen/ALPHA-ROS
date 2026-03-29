@@ -30,7 +30,11 @@ import FavoritoView from "./views/favorito-view";
 //import HistorialView from "./views/historial-view";
 
 // ID TEMPORAL: falta el id de los de sign in
+// Final User 3
+//const ID_USUARIO_HARDCODEADO = "5c684c90-c84f-4dfb-a99c-017dcd614e32";
+// User 1
 const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
+// User 2
 //const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
 
 const HeaderMock = () => (

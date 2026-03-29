@@ -185,6 +185,26 @@ export default function CambiarCorreoView({
               return;
             }
 
+            const resOtp = await fetch("/backend/perfil/verificationCode", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id_usuario,
+                nuevo_email: strNuevoEmail,
+              }),
+            });
+
+            const jsonOtp = await resOtp.json();
+
+            if (!resOtp.ok || !jsonOtp.ok) {
+              setStrErrorModalMessage(
+                jsonOtp.message ||
+                  "No se pudo enviar el código de verificación.",
+              );
+              setBolShowErrorModal(true);
+              return;
+            }
+
             onContinue(strNuevoEmail);
           } catch (error) {
             console.error("Error en validación de cambio de correo:", error);
