@@ -1,4 +1,14 @@
-﻿import { useState } from "react";
+﻿/**
+ * @Dev: [Tu nombre aquí]
+ * @Fecha: 28/03/2026
+ * @Funcionalidad: Hook personalizado que centraliza toda la lógica del formulario
+ * de Información Comercial. Maneja estados, validaciones, formato de precio,
+ * interacción con los dropdowns y el guardado temporal de datos para el paso 2.
+ * @return {object} Estados y handlers necesarios para el formulario
+ */
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   DESC_MAX,
   DESC_MIN,
@@ -6,13 +16,13 @@ import {
   FormErrors,
   FormField,
   FORM_INICIAL,
-  InformacionComercialApiResponse,
   PRECIO_MAXIMO,
   TITULO_MAX,
   TITULO_MIN,
   toTipoOperacionBackend,
 } from "../InformacionComercial.types";
 
+// Lista de campos del formulario para iterar en validaciones
 const FORM_FIELDS: FormField[] = [
   "titulo",
   "precio",
@@ -21,13 +31,25 @@ const FORM_FIELDS: FormField[] = [
   "descripcion",
 ];
 
+// Regex para validar formato de precio boliviano (ej: 1.234,56)
 const PRICE_FORMAT_REGEX = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/;
 
+/**
+ * @Funcionalidad: Verifica si un nombre de campo pertenece al formulario
+ * @param {string} fieldName - Nombre del campo a verificar
+ * @return {boolean} True si es un campo válido del formulario
+ */
 function isFormField(fieldName: string): fieldName is FormField {
   return FORM_FIELDS.includes(fieldName as FormField);
 }
 
+/**
+ * @Funcionalidad: Formatea el input de precio al estándar boliviano con puntos de miles
+ * @param {string} inputValue - Valor crudo ingresado por el usuario
+ * @return {string} Valor formateado (ej: "1.234,56")
+ */
 function formatPriceInput(inputValue: string): string {
+  // Eliminar caracteres no permitidos, solo dígitos y coma decimal
   const sanitized = inputValue.replace(/[^\d,]/g, "");
   if (!sanitized) return "";
 
@@ -35,27 +57,40 @@ function formatPriceInput(inputValue: string): string {
   const hasComma = sanitized.includes(",");
   const integerDigits = rawInteger.replace(/^0+(?=\d)/, "");
   const normalizedInteger = integerDigits === "" ? (hasComma ? "0" : "") : integerDigits;
+  // Agregar puntos de miles al entero
   const integerWithThousands = normalizedInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  // Limitar decimales a 2 dígitos
   const decimalDigits = rest.join("").slice(0, 2);
 
   if (!hasComma) return integerWithThousands;
   return `${integerWithThousands},${decimalDigits}`;
 }
 
+/**
+ * @Funcionalidad: Convierte el precio formateado a número para validaciones
+ * @param {string} priceValue - Precio en formato boliviano (ej: "1.234,56")
+ * @return {number | null} Número parseado o null si no es válido
+ */
 function parseFormattedPrice(priceValue: string): number | null {
   if (!priceValue) return null;
-
+  // Normalizar de formato boliviano a formato JS
   const normalized = priceValue.replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
-
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * @Funcionalidad: Convierte el precio formateado al formato que espera el backend
+ * @param {string} priceValue - Precio en formato boliviano (ej: "1.234,56")
+ * @return {string} Precio en formato numérico estándar (ej: "1234.56")
+ */
 function toBackendPrice(priceValue: string): string {
   return priceValue.replace(/\./g, "").replace(",", ".");
 }
 
 export function useInformacionComercialForm() {
+  const router = useRouter();
+
   const [form, setForm] = useState<FormData>(FORM_INICIAL);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
@@ -63,6 +98,12 @@ export function useInformacionComercialForm() {
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
 
+  /**
+   * @Funcionalidad: Valida un campo individual según las reglas de negocio
+   * @param {keyof FormData} name - Nombre del campo a validar
+   * @param {string} value - Valor actual del campo
+   * @return {string | undefined} Mensaje de error o undefined si es válido
+   */
   function validateField(name: keyof FormData, value: string): string | undefined {
     switch (name) {
       case "titulo":
@@ -76,12 +117,10 @@ export function useInformacionComercialForm() {
         if (!PRICE_FORMAT_REGEX.test(value)) {
           return "Ingrese un valor válido (ej: 1.234,56).";
         }
-
-        const num = parseFormattedPrice(value);
-        if (num === null) return "El precio debe ser numérico.";
-        if (num <= 0) return "El precio debe ser mayor a 0.";
-        if (num > PRECIO_MAXIMO) return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
-
+        const intNum = parseFormattedPrice(value);
+        if (intNum === null) return "El precio debe ser numérico.";
+        if (intNum <= 0) return "El precio debe ser mayor a 0.";
+        if (intNum > PRECIO_MAXIMO) return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
         return undefined;
       }
 
@@ -99,21 +138,29 @@ export function useInformacionComercialForm() {
     }
   }
 
+  /**
+   * @Funcionalidad: Valida todos los campos del formulario de una sola vez
+   * @return {FormErrors} Objeto con los errores encontrados por campo
+   */
   function validateAll(): FormErrors {
-    const fieldErrors: FormErrors = {};
+    const objFieldErrors: FormErrors = {};
     (Object.keys(form) as FormField[]).forEach((fieldName) => {
-      const errorMessage = validateField(fieldName, form[fieldName]);
-      if (errorMessage) fieldErrors[fieldName] = errorMessage;
+      const strErrorMessage = validateField(fieldName, form[fieldName]);
+      if (strErrorMessage) objFieldErrors[fieldName] = strErrorMessage;
     });
-    return fieldErrors;
+    return objFieldErrors;
   }
 
+  /**
+   * @Funcionalidad: Maneja cambios en inputs de texto y textarea
+   * @param {React.ChangeEvent} e - Evento de cambio del input
+   */
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setSubmitStatus(null);
     setSubmitMessage("");
-
+    // Revalidar en tiempo real solo si el campo ya fue tocado
     if (touched[name as keyof FormData]) {
       setErrors((prev) => ({
         ...prev,
@@ -123,12 +170,16 @@ export function useInformacionComercialForm() {
     }
   }
 
+  /**
+   * @Funcionalidad: Maneja cambios en el campo precio con formato boliviano
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento de cambio del input precio
+   */
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatPriceInput(e.target.value);
-
-    if (formatted) {
-      const num = parseFormattedPrice(formatted);
-      if (num !== null && num > PRECIO_MAXIMO) {
+    const strFormatted = formatPriceInput(e.target.value);
+    // Bloquear si supera el límite máximo permitido
+    if (strFormatted) {
+      const intNum = parseFormattedPrice(strFormatted);
+      if (intNum !== null && intNum > PRECIO_MAXIMO) {
         setTouched((prev) => ({ ...prev, precio: true }));
         setErrors((prev) => ({
           ...prev,
@@ -137,55 +188,71 @@ export function useInformacionComercialForm() {
         return;
       }
     }
-
-    setForm((prev) => ({ ...prev, precio: formatted }));
+    setForm((prev) => ({ ...prev, precio: strFormatted }));
     setSubmitStatus(null);
     setSubmitMessage("");
-
     if (touched.precio) {
       setErrors((prev) => ({
         ...prev,
-        precio: validateField("precio", formatted),
+        precio: validateField("precio", strFormatted),
         general: undefined,
       }));
     }
   }
 
+  /**
+   * @Funcionalidad: Marca el campo como tocado y valida al perder el foco
+   * @param {React.FocusEvent} e - Evento de blur del input
+   */
   function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name as keyof FormData, value) }));
   }
 
+  /**
+   * @Funcionalidad: Valida dropdown al cerrarse sin seleccionar una opción
+   * @param {"tipoPropiedad" | "tipoOperacion"} name - Nombre del campo dropdown
+   */
   function handleDropdownBlur(name: "tipoPropiedad" | "tipoOperacion") {
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name, form[name]) }));
   }
 
-  function handleSelectPropiedad(option: string) {
-    setForm((prev) => ({ ...prev, tipoPropiedad: option }));
+  /**
+   * @Funcionalidad: Registra la opción seleccionada en Tipo de Propiedad
+   * @param {string} strOption - Opción seleccionada por el usuario
+   */
+  function handleSelectPropiedad(strOption: string) {
+    setForm((prev) => ({ ...prev, tipoPropiedad: strOption }));
     setErrors((prev) => ({ ...prev, tipoPropiedad: undefined, general: undefined }));
     setTouched((prev) => ({ ...prev, tipoPropiedad: true }));
     setSubmitStatus(null);
     setSubmitMessage("");
   }
 
-  function handleSelectOperacion(option: string) {
-    setForm((prev) => ({ ...prev, tipoOperacion: option }));
+  /**
+   * @Funcionalidad: Registra la opción seleccionada en Tipo de Operación
+   * @param {string} strOption - Opción seleccionada por el usuario
+   */
+  function handleSelectOperacion(strOption: string) {
+    setForm((prev) => ({ ...prev, tipoOperacion: strOption }));
     setErrors((prev) => ({ ...prev, tipoOperacion: undefined, general: undefined }));
     setTouched((prev) => ({ ...prev, tipoOperacion: true }));
     setSubmitStatus(null);
     setSubmitMessage("");
   }
 
+  /**
+   * @Funcionalidad: Cancela el formulario con confirmación si hay datos ingresados
+   */
   function handleCancelar() {
     if (isSubmitting) return;
-
-    const hasData = Object.values(form).some((value) => value.trim() !== "");
-    if (hasData) {
+    const bolHasData = Object.values(form).some((value) => value.trim() !== "");
+    // Pedir confirmación solo si hay datos que se perderían
+    if (bolHasData) {
       if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
     }
-
     setForm(FORM_INICIAL);
     setErrors({});
     setTouched({});
@@ -193,90 +260,39 @@ export function useInformacionComercialForm() {
     setSubmitMessage("");
   }
 
-  function buildFieldErrorsFromBackend(
-    backendErrors: InformacionComercialApiResponse["errores"]
-  ): FormErrors {
-    if (!backendErrors || typeof backendErrors !== "object") {
-      return {};
-    }
-
-    const fieldErrors: FormErrors = {};
-    for (const [fieldName, message] of Object.entries(backendErrors)) {
-      if (isFormField(fieldName) && typeof message === "string") {
-        fieldErrors[fieldName] = message;
-      }
-    }
-
-    return fieldErrors;
-  }
-
-  async function handleSiguiente() {
+  /**
+   * @Funcionalidad: Valida el formulario, guarda los datos temporalmente en sessionStorage
+   * y navega al paso 2. Los datos NO se envían al backend hasta que el usuario
+   * presione Publicar en el formulario de Características del Inmueble.
+   */
+  function handleSiguiente() {
     if (isSubmitting) return;
 
-    const allTouched: Partial<Record<FormField, boolean>> = {};
+    // Marcar todos los campos como tocados para mostrar errores
+    const objAllTouched: Partial<Record<FormField, boolean>> = {};
     FORM_FIELDS.forEach((fieldName) => {
-      allTouched[fieldName] = true;
+      objAllTouched[fieldName] = true;
     });
-    setTouched(allTouched);
+    setTouched(objAllTouched);
 
-    const localErrors = validateAll();
-    setErrors(localErrors);
-    if (Object.keys(localErrors).length > 0) return;
+    const objLocalErrors = validateAll();
+    setErrors(objLocalErrors);
+    if (Object.keys(objLocalErrors).length > 0) return;
 
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-    setSubmitMessage("");
+    // Guardar datos del paso 1 en sessionStorage para combinar con el paso 2 al publicar
+    sessionStorage.setItem("informacionComercial", JSON.stringify({
+      titulo:        form.titulo,
+      precio:        toBackendPrice(form.precio),
+      tipoPropiedad: form.tipoPropiedad,
+      tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
+      descripcion:   form.descripcion,
+    }));
 
-    try {
-      const response = await fetch("/backend/publicacion/informacion-comercial", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          titulo: form.titulo,
-          precio: toBackendPrice(form.precio),
-          tipoPropiedad: form.tipoPropiedad,
-          tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
-          descripcion: form.descripcion,
-        }),
-      });
-
-      let responseBody: InformacionComercialApiResponse | null = null;
-      try {
-        responseBody = (await response.json()) as InformacionComercialApiResponse;
-      } catch {
-        responseBody = null;
-      }
-
-      if (!response.ok || !responseBody?.ok) {
-        const backendErrors = buildFieldErrorsFromBackend(responseBody?.errores);
-        const backendMessage =
-          responseBody?.mensaje ?? "No se pudo guardar la información comercial.";
-
-        setErrors((prev) => ({
-          ...prev,
-          ...backendErrors,
-          general: Object.keys(backendErrors).length === 0 ? backendMessage : undefined,
-        }));
-        setSubmitStatus("error");
-        setSubmitMessage(backendMessage);
-        return;
-      }
-
-      setErrors({});
-      setSubmitStatus("success");
-      setSubmitMessage(responseBody.mensaje);
-    } catch {
-      const fallbackMessage = "No se pudo conectar con el servidor.";
-      setErrors((prev) => ({ ...prev, general: fallbackMessage }));
-      setSubmitStatus("error");
-      setSubmitMessage(fallbackMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
+    // TODO: reemplazar "???" con la ruta del formulario de Características del Inmueble
+    router.push("???");
   }
 
+  // Retorna true si el campo fue tocado y tiene error
   const hasErr = (fieldName: keyof FormData) => touched[fieldName] && !!errors[fieldName];
 
   return {

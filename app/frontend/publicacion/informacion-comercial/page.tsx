@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * @Dev: [OliverG]
+ * @Fecha: 28/03/2026
+ * @Funcionalidad: Página principal del formulario de Información Comercial para
+ * la publicación de inmuebles. Renderiza el navbar, el formulario con sus campos
+ * y los botones de acción Cancelar y Siguiente.
+ * @return {JSX.Element} Página completa del formulario de Información Comercial
+ */
+
 import { useInformacionComercialForm } from "./Hooks/useInformacionComercialForm";
 import DropdownSelect from "./Components/Dropdown.Select";
 import PrecioInput from "./Components/PrecioInput";
@@ -31,7 +40,7 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col bg-[#EAE4D8] font-[family-name:var(--font-geist-sans)]">
 
-      {/* ── NAVBAR ── */}
+      {/* ── Barra de navegación superior ── */}
       <nav className="w-full h-11 bg-[#3D3830] flex items-center px-4 gap-2.5 flex-shrink-0 sticky top-0 z-[100]">
         <button
           className="w-7 h-7 border border-[#6B6560] rounded bg-transparent text-[#C4BEB8] flex items-center justify-center cursor-pointer flex-shrink-0"
@@ -43,24 +52,28 @@ export default function Page() {
           </svg>
         </button>
 
+        {/* Oculto en mobile */}
         <span className="hidden sm:inline bg-[#524D48] text-[#C4BEB8] text-[0.67rem] font-medium px-2.5 py-1 rounded whitespace-nowrap flex-shrink-0">
           Planes de Publicación
         </span>
 
         <div className="flex-1" />
 
+        {/* Links de navegación ocultos en mobile */}
         <div className="hidden md:flex items-center gap-5 mr-1">
-          {["Compra", "Alquiler", "Anticrético"].map((l) => (
-            <span key={l} className="text-[0.64rem] font-semibold tracking-widest text-[#C4BEB8] uppercase cursor-pointer hover:text-white">
-              {l}
+          {["Compra", "Alquiler", "Anticrético"].map((strLink) => (
+            <span key={strLink} className="text-[0.64rem] font-semibold tracking-widest text-[#C4BEB8] uppercase cursor-pointer hover:text-white">
+              {strLink}
             </span>
           ))}
         </div>
 
+        {/* Botón publicar oculto en mobile */}
         <button className="hidden md:block bg-[#524D48] text-[#C4BEB8] text-[0.64rem] font-semibold tracking-widest uppercase px-3 py-1 rounded border-none cursor-pointer mr-1.5 whitespace-nowrap hover:bg-[#6B6560]">
           Publicar
         </button>
 
+        {/* Iconos de notificación, avatar y perfil */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <svg className="w-[18px] h-[18px] text-[#C4BEB8] cursor-pointer" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 2a6 6 0 0 0-6 6c0 3.5-2 4.5-2 5h16s-2-1.5-2-5a6 6 0 0 0-6-6z"/>
@@ -82,26 +95,28 @@ export default function Page() {
         </div>
       </nav>
 
-      {/* ── BODY ── */}
+      {/* ── Área principal con fondo degradado de 2 colores ── */}
       <div
         className="flex-1 flex flex-col items-center px-6"
         style={{ background: "linear-gradient(to bottom, #EAE4D8 35%, #CFC9BB 35%)" }}
       >
+        {/* Título de la página */}
         <div className="w-full max-w-[55%] px-12 pt-8 pb-6 max-sm:max-w-full max-sm:px-0 max-sm:pt-5 max-sm:pb-4">
           <h1 className="text-[2.6rem] font-bold text-[#1A1714] tracking-tight leading-tight max-sm:text-[1.45rem]">
             Crear publicación
           </h1>
         </div>
 
+        {/* Card principal del formulario */}
         <div className="bg-white rounded-lg shadow-md w-full max-w-[620px] px-8 py-7 relative z-[1] mt-12 mb-12 max-sm:max-w-full max-sm:px-3.5 max-sm:py-4 max-sm:mt-4 max-sm:mb-5">
           <p className="text-center text-[0.85rem] font-bold tracking-[0.13em] uppercase text-[#1A1714] mb-5">
             Información Comercial
           </p>
 
-          {/* ── Título + Precio ── */}
+          {/* ── Fila: Título del Aviso + Precio ── */}
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px] gap-3.5 w-full items-start">
 
-            {/* Título */}
+            {/* Campo Título del Aviso */}
             <div className="flex flex-col gap-1.5 w-full min-w-0">
               <label className="text-[0.82rem] font-medium text-[#1A1714]" htmlFor="titulo">
                 Título del Aviso
@@ -111,6 +126,7 @@ export default function Page() {
                 name="titulo"
                 type="text"
                 className={`w-full h-10 px-3 text-[0.88rem] text-[#1A1714] bg-white border rounded-[6px] outline-none transition-colors placeholder:text-[#B8B2AC] ${
+                  // Borde rojo si hay error, gris por defecto
                   hasErr("titulo")
                     ? "border-[#C0503A]"
                     : "border-[#D4CFC6] focus:border-[#8A8480]"
@@ -124,14 +140,16 @@ export default function Page() {
               />
               <div className="flex justify-between items-start">
                 {hasErr("titulo") ? (
+                  // Mensaje de error inline
                   <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errors.titulo}</span>
                 ) : form.titulo.length > 0 ? (
+                  // Contador de caracteres
                   <span className="ml-auto text-[0.70rem] text-[#8A8480]">{form.titulo.length}/{TITULO_MAX}</span>
                 ) : null}
               </div>
             </div>
 
-            {/* Precio */}
+            {/* Campo Precio */}
             <div className="w-full">
               <PrecioInput
                 value={form.precio}
@@ -143,7 +161,7 @@ export default function Page() {
             </div>
           </div>
 
-          {/* ── Tipo de Propiedad ── */}
+          {/* Campo Tipo de Propiedad */}
           <DropdownSelect
             id="tipoPropiedad"
             label="Tipo de Propiedad"
@@ -151,11 +169,11 @@ export default function Page() {
             value={form.tipoPropiedad}
             hasError={!!hasErr("tipoPropiedad")}
             errorMsg={errors.tipoPropiedad}
-            onSelect={(opt) => handleSelectPropiedad(opt)}
+            onSelect={(strOpt) => handleSelectPropiedad(strOpt)}
             onClose={() => handleDropdownBlur("tipoPropiedad")}
           />
 
-          {/* ── Tipo de Operación ── */}
+          {/* Campo Tipo de Operación */}
           <DropdownSelect
             id="tipoOperacion"
             label="Tipo de Operación"
@@ -163,11 +181,11 @@ export default function Page() {
             value={form.tipoOperacion}
             hasError={!!hasErr("tipoOperacion")}
             errorMsg={errors.tipoOperacion}
-            onSelect={(opt) => handleSelectOperacion(opt)}
+            onSelect={(strOpt) => handleSelectOperacion(strOpt)}
             onClose={() => handleDropdownBlur("tipoOperacion")}
           />
 
-          {/* ── Descripción ── */}
+          {/* Campo Descripción */}
           <div className="flex flex-col gap-1.5 mb-3.5">
             <label className="text-[0.82rem] font-medium text-[#1A1714]" htmlFor="descripcion">
               Descripción
@@ -193,8 +211,9 @@ export default function Page() {
                 </span>}
           </div>
 
-          {/* ── Acciones ── */}
+          {/* ── Botones de acción ── */}
           <div className="flex justify-end gap-2.5 mt-5 max-sm:flex-row max-sm:gap-2">
+            {/* Botón Cancelar — limpia el formulario con confirmación */}
             <button
               type="button"
               onClick={handleCancelar}
@@ -203,6 +222,7 @@ export default function Page() {
             >
               Cancelar
             </button>
+            {/* Botón Siguiente — valida y envía al backend */}
             <button
               type="button"
               onClick={handleSiguiente}
@@ -213,6 +233,7 @@ export default function Page() {
             </button>
           </div>
 
+          {/* Mensaje de estado del submit (éxito o error general) */}
           {(submitMessage || errors.general) && (
             <span
               className={`text-[0.74rem] leading-snug mt-2 block ${submitStatus === "success" ? "text-[#8A8480]" : "text-[#C0503A]"}`}
