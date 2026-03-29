@@ -1,23 +1,25 @@
 "use client";
 
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+type HistorialItem = {
+  id: number;
+  titulo: string;
+  precio: string;
+};
 export default function HistorialView() {
 
-  const [historial, setHistorial] = useState([
-    {
-      id: 1,
-      titulo: "Casa en venta - Cochabamba",
-      precio: "$120,000"
-    },
-    {
-      id: 2,
-      titulo: "Departamento en alquiler",
-      precio: "$500"
-    }
-  ]);
-
+  const [historial, setHistorial] = useState<HistorialItem[]>([]);
   const [page, setPage] = useState(1);
+  useEffect(() => {
+  fetch("/api/historial")
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("DATA:", data); // para verificar
+      setHistorial(data);
+    })
+    .catch((error) => console.error("Error:", error));
+  }, []);
+  
   const itemsPerPage = 1;
 
   const start = (page - 1) * itemsPerPage;
