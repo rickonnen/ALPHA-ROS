@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
 
 import PerfilView from "./views/perfil-view";
+import HistorialView from "./views/historial-view";
 
 const HeaderMock = () => (
   <header className="w-full h-[70px] bg-white border-b flex items-center px-8 text-slate-400 italic sticky top-0 z-50 justify-between">
@@ -46,7 +47,7 @@ export default function PerfilPage() {
     seguridad: <div className="p-8">Vista de Seguridad - Equipo B</div>, 
     publicaciones: <div className="p-8">Vista de Publicaciones - Equipo C</div>,
     favoritos: <div className="p-8">Vista de Favoritos - Equipo D</div>,
-    historial: <div className="p-8">Vista de Historial - Equipo E</div>,
+    historial: <HistorialView />,
   };
 
   return (
@@ -70,7 +71,7 @@ export default function PerfilPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-0 items-stretch">
-          <nav id="btns" className="flex flex-col w-full md:w-64 z-10 relative">
+          <nav id="btns" className="flex flex-col w-full md:w-64 z-50 relative">
             {[
               { id: "perfil", name: "MI PERFIL" },
               { id: "seguridad", name: "SEGURIDAD" },
@@ -82,7 +83,10 @@ export default function PerfilPage() {
               return (
                 <button
                   key={btn.id}
-                  onClick={() => setView(btn.id)}
+                  onClick={() => {
+                    console.log("CLICK:", btn.id);
+                    setView(btn.id);
+                  }}
                   className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
                     isSelected 
                       ? "bg-[var(--secondary)] text-white md:rounded-l-2xl md:-mr-[1px] shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.2)] z-20" 
@@ -99,6 +103,7 @@ export default function PerfilPage() {
             className="flex-grow bg-[var(--secondary)] text-white md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             {VIEWS_COMPONENTS[view] || VIEWS_COMPONENTS.perfil}
           </div>
+
         </div>
       </main>
     </div>
