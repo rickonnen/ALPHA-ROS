@@ -5,32 +5,27 @@ import AuthModal from "@/app/frontend/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/frontend/auth/AuthContext";
 
-import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
-
 export default function TestAuthPage() {
   const { user, logout, isLoading } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showProtected, setShowProtected] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-const [showNotifications, setShowNotifications] = useState(false); 
-
   return (
     <div className="min-h-screen bg-gray-100 p-10 flex flex-col items-center">
-      <nav className="relative p-4 flex justify-between items-center w-full bg-white rounded-lg shadow-sm mb-10">
+      <nav className="p-4 flex justify-between items-center w-full bg-white rounded-lg shadow-sm mb-10">
         <h1 className="font-bold text-lg">Binary Brain - Test</h1>
         <div className="flex items-center gap-4">
           {user ? (
             <>
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => alert("Notificaciones: Próximamente")}
                 title="Notificaciones"
                 aria-label="Notificaciones"
                 className="text-gray-600 hover:text-[#B47B65] transition-colors"
               >
                 <Bell size={24} />
               </button>
-              
               <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 <span className="text-gray-700 font-medium">{user.name}</span>
                 <button
@@ -69,12 +64,6 @@ const [showNotifications, setShowNotifications] = useState(false);
         </div>
       </nav>
 
-            {user && showNotifications && (
-              <div className="absolute top-20 right-10 z-50">
-                <NotificationPanel />
-              </div>
-          )}
-
       <div className="p-10 text-center text-gray-400 italic">
         {isLoading ? (
           <p>Cargando...</p>
@@ -109,5 +98,3 @@ const [showNotifications, setShowNotifications] = useState(false);
     </div>
   );
 }
-
-
