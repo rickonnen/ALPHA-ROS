@@ -1,57 +1,53 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/app/backend/prisma'; 
+import { PrismaClient } from '@prisma/client';
 
-// estas son funciones del backend
+const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const idDetalle = searchParams.get('id'); // El ID que ves en la columna 'id_detalle'
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { id_usuario, id_plan } = body;
+    const planIdNumeric = parseInt(id_plan.toString());
 
-    if (!idDetalle) return NextResponse.json({ error: "Falta ID" }, { status: 400 });
+    if (!id_usuario || !id_plan) {
+      return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
+    }
 
-    const transaccion = await prisma.detallePago.findUnique({
-        where: { id_detalle: parseInt(idDetalle) }
+    const pagoExistente = await prisma.detallePago.findFirst({
+      where: {
+        id_usuario: id_usuario,
+        id_plan: planIdNumeric,
+        estado: 1 // 1 = Pendiente
+      }
     });
 
-    return NextResponse.json(transaccion);
-}
-
-// POST: El que se activa al presionar el botón verde
-export async function POST(request: Request) {
-    try {
-        const body = await request.json();
-        const { id_detalle, id_usuario } = body;
-
-        // Buscamos la transacción en la tabla real
-        const registro = await prisma.detallePago.findUnique({
-            where: { id_detalle: parseInt(id_detalle),
-                     id_usuario: id_usuario
-             }
-        });
-
-        if (!registro) {
-            return NextResponse.json({ titulo: "Error", mensaje: "No existe el registro", estado: 0 });
-        }
-
-        // Lógica de respuesta según la columna 'estado'
-        // 1 = Pendiente, 2 = Verificado, 3 = Rechazado
-        if (registro.estado === 2) {
-            return NextResponse.json({
-                titulo: "¡PAGO EXITOSO!",
-                mensaje: "El pago fue procesado con exito, puede consultar su tranasccion en historial de pagos",
-            });
-        } else if (registro.estado === 3) {
-            return NextResponse.json({
-                titulo: "PAGO RECHAZADO",
-                mensaje: "Hubo un problema con la transferencia. Por favor, intenta de nuevo.",
-            });
-        } else {
-            return NextResponse.json({
-                titulo: "PAGO PENDIENTE",
-                mensaje: "El pago se esta procesando, esto puede durar algunas horas",
-            });
-        }
-    } catch (error) {
-        return NextResponse.json({ error: "Error de servidor" }, { status: 500 });
+    if (pagoExistente) {
+      return NextResponse.json({
+        titulo: "Verificando Pago",
+        mensaje: "El pago se esta procesando, esto puede durar algunas horas"
+      });
     }
+
+    await prisma.detallePago.create({
+      data: {
+        id_plan: planIdNumeric,
+        id_usuario: id_usuario,
+        estado: 1,
+        metodo_pago: "Transferencia QR",
+        fecha_detalle: new Date()
+      }
+    });
+
+    return NextResponse.json({
+      titulo: "Verificando Pago",
+      mensaje: "El pago se esta procesando, esto puede durar algunas horas"
+    });
+
+  } catch (error: any) {
+    console.error("Error de Prisma en Verificar:", error);
+    return NextResponse.json(
+      { error: "Error interno al registrar el intento de pago" }, 
+      { status: 500 }
+    );
+  }
 }

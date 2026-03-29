@@ -59,12 +59,13 @@ export default async function PlanesPublicacion() {
               </CardContent>
               <CardFooter className="pt-8 bg-transparent">
                 <Button className="w-full font-bold">
-                  Continuar
+                  <Link href={`/frontend/cobros/sector-pagos?planId=${plan.id_plan}`}>
+                    Continuar
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
           ))}
-
         </div>
       </main>
     </div>

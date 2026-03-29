@@ -20,7 +20,7 @@ export default function PaginaSectorPagos() {
   );
 }
 //los amigos de rodrigo no hicieron login asi que wamos a simular pe
-const USUARIO_SIMULADO_ID = "d4c4d9c0-ded9-4186-890e-a9f19fd67d5e";
+
 
 function ContenidoPaginaCobros() {
   const searchParams = useSearchParams();
@@ -43,8 +43,8 @@ function ContenidoPaginaCobros() {
       try {
         // Ejecutamos ambas peticiones en paralelo para ganar velocidad
         const [resPlan, resQr] = await Promise.all([
-            fetch(`/backend/controllers/cobros/planes?planId=${planId}`),
-            fetch(`/backend/controllers/cobros/descargar?planId=${planId}`) 
+            fetch(`/backend/cobros/getplan?planId=${planId}`),
+            fetch(`/backend/cobros/descargar?planId=${planId}`) 
         ]);
 
         const dataPlan = await resPlan.json();
@@ -74,10 +74,10 @@ function ContenidoPaginaCobros() {
     cargarDatosIniciales();
   }, [planId]);
 
-  const USUARIO_SIMULADO_ID = "d4c4d9c0-ded9-4186-890e-a9f19fd67d5e";
+  const USUARIO_SIMULADO_ID = "4ce5fb58-95d8-4b43-8e49-4d75711f1837";
     const manejarVerificacion = async () => {
     try {
-      const res = await fetch('/backend/controllers/cobros/verificar', {
+      const res = await fetch('/backend/cobros/verificar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -217,12 +217,13 @@ function ContenidoPaginaCobros() {
               {mensaje}
             </p>
 
-            <button
-              onClick={() => setMostrarModal(false)}
-              className="bg-[#333] hover:bg-black text-white px-6 py-2 rounded text-xs font-bold"
-            >
-              Historial de Pagos
-            </button>
+            <Link href="/frontend/cobros/historial-pagos">
+              <button
+                className="bg-[#333] hover:bg-black text-white px-6 py-2 rounded text-xs font-bold"
+              >
+                Historial de Pagos
+              </button>
+            </Link>
           </div>
         </div>
       )}
