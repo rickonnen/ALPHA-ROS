@@ -531,7 +531,7 @@ model CiudadImagen {
 }
 
 model DetallePago {
-  id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
+  id_detalle      Int              @id(map: "DetallePago_pk") @db.SmallInt
   id_plan         Int?             @db.SmallInt
   fecha_detalle   DateTime?        @db.Date
   estado          Int?             @db.SmallInt
@@ -571,7 +571,6 @@ model Etiquetas {
 model Favorito {
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
 
