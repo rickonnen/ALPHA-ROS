@@ -61,7 +61,7 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
           Información Personal
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 px-6 md:px-8">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 px-6 md:px-8 pb-8">
         <div className="flex flex-col gap-6">
           <div className="group flex flex-col transition-all duration-300 ease-out hover:-translate-y-1 cursor-default border-b border-white/10 pb-4">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 transition-colors duration-300 group-hover:text-white/80">
@@ -80,7 +80,7 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
                   className="rounded-sm shadow-md opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                 />
               )}
-            </div>
+            </div>g
           </div>
           <DetailBlock
             label="Nombre y Apellido"
