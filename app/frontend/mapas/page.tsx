@@ -1,5 +1,8 @@
 "use client"
 
+// TODO: INTEGRACIÓN - Reemplazar este import cuando el equipo de filtros entregue su contexto/hook
+// Actualmente se usan datos de prueba. Ver estructura esperada en /lib/locations-placeholder-data.ts
+// El equipo de filtros debe proveer un array Location[] con: id, lat, lng, direccion, zona, precio
 import { locations, Location } from "@/lib/locations-placeholder-data"
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet"
 import L from "leaflet"
@@ -111,6 +114,17 @@ export default function FilterAndSearchPage() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  // TODO: INTEGRACIÓN - Reemplazar 'locations' por los datos del equipo de filtros
+  // Ejemplo: const { locations } = useFiltros()
+  // o recibir locations como prop desde la página padre
+  // La consulta Prisma esperada es:
+  // prisma.publicacion.findMany({
+  //   select: {
+  //     id_publicacion: true,
+  //     precio: true,
+  //     Ubicacion: { select: { latitud, longitud, direccion, zona } }
+  //   }
+  // })
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
