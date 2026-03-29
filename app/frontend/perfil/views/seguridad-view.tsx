@@ -14,7 +14,9 @@ interface SeguridadProps {
   id_usuario: string;
   email: string;
   telefonos: string[];
+  onSuccess: () => void;
 };
+//export default function SeguridadView({id_usuario, email, telefonos, onSuccess}: SeguridadProps) {
 export default function SeguridadView({ id_usuario, email, telefonos }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
