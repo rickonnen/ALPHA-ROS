@@ -8,35 +8,43 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Check, X } from "lucide-react"
 import { PaymentRecord } from "./paymentTypes"
 import { PaymentAcceptModal } from "./PaymentAcceptModal"
 import { PaymentRejectModal } from "./PaymentRejectModal"
 
-/**
- * Dev: René Gabriel Vera Portanda
- * Fecha: 24/03/26
- * Funcionalidad: Interfaz que define las propiedades para el componente PaymentDataTable.
- */
+// Importación de Shadcn Pagination
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+
 interface PaymentDataTableProps {
   arrData: PaymentRecord[];
   bolShowActions?: boolean;
   onPaymentUpdated?: () => void;
+  bolIsLoading?: boolean;
+  intCurrentPage?: number;
+  intTotalPages?: number;
+  onPageChange?: (intPage: number) => void;
 }
 
-/**
- * Dev: René Gabriel Vera Portanda
- * Fecha: 24/03/26
- * Funcionalidad: Muestra una tabla de los registros de pago con acciones opcionales para aceptar o rechazar.
- * @param {array} arrData - Matriz de registros de pago para mostrar.
- * @param {boolean} bolShowActions - Indicador para determinar si se deben mostrar los botones de acción.
- * @param {function} onPaymentUpdated - Función de devolución de llamada ejecutada después de que un pago se actualiza correctamente.
- * @return {object} objJSX - El componente de React renderizado.
- */
-export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpdated }: PaymentDataTableProps) {
+export function PaymentDataTable({ 
+  arrData, 
+  bolShowActions = false, 
+  onPaymentUpdated,
+  bolIsLoading = false,
+  intCurrentPage = 1,
+  intTotalPages = 1,
+  onPageChange
+}: PaymentDataTableProps) {
   const [bolShowAcceptModal, setBolShowAcceptModal] = useState<boolean>(false);
   const [bolShowRejectModal, setBolShowRejectModal] = useState<boolean>(false);
   const [objSelectedPayment, setObjSelectedPayment] = useState<PaymentRecord | null>(null);
+  const [bolIsProcessing, setBolIsProcessing] = useState<boolean>(false);
 
   const handleOpenAcceptModal = (objPayment: PaymentRecord) => {
     setObjSelectedPayment(objPayment);
@@ -48,10 +56,9 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
     setBolShowRejectModal(true);
   };
 
-  // Lógica conectada al backend para aceptar el pago
   const handleConfirmAcceptance = async () => {
-    if (!objSelectedPayment) return;
-    
+    if (!objSelectedPayment || bolIsProcessing) return;
+    setBolIsProcessing(true);
     try {
       const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
         method: 'PATCH',
@@ -70,14 +77,14 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
       }
     } catch (objError) {
       console.error("Error:", objError);
-      alert("Error de conexión");
+    } finally {
+      setBolIsProcessing(false);
     }
   };
 
-  // Lógica conectada al backend para rechazar el pago
   const handleConfirmRejection = async () => {
-    if (!objSelectedPayment) return;
-
+    if (!objSelectedPayment || bolIsProcessing) return;
+    setBolIsProcessing(true);
     try {
       const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
         method: 'PATCH',
@@ -96,71 +103,137 @@ export function PaymentDataTable({ arrData, bolShowActions = false, onPaymentUpd
       }
     } catch (objError) {
       console.error("Error:", objError);
-      alert("Error de conexión");
+    } finally {
+      setBolIsProcessing(false);
     }
   };
 
+  const renderSkeletons = () => {
+    return Array.from({ length: 5 }).map((_, index) => (
+      <TableRow key={`skeleton-${index}`} className="border-b border-border">
+        <TableCell className="px-6 py-4 border-r border-border">
+          <div className="h-4 w-6 bg-muted animate-pulse rounded mx-auto" />
+        </TableCell>
+        <TableCell className="px-6 py-4 border-r border-border">
+          <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+        </TableCell>
+        <TableCell className="px-6 py-4 border-r border-border">
+          <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+        </TableCell>
+        <TableCell className="px-6 py-4 border-r border-border">
+          <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+        </TableCell>
+        <TableCell className={`px-6 py-4 ${bolShowActions ? 'border-r border-border' : ''}`}>
+          <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+        </TableCell>
+        {bolShowActions && (
+          <TableCell className="px-6 py-4">
+            <div className="flex justify-center space-x-2">
+              <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
+              <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
+            </div>
+          </TableCell>
+        )}
+      </TableRow>
+    ));
+  };
+
   return (
-    // Se usa bg-background y border-border en lugar de colores hex
-    <div className="w-full rounded-md border border-border overflow-hidden bg-white">
-      <Table className="table-fixed w-full">
-        {/* Se usa bg-muted en lugar de un hex hardcoded para el encabezado */}
-        <TableHeader className="bg-background border-b-2 border-border">
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-[20px] border-r border-border">N°</TableHead>
-            <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[25%] border-r border-border">Cliente</TableHead>
-            <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] border-r border-border">Tipo de Plan</TableHead>
-            <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[15%] border-r border-border">Fecha</TableHead>
-            <TableHead className={`h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] ${bolShowActions ? 'border-r border-border' : ''}`}>Método de Pago</TableHead>
-            {bolShowActions && (
-              <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-[180px]">Acciones</TableHead>
-            )}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {arrData.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={bolShowActions ? 6 : 5} className="text-center py-16 text-muted-foreground font-medium">No existen registros.</TableCell>
+    <div className="w-full rounded-md border border-border overflow-hidden bg-card shadow-sm">
+      
+      {/* --- INICIO DEL CAMBIO PARA RESPONSIVIDAD --- */}
+      <div className="w-full overflow-x-auto">
+        {/* min-w-[800px] asegura que las columnas no se aplasten en móviles */}
+        <Table className="w-full min-w-[800px]">
+          <TableHeader className="bg-muted/30 border-b-2 border-border">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-[60px] border-r border-border">N°</TableHead>
+              <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[25%] border-r border-border">Cliente</TableHead>
+              <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] border-r border-border">Tipo de Plan</TableHead>
+              <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[15%] border-r border-border">Fecha</TableHead>
+              <TableHead className={`h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] ${bolShowActions ? 'border-r border-border' : ''}`}>Método de Pago</TableHead>
+              {bolShowActions && (
+                <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-[180px]">Acciones</TableHead>
+              )}
             </TableRow>
-          ) : (
-            arrData.map((objPayment) => (
-              // Se usa hover:bg-muted/50 en lugar del hover con hex
-              <TableRow key={objPayment.intId} className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
-                <TableCell className="px-6 py-4 font-semibold text-muted-foreground text-center border-r border-border">{objPayment.intId}</TableCell>
-                <TableCell className="px-6 py-4 font-medium text-foreground border-r border-border truncate">{objPayment.strClientName}</TableCell>
-                <TableCell className="px-6 py-4 text-muted-foreground border-r border-border truncate">{objPayment.strPlanType}</TableCell>
-                <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">{objPayment.strDate}</TableCell>
-                <TableCell className={`px-6 py-4 text-muted-foreground truncate ${bolShowActions ? 'border-r border-border' : ''}`}>{objPayment.strPaymentMethod}</TableCell>
-                {bolShowActions && (
-                  <TableCell className="px-6 py-4">
-                    <div className="flex justify-center space-x-2">
-                      {/* Botón Aceptar: Usa primary y su foreground */}
-                      <Button 
-                        onClick={() => handleOpenAcceptModal(objPayment)}
-                        variant="default" 
-                        size="sm" 
-                        className="h-8 px-3 flex items-center gap-1.5"
-                      >
-                        <span className="text-xs font-semibold">Aceptar</span>
-                      </Button>
-                      
-                      {/* Botón Rechazar: Usa destructive para el rechazo */}
-                      <Button 
-                        onClick={() => handleOpenRejectModal(objPayment)}
-                        variant="default" 
-                        size="sm" 
-                        className="h-8 px-3 flex items-center gap-1.5"
-                      >
-                        <span className="text-xs font-semibold">Rechazar</span>
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
+          </TableHeader>
+          <TableBody>
+            {bolIsLoading ? (
+              renderSkeletons()
+            ) : arrData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={bolShowActions ? 6 : 5} className="text-center py-16 text-muted-foreground font-medium italic">
+                  No existen registros en esta categoría.
+                </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              arrData.map((objPayment) => (
+                <TableRow key={objPayment.intId} className="border-b border-border last:border-b-0 hover:bg-muted/40 transition-colors">
+                  <TableCell className="px-6 py-4 font-semibold text-muted-foreground text-center border-r border-border">{objPayment.intId}</TableCell>
+                  <TableCell className="px-6 py-4 font-medium text-foreground border-r border-border truncate">{objPayment.strClientName}</TableCell>
+                  <TableCell className="px-6 py-4 text-muted-foreground border-r border-border truncate">{objPayment.strPlanType}</TableCell>
+                  <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">{objPayment.strDate}</TableCell>
+                  <TableCell className={`px-6 py-4 text-muted-foreground truncate ${bolShowActions ? 'border-r border-border' : ''}`}>{objPayment.strPaymentMethod}</TableCell>
+                  {bolShowActions && (
+                    <TableCell className="px-6 py-4">
+                      <div className="flex justify-center space-x-2">
+                        <Button 
+                          onClick={() => handleOpenAcceptModal(objPayment)}
+                          variant="default" 
+                          size="sm" 
+                          className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95"
+                        >
+                          Aceptar
+                        </Button>
+                        <Button 
+                          onClick={() => handleOpenRejectModal(objPayment)}
+                          variant="destructive" 
+                          size="sm" 
+                          className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95"
+                        >
+                          Rechazar
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      {/* --- FIN DEL CAMBIO PARA RESPONSIVIDAD --- */}
+
+      <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-card/50">
+        <p className="text-sm text-muted-foreground">
+          Página <span className="font-bold text-foreground">{intCurrentPage}</span> de <span className="font-bold text-foreground">{intTotalPages}</span>
+        </p>
+        
+        <Pagination className="justify-end w-auto mx-0">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (intCurrentPage > 1) onPageChange?.(intCurrentPage - 1);
+                }}
+                className={intCurrentPage === 1 || bolIsLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext 
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (intCurrentPage < intTotalPages) onPageChange?.(intCurrentPage + 1);
+                }}
+                className={intCurrentPage === intTotalPages || bolIsLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       {objSelectedPayment && (
         <>
