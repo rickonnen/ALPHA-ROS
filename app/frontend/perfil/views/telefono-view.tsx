@@ -221,7 +221,6 @@ export default function TelefonosView({
       setOpen(true);
 
       if (res.ok) {
-        // 🔥 reconstruir lista sin el eliminado
         const filtrados = telefonosValues.filter(
           (_, i) => i !== slotActual && telefonosActivos[i]
         );
@@ -236,7 +235,6 @@ export default function TelefonosView({
         setTelefonosValues(nuevosValues);
         setTelefonosActivos(nuevosActivos);
 
-        // 🔥 limpiar estados
         setEditando(Array.from({ length: MAX_TELEFONOS }, () => false));
         setSlotEnEdicion(null);
         setSnapshot(null);
@@ -344,6 +342,7 @@ export default function TelefonosView({
 
   return (
     <div className="space-y-6 text-white">
+      
       <Button
         type="button"
         variant="ghost"
@@ -353,6 +352,9 @@ export default function TelefonosView({
         <ArrowLeft className="mr-2 h-4 w-4" />
         Volver a Seguridad
       </Button>
+      <p className="text-xs tracking-widest text-white/50 mb-1 pb-5">
+      SEGURIDAD › GESTIONAR TELÉFONOS
+      </p>
 
       <div className="flex items-start gap-3">
         <div className="text-2xl">📞</div>
