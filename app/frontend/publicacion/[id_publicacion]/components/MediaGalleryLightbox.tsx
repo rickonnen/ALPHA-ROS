@@ -1,17 +1,18 @@
 /**
  * Dev: Gustavo Montaño
- * Date: 25/03/2026
- * Funcionalidad: Vista previa ampliada al click con navegación entre imágenes (HU4 - Task 4.4)
+ * Date: 26/03/2026
+ * Funcionalidad: Lightbox modal para visualización ampliada de imágenes
+ *                (HU4 - Task 4.4)
  * @param arrImagenesSafe  - URLs de imágenes con fallback aplicado
- * @param intLightboxIndex - Índice actual de la imagen ampliada
- * @param onClose          - Cerrar lightbox
- * @param onPrev           - Imagen anterior en lightbox
- * @param onNext           - Imagen siguiente en lightbox
- * @param onImgError       - Manejar error de imagen con fallback
+ * @param intLightboxIndex - Índice de la imagen actualmente visible en el lightbox
+ * @param onClose          - Función para cerrar el lightbox
+ * @param onPrev           - Función para navegar a la imagen anterior
+ * @param onNext           - Función para navegar a la imagen siguiente
+ * @param onImgError       - Función para manejar error de imagen con fallback
+ * @return JSX con overlay modal de pantalla completa
  */
 import React from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-
 interface MediaGalleryLightboxProps {
   arrImagenesSafe:  string[];
   intLightboxIndex: number;
@@ -20,7 +21,6 @@ interface MediaGalleryLightboxProps {
   onNext:           () => void;
   onImgError:       (e: React.SyntheticEvent<HTMLImageElement>) => void;
 }
-
 export const MediaGalleryLightbox = ({
   arrImagenesSafe,
   intLightboxIndex,

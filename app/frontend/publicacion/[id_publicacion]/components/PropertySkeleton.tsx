@@ -1,8 +1,11 @@
 /** * Dev: Marcela C.
- * Funcionalidad: Loading silhouettes (Task 4.9).
+ * Date: 27/03/2026
+ * Funcionalidad: Siluetas de carga mientras se obtienen los datos del inmueble
+ *                (HU4 - Task 4.9)
+ * @return JSX con skeletons que replican la estructura del perfil
  */
 import { Skeleton } from "@/components/ui/skeleton";
-//
+
 export const PropertySkeleton = () => {
   return (
     <div className="space-y-10 animate-pulse">

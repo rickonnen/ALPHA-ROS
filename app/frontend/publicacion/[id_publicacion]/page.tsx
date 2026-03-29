@@ -1,9 +1,10 @@
 /**
  * Dev: Gustavo Montaño
- * Date: 25/03/2026
+ * Date modification: 28/03/2026
  * Funcionalidad: Página del Perfil del Inmueble con datos reales de BD
  *                (HU4 - Tasks 4.1, 4.2, 4.3, 4.5, 4.8, 4.10, 4.13)
  * @param params - Parámetros de ruta dinámica con el ID de la publicación
+ * @return JSX con la vista completa del perfil del inmueble
  */
 import { notFound } from "next/navigation";
 import { Tag, Ruler } from "lucide-react";
@@ -19,20 +20,15 @@ export default async function PerfilInmueblePage({
 }) {
   const { id_publicacion } = await params;
   const objPerfil = await getPerfilInmueble(Number(id_publicacion));
-
   if (!objPerfil) return notFound();
-
   // Task 4.5: Extraer video ID según plataforma (YouTube, YouTube Shorts, Instagram Reel)
 const strVideoUrl = objPerfil.Video?.[0]?.url_video ?? null;
-
 const bolEsYoutube = strVideoUrl
   ? strVideoUrl.includes("youtube.com") || strVideoUrl.includes("youtu.be")
   : false;
-
 const bolEsInstagram = strVideoUrl
   ? strVideoUrl.includes("instagram.com/reel") || strVideoUrl.includes("instagram.com/p")
   : false;
-
 // Extraer ID de YouTube — soporta youtube.com/watch, youtu.be y youtube.com/shorts
 const strVideoId = bolEsYoutube && strVideoUrl
   ? strVideoUrl.includes("youtu.be/")
@@ -41,7 +37,6 @@ const strVideoId = bolEsYoutube && strVideoUrl
       ? strVideoUrl.split("/shorts/")[1]?.split("?")[0]
       : strVideoUrl.split("v=")[1]?.split("&")[0]
   : null;
-
 const strReelId = bolEsInstagram && strVideoUrl
   ? strVideoUrl.includes("/reel/")
     ? strVideoUrl.split("/reel/")[1]?.split("/")[0]
@@ -49,28 +44,23 @@ const strReelId = bolEsInstagram && strVideoUrl
   : null;
   // Task 4.8: Dirección desde relación Ubicacion
   const strDireccion = objPerfil.Ubicacion?.direccion ?? "Dirección no disponible";
-
   // Task 4.4: Mapear URLs reales desde modelo Imagen ← AQUÍ, antes del return
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   return (
 <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
   <div className="max-w-6xl mx-auto">
-
         {/* Task 4.3: Título */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight">
             {objPerfil.titulo}
           </h1>
         </header>
-
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
-
         <MediaGallery
   arrImagenes={arrImagenes}
   strVideoId={strVideoId ?? undefined}
   strReelId={strReelId ?? undefined}
 />
-
 {/* Task 4.3: Precio y Superficie */}
 <div className="flex flex-row justify-between items-center py-8 border-y border-black/10 mb-10 gap-4">
   <div className="flex items-center gap-2 min-w-0">
@@ -92,7 +82,6 @@ const strReelId = bolEsInstagram && strVideoUrl
     </p>
   </div>
 </div>
-
 {/* Task 4.8: Dirección */}
 <div className="mb-12 text-xl">
   <p>
@@ -112,7 +101,6 @@ const strReelId = bolEsInstagram && strVideoUrl
             intGarajes:       objPerfil.garajes                         ?? 0,
           }}
         />
-
         {/* Task 4.8: Descripción con saltos de línea */}
         <section className="mt-16 mb-20">
           <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
@@ -124,7 +112,6 @@ const strReelId = bolEsInstagram && strVideoUrl
             </p>
           </div>
         </section>
-
         {/* Task 4.10: Botones — rutas las conecta otro dev */}
 <PropertyActions />
       </div>

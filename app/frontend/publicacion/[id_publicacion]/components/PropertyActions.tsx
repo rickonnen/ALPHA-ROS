@@ -2,6 +2,7 @@
  * Dev: Gustavo Montaño
  * Date: 28/03/2026
  * Funcionalidad: Botones de acción del perfil del inmueble (HU4 - Task 4.10)
+ * @return JSX con botones "Ver mis publicaciones" y "Publicar otro inmueble"
  */
 "use client";
 
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 
 export const PropertyActions = () => {
   const router = useRouter();
-
   return (
     <footer className="flex flex-row justify-between items-center gap-3 pt-10 border-t border-black/10">
       <Button

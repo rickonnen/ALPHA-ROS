@@ -1,10 +1,13 @@
 /**
  * Dev: Marcela C.
- * Funcionalidad: Versión Desktop de detalles técnicos (Grid 2 columnas)
+ * Date: 27/03/2026
+ * Funcionalidad: Vista desktop de detalles del inmueble en grilla 2 columnas
+ *                (HU4 - Tasks 4.6, 4.7)
+ * @param objInfo - Objeto con los datos del inmueble (ver PropertyDetails)
+ * @return JSX con grilla de detalles visible solo en desktop
  */
 import React from "react";
 import { PerfilDetallesProps, DetalleItem } from "./PropertyDetails";
-
 export const PropertyDetailsDesktop = ({ objInfo }: PerfilDetallesProps) => (
   <section className="hidden md:block bg-white/40 backdrop-blur-sm rounded-3xl p-8 border border-black/5 shadow-sm">
     <h2 className="text-2xl font-bold mb-8 border-b border-[#2E2E2E]/5 pb-2 text-[#1F3A4D]">

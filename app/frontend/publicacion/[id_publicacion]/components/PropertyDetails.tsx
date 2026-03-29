@@ -1,12 +1,21 @@
 /**
  * Dev: Marcela C.
- * Date: 25/03/2026
- * Funcionalidad: Punto de entrada para detalles del inmueble (HU4)
+ * Date: 27/03/2026
+ * Funcionalidad: Punto de entrada para detalles del inmueble (HU4 - Tasks 4.6, 4.7)
+ * @param objInfo - Objeto con los datos del inmueble a mostrar
+ * @param objInfo.strTipoInmueble  - Tipo de propiedad (Casa, Depto, etc.)
+ * @param objInfo.strTipoOperacion - Tipo de operación (Venta, Alquiler, etc.)
+ * @param objInfo.strDepartamento  - Nombre del departamento/ciudad
+ * @param objInfo.strZona          - Nombre de la zona
+ * @param objInfo.intHabitaciones  - Número de habitaciones
+ * @param objInfo.intBanos         - Número de baños
+ * @param objInfo.intPlantas       - Número de plantas
+ * @param objInfo.intGarajes       - Número de garajes
+ * @return JSX con versión desktop y mobile de los detalles
  */
 import React from "react";
 import { PropertyDetailsDesktop } from "./PropertyDetailsDesktop";
 import { PropertyDetailsMobile } from "./PropertyDetailsMobile";
-
 export interface PerfilDetallesProps {
   objInfo: {
     strTipoInmueble:  string;
@@ -19,7 +28,6 @@ export interface PerfilDetallesProps {
     intGarajes:        number;
   };
 }
-
 export const PropertyDetails = (props: PerfilDetallesProps) => {
   return (
     <>
@@ -28,7 +36,6 @@ export const PropertyDetails = (props: PerfilDetallesProps) => {
     </>
   );
 };
-
 // Componente de ítem reutilizable
 export const DetalleItem = ({
   strLabel,

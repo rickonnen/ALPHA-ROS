@@ -1,6 +1,10 @@
 /**
  * Dev: Marcela C.
- * Funcionalidad: Versión Mobile de detalles técnicos (Lista vertical)
+ * Date: 27/03/2026
+ * Funcionalidad: Vista mobile de detalles del inmueble en lista vertical
+ *                (HU4 - Tasks 4.6, 4.7, 4.12)
+ * @param objInfo - Objeto con los datos del inmueble (ver PropertyDetails)
+ * @return JSX con lista de detalles visible solo en mobile
  */
 import React from "react";
 import { PerfilDetallesProps, DetalleItem } from "./PropertyDetails";

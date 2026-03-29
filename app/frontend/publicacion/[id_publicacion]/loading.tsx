@@ -1,7 +1,9 @@
 /**
  * Dev: Marcela C.
  * Date: 25/03/2026
- * Funcionalidad: Estado de carga del perfil mientras llegan datos de BD (HU4 - Task 4.9)
+ * Funcionalidad: Página de carga automática de Next.js mientras se resuelve
+ *                la query del perfil del inmueble (HU4 - Task 4.9)
+ * @return JSX con PropertySkeleton como estado de carga
  */
 import { PropertySkeleton } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertySkeleton";
 

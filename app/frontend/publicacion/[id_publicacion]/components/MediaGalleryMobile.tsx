@@ -1,20 +1,20 @@
 /**
  * Dev: Marcela C.
- * Date: 25/03/2026
- * Funcionalidad: Carrusel mobile con video o reel como último slide (HU4 - Tasks 4.4, 4.5, 4.12)
+ * Date: 26/03/2026
+ * Funcionalidad: Carrusel mobile con flechas e indicadores (HU4 - Tasks 4.4, 4.12)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
  * @param strReelId       - ID del Reel de Instagram (opcional)
  * @param intCurrentIndex - Índice actual del carrusel
- * @param intTotalSlides  - Total de slides (imágenes + video/reel si existe)
- * @param onPrev          - Navegar slide anterior
- * @param onNext          - Navegar slide siguiente
- * @param onOpenLightbox  - Abrir lightbox en índice dado
- * @param onImgError      - Manejar error de imagen con fallback e índice
+ * @param intTotalSlides  - Total de slides incluyendo video si existe
+ * @param onPrev          - Función para navegar a la imagen anterior
+ * @param onNext          - Función para navegar a la imagen siguiente
+ * @param onOpenLightbox  - Función para abrir el lightbox en un índice dado
+ * @param onImgError      - Función para manejar error de imagen con fallback
+ * @return JSX con carrusel de una columna visible solo en mobile
  */
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
 interface MediaGalleryMobileProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
@@ -26,7 +26,6 @@ interface MediaGalleryMobileProps {
   onOpenLightbox:  (intIdx: number) => void;
   onImgError:      (e: React.SyntheticEvent<HTMLImageElement>, intIdx?: number) => void;
 }
-
 export const MediaGalleryMobile = ({
   arrImagenesSafe,
   strVideoId,
@@ -40,7 +39,6 @@ export const MediaGalleryMobile = ({
 }: MediaGalleryMobileProps) => {
   // Task 4.5: El video o reel ocupa el último slide del carrusel
   const bolEsSlideVideo = (strVideoId || strReelId) && intCurrentIndex === arrImagenesSafe.length;
-
   return (
     // Task 4.12: Solo visible en mobile
     <div className="md:hidden relative h-70 bg-[#E7E1D7] rounded-2xl overflow-hidden">

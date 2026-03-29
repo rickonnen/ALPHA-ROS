@@ -1,20 +1,20 @@
 /**
- * Dev: Gustavo Montaño C.
+ * Dev: Gustavo Montaño
  * Date: 26/03/2026
  * Funcionalidad: Grilla desktop con flechas y lightbox (HU4 - Tasks 4.4, 4.5, 4.11)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
  * @param strReelId       - ID del Reel de Instagram (opcional)
- * @param intCurrentIndex - Índice actual del carrusel
- * @param strFallback     - URL imagen de empresa por defecto
- * @param onPrev          - Navegar imagen anterior
- * @param onNext          - Navegar imagen siguiente
- * @param onOpenLightbox  - Abrir lightbox en índice dado
- * @param onImgError      - Manejar error de imagen con fallback e índice
+ * @param intCurrentIndex - Índice actual del carrusel principal
+ * @param strFallback     - URL de imagen de empresa por defecto
+ * @param onPrev          - Función para navegar a la imagen anterior
+ * @param onNext          - Función para navegar a la imagen siguiente
+ * @param onOpenLightbox  - Función para abrir el lightbox en un índice dado
+ * @param onImgError      - Función para manejar error de imagen con fallback
+ * @return JSX con grilla de 3 columnas visible solo en desktop
  */
 import React from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
-
 interface MediaGalleryDesktopProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
@@ -26,7 +26,6 @@ interface MediaGalleryDesktopProps {
   onOpenLightbox:  (intIdx: number) => void;
   onImgError:      (e: React.SyntheticEvent<HTMLImageElement>, intIdx?: number) => void;
 }
-
 export const MediaGalleryDesktop = ({
   arrImagenesSafe,
   strVideoId,
@@ -40,7 +39,6 @@ export const MediaGalleryDesktop = ({
 }: MediaGalleryDesktopProps) => (
   // Task 4.12: Solo visible en desktop
   <div className="hidden md:grid grid-cols-3 gap-4 h-125">
-
     {/* Task 4.4: Slot 1 — imagen principal con flechas y zoom */}
     <div className="col-span-2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm relative group cursor-pointer">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,7 +84,6 @@ export const MediaGalleryDesktop = ({
         ))}
       </div>
     </div>
-
     {/* Columna derecha */}
     <div className="flex flex-col gap-4">
       {/* Task 4.5: Slot 2 — YouTube, Instagram Reel, o imagen 2 */}

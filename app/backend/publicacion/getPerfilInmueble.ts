@@ -1,9 +1,10 @@
 /**
  * Dev: Gustavo Montaño
  * Date: 25/03/2026
- * Funcionalidad: Obtener todos los datos del perfil del inmueble por ID (HU4 - Task 4.2)
- * @param intIdPublicacion - ID de la publicación desde la ruta dinámica [id]
- * @return Objeto completo del perfil del inmueble con sus relaciones o null si no existe
+ * Funcionalidad: Consulta a la BD para obtener todos los datos del perfil
+ *                del inmueble incluyendo relaciones (HU4 - Task 4.2)
+ * @param intId - ID numérico de la publicación a consultar
+ * @return Objeto con todos los datos del inmueble o null si no existe
  */
 import { PrismaClient } from "@prisma/client";
 
