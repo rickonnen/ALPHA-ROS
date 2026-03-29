@@ -28,7 +28,7 @@ export function NotificationItem({
     >
       {/* Ícono mail */}
       <div
-        className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full
+        className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-full
           ${read ? "text-gray-400 bg-gray-100" : "text-blue-600 bg-blue-100"}`}
       >
         <Mail size={16} />
@@ -54,7 +54,7 @@ export function NotificationItem({
           e.stopPropagation();
           onDelete(id);
         }}
-        className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity
+        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity
           w-7 h-7 flex items-center justify-center rounded-full
           text-gray-400 hover:text-red-500 hover:bg-red-50"
         title="Eliminar notificación"

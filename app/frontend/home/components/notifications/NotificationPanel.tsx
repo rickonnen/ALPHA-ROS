@@ -62,7 +62,7 @@ export function NotificationPanel() {
   };
 
   return (
-    <div className="absolute right-0 top-12 z-50 w-[520px] rounded-2xl shadow-lg overflow-hidden bg-white flex flex-col max-h-[480px]">
+    <div className="absolute right-10 top-26 z-50 w-80 h-111 rounded-2xl shadow-lg overflow-hidden bg-white flex flex-col max-h-120">
       <NotificationHeader total={notifications.length} />
 
       <div className="p-2">

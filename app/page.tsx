@@ -5,11 +5,15 @@ import AuthModal from "@/app/frontend/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/frontend/auth/AuthContext";
 
+import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
+
 export default function TestAuthPage() {
   const { user, logout, isLoading } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showProtected, setShowProtected] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100 p-10 flex flex-col items-center">
@@ -19,13 +23,16 @@ export default function TestAuthPage() {
           {user ? (
             <>
               <button
-                onClick={() => alert("Notificaciones: Próximamente")}
+                onClick={() => setShowNotifications((prev) => !prev)}
                 title="Notificaciones"
                 aria-label="Notificaciones"
                 className="text-gray-600 hover:text-[#B47B65] transition-colors"
               >
                 <Bell size={24} />
               </button>
+
+              {showNotifications && <NotificationPanel />}
+
               <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 <span className="text-gray-700 font-medium">{user.name}</span>
                 <button
