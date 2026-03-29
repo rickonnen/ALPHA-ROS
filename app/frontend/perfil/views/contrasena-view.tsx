@@ -11,6 +11,9 @@
  * requisitos de seguridad (mínimo 8 caracteres, mayúscula y carácter especial),
  * contraseñas que no coinciden, nueva igual a la actual, modales de éxito y error,
  * ícono de candado, transición de entrada, estilos mejorados y conexión al backend
+ * 
+ * Modificado: Dylan Coca Beltran - 29/03/2026
+ * Cambio: Se agregaron conexiones para comprobar la password y cambiarla
  */
 "use client";
 
@@ -154,9 +157,32 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email }: Chan
         setBolShowErrorModal(true);
         return;
       }
-
+/*
       // Contraseña correcta
       setBolShowModal(true);
+*/
+
+      // Contraseña correcta, ahora actualizar
+      const resUpdate = await fetch("/backend/perfil/actualizarContrasena", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_usuario,
+          strNewPassword: strNewPassword
+        })
+      });
+
+      const jsonUpdate = await resUpdate.json();
+
+      if (!resUpdate.ok || !jsonUpdate.ok) {
+        setStrErrorModalMessage(jsonUpdate.error || "No se pudo actualizar la contraseña.");
+        setBolShowErrorModal(true);
+        return;
+      }
+
+      // Todo correcto
+      setBolShowModal(true);
+
 
     } catch (error) {
       console.error("Error al validar contraseña:", error);
