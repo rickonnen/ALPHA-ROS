@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file FreePublicationLimitModal.tsx
+ * @description Modal de la HU5 que alerta al usuario cuando ha excedido el límite 
+ * de publicaciones gratuitas permitidas por su plan.
+ */
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,46 +17,51 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type FreePublicationLimitModalProps = {
-  publicationCount: number;
-  isPremium: boolean;
-  onBack: () => void;
-  freeLimit?: number;
-  plansHref?: string;
-  title?: string;
-  description?: string;
-};
+// Uso de PascalCase para la Interfaz
+interface FreePublicationLimitModalProps {
+  intPublicationCount: number;
+  bolIsPremium: boolean;
+  onBack: () => void; // Función callback
+  intFreeLimit?: number;
+  strPlansHref?: string;
+  strTitle?: string;
+  strDescription?: string;
+}
 
+/**
+ * Componente funcional para el modal de límite de publicaciones.
+ * Aplica validaciones booleanas para disparar la alerta y redirigir a planes.
+ * * @param {FreePublicationLimitModalProps} props - Propiedades inyectadas al modal.
+ * @returns {JSX.Element} El componente renderizado del Modal (AlertDialog).
+ */
 export default function FreePublicationLimitModal({
-  publicationCount,
-  isPremium,
+  intPublicationCount,
+  bolIsPremium,
   onBack,
-  freeLimit = 2,
-  plansHref = "/pagina-cobros",
-  title = "Has excedido tus publicaciones gratuitas",
-  description =
+  intFreeLimit = 2,
+  strPlansHref = "/pagina-cobros",
+  strTitle = "Has excedido tus publicaciones gratuitas",
+  strDescription =
     "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
-  // Verificación de límite de publicaciones
-  const hasExceededFreePosts = !isPremium && publicationCount >= freeLimit;
+  
+  // Nomenclatura camelCase con prefijo 'bol' para la constante de evaluación
+  const bolHasExceededFreePosts = !bolIsPremium && intPublicationCount >= intFreeLimit;
 
   return (
-    <AlertDialog open={hasExceededFreePosts}>
+    <AlertDialog open={bolHasExceededFreePosts}>
       <AlertDialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto rounded-3xl p-6 sm:p-8">
         <AlertDialogHeader>
-          {/* Aplicando la tipografía H2 de tu guía: text-3xl font-semibold */}
           <AlertDialogTitle className="text-3xl font-semibold text-center">
-            {title}
+            {strTitle}
           </AlertDialogTitle>
           
-          {/* Aplicando la tipografía de Párrafo de tu guía: text-base text-slate-700 */}
           <AlertDialogDescription className="mt-4 text-base text-slate-700 text-center">
-            {description}
+            {strDescription}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row sm:space-x-0">
-          {/* Usamos puramente la variante "ghost" del estándar de shadcn */}
           <Button
             type="button"
             variant="ghost"
@@ -60,13 +71,12 @@ export default function FreePublicationLimitModal({
             {"< Atrás"}
           </Button>
 
-          {/* Usamos puramente la variante "outline" o "secondary" para heredar tu globals.css */}
           <Button
             asChild
             variant="outline"
             className="w-full sm:w-1/2"
           >
-            <Link href={plansHref}>
+            <Link href={strPlansHref}>
               {"Ver Planes →"}
             </Link>
           </Button>

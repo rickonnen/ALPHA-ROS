@@ -1,42 +1,46 @@
 "use client";
 
-//Esta es una pagina de ejemplo
+/**
+ * @file page.tsx
+ * @description Página base para la Guía de Tipografía y pruebas de componentes UI (como el Modal de Límite de Publicaciones).
+ */
 
-// CAMBIO A: Importamos el botón aquí arriba
 import { useState } from "react";
 import FreePublicationLimitModal from "./frontend/publicacion/components/FreePublicationLimitModal";
 import { Button } from "@/components/ui/button";
 
-// NUEVO: Importamos  función del backend
-import { verificarYCrearPublicacion } from "@/app/backend/publicacion/action";
+import { asociarPublicacionExistente } from "@/app/backend/publicacion/action";
 
 export default function GuiaTipografia() {
-  const [publicationCount, setPublicationCount] = useState(0);
-  const [isPremium, setIsPremium] = useState(false);
-  const [cargando, setCargando] = useState(false); // Añadimos esto para evitar doble clic
+  // Estados renombrados con prefijos 'int' (integer/number) y 'bol' (boolean) según el estándar
+  const [intPublicationCount, setIntPublicationCount] = useState(0);
+  const [bolIsPremium, setBolIsPremium] = useState(false);
+  const [bolCargando, setBolCargando] = useState(false);
 
-  // NUEVO: Función que ejecuta la prueba conectada a  Base de Datos
+  /**
+   * Asocia una publicación de prueba al usuario actual comunicándose con el backend.
+   * Maneja los estados de carga y dispara el modal si se alcanza el límite.
+   * * @returns {Promise<void>}
+   */
   const handlePublicar = async () => {
-    setCargando(true);
+    setBolCargando(true);
     
-    // Enviamos datos falsos (dummy) a tu backend
-    const respuesta = await verificarYCrearPublicacion({
-      titulo: "Casa de prueba desde la Guía",
-      precio: 150000
-    });
+    // Uso del prefijo 'int' para esta constante numérica
+    const intIdPublicacionSupabase = 12; 
+    
+    // Uso del prefijo 'obj' para el objeto de respuesta del backend
+    const objRespuesta = await asociarPublicacionExistente(intIdPublicacionSupabase);
 
-    if (!respuesta.success && respuesta.reason === "LIMITE_ALCANZADO") {
-      // Si el backend dice que no hay cupo, usamos  estados para disparar el modal
-      setIsPremium(false);
-      setPublicationCount(2); 
-    } else if (respuesta.success) {
-      // Si el backend lo guardó correctamente, mostramos una alerta
-      alert("¡Éxito! Publicación guardada en la base de datos y cupo descontado.");
+    if (!objRespuesta.success && objRespuesta.reason === "LIMITE_ALCANZADO") {
+      setBolIsPremium(false);
+      setIntPublicationCount(2); 
+    } else if (objRespuesta.success) {
+      alert("¡Éxito! Publicación asociada a tu usuario y cupo descontado.");
     } else {
       alert("Ocurrió un error en el servidor.");
     }
 
-    setCargando(false);
+    setBolCargando(false);
   };
 
   return (
@@ -47,7 +51,7 @@ export default function GuiaTipografia() {
           Equipo: Por favor, utilicen estrictamente estas clases de Tailwind para mantener la consistencia en todo el frontend.
         </p>
 
-        {/* SECCIÓN TIPOGRAFÍA (Lo que ya tenías) */}
+        {/* SECCIÓN TIPOGRAFÍA */}
         <div className="space-y-6 mb-16">
           {/* H1 - Título Principal */}
           <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
@@ -133,13 +137,13 @@ export default function GuiaTipografia() {
                 Botón Especial
               </Button>
               
-              {/* ESTE ES EL BOTÓN QUE AHORA LLAMA AL BACKEND */}
+              {/* BOTÓN MODIFICADO PARA LA PRUEBA (usando la variable booleana prefijada) */}
               <Button
                 variant="destructive"
                 onClick={handlePublicar}
-                disabled={cargando}
+                disabled={bolCargando}
               >
-                {cargando ? "Cargando..." : "Publicar"}
+                {bolCargando ? "Cargando..." : "Publicar"}
               </Button>
             </div>
 
@@ -148,9 +152,9 @@ export default function GuiaTipografia() {
       </div>
 
       <FreePublicationLimitModal
-        publicationCount={publicationCount}
-        isPremium={isPremium}
-        onBack={() => setPublicationCount(1)}
+        intPublicationCount={intPublicationCount}
+        bolIsPremium={bolIsPremium}
+        onBack={() => setIntPublicationCount(1)}
       />
     </main>
   );
