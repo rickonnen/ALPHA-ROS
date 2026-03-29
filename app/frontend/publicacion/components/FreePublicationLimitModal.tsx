@@ -1,12 +1,17 @@
 "use client";
 
 /**
- * @file FreePublicationLimitModal.tsx
- * @description Modal de la HU5 que alerta al usuario cuando ha excedido el límite 
- * de publicaciones gratuitas permitidas por su plan.
+ * @Dev: JimmyP
+ * @Fecha: 28/03/2026
+ * @Modificación: StefanyS — 29/03/2026
+ * @Funcionalidad: Modal de la HU5. Se monta únicamente cuando PropertyActions
+ *                 confirma que cant_publicaciones_restantes = 0.
+ *                 Botones en color terracota/naranja, responsive para mobile y desktop.
+ * @param {FreePublicationLimitModalProps} props - Callback y textos del modal.
+ * @return {JSX.Element} AlertDialog abierto con tipografía Geist Sans.
  */
 
-import Link from "next/link";
+import Link       from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -17,64 +22,50 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Uso de PascalCase para la Interfaz
+// PascalCase para la interfaz - Estándar Alpha-Ros
 interface FreePublicationLimitModalProps {
-  intPublicationCount: number;
-  bolIsPremium: boolean;
-  onBack: () => void; // Función callback
-  intFreeLimit?: number;
-  strPlansHref?: string;
-  strTitle?: string;
+  onBack:          () => void;
+  strPlansHref?:   string;
+  strTitle?:       string;
   strDescription?: string;
 }
 
-/**
- * Componente funcional para el modal de límite de publicaciones.
- * Aplica validaciones booleanas para disparar la alerta y redirigir a planes.
- * * @param {FreePublicationLimitModalProps} props - Propiedades inyectadas al modal.
- * @returns {JSX.Element} El componente renderizado del Modal (AlertDialog).
- */
 export default function FreePublicationLimitModal({
-  intPublicationCount,
-  bolIsPremium,
   onBack,
-  intFreeLimit = 2,
-  strPlansHref = "/pagina-cobros",
-  strTitle = "Has excedido tus publicaciones gratuitas",
-  strDescription =
-    "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
+  strPlansHref   = "/pagina-cobros",
+  strTitle       = "Has excedido tus publicaciones gratuitas",
+  strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
-  
-  // Nomenclatura camelCase con prefijo 'bol' para la constante de evaluación
-  const bolHasExceededFreePosts = !bolIsPremium && intPublicationCount >= intFreeLimit;
-
   return (
-    <AlertDialog open={bolHasExceededFreePosts}>
-      <AlertDialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto rounded-3xl p-6 sm:p-8">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-3xl font-semibold text-center">
+    <AlertDialog open={true}>
+      <AlertDialogContent
+        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8"
+        style={{ fontFamily: 'var(--font-geist-sans)' }}
+      >
+        <AlertDialogHeader className="text-center space-y-3">
+          <AlertDialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight">
             {strTitle}
           </AlertDialogTitle>
-          
-          <AlertDialogDescription className="mt-4 text-base text-slate-700 text-center">
+          <AlertDialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
             {strDescription}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <AlertDialogFooter className="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row sm:space-x-0">
+        <AlertDialogFooter className="mt-6 flex flex-row items-center justify-between gap-3 sm:gap-4">
+          {/* Botón Atrás */}
           <Button
             type="button"
             variant="ghost"
             onClick={onBack}
-            className="w-full sm:w-1/2"
+            className="flex-1 text-[#C26E5A] hover:text-[#C26E5A] hover:bg-[#C26E5A]/10 font-semibold"
           >
             {"< Atrás"}
           </Button>
 
+          {/* Botón Ver Planes */}
           <Button
             asChild
-            variant="outline"
-            className="w-full sm:w-1/2"
+            className="flex-1 border border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 font-semibold"
           >
             <Link href={strPlansHref}>
               {"Ver Planes →"}

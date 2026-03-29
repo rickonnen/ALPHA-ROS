@@ -1,68 +1,116 @@
-"use server"; 
+"use server";
 
 /**
- * @file actions.ts
- * @description Acciones de servidor (Server Actions) para la creación y asociación de publicaciones, 
- * gestionando transacciones atómicas y validando la restricción de cupos (HU5).
+ * @Dev: Gustavo Montaño
+ * @Fecha: 28/03/2026
+ * @Modificación: StefanyS — 29/03/2026
+ * @Funcionalidad: Server Actions para verificar el contador de publicaciones
+ *                 del usuario y gestionar creación/asociación de publicaciones (HU5).
  */
 
 import { prisma } from "@/lib/prisma";
 
-// Uso del prefijo 'str' para variables de tipo texto (UUID)
-const strUserId = "8cb1d337-7122-4b22-8f46-31c8af92b5a6"; 
+// Valor inicial del contador para usuarios gratuitos
+const INT_LIMITE_GRATUITO = 2;
 
-// Tipo para los datos del formulario de publicación
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+
+export interface EstadoPublicacionUsuario {
+  intPublicacionesRestantes: number;
+  bolLimiteAlcanzado:        boolean;
+}
+
 interface PublicacionFormData {
   titulo: string;
   precio: number;
   [key: string]: unknown;
 }
 
-// ==========================================
-// HERRAMIENTA 1: El Flujo Definitivo (Crear de cero)
-// ==========================================
+// ─── Verificar contador del usuario ──────────────────────────────────────────
 
 /**
- * Verifica si el usuario tiene cupos disponibles y crea una nueva publicación,
- * descontando el cupo utilizado en la misma transacción.
- * @param {PublicacionFormData} objDatosFormulario - Objeto que contiene los datos de la publicación.
- * @returns {Promise<object>} Objeto con el estado de la operación y el ID de la publicación o la razón del error.
+ * @Dev: StefanyS
+ * @Fecha: 29/03/2026
+ * @Funcionalidad: Consulta cant_publicaciones_restantes del usuario en la BD.
+ *                 Se llama SOLO al hacer click en "Publicar otro inmueble".
+ *                 Si el contador es 0 → bolLimiteAlcanzado = true → mostrar modal.
+ *                 Si el contador es mayor a 0 → redirigir al formulario.
+ * @param {string} strUserId - UUID del usuario dueño de la publicación.
+ * @return {Promise<EstadoPublicacionUsuario>} Estado con contador y flag de límite.
  */
-export async function verificarYCrearPublicacion(objDatosFormulario: PublicacionFormData) {
+export async function verificarEstadoPublicacion(
+  strUserId: string,
+): Promise<EstadoPublicacionUsuario> {
+
+  // Si no hay userId válido bloquear por seguridad
+  if (!strUserId || strUserId.trim() === "") {
+    return { intPublicacionesRestantes: 0, bolLimiteAlcanzado: true };
+  }
+
+  const objUsuario = await prisma.usuario.findUnique({
+    where:  { id_usuario: strUserId },
+    select: { cant_publicaciones_restantes: true },
+  });
+
+  // Si el usuario no existe en BD, no permitir publicar
+  if (!objUsuario) {
+    return { intPublicacionesRestantes: 0, bolLimiteAlcanzado: true };
+  }
+
+  // Si cant_publicaciones_restantes es NULL, asumir que tiene el límite completo
+  const intRestantes = objUsuario.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
+
+  // Límite alcanzado únicamente cuando el contador llega a 0
+  const bolLimiteAlcanzado = intRestantes <= 0;
+
+  return {
+    intPublicacionesRestantes: intRestantes,
+    bolLimiteAlcanzado,
+  };
+}
+
+// ─── Crear publicación ────────────────────────────────────────────────────────
+
+/**
+ * @Dev: Gustavo Montaño
+ * @Fecha: 28/03/2026
+ * @Funcionalidad: Verifica el contador y crea una nueva publicación en transacción atómica.
+ * @param {string} strUserId - UUID del usuario autenticado.
+ * @param {PublicacionFormData} objDatosFormulario - Datos del formulario.
+ * @return {Promise<object>} Resultado con idPublicacion o razón del error.
+ */
+export async function verificarYCrearPublicacion(
+  strUserId: string,
+  objDatosFormulario: PublicacionFormData,
+) {
   try {
-    // Uso del prefijo 'int' porque el resultado final es el ID numérico de la publicación
     const intResultado = await prisma.$transaction(async (tx) => {
-      
-      // Uso del prefijo 'obj' para el registro obtenido de la BD
       const objUsuario = await tx.usuario.findUnique({
-        where: { id_usuario: strUserId },
-        select: { cant_publicaciones_restantes: true }
+        where:  { id_usuario: strUserId },
+        select: { cant_publicaciones_restantes: true },
       });
-      
-      // Uso del prefijo 'int' para variables numéricas
-      const intRestantes = objUsuario?.cant_publicaciones_restantes ?? 2;
 
-      if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO"); 
+      const intRestantes = objUsuario?.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
+      if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO");
 
-      // Uso del prefijo 'obj' para el nuevo registro creado en la BD
       const objNuevaPublicacion = await tx.publicacion.create({
-         data: {
-           titulo: objDatosFormulario.titulo,
-           precio: objDatosFormulario.precio,
-           id_usuario: strUserId,
-         }
+        data: {
+          titulo:     objDatosFormulario.titulo,
+          precio:     objDatosFormulario.precio,
+          id_usuario: strUserId,
+        },
       });
 
+      // Decrementar el contador al crear una publicación
       await tx.usuario.update({
         where: { id_usuario: strUserId },
-        data: { cant_publicaciones_restantes: intRestantes - 1 }
+        data:  { cant_publicaciones_restantes: intRestantes - 1 },
       });
 
       return objNuevaPublicacion.id_publicacion;
     });
-    
+
     return { success: true, id_publicacion: intResultado };
-    
   } catch (objError: unknown) {
     if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {
       return { success: false, reason: "LIMITE_ALCANZADO" };
@@ -71,46 +119,44 @@ export async function verificarYCrearPublicacion(objDatosFormulario: Publicacion
   }
 }
 
-
-// ==========================================
-// HERRAMIENTA 2: (Asociar)
-// ==========================================
+// ─── Asociar publicación existente ───────────────────────────────────────────
 
 /**
- * Verifica si el usuario tiene cupos disponibles y se apropia de una publicación existente,
- * vinculando el id del usuario a la publicación y descontando el cupo utilizado.
- * @param {number} intIdPublicacionCreada - ID numérico de la publicación que ya existe en la base de datos.
- * @returns {Promise<object>} Objeto con el estado de la operación y el ID de la publicación actualizada.
+ * @Dev: Gustavo Montaño
+ * @Fecha: 28/03/2026
+ * @Funcionalidad: Verifica el contador y asocia una publicación existente al usuario.
+ * @param {string} strUserId - UUID del usuario autenticado.
+ * @param {number} intIdPublicacionCreada - ID de la publicación a asociar.
+ * @return {Promise<object>} Resultado con idPublicacion o razón del error.
  */
-export async function asociarPublicacionExistente(intIdPublicacionCreada: number) {
+export async function asociarPublicacionExistente(
+  strUserId: string,
+  intIdPublicacionCreada: number,
+) {
   try {
     const intResultado = await prisma.$transaction(async (tx) => {
-        
       const objUsuario = await tx.usuario.findUnique({
-        where: { id_usuario: strUserId },
-        select: { cant_publicaciones_restantes: true }
+        where:  { id_usuario: strUserId },
+        select: { cant_publicaciones_restantes: true },
       });
-      
-      const intRestantes = objUsuario?.cant_publicaciones_restantes ?? 2;
 
-      if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO"); 
+      const intRestantes = objUsuario?.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
+      if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO");
 
-      // Actualizamos la publicación existente
       const objPublicacionActualizada = await tx.publicacion.update({
-         where: { id_publicacion: intIdPublicacionCreada },
-         data: { id_usuario: strUserId } 
+        where: { id_publicacion: intIdPublicacionCreada },
+        data:  { id_usuario: strUserId },
       });
 
       await tx.usuario.update({
         where: { id_usuario: strUserId },
-        data: { cant_publicaciones_restantes: intRestantes - 1 }
+        data:  { cant_publicaciones_restantes: intRestantes - 1 },
       });
 
       return objPublicacionActualizada.id_publicacion;
     });
-    
+
     return { success: true, id_publicacion: intResultado };
-    
   } catch (objError: unknown) {
     if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {
       return { success: false, reason: "LIMITE_ALCANZADO" };
