@@ -788,6 +788,7 @@ model Usuario {
   Pais                         Pais?               @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   UsuarioTelefono              UsuarioTelefono[]
+  otp_cambio_correo            otp_cambio_correo[]
 
   @@schema("public")
 }
@@ -820,6 +821,26 @@ model Zona {
   Publicacion Publicacion[]
   Ciudad      Ciudad?       @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
 
+  @@schema("public")
+}
+
+model otp_cambio_correo {
+  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String   @db.Uuid
+  nuevo_email    String   @db.VarChar(320)
+  otp_hash       String
+  expira_en      DateTime @db.Timestamptz(6)
+  reenviar_desde DateTime @db.Timestamptz(6)
+  intentos       Int      @default(0)
+  max_intentos   Int      @default(5)
+  consumido      Boolean  @default(false)
+  creado_en      DateTime @default(now()) @db.Timestamptz(6)
+  actualizado_en DateTime @default(now()) @db.Timestamptz(6)
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
+  @@index([expira_en], map: "idx_otp_cambio_correo_expira")
+  @@index([id_usuario], map: "idx_otp_cambio_correo_usuario")
   @@schema("public")
 }
 
