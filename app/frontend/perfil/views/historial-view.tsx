@@ -107,6 +107,16 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
                     </p>
                   </div>
                 </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-300 hover:text-blue-100"
+                    onClick={() => alert(`Publicación: ${item.Publicacion.titulo}`)}
+                  >
+                    Info
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
