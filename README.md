@@ -26,7 +26,7 @@ cd ALPHA-ROS
     4. SysInfo Squad -
     5. Bug Hunters -
     6. Digital Core - Listo - Pagina de Publicacion
-    7. ADA -
+    7. ADA - Listo - Cobros dentro la plataforma
 
 
 

@@ -532,9 +532,8 @@ model CiudadImagen {
 
 model DetallePago {
   id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
-  id_usuario      String?          @db.SmallInt
   id_plan         Int?             @db.SmallInt
-  fecha_detalle   DateTime?        @db.Date
+  fecha_detalle   DateTime?        @default(now()) @db.Timestamptz(6)
   estado          Int?             @db.SmallInt
   metodo_pago     String?          @db.VarChar(50)
   id_usuario      String?          @db.Uuid
@@ -570,7 +569,6 @@ model Etiquetas {
 }
 
 model Favorito {
-  id_usuario     String      @db.SmallInt
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
@@ -582,7 +580,6 @@ model Favorito {
 }
 
 model HistorialBusqueda {
-  id_usuario        String        @db.SmallInt
   id_ciudad         Int           @db.SmallInt
   id_tipo_operacion Int           @db.SmallInt
   fecha_busqueda    DateTime      @db.Timestamptz(6)
@@ -596,7 +593,6 @@ model HistorialBusqueda {
 }
 
 model HistorialVistos {
-  id_usuario     String      @db.SmallInt
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -628,7 +624,6 @@ model Moneda {
 
 model Notificacion {
   id_notificacion       String                 @id(map: "Notificacion_pk") @db.Uuid
-  id_usuario            String?                @db.SmallInt
   titulo                String?                @db.VarChar(256)
   mensaje               String?
   id_categoria          Int?
@@ -658,7 +653,10 @@ model PlanPublicacion {
   nombre_plan        String?       @db.VarChar(128)
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
+  activo             Boolean?      @default(false)
+  id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
 
   @@schema("public")
 }
@@ -667,7 +665,6 @@ model Publicacion {
   id_publicacion            Int                         @id(map: "Publicacion_pk") @default(autoincrement())
   titulo                    String?                     @db.VarChar(256)
   descripcion               String?
-  id_usuario                String?                     @db.SmallInt
   precio                    Decimal?                    @db.Decimal(25, 2)
   superficie                Decimal?                    @db.Decimal(10, 2)
   habitaciones              Int?                        @db.SmallInt
@@ -713,8 +710,9 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
-  qr_URL    String?
+  id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL          String?
+  PlanPublicacion PlanPublicacion[]
 
   @@schema("public")
 }
@@ -771,8 +769,6 @@ model Ubicacion {
 }
 
 model Usuario {
-  id_usuario                   Int                 @id(map: "Usuario_pk") @default(autoincrement()) @db.SmallInt
-  username                     String?             @db.VarChar(128)
   email                        String?             @db.VarChar(320)
   nombres                      String?             @db.VarChar(100)
   apellidos                    String?             @db.VarChar(100)
@@ -781,7 +777,7 @@ model Usuario {
   estado                       Int?                @db.SmallInt
   direccion                    String?             @db.VarChar(200)
   google_id                    String?             @db.VarChar(404)
-  cant_publicaciones_restantes Int?                @default(2)
+  cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?             @db.VarChar(128)
   id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid

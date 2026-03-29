@@ -1,19 +1,36 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlanPublicacion } from "@prisma/client";
+import Link from "next/link";
+// Función auxiliar para consumir el endpoint
+// app/frontend/cobros/planes/page.tsx
 
-export default function PlanesPublicacion() {
+async function obtenerPlanes() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  
+  // ASEGÚRATE de que la ruta coincida con las carpetas donde pusiste el route.ts
+  const res = await fetch(`${baseUrl}/backend/cobros/planes`, {
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    throw new Error('Fallo al obtener los planes de publicación');
+  }
+
+  return res.json();
+}
+
+export default async function PlanesPublicacion() {
+  // Llamamos a la API a través de la función auxiliar
+  const planes = await obtenerPlanes();
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       
       {/* CONTENIDO PRINCIPAL */}
       <main className="max-w-6xl mx-auto px-6 py-12">
         
-        {/* Botón Volver */}
-        <div className="mb-8">
-          <Button variant="default" className="px-8 rounded-md font-bold">
-            Volver
-          </Button>
-        </div>
+        
 
         {/* Título y Descripción */}
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -27,57 +44,28 @@ export default function PlanesPublicacion() {
           </p>
         </div>
 
-        {/* GRID DE TARJETAS DE PLANES */}
+        {/* GRID DE TARJETAS DE PLANES (Dinámico) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* Plan Estándar */}
-          <Card className="flex flex-col text-center border-2 shadow-sm rounded-xl py-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-black">PLAN ESTÁNDAR</CardTitle>
-            </CardHeader>
-            <CardContent className="grow">
-              <p className="text-2xl font-bold mb-8 text-foreground">$ 0.99</p>
-              <p className="text-muted-foreground">+ 2 cupos de publicación</p>
-            </CardContent>
-            <CardFooter className="pt-8">
-              <Button className="w-full font-bold">
-                Continuar
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* Plan Avanzado */}
-          <Card className="flex flex-col text-center border-2 shadow-sm rounded-xl py-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-black">PLAN AVANZADO</CardTitle>
-            </CardHeader>
-            <CardContent className="grow">
-              <p className="text-2xl font-bold mb-8 text-foreground">$ 4.99</p>
-              <p className="text-muted-foreground">+ 12 cupos de publicación</p>
-            </CardContent>
-            <CardFooter className="pt-8">
-              <Button className="w-full font-bold">
-                Continuar
-              </Button>
-            </CardFooter>
-          </Card>
-
-          {/* Plan Profesional */}
-          <Card className="flex flex-col text-center border-2 shadow-sm rounded-xl py-6">
-            <CardHeader>
-              <CardTitle className="text-2xl font-black">PLAN PROFESIONAL</CardTitle>
-            </CardHeader>
-            <CardContent className="grow">
-              <p className="text-2xl font-bold mb-8 text-foreground">$ 19.99</p>
-              <p className="text-muted-foreground">+ 50 cupos de publicación</p>
-            </CardContent>
-            <CardFooter className="pt-8">
-              <Button className="w-full font-bold">
-                Continuar
-              </Button>
-            </CardFooter>
-          </Card>
-
+          {planes.map((plan: PlanPublicacion) => (
+            <Card key={plan.id_plan} className="flex flex-col text-center border-2 shadow-sm rounded-xl py-6">
+              <CardHeader>
+                <CardTitle className="text-2xl font-black">{plan.nombre_plan}</CardTitle>
+              </CardHeader>
+              <CardContent className="grow">
+                {/* Asegúrate de formatear el precio si es necesario */}
+                <p className="text-2xl font-bold mb-8 text-foreground">$ {plan.precio_plan?.toString()}</p>
+                <p className="text-muted-foreground">+ {plan.cant_publicaciones} cupos de publicación</p>
+              </CardContent>
+              <CardFooter className="pt-8 bg-transparent">
+                <Button className="w-full font-bold">
+                  <Link href={`/frontend/cobros/sector-pagos?planId=${plan.id_plan}`}>
+                    Continuar
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </main>
     </div>
