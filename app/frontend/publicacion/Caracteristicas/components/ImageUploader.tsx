@@ -1,5 +1,5 @@
 /**
- * Dev: Gabriel Paredes 
+ * Dev: Gabriel Paredes
  * Date modification: 29/03/2026
  * Funcionalidad: Componente para subir imágenes de un inmueble con
  *                validación de formato, peso, resolución y aspecto.
@@ -7,7 +7,8 @@
  *                el usuario intenta agregar una imagen superando el
  *                límite máximo de 5 imágenes permitidas.
  *                Aviso: informa al usuario que las imágenes deben
- *                volver a seleccionarse si recarga la página.
+ *                volver a seleccionarse si recarga la página,
+ *                controlado por interacción real del usuario.
  * @param {ImageUploaderProps} props - files, onChange, onRemove, error, touched
  * @return {JSX.Element} Uploader de imágenes con previsualizaciones y validaciones
  */
@@ -26,6 +27,9 @@ const MIN_HEIGHT      = 720
 const ACCEPTED_TYPES  = ['image/jpeg', 'image/png']
 const ACCEPTED_RATIOS = [4 / 3, 16 / 9]
 const RATIO_TOLERANCE = 0.02
+
+// Clave para sessionStorage — identifica interacción real del usuario
+const SESSION_KEY = 'imageUploader_userInteracted'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -81,16 +85,26 @@ function validateImageDimensions(
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export function ImageUploader({ files = [], onChange, onRemove, error, touched }: ImageUploaderProps) {
-  const inputRef                    = useRef<HTMLInputElement>(null)
+  const inputRef                      = useRef<HTMLInputElement>(null)
   const [fieldError,  setFieldError]  = useState<string | null>(null)
-  // Tarea 2.9: inicializar con lazy useState para evitar setState dentro de useEffect
   const [wasVisited,  setWasVisited]  = useState<boolean>(false)
 
+  // Al montar: solo mostrar aviso si el usuario realmente interactuó
+  // en esta misma pestaña antes de recargar (navegación real, no nueva pestaña)
   useEffect(() => {
     try {
-      const hasSession = !!sessionStorage.getItem('caracteristicasInmueble')
-      if (hasSession) startTransition(() => setWasVisited(true))
+      // sessionStorage existe por pestaña; al abrir una nueva pestaña
+      // aunque comparta la URL, sessionStorage parte vacío.
+      // Solo activamos el aviso si hay marca Y no hay archivos cargados.
+      const interacted = sessionStorage.getItem(SESSION_KEY) === 'true'
+      if (interacted && files.length === 0) {
+        startTransition(() => setWasVisited(true))
+      } else {
+        // Si hay archivos o no hubo interacción, limpiar marca
+        sessionStorage.removeItem(SESSION_KEY)
+      }
     } catch { /* SSR */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── Estado controlado externamente por el hook ────────────────────────────
@@ -131,6 +145,11 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
       return
     }
 
+    // Marcar interacción real del usuario en esta pestaña
+    try {
+      sessionStorage.setItem(SESSION_KEY, 'true')
+    } catch { /* SSR */ }
+
     onChange?.([file])
   }
 
@@ -150,6 +169,11 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
   const handleRemove = (index: number) => {
     setFieldError(null)
+    // Si elimina todas las imágenes, limpiar marca para no mostrar aviso innecesario
+    if (files.length === 1) {
+      try { sessionStorage.removeItem(SESSION_KEY) } catch { /* SSR */ }
+      setWasVisited(false)
+    }
     onRemove?.(index)
   }
 
@@ -242,7 +266,7 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         </p>
       )}
 
-      {/* Aviso: aparece solo si el usuario ya estuvo aquí antes y no hay imágenes */}
+      {/* Aviso: solo si el usuario subió imágenes en esta pestaña y luego recargó */}
       {wasVisited && files.length === 0 && (
         <span className="text-red-500" style={{ fontSize: '14px' }}>
           Por favor, inserte su imagen de nuevo.
