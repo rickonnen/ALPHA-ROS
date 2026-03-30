@@ -324,8 +324,6 @@ function handleCancelar() {
 
     // Limpiar el borrador ya que los datos finales están guardados
     
-
-    // TODO: reemplazar "???" con la ruta del formulario de Características del Inmueble
     router.push("/frontend/publicacion/Caracteristicas");
   }
 
