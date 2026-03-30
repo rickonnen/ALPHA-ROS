@@ -1,48 +1,8 @@
-"use client";
+//Esta es una pagina de ejemplo
 
-/**
- * @file page.tsx
- * @description Página base para la Guía de Tipografía y pruebas de componentes UI (como el Modal de Límite de Publicaciones).
- */
-
-import { useState } from "react";
-import FreePublicationLimitModal from "./frontend/publicacion/components/FreePublicationLimitModal";
+// CAMBIO A: Importamos el botón aquí arriba
 import { Button } from "@/components/ui/button";
-
-import { asociarPublicacionExistente } from "@/app/backend/publicacion/modal/action";
-
 export default function GuiaTipografia() {
-  // Estados renombrados con prefijos 'int' (integer/number) y 'bol' (boolean) según el estándar
-  const [intPublicationCount, setIntPublicationCount] = useState(0);
-  const [bolIsPremium, setBolIsPremium] = useState(false);
-  const [bolCargando, setBolCargando] = useState(false);
-
-  /**
-   * Asocia una publicación de prueba al usuario actual comunicándose con el backend.
-   * Maneja los estados de carga y dispara el modal si se alcanza el límite.
-   * * @returns {Promise<void>}
-   */
-  const handlePublicar = async () => {
-    setBolCargando(true);
-    
-    // Uso del prefijo 'int' para esta constante numérica
-    const intIdPublicacionSupabase = 12; 
-    
-    // Uso del prefijo 'obj' para el objeto de respuesta del backend
-    const objRespuesta = await asociarPublicacionExistente(intIdPublicacionSupabase);
-
-    if (!objRespuesta.success && objRespuesta.reason === "LIMITE_ALCANZADO") {
-      setBolIsPremium(false);
-      setIntPublicationCount(2); 
-    } else if (objRespuesta.success) {
-      alert("¡Éxito! Publicación asociada a tu usuario y cupo descontado.");
-    } else {
-      alert("Ocurrió un error en el servidor.");
-    }
-
-    setBolCargando(false);
-  };
-
   return (
     <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
       <div className="max-w-4xl mx-auto">
@@ -51,7 +11,7 @@ export default function GuiaTipografia() {
           Equipo: Por favor, utilicen estrictamente estas clases de Tailwind para mantener la consistencia en todo el frontend.
         </p>
 
-        {/* SECCIÓN TIPOGRAFÍA */}
+        {/* SECCIÓN TIPOGRAFÍA (Lo que ya tenías) */}
         <div className="space-y-6 mb-16">
           {/* H1 - Título Principal */}
           <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
@@ -136,28 +96,12 @@ export default function GuiaTipografia() {
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
                 Botón Especial
               </Button>
-              
-              {/* BOTÓN MODIFICADO PARA LA PRUEBA (usando la variable booleana prefijada) */}
-              <Button
-                variant="destructive"
-                onClick={handlePublicar}
-                disabled={bolCargando}
-              >
-                {bolCargando ? "Cargando..." : "Publicar"}
-              </Button>
-            </div>
+              </div>
 
+          
         </section>
 
       </div>
-
-      <FreePublicationLimitModal
-        intPublicationCount={intPublicationCount}
-        bolIsPremium={bolIsPremium}
-        onBack={() => setIntPublicationCount(1)}
-      />
     </main>
   );
 }
-
-
