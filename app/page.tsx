@@ -1,107 +1,92 @@
-//Esta es una pagina de ejemplo
+"use client";
+import { useState } from "react";
+import { Bell, LogOut } from "lucide-react";
+import AuthModal from "@/app/frontend/auth/AuthModal";
+import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
+import { useAuth } from "@/app/frontend/auth/AuthContext";
 
-// CAMBIO A: Importamos el botón aquí arriba
-import { Button } from "@/components/ui/button";
-export default function GuiaTipografia() {
+import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
+
+export default function TestAuthPage() {
+  const { user, logout, isLoading } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+  const [showProtected, setShowProtected] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  const [showNotifications, setShowNotifications] = useState(false);
+
   return (
-    <main className="min-h-screen bg-background text-foreground p-8 md:p-16">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4 border-b pb-4">Guía de Tipografía del Proyecto</h1>
-        <p className="mb-10 text-lg text-slate-600">
-          Equipo: Por favor, utilicen estrictamente estas clases de Tailwind para mantener la consistencia en todo el frontend.
-        </p>
+    <div className="min-h-screen bg-gray-100 p-10 flex flex-col items-center">
+      <nav className="p-4 flex justify-between items-center w-full bg-white rounded-lg shadow-sm mb-10">
+        <h1 className="font-bold text-lg">Binary Brain - Test</h1>
+        <div className="flex items-center gap-4">
+          {user ? (
+            <>
+              <button
+                onClick={() => setShowNotifications((prev) => !prev)}
+                title="Notificaciones"
+                aria-label="Notificaciones"
+                className="text-gray-600 hover:text-[#B47B65] transition-colors"
+              >
+                <Bell size={24} />
+              </button>
 
-        {/* SECCIÓN TIPOGRAFÍA (Lo que ya tenías) */}
-        <div className="space-y-6 mb-16">
-          {/* H1 - Título Principal */}
-          <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <span className="bg-blue-100 text-blue-800 font-mono text-sm px-2 py-1 rounded font-bold">text-5xl</span>
-              <p className="text-sm text-slate-500 mt-2">48px (3rem)</p>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Títulos Principales (H1)</p>
-            </div>
-            <div className="md:w-2/3">
-              <h1 className="text-5xl font-bold">El veloz murciélago</h1>
-            </div>
-          </div>
+              {showNotifications && <NotificationPanel />}
 
-          {/* H2 - Subtítulos de Sección */}
-          <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <span className="bg-blue-100 text-blue-800 font-mono text-sm px-2 py-1 rounded font-bold">text-3xl</span>
-              <p className="text-sm text-slate-500 mt-2">30px (1.875rem)</p>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Secciones (H2)</p>
-            </div>
-            <div className="md:w-2/3">
-              <h2 className="text-3xl font-semibold">El veloz murciélago</h2>
-            </div>
-          </div>
-
-          {/* H3 - Títulos de Tarjetas */}
-          <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <span className="bg-blue-100 text-blue-800 font-mono text-sm px-2 py-1 rounded font-bold">text-xl</span>
-              <p className="text-sm text-slate-500 mt-2">20px (1.25rem)</p>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Tarjetas o Módulos (H3)</p>
-            </div>
-            <div className="md:w-2/3">
-              <h3 className="text-xl font-medium">El veloz murciélago hindú</h3>
-            </div>
-          </div>
-
-          {/* P - Texto Base */}
-          <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <span className="bg-green-100 text-green-800 font-mono text-sm px-2 py-1 rounded font-bold">text-base</span>
-              <p className="text-sm text-slate-500 mt-2">16px (1rem)</p>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Párrafos / Texto Normal (p)</p>
-            </div>
-            <div className="md:w-2/3">
-              <p className="text-base text-slate-700">El veloz murciélago hindú comía feliz cardillo y kiwi. La cigüeña tocaba el saxofón detrás del palenque de paja.</p>
-            </div>
-          </div>
-
-          {/* Small - Texto Pequeño */}
-          <div className="flex flex-col md:flex-row md:items-center border border-slate-200 p-6 rounded-xl shadow-sm bg-slate-50">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <span className="bg-purple-100 text-purple-800 font-mono text-sm px-2 py-1 rounded font-bold">text-sm</span>
-              <p className="text-sm text-slate-500 mt-2">14px (0.875rem)</p>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mt-1">Notas / Metadatos</p>
-            </div>
-            <div className="md:w-2/3">
-              <p className="text-sm text-slate-500">Publicado el 12 de Octubre • 5 min de lectura</p>
-            </div>
-          </div>
-        </div>
-
-        {/* CAMBIO B: Nueva sección de Botones aquí */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Botones (shadcn/ui)</h2>
-          
-            <p className="text-sm text-slate-600 mb-6">
-              Usen estas variantes cambiando la propiedad <strong>variant</strong> del componente Button.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 items-center">
-              <Button>Confirmar</Button>
-              <Button variant="secondary">cancelar</Button>
-              <Button variant="destructive">Eliminar cuenta</Button>
-              <Button variant="outline">filtrar</Button>
-              <Button variant="outline">descargar</Button>
-              <Button variant="outline">exportar a pdf</Button>
-              <Button>Confirmar</Button>
-              <Button variant="ghost">cancelar2</Button>
-              <Button variant="link">ejecutar</Button>
-              <Button variant="link">ver mas detalles mas detalles</Button>
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                Botón Especial
-              </Button>
+              <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+                <span className="text-gray-700 font-medium">{user.name}</span>
+                <button
+                  onClick={() => { logout(); setShowAuth(false); }}
+                  className="text-gray-600 hover:text-red-600 transition-colors"
+                  title="Cerrar sesión"
+                >
+                  <LogOut size={20} />
+                </button>
               </div>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setShowProtected(true)}
+                title="Notificaciones"
+                aria-label="Notificaciones"
+                className="text-gray-600 hover:text-[#B47B65] transition-colors"
+              >
+                <Bell size={24} />
+              </button>
+              <button
+                onClick={() => { setAuthMode("login"); setShowAuth(true); }}
+                className="bg-[#B47B65] text-white px-6 py-2 rounded-full font-bold"
+              >
+                Iniciar Sesión
+              </button>
+            </>
+          )}
+        </div>
+      </nav>
 
-          
-        </section>
-
+      <div className="p-10 text-center text-gray-400 italic">
+        {isLoading
+          ? <p>Cargando...</p>
+          : user
+            ? <p>¡Bienvenido, {user.name}! Estás autenticado.</p>
+            : <p>(Este fondo representa el HOME que está haciendo el otro grupo)</p>
+        }
       </div>
-    </main>
+
+      <ProtectedFeatureModal
+        isOpen={showProtected}
+        featureName="esta función"
+        onClose={() => setShowProtected(false)}
+        onLoginClick={() => { setShowProtected(false); setAuthMode("login"); setShowAuth(true); }}
+        onRegisterClick={() => { setShowProtected(false); setAuthMode("register"); setShowAuth(true); }}
+      />
+
+      <AuthModal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        initialMode={authMode}
+      />
+    </div>
   );
 }
