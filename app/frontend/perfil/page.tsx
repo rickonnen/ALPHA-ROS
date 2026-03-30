@@ -32,6 +32,7 @@ import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
+//import HistorialPagosView from "././frontend/historial-pagos";
 
 // ID TEMPORAL: falta el id de los de sign in
 // Final User 3
@@ -75,6 +76,7 @@ export default function PerfilPage() {
     { id: "publicaciones", name: "PUBLICACIONES" },
     { id: "favoritos", name: "FAVORITOS" },
     { id: "historial", name: "HISTORIAL" },
+    { id: "historialPagos", name: "HISTORIAL PAGOS" },
   ];
 
   const telefonos = usuario?.UsuarioTelefono?.map(
@@ -90,10 +92,13 @@ export default function PerfilPage() {
         id_usuario={ID_USUARIO_HARDCODEADO}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
+        onSuccess={() => setView("perfil")}
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
     historial: <HistorialView id_usuario={ID_USUARIO_HARDCODEADO} />,
+    historialPagos: <div>Historial Pagos</div>,
+    //historialPagos: <HistorialPagosView id_usuario={ID_USUARIO_HARDCODEADO} />,
   };
 
   return (
