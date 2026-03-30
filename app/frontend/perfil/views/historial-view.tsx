@@ -1,7 +1,7 @@
 /*  Dev: Luis - xdev/sow-luisc
     Fecha: 29/03/2026
     Funcionalidad: Vista de Historial dentro del perfil del usuario
-      - Consume GET /api/historial?id_usuario=...
+      - Consume GET /backend/perfil/getHistorial?id_usuario=...
       - Lista hasta 5 items por página con scroll interno (max-h 300px)
       - Paginación con numeritos si hay más de 5
       - Botón eliminar remueve el item del historial en frontend
@@ -42,7 +42,7 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
     const cargarHistorial = async () => {
       try {
         setCargando(true);
-        const res = await fetch(`/api/historial?id_usuario=${id_usuario}`);
+        const res = await fetch(`/backend/perfil/getHistorial?id_usuario=${id_usuario}`);
         if (!res.ok) throw new Error("No se pudo cargar el historial");
         const json = await res.json();
         setHistorial(json);
@@ -61,14 +61,25 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
       (paginaActual - 1) * ITEMS_POR_PAGINA,
       paginaActual * ITEMS_POR_PAGINA
     );
-  const handleEliminar = (id_publicacion: number) => {
-    const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
-    setHistorial(nuevos);
-    const nuevoTotal = Math.ceil(nuevos.length / ITEMS_POR_PAGINA);
-    if (paginaActual > nuevoTotal && nuevoTotal > 0) {
-      setPaginaActual(nuevoTotal);
+  const handleEliminar = async (id_publicacion: number) => {
+    try {
+      const res = await fetch(
+        `/backend/perfil/getHistorial?id_usuario=${id_usuario}&id_publicacion=${id_publicacion}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error("No se pudo eliminar");
+
+      const nuevos = historial.filter((h) => h.id_publicacion !== id_publicacion);
+      setHistorial(nuevos);
+      const nuevoTotal = Math.ceil(nuevos.length / ITEMS_POR_PAGINA);
+      if (paginaActual > nuevoTotal && nuevoTotal > 0) setPaginaActual(nuevoTotal);
+    } catch (err) {
+      console.error(err);
     }
   };
+
+
+
 
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
