@@ -32,7 +32,7 @@ import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
-//import HistorialPagosView from "././frontend/historial-pagos";
+import HistorialPagosView from "@/app/frontend/cobros/historial-pagos/page";
 
 // ID TEMPORAL: falta el id de los de sign in
 // Final User 3
@@ -97,8 +97,7 @@ export default function PerfilPage() {
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
     historial: <HistorialView id_usuario={ID_USUARIO_HARDCODEADO} />,
-    historialPagos: <div>Historial Pagos</div>,
-    //historialPagos: <HistorialPagosView id_usuario={ID_USUARIO_HARDCODEADO} />,
+    historialPagos: <HistorialPagosView id_usuario={ID_USUARIO_HARDCODEADO} />,
   };
 
   return (

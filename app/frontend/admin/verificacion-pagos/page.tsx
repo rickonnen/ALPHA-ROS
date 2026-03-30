@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PaymentDataTable } from "@/components/admin/PaymentDataTable"
 import { PaymentRecord } from "@/components/admin/paymentTypes"
+import { AccessDenied } from "@/components/admin/AccessDenied" 
 
 /**
  * Dev: René Gabriel Vera Portanda
  * Fecha: 29/03/26
- * Funcionalidad: Muestra la página de verificación de pagos con soporte para paginación dinámica.
+ * Funcionalidad: Muestra la página de verificación de pagos con soporte para paginación dinámica y validación de seguridad (403).
  */
 export default function PaymentVerificationPage() {
   const [arrPending, setArrPending] = useState<PaymentRecord[]>([]);
@@ -16,7 +17,10 @@ export default function PaymentVerificationPage() {
   const [arrRejected, setArrRejected] = useState<PaymentRecord[]>([]);
   const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
 
-  // --- ESTADOS DE PAGINACIÓN ---
+  // CONTROL DE SEGURIDAD 
+  const [bolIsAuthorized, setBolIsAuthorized] = useState<boolean>(true);
+
+  // ESTADOS DE PAGINACIÓN 
   const [intPagePending, setIntPagePending] = useState<number>(1);
   const [intTotalPagesPending, setIntTotalPagesPending] = useState<number>(1);
 
@@ -27,7 +31,7 @@ export default function PaymentVerificationPage() {
   const [intTotalPagesRejected, setIntTotalPagesRejected] = useState<number>(1);
 
   /**
-   * Funcionalidad: Carga los pagos usando los estados de página actuales.
+   * Funcionalidad: Carga los pagos usando los estados de página actuales y valida permisos.
    */
   const loadPayments = async () => {
     setBolIsLoading(true);
@@ -37,6 +41,19 @@ export default function PaymentVerificationPage() {
         fetch(`/backend/cobros/verificacion-pagos?status=Aceptado&page=${intPageAccepted}&limit=10`), 
         fetch(`/backend/cobros/verificacion-pagos?status=Rechazado&page=${intPageRejected}&limit=10`)
       ]);
+
+      // Si el backend Rechaza (403), bloquea la vista 
+      if (
+        objResPending.status === 403 || 
+        objResAccepted.status === 403 || 
+        objResRejected.status === 403
+      ) {
+        setBolIsAuthorized(false);
+        return; // Detiene la ejecución aquí, no intenta mapear datos vacíos
+      }
+
+      // Si pasa el escudo, confirmamos que esta autorizado
+      setBolIsAuthorized(true);
 
       const objDataPending = await objResPending.json();
       const objDataAccepted = await objResAccepted.json();
@@ -58,12 +75,12 @@ export default function PaymentVerificationPage() {
         }));
       };
 
-      // 1. Guardamos los datos formateados
+      // Guarda los datos formateados
       setArrPending(formatData(objDataPending.arrPayments));
       setArrAccepted(formatData(objDataAccepted.arrPayments));
       setArrRejected(formatData(objDataRejected.arrPayments));
 
-      // 2. Guardamos el total de páginas que calculó el servidor
+      // Guarda el total de páginas que calculó el servidor
       setIntTotalPagesPending(objDataPending.intTotalPages || 1);
       setIntTotalPagesAccepted(objDataAccepted.intTotalPages || 1);
       setIntTotalPagesRejected(objDataRejected.intTotalPages || 1);
@@ -86,53 +103,58 @@ export default function PaymentVerificationPage() {
         VERIFICACION DE PAGOS
       </h2>
 
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="bg-transparent h-auto p-0 space-x-1 mb-8">
-          <TabsTrigger value="pending" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
-            Pagos Pendientes
-          </TabsTrigger>
-          <TabsTrigger value="accepted" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
-            Pagos Aceptados
-          </TabsTrigger>
-          <TabsTrigger value="rejected" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
-            Pagos Rechazados
-          </TabsTrigger>
-        </TabsList>
+      {/* --- RENDERIZADO CONDICIONAL --- */}
+      {!bolIsAuthorized ? (
+        <AccessDenied />
+      ) : (
+        <Tabs defaultValue="pending" className="w-full">
+          <TabsList className="bg-transparent h-auto p-0 space-x-1 mb-8">
+            <TabsTrigger value="pending" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
+              Pagos Pendientes
+            </TabsTrigger>
+            <TabsTrigger value="accepted" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
+              Pagos Aceptados
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-[1px] transition-all">
+              Pagos Rechazados
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="border-t border-border pt-8">
-          <TabsContent value="pending" className="m-0 focus-visible:outline-none">
-            <PaymentDataTable 
-              arrData={arrPending} 
-              bolShowActions={true} 
-              onPaymentUpdated={loadPayments} 
-              bolIsLoading={bolIsLoading}
-              intCurrentPage={intPagePending}
-              intTotalPages={intTotalPagesPending}
-              onPageChange={(intNewPage) => setIntPagePending(intNewPage)}
-            />
-          </TabsContent>
-          <TabsContent value="accepted" className="m-0 focus-visible:outline-none">
-            <PaymentDataTable 
-              arrData={arrAccepted} 
-              bolShowActions={false} 
-              bolIsLoading={bolIsLoading}
-              intCurrentPage={intPageAccepted}
-              intTotalPages={intTotalPagesAccepted}
-              onPageChange={(intNewPage) => setIntPageAccepted(intNewPage)}
-            />
-          </TabsContent>
-          <TabsContent value="rejected" className="m-0 focus-visible:outline-none">
-            <PaymentDataTable 
-              arrData={arrRejected} 
-              bolShowActions={false} 
-              bolIsLoading={bolIsLoading}
-              intCurrentPage={intPageRejected}
-              intTotalPages={intTotalPagesRejected}
-              onPageChange={(intNewPage) => setIntPageRejected(intNewPage)}
-            />
-          </TabsContent>
-        </div>
-      </Tabs>
+          <div className="border-t border-border pt-8">
+            <TabsContent value="pending" className="m-0 focus-visible:outline-none">
+              <PaymentDataTable 
+                arrData={arrPending} 
+                bolShowActions={true} 
+                onPaymentUpdated={loadPayments} 
+                bolIsLoading={bolIsLoading}
+                intCurrentPage={intPagePending}
+                intTotalPages={intTotalPagesPending}
+                onPageChange={(intNewPage) => setIntPagePending(intNewPage)}
+              />
+            </TabsContent>
+            <TabsContent value="accepted" className="m-0 focus-visible:outline-none">
+              <PaymentDataTable 
+                arrData={arrAccepted} 
+                bolShowActions={false} 
+                bolIsLoading={bolIsLoading}
+                intCurrentPage={intPageAccepted}
+                intTotalPages={intTotalPagesAccepted}
+                onPageChange={(intNewPage) => setIntPageAccepted(intNewPage)}
+              />
+            </TabsContent>
+            <TabsContent value="rejected" className="m-0 focus-visible:outline-none">
+              <PaymentDataTable 
+                arrData={arrRejected} 
+                bolShowActions={false} 
+                bolIsLoading={bolIsLoading}
+                intCurrentPage={intPageRejected}
+                intTotalPages={intTotalPagesRejected}
+                onPageChange={(intNewPage) => setIntPageRejected(intNewPage)}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      )}
     </div>
   )
 }
