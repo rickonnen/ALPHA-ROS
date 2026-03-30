@@ -2,8 +2,7 @@
  * @Dev: Gustavo Montaño
  * @Fecha: 28/03/2026
  * @Modificación: StefanyS — 29/03/2026
- * @Funcionalidad: Página del Perfil del Inmueble. Pasa strUserId a PropertyActions
- *                 para que la verificación del contador ocurra solo al hacer click.
+ * @Funcionalidad: Página del Perfil del Inmueble.
  * @param params - Parámetros de ruta dinámica con el ID de la publicación.
  * @return {JSX.Element} Vista completa del perfil del inmueble.
  */
@@ -14,7 +13,6 @@ import { MediaGallery }      from "@/app/frontend/publicacion/[id_publicacion]/c
 import { PropertyDetails }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/app/backend/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyActions";
-import { createClient }      from "@/lib/supabase/server";
 
 export default async function PerfilInmueblePage({
   params,
@@ -33,12 +31,6 @@ export default async function PerfilInmueblePage({
   // 4. Consultar datos de la publicación
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
-
-  // 5. ID del usuario autenticado desde sesión
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  console.log("Usuario autenticado:", user?.id);
-  const strUserId = user?.id ?? "";
 
   // Task 4.5: Extraer video ID según plataforma
   const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
@@ -143,7 +135,7 @@ export default async function PerfilInmueblePage({
         </section>
 
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
-        <PropertyActions/>
+        <PropertyActions />
 
       </div>
     </main>
