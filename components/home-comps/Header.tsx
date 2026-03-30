@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import AuthModal from "@/app/frontend/auth/AuthModal";
@@ -28,7 +28,7 @@ const arrNavLinks = [
  */
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
-  const { user, logout, isLoading } = useAuth();
+  const { user } = useAuth();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -83,7 +83,6 @@ export const Header = () => {
     </Link>
   );
 
-  // ── Botón de notificaciones (comportamiento según auth) ──
   const btnNotifications = user ? (
     <div className="relative">
       <button
@@ -107,48 +106,43 @@ export const Header = () => {
     </button>
   );
 
-  // ── Botón de perfil / sesión ──
   const btnProfile = user ? (
-    <div className="flex items-center gap-2">
-      {/* Ir a Mi Perfil */}
-      <Link href={`/frontend/perfil?id=${user.id}`}>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none"
-          title="Mi perfil"
-        >
-          <img
-            src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
-            alt="Perfil"
-            className="w-8 h-8 rounded-full object-contain"
-          />
-          <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
-            {user.name}
-          </span>
-        </Button>
-      </Link>
-
-      {/* Cerrar sesión */}
-      <button
-        onClick={() => {
-          logout();
-          setShowAuth(false);
-        }}
-        title="Cerrar sesión"
-        className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-red-100 hover:shadow-[0_0_12px_#ef4444] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D]"
+    <Link 
+      href={`/frontend/perfil?id=${user.id}`} 
+      className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-full inline-block"
+    >
+      <Button
+        variant="ghost"
+        className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none"
+        title="Mi perfil"
       >
-        <LogOut size={18} className="text-red-500" />
-      </button>
-    </div>
+        <img
+          src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
+          alt="Perfil"
+          className="w-8 h-8 rounded-full object-contain"
+        />
+        <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
+          {user.name}
+        </span>
+      </Button>
+    </Link>
   ) : (
     <Button
+      variant="ghost"
       onClick={() => {
         setAuthMode("login");
         setShowAuth(true);
       }}
-      className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none"
+      className="flex items-center gap-2 h-10 px-3 bg-transparent transition-all duration-300 hover:bg-transparent hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] text-[#555555] rounded-full"
     >
-      INICIAR SESIÓN
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="10" r="3" />
+        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+      </svg>
+      <span className="text-[14px] font-bold uppercase tracking-wide">
+        INICIAR SESIÓN
+      </span>
     </Button>
   );
 
@@ -158,10 +152,8 @@ export const Header = () => {
         className={`font-sans fixed top-0 w-full z-50 bg-[#E7E1D7] text-[#2E2E2E] shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? "-translate-y-full" : "translate-y-0"}`}
       >
         <div className="w-full px-4 lg:px-[40px] h-20 flex items-center justify-between">
-          {/* Logo — móvil */}
           <div className="flex lg:hidden">{btnLogoProbol}</div>
 
-          {/* Hamburger — móvil */}
           <div className="flex lg:hidden" ref={refMobileMenuButton}>
             <Button
               variant="ghost"
@@ -188,7 +180,6 @@ export const Header = () => {
             </Button>
           </div>
 
-          {/* Izquierda — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
             <Link
@@ -199,7 +190,6 @@ export const Header = () => {
             </Link>
           </div>
 
-          {/* Derecha — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {arrNavLinks.map((objLink) => (
               <Link
@@ -225,7 +215,6 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Menú móvil desplegable */}
         {bolIsMobileMenuOpen && (
           <>
             <div
@@ -238,18 +227,19 @@ export const Header = () => {
               className="lg:hidden absolute top-20 left-0 w-full bg-[#1F3A4D] text-[#E7E1D7] shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
               onClick={(objEvent) => objEvent.stopPropagation()}
             >
-              {/* Perfil / Login */}
               {user ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    closeMobileMenu();
-                  }}
+                <Link
+                  href={`/frontend/perfil?id=${user.id}`}
+                  onClick={closeMobileMenu}
                   className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 >
-                  <LogOut size={20} />
-                  <span className="uppercase">CERRAR SESIÓN ({user.name})</span>
-                </button>
+                  <img
+                    src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
+                    alt="Perfil"
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
+                  <span className="uppercase">MI PERFIL ({user.name})</span>
+                </Link>
               ) : (
                 <button
                   onClick={() => {
@@ -259,16 +249,15 @@ export const Header = () => {
                   }}
                   className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 >
-                  <img
-                    src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
-                    alt="Perfil"
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                  <span className="uppercase">INICIAR SESIÓN</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="10" r="3" />
+                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                  </svg>
+                  <span className="uppercase font-semibold">INICIAR SESIÓN</span>
                 </button>
               )}
 
-              {/* Notificaciones */}
               <button
                 className={`flex items-center gap-4 text-left border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 onClick={() => {
@@ -285,7 +274,6 @@ export const Header = () => {
                 <span>NOTIFICACIONES</span>
               </button>
 
-              {/* Publicar */}
               <Link
                 href="/frontend/publicacion"
                 prefetch={false}
@@ -320,7 +308,6 @@ export const Header = () => {
         )}
       </header>
 
-      {/* Modales de autenticación — fuera del <header> para evitar z-index issues */}
       <ProtectedFeatureModal
         isOpen={showProtected}
         featureName="esta función"
