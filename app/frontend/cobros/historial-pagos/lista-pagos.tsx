@@ -94,7 +94,7 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
   const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
 
   return (
-    <div className="mt-4 space-y-3">
+    <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-2">
       {/* BARRA SUPERIOR (DESHABILITADA) */}
       <div className="bg-[#E8A5A0] text-black text-sm px-4 py-2 flex justify-between items-center opacity-80">
         <span>Últimos 30 días (17/02/2026 - 19/03/2026)</span>
