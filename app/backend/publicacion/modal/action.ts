@@ -1,20 +1,16 @@
 "use server";
 
 /**
- * @Dev: Gustavo Montaño
+ * @Dev: jimmyP
  * @Fecha: 28/03/2026
- * @Modificación: StefanyS — 29/03/2026
  * @Funcionalidad: Server Actions para verificar el contador de publicaciones
  *                 del usuario y gestionar creación/asociación de publicaciones (HU5).
  */
 
 import { prisma } from "@/lib/prisma";
-
 // Valor inicial del contador para usuarios gratuitos
 const INT_LIMITE_GRATUITO = 2;
-
 // ─── Tipos ────────────────────────────────────────────────────────────────────
-
 export interface EstadoPublicacionUsuario {
   intPublicacionesRestantes: number;
   bolLimiteAlcanzado:        boolean;
@@ -25,11 +21,9 @@ interface PublicacionFormData {
   precio: number;
   [key: string]: unknown;
 }
-
 // ─── Verificar contador del usuario ──────────────────────────────────────────
-
 /**
- * @Dev: StefanyS
+ * @Dev: jimmyP
  * @Fecha: 29/03/2026
  * @Funcionalidad: Consulta cant_publicaciones_restantes del usuario en la BD.
  *                 Se llama SOLO al hacer click en "Publicar otro inmueble".
@@ -51,28 +45,22 @@ export async function verificarEstadoPublicacion(
     where:  { id_usuario: strUserId },
     select: { cant_publicaciones_restantes: true },
   });
-
   // Si el usuario no existe en BD, no permitir publicar
   if (!objUsuario) {
     return { intPublicacionesRestantes: 0, bolLimiteAlcanzado: true };
   }
-
   // Si cant_publicaciones_restantes es NULL, asumir que tiene el límite completo
   const intRestantes = objUsuario.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
-
   // Límite alcanzado únicamente cuando el contador llega a 0
   const bolLimiteAlcanzado = intRestantes <= 0;
-
   return {
     intPublicacionesRestantes: intRestantes,
     bolLimiteAlcanzado,
   };
 }
-
 // ─── Crear publicación ────────────────────────────────────────────────────────
-
 /**
- * @Dev: Gustavo Montaño
+ * @Dev: jimmyP
  * @Fecha: 28/03/2026
  * @Funcionalidad: Verifica el contador y crea una nueva publicación en transacción atómica.
  * @param {string} strUserId - UUID del usuario autenticado.
@@ -100,16 +88,13 @@ export async function verificarYCrearPublicacion(
           id_usuario: strUserId,
         },
       });
-
       // Decrementar el contador al crear una publicación
       await tx.usuario.update({
         where: { id_usuario: strUserId },
         data:  { cant_publicaciones_restantes: intRestantes - 1 },
       });
-
       return objNuevaPublicacion.id_publicacion;
     });
-
     return { success: true, id_publicacion: intResultado };
   } catch (objError: unknown) {
     if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {
@@ -118,11 +103,9 @@ export async function verificarYCrearPublicacion(
     return { success: false, reason: "ERROR_SERVIDOR" };
   }
 }
-
 // ─── Asociar publicación existente ───────────────────────────────────────────
-
 /**
- * @Dev: Gustavo Montaño
+ * @Dev: jimmyP
  * @Fecha: 28/03/2026
  * @Funcionalidad: Verifica el contador y asocia una publicación existente al usuario.
  * @param {string} strUserId - UUID del usuario autenticado.
@@ -139,23 +122,18 @@ export async function asociarPublicacionExistente(
         where:  { id_usuario: strUserId },
         select: { cant_publicaciones_restantes: true },
       });
-
       const intRestantes = objUsuario?.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
       if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO");
-
       const objPublicacionActualizada = await tx.publicacion.update({
         where: { id_publicacion: intIdPublicacionCreada },
         data:  { id_usuario: strUserId },
       });
-
       await tx.usuario.update({
         where: { id_usuario: strUserId },
         data:  { cant_publicaciones_restantes: intRestantes - 1 },
       });
-
       return objPublicacionActualizada.id_publicacion;
     });
-
     return { success: true, id_publicacion: intResultado };
   } catch (objError: unknown) {
     if (objError instanceof Error && objError.message === "LIMITE_ALCANZADO") {

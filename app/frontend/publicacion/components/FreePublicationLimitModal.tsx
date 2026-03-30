@@ -1,9 +1,7 @@
 "use client";
-
 /**
- * @Dev: Gustavo Montaño
- * @Fecha: 28/03/2026
- * @Modificación: StefanyS — 29/03/2026
+ * @Dev: jimmyP
+ * @Fecha: 29/03/2026
  * @Funcionalidad: Modal de la HU5. Controlado externamente por bolOpen.
  *                 Solo se muestra cuando PropertyActions confirma límite alcanzado
  *                 y activa bolOpen=true. Nunca se abre solo al montar.
@@ -21,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
 // PascalCase para la interfaz - Estándar Alpha-Ros
 interface FreePublicationLimitModalProps {
   bolOpen:         boolean;   // controla si el modal está visible
@@ -30,7 +27,6 @@ interface FreePublicationLimitModalProps {
   strTitle?:       string;
   strDescription?: string;
 }
-
 export default function FreePublicationLimitModal({
   bolOpen,
   onBack,
@@ -38,10 +34,8 @@ export default function FreePublicationLimitModal({
   strTitle       = "Has excedido tus publicaciones gratuitas",
   strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
-
   // No renderizar nada si el modal está cerrado
   if (!bolOpen) return null;
-
   return (
     <AlertDialog open={bolOpen}>
       <AlertDialogContent
@@ -67,7 +61,6 @@ export default function FreePublicationLimitModal({
           >
             {"< Atrás"}
           </Button>
-
           {/* Botón Ver Planes */}
           <Button
             asChild
