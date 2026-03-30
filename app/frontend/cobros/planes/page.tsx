@@ -8,13 +8,10 @@ import {
 } from "@/components/ui/card";
 import { PlanPublicacion } from "@prisma/client";
 import Link from "next/link";
-// Función auxiliar para consumir el endpoint
-// app/frontend/cobros/planes/page.tsx
+import { BotonContinuarPlan } from "./BotonContinuarPlan";
 
 async function obtenerPlanes() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-  // ASEGÚRATE de que la ruta coincida con las carpetas donde pusiste el route.ts
   const res = await fetch(`${baseUrl}/backend/cobros/planes`, {
     cache: "no-store",
   });
@@ -26,15 +23,22 @@ async function obtenerPlanes() {
   return res.json();
 }
 
-export default async function PlanesPublicacion() {
-  // Llamamos a la API a través de la función auxiliar
+interface Props {
+  searchParams: Promise<{
+    id?: string;
+  }>;
+}
+
+export default async function PlanesPublicacion({ searchParams }: Props) {
+  //De aqui sacamos el usuario
+  const params = await searchParams;
+  const idUsuario = params.id ?? "";
+
   const planes = await obtenerPlanes();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      {/* CONTENIDO PRINCIPAL */}
       <main className="max-w-6xl mx-auto px-6 py-12">
-        {/* Título y Descripción */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h1 className="text-4xl font-extrabold mb-6 text-foreground">
             COMPRA MÁS CUPOS DE PUBLICACIÓN
@@ -46,7 +50,6 @@ export default async function PlanesPublicacion() {
           </p>
         </div>
 
-        {/* GRID DE TARJETAS DE PLANES (Dinámico) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {planes.map((plan: PlanPublicacion) => (
             <Card
@@ -59,7 +62,6 @@ export default async function PlanesPublicacion() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grow">
-                {/* Asegúrate de formatear el precio si es necesario */}
                 <p className="text-2xl font-bold mb-8 text-foreground">
                   $ {plan.precio_plan?.toString()}
                 </p>
@@ -68,13 +70,10 @@ export default async function PlanesPublicacion() {
                 </p>
               </CardContent>
               <CardFooter className="pt-8 bg-transparent">
-                <Button asChild className="w-full font-bold">
-                  <Link
-                    href={`/frontend/cobros/sector-pagos?planId=${plan.id_plan}`}
-                  >
-                    Continuar
-                  </Link>
-                </Button>
+                <BotonContinuarPlan
+                  planId={plan.id_plan}
+                  idUsuario={idUsuario}
+                />
               </CardFooter>
             </Card>
           ))}
