@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { Bell, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { Bell, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useScrollDirection } from "../hooks/useScrollDirection";
 import AuthModal from "@/app/frontend/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/frontend/auth/AuthContext";
 import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
+import { useRouter } from "next/navigation";
+import { verificarEstadoPublicacion } from "@/app/backend/publicacion/modal/action";
+import FreePublicationLimitModal from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
 
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
   { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" }
+  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" },
 ];
 
 /**
@@ -29,12 +32,15 @@ const arrNavLinks = [
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
   const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showProtected, setShowProtected] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [showNotifications, setShowNotifications] = useState(false);
+  const [bolShowModal, setBolShowModal] = useState(false);
+  const [bolChecking, setBolChecking]   = useState(false);
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
@@ -53,19 +59,41 @@ export const Header = () => {
     };
 
     const handleEscapeKey = (objEvent: KeyboardEvent) => {
-      if (objEvent.key === 'Escape') closeMobileMenu();
+      if (objEvent.key === "Escape") closeMobileMenu();
     };
 
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleEscapeKey);
+    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("keydown", handleEscapeKey);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [bolIsMobileMenuOpen]);
 
-  const strLinkClassesDesktop = "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
-  const strLinkClassesMobile = "text-[15px] font-normal text-[#E7E1D7] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D]";
+  const handlePublicar = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/frontend/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/frontend/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
+  };
+
+  const strLinkClassesDesktop =
+    "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
+  const strLinkClassesMobile =
+    "text-[15px] font-normal text-[#E7E1D7] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D]";
 
   const btnLogoProbol = (
     <Link
@@ -105,7 +133,7 @@ export const Header = () => {
     </button>
   );
 
-    // ── Botón de perfil / sesión ──
+  // ── Botón de perfil / sesión ──
   const btnProfile = user ? (
     <div className="flex items-center gap-2">
       {/* Ir a Mi Perfil */}
@@ -128,7 +156,10 @@ export const Header = () => {
 
       {/* Cerrar sesión */}
       <button
-        onClick={() => { logout(); setShowAuth(false); }}
+        onClick={() => {
+          logout();
+          setShowAuth(false);
+        }}
         title="Cerrar sesión"
         className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-red-100 hover:shadow-[0_0_12px_#ef4444] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D]"
       >
@@ -137,7 +168,10 @@ export const Header = () => {
     </div>
   ) : (
     <Button
-      onClick={() => { setAuthMode("login"); setShowAuth(true); }}
+      onClick={() => {
+        setAuthMode("login");
+        setShowAuth(true);
+      }}
       className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none"
     >
       INICIAR SESIÓN
@@ -146,13 +180,12 @@ export const Header = () => {
 
   return (
     <>
-      <header className={`font-sans fixed top-0 w-full z-50 bg-[#E7E1D7] text-[#2E2E2E] shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? '-translate-y-full' : 'translate-y-0'}`}>
+      <header
+        className={`font-sans fixed top-0 w-full z-50 bg-[#E7E1D7] text-[#2E2E2E] shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? "-translate-y-full" : "translate-y-0"}`}
+      >
         <div className="w-full px-4 lg:px-[40px] h-20 flex items-center justify-between">
-
           {/* Logo — móvil */}
-          <div className="flex lg:hidden">
-            {btnLogoProbol}
-          </div>
+          <div className="flex lg:hidden">{btnLogoProbol}</div>
 
           {/* Hamburger — móvil */}
           <div className="flex lg:hidden" ref={refMobileMenuButton}>
@@ -163,7 +196,17 @@ export const Header = () => {
               aria-expanded={bolIsMobileMenuOpen}
               aria-label="Abrir menú"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="4" x2="20" y1="12" y2="12" />
                 <line x1="4" x2="20" y1="6" y2="6" />
                 <line x1="4" x2="20" y1="18" y2="18" />
@@ -174,7 +217,10 @@ export const Header = () => {
           {/* Izquierda — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
-            <Link href="/frontend/cobros/planes" className={strLinkClassesDesktop}>
+            <Link
+              href={`/frontend/cobros/planes?id=${user?.id}`}
+              className={strLinkClassesDesktop}
+            >
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
@@ -182,19 +228,22 @@ export const Header = () => {
           {/* Derecha — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {arrNavLinks.map((objLink) => (
-              <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>
+              <Link
+                key={objLink.strLabel}
+                href={objLink.strHref}
+                className={strLinkClassesDesktop}
+              >
                 {objLink.strLabel}
               </Link>
             ))}
 
-            <Link
-              href={user ? "/frontend/publicacion" : "/login"}
-              className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md"
+            <Button
+              onClick={handlePublicar}
+              disabled={bolChecking}
+              className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
             >
-              <Button className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                PUBLICAR
-              </Button>
-            </Link>
+              {bolChecking ? "Verificando..." : "PUBLICAR"}
+            </Button>
 
             {btnNotifications}
             {btnProfile}
@@ -204,7 +253,10 @@ export const Header = () => {
         {/* Menú móvil desplegable */}
         {bolIsMobileMenuOpen && (
           <>
-            <div className="lg:hidden fixed inset-0 z-40 bg-black/20" onClick={closeMobileMenu} />
+            <div
+              className="lg:hidden fixed inset-0 z-40 bg-black/20"
+              onClick={closeMobileMenu}
+            />
             <div
               id="mobile-header-menu"
               ref={refMobileMenuPanel}
@@ -214,7 +266,10 @@ export const Header = () => {
               {/* Perfil / Login */}
               {user ? (
                 <button
-                  onClick={() => { logout(); closeMobileMenu(); }}
+                  onClick={() => {
+                    logout();
+                    closeMobileMenu();
+                  }}
                   className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 >
                   <LogOut size={20} />
@@ -222,10 +277,18 @@ export const Header = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }}
+                  onClick={() => {
+                    setAuthMode("login");
+                    setShowAuth(true);
+                    closeMobileMenu();
+                  }}
                   className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 >
-                  <img src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png" alt="Perfil" className="w-10 h-10 rounded-full object-contain" />
+                  <img
+                    src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
+                    alt="Perfil"
+                    className="w-10 h-10 rounded-full object-contain"
+                  />
                   <span className="uppercase">INICIAR SESIÓN</span>
                 </button>
               )}
@@ -234,7 +297,11 @@ export const Header = () => {
               <button
                 className={`flex items-center gap-4 text-left border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
                 onClick={() => {
-                  if (!user) { setShowProtected(true); closeMobileMenu(); return; }
+                  if (!user) {
+                    setShowProtected(true);
+                    closeMobileMenu();
+                    return;
+                  }
                   setShowNotifications((prev) => !prev);
                   closeMobileMenu();
                 }}
@@ -243,25 +310,34 @@ export const Header = () => {
                 <span>NOTIFICACIONES</span>
               </button>
 
-              {/* Publicar */}
-              <Link
-                href="/frontend/publicacion"
-                prefetch={false}
-                onClick={closeMobileMenu}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D] rounded-md"
+              {/* Publicar — móvil */}
+              <Button
+                onClick={() => {
+                  closeMobileMenu();
+                  handlePublicar();
+                }}
+                disabled={bolChecking}
+                className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
               >
-                <Button className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                  PUBLICAR
-                </Button>
-              </Link>
+                {bolChecking ? "Verificando..." : "PUBLICAR"}
+              </Button>
 
               {arrNavLinks.map((objLink) => (
-                <Link key={objLink.strLabel} href={objLink.strHref} onClick={closeMobileMenu} className={strLinkClassesMobile}>
+                <Link
+                  key={objLink.strLabel}
+                  href={objLink.strHref}
+                  onClick={closeMobileMenu}
+                  className={strLinkClassesMobile}
+                >
                   {objLink.strLabel}
                 </Link>
               ))}
 
-              <Link href="/frontend/cobros/planes" onClick={closeMobileMenu} className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}>
+              <Link
+                href={`/frontend/cobros/planes?id=${user?.id}`}
+                onClick={closeMobileMenu}
+                className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}
+              >
                 PLANES DE PUBLICACIÓN
               </Link>
             </div>
@@ -274,13 +350,27 @@ export const Header = () => {
         isOpen={showProtected}
         featureName="esta función"
         onClose={() => setShowProtected(false)}
-        onLoginClick={() => { setShowProtected(false); setAuthMode("login"); setShowAuth(true); }}
-        onRegisterClick={() => { setShowProtected(false); setAuthMode("register"); setShowAuth(true); }}
+        onLoginClick={() => {
+          setShowProtected(false);
+          setAuthMode("login");
+          setShowAuth(true);
+        }}
+        onRegisterClick={() => {
+          setShowProtected(false);
+          setAuthMode("register");
+          setShowAuth(true);
+        }}
       />
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         initialMode={authMode}
+      />
+
+      {/* Modal límite de publicaciones gratuitas */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
       />
     </>
   );

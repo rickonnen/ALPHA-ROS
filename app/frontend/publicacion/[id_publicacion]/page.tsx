@@ -14,6 +14,7 @@ import { MediaGallery }      from "@/app/frontend/publicacion/[id_publicacion]/c
 import { PropertyDetails }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/app/backend/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyActions";
+import { createClient }      from "@/lib/supabase/server";
 
 export default async function PerfilInmueblePage({
   params,
@@ -33,9 +34,11 @@ export default async function PerfilInmueblePage({
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
 
-  // 5. ID del usuario dueño de esta publicación
-  //    TODO: reemplazar por usuario autenticado desde sesión cuando esté disponible
-  const strUserId = objPerfil.id_usuario ?? "";
+  // 5. ID del usuario autenticado desde sesión
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log("Usuario autenticado:", user?.id);
+  const strUserId = user?.id ?? "";
 
   // Task 4.5: Extraer video ID según plataforma
   const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
@@ -140,7 +143,7 @@ export default async function PerfilInmueblePage({
         </section>
 
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
-        <PropertyActions strUserId={strUserId} />
+        <PropertyActions/>
 
       </div>
     </main>

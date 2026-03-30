@@ -41,60 +41,7 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col bg-[#EAE4D8] font-[family-name:var(--font-geist-sans)]">
 
-      {/* ── Barra de navegación superior ── */}
-      <nav className="w-full h-11 bg-[#3D3830] flex items-center px-4 gap-2.5 flex-shrink-0 sticky top-0 z-[100]">
-        <button
-          className="w-7 h-7 border border-[#6B6560] rounded bg-transparent text-[#C4BEB8] flex items-center justify-center cursor-pointer flex-shrink-0"
-          aria-label="Cerrar"
-        >
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="w-3 h-3">
-            <line x1="2" y1="2" x2="12" y2="12"/>
-            <line x1="12" y1="2" x2="2" y2="12"/>
-          </svg>
-        </button>
-
-        {/* Oculto en mobile */}
-        <span className="hidden sm:inline bg-[#524D48] text-[#C4BEB8] text-[0.67rem] font-medium px-2.5 py-1 rounded whitespace-nowrap flex-shrink-0">
-          Planes de Publicación
-        </span>
-
-        <div className="flex-1" />
-
-        {/* Links de navegación ocultos en mobile */}
-        <div className="hidden md:flex items-center gap-5 mr-1">
-          {["Compra", "Alquiler", "Anticrético"].map((strLink) => (
-            <span key={strLink} className="text-[0.64rem] font-semibold tracking-widest text-[#C4BEB8] uppercase cursor-pointer hover:text-white">
-              {strLink}
-            </span>
-          ))}
-        </div>
-
-        {/* Botón publicar oculto en mobile */}
-        <button className="hidden md:block bg-[#524D48] text-[#C4BEB8] text-[0.64rem] font-semibold tracking-widest uppercase px-3 py-1 rounded border-none cursor-pointer mr-1.5 whitespace-nowrap hover:bg-[#6B6560]">
-          Publicar
-        </button>
-
-        {/* Iconos de notificación, avatar y perfil */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <svg className="w-[18px] h-[18px] text-[#C4BEB8] cursor-pointer" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 2a6 6 0 0 0-6 6c0 3.5-2 4.5-2 5h16s-2-1.5-2-5a6 6 0 0 0-6-6z"/>
-            <path d="M11.73 17a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <div className="w-6 h-6 rounded-full bg-[#524D48] border border-[#6B6560] flex items-center justify-center cursor-pointer flex-shrink-0">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-[#C4BEB8]">
-              <circle cx="10" cy="7" r="3.5"/>
-              <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6"/>
-            </svg>
-          </div>
-          <div className="flex items-center gap-1 text-[#C4BEB8] text-[0.64rem] font-semibold tracking-wider uppercase cursor-pointer whitespace-nowrap">
-            <span className="hidden sm:inline">MI PERFIL</span>
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-              <line x1="2" y1="7" x2="12" y2="7"/>
-              <polyline points="8 3 12 7 8 11"/>
-            </svg>
-          </div>
-        </div>
-      </nav>
+      
 
       {/* ── Área principal con fondo degradado de 2 colores ── */}
       <div

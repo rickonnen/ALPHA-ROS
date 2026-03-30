@@ -15,7 +15,7 @@ const arrExploreLinks = [
   { strHref: "/frontend/cobros", strLabel: "Compra" },
   { strHref: "/frontend/search", strLabel: "Alquiler" },
   { strHref: "/frontend/mapas", strLabel: "Anticrético" },
-  { strHref: "/frontend/publicacion", strLabel: "Publica tu inmueble" },
+  { strHref: "/frontend/publicacion/informacion-comercial", strLabel: "Publica tu inmueble" },
 ];
 
 const arrInfoLinks = [

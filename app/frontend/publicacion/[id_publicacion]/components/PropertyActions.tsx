@@ -1,35 +1,46 @@
 "use client";
 /**
  * @Dev: Gustavo Montaño
- * @Fecha: 29/03/2026
+ * @Fecha: 28/03/2026
+ * @Modificación: StefanyS — 29/03/2026
  * @Funcionalidad: Botones de acción en la página de detalle del inmueble.
  *                 Al hacer click en "Publicar otro inmueble" consulta el contador
  *                 del usuario. El modal solo se abre si bolShowModal=true,
  *                 nunca al montar el componente.
- * @param {PropertyActionsProps} props - ID del usuario dueño de la publicación.
  * @return {JSX.Element} Footer con botones y modal controlado.
  */
-import { useRouter }             from "next/navigation";
-import { useState }              from "react";
-import { Button }                from "@/components/ui/button";
-import FreePublicationLimitModal from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
+
+
+import { useRouter }                  from "next/navigation";
+import { useState, useEffect }        from "react";
+import { Button }                     from "@/components/ui/button";
+import FreePublicationLimitModal      from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
 import { verificarEstadoPublicacion } from "@/app/backend/publicacion/modal/action";
 
-// PascalCase para la interfaz - Estándar Alpha-Ros
-interface PropertyActionsProps {
-  strUserId: string;
-}
-export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
+export const PropertyActions = () => {
   const router = useRouter();
-  // Inicia en false — el modal NUNCA se abre solo al montar
   const [bolShowModal, setBolShowModal] = useState(false);
   const [bolChecking,  setBolChecking]  = useState(false);
+  const [strUserId,    setStrUserId]    = useState("");
+
+  // Obtener el usuario desde localStorage igual que AuthContext
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const objUser = JSON.parse(storedUser);
+      setStrUserId(objUser.id ?? "");
+    }
+  }, []);
+
   const handleNuevaPublicacion = async () => {
+    if (!strUserId) {
+      router.push("/login");
+      return;
+    }
     setBolChecking(true);
     try {
       const objEstado = await verificarEstadoPublicacion(strUserId);
       if (objEstado.bolLimiteAlcanzado) {
-        // Solo aquí se abre el modal — después de verificar con un click real
         setBolShowModal(true);
       } else {
         router.push("/frontend/publicacion/informacion-comercial");
@@ -40,6 +51,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
       setBolChecking(false);
     }
   };
+
   return (
     <>
       <footer className="flex flex-row justify-between items-center gap-3 pt-10 border-t border-black/10">
@@ -51,6 +63,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
         >
           Ver mis publicaciones
         </Button>
+
         <Button
           type="button"
           disabled={bolChecking}
@@ -60,7 +73,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
           {bolChecking ? "Verificando..." : "Publicar otro inmueble"}
         </Button>
       </footer>
-      {/* Modal — siempre en el DOM pero solo visible cuando bolShowModal=true */}
+
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}
