@@ -72,7 +72,7 @@ function ContenidoPaginaCobros() {
     cargarDatosIniciales();
   }, [planId]);
 
-  const USUARIO_SIMULADO_ID = "4ce5fb58-95d8-4b43-8e49-4d75711f1837";
+  const USUARIO_SIMULADO_ID = "a1b2c3d4-0003-0003-0003-000000000003";
     const manejarVerificacion = async () => {
     try {
       const res = await fetch('/backend/cobros/verificar', {
