@@ -26,14 +26,14 @@ cd ALPHA-ROS
     4. SysInfo Squad -
     5. Bug Hunters -
     6. Digital Core - Listo - Pagina de Publicacion
-    7. ADA -
+    7. ADA - Listo - Cobros dentro la plataforma
 
 
 
-
-
-
-
+# Cambios en la bd
+    1. Actualizar el supabase con los Querys mencionados
+    2. npx prisma db pull --force (cuidao)
+    3. npx prisma generate
 
 
 
@@ -72,3 +72,11 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# Formato de actualizaciones
+/*  Dev: Nombre apellido - rama de push
+    Fecha: dd/mm/aaaa
+    Funcionalidad: lo que se hace en dicha actualizacion
+      - @param {lo que tiene que llegar} - descripcion
+      - @return {lo que tiene que devolver} - descripcion
+*/

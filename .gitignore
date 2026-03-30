@@ -42,5 +42,3 @@ next-env.d.ts
 
 /lib/generated/prisma
 
-# Mis tests privados de características
-app/frontend/publicacion/Caracteristicas/tests/
