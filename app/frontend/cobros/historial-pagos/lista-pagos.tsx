@@ -45,8 +45,14 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
         `/backend/cobros/historial-pagos?estado=${estado}&id_usuario=${id_usuario}`
       );
       const data = await res.json();
-      setPagos(Array.isArray(data) ? data : data.data || []);
+      const nuevosPagos = Array.isArray(data) ? data : data.data || [];
+
+      setPagos(nuevosPagos);
       setError("");
+
+      const nuevoTotal = Math.ceil(nuevosPagos.length / ITEMS);
+      setPagina((prev) => (prev > nuevoTotal ? nuevoTotal || 1 : prev));
+
     } catch (err) {
       setError("No fue posible cargar el historial de pagos. Intente nuevamente.");
     }
@@ -88,14 +94,15 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
     return <EstadoVacio />;
   }
 
-  //PAGINACIÓN
   const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);
-  const inicio = (pagina - 1) * ITEMS;
-  const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
+  const datos = pagosAdaptados.slice(
+    (pagina - 1) * ITEMS,
+    pagina * ITEMS
+  );
 
   return (
     <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-2">
-      {/* BARRA SUPERIOR (DESHABILITADA) */}
+      {/* BARRA SUPERIOR */}
       <div className="bg-[#E8A5A0] text-black text-sm px-4 py-2 flex justify-between items-center opacity-80">
         <span>Últimos 30 días (17/02/2026 - 19/03/2026)</span>
       </div>
@@ -106,35 +113,36 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
       ))}
 
       {/* PAGINACIÓN */}
-      <Pagination className="justify-end">
-        <PaginationContent>
+      {totalPaginas > 1 && (
+        <Pagination className="justify-end">
+          <PaginationContent>
 
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => setPagina(p => Math.max(p - 1, 1))}
-            />
-          </PaginationItem>
-
-          {Array.from({ length: totalPaginas }).map((_, i) => (
-            <PaginationItem key={i}>
-              <PaginationLink
-                isActive={pagina === i + 1}
-                onClick={() => setPagina(i + 1)}
-              >
-                {i + 1}
-              </PaginationLink>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setPagina(p => Math.max(p - 1, 1))}
+              />
             </PaginationItem>
-          ))}
 
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))}
-            />
-          </PaginationItem>
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => (
+              <PaginationItem key={num}>
+                <PaginationLink
+                  isActive={pagina === num}
+                  onClick={() => setPagina(num)}
+                >
+                  {num}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
 
-        </PaginationContent>
-      </Pagination>
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))}
+              />
+            </PaginationItem>
 
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 }
