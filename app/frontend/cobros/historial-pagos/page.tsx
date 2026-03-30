@@ -6,10 +6,11 @@
  */
 
 import TabsPagos from "./tabs-pagos";
-export default function HistorialPagosPage() {
+
+export default function HistorialPagosPage({ id_usuario }: { id_usuario: string }) {
   return (
     <div className="w-full p-4 md:p-6 font-sans">
-      <TabsPagos />
+      <TabsPagos id_usuario={id_usuario} />
     </div>
   );
 }

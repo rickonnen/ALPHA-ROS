@@ -11,19 +11,21 @@ const prisma = new PrismaClient();
 export async function GET(req: NextRequest) {
   try {
     const estado = req.nextUrl.searchParams.get("estado");
-    const userId = "d4c4d9c0-ded9-4186-890e-a9f19fd67d5e"; //usuario id puesto manuelamente 
+    const userId = req.nextUrl.searchParams.get("id_usuario");
+
+    if (!userId) {
+      return NextResponse.json(
+        { message: "id_usuario es requerido" },
+        { status: 400 }
+      );
+    }
+
     const pagos = await prisma.detallePago.findMany({
       where: {
         id_usuario: userId,
-        ...(estado === "pendiente" && {
-          estado: 1,
-        }),
-        ...(estado === "realizado" && {
-          estado: 2,
-        }),
-        ...(estado === "rechazado" && {
-          estado: 3,
-        }),
+        ...(estado === "pendiente" && { estado: 1 }),
+        ...(estado === "realizado" && { estado: 2 }),
+        ...(estado === "rechazado" && { estado: 3 }),
       },
       include: {
         PlanPublicacion: true,
@@ -32,6 +34,7 @@ export async function GET(req: NextRequest) {
         fecha_detalle: "desc",
       },
     });
+
     return NextResponse.json(pagos);
   } catch (error) {
     return NextResponse.json(

@@ -50,8 +50,10 @@ export default function CardPago({ pago }: { pago: Pago }) {
             {pago.estado === "pendiente" ? "Monto:" : "Total pagado:"}
           </span>
           <span className="text-[#2E2E2E]">
-            ${pago.monto}{" "}
-            <span className="text-gray-400">(≈ Bs {pago.monto * 7})</span>
+            ${Number(pago.monto).toFixed(2)}{" "}
+            <span className="text-gray-400">
+              (≈ Bs {(pago.monto * 7).toFixed(2)})
+            </span>
           </span>
         </div>
       </div>
