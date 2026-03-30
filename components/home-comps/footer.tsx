@@ -26,7 +26,7 @@ const arrInfoLinks = [
 
 const arrSocialLinks = [
   {
-    strHref: "https://facebook.com",
+    strHref: "https://www.facebook.com/share/1Fgy1caBsd/",
     strAriaLabel: "Facebook",
     strImgSrc: "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774561359/facebook-svgrepo-com_hy7ihi.svg",
     strImgAlt: "Facebook icon",
