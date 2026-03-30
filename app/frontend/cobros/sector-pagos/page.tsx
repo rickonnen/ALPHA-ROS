@@ -11,6 +11,8 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import HistorialPagosView from "@/app/frontend/cobros/historial-pagos/page";
 
 export default function PaginaSectorPagos() {
   return (
@@ -129,82 +131,93 @@ function ContenidoPaginaCobros() {
   }
 
   return (
-     <div className="min-h-screen flex">
+     <div className="min-h-screen flex flex-col md:flex-row">
 
     {/* DIV DE LA IZQUIERDA */}
-    <div className="w-[60%] bg-gray-100 p-12 flex flex-col justify-between min-h-screen"> 
+    <div className="w-full md:w-3/5 bg-background p-8 md:p-12 flex flex-col gap-6 md:justify-between md:min-h-screen">
       
       {/* Contenedor superior para Título y Descripción */}
       <div>
-        <h1 className="text-4xl font-bold ml-10 mt-15 text-gray-800 font-mono"> {nombrePlan} </h1>
-        
-        <div className="border-gray-400 p-6 rounded-md mt-20">
-          {/* Label de Descripción*/}
-          <p className="text-1xl text-gray-600 font-bold whitespace-pre-line leading-relaxed border-l-4 border-gray-200 font-mono"> descripcion: </p>
-          <p className="text-1xl text-gray-600 whitespace-pre-line leading-relaxed border-l-4 border-gray-200 font-mono"> {descripcionPlan} </p>
-        </div>
+        <Card className="shadow-lg rounded-2xl border-border">
+          <CardHeader>
+            <CardTitle className="text-2xl md:text-4xl font-bold font-mono text-foreground ml-0 md:ml-10 mt-4">
+              {nombrePlan}
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="p-4 md:p-6 rounded-md mt-4 md:mt-10">
+          
+              <p className="text-lg md:text-xl text-muted-foreground font-bold whitespace-pre-line leading-relaxed border-l-4 border-border pl-3 font-mono">
+                descripción:
+              </p>
+
+              <p className="text-base md:text-xl text-muted-foreground whitespace-pre-line leading-relaxed border-l-4 border-border pl-3 mt-2 font-mono">
+                {descripcionPlan}
+              </p>
+
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* BOTÓN VOLVER (Posicionado abajo a la izquierda) */}
-      <div className="ml-10 mb-5">
-        <Link href="/frontend/cobros/planes">
-          <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-            Volver
-          </button>
-        </Link>
-      </div>
+    <div className="ml-10 mb-5">
+      <Link href="/frontend/cobros/planes">
+        <Button>
+          Volver
+        </Button>
+      </Link>
+    </div>
     </div>
       
 
 {/* DIV DE LA DERECHA  */}
-      <div className="w-[40%] bg-white p-12 border-l">
+      <div className="w-full md:w-2/5 bg-white p-8 md:p-12 border-t md:border-t-0 md:border-l">
 
-        <h2 className="text-3xl text-gray-800 font-mono text-center mt-5">TOTAL A PAGAR</h2>
+        <h2 className="text-2xl md:text-3xl text-foreground font-mono text-center mt-5">TOTAL A PAGAR</h2>
         
-        <div className="text-4xl font-bold text-gray-800 px-6 py-2 text-center">
+        <div className="text-3xl md:text-4xl font-bold text-primary px-4 py-2 text-center">
           ${totalAPagar.toFixed(2)}
         </div>
 
-        <div className="flex justify-center items-center my-10">
+        <div className="flex justify-center items-center my-8 md:my-10">
           {qrUrl ? (
             <img 
               src={qrUrl} 
               alt="Código QR de Pago Real" 
-              className="w-70 h-70 border-4 border-white shadow-2xl rounded-2xl transition-opacity duration-500" 
+              className="w-48 h-48 md:w-70 md:h-70 border-4 border-white shadow-2xl rounded-2xl transition-opacity duration-500" 
             />
           ) : (
-            <div className="w-70 h-70 bg-gray-200 animate-pulse rounded-2xl flex items-center justify-center border-4 border-white shadow-2xl">
+            <div className="w-48 h-48 md:w-70 md:h-70 bg-gray-200 animate-pulse rounded-2xl flex items-center justify-center border-4 border-white shadow-2xl">
               <span className="text-gray-400 font-mono text-xs uppercase">Generando QR...</span>
             </div>
           )}
         </div>
 
           <div className="flex justify-center mt-19">
-            <button 
-              onClick={manejarVerificacion} 
-              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-            >
+            <Button onClick={manejarVerificacion}>
               Verificar Pago
-            </button>
+            </Button>
           </div>
+
           <div className="flex justify-center mt-8">
-            <button onClick={manejarDescarga} 
-              className="bg-rose-500 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded" >  
+            <Button variant="secondary" onClick={manejarDescarga}>
               Descargar QR
-            </button>
+            </Button>
           </div>
 
       </div>
       {/* modal   */}
       {mostrarModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-[#D9D9D9] p-10 w-[450px] text-center relative shadow-xl">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-md z-50 px-4">
+          <div className="bg-[#D9D9D9] p-6 md:p-10 w-full max-w-md text-center relative shadow-xl rounded-lg">
             {/* Botón X de cierre en la esquina */}
-            <button 
+            <button
               onClick={() => setMostrarModal(false)}
-              className="absolute right-4 top-4 font-black text-xl text-gray-800"
+              className="absolute right-4 top-4 text-2xl"
             >
-              X
+              ×
             </button>
 
             <h2 className="text-xl font-black mb-4 text-[#1A233A] uppercase">
@@ -215,12 +228,14 @@ function ContenidoPaginaCobros() {
               {mensaje}
             </p>
 
-            <Link href="/frontend/cobros/historial-pagos">
-              <button
-                className="bg-[#333] hover:bg-black text-white px-6 py-2 rounded text-xs font-bold"
+            <Link href="/frontend/perfil/">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="font-bold text-sm"
               >
                 Historial de Pagos
-              </button>
+              </Button>
             </Link>
           </div>
         </div>
