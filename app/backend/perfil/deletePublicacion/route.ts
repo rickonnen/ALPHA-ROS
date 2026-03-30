@@ -1,3 +1,17 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id_publicacion = searchParams.get("id_publicacion");
+
+  // Esto se verá en los logs de Vercel (en el dashboard)
+  console.log(`Se solicitó borrar la publicación con ID: ${id_publicacion}`);
+
+  return NextResponse.json(
+    { message: `Simulación: Se borró la publicación ${id_publicacion}` },
+    { status: 200 }
+  );
+}
 /*  Dev: Candy Camila Ordoñez Pinto
     Fecha: 28/03/2026
     Funcionalidad: DELETE /backend/perfil/deletePublicacion
