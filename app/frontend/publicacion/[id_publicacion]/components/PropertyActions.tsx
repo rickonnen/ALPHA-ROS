@@ -60,7 +60,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
           type="button"
           variant="outline"
           className="flex-1 md:flex-none min-w-0 border-[#C26E5A] text-[#C26E5A] px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs! md:text-lg! hover:bg-[#C26E5A]/5"
-          onClick={() => router.push("/perfil")}
+          onClick={() => router.push("/frontend/perfil")}
         >
           Ver mis publicaciones
         </Button>

@@ -34,7 +34,7 @@ interface FreePublicationLimitModalProps {
 export default function FreePublicationLimitModal({
   bolOpen,
   onBack,
-  strPlansHref   = "/pagina-cobros",
+  strPlansHref   = "/frontend/cobros/planes",
   strTitle       = "Has excedido tus publicaciones gratuitas",
   strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
