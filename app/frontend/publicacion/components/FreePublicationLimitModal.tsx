@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * @Dev: JimmyP
+ * @Dev: Gustavo Montaño
  * @Fecha: 28/03/2026
  * @Modificación: StefanyS — 29/03/2026
- * @Funcionalidad: Modal de la HU5. Se monta únicamente cuando PropertyActions
- *                 confirma que cant_publicaciones_restantes = 0.
- *                 Botones en color terracota/naranja, responsive para mobile y desktop.
- * @param {FreePublicationLimitModalProps} props - Callback y textos del modal.
- * @return {JSX.Element} AlertDialog abierto con tipografía Geist Sans.
+ * @Funcionalidad: Modal de la HU5. Controlado externamente por bolOpen.
+ *                 Solo se muestra cuando PropertyActions confirma límite alcanzado
+ *                 y activa bolOpen=true. Nunca se abre solo al montar.
+ * @param {FreePublicationLimitModalProps} props - Callback, estado y textos del modal.
+ * @return {JSX.Element | null} AlertDialog controlado o null si bolOpen es false.
  */
 
 import Link       from "next/link";
@@ -24,6 +24,7 @@ import {
 
 // PascalCase para la interfaz - Estándar Alpha-Ros
 interface FreePublicationLimitModalProps {
+  bolOpen:         boolean;   // controla si el modal está visible
   onBack:          () => void;
   strPlansHref?:   string;
   strTitle?:       string;
@@ -31,13 +32,18 @@ interface FreePublicationLimitModalProps {
 }
 
 export default function FreePublicationLimitModal({
+  bolOpen,
   onBack,
-  strPlansHref   = "/frontend/cobros/planes",
+  strPlansHref   = "/pagina-cobros",
   strTitle       = "Has excedido tus publicaciones gratuitas",
   strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
+
+  // No renderizar nada si el modal está cerrado
+  if (!bolOpen) return null;
+
   return (
-    <AlertDialog open={true}>
+    <AlertDialog open={bolOpen}>
       <AlertDialogContent
         className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8"
         style={{ fontFamily: 'var(--font-geist-sans)' }}

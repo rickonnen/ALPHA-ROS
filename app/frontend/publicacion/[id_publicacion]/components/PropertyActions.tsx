@@ -6,11 +6,10 @@
  * @Modificación: StefanyS — 29/03/2026
  * @Funcionalidad: Botones de acción en la página de detalle del inmueble.
  *                 Al hacer click en "Publicar otro inmueble" consulta el contador
- *                 del usuario en ese momento.
- *                 Si cant_publicaciones_restantes > 0 → redirige al formulario.
- *                 Si cant_publicaciones_restantes = 0 → muestra el modal (HU5).
+ *                 del usuario. El modal solo se abre si bolShowModal=true,
+ *                 nunca al montar el componente.
  * @param {PropertyActionsProps} props - ID del usuario dueño de la publicación.
- * @return {JSX.Element} Footer con botones y modal condicional.
+ * @return {JSX.Element} Footer con botones y modal controlado.
  */
 
 import { useRouter }             from "next/navigation";
@@ -26,33 +25,28 @@ interface PropertyActionsProps {
 
 export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
   const router = useRouter();
-  // Controla si el modal es visible
+  // Inicia en false — el modal NUNCA se abre solo al montar
   const [bolShowModal, setBolShowModal] = useState(false);
-  // Controla el estado de carga mientras se consulta la BD
   const [bolChecking,  setBolChecking]  = useState(false);
 
   /**
    * @Dev: StefanyS
    * @Fecha: 29/03/2026
-   * @Funcionalidad: Verifica el contador de publicaciones restantes al hacer click.
-   *                 cant_publicaciones_restantes > 0 → redirige al formulario.
-   *                 cant_publicaciones_restantes = 0 → abre el modal.
+   * @Funcionalidad: Verifica el contador SOLO al hacer click.
+   *                 Nunca modifica bolShowModal al montar o al renderizar.
    * @return {Promise<void>}
    */
   const handleNuevaPublicacion = async () => {
     setBolChecking(true);
     try {
       const objEstado = await verificarEstadoPublicacion(strUserId);
-
       if (objEstado.bolLimiteAlcanzado) {
-        // Contador en 0 → mostrar modal de límite alcanzado
+        // Solo aquí se abre el modal — después de verificar con un click real
         setBolShowModal(true);
       } else {
-        // Contador mayor a 0 → redirigir al formulario de publicación
         router.push("/frontend/publicacion/informacion-comercial");
       }
     } catch {
-      // Error de red o BD → redirigir para no bloquear al usuario
       router.push("/frontend/publicacion/informacion-comercial");
     } finally {
       setBolChecking(false);
@@ -66,7 +60,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
           type="button"
           variant="outline"
           className="flex-1 md:flex-none min-w-0 border-[#C26E5A] text-[#C26E5A] px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs! md:text-lg! hover:bg-[#C26E5A]/5"
-          onClick={() => router.push("/frontend/perfil")}
+          onClick={() => router.push("/perfil")}
         >
           Ver mis publicaciones
         </Button>
@@ -81,12 +75,11 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
         </Button>
       </footer>
 
-      {/* Modal solo se monta cuando bolShowModal es true */}
-      {bolShowModal && (
-        <FreePublicationLimitModal
-          onBack={() => setBolShowModal(false)}
-        />
-      )}
+      {/* Modal — siempre en el DOM pero solo visible cuando bolShowModal=true */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+      />
     </>
   );
 };
