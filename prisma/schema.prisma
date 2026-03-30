@@ -531,7 +531,15 @@ model CiudadImagen {
 }
 
 model DetallePago {
+<<<<<<< HEAD
   id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
+=======
+<<<<<<< HEAD
+  id_detalle      Int              @id(map: "DetallePago_pk") @db.SmallInt
+=======
+  id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
+>>>>>>> xdev/bbr-AlissonS_MarizabelC
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
   id_plan         Int?             @db.SmallInt
   fecha_detalle   DateTime?        @default(now()) @db.Timestamptz(6)
   estado          Int?             @db.SmallInt
@@ -571,7 +579,14 @@ model Etiquetas {
 model Favorito {
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+<<<<<<< HEAD
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
+=======
+<<<<<<< HEAD
+=======
+  fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
+>>>>>>> xdev/bbr-AlissonS_MarizabelC
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
 
@@ -643,7 +658,10 @@ model Pais {
   nombre_pais String?     @db.VarChar(128)
   codigo_iso  String?     @db.Char(2)
   Ubicacion   Ubicacion[]
+<<<<<<< HEAD
   Usuario     Usuario[]
+=======
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
 
   @@schema("public")
 }
@@ -656,7 +674,10 @@ model PlanPublicacion {
   activo             Boolean?      @default(false)
   id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
+<<<<<<< HEAD
   QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
+=======
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
 
   @@schema("public")
 }
@@ -710,9 +731,14 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
+<<<<<<< HEAD
   id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
   qr_URL          String?
   PlanPublicacion PlanPublicacion[]
+=======
+  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL    String?
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
 
   @@schema("public")
 }
@@ -732,6 +758,10 @@ model Telefono {
   codigo_pais     Int               @db.SmallInt
   UsuarioTelefono UsuarioTelefono[]
 
+<<<<<<< HEAD
+=======
+  @@id([nro_telefono, codigo_pais], map: "Telefono_pk")
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
   @@schema("public")
 }
 
@@ -781,7 +811,10 @@ model Usuario {
   url_foto_perfil              String?
   username                     String?             @db.VarChar(128)
   id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
+<<<<<<< HEAD
   id_pais                      Int?                @db.SmallInt
+=======
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
@@ -789,15 +822,21 @@ model Usuario {
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
   users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+<<<<<<< HEAD
   Pais                         Pais?               @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   UsuarioTelefono              UsuarioTelefono[]
   otp_cambio_correo            otp_cambio_correo[]
+=======
+  Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  UsuarioTelefono              UsuarioTelefono[]
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
 
   @@schema("public")
 }
 
 model UsuarioTelefono {
+<<<<<<< HEAD
   id_uste     Int      @id(map: "UsuarioTelefono_pk") @default(autoincrement()) @db.SmallInt
   id_telefono Int      @db.SmallInt
   id_usuario  String   @db.Uuid
@@ -805,6 +844,15 @@ model UsuarioTelefono {
   Telefono    Telefono @relation(fields: [id_telefono], references: [id_telefono], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
   Usuario     Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
 
+=======
+  nro_telefono String   @db.VarChar(12)
+  codigo_pais  Int      @db.SmallInt
+  id_usuario   String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  Telefono     Telefono @relation(fields: [nro_telefono, codigo_pais], references: [nro_telefono, codigo_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
+  Usuario      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
+
+  @@id([id_usuario, nro_telefono, codigo_pais], map: "UsuarioTelefono_pk")
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
   @@schema("public")
 }
 
@@ -828,6 +876,7 @@ model Zona {
   @@schema("public")
 }
 
+<<<<<<< HEAD
 model otp_cambio_correo {
   id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
@@ -848,6 +897,8 @@ model otp_cambio_correo {
   @@schema("public")
 }
 
+=======
+>>>>>>> b828786c4fdca7eafa202db655231b3e1f637e9f
 enum aal_level {
   aal1
   aal2

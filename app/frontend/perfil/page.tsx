@@ -23,26 +23,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home, Menu, X, LogOut, Loader2 } from "lucide-react";
 import PerfilView from "./views/perfil-view";
-// Importan sus respectivas vistas
 import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import HistorialPagosView from "@/app/frontend/cobros/historial-pagos/page";
 
-// ID TEMPORAL: falta el id de los de sign in
-// Final User 3
-//const ID_USUARIO_HARDCODEADO = "5c684c90-c84f-4dfb-a99c-017dcd614e32";
-// User 1
-const ID_USUARIO_HARDCODEADO = "a1b2c3d4-0003-0003-0003-000000000003";
-// User 2
-//const ID_USUARIO_HARDCODEADO = "9fa7d130-d52e-4749-974c-d232f5994f9f";
+/*  Dev: David Chavez Totora - xdev/davidc
+    Fecha: 29/03/2026
+    Funcionalidad: Página principal de Mi Perfil
+      - Lee el id_usuario desde el query param ?id=... que envía el Header
+      - Consume GET /backend/perfil/getUsuario?id_usuario=...
+      - Distribuye los datos reales a cada vista
+*/
 
 export default function PerfilPage() {
+  const searchParams = useSearchParams();
+  // Lee el id que envía el Header como /frontend/perfil?id=<user.id>
+  const idUsuario = searchParams.get("id") ?? "";
+
   const [view, setView] = useState("perfil");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -51,11 +55,17 @@ export default function PerfilPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!idUsuario) {
+      setError("No se proporcionó un ID de usuario.");
+      setLoading(false);
+      return;
+    }
+
     const fetchUsuario = async () => {
       try {
         setLoading(true);
         const res = await fetch(
-          `/backend/perfil/getUsuario?id_usuario=${ID_USUARIO_HARDCODEADO}`
+          `/backend/perfil/getUsuario?id_usuario=${idUsuario}`
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -68,7 +78,7 @@ export default function PerfilPage() {
     };
 
     fetchUsuario();
-  }, []);
+  }, [idUsuario]);
 
   const menuItems = [
     { id: "perfil", name: "MI PERFIL" },
@@ -80,29 +90,27 @@ export default function PerfilPage() {
   ];
 
   const telefonos = usuario?.UsuarioTelefono?.map(
-      (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
+    (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
   ) ?? [];
 
-  
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
-    perfil: usuario ? (<PerfilView usuario={usuario} telefonos={telefonos} />) : null,
-    publicaciones: usuario ? (<PublicacionesView id_usuario={usuario.id_usuario} />) : null,
+    perfil: usuario ? <PerfilView usuario={usuario} telefonos={telefonos} /> : null,
+    publicaciones: usuario ? <PublicacionesView id_usuario={usuario.id_usuario} /> : null,
     seguridad: (
       <SeguridadView
-        id_usuario={ID_USUARIO_HARDCODEADO}
+        id_usuario={idUsuario}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={usuario.id_usuario} /> : null,
-    historial: <HistorialView id_usuario={ID_USUARIO_HARDCODEADO} />,
-    historialPagos: <HistorialPagosView id_usuario={ID_USUARIO_HARDCODEADO} />,
+    historial: <HistorialView id_usuario={idUsuario} />,
+    historialPagos: <HistorialPagosView id_usuario={idUsuario} />,
   };
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-
       <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
 
         {loading && (
