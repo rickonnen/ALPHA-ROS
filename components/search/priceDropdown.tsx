@@ -132,29 +132,29 @@ export default function PriceDropdown({
     };
 
     return (
-        <div className="w-full max-w-lg">
+        <div className="w-full  max-w-lg mt-3">
             <Accordion 
                 type="single" 
                 collapsible 
-                className="w-full"
+                className="w-full "
                 value={accordionValue}
                 onValueChange={(value) => setAccordionValue(value || undefined)}
             >
                 <AccordionItem value="price" className="border-none ">
 
-                    <div className="border-2 border-black rounded-xl w-full overflow-hidden bg-[#F4EFE6]">
-                        <AccordionTrigger className="text-xl text-black text-left px-4 py-3">
+                    <div className="  rounded-xl w-full overflow-hidden bg-[#F4EFE6]">
+                        <AccordionTrigger className="text-sm text-black text-left px-4 py-3">
                             {getTriggerLabel()}
                         </AccordionTrigger>
                     </div>
 
-                    <AccordionContent className="pt-2">
-                        <div className="flex flex-col p-4 border-2 border-black rounded-xl">
+                    <AccordionContent className="pt-2 ">
+                        <div className="flex flex-col p-4 border-2  rounded-xl bg-white ">
                             <CurrencySwitch 
                                 currentCurrency={selectedCurrency}
                                 setCurrentCurrency={onCurrencyChange}
                             />
-                            <div className="flex justify-center gap-1 mt-3">
+                            <div className="flex justify-center gap-1 mt-3 ">
                                 <input
                                     type="number"
                                     placeholder={`Min ${selectedCurrency}`}
