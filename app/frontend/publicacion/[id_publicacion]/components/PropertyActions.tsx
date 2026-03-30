@@ -16,7 +16,7 @@ import { useRouter }             from "next/navigation";
 import { useState }              from "react";
 import { Button }                from "@/components/ui/button";
 import FreePublicationLimitModal from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
-import { verificarEstadoPublicacion } from "@/app/backend/publicacion/action";
+import { verificarEstadoPublicacion } from "@/app/backend/publicacion/modal/action";
 
 // PascalCase para la interfaz - Estándar Alpha-Ros
 interface PropertyActionsProps {

@@ -9,7 +9,7 @@ import { useState } from "react";
 import FreePublicationLimitModal from "./frontend/publicacion/components/FreePublicationLimitModal";
 import { Button } from "@/components/ui/button";
 
-import { asociarPublicacionExistente } from "@/app/backend/publicacion/action";
+import { asociarPublicacionExistente } from "@/app/backend/publicacion/modal/action";
 
 export default function GuiaTipografia() {
   // Estados renombrados con prefijos 'int' (integer/number) y 'bol' (boolean) según el estándar
