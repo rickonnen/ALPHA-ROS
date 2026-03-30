@@ -11,9 +11,11 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.100.1",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
+    "geist": "^1.7.0",
     "embla-carousel-react": "^8.6.0",
-    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-label": "^2.1.7",
     "libphonenumber-js": "^1.12.41",
     
     "lucide-react": "^1.0.1",
