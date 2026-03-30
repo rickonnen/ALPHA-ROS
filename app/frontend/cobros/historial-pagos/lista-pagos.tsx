@@ -6,7 +6,16 @@
  */
 import { useState, useEffect } from "react";
 import CardPago from "./card-pago";
-import EstadoVacio from "../../auth/estado-vacio";
+import EstadoVacio from "./estado-vacio";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Pago {
   id: number;
@@ -33,7 +42,7 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
     setLoading(true);
     try {
       const res = await fetch(
-        `/backend/cobros/historial-pagos?estado=${estado}&id_usuario=${id_usuario}` // 👈 agregado id_usuario
+        `/backend/cobros/historial-pagos?estado=${estado}&id_usuario=${id_usuario}`
       );
       const data = await res.json();
       setPagos(Array.isArray(data) ? data : data.data || []);
@@ -85,9 +94,9 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
   const datos = pagosAdaptados.slice(inicio, inicio + ITEMS);
 
   return (
-    <div className="mt-4 space-y-3">
+    <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-2">
       {/* BARRA SUPERIOR (DESHABILITADA) */}
-      <div className="bg-[#E8A5A0] text-white text-sm px-4 py-2 flex justify-between items-center opacity-80">
+      <div className="bg-[#E8A5A0] text-black text-sm px-4 py-2 flex justify-between items-center opacity-80">
         <span>Últimos 30 días (17/02/2026 - 19/03/2026)</span>
       </div>
 
@@ -97,23 +106,35 @@ export default function ListaPagos({ estado, id_usuario }: { estado: "pendiente"
       ))}
 
       {/* PAGINACIÓN */}
-      <div className="flex justify-end gap-2 text-sm text-[#ffffff]">
-        <button onClick={() => setPagina(p => Math.max(p - 1, 1))}>
-          ←
-        </button>
-        {Array.from({ length: totalPaginas }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setPagina(i + 1)}
-            className={pagina === i + 1 ? "font-bold" : ""}
-          >
-            {i + 1}
-          </button>
-        ))}
-        <button onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))}>
-          →
-        </button>
-      </div>
+      <Pagination className="justify-end">
+        <PaginationContent>
+
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => setPagina(p => Math.max(p - 1, 1))}
+            />
+          </PaginationItem>
+
+          {Array.from({ length: totalPaginas }).map((_, i) => (
+            <PaginationItem key={i}>
+              <PaginationLink
+                isActive={pagina === i + 1}
+                onClick={() => setPagina(i + 1)}
+              >
+                {i + 1}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))}
+            />
+          </PaginationItem>
+
+        </PaginationContent>
+      </Pagination>
+
     </div>
   );
 }
