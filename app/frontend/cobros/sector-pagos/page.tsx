@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -9,45 +9,77 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import HistorialPagosView from "@/app/frontend/cobros/historial-pagos/page";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
+
+// 1. Skeleton adaptado a variables globales
+function PaginaCobrosSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col md:flex-row">
+      {/* Columna Izquierda - Skeleton */}
+      <div className="flex w-full flex-col justify-between bg-muted/30 p-10 md:w-1/2 lg:p-16">
+        <div>
+          <Skeleton className="mb-8 h-12 w-3/4" />
+          <Skeleton className="mb-4 h-6 w-1/3" />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
+        </div>
+        <div className="mt-12">
+          <Skeleton className="h-10 w-28" />
+        </div>
+      </div>
+
+      {/* Columna Derecha - Skeleton */}
+      <div className="flex w-full flex-col items-center justify-center bg-background p-10 md:w-1/2 lg:p-16">
+        <div className="flex w-full max-w-sm flex-col items-center">
+          <Skeleton className="mb-2 h-6 w-1/2" />
+          <Skeleton className="mb-10 h-10 w-1/3" />
+          <Skeleton className="mb-10 h-64 w-64 rounded-md" />
+          <div className="flex w-full flex-col gap-4">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PaginaSectorPagos() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-10 text-center">Cargando parámetros de pago...</div>
-      }
-    >
+    <Suspense fallback={<PaginaCobrosSkeleton />}>
       <ContenidoPaginaCobros />
     </Suspense>
   );
 }
 
+type EstadoModal = "cerrado" | "confirmacion" | "procesando" | "ya_pendiente";
+
 function ContenidoPaginaCobros() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const planId = searchParams.get("planId") || "1";
-  // Lee el id que envía el Header como /frontend/perfil?id=<user.id>
   const idUsuario = searchParams.get("id") ?? "";
 
-  // Estados de información
-  const [mensaje, setMensaje] = useState("Esperando interacción...");
-  const [titulo, setTitulo] = useState("Estado del Pago");
-  const [nombrePlan, setNombrePlan] = useState("");
+  const [nombrePlan, setNombrePlan] = useState("PLAN X");
   const [descripcionPlan, setDescripcionPlan] = useState("");
   const [totalAPagar, setTotalAPagar] = useState<number>(0);
   const [qrUrl, setQrUrl] = useState<string>("");
-
-  const [mostrarModal, setMostrarModal] = useState(false);
   const [estaCargando, setEstaCargando] = useState(true);
+  const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
 
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       setEstaCargando(true);
       try {
-        // Ejecutamos ambas peticiones en paralelo para ganar velocidad
         const [resPlan, resQr] = await Promise.all([
           fetch(`/backend/cobros/getplan?planId=${planId}`),
           fetch(`/backend/cobros/descargar?planId=${planId}`),
@@ -55,35 +87,30 @@ function ContenidoPaginaCobros() {
 
         const dataPlan = await resPlan.json();
         const dataQr = await resQr.json();
-        if (dataQr && dataQr.url) {
-          setQrUrl(dataQr.url);
-        } else {
-          console.error("No se recibió URL de QR válida");
-        }
+
         if (dataPlan && !dataPlan.error) {
           setNombrePlan(dataPlan.nombre);
           setTotalAPagar(dataPlan.total);
           setDescripcionPlan(dataPlan.descripcion);
         }
 
-        if (dataQr.url) {
+        if (dataQr && dataQr.url) {
           setQrUrl(dataQr.url);
         }
       } catch (error) {
         console.error("Error en la carga inicial:", error);
-        setMensaje("Error al conectar con el servidor.");
       } finally {
-        setTimeout(() => setEstaCargando(false), 800);
+        setEstaCargando(false);
       }
     };
 
     cargarDatosIniciales();
   }, [planId]);
 
-  //const USUARIO_SIMULADO_ID = "a1b2c3d4-0003-0003-0003-000000000003";
-  const manejarVerificacion = async () => {
+  const manejarAceptarPago = async () => {
+    setEstadoModal("cerrado");
+
     try {
-      console.log(searchParams.get("id"));
       const res = await fetch("/backend/cobros/verificar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,21 +122,19 @@ function ContenidoPaginaCobros() {
 
       const data = await res.json();
 
-      // Seteamos los estados para el modal
-      setTitulo(data.titulo);
-      setMensaje(data.mensaje);
-      setMostrarModal(true);
+      if (res.status === 409 || data.yaPendiente) {
+        setEstadoModal("ya_pendiente");
+      } else {
+        setEstadoModal("procesando");
+      }
     } catch (error) {
       console.error("Error al registrar:", error);
-      setTitulo("Verificando Pago");
-      setMensaje("El pago se esta procesando, esto puedo durar algunas horas");
-      setMostrarModal(true);
+      setEstadoModal("ya_pendiente");
     }
   };
 
   const manejarDescarga = async () => {
     if (!qrUrl) return;
-    setMensaje("Iniciando descarga de QR...");
     const respuestaImagen = await fetch(qrUrl);
     const blob = await respuestaImagen.blob();
     const urlBlob = window.URL.createObjectURL(blob);
@@ -119,125 +144,159 @@ function ContenidoPaginaCobros() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setMensaje("QR guardado en tu dispositivo.");
+  };
+
+  const irAlPerfil = () => {
+    router.push(`/frontend/perfil?id=${idUsuario}`);
   };
 
   if (estaCargando) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 font-geist">
-        <div className="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
-          <div className="h-full bg-black animate-progress-bar"></div>
-        </div>
-        <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">
-          cargando la pagina, por favor espere
-        </p>
-      </div>
-    );
+    return <PaginaCobrosSkeleton />;
   }
 
+  // --- RENDERIZADO PRINCIPAL (Sin colores harcodeados) ---
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* DIV DE LA IZQUIERDA */}
-      <div className="w-full md:w-3/5 bg-background p-8 md:p-12 flex flex-col gap-6 md:justify-between md:min-h-screen">
-        {/* Contenedor superior para Título y Descripción */}
+    <div className="flex min-h-screen flex-col md:flex-row bg-background">
+      {/* Columna Izquierda */}
+      <div className="flex w-full flex-col justify-between bg-muted/30 p-10 md:w-1/2 lg:p-16">
         <div>
-          <Card className="shadow-lg rounded-2xl border-border">
-            <CardHeader>
-              <CardTitle className="text-2xl md:text-4xl font-bold font-mono text-foreground ml-0 md:ml-10 mt-4">
-                {nombrePlan}
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="p-4 md:p-6 rounded-md mt-4 md:mt-10">
-                <p className="text-lg md:text-xl text-muted-foreground font-bold whitespace-pre-line leading-relaxed border-l-4 border-border pl-3 font-mono">
-                  descripción:
-                </p>
-
-                <p className="text-base md:text-xl text-muted-foreground whitespace-pre-line leading-relaxed border-l-4 border-border pl-3 mt-2 font-mono">
-                  {descripcionPlan}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <h1 className="mb-8 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
+            {nombrePlan}
+          </h1>
+          <h2 className="mb-4 text-xl font-bold text-foreground">
+            Descripción
+          </h2>
+          <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
+            {descripcionPlan || "Cargando detalles..."}
+          </div>
         </div>
 
-        {/* BOTÓN VOLVER (Posicionado abajo a la izquierda) */}
-        <div className="ml-10 mb-5">
+        <div className="mt-12">
           <Link href={`/frontend/cobros/planes?id=${idUsuario}`}>
-            <Button>Volver</Button>
+            <Button variant="default">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+            </Button>
           </Link>
         </div>
       </div>
 
-      {/* DIV DE LA DERECHA  */}
-      <div className="w-full md:w-2/5 bg-white p-8 md:p-12 border-t md:border-t-0 md:border-l">
-        <h2 className="text-2xl md:text-3xl text-foreground font-mono text-center mt-5">
-          TOTAL A PAGAR
-        </h2>
+      {/* Columna Derecha */}
+      <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
+        <div className="flex flex-col items-center w-full max-w-sm">
+          <h2 className="text-2xl font-medium text-muted-foreground mb-2">
+            Total a pagar
+          </h2>
+          <div className="text-3xl mb-10 text-foreground font-semibold">
+            $ {totalAPagar.toFixed(2)}
+          </div>
 
-        <div className="text-3xl md:text-4xl font-bold text-primary px-4 py-2 text-center">
-          ${totalAPagar.toFixed(2)}
-        </div>
-
-        <div className="flex justify-center items-center my-8 md:my-10">
-          {qrUrl ? (
-            <img
-              src={qrUrl}
-              alt="Código QR de Pago Real"
-              className="w-48 h-48 md:w-70 md:h-70 border-4 border-white shadow-2xl rounded-2xl transition-opacity duration-500"
-            />
-          ) : (
-            <div className="w-48 h-48 md:w-70 md:h-70 bg-gray-200 animate-pulse rounded-2xl flex items-center justify-center border-4 border-white shadow-2xl">
-              <span className="text-gray-400 font-mono text-xs uppercase">
+          <div className="mb-10 flex h-64 w-64 items-center justify-center overflow-hidden rounded-md border border-border shadow-sm">
+            {qrUrl ? (
+              <img
+                src={qrUrl}
+                alt="Código QR de Pago"
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <span className="text-sm uppercase text-muted-foreground font-medium">
                 Generando QR...
               </span>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <div className="flex justify-center mt-19">
-          <Button onClick={manejarVerificacion}>Verificar Pago</Button>
-        </div>
-
-        <div className="flex justify-center mt-8">
-          <Button variant="secondary" onClick={manejarDescarga}>
-            Descargar QR
-          </Button>
-        </div>
-      </div>
-      {/* modal   */}
-      {mostrarModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/10 backdrop-blur-md z-50 px-4">
-          <div className="bg-[#D9D9D9] p-6 md:p-10 w-full max-w-md text-center relative shadow-xl rounded-lg">
-            {/* Botón X de cierre en la esquina */}
-            <button
-              onClick={() => setMostrarModal(false)}
-              className="absolute right-4 top-4 text-2xl"
+          <div className="flex w-full flex-col gap-4">
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full font-semibold text-lg py-6 shadow-md"
+              onClick={() => setEstadoModal("confirmacion")}
             >
-              ×
-            </button>
+              Verificar Pago
+            </Button>
 
-            <h2 className="text-xl font-black mb-4 text-[#1A233A] uppercase">
-              {titulo}
-            </h2>
-
-            <p className="text-[#3E4D6E] text-sm mb-8 px-4 font-bold">
-              {mensaje}
-            </p>
-
-            <Link href={`/frontend/perfil?id=${idUsuario}`}>
-              <Button
-                variant="secondary"
-                size="lg"
-                className="font-bold text-sm"
-              >
-                Historial de Pagos
-              </Button>
-            </Link>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full font-bold text-lg py-6 shadow-md transition-colors"
+              onClick={manejarDescarga}
+            >
+              DESCARGAR QR
+            </Button>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Modales */}
+      <AlertDialog
+        open={estadoModal !== "cerrado"}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setEstadoModal("cerrado");
+        }}
+      >
+        <AlertDialogContent>
+          {estadoModal === "confirmacion" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  ¿Estás seguro de que hiciste el pago?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción notificará al sistema para validar la transacción.
+                  Asegúrate de haber completado la transferencia.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  Rechazar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={manejarAceptarPago}>
+                  Aceptar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {estadoModal === "procesando" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Verificando pago</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Este proceso puede durar algunas horas. Puedes revisar el
+                  estado de tu pago en tu perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  Cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}>
+                  Ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {estadoModal === "ya_pendiente" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Pago en proceso</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ya tienes un pago pendiente de verificación. Por favor, espera
+                  a que se complete o revisa el estado en tu perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  Cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}>
+                  Ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
