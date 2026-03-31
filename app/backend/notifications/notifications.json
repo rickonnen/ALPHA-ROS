@@ -57,6 +57,16 @@
     "id": 10,
     "title": "Pago recibido 1000",
     "message": "Has recibido un pago de Bs. 1000",
+<<<<<<< Updated upstream
     "read": false
+=======
+    "read": true
+  },
+  {
+    "id": 2,
+    "title": "Luz vacaciones",
+    "message": "Nueva propiedad disponible en tu zona",
+    "read": true
+>>>>>>> Stashed changes
   }
 ]
