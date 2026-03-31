@@ -7,6 +7,8 @@ import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/frontend/auth/AuthContext";
 import NotificationsPanel from "@/app/frontend/notifications/NotificationsPanel";
 
+import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
+
 export default function TestAuthPage() {
   const { user, logout, isLoading } = useAuth();
 
@@ -15,6 +17,7 @@ export default function TestAuthPage() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
   const [showNotifications, setShowNotifications] = useState(false);
+<<<<<<< HEAD
   const [notifications, setNotifications] = useState<any[]>([]);
   
   // Función para cerrar el panel de notificaciones
@@ -82,6 +85,8 @@ export default function TestAuthPage() {
 
   // 🔢 Contador dinámico
   const unreadCount = notifications.filter((n) => !n.read).length;
+=======
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
 
   return (
     <div className="min-h-screen bg-gray-100 p-10 flex flex-col items-center">
@@ -93,6 +98,7 @@ export default function TestAuthPage() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
+<<<<<<< HEAD
               {/* 🔔 NOTIFICACIONES */}
               <div className="relative">
                 <button
@@ -120,15 +126,34 @@ export default function TestAuthPage() {
               </div>
 
               {/* USER */}
+=======
+              <button
+                onClick={() => setShowNotifications((prev) => !prev)}
+                title="Notificaciones"
+                aria-label="Notificaciones"
+                className="text-gray-600 hover:text-[#B47B65] transition-colors"
+              >
+                <Bell size={24} />
+              </button>
+
+              {showNotifications && <NotificationPanel />}
+
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
               <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 <span className="text-gray-700 font-medium">{user.name}</span>
 
                 <button
+<<<<<<< HEAD
                   onClick={() => {
                     logout();
                     setShowAuth(false);
                   }}
                   className="text-gray-600 hover:text-red-600"
+=======
+                  onClick={() => { logout(); setShowAuth(false); }}
+                  className="text-gray-600 hover:text-red-600 transition-colors"
+                  title="Cerrar sesión"
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
                 >
                   <LogOut size={20} />
                 </button>
@@ -144,10 +169,7 @@ export default function TestAuthPage() {
               </button>
 
               <button
-                onClick={() => {
-                  setAuthMode("login");
-                  setShowAuth(true);
-                }}
+                onClick={() => { setAuthMode("login"); setShowAuth(true); }}
                 className="bg-[#B47B65] text-white px-6 py-2 rounded-full font-bold"
               >
                 Iniciar Sesión
@@ -159,6 +181,7 @@ export default function TestAuthPage() {
 
       {/* BODY */}
       <div className="p-10 text-center text-gray-400 italic">
+<<<<<<< HEAD
         {isLoading ? (
           <p>Cargando...</p>
         ) : user ? (
@@ -169,20 +192,22 @@ export default function TestAuthPage() {
       </div>
 
       {/* MODALES */}
+=======
+        {isLoading
+          ? <p>Cargando...</p>
+          : user
+            ? <p>¡Bienvenido, {user.name}! Estás autenticado.</p>
+            : <p>(Este fondo representa el HOME que está haciendo el otro grupo)</p>
+        }
+      </div>
+
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
       <ProtectedFeatureModal
         isOpen={showProtected}
         featureName="esta función"
         onClose={() => setShowProtected(false)}
-        onLoginClick={() => {
-          setShowProtected(false);
-          setAuthMode("login");
-          setShowAuth(true);
-        }}
-        onRegisterClick={() => {
-          setShowProtected(false);
-          setAuthMode("register");
-          setShowAuth(true);
-        }}
+        onLoginClick={() => { setShowProtected(false); setAuthMode("login"); setShowAuth(true); }}
+        onRegisterClick={() => { setShowProtected(false); setAuthMode("register"); setShowAuth(true); }}
       />
 
       <AuthModal

@@ -9,7 +9,11 @@
     "id": 2,
     "title": "Mensaje inmobiliario",
     "message": "Nueva propiedad disponible en tu zona",
+<<<<<<< HEAD
     "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
   },
   {
     "id": 3,
@@ -21,25 +25,41 @@
     "id": 4,
     "title": "Nuevo favorito",
     "message": "Alguien guardó tu propiedad",
+<<<<<<< HEAD
     "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
   },
   {
     "id": 5,
     "title": "Pago recibido 5",
     "message": "Has recibido un pago de Bs. 500",
+<<<<<<< HEAD
     "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
   },
   {
     "id": 6,
     "title": "Pago recibido 6",
     "message": "Has recibido un pago de Bs. 600",
+<<<<<<< HEAD
     "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
   },
   {
     "id": 7,
     "title": "Pago recibido 7",
     "message": "Has recibido un pago de Bs. 700",
+<<<<<<< HEAD
     "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
   },
   {
     "id": 8,
@@ -57,6 +77,7 @@
     "id": 10,
     "title": "Pago recibido 1000",
     "message": "Has recibido un pago de Bs. 1000",
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     "read": false
 =======
@@ -68,5 +89,12 @@
     "message": "Nueva propiedad disponible en tu zona",
     "read": true
 >>>>>>> Stashed changes
+=======
+<<<<<<< HEAD
+    "read": false
+=======
+    "read": true
+>>>>>>> origin/xdev/bbr-AlissonS_MarizabelC
+>>>>>>> dd88cde8ea6ff0e756e8ea605efac40bdd110691
   }
 ]
