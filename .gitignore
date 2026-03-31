@@ -32,7 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-prisma
+prisma/*
+!prisma/
+!prisma/schema.prisma
 
 # vercel
 .vercel
@@ -42,4 +44,3 @@ prisma
 next-env.d.ts
 
 /lib/generated/prisma
-
