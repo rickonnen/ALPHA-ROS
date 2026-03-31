@@ -8,7 +8,6 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet"
 import L from "leaflet"
 import { useState, useEffect } from "react"
 import MarkerClusterGroup from "react-leaflet-cluster"
-import "leaflet/dist/leaflet.css"
 
 // IMPORTACIÓN DE SHADCN
 import { Button } from "@/components/ui/button"

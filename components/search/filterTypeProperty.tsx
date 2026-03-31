@@ -2,7 +2,6 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { Geist } from 'next/font/google'
 import {
   Accordion,
   AccordionContent,
@@ -20,10 +19,6 @@ type Props = {
   selected: number[]
   onChange: (selected: number[]) => void
 }
-
-const geist = Geist({
-  subsets: ['latin']
-})
 
 export function FilterTypeProperty({tipos, selected, onChange }: Props) {
 
@@ -57,11 +52,11 @@ export function FilterTypeProperty({tipos, selected, onChange }: Props) {
               hover:no-underline hover:bg-gray-50 
               text-[#1f3a4d] 
             ">
-            <div className={`${geist.className} flex w-full`}> 
+            <div className="font-sans flex w-full"> 
               <span className="flex-1 truncate text-left ">{labelTruncated}</span> 
             </div>
           </AccordionTrigger>
-        <AccordionContent className={`${geist.className} pb-0`}>
+        <AccordionContent className="font-sans pb-0">
           <div className="bg-white rounded-2xl border-amber-900 p-2 shadow-sm">
             {tipos.map((tipo, index) => {
               const id = `tipo-inmueble-${tipo.id_tipo_inmueble}`

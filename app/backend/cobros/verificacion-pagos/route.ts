@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { PrismaClient } from '@prisma/client';
 
 const objPrisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 /**
  * Dev: Gabriel

@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Geist } from "next/font/google";
-
-const geist = Geist({ subsets: ["latin"] });
 
 const HABITACIONES = [
   "Sin ambientes",
@@ -100,7 +97,7 @@ export default function FiltrosAvanzado({ onChange }: Props) {
   return (
     <div
       ref={wrapperRef}
-      className={`${geist.className} bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72`}
+      className="font-sans bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72"
     >
       <button
         onClick={() => setAbierto((p) => !p)}

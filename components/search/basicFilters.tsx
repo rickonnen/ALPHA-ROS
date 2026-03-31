@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Geist } from "next/font/google";
 import { buscarPublicaciones, type FiltrosPublicacion } from "@/app/frontend/search/search-services";
-
-const geist = Geist({ subsets: ["latin"] });
 
 interface MapboxFeature {
   id: string;
@@ -126,7 +123,7 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
   return (
     <div
       ref={wrapperRef}
-      className={`${geist.className} bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72`}
+      className="font-sans bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72"
     >
       <h2 className="text-lg font-semibold text-[#2E2E2E]">Filtros</h2>
       <p className="text-xs text-[#2E2E2E]/60 mb-4">Filtros Básicos</p>

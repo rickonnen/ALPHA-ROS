@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,21 +5,54 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PlanPublicacion } from "@prisma/client";
-import Link from "next/link";
 import { BotonContinuarPlan } from "./BotonContinuarPlan";
 
+interface PlanPublicacionCard {
+  id_plan: number;
+  nombre_plan: string | null;
+  precio_plan: string | number | null;
+  cant_publicaciones: number | null;
+  activo: boolean | null;
+  id_metodo: number | null;
+}
+
 async function obtenerPlanes() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/backend/cobros/planes`, {
-    cache: "no-store",
-  });
+  // const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  // const res = await fetch(`${baseUrl}/backend/cobros/planes`, {
+  //   cache: "no-store",
+  // });
 
-  if (!res.ok) {
-    throw new Error("Fallo al obtener los planes de publicación");
-  }
+  // if (!res.ok) {
+  //   throw new Error("Fallo al obtener los planes de publicación");
+  // }
+  const res: PlanPublicacionCard[] = [
+    {
+      id_plan: 1,
+      nombre_plan: "PLAN ESTANDAR",
+      precio_plan: "0.99",
+      cant_publicaciones: 2,
+      activo: true,
+      id_metodo: 1,
+    },
+    {
+      id_plan: 2,
+      nombre_plan: "PLAN PLUS",
+      precio_plan: "4.99",
+      cant_publicaciones: 10,
+      activo: true,
+      id_metodo: 1,
+    },
+    {
+      id_plan: 3,
+      nombre_plan: "PLAN PRO",
+      precio_plan: "9.99",
+      cant_publicaciones: 25,
+      activo: true,
+      id_metodo: 1,
+    },
+  ];
 
-  return res.json();
+  return res;
 }
 
 interface Props {
@@ -51,7 +83,7 @@ export default async function PlanesPublicacion({ searchParams }: Props) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {planes.map((plan: PlanPublicacion) => (
+          {planes.map((plan) => (
             <Card
               key={plan.id_plan}
               className="flex flex-col text-center border-2 shadow-sm rounded-xl py-6"

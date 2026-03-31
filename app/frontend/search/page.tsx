@@ -11,7 +11,6 @@ import { OperationTypeFilter, type OperationType } from '@/components/search/ope
 
 import { FilterTypeProperty, TipoInmueble } from '@/components/search/filterTypeProperty';
 import { useSearchParams } from 'next/navigation'; 
-import { getPublicacionesOrdenadas } from '@/app/backend/filter_search_page/services';
 
 type Currency = "USD" | "BS";
 

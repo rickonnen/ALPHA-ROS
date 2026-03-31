@@ -22,7 +22,7 @@
 */
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ import HistorialPagosView from "@/app/frontend/cobros/historial-pagos/page";
       - Distribuye los datos reales a cada vista
 */
 
-export default function PerfilPage() {
+function PerfilPageContent() {
   const searchParams = useSearchParams();
   // Lee el id que envía el Header como /frontend/perfil?id=<user.id>
   const idUsuario = searchParams.get("id") ?? "";
@@ -221,5 +221,24 @@ export default function PerfilPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function PerfilPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[var(--background)]">
+          <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
+            <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span className="text-sm font-medium">Cargando perfil...</span>
+            </div>
+          </main>
+        </div>
+      }
+    >
+      <PerfilPageContent />
+    </Suspense>
   );
 }

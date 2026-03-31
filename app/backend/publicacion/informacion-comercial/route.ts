@@ -8,6 +8,8 @@
 import { NextRequest } from "next/server";
 import { crearInformacionComercialController } from "./publicacion.controller";
 
+export const dynamic = "force-dynamic";
+
 /**
  * @Funcionalidad: Maneja las peticiones POST al endpoint de información comercial
  * @param {NextRequest} req - Request de Next.js

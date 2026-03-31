@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 //para poder agregar automaticamente la descripcion, qr y precio a cobros 
 const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {

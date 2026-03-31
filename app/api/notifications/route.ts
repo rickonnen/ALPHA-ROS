@@ -3,6 +3,8 @@ import notifications from "@/app/backend/notifications/notifications.json";
 import fs from "fs";
 import path from "path";
 
+export const dynamic = "force-dynamic";
+
 // Ruta al archivo JSON
 const notificationsPath = path.join(process.cwd(), "app/backend/notifications/notifications.json");
 

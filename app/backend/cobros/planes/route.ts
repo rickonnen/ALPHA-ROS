@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+export const dynamic = "force-dynamic";
 
 // Fíjate que es "export async function GET", NO "export default async function"
 export async function GET() {
