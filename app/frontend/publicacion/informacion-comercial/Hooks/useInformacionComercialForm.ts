@@ -1,6 +1,16 @@
 ﻿/**
  * @Dev: [OliverG]
  * @Fecha: 28/03/2026
+ * @Modificación: Gabriel Paredes Sipe — 29/03/2026
+ *   → handleSiguiente recibe idUsuario como parámetro en lugar de leerlo
+ *     desde useAuth, para evitar dependencia del AuthProvider en el hook.
+ *     El page.tsx es quien lee el usuario y lo pasa al llamar handleSiguiente.
+ * @Modificación: Gabriel Paredes Sipe — 30/03/2026
+ *   → Se elimina useAuth del hook y del page.tsx. El id_usuario se lee
+ *     directamente desde localStorage (donde AuthContext lo persiste en
+ *     login, signup y Google), evitando el error "useAuth debe ser usado
+ *     dentro de AuthProvider" causado por que el AuthProvider en el layout
+ *     no envuelve los children de la página.
  * @Funcionalidad: Hook personalizado que centraliza toda la lógica del formulario
  * de Información Comercial. Maneja estados, validaciones, formato de precio,
  * interacción con los dropdowns y el guardado temporal de datos para el paso 2.
@@ -52,19 +62,14 @@ function isFormField(fieldName: string): fieldName is FormField {
  * @return {string} Valor formateado (ej: "1.234,56")
  */
 function formatPriceInput(inputValue: string): string {
-  // Eliminar caracteres no permitidos, solo dígitos y coma decimal
   const sanitized = inputValue.replace(/[^\d,]/g, "");
   if (!sanitized) return "";
-
   const [rawInteger = "", ...rest] = sanitized.split(",");
   const hasComma = sanitized.includes(",");
   const integerDigits = rawInteger.replace(/^0+(?=\d)/, "");
   const normalizedInteger = integerDigits === "" ? (hasComma ? "0" : "") : integerDigits;
-  // Agregar puntos de miles al entero
   const integerWithThousands = normalizedInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  // Limitar decimales a 2 dígitos
   const decimalDigits = rest.join("").slice(0, 2);
-
   if (!hasComma) return integerWithThousands;
   return `${integerWithThousands},${decimalDigits}`;
 }
@@ -76,7 +81,6 @@ function formatPriceInput(inputValue: string): string {
  */
 function parseFormattedPrice(priceValue: string): number | null {
   if (!priceValue) return null;
-  // Normalizar de formato boliviano a formato JS
   const normalized = priceValue.replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
@@ -94,11 +98,11 @@ function toBackendPrice(priceValue: string): string {
 export function useInformacionComercialForm() {
   const router = useRouter();
 
-  const [form, setForm] = useState<FormData>(FORM_INICIAL);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
+  const [form, setForm]                   = useState<FormData>(FORM_INICIAL);
+  const [errors, setErrors]               = useState<FormErrors>({});
+  const [touched, setTouched]             = useState<Partial<Record<keyof FormData, boolean>>>({});
+  const [isSubmitting, setIsSubmitting]   = useState(false);
+  const [submitStatus, setSubmitStatus]   = useState<"success" | "error" | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
   // Indica si el componente ya está montado en el cliente
   // Evita el error de hydration al mostrar datos del sessionStorage
@@ -119,8 +123,8 @@ export function useInformacionComercialForm() {
       }
     }
     setTimeout(() => {
-    setBolMounted(true);
-  },0);
+      setBolMounted(true);
+    }, 0);
   }, []);
 
   // Guardar borrador automáticamente cada vez que el form cambia
@@ -142,25 +146,19 @@ export function useInformacionComercialForm() {
         if (value.trim().length < TITULO_MIN) return `Mínimo ${TITULO_MIN} caracteres.`;
         if (value.length > TITULO_MAX) return `Máximo ${TITULO_MAX} caracteres.`;
         return undefined;
-
       case "precio": {
         if (!value) return "El precio es obligatorio.";
-        if (!PRICE_FORMAT_REGEX.test(value)) {
-          return "Ingrese un valor válido (ej: 1.234,56).";
-        }
+        if (!PRICE_FORMAT_REGEX.test(value)) return "Ingrese un valor válido (ej: 1.234,56).";
         const intNum = parseFormattedPrice(value);
         if (intNum === null) return "El precio debe ser numérico.";
         if (intNum <= 0) return "El precio debe ser mayor a 0.";
         if (intNum > PRECIO_MAXIMO) return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
         return undefined;
       }
-
       case "tipoPropiedad":
         return value ? undefined : "Seleccione un tipo de propiedad.";
-
       case "tipoOperacion":
         return value ? undefined : "Seleccione un tipo de operación.";
-
       case "descripcion":
         if (!value.trim()) return "La descripción es obligatoria.";
         if (value.trim().length < DESC_MIN) return `Mínimo ${DESC_MIN} caracteres.`;
@@ -191,7 +189,6 @@ export function useInformacionComercialForm() {
     setForm((prev) => ({ ...prev, [name]: value }));
     setSubmitStatus(null);
     setSubmitMessage("");
-    // Revalidar en tiempo real solo si el campo ya fue tocado
     if (touched[name as keyof FormData]) {
       setErrors((prev) => ({
         ...prev,
@@ -207,7 +204,6 @@ export function useInformacionComercialForm() {
    */
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
     const strFormatted = formatPriceInput(e.target.value);
-    // Bloquear si supera el límite máximo permitido
     if (strFormatted) {
       const intNum = parseFormattedPrice(strFormatted);
       if (intNum !== null && intNum > PRECIO_MAXIMO) {
@@ -278,52 +274,58 @@ export function useInformacionComercialForm() {
    * @Funcionalidad: Cancela el formulario con confirmación si hay datos ingresados.
    * Limpia también el borrador guardado en sessionStorage.
    */
-function handleCancelar() {
-  if (isSubmitting) return;
-  const bolHasData = Object.values(form).some((value) => value.trim() !== "");
-  if (bolHasData) {
-    if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
+  function handleCancelar() {
+    if (isSubmitting) return;
+    const bolHasData = Object.values(form).some((value) => value.trim() !== "");
+    if (bolHasData) {
+      if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
+    }
+    sessionStorage.removeItem(DRAFT_KEY);
+    setForm(FORM_INICIAL);
+    setErrors({});
+    setTouched({});
+    setSubmitStatus(null);
+    setSubmitMessage("");
+    router.push("/");
   }
-  sessionStorage.removeItem(DRAFT_KEY);
-  setForm(FORM_INICIAL);
-  setErrors({});
-  setTouched({});
-  setSubmitStatus(null);
-  setSubmitMessage("");
-  // Redirigir al home
-  router.push("/");
-}
 
   /**
-   * @Funcionalidad: Valida el formulario, guarda los datos temporalmente en sessionStorage
-   * y navega al paso 2. Los datos NO se envían al backend hasta que el usuario
-   * presione Publicar en el formulario de Características del Inmueble.
+   * @Funcionalidad: Valida el formulario, guarda los datos del paso 1 en sessionStorage
+   * incluyendo el id_usuario leído desde localStorage (donde AuthContext lo persiste),
+   * y navega al paso 2. No depende de useAuth ni del AuthProvider.
+   * Los datos NO se envían al backend hasta que el usuario presione Publicar
+   * en el formulario de Características del Inmueble.
    */
   function handleSiguiente() {
     if (isSubmitting) return;
 
     // Marcar todos los campos como tocados para mostrar errores
     const objAllTouched: Partial<Record<FormField, boolean>> = {};
-    FORM_FIELDS.forEach((fieldName) => {
-      objAllTouched[fieldName] = true;
-    });
+    FORM_FIELDS.forEach((fieldName) => { objAllTouched[fieldName] = true; });
     setTouched(objAllTouched);
 
     const objLocalErrors = validateAll();
     setErrors(objLocalErrors);
     if (Object.keys(objLocalErrors).length > 0) return;
 
+    // Leer el usuario desde localStorage, donde AuthContext lo guarda
+    // en los tres flujos: email/password, Google y cookie JWT
+    const strStoredUser = localStorage.getItem("user");
+    const strIdUsuario = strStoredUser
+      ? (JSON.parse(strStoredUser)?.id ?? "")
+      : "";
+
     // Guardar datos finales validados del paso 1 para que el paso 2 los lea al publicar
+    // Se incluye id_usuario para vincularlo en la BD al momento de publicar
     sessionStorage.setItem("informacionComercial", JSON.stringify({
       titulo:        form.titulo,
       precio:        toBackendPrice(form.precio),
       tipoPropiedad: form.tipoPropiedad,
       tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
       descripcion:   form.descripcion,
+      id_usuario:    strIdUsuario,
     }));
 
-    // Limpiar el borrador ya que los datos finales están guardados
-    
     router.push("/frontend/publicacion/Caracteristicas");
   }
 

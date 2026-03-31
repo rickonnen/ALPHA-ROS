@@ -1,11 +1,11 @@
 /**
- * Dev: Gabriel Paredes Sipe
+ * Dev: Gabriel Paredes 
  * Date modification: 29/03/2026
- * Corrección de bug 2: grid cambia de items-end a items-start
- *                para evitar desalineación al aparecer mensajes de error.
  * Funcionalidad: Componente de formulario para ingresar habitaciones,
  *                baños, garajes y plantas de un inmueble con validación.
- *               
+ *                Corrección de bug: el span de error se renderiza en ambas
+ *                celdas de la fila solo cuando al menos una celda de esa
+ *                fila tiene error, evitando espacio extra innecesario.
  * @param {HabitacionesFormProps} props - Valores, errores, touched, onChange y onBlur
  * @return {JSX.Element} Grid de inputs numéricos para características del inmueble
  */
@@ -34,12 +34,28 @@ interface HabitacionesFormProps {
 const soloEnteroPositivo = (value: string): string =>
   value.replace(/[^0-9]/g, '')
 
+const ErrorMsg = ({ visible, message }: { visible: boolean; message?: string }) => (
+  <span
+    className="text-red-500 text-xs"
+    style={{ visibility: visible ? 'visible' : 'hidden' }}
+  >
+    {message || 'x'}
+  </span>
+)
+
 export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, garagesValue, errors, touched, onChange, onBlur }: HabitacionesFormProps) {
 
   const makeChangeHandler = (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange(field, soloEnteroPositivo(e.target.value))
     }
+
+  const hasError = (field: 'habitaciones' | 'banios' | 'plantas' | 'garajes') =>
+    !!(touched[field] && errors[field])
+
+  // Solo mostrar fila de error si al menos una celda de esa fila lo tiene
+  const row1Error = hasError('habitaciones') || hasError('banios')
+  const row2Error = hasError('garajes')      || hasError('plantas')
 
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3 items-end">
@@ -58,9 +74,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
           onBlur={() => onBlur('habitaciones')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
-        {touched.habitaciones && errors.habitaciones && (
-          <span className="text-red-500 text-xs">{errors.habitaciones}</span>
-        )}
+        {row1Error && <ErrorMsg visible={hasError('habitaciones')} message={errors.habitaciones} />}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -77,9 +91,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
           onBlur={() => onBlur('banios')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
-        {touched.banios && errors.banios && (
-          <span className="text-red-500 text-xs">{errors.banios}</span>
-        )}
+        {row1Error && <ErrorMsg visible={hasError('banios')} message={errors.banios} />}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -96,9 +108,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
           onBlur={() => onBlur('garajes')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
-        {touched.garajes && errors.garajes && (
-          <span className="text-red-500 text-xs">{errors.garajes}</span>
-        )}
+        {row2Error && <ErrorMsg visible={hasError('garajes')} message={errors.garajes} />}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -115,9 +125,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
           onBlur={() => onBlur('plantas')}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
         />
-        {touched.plantas && errors.plantas && (
-          <span className="text-red-500 text-xs">{errors.plantas}</span>
-        )}
+        {row2Error && <ErrorMsg visible={hasError('plantas')} message={errors.plantas} />}
       </div>
 
     </div>

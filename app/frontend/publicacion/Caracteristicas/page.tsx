@@ -1,11 +1,19 @@
 'use client'
 
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 30/03/2026
+ * Modificación: Se agrega id_usuario al FormData antes de llamar a publicarConImagenes.
+ *   Lee id_usuario del sessionStorage (guardado por useInformacionComercialForm en paso 1).
+ *    Lo adjunta al FormData para que action.ts lo vincule en el INSERT de la BD.
+ */
+
 import { useState } from 'react'
 import { useCaracteristicasForm } from './Hooks/useCaracteristicasForm'
-import { DireccionForm } from './components/DireccionForm'
-import { DepartamentoSelect } from './components/DepartamentoSelect'
-import { HabitacionesForm } from './components/HabitacionesForm'
-import { ImageUploader } from './components/ImageUploader'
+import { DireccionForm } from './Components/DireccionForm'
+import { DepartamentoSelect } from './Components/DepartamentoSelect'
+import { HabitacionesForm } from './Components/HabitacionesForm'
+import { ImageUploader } from './Components/ImageUploader'
 import { VideoSection } from './components/VideoSection'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBackend/actions'
@@ -57,19 +65,22 @@ export default function CaracteristicasPage() {
         const objPaso1 = JSON.parse(strPaso1)
 
         const formData = new FormData()
-        formData.append('titulo', objPaso1.titulo)
-        formData.append('precio', objPaso1.precio)
+        formData.append('titulo',        objPaso1.titulo)
+        formData.append('precio',        objPaso1.precio)
         formData.append('tipoPropiedad', objPaso1.tipoPropiedad)
         formData.append('tipoOperacion', objPaso1.tipoOperacion)
-        formData.append('descripcion', objPaso1.descripcion)
-        formData.append('direccion', formValues.direccion)
-        formData.append('superficie', formValues.superficie.replace(/\./g, ''))
+        formData.append('descripcion',   objPaso1.descripcion)
+        //  CAMBIO: adjuntar id_usuario desde sessionStorage del paso 1 
+        formData.append('id_usuario',    objPaso1.id_usuario ?? '')
+        // ─────────────────────────────────────────────────────────────────────
+        formData.append('direccion',    formValues.direccion)
+        formData.append('superficie',   formValues.superficie.replace(/\./g, ''))
         formData.append('departamento', formValues.departamento)
-        formData.append('zona', formValues.zona)
+        formData.append('zona',         formValues.zona)
         formData.append('habitaciones', formValues.habitaciones)
-        formData.append('banios', formValues.banios)
-        formData.append('plantas', formValues.plantas)
-        formData.append('garajes', formValues.garajes)
+        formData.append('banios',       formValues.banios)
+        formData.append('plantas',      formValues.plantas)
+        formData.append('garajes',      formValues.garajes)
         formValues.imagenes.forEach((file) => formData.append('imagenes', file))
         formData.append('videoUrl', strVideoUrl)
 
@@ -81,11 +92,7 @@ export default function CaracteristicasPage() {
           sessionStorage.removeItem("videoUrl")
           setSubmitOk(true)
           console.log("ID generado por la DB:", result.idPublicacion);
-          
-          // --- ÚNICO CAMBIO: REDIRECCIÓN ---
           router.push(`/frontend/publicacion/${result.idPublicacion}`);
-          // ---------------------------------
-          
         } else {
           const firstError = Object.values(result.errors).flat()[0] ?? null
           setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
@@ -102,7 +109,6 @@ export default function CaracteristicasPage() {
   return (
     <main
       className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
-      
       style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
     >
       <div className="w-full max-w-2xl">
@@ -202,9 +208,7 @@ export default function CaracteristicasPage() {
               type="button"
               variant="outline"
               disabled={isSubmitting}
-              onClick={() => {
-                router.push("/frontend/publicacion/informacion-comercial")
-              }}
+              onClick={() => router.push("/frontend/publicacion/informacion-comercial")}
               className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
             >
               Regresar

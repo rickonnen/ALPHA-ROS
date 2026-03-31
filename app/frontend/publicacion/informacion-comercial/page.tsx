@@ -3,6 +3,16 @@
 /**
  * @Dev: [OliverG]
  * @Fecha: 28/03/2026
+ * @Modificación: Gabriel Paredes Sipe — 29/03/2026
+ *   → Se agrega useAuth para leer el id del usuario autenticado.
+ *   → handleSiguiente recibe el id como parámetro para vincularlo
+ *     en sessionStorage sin que el hook dependa del AuthProvider.
+ * @Modificación: Gabriel Paredes Sipe — 30/03/2026
+ *   → Se elimina useAuth del page y del hook. El id_usuario ahora se
+ *     lee directamente desde localStorage dentro del hook, evitando
+ *     el error "useAuth debe ser usado dentro de AuthProvider" causado
+ *     por que el AuthProvider en el layout no envuelve los children.
+ *   → handleSiguiente ya no recibe parámetros.
  * @Funcionalidad: Página principal del formulario de Información Comercial para
  * la publicación de inmuebles. Renderiza el navbar, el formulario con sus campos
  * y los botones de acción Cancelar y Siguiente.
@@ -10,8 +20,8 @@
  */
 
 import { useInformacionComercialForm } from "./Hooks/useInformacionComercialForm";
-import DropdownSelect from "./Components/Dropdown.Select";
-import PrecioInput from "./Components/PrecioInput";
+import DropdownSelect    from "./Components/Dropdown.Select";
+import PrecioInput       from "./Components/PrecioInput";
 import {
   TIPOS_PROPIEDAD,
   TIPOS_OPERACION,
@@ -41,14 +51,11 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col bg-[#EAE4D8] font-[family-name:var(--font-geist-sans)]">
 
-      
-
       {/* ── Área principal con fondo degradado de 2 colores ── */}
       <div
         className="flex-1 flex flex-col items-center px-6"
         style={{ background: "linear-gradient(to bottom, #EAE4D8 35%, #CFC9BB 35%)" }}
       >
-        {/* Título de la página */}
         <div className="w-full max-w-[55%] px-12 pt-8 pb-6 max-sm:max-w-full max-sm:px-0 max-sm:pt-5 max-sm:pb-4">
           <h1 className="text-[2.6rem] font-bold text-[#1A1714] tracking-tight leading-tight max-sm:text-[1.45rem]">
             Crear publicación
@@ -62,10 +69,8 @@ export default function Page() {
           </p>
 
           {/* ── Fila: Título del Aviso + Precio ── */}
-          {/* En mobile se apilan vertical, en desktop van lado a lado */}
           <div className="flex flex-col sm:flex-row sm:items-start gap-3.5 w-full mb-1">
 
-            {/* Campo Título del Aviso */}
             <div className="flex flex-col gap-1.5 w-full min-w-0 flex-1">
               <label className="text-[0.82rem] font-medium text-[#1A1714]" htmlFor="titulo">
                 Título del Aviso
@@ -88,16 +93,13 @@ export default function Page() {
               />
               <div className="flex justify-between items-start">
                 {hasErr("titulo") ? (
-                  // Mensaje de error inline
                   <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errors.titulo}</span>
                 ) : bolMounted && form.titulo.length > 0 ? (
-                  // Contador de caracteres — solo visible tras el montaje en cliente
                   <span className="ml-auto text-[0.70rem] text-[#8A8480]">{form.titulo.length}/{TITULO_MAX}</span>
                 ) : null}
               </div>
             </div>
 
-            {/* Campo Precio — ancho fijo en desktop, completo en mobile */}
             <div className="w-full sm:w-[130px] sm:flex-shrink-0">
               <PrecioInput
                 value={form.precio}
@@ -109,7 +111,6 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Campo Tipo de Propiedad */}
           <DropdownSelect
             id="tipoPropiedad"
             label="Tipo de Propiedad"
@@ -121,7 +122,6 @@ export default function Page() {
             onClose={() => handleDropdownBlur("tipoPropiedad")}
           />
 
-          {/* Campo Tipo de Operación */}
           <DropdownSelect
             id="tipoOperacion"
             label="Tipo de Operación"
@@ -133,7 +133,6 @@ export default function Page() {
             onClose={() => handleDropdownBlur("tipoOperacion")}
           />
 
-          {/* Campo Descripción */}
           <div className="flex flex-col gap-1.5 mb-3.5">
             <label className="text-[0.82rem] font-medium text-[#1A1714]" htmlFor="descripcion">
               Descripción
@@ -156,12 +155,12 @@ export default function Page() {
               ? <span className="text-[0.74rem] text-[#C0503A] leading-snug">{errors.descripcion}</span>
               : <span className={`text-[0.70rem] text-right ${bolMounted && form.descripcion.length > DESC_MAX ? "text-[#C0503A]" : "text-[#8A8480]"}`}>
                   {bolMounted ? form.descripcion.length : 0}/{DESC_MAX}
-                </span>}
+                </span>
+            }
           </div>
 
           {/* ── Botones de acción ── */}
           <div className="flex justify-end gap-2.5 mt-5 max-sm:flex-row max-sm:gap-2">
-            {/* Botón Cancelar — limpia el formulario con confirmación */}
             <button
               type="button"
               onClick={handleCancelar}
@@ -170,10 +169,10 @@ export default function Page() {
             >
               Cancelar
             </button>
-            {/* Botón Siguiente — valida y guarda en sessionStorage */}
+            {/* handleSiguiente ya no recibe parámetros — el id_usuario lo lee internamente desde localStorage */}
             <button
               type="button"
-              onClick={handleSiguiente}
+              onClick={() => handleSiguiente()}
               disabled={isSubmitting}
               className="h-[38px] px-6 rounded-md text-[0.88rem] font-medium cursor-pointer bg-[#C0503A] border-[1.5px] border-[#C0503A] text-white hover:bg-[#A8432F] hover:border-[#A8432F] transition-colors max-sm:flex-1"
             >
@@ -181,7 +180,6 @@ export default function Page() {
             </button>
           </div>
 
-          {/* Mensaje de estado del submit (éxito o error general) */}
           {(submitMessage || errors.general) && (
             <span
               className={`text-[0.74rem] leading-snug mt-2 block ${submitStatus === "success" ? "text-[#8A8480]" : "text-[#C0503A]"}`}
