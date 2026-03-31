@@ -1,10 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell, LogOut } from "lucide-react";
 import AuthModal from "@/app/frontend/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/frontend/auth/AuthContext";
-
 import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
 
 export default function TestAuthPage() {
@@ -12,8 +11,20 @@ export default function TestAuthPage() {
   const [showAuth, setShowAuth] = useState(false);
   const [showProtected, setShowProtected] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) return;
+    fetch("/api/notifications")
+      .then(r => r.json())
+      .then(data => setUnreadCount(data.filter((n: any) => !n.read).length))
+      .catch(console.error);
+  }, [user]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-10 flex flex-col items-center">
@@ -26,12 +37,19 @@ export default function TestAuthPage() {
                 onClick={() => setShowNotifications((prev) => !prev)}
                 title="Notificaciones"
                 aria-label="Notificaciones"
-                className="text-gray-600 hover:text-[#B47B65] transition-colors"
+                className="relative text-gray-600 hover:text-[#B47B65] transition-colors"
               >
                 <Bell size={24} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
-              {showNotifications && <NotificationPanel />}
+              {showNotifications && (
+                <NotificationPanel onNotificationRead={fetchUnreadCount} />
+              )}
 
               <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 <span className="text-gray-700 font-medium">{user.name}</span>

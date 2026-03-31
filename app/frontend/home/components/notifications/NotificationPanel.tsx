@@ -14,18 +14,16 @@ type Notification = {
   time?: string;
 };
 
-export function NotificationPanel() {
+export function NotificationPanel({ onNotificationRead }: { onNotificationRead?: () => void }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cargar notificaciones desde el backend
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const res = await fetch("/api/notifications");
         const data = await res.json();
-        // Mapear "message" del backend a "description" que usa tu UI
         const mapped = data.map((n: any) => ({
           id: n.id,
           title: n.title,
@@ -59,41 +57,38 @@ export function NotificationPanel() {
   };
 
   const handleRead = async (id: number) => {
-    // Actualizar localmente
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-    // Sincronizar con backend
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAsRead", notificationId: id }),
       });
+      onNotificationRead?.();
     } catch (error) {
       console.error("Error al marcar como leída:", error);
     }
   };
 
   const handleMarkAll = async () => {
-    // Actualizar localmente
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    // Sincronizar con backend
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAllAsRead" }),
       });
+      onNotificationRead?.();
     } catch (error) {
       console.error("Error al marcar todas como leídas:", error);
     }
   };
 
   return (
-    <div className="absolute right-10 top-26 z-50 w-80 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
+    <div className="absolute right-10 top-26 z-50 w-100 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
       <NotificationHeader total={notifications.length} />
-
       <div className="p-2">
         <NotificationTabs
           activeTab={activeTab}
@@ -102,7 +97,6 @@ export function NotificationPanel() {
           onMarkAll={handleMarkAll}
         />
       </div>
-
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
           Cargando notificaciones...
