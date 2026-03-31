@@ -1,14 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   try {
-    console.log("Iniciando signup, SUPABASE_URL:", process.env.SUPABASE_URL);
+    const supabaseAdmin = createSupabaseAdminClient();
+    console.log("Iniciando signup, SUPABASE_URL:", process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL);
     console.log("SERVICE_ROLE_KEY exists:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
     // se recibe el 'name' que contendrá el nombre completo
