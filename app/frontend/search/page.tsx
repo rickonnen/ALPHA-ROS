@@ -34,6 +34,30 @@ const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
 
 const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
 
+function sortProperties(properties: Property[], sortBy: string): Property[] {
+  const sorted = [...properties];
+
+  sorted.sort((first, second) => {
+    switch (sortBy) {
+      case 'precio-asc':
+        return first.price - second.price;
+      case 'precio-des':
+        return second.price - first.price;
+      case 'm2-menor':
+        return first.terrainArea - second.terrainArea;
+      case 'm2-mayor':
+        return second.terrainArea - first.terrainArea;
+      case 'fecha-antigua':
+        return first.id - second.id;
+      case 'fecha-reciente':
+      default:
+        return second.id - first.id;
+    }
+  });
+
+  return sorted;
+}
+
 function toNumber(value: number | null | undefined): number {
   return value ?? 0;
 }
@@ -144,8 +168,14 @@ export default function SearchPage() {
   ]);
 
   const displayedProperties = useMemo(
-    () => searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
-    [searchResults, selectedOperation],
+    () =>
+      sortProperties(
+        searchResults.map((publication) =>
+          mapPublicationToProperty(publication, selectedOperation),
+        ),
+        selectedSort,
+      ),
+    [searchResults, selectedOperation, selectedSort],
   );
 
   const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
@@ -170,7 +200,6 @@ export default function SearchPage() {
         currency: selectedCurrency,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
-        sortBy: selectedSort,
         ...overrides,
       };
 
@@ -209,13 +238,11 @@ export default function SearchPage() {
       currency: 'USD',
       minPrice: undefined,
       maxPrice: undefined,
-      sortBy: 'fecha-reciente',
     });
   };
 
   const handleSort = (sortOption: string) => {
     setSelectedSort(sortOption);
-    void runSearch({ sortBy: sortOption });
   };
 
   return (

@@ -16,7 +16,6 @@ export type SearchFiltersInput = {
   currency?: SearchCurrency;
   minPrice?: number;
   maxPrice?: number;
-  sortBy?: string;
 };
 
 export type SearchPublicationResult = {
@@ -291,47 +290,6 @@ function passesPriceFilter(
   return true;
 }
 
-function getSortValue(publication: PublicationWithRelations, sortBy: string): number {
-  switch (sortBy) {
-    case 'precio-asc':
-    case 'precio-des':
-      return convertPublicationPriceToUsd(publication) ?? 0;
-    case 'm2-mayor':
-    case 'm2-menor':
-      return toNumber(publication.superficie) ?? 0;
-    case 'fecha-antigua':
-    case 'fecha-reciente':
-    default:
-      return publication.id_publicacion;
-  }
-}
-
-function sortPublications(
-  publications: PublicationWithRelations[],
-  sortBy: string,
-): PublicationWithRelations[] {
-  const sorted = [...publications];
-
-  sorted.sort((first, second) => {
-    const firstValue = getSortValue(first, sortBy);
-    const secondValue = getSortValue(second, sortBy);
-
-    switch (sortBy) {
-      case 'precio-asc':
-      case 'm2-menor':
-      case 'fecha-antigua':
-        return firstValue - secondValue;
-      case 'precio-des':
-      case 'm2-mayor':
-      case 'fecha-reciente':
-      default:
-        return secondValue - firstValue;
-    }
-  });
-
-  return sorted;
-}
-
 function mapPublication(publication: PublicationWithRelations): SearchPublicationResult {
   return {
     id_publicacion: publication.id_publicacion,
@@ -374,6 +332,9 @@ export async function searchPublicaciones(
 ): Promise<SearchPublicationResult[]> {
   const publications = await prisma.publicacion.findMany({
     where: buildWhere(filters),
+    orderBy: {
+      id_publicacion: 'desc',
+    },
     include: {
       TipoInmueble: true,
       TipoOperacion: true,
@@ -403,10 +364,5 @@ export async function searchPublicaciones(
     passesPriceFilter(publication, filters),
   );
 
-  const sortBy = filters.sortBy ?? 'fecha-reciente';
-  return sortPublications(priceFiltered, sortBy).map(mapPublication);
-}
-
-export async function getPublicacionesOrdenadas(criterio: string) {
-  return searchPublicaciones({ sortBy: criterio });
+  return priceFiltered.map(mapPublication);
 }
