@@ -1,20 +1,18 @@
 "use client";
 /**
  * @Dev: Gustavo Montaño
- * @Fecha: 28/03/2026
- * @Modificación: StefanyS — 29/03/2026
+ * @Fecha: 30/03/2026
  * @Funcionalidad: Botones de acción en la página de detalle del inmueble.
- *                 Al hacer click en "Publicar otro inmueble" consulta el contador
- *                 del usuario. El modal solo se abre si bolShowModal=true,
- *                 nunca al montar el componente.
+ * Al hacer click en "Publicar otro inmueble" consulta el contador
+ * del usuario. El modal solo se abre si bolShowModal=true,
+ * nunca al montar el componente.
  * @return {JSX.Element} Footer con botones y modal controlado.
  */
 
-
-import { useRouter }                  from "next/navigation";
-import { useState, useEffect }        from "react";
-import { Button }                     from "@/components/ui/button";
-import FreePublicationLimitModal      from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
+import { useRouter }          from "next/navigation";
+import { useState, useEffect }from "react";
+import { Button }             from "@/components/ui/button";
+import FreePublicationLimitModal from "@/app/frontend/publicacion/components/FreePublicationLimitModal";
 import { verificarEstadoPublicacion } from "@/app/backend/publicacion/modal/action";
 
 export const PropertyActions = () => {
@@ -32,9 +30,22 @@ export const PropertyActions = () => {
     }
   }, []);
 
+  // 🚀 FUNCIÓN PARA IR AL PERFIL DIRECTO A LA PESTAÑA "PUBLICACIONES"
+  const handleVerMisPublicaciones = () => {
+    if (!strUserId) {
+      router.push("/frontend/auth/sing-in-up"); 
+      return;
+    }
+    
+    // Mandamos el ID del usuario Y el parámetro 'view=publicaciones' para que
+    // el equipo de Perfil sepa qué pestaña abrir directamente.
+    router.push(`/frontend/perfil?id=${strUserId}&view=publicaciones`);
+  };
+
+  // 🚀 FUNCIÓN PARA PUBLICAR VERIFICANDO CRÉDITOS
   const handleNuevaPublicacion = async () => {
     if (!strUserId) {
-      router.push("/login");
+      router.push("/frontend/auth/sing-in-up");
       return;
     }
     setBolChecking(true);
@@ -73,7 +84,7 @@ export const PropertyActions = () => {
           type="button"
           variant="outline"
           className="flex-1 md:flex-none min-w-0 border-[#C26E5A] text-[#C26E5A] px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs! md:text-lg! hover:bg-[#C26E5A]/5"
-          onClick={() => router.push("/frontend/perfil")}
+          onClick={handleVerMisPublicaciones}
         >
           Ver mis publicaciones
         </Button>
