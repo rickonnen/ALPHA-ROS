@@ -2,6 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Geist } from "next/font/google";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -39,41 +46,70 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
   }, []);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="w-full">
       <button
+        type="button"
         onClick={() => setAbierto((p) => !p)}
-        className="w-full px-3 py-2 border border-[#E7E1D7] rounded-md bg-[#E7E1D7] text-sm flex justify-between items-center text-[#2E2E2E] hover:bg-[#DDD7CD] transition-colors"
+        className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span className={valor ? "font-medium" : "text-[#2E2E2E]/60"}>
+        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
           {valor || label}
         </span>
+
         <span
-          className="text-[#2E2E2E]/50 transition-transform duration-200"
-          style={{ display: "inline-block", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
+          className="text-[#4B4B4B] transition-transform duration-200"
+          style={{
+            display: "inline-block",
+            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+          }}
         >
           ▾
         </span>
       </button>
 
       {abierto && (
-        <ul className="absolute top-full mt-1 w-full bg-white border border-[#E7E1D7] rounded-md z-50 shadow-sm overflow-hidden">
-          {opciones.map((op, i) => (
-            <li
-              key={i}
-              onMouseDown={() => {
-                onChange(op);
-                setAbierto(false);
-              }}
-              className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
-                valor === op
-                  ? "bg-[#1F3A4D] text-white"
-                  : "hover:bg-[#E7E1D7] text-[#2E2E2E]"
-              }`}
-            >
-              {op}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+          <div className="space-y-2">
+            {opciones.map((op, i) => {
+              const checked = valor === op;
+
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onMouseDown={() => {
+                    onChange(op);
+                    setAbierto(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
+                    checked
+                      ? "bg-[#E7E3DD] text-[#2E2E2E]"
+                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                      checked
+                        ? "border-[#6B6B6B] bg-white"
+                        : "border-[#8A847C] bg-white"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                      )}
+                    />
+                  </span>
+
+                  <span className="text-sm text-[#2E2E2E]">{op}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -98,47 +134,61 @@ export default function FiltrosAvanzado({ onChange }: Props) {
   };
 
   return (
-    <div
-      ref={wrapperRef}
-      className={`${geist.className} bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72`}
-    >
-      <button
-        onClick={() => setAbierto((p) => !p)}
-        className="w-full flex justify-between items-center text-sm font-semibold text-[#2E2E2E] hover:text-[#C26E5A] transition-colors"
+    <div ref={wrapperRef} className={`${geist.className} w-full mt-3`}>
+      <Accordion
+        type="single"
+        collapsible
+        value={abierto ? "advanced" : ""}
+        onValueChange={(value) => setAbierto(value === "advanced")}
+        className="w-full"
       >
-        <span>avanzado</span>
-        <span
-          className="transition-transform duration-300"
-          style={{ display: "inline-block", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
-        >
-          ▾
-        </span>
-      </button>
+        <AccordionItem value="advanced" className="border-none">
+          <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+            <AccordionTrigger
+              className={cn(
+                "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
+                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+              )}
+            >
+              avanzado
+            </AccordionTrigger>
+          </div>
 
-      {abierto && (
-        <div className="flex flex-col gap-3 mt-4">
-          <SubDropdown
-            label="Número total de habitaciones"
-            opciones={HABITACIONES}
-            valor={habitaciones}
-            onChange={(v) => { setHabitaciones(v); actualizar("habitaciones", v); }}
-          />
+          <AccordionContent className="pt-3 pb-0 overflow-visible">
+            <div className="flex flex-col gap-3 overflow-visible">
+              <SubDropdown
+                label="Número total de habitaciones"
+                opciones={HABITACIONES}
+                valor={habitaciones}
+                onChange={(v) => {
+                  setHabitaciones(v);
+                  actualizar("habitaciones", v);
+                }}
+              />
 
-          <SubDropdown
-            label="Baños"
-            opciones={BANOS}
-            valor={banos}
-            onChange={(v) => { setBanos(v); actualizar("banos", v); }}
-          />
+              <SubDropdown
+                label="Baños"
+                opciones={BANOS}
+                valor={banos}
+                onChange={(v) => {
+                  setBanos(v);
+                  actualizar("banos", v);
+                }}
+              />
 
-          <SubDropdown
-            label="Piscina"
-            opciones={PISCINA}
-            valor={piscina}
-            onChange={(v) => { setPiscina(v); actualizar("piscina", v); }}
-          />
-        </div>
-      )}
+              <SubDropdown
+                label="Piscina"
+                opciones={PISCINA}
+                valor={piscina}
+                onChange={(v) => {
+                  setPiscina(v);
+                  actualizar("piscina", v);
+                }}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

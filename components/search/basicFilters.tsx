@@ -3,6 +3,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Geist } from "next/font/google";
 import { buscarPublicaciones, type FiltrosPublicacion } from "@/app/frontend/search/search-services";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -126,11 +133,8 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
   return (
     <div
       ref={wrapperRef}
-      className={`${geist.className} bg-[#F4EFE6] border border-[#E7E1D7] rounded-lg p-5 w-72`}
+      className={`${geist.className} w-full`}
     >
-      <h2 className="text-lg font-semibold text-[#2E2E2E]">Filtros</h2>
-      <p className="text-xs text-[#2E2E2E]/60 mb-4">Filtros Básicos</p>
-
       <div className="flex flex-col gap-3">
         <div className="relative">
           <input
@@ -140,11 +144,11 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
             value={ubicacion}
             onChange={handleChange}
             onFocus={() => {}}
-            className="w-full px-3 py-2 border border-[#E7E1D7] rounded-md bg-[#E7E1D7] text-sm outline-none"
+            className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55]"
           />
 
           {abierto && (
-            <ul className="absolute top-full mt-1 w-full bg-white border border-[#E7E1D7] rounded-md z-50">
+            <ul className="absolute top-full z-50 mt-2 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-2 shadow-sm">
               {error && (
                 <li className="px-3 py-2 text-sm text-red-500">
                   Error al obtener sugerencias
@@ -160,7 +164,7 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                   <li
                     key={feat.id}
                     onMouseDown={() => handleSelect(feat)}
-                    className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-200"
+                    className="cursor-pointer rounded-[12px] px-3 py-2 text-sm text-[#2E2E2E] hover:bg-[#F4EFE6]"
                   >
                     {feat.place_name}
                   </li>
@@ -169,68 +173,142 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
           )}
         </div>
 
-        <div className="relative">
-          <button
-            onClick={() => setAbiertoOperacion(!abiertoOperacion)}
-            className="w-full px-3 py-2 border border-[#E7E1D7] rounded-md bg-[#E7E1D7] text-sm flex justify-between"
-          >
-            {operacion}
-            <span>▾</span>
-          </button>
+        <Accordion
+          type="single"
+          collapsible
+          value={abiertoOperacion ? "operacion" : ""}
+          onValueChange={(value) => setAbiertoOperacion(value === "operacion")}
+          className="w-full"
+        >
+          <AccordionItem value="operacion" className="border-none">
+            <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+              <AccordionTrigger
+                className={cn(
+                  "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
+                  "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+                )}
+              >
+                {operacion}
+              </AccordionTrigger>
+            </div>
 
-          {abiertoOperacion && (
-            <ul className="absolute top-full mt-1 w-full bg-white border border-[#E7E1D7] rounded-md z-50">
-              {OPERACIONES.map((op, i) => (
-                <li
-                  key={i}
-                  onClick={() => {
-                    setOperacion(op);
-                    setAbiertoOperacion(false);
-                  }}
-                  className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-200"
-                >
-                  {op}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+            <AccordionContent className="pt-3 pb-0">
+              <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+                <div className="space-y-2">
+                  {OPERACIONES.map((op, i) => {
+                    const checked = op === operacion;
 
-        <div className="relative">
-          <button
-            onClick={() => setAbiertoTipo(!abiertoTipo)}
-            className="w-full px-3 py-2 border border-[#E7E1D7] rounded-md bg-[#E7E1D7] text-sm flex justify-between"
-          >
-            {tipo || "Tipo Inmueble"}
-            <span>▾</span>
-          </button>
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setOperacion(op);
+                          setAbiertoOperacion(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm text-[#2E2E2E] transition",
+                          checked ? "bg-[#E7E3DD]" : "bg-transparent hover:bg-[#F4EFE6]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                            checked
+                              ? "border-[#6B6B6B] bg-white"
+                              : "border-[#8A847C] bg-white"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                              checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                            )}
+                          />
+                        </span>
 
-          {abiertoTipo && (
-            <ul className="absolute top-full mt-1 w-full bg-white border border-[#E7E1D7] rounded-md z-50">
-              {TIPOS_INMUEBLE.map((t, i) => (
-                <li
-                  key={i}
-                  onClick={() => {
-                    setTipo(t);
-                    setAbiertoTipo(false);
-                  }}
-                  className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-200"
-                >
-                  {t}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                        <span className="text-sm text-[#2E2E2E]">{op}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <Accordion
+          type="single"
+          collapsible
+          value={abiertoTipo ? "tipo" : ""}
+          onValueChange={(value) => setAbiertoTipo(value === "tipo")}
+          className="w-full"
+        >
+          <AccordionItem value="tipo" className="border-none">
+            <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+              <AccordionTrigger
+                className={cn(
+                  "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
+                  "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+                )}
+              >
+                {tipo || "Tipo Inmueble"}
+              </AccordionTrigger>
+            </div>
+
+            <AccordionContent className="pt-3 pb-0">
+              <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+                <div className="space-y-2">
+                  {TIPOS_INMUEBLE.map((t, i) => {
+                    const checked = t === tipo;
+
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setTipo(t);
+                          setAbiertoTipo(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm text-[#2E2E2E] transition",
+                          checked ? "bg-[#E7E3DD]" : "bg-transparent hover:bg-[#F4EFE6]"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                            checked
+                              ? "border-[#6B6B6B] bg-white"
+                              : "border-[#8A847C] bg-white"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                              checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                            )}
+                          />
+                        </span>
+
+                        <span className="text-sm text-[#2E2E2E]">{t}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
-      <button
+      {/* <button
         onClick={handleAplicar}
         disabled={buscando}
-        className="mt-4 w-full py-2 bg-[#1F3A4D] hover:bg-[#C26E5A] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm rounded-md cursor-pointer transition-colors"
+        className="mt-4 w-full cursor-pointer rounded-md bg-[#1F3A4D] py-2 text-sm text-white transition-colors hover:bg-[#C26E5A] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {buscando ? "Buscando..." : "Aplicar filtros"}
-      </button>
+        {buscando ? "Buscando..." : "Aplicar"}
+      </button> */}
     </div>
   );
 }
