@@ -26,7 +26,6 @@ export function ClearFiltersButton({ hasActiveFilters, onClear }: ClearFiltersBu
           : 'border-gray-200 bg-white text-gray-300  cursor-not-allowed pointer-events-none',
       )}
     >
-      <X className="size-3.5 shrink-0" />
       Limpiar filtros
     </button>
   );
