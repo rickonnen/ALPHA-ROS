@@ -46,6 +46,7 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
 
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -100,10 +101,11 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    val = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s,]/g, "");
+    const val = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s,]/g, "");
     setUbicacion(val);
-    setTimeout(() => buscar(val), 300);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => buscar(val), 400);
   };
 
   const handleSelect = (feature: MapboxFeature) => {
@@ -143,7 +145,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
             placeholder="Buscar por ubicación"
             value={ubicacion}
             onChange={handleChange}
-            onFocus={() => {}}
             className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55]"
           />
 
@@ -197,7 +198,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                 <div className="space-y-2">
                   {OPERACIONES.map((op, i) => {
                     const checked = op === operacion;
-
                     return (
                       <button
                         key={i}
@@ -214,9 +214,7 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                         <span
                           className={cn(
                             "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
-                            checked
-                              ? "border-[#6B6B6B] bg-white"
-                              : "border-[#8A847C] bg-white"
+                            checked ? "border-[#6B6B6B] bg-white" : "border-[#8A847C] bg-white"
                           )}
                         >
                           <span
@@ -226,7 +224,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                             )}
                           />
                         </span>
-
                         <span className="text-sm text-[#2E2E2E]">{op}</span>
                       </button>
                     );
@@ -261,7 +258,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                 <div className="space-y-2">
                   {TIPOS_INMUEBLE.map((t, i) => {
                     const checked = t === tipo;
-
                     return (
                       <button
                         key={i}
@@ -278,9 +274,7 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                         <span
                           className={cn(
                             "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
-                            checked
-                              ? "border-[#6B6B6B] bg-white"
-                              : "border-[#8A847C] bg-white"
+                            checked ? "border-[#6B6B6B] bg-white" : "border-[#8A847C] bg-white"
                           )}
                         >
                           <span
@@ -290,7 +284,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
                             )}
                           />
                         </span>
-
                         <span className="text-sm text-[#2E2E2E]">{t}</span>
                       </button>
                     );
@@ -301,14 +294,6 @@ export default function FiltrosInmueble({ filtrosAvanzados, onResultados }: Prop
           </AccordionItem>
         </Accordion>
       </div>
-
-      {/* <button
-        onClick={handleAplicar}
-        disabled={buscando}
-        className="mt-4 w-full cursor-pointer rounded-md bg-[#1F3A4D] py-2 text-sm text-white transition-colors hover:bg-[#C26E5A] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {buscando ? "Buscando..." : "Aplicar"}
-      </button> */}
     </div>
   );
 }

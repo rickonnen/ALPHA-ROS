@@ -21,8 +21,40 @@ const HABITACIONES = [
 ];
 
 const BANOS = ["+1 baños", "+2 baños", "+3 baños", "+4 baños"];
+const GENERAL = ["Sí", "No"];
 
-const PISCINA = ["Sí", "No"];
+export interface FiltrosAvanzadoValores {
+  habitaciones: string;
+  banos: string;
+  piscina: string;
+  patio: string;
+  garaje: string;
+  amueblada: string;
+  lavanderia: string;
+  balcon: string;
+}
+
+const CAMPOS: { key: keyof FiltrosAvanzadoValores; label: string; opciones: string[] }[] = [
+  { key: "habitaciones", label: "Número total de habitaciones", opciones: HABITACIONES },
+  { key: "banos",        label: "Baños",                        opciones: BANOS },
+  { key: "piscina",      label: "Piscina",                      opciones: GENERAL },
+  { key: "patio",        label: "Patio/Jardín",                 opciones: GENERAL },
+  { key: "garaje",       label: "Garaje",                       opciones: GENERAL },
+  { key: "amueblada",    label: "Amueblada",                    opciones: GENERAL },
+  { key: "lavanderia",   label: "Lavandería",                   opciones: GENERAL },
+  { key: "balcon",       label: "Balcón/Terraza",               opciones: GENERAL },
+];
+
+const VALORES_INICIALES: FiltrosAvanzadoValores = {
+  habitaciones: "",
+  banos: "",
+  piscina: "",
+  patio: "",
+  garaje: "",
+  amueblada: "",
+  lavanderia: "",
+  balcon: "",
+};
 
 interface SubDropdownProps {
   label: string;
@@ -52,16 +84,10 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         onClick={() => setAbierto((p) => !p)}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-          {valor || label}
-        </span>
-
+        <span>{valor || label}</span>
         <span
           className="text-[#4B4B4B] transition-transform duration-200"
-          style={{
-            display: "inline-block",
-            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
-          }}
+          style={{ display: "inline-block", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
         >
           ▾
         </span>
@@ -70,40 +96,27 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
       {abierto && (
         <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
           <div className="space-y-2">
-            {opciones.map((op, i) => {
+            {opciones.map((op) => {
               const checked = valor === op;
-
               return (
                 <button
-                  key={i}
+                  key={op}
                   type="button"
-                  onMouseDown={() => {
-                    onChange(op);
-                    setAbierto(false);
-                  }}
+                  onMouseDown={() => { onChange(op); setAbierto(false); }}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
-                    checked
-                      ? "bg-[#E7E3DD] text-[#2E2E2E]"
-                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                    checked ? "bg-[#E7E3DD]" : "bg-transparent hover:bg-[#F4EFE6]"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
-                      checked
-                        ? "border-[#6B6B6B] bg-white"
-                        : "border-[#8A847C] bg-white"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
-                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
-                      )}
-                    />
+                  <span className={cn(
+                    "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                    checked ? "border-[#6B6B6B] bg-white" : "border-[#8A847C] bg-white"
+                  )}>
+                    <span className={cn(
+                      "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                      checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                    )} />
                   </span>
-
                   <span className="text-sm text-[#2E2E2E]">{op}</span>
                 </button>
               );
@@ -116,25 +129,21 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
 }
 
 interface Props {
-  onChange: (valores: { habitaciones: string; banos: string; piscina: string }) => void;
+  onChange: (valores: FiltrosAvanzadoValores) => void;
 }
 
 export default function FiltrosAvanzado({ onChange }: Props) {
   const [abierto, setAbierto] = useState(false);
+  const [valores, setValores] = useState<FiltrosAvanzadoValores>(VALORES_INICIALES);
 
-  const [habitaciones, setHabitaciones] = useState("");
-  const [banos, setBanos] = useState("");
-  const [piscina, setPiscina] = useState("");
-
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const actualizar = (campo: string, valor: string) => {
-    const nuevo = { habitaciones, banos, piscina, [campo]: valor };
+  const handleChange = (campo: keyof FiltrosAvanzadoValores, valor: string) => {
+    const nuevo = { ...valores, [campo]: valor };
+    setValores(nuevo);
     onChange(nuevo);
   };
 
   return (
-    <div ref={wrapperRef} className={`${geist.className} w-full mt-3`}>
+    <div className={`${geist.className} w-full mt-3`}>
       <Accordion
         type="single"
         collapsible
@@ -156,35 +165,15 @@ export default function FiltrosAvanzado({ onChange }: Props) {
 
           <AccordionContent className="pt-3 pb-0 overflow-visible">
             <div className="flex flex-col gap-3 overflow-visible">
-              <SubDropdown
-                label="Número total de habitaciones"
-                opciones={HABITACIONES}
-                valor={habitaciones}
-                onChange={(v) => {
-                  setHabitaciones(v);
-                  actualizar("habitaciones", v);
-                }}
-              />
-
-              <SubDropdown
-                label="Baños"
-                opciones={BANOS}
-                valor={banos}
-                onChange={(v) => {
-                  setBanos(v);
-                  actualizar("banos", v);
-                }}
-              />
-
-              <SubDropdown
-                label="Piscina"
-                opciones={PISCINA}
-                valor={piscina}
-                onChange={(v) => {
-                  setPiscina(v);
-                  actualizar("piscina", v);
-                }}
-              />
+              {CAMPOS.map(({ key, label, opciones }) => (
+                <SubDropdown
+                  key={key}
+                  label={label}
+                  opciones={opciones}
+                  valor={valores[key]}
+                  onChange={(v) => handleChange(key, v)}
+                />
+              ))}
             </div>
           </AccordionContent>
         </AccordionItem>
