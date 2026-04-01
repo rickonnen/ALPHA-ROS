@@ -20,7 +20,7 @@ import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBa
 import { useRouter } from "next/navigation"
 
 export default function CaracteristicasPage() {
-  const {
+const {
     values,
     errors,
     touched,
@@ -29,6 +29,7 @@ export default function CaracteristicasPage() {
     handleSubmit,
     handleAgregarImagenes,
     handleEliminarImagen,
+    handleReset,
   } = useCaracteristicasForm()
 
   const router = useRouter()
@@ -87,9 +88,13 @@ export default function CaracteristicasPage() {
         const result = await publicarConImagenes(formData)
 
         if (result.success) {
-          sessionStorage.removeItem("informacionComercial")
-          sessionStorage.removeItem("informacionComercialDraft")
-          sessionStorage.removeItem("videoUrl")
+          sessionStorage.removeItem("caracteristicasInmueble");
+          sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+          sessionStorage.removeItem("informacionComercialDraft");
+          sessionStorage.removeItem("informacionComercialDraftUsuario");
+          sessionStorage.removeItem("informacionComercial");
+          sessionStorage.removeItem("videoUrl");
+          sessionStorage.removeItem("imageUploader_userInteracted");
           setSubmitOk(true)
           console.log("ID generado por la DB:", result.idPublicacion);
           router.push(`/frontend/publicacion/${result.idPublicacion}`);

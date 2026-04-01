@@ -46,6 +46,16 @@ const PRICE_FORMAT_REGEX = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/;
 
 // Key del borrador en sessionStorage
 const DRAFT_KEY = "informacionComercialDraft";
+const DRAFT_USER_KEY = "informacionComercialDraftUsuario";
+
+function getIdUsuarioActual(): string {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? (JSON.parse(raw)?.id ?? "") : "";
+  } catch {
+    return "";
+  }
+}
 
 /**
  * @Funcionalidad: Verifica si un nombre de campo pertenece al formulario
@@ -110,16 +120,24 @@ export function useInformacionComercialForm() {
 
   // Recuperar borrador del sessionStorage solo en el cliente tras el montaje
   // Usa startTransition igual que el hook del paso 2 para evitar hydration error
-  useEffect(() => {
-    const strSaved = sessionStorage.getItem(DRAFT_KEY);
-    if (strSaved) {
-      try {
-        const objSaved = JSON.parse(strSaved) as FormData;
-        startTransition(() => {
-          setForm({ ...FORM_INICIAL, ...objSaved });
-        });
-      } catch {
-        sessionStorage.removeItem(DRAFT_KEY);
+useEffect(() => {
+    const idUsuarioActual = getIdUsuarioActual();
+    const idUsuarioDraft  = sessionStorage.getItem(DRAFT_USER_KEY) ?? "";
+
+    if (idUsuarioDraft && idUsuarioDraft !== idUsuarioActual) {
+      sessionStorage.removeItem(DRAFT_KEY);
+      sessionStorage.removeItem(DRAFT_USER_KEY);
+    } else {
+      const strSaved = sessionStorage.getItem(DRAFT_KEY);
+      if (strSaved) {
+        try {
+          const objSaved = JSON.parse(strSaved) as FormData;
+          startTransition(() => {
+            setForm({ ...FORM_INICIAL, ...objSaved });
+          });
+        } catch {
+          sessionStorage.removeItem(DRAFT_KEY);
+        }
       }
     }
     setTimeout(() => {
@@ -128,9 +146,10 @@ export function useInformacionComercialForm() {
   }, []);
 
   // Guardar borrador automáticamente cada vez que el form cambia
-  useEffect(() => {
+useEffect(() => {
     if (!bolMounted) return;
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    sessionStorage.setItem(DRAFT_USER_KEY, getIdUsuarioActual());
   }, [form, bolMounted]);
 
   /**
@@ -281,6 +300,8 @@ export function useInformacionComercialForm() {
       if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
     }
     sessionStorage.removeItem(DRAFT_KEY);
+    sessionStorage.removeItem(DRAFT_USER_KEY);
+    sessionStorage.removeItem("informacionComercial");
     setForm(FORM_INICIAL);
     setErrors({});
     setTouched({});
