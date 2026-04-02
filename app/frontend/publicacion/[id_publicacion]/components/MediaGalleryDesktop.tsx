@@ -91,7 +91,6 @@ export const MediaGalleryDesktop = ({
     </div>
   );
 
-  // Video/Reel slot
   const SlotVideo = strVideoId ? (
     <iframe
       className="w-full h-full border-0 rounded-2xl"
@@ -108,8 +107,15 @@ export const MediaGalleryDesktop = ({
     />
   ) : null;
 
-
-  // Case 2: 2 slots side by side (50/50)
+ 
+  if (bolCase1) {
+    return (
+      <div className="hidden md:block h-125">
+        {SlotPrincipal}
+      </div>
+    );
+  }
+ 
   if (bolCase2) {
     return (
       <div className="hidden md:grid grid-cols-2 gap-4 h-125">
@@ -134,8 +140,7 @@ export const MediaGalleryDesktop = ({
     );
   }
 
-  // Case 3: 3 slots (2/3 + 1/3 with 2 secondary slots) — original layout
-  // Secondary slot indices relative to current
+
   const intSlot2Idx = bolHasVideo
     ? (intCurrentIndex + 1) % intImgCount
     : (intCurrentIndex + 1) % intImgCount;
