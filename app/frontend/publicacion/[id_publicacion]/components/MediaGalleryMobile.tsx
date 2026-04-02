@@ -41,23 +41,28 @@ export const MediaGalleryMobile = ({
   const bolEsSlideVideo = (strVideoId || strReelId) && intCurrentIndex === arrImagenesSafe.length;
   return (
     // Task 4.12: Solo visible en mobile
-    <div className="md:hidden relative h-70 bg-[#E7E1D7] rounded-2xl overflow-hidden">
+<div className="lg:hidden relative h-[min(280px,100svh)] bg-[#E7E1D7] rounded-2xl overflow-hidden">
       {/* Task 4.5: Último slide = YouTube, Instagram Reel, o imagen */}
       {bolEsSlideVideo ? (
         strVideoId ? (
-          <iframe
-            className="w-full h-full border-0"
-            src={`https://www.youtube.com/embed/${strVideoId}`}
-            title="Video del inmueble"
-            allowFullScreen
-          />
-        ) : (
-          <iframe
-            className="w-full h-full border-0"
-            src={`https://www.instagram.com/reel/${strReelId}/embed`}
-            title="Reel del inmueble"
-            allowFullScreen
-          />
+          <div className="relative w-full h-full">
+    <iframe
+      className="absolute inset-0 w-full h-full border-0"
+      src={`https://www.youtube.com/embed/${strVideoId}?playsinline=0`}
+      title="Video del inmueble"
+      allowFullScreen
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    />
+  </div>
+) : (
+  <div className="relative w-full h-full">
+    <iframe
+      className="absolute inset-0 w-full h-full border-0"
+      src={`https://www.instagram.com/reel/${strReelId}/embed`}
+      title="Reel del inmueble"
+      allowFullScreen
+    />
+  </div>
         )
       ) : (
         <>
