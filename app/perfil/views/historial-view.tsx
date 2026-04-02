@@ -42,7 +42,7 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
     const cargarHistorial = async () => {
       try {
         setCargando(true);
-        const res = await fetch(`/api/historial?id_usuario=${id_usuario}`);
+        const res = await fetch(`/api/perfil/getHistorial?id_usuario=${id_usuario}`);
         if (!res.ok) throw new Error("No se pudo cargar el historial");
         const json = await res.json();
         setHistorial(json);
