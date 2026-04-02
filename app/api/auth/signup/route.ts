@@ -9,11 +9,11 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
-    // ↳ Recibe: nombre, email, password del RegisterForm
+    const { nombre, apellido, email, password } = await request.json();
+    // ↳ Recibe: nombre, apellido, email, password del RegisterForm
 
     // ✅ 1. VALIDAR CAMPOS
-    if (!name || !email || !password) {
+    if (!nombre || !apellido || !email || !password) {
       return NextResponse.json(
         { error: "Faltan campos requeridos" },
         { status: 400 }
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       email_confirm: true,              // Ya confirmado automático
-      user_metadata: { name }           // Guardar nombre en metadata
+      user_metadata: { nombre, apellido }           // Guardar nombre y apellido en metadata
     });
 
     if (authError) {
@@ -34,30 +34,24 @@ export async function POST(request: NextRequest) {
 
 
     // �📋 3. INSERTAR EN TABLA "Usuario"
-    // 3. VERIFICAR SI USUARIO EXISTE, SI NO EXISTE INSERTARLO
-    const { data: existingUser } = await supabaseAdmin
+    // 3. INSERTAR EN TABLA "Usuario"
+    const { error: dbError } = await supabaseAdmin
       .from('Usuario')
-      .select('id_usuario')
-      .eq('id_usuario', authData.user.id)
-      .single();
+      .upsert([
+        {
+          id_usuario: authData.user.id,
+          email: email,
+          nombres: nombre,
+          apellidos: apellido,
+          rol: 2,
+          estado: 1
+        }
+      ], { onConflict: 'id_usuario' });
 
-    if (!existingUser) {
-      const { error: dbError } = await supabaseAdmin
-        .from('Usuario')
-        .insert([
-          {
-            id_usuario: authData.user.id,
-            email: email,
-            nombres: name,
-            rol: 2,
-            estado: 1
-          }
-        ]);
-
-      if (dbError) {
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-        return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
-      }
+    if (dbError) {
+      console.error("Error al guardar en DB:", dbError);
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
     }
 
     // 4. CREAR JWT

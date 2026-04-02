@@ -11,9 +11,9 @@ export async function POST(request: Request) {
     console.log("Iniciando signup, SUPABASE_URL:", process.env.SUPABASE_URL);
     console.log("SERVICE_ROLE_KEY exists:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-    // se recibe el 'name' que contendrá el nombre completo
-    const { email, password, name } = await request.json();
-    console.log("Datos recibidos:", { email, password: "***", name });
+    // se reciben 'nombre' y 'apellido' separados
+    const { email, password, nombre, apellido } = await request.json();
+    console.log("Datos recibidos:", { email, password: "***", nombre, apellido });
 
     // 1. Crear el usuario en Supabase Auth
     console.log("Creando usuario en Auth...");
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name } 
+      user_metadata: { nombre, apellido } 
     });
 
     if (authError) {
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
           {
             id_usuario: authData.user.id,
             email: email,
-            nombres: name,
+            nombres: nombre,
+            apellidos: apellido,
             rol: 2,
             estado: 1
           }
