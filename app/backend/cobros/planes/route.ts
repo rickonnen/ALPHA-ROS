@@ -8,7 +8,6 @@ export async function GET() {
   try {
     const planes = await prisma.planPublicacion.findMany({
       where: {
-        activo: true,
       },
       orderBy: {
         precio_plan: 'asc',
