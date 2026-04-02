@@ -56,7 +56,10 @@ export default async function PerfilInmueblePage({
     : null;
 
   // Task 4.8: Dirección desde relación Ubicacion
-  const strDireccion = objPerfil.Ubicacion?.direccion ?? "Dirección no disponible";
+  const strDireccion = [
+  objPerfil.Ubicacion?.direccion,
+  objPerfil.Ubicacion?.zona,
+].filter(Boolean).join(", ") || "Dirección no disponible";
 
   // Task 4.4: URLs de imágenes
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
@@ -114,7 +117,7 @@ export default async function PerfilInmueblePage({
             strTipoInmueble:  objPerfil.TipoInmueble?.nombre_inmueble   ?? "—",
             strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion  ?? "—",
             strDepartamento:  objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
-            strZona:          objPerfil.Zona?.nombre_zona                ?? "—",
+            strZona:          objPerfil.Ubicacion?.zona ?? "—",
             intHabitaciones:  objPerfil.habitaciones                     ?? 0,
             intBanos:         objPerfil.banos                            ?? 0,
             intPlantas:       objPerfil.plantas                          ?? 0,
