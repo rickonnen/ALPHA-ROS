@@ -1,24 +1,5 @@
 "use client";
 
-/**
- * @Dev: [OliverG]
- * @Fecha: 28/03/2026
- * @Modificación: Gabriel Paredes Sipe — 29/03/2026
- *   → Se agrega useAuth para leer el id del usuario autenticado.
- *   → handleSiguiente recibe el id como parámetro para vincularlo
- *     en sessionStorage sin que el hook dependa del AuthProvider.
- * @Modificación: Gabriel Paredes Sipe — 30/03/2026
- *   → Se elimina useAuth del page y del hook. El id_usuario ahora se
- *     lee directamente desde localStorage dentro del hook, evitando
- *     el error "useAuth debe ser usado dentro de AuthProvider" causado
- *     por que el AuthProvider en el layout no envuelve los children.
- *   → handleSiguiente ya no recibe parámetros.
- * @Funcionalidad: Página principal del formulario de Información Comercial para
- * la publicación de inmuebles. Renderiza el navbar, el formulario con sus campos
- * y los botones de acción Cancelar y Siguiente.
- * @return {JSX.Element} Página completa del formulario de Información Comercial
- */
-
 import { useInformacionComercialForm } from "./Hooks/useInformacionComercialForm";
 import DropdownSelect    from "./Components/Dropdown.Select";
 import PrecioInput       from "./Components/PrecioInput";
@@ -49,22 +30,21 @@ export default function Page() {
   } = useInformacionComercialForm();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#EAE4D8] font-[family-name:var(--font-geist-sans)]">
+    <div
+      className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)]"
+      style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
+    >
+      <div className="flex-1 flex flex-col px-4 py-6 sm:px-6 sm:py-8">
 
-      {/* ── Área principal con fondo degradado de 2 colores ── */}
-      <div
-        className="flex-1 flex flex-col items-center px-6"
-        style={{ background: "linear-gradient(to bottom, #EAE4D8 35%, #CFC9BB 35%)" }}
-      >
-        <div className="w-full max-w-[55%] px-12 pt-8 pb-6 max-sm:max-w-full max-sm:px-0 max-sm:pt-5 max-sm:pb-4">
-          <h1 className="text-[2.6rem] font-bold text-[#1A1714] tracking-tight leading-tight max-sm:text-[1.45rem]">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-40">
             Crear publicación
           </h1>
         </div>
 
         {/* Card principal del formulario */}
-        <div className="bg-white rounded-lg shadow-md w-full max-w-[620px] px-8 py-7 relative z-[1] mt-12 mb-12 max-sm:max-w-full max-sm:px-3.5 max-sm:py-4 max-sm:mt-4 max-sm:mb-5">
-          <p className="text-center text-[0.85rem] font-bold tracking-[0.13em] uppercase text-[#1A1714] mb-5">
+        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl px-4 py-6 sm:p-8 mt-4 mb-8 shadow-md">
+          <p className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-black">
             Información Comercial
           </p>
 
@@ -169,7 +149,6 @@ export default function Page() {
             >
               Cancelar
             </button>
-            {/* handleSiguiente ya no recibe parámetros — el id_usuario lo lee internamente desde localStorage */}
             <button
               type="button"
               onClick={() => handleSiguiente()}
