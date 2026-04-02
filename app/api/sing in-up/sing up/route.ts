@@ -31,35 +31,33 @@ export async function POST(request: Request) {
 
     console.log("Usuario creado en Auth con ID:", authData.user.id);
 
-    // 2. Insertar en tu tabla pública 'Usuario'
-    console.log("Insertando en tabla Usuario...");
-    console.log("Objeto a insertar:", {
-      id_usuario: authData.user.id,
-      email: email,
-      nombres: name,
-      rol: 2,
-      estado: 1
-    });
+    console.log("Verificando si usuario existe...");
     
-    const { data: dbData, error: dbError } = await supabaseAdmin
+    const { data: existingUser } = await supabaseAdmin
       .from('Usuario')
-      .insert([
-        {
-          id_usuario: authData.user.id,
-          email: email,
-          nombres: name,
-          rol: 2,
-          estado: 1
-        }
-      ]);
+      .select('id_usuario')
+      .eq('id_usuario', authData.user.id)
+      .single();
 
-    console.log("Respuesta del insert:", { data: dbData, error: dbError });
+    if (!existingUser) {
+      console.log("Insertando en tabla Usuario...");
+      const { data: dbData, error: dbError } = await supabaseAdmin
+        .from('Usuario')
+        .insert([
+          {
+            id_usuario: authData.user.id,
+            email: email,
+            nombres: name,
+            rol: 2,
+            estado: 1
+          }
+        ]);
 
-    if (dbError) {
-      console.error("Error en DB:", dbError);
-
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
+      if (dbError) {
+        console.error("Error en DB:", dbError);
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
+      }
     }
 
     console.log("Usuario insertado en tabla Usuario");

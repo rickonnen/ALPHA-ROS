@@ -1,12 +1,13 @@
-"use client";
+"use client";  // Componente de cliente (React)
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { SessionProvider } from "next-auth/react";
 
+// 📦 TIPOS
 interface User {
   id: string;
   name: string;
   email: string;
 }
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -15,76 +16,93 @@ interface AuthContextType {
   logout: () => void;
 }
 
+// 📝 CREAR CONTEXTO
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // 🔐 ESTADOS
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Verificar sesión al cargar — revisa localStorage, NextAuth (Google) y cookie propia
+
+  // 🔍 FUNCIÓN AUXILIAR: Obtener usuario del servidor
+  const fetchUserFromServer = async () => {
+    try {
+      // Llamar a /api/auth/me
+      const res = await fetch("/api/auth/me", {
+        credentials: "include",  // ⭐ IMPORTANTE: Enviar cookies con el request
+        // ↳ Sin esto, la cookie httpOnly NO se envía
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);  // Guardar usuario en memory (NO en localStorage)
+        return true;
+      }
+    } catch (error) {
+      console.error("Error fetching user from server:", error);
+    }
+    return false;
+  };
+
+  // 🚀 AL MONTAR COMPONENTE: Verificar si hay sesión
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // 1. Primero verificar localStorage (usuarios email/password)
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-          setIsLoading(false);
-          return;
-        }
-        // 2. Verificar sesión de NextAuth (usuarios de Google)
+        // 1️⃣ Verificar si es usuario de Google (NextAuth)
         const sessionRes = await fetch("/api/auth/session");
         if (sessionRes.ok) {
           const session = await sessionRes.json();
           if (session?.user) {
+            // Google user encontrado
             const googleUser: User = {
               id: session.user.id ?? session.user.email ?? "",
               name: session.user.name ?? "",
               email: session.user.email ?? "",
             };
             setUser(googleUser);
-            localStorage.setItem("user", JSON.stringify(googleUser));
             setIsLoading(false);
-            return;
+            return;  // Salir, usuario ya identificado
           }
         }
-        // 3. Verificar sesión propia por cookie JWT
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
+
+        // 2️⃣ Verificar si es usuario email/password (JWT en cookie)
+        await fetchUserFromServer();
+        // ↳ Si hay JWT válido en cookie → Obtiene usuario
+        // ↳ Si NO hay JWT o expiró → user sigue null
+        
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false);  // Dejar de cargar aunque falle
       }
     };
 
     checkSession();
-  }, []);
+  }, []);  // Solo ejecutar una vez al montar
 
+  // 🔐 FUNCIÓN: LOGIN
   const login = async (email: string, password: string) => {
+    // 1. Enviar email/password a servidor
     const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      credentials: "include",  // Enviar/recibir cookies
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       throw new Error(data.error || "Error al iniciar sesión");
     }
 
-    setUser(data.user);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    // 2. Servidor respondió OK y guardó JWT en cookie
+    // 3. Obtener usuario desde /api/auth/me
+    await fetchUserFromServer();
+    // ↳ Ahora user tiene datos del usuario autenticado
   };
 
+  // 📝 FUNCIÓN: SIGNUP
   const signup = async (name: string, email: string, password: string) => {
+    // 1. Enviar datos a servidor
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,46 +110,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ name, email, password }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       throw new Error(data.error || "Error al registrarse");
     }
 
-    if (data.user) {
-      setUser(data.user);
-      localStorage.setItem("user", JSON.stringify(data.user));
-    }
+    // 2. JWT guardado en cookie
+    // 3. Obtener usuario
+    await fetchUserFromServer();
   };
 
+  // 🚪 FUNCIÓN: LOGOUT
   const logout = async () => {
     try {
-      // Cerrar sesión propia (cookie JWT)
+      // Llamar a /api/auth/logout para borrar cookie
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
     } catch (_) {}
 
-    try {
-      // Cerrar sesión de NextAuth (Google)
-      const { signOut } = await import("next-auth/react");
-      await signOut({ redirect: false });
-    } catch (_) {}
-
+    // Limpiar estado (NO hay localStorage que limpiar)
     setUser(null);
-    localStorage.removeItem("user");
+    // ❌ NO HAY: localStorage.removeItem("user")
   };
 
+  // 📦 RETORNAR CONTEXTO
   return (
-    <SessionProvider>
-      <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
-        {children}
-      </AuthContext.Provider>
-    </SessionProvider>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
+// 🎣 HOOK PERSONALIZADO PARA USAR EL CONTEXTO
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

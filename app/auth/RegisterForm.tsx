@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
 import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
@@ -191,26 +190,25 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
         </h2>
       </div>
 
-      {/* Botón Google — usa signIn de NextAuth directamente, sin popup manual */}
+      {/* Botón Google — Deshabilitado */}
       <button
         type="button"
-        disabled={loading}
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={(e) => e.preventDefault()}
         style={{
           width: "100%",
-          backgroundColor: loading ? "#9ca3af" : "#0F172A",
+          backgroundColor: "#0F172A",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
           border: "none",
-          cursor: loading ? "not-allowed" : "pointer",
+          cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
           marginBottom: "16px",
-          opacity: loading ? 0.6 : 1,
+          opacity: 1,
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

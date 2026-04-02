@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from "next/server";
+import { sign } from "jsonwebtoken";  // Para CREAR JWT
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -12,8 +13,9 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
+    // ↳ Recibe email y password del LoginForm
 
-    // Validaciones básicas
+    // ✅ 1. VALIDAR CAMPOS
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email y contraseña son obligatorios" },
@@ -21,10 +23,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Autenticar con Supabase Auth
+    // 🔐 2. AUTENTICAR CON SUPABASE AUTH
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password
+      // ↳ Supabase verifica email/password en su tabla auth.users
     });
 
     if (authError || !authData.user) {
@@ -34,9 +37,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener datos del usuario desde la tabla Usuario con Prisma
+    // 3. OBTENER DATOS DEL USUARIO DE LA TABLA "Usuario"
     const userData = await prisma.usuario.findUnique({
-      where: { id_usuario: authData.user.id },
+      where: { id_usuario: authData.user.id },  // ID de Supabase Auth
       select: { id_usuario: true, nombres: true, email: true, rol: true }
     });
 
@@ -47,18 +50,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = {
-      id: userData.id_usuario,
-      name: userData.nombres,
-      email: userData.email,
-    };
+    // 🎫 4. CREAR JWT TOKEN
+    const jwtToken = sign(
+      { userId: userData.id_usuario },  // Datos dentro del token
+      process.env.JWT_SECRET!,           // Clave secreta
+      { expiresIn: "7d" }                // Expira en 7 días
+    );
+    // ↳ Ejemplo de JWT:
+    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhYmMxMjMifQ.xxxxx
 
+    // 🍪 5. CREAR RESPUESTA + GUARDAR JWT EN COOKIE
     const response = NextResponse.json(
-      { user, message: "Sesión iniciada exitosamente" },
+      { message: "Sesión iniciada exitosamente" },
       { status: 200 }
     );
 
+    // IMPORTANTE: Configurar cookie httpOnly
+    response.cookies.set("auth_token", jwtToken, {
+      httpOnly: true,                           // ❌ No se puede acceder desde JavaScript
+      secure: process.env.NODE_ENV === "production",  // 🔒 HTTPS en producción
+      sameSite: "lax",                          // 🛡️ Protege contra CSRF
+      maxAge: 7 * 24 * 60 * 60,                 // 7 días en segundos
+      path: "/",                                // Disponible en toda la app
+    });
+    // ↳ El NAVEGADOR envía esta cookie automáticamente en cada request
+
     return response;
+
   } catch (error) {
     return NextResponse.json(
       { error: "Error en el servidor: " + String(error) },

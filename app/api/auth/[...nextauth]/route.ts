@@ -34,16 +34,15 @@ const handler = NextAuth({
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
 
-          // 🔎 Verificar si ya existe
-          const { data: existing } = await supabase
+          // 🔎 Verificar si ya existe por id_usuario
+          const { data: existingById } = await supabase
             .from("Usuario")
             .select("id_usuario")
-            .eq("email", user.email)
+            .eq("id_usuario", account.providerAccountId)
             .maybeSingle()
 
           // 🆕 Crear usuario si no existe
-          if (!existing) {
-
+          if (!existingById) {
             await supabase.from("Usuario").insert({
               id_usuario: account.providerAccountId,
               email: user.email,
