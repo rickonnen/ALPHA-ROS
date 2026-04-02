@@ -42,7 +42,7 @@ export default function FavButton({
   const agregarFavorito = async () => {
     try {
       setCargando(true);
-      const res = await fetch("/backend/perfil/addFav", {
+      const res = await fetch("/api/perfil/addFav", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_usuario, id_publicacion }),
@@ -75,7 +75,7 @@ export default function FavButton({
     try {
       setCargando(true);
       const res = await fetch(
-        `/backend/perfil/deleteFav?id_usuario=${id_usuario}&id_publicacion=${id_publicacion}`,
+        `/api/perfil/deleteFav?id_usuario=${id_usuario}&id_publicacion=${id_publicacion}`,
         { method: "DELETE" }
       );
 

@@ -12,16 +12,16 @@ const strBaseLinkClasses = "inline-block rounded-sm text-[#2E2E2E] transition-al
 const strSocialBtnClasses = "inline-flex h-11 w-11 items-center justify-center rounded-sm transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
 
 const arrExploreLinks = [
-  { strHref: "/frontend/cobros", strLabel: "Compra" },
-  { strHref: "/frontend/search", strLabel: "Alquiler" },
-  { strHref: "/frontend/mapas", strLabel: "Anticrético" },
-  { strHref: "/frontend/publicacion", strLabel: "Publica tu inmueble" },
+  { strHref: "/cobros", strLabel: "Compra" },
+  { strHref: "/search", strLabel: "Alquiler" },
+  { strHref: "/mapas", strLabel: "Anticrético" },
+  { strHref: "/publicacion", strLabel: "Publica tu inmueble" },
 ];
 
 const arrInfoLinks = [
-  { strHref: "/frontend/home/sobre-nosotros", strLabel: "Sobre nosotros" },
-  { strHref: "/frontend/home/terminos-condiciones", strLabel: "Términos y condiciones" },
-  { strHref: "/frontend/home/politicas-privacidad", strLabel: "Políticas de privacidad" },
+  { strHref: "/home/sobre-nosotros", strLabel: "Sobre nosotros" },
+  { strHref: "/home/terminos-condiciones", strLabel: "Términos y condiciones" },
+  { strHref: "/home/politicas-privacidad", strLabel: "Políticas de privacidad" },
 ];
 
 const arrSocialLinks = [

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Geist } from "next/font/google";
-import { buscarPublicaciones, type FiltrosPublicacion } from "@/app/frontend/search/search-services";
+import { buscarPublicaciones, type FiltrosPublicacion } from "@/features/search/search-services";
 
 const geist = Geist({ subsets: ["latin"] });
 
