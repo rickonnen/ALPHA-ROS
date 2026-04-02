@@ -78,6 +78,16 @@ export const MIN_RESOLUCION_ALTO      = 720;
 
 // Tarea 2.9: clave de sessionStorage para los datos del paso 2
 const SESSION_KEY = 'caracteristicasInmueble';
+const SESSION_USER_KEY = 'caracteristicasInmuebleUsuario';
+
+function getIdUsuarioActual(): string {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? (JSON.parse(raw)?.id ?? "") : "";
+  } catch {
+    return "";
+  }
+}
 
 const INITIAL_VALUES: CaracteristicasFormValues = {
   direccion:    '',
@@ -105,6 +115,13 @@ function esNumeroDecimalPositivo(valor: string): boolean {
 // Tarea 2.9: leer valores guardados del sessionStorage (sin imágenes, no serializables)
 function leerSesion(): Partial<Omit<CaracteristicasFormValues, 'imagenes'>> {
   try {
+    const idActual  = getIdUsuarioActual();
+    const idGuardado = sessionStorage.getItem(SESSION_USER_KEY) ?? "";
+    if (idGuardado && idGuardado !== idActual) {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_USER_KEY);
+      return {};
+    }
     const raw = sessionStorage.getItem(SESSION_KEY)
     return raw ? JSON.parse(raw) : {}
   } catch {
@@ -117,6 +134,7 @@ function guardarSesion(values: CaracteristicasFormValues): void {
   try {
     const { imagenes: _, ...rest } = values
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(rest))
+    sessionStorage.setItem(SESSION_USER_KEY, getIdUsuarioActual())
   } catch {
     // sessionStorage no disponible (SSR), ignorar
   }
@@ -308,7 +326,11 @@ export function useCaracteristicasForm() {
 
   // Resetea todo al estado inicial y limpia sessionStorage
   const handleReset = useCallback(() => {
-    sessionStorage.removeItem(SESSION_KEY)
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_USER_KEY);  // ← agregar esta línea
+    sessionStorage.removeItem("informacionComercialDraft");
+    sessionStorage.removeItem("informacionComercialDraftUsuario");
+    sessionStorage.removeItem("informacionComercial");
     setValues(INITIAL_VALUES);
     setErrors({});
     setTouched({});

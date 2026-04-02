@@ -54,9 +54,23 @@ export const PropertyActions = () => {
       if (objEstado.bolLimiteAlcanzado) {
         setBolShowModal(true);
       } else {
+        sessionStorage.removeItem("caracteristicasInmueble");
+        sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+        sessionStorage.removeItem("informacionComercialDraft");
+        sessionStorage.removeItem("informacionComercialDraftUsuario");
+        sessionStorage.removeItem("informacionComercial");
+        sessionStorage.removeItem("videoUrl");
+        sessionStorage.removeItem("imageUploader_userInteracted");
         router.push("/frontend/publicacion/informacion-comercial");
       }
     } catch {
+      sessionStorage.removeItem("caracteristicasInmueble");
+        sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+        sessionStorage.removeItem("informacionComercialDraft");
+        sessionStorage.removeItem("informacionComercialDraftUsuario");
+        sessionStorage.removeItem("informacionComercial");
+        sessionStorage.removeItem("videoUrl");
+        sessionStorage.removeItem("imageUploader_userInteracted");
       router.push("/frontend/publicacion/informacion-comercial");
     } finally {
       setBolChecking(false);

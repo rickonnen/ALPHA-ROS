@@ -20,7 +20,7 @@ import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBa
 import { useRouter } from "next/navigation"
 
 export default function CaracteristicasPage() {
-  const {
+const {
     values,
     errors,
     touched,
@@ -29,6 +29,7 @@ export default function CaracteristicasPage() {
     handleSubmit,
     handleAgregarImagenes,
     handleEliminarImagen,
+    handleReset,
   } = useCaracteristicasForm()
 
   const router = useRouter()
@@ -87,9 +88,13 @@ export default function CaracteristicasPage() {
         const result = await publicarConImagenes(formData)
 
         if (result.success) {
-          sessionStorage.removeItem("informacionComercial")
-          sessionStorage.removeItem("informacionComercialDraft")
-          sessionStorage.removeItem("videoUrl")
+          sessionStorage.removeItem("caracteristicasInmueble");
+          sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+          sessionStorage.removeItem("informacionComercialDraft");
+          sessionStorage.removeItem("informacionComercialDraftUsuario");
+          sessionStorage.removeItem("informacionComercial");
+          sessionStorage.removeItem("videoUrl");
+          sessionStorage.removeItem("imageUploader_userInteracted");
           setSubmitOk(true)
           console.log("ID generado por la DB:", result.idPublicacion);
           router.push(`/frontend/publicacion/${result.idPublicacion}`);
@@ -112,14 +117,14 @@ export default function CaracteristicasPage() {
       style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
     >
       <div className="w-full max-w-2xl">
-        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-60">
+        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-40">
           Crear publicación
         </h1>
       </div>
 
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
-        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#1F3A4D]">
-          Caracteristicas del inmueble
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8 mt-14">
+        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-black">
+            Caracteristicas del inmueble
         </h2>
 
         <div className="flex flex-col gap-4">
