@@ -60,7 +60,7 @@ export function PaymentDataTable({
     if (!objSelectedPayment || bolIsProcessing) return;
     setBolIsProcessing(true);
     try {
-      const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
+      const objResponse = await fetch('/admin/verificacion-pagos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,7 +86,7 @@ export function PaymentDataTable({
     if (!objSelectedPayment || bolIsProcessing) return;
     setBolIsProcessing(true);
     try {
-      const objResponse = await fetch('/backend/cobros/verificacion-pagos', {
+      const objResponse = await fetch('/admin/verificacion-pagos', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

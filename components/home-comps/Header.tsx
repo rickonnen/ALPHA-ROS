@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; 
 import { useScrollDirection } from "../hooks/useScrollDirection";
-import AuthModal from "@/app/frontend/auth/AuthModal";
-import ProtectedFeatureModal from "@/app/frontend/auth/ProtectedFeatureModal";
-import { useAuth } from "@/app/frontend/auth/AuthContext";
-import { NotificationPanel } from "@/app/frontend/home/components/notifications/NotificationPanel";
+import AuthModal from "@/app/auth/AuthModal";
+import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
+import { useAuth } from "@/app/auth/AuthContext";
+import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
@@ -111,7 +111,7 @@ export const Header = () => {
   const btnProfile = user ? (
     <div className="flex items-center gap-2">
       {/* Ir a Mi Perfil */}
-      <Link href={`/frontend/perfil?id=${user.id}`}>
+      <Link href={`/perfil?id=${user.id}`}>
         <Button
           variant="ghost"
           className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none"
@@ -192,7 +192,7 @@ export const Header = () => {
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
             <Link
-              href={`/frontend/cobros/planes?id=${user?.id}`}
+              href={`/cobros/planes?id=${user?.id}`}
               className={strLinkClassesDesktop}
             >
               PLANES DE PUBLICACIÓN
@@ -212,7 +212,7 @@ export const Header = () => {
             ))}
 
             <Link
-              href={user ? "/frontend/publicacion" : "/login"}
+              href={user ? "/publicacion" : "/login"}
               className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md"
             >
               <Button className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
@@ -287,7 +287,7 @@ export const Header = () => {
 
               {/* Publicar */}
               <Link
-                href="/frontend/publicacion"
+                href="/publicacion"
                 prefetch={false}
                 onClick={closeMobileMenu}
                 className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D] rounded-md"
@@ -309,7 +309,7 @@ export const Header = () => {
               ))}
 
               <Link
-                href={`/frontend/cobros/planes?id=${user?.id}`}
+                href={`/cobros/planes?id=${user?.id}`}
                 onClick={closeMobileMenu}
                 className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}
               >

@@ -86,7 +86,6 @@ const handler = NextAuth({
 
     },
 
-    // 🔥 SESSION (ENVIAR ID AL FRONTEND)
     async session({ session, token }: any) {
 
       if (session.user) {

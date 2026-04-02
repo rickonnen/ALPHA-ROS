@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import notifications from "@/app/backend/notifications/notifications.json";
+import notifications from "@/app/api/notifications/notifications.json";
 import fs from "fs";
 import path from "path";
 
 // Ruta al archivo JSON
-const notificationsPath = path.join(process.cwd(), "app/backend/notifications/notifications.json");
+const notificationsPath = path.join(process.cwd(), "app/api/notifications/notifications.json");
 
 // Función para leer notificaciones actualizadas
 const readNotifications = () => {

@@ -40,7 +40,7 @@ const strDisplayName: Record<string, string> = {
 //  Funciones fetch → API Routes
 // ---------------------------------------------------------------
 async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
-  const res = await fetch("/backend/home/explore/alquiler");
+  const res = await fetch("/api/home/explore/alquiler");
   const { data } = await res.json();
   return data.map((row: { ciudad: string; total: number }) => ({
     strName:  row.ciudad,
@@ -49,7 +49,7 @@ async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
 }
 
 async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
-  const res = await fetch("/backend/home/explore/venta");
+  const res = await fetch("/api/home/explore/venta");
   const { data } = await res.json();
   return data.map((row: { ciudad: string; total: number }) => ({
     strName:  row.ciudad,
@@ -58,7 +58,7 @@ async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
 }
 
 async function fetchTiposInmueble(): Promise<CategoryItem[]> {
-  const res = await fetch("/backend/home/explore/tipos");
+  const res = await fetch("/api/home/explore/tipos");
   const { data } = await res.json();
   return data.map((row: { tipo_inmueble: string; total: number }) => ({
     strName:  strDisplayName[row.tipo_inmueble] ?? row.tipo_inmueble,
