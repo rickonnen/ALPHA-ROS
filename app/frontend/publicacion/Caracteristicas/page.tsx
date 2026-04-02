@@ -2,25 +2,27 @@
 
 /**
  * Dev: Gabriel Paredes Sipe
- * Date modification: 30/03/2026
+ * Date modification: 02/04/2026
  * Modificación: Se agrega id_usuario al FormData antes de llamar a publicarConImagenes.
  *   Lee id_usuario del sessionStorage (guardado por useInformacionComercialForm en paso 1).
- *    Lo adjunta al FormData para que action.ts lo vincule en el INSERT de la BD.
+ *   Lo adjunta al FormData para que action.ts lo vincule en el INSERT de la BD.
+ *   Corrección: se extrae el campo Zona al componente ZonaInput separado.
  */
 
 import { useState } from 'react'
 import { useCaracteristicasForm } from './Hooks/useCaracteristicasForm'
-import { DireccionForm } from './Components/DireccionForm'
-import { DepartamentoSelect } from './Components/DepartamentoSelect'
-import { HabitacionesForm } from './Components/HabitacionesForm'
-import { ImageUploader } from './Components/ImageUploader'
+import { DireccionForm } from './components/DireccionForm'
+import { DepartamentoSelect } from './components/DepartamentoSelect'
+import { ZonaInput } from './components/Zona'
+import { HabitacionesForm } from './components/HabitacionesForm'
+import { ImageUploader } from './components/ImageUploader'
 import { VideoSection } from './components/VideoSection'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBackend/actions'
 import { useRouter } from "next/navigation"
 
 export default function CaracteristicasPage() {
-const {
+  const {
     values,
     errors,
     touched,
@@ -71,9 +73,7 @@ const {
         formData.append('tipoPropiedad', objPaso1.tipoPropiedad)
         formData.append('tipoOperacion', objPaso1.tipoOperacion)
         formData.append('descripcion',   objPaso1.descripcion)
-        //  CAMBIO: adjuntar id_usuario desde sessionStorage del paso 1 
         formData.append('id_usuario',    objPaso1.id_usuario ?? '')
-        // ─────────────────────────────────────────────────────────────────────
         formData.append('direccion',    formValues.direccion)
         formData.append('superficie',   formValues.superficie.replace(/\./g, ''))
         formData.append('departamento', formValues.departamento)
@@ -88,16 +88,16 @@ const {
         const result = await publicarConImagenes(formData)
 
         if (result.success) {
-          sessionStorage.removeItem("caracteristicasInmueble");
-          sessionStorage.removeItem("caracteristicasInmuebleUsuario");
-          sessionStorage.removeItem("informacionComercialDraft");
-          sessionStorage.removeItem("informacionComercialDraftUsuario");
-          sessionStorage.removeItem("informacionComercial");
-          sessionStorage.removeItem("videoUrl");
-          sessionStorage.removeItem("imageUploader_userInteracted");
+          sessionStorage.removeItem("caracteristicasInmueble")
+          sessionStorage.removeItem("caracteristicasInmuebleUsuario")
+          sessionStorage.removeItem("informacionComercialDraft")
+          sessionStorage.removeItem("informacionComercialDraftUsuario")
+          sessionStorage.removeItem("informacionComercial")
+          sessionStorage.removeItem("videoUrl")
+          sessionStorage.removeItem("imageUploader_userInteracted")
           setSubmitOk(true)
-          console.log("ID generado por la DB:", result.idPublicacion);
-          router.push(`/frontend/publicacion/${result.idPublicacion}`);
+          console.log("ID generado por la DB:", result.idPublicacion)
+          router.push(`/frontend/publicacion/${result.idPublicacion}`)
         } else {
           const firstError = Object.values(result.errors).flat()[0] ?? null
           setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
@@ -122,9 +122,9 @@ const {
         </h1>
       </div>
 
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8 mt-14">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8 mt-8">
         <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-black">
-            Caracteristicas del inmueble
+          Caracteristicas del inmueble
         </h2>
 
         <div className="flex flex-col gap-4">
@@ -147,23 +147,13 @@ const {
             onBlur={onBlur}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="zona" className="text-sm font-medium text-[#2E2E2E]">
-              Zona
-            </label>
-            <input
-              id="zona"
-              type="text"
-              maxLength={100}
-              value={values.zona}
-              onChange={(e) => onChange('zona', e.target.value)}
-              onBlur={() => onBlur('zona')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
-            />
-            {touched.zona && errors.zona && (
-              <span className="text-red-500 text-sm">{errors.zona}</span>
-            )}
-          </div>
+          <ZonaInput
+            value={values.zona}
+            error={errors.zona}
+            touched={touched.zona ?? false}
+            onChange={onChange}
+            onBlur={onBlur}
+          />
 
           <HabitacionesForm
             bedroomsValue={values.habitaciones}
