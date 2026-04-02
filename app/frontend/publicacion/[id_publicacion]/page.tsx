@@ -86,7 +86,7 @@ export default async function PerfilInmueblePage({
             <p className="text-base md:text-3xl">
               <span className="font-bold text-[#1F3A4D]">Precio:</span>{" "}
               <span className="font-medium">
-                {Number(objPerfil.precio).toLocaleString("de-DE")} Bs
+                {Number(objPerfil.precio).toLocaleString("de-DE")} Bs.
               </span>
             </p>
           </div>
