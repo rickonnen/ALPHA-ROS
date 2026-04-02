@@ -110,7 +110,7 @@ export const MediaGalleryDesktop = ({
  
   if (bolCase1) {
     return (
-      <div className="hidden md:block h-125">
+      <div className="hidden lg:block h-125">
         {SlotPrincipal}
       </div>
     );
@@ -118,7 +118,7 @@ export const MediaGalleryDesktop = ({
  
   if (bolCase2) {
     return (
-      <div className="hidden md:grid grid-cols-2 gap-4 h-125">
+      <div className="hidden lg:grid grid-cols-2 gap-4 h-125">
         {/* Slot 1: main image */}
         {SlotPrincipal}
         {/* Slot 2: video or second image */}
@@ -147,7 +147,7 @@ export const MediaGalleryDesktop = ({
   const intSlot3Idx = (intCurrentIndex + (bolHasVideo ? 1 : 2)) % intImgCount;
 
   return (
-    <div className="hidden md:grid grid-cols-3 gap-4 h-125">
+    <div className="hidden lg:grid grid-cols-3 gap-4 h-125">
       {/* Slot 1: main image */}
       <div className="col-span-2 h-full">
         {SlotPrincipal}
