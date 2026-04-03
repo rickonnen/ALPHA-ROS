@@ -9,10 +9,10 @@
 
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";
-import { MediaGallery }      from "@/app/frontend/publicacion/[id_publicacion]/components/MediaGallery";
-import { PropertyDetails }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyDetails";
+import { MediaGallery }      from "@/app/frontend/publicacion/Perfil_del_Inmueble/[id_publicacion]/components/MediaGallery";
+import { PropertyDetails }   from "@/app/frontend/publicacion/Perfil_del_Inmueble/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/app/backend/publicacion/Perfil_Publicacion/getPerfilInmueble";
-import { PropertyActions }   from "@/app/frontend/publicacion/[id_publicacion]/components/PropertyActions";
+import { PropertyActions }   from "@/app/frontend/publicacion/Perfil_del_Inmueble/[id_publicacion]/components/PropertyActions";
 
 export default async function PerfilInmueblePage({
   params,
