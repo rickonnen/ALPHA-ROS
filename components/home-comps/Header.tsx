@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
@@ -11,10 +12,11 @@ import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 /**
- * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 25/03/2026
- * Dev: Erick Eduardo Arnez Torrico          Fecha: 26/03/2026
- * Encabezado principal responsivo con menú desplegable para móviles
- * Incluye lógica de autenticación (login/registro), panel de notificaciones, ocultamiento
+ * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 03/04/2026
+ * Dev: Erick Eduardo Arnez Torrico        Fecha: 26/03/2026
+ * Encabezado principal responsivo con menú desplegable para móviles.
+ * Incluye lógica de autenticación, panel de notificaciones con cierre automático,
+ * y soporte para el hook de animación con tipos de cursor.
  * @return {object} Componente visual Header para Next.js.
  */
 const arrNavLinks = [
@@ -25,10 +27,10 @@ const arrNavLinks = [
 
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
-  const strHoverAnim = useHoverAnimation(true); 
+  const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
 
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -50,8 +52,8 @@ export const Header = () => {
   );
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (refNotifPanel.current && !refNotifPanel.current.contains(e.target as Node)) {
+    const handleClickOutside = (objEvent: MouseEvent) => {
+      if (refNotifPanel.current && !refNotifPanel.current.contains(objEvent.target as Node)) {
         setShowNotifications(false);
       }
     };
@@ -78,8 +80,7 @@ export const Header = () => {
     </Link>
   );
 
-  // ── Botón de notificaciones (comportamiento según auth) ──
-  const btnNotifications = user ? (
+  const btnNotifications = (
     <div className="relative" ref={refNotifPanel}>
       <button
         onClick={() => (user ? setShowNotifications((prev) => !prev) : setShowProtected(true))}
@@ -87,10 +88,10 @@ export const Header = () => {
         aria-label="Notificaciones"
         className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
       >
-        <img 
-          src="/bell_icon.svg" 
-          alt="Notificaciones" 
-          className="w-6 h-6 object-contain" 
+        <img
+          src="/bell_icon.svg"
+          alt="Notificaciones"
+          className="w-6 h-6 object-contain"
         />
       </button>
       {user && showNotifications && <NotificationPanel />}
@@ -123,10 +124,10 @@ export const Header = () => {
       className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
     >
       <div className="relative flex items-center justify-center">
-        <img 
-          src="/account_avatar.svg" 
-          alt="Icono cuenta" 
-          className="w-7 h-7 object-contain" 
+        <img
+          src="/account_avatar.svg"
+          alt="Icono cuenta"
+          className="w-7 h-7 object-contain"
         />
         <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
       </div>
@@ -151,17 +152,17 @@ export const Header = () => {
               aria-expanded={bolIsMobileMenuOpen}
               aria-label="Abrir menú"
             >
-              <img 
-                src="/hamburger_icon.svg" 
-                alt="Menú" 
-                className="w-7 h-7 object-contain" 
+              <img
+                src="/hamburger_icon.svg"
+                alt="Menú"
+                className="w-7 h-7 object-contain"
               />
             </button>
           </div>
 
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
-            <Link href={`/cobros/planes?id=${user?.id}`} className={strLinkClassesDesktop}>
+            <Link href={`/cobros/planes`} className={strLinkClassesDesktop}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
@@ -173,7 +174,7 @@ export const Header = () => {
               </Link>
             ))}
 
-            <button 
+            <button
               onClick={() => router.push(user ? "/publicacion" : "/login")}
               className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
             >
@@ -188,22 +189,22 @@ export const Header = () => {
         {bolIsMobileMenuOpen && (
           <>
             <div className="lg:hidden fixed inset-0 z-40" onClick={closeMobileMenu} />
-            <div 
-              id="mobile-header-menu" 
-              ref={refMobileMenuPanel} 
-              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50" 
+            <div
+              id="mobile-header-menu"
+              ref={refMobileMenuPanel}
+              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
               onClick={(objEvent) => objEvent.stopPropagation()}
             >
               {user ? (
-                <button 
-                  onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }} 
+                <button
+                  onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }}
                   className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
                 >
                   <div className="relative flex items-center justify-center">
-                    <img 
-                      src="/account_avatar.svg" 
-                      alt="Perfil" 
-                      className="w-6 h-6 object-contain brightness-0 invert" 
+                    <img
+                      src="/account_avatar.svg"
+                      alt="Perfil"
+                      className="w-6 h-6 object-contain brightness-0 invert"
                     />
                   </div>
                   <span className="uppercase font-semibold text-left">
@@ -211,15 +212,15 @@ export const Header = () => {
                   </span>
                 </button>
               ) : (
-                <button 
-                  onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }} 
+                <button
+                  onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }}
                   className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
                 >
                   <div className="relative flex items-center justify-center">
-                    <img 
-                      src="/account_avatar.svg" 
-                      alt="Iniciar Sesión" 
-                      className="w-6 h-6 object-contain brightness-0 invert" 
+                    <img
+                      src="/account_avatar.svg"
+                      alt="Iniciar Sesión"
+                      className="w-6 h-6 object-contain brightness-0 invert"
                     />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
@@ -228,10 +229,11 @@ export const Header = () => {
               )}
 
               <button className={`flex items-center gap-4 text-left border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`} onClick={() => { if (!user) setShowProtected(true); else setShowNotifications((p) => !p); closeMobileMenu(); }}>
-                <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" /> <span className="uppercase">NOTIFICACIONES</span>
+                <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" />
+                <span className="uppercase">NOTIFICACIONES</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => { router.push("/publicacion"); closeMobileMenu(); }}
                 className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background ${strHoverAnimNoTextColor}`}
               >
@@ -239,12 +241,14 @@ export const Header = () => {
               </button>
 
               {arrNavLinks.map((objLink) => (
-                <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }} className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+                <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }}
+                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
                   {objLink.strLabel}
                 </div>
               ))}
 
-              <div onClick={() => { router.push(`/cobros/planes?id=${user?.id}`); closeMobileMenu(); }} className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
+              <div onClick={() => { router.push(`/cobros/planes`); closeMobileMenu(); }}
+                className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
                 PLANES DE PUBLICACIÓN
               </div>
             </div>
