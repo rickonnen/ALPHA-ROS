@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { PlanPublicacion } from "@prisma/client";
 import { BotonContinuarPlan } from "./BotonContinuarPlan";
-import { prisma } from "@/lib/prisma";
+import { getPlanesPublicacion } from "./getPlanesPublicacion";
 
 interface Props {
   searchParams: Promise<{
@@ -16,19 +16,12 @@ interface Props {
 }
 
 export default async function PlanesPublicacion({ searchParams }: Props) {
-  // 1. Obtenemos el ID del usuario de los searchParams
+  // Obtenemos el ID del usuario de los searchParams
   const params = await searchParams;
   const idUsuario = params.id ?? "";
 
-  // 2. Consulta DIRECTA a la base de datos (Sin fetch, sin baseUrl)
-  const planes = await prisma.planPublicacion.findMany({
-    where: {
-      activo: true,
-    },
-    orderBy: {
-      precio_plan: "asc",
-    },
-  });
+  // Obtenemos los planes de publicación activos
+  const planes = await getPlanesPublicacion();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">

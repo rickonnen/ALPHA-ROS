@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // Ajusta la ruta a donde tengas tu instancia de prisma
+import { getPlanesPublicacion } from '@/app/cobros/planes/getPlanesPublicacion';
 
 export async function GET() {
   try {
-    const planes = await prisma.planPublicacion.findMany({
-      where: {
-        activo: true,
-      },
-      orderBy: {
-        precio_plan: 'asc',
+    const planes = await getPlanesPublicacion();
+    
+    return NextResponse.json(planes, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
       },
     });
-    
-    return NextResponse.json(planes);
   } catch (error) {
     console.error("Error al obtener los planes:", error);
     return NextResponse.json(
