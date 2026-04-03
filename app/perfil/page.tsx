@@ -33,6 +33,7 @@ import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
+import { useAuth } from "../auth/AuthContext";
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
     Funcionalidad: Página principal de Mi Perfil
@@ -42,6 +43,8 @@ import HistorialPagosView from "@/app/cobros/historial-pagos/page";
 */
 
 function PerfilContent() {
+  const { user } = useAuth();
+  console.log("Usuario autenticado en PerfilContent:", user);
   const searchParams = useSearchParams();
   const idUsuario = searchParams.get("id") ?? "";
 
