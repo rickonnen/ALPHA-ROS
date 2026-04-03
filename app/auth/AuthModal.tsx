@@ -2,7 +2,6 @@
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { useState, useEffect } from "react";
-// Importamos X de lucide-react para un icono de cierre limpio
 import { X } from "lucide-react";
 
 interface AuthModalProps {
@@ -12,10 +11,8 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
-  // Estado para alternar entre Login y Registro dentro del panel
   const [isLogin, setIsLogin] = useState(initialMode === "login");
 
-  // Actualizar el estado cuando initialMode cambia
   useEffect(() => {
     setIsLogin(initialMode === "login");
   }, [initialMode]);
@@ -23,7 +20,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
   if (!isOpen) return null;
 
   return (
-    // Contenedor principal fixed que ocupa toda la pantalla
     <div className="fixed inset-0 z-[100] flex justify-end">
       {/* Fondo desenfocado (Backdrop) - Cierra al hacer clic */}
       <div 

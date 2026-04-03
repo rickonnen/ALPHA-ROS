@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
+import { sign } from "jsonwebtoken";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -8,10 +9,9 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { nombre, apellido, email, password } = await request.json();
 
-    // Validaciones básicas
-    if (!name || !email || !password) {
+    if (!nombre || !apellido || !email || !password) {
       return NextResponse.json(
         { error: "Faltan campos requeridos" },
         { status: 400 }
@@ -21,35 +21,52 @@ export async function POST(request: NextRequest) {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
-      user_metadata: { name }
+      email_confirm: true,        
+      user_metadata: { nombre, apellido }       
     });
 
     if (authError) {
       return NextResponse.json({ error: "Error en Auth: " + authError.message }, { status: 400 });
     }
 
-    const { data: dbData, error: dbError } = await supabaseAdmin
+    // 3. INSERTAR EN TABLA "Usuario"
+    const { error: dbError } = await supabaseAdmin
       .from('Usuario')
-      .insert([
+      .upsert([
         {
           id_usuario: authData.user.id,
           email: email,
-          nombres: name,
+          nombres: nombre,
+          apellidos: apellido,
           rol: 2,
           estado: 1
         }
-      ]);
+      ], { onConflict: 'id_usuario' });
 
     if (dbError) {
+      console.error("Error al guardar en DB:", dbError);
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
     }
 
-    const response = NextResponse.json(
-      { user: { id: authData.user.id, name, email }, message: "¡Registro exitoso!" },
-      { status: 200 }
+    const jwtToken = sign(
+      { userId: authData.user.id },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
     );
+
+    const response = NextResponse.json(
+      { message: "¡Registro exitoso!" },
+      { status: 201 }  // 201 = Created
+    );
+
+    response.cookies.set("auth_token", jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
 
     return response;
 
@@ -60,3 +77,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

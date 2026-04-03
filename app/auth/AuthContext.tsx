@@ -1,17 +1,17 @@
-"use client";
+"use client";  // Componente de cliente (React)
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { SessionProvider } from "next-auth/react";
 
 interface User {
   id: string;
   name: string;
   email: string;
 }
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -20,42 +20,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Verificar sesión al cargar — revisa localStorage, NextAuth (Google) y cookie propia
+
+  const fetchUserFromServer = async () => {
+    try {
+      const res = await fetch("/api/auth/me", {
+        credentials: "include", 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user); 
+        return true;
+      }
+    } catch (error) {
+      console.error("Error fetching user from server:", error);
+    }
+    return false;
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // 1. Primero verificar localStorage (usuarios email/password)
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-          setIsLoading(false);
-          return;
-        }
-        // 2. Verificar sesión de NextAuth (usuarios de Google)
         const sessionRes = await fetch("/api/auth/session");
         if (sessionRes.ok) {
           const session = await sessionRes.json();
           if (session?.user) {
+            // Google user encontrado
             const googleUser: User = {
               id: session.user.id ?? session.user.email ?? "",
               name: session.user.name ?? "",
               email: session.user.email ?? "",
             };
             setUser(googleUser);
-            localStorage.setItem("user", JSON.stringify(googleUser));
             setIsLoading(false);
-            return;
+            return;  
           }
         }
-        // 3. Verificar sesión propia por cookie JWT
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
+
+        await fetchUserFromServer();
+        
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
@@ -64,71 +66,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkSession();
-  }, []);
+  }, []);  
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      credentials: "include", 
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       throw new Error(data.error || "Error al iniciar sesión");
     }
 
-    setUser(data.user);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    await fetchUserFromServer();
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (nombre: string, apellido: string, email: string, password: string) => {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ nombre, apellido, email, password }),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       throw new Error(data.error || "Error al registrarse");
     }
 
-    if (data.user) {
-      setUser(data.user);
-      localStorage.setItem("user", JSON.stringify(data.user));
-    }
+    await fetchUserFromServer();
   };
 
   const logout = async () => {
     try {
-      // Cerrar sesión propia (cookie JWT)
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
     } catch (_) {}
 
-    try {
-      // Cerrar sesión de NextAuth (Google)
-      const { signOut } = await import("next-auth/react");
-      await signOut({ redirect: false });
-    } catch (_) {}
-
     setUser(null);
-    localStorage.removeItem("user");
   };
 
   return (
-    <SessionProvider>
-      <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
-        {children}
-      </AuthContext.Provider>
-    </SessionProvider>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
