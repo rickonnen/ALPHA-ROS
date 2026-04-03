@@ -8,7 +8,6 @@ import HistorialPagosPage from "@/app/cobros/historial-pagos/page";
 export default function HistorialPagosView() {
   return (
     <div className="w-full">
-      {/* ✅ CORRECCIÓN: Quitamos la prop id_usuario ya que el componente la lee de la URL */}
       <HistorialPagosPage />
     </div>
   );

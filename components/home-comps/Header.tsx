@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button"; 
+import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
@@ -67,7 +67,10 @@ export const Header = () => {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (refNotifPanel.current && !refNotifPanel.current.contains(e.target as Node)) {
+      if (
+        refNotifPanel.current &&
+        !refNotifPanel.current.contains(e.target as Node)
+      ) {
         setShowNotifications(false);
       }
     };
@@ -202,10 +205,7 @@ export const Header = () => {
           {/* Izquierda — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
-            <Link
-              href={`/cobros/planes?id=${user?.id}`}
-              className={strLinkClassesDesktop}
-            >
+            <Link href={`/cobros/planes`} className={strLinkClassesDesktop}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
@@ -320,7 +320,7 @@ export const Header = () => {
               ))}
 
               <Link
-                href={`/cobros/planes?id=${user?.id}`}
+                href={`/cobros/planes`}
                 onClick={closeMobileMenu}
                 className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}
               >
