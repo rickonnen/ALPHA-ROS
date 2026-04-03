@@ -102,7 +102,7 @@ export default function ConfirmarCorreoView({
     setStrModalMessage("");
 
     if (bolRedirectToPerfilOnClose) {
-      window.location.assign("/perfil");
+      window.location.assign(`/perfil?id=${id_usuario}`);
     }
   };
 
