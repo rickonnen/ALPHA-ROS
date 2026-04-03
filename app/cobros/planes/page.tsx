@@ -6,8 +6,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PlanPublicacion } from "@prisma/client";
-import { BotonContinuarPlan } from "./BotonContinuarPlan";
-import { prisma } from "@/lib/prisma"; // Importa tu instancia de prisma aquí
+import { BotonContinuarPlan } from "@/components/cobros/BotonContinuarPlan";
+import { getPlanesPublicacion } from "@/features/cobros/planes/getPlanesPublicacion";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface Props {
   searchParams: Promise<{
@@ -16,27 +19,32 @@ interface Props {
 }
 
 export default async function PlanesPublicacion({ searchParams }: Props) {
-  // 1. Obtenemos el ID del usuario de los searchParams
   const params = await searchParams;
   const idUsuario = params.id ?? "";
 
-  // 2. Consulta DIRECTA a la base de datos (Sin fetch, sin baseUrl)
-  const planes = await prisma.planPublicacion.findMany({
-    where: {
-      activo: true,
-    },
-    orderBy: {
-      precio_plan: "asc",
-    },
-  });
+  const planes = await getPlanesPublicacion();
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-6 pt-10 pb-12">
+        <div className="relative mb-12 flex flex-col md:flex-row md:items-center justify-center min-h-11 gap-6 md:gap-0">
+          {" "}
+          <div className="self-start md:self-auto md:absolute md:left-0">
+            <Button variant="default" asChild className="rounded-lg px-4 py-2">
+              <Link href="/" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="font-semibold text-sm">Volver al inicio</span>
+              </Link>
+            </Button>
+          </div>
+          <div className="text-center w-full max-w-2xl md:px-20 mx-auto">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-foreground uppercase tracking-tight">
+              COMPRA MÁS CUPOS DE PUBLICACIÓN
+            </h1>
+          </div>
+        </div>
+
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl font-extrabold mb-6 text-foreground uppercase">
-            COMPRA MÁS CUPOS DE PUBLICACIÓN
-          </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Selecciona uno de nuestros planes para obtener más cupos de
             publicación. Cada plan incluye una cantidad de publicaciones que te

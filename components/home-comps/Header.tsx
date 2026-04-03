@@ -39,6 +39,7 @@ export const Header = () => {
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
+  const refNotifPanel = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = () => setBolIsMobileMenuOpen(false);
 
@@ -47,6 +48,16 @@ export const Header = () => {
     closeMobileMenu,
     bolIsMobileMenuOpen
   );
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (refNotifPanel.current && !refNotifPanel.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const strLinkClassesDesktop =
     `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
@@ -67,8 +78,9 @@ export const Header = () => {
     </Link>
   );
 
-  const btnNotifications = (
-    <div className="relative">
+  // ── Botón de notificaciones (comportamiento según auth) ──
+  const btnNotifications = user ? (
+    <div className="relative" ref={refNotifPanel}>
       <button
         onClick={() => (user ? setShowNotifications((prev) => !prev) : setShowProtected(true))}
         title="Notificaciones"
