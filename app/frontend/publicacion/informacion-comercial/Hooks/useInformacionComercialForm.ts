@@ -1,109 +1,12 @@
-﻿/**
- * @Dev: [OliverG]
- * @Fecha: 28/03/2026
- * @Modificación: Gabriel Paredes Sipe — 29/03/2026
- *   → handleSiguiente recibe idUsuario como parámetro en lugar de leerlo
- *     desde useAuth, para evitar dependencia del AuthProvider en el hook.
- *     El page.tsx es quien lee el usuario y lo pasa al llamar handleSiguiente.
- * @Modificación: Gabriel Paredes Sipe — 30/03/2026
- *   → Se elimina useAuth del hook y del page.tsx. El id_usuario se lee
- *     directamente desde localStorage (donde AuthContext lo persiste en
- *     login, signup y Google), evitando el error "useAuth debe ser usado
- *     dentro de AuthProvider" causado por que el AuthProvider en el layout
- *     no envuelve los children de la página.
- * @Funcionalidad: Hook personalizado que centraliza toda la lógica del formulario
- * de Información Comercial. Maneja estados, validaciones, formato de precio,
- * interacción con los dropdowns y el guardado temporal de datos para el paso 2.
- * @return {object} Estados y handlers necesarios para el formulario
- */
-
+﻿"use client";
 import { useState, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  DESC_MAX,
-  DESC_MIN,
-  FormData,
-  FormErrors,
-  FormField,
-  FORM_INICIAL,
-  PRECIO_MAXIMO,
-  TITULO_MAX,
-  TITULO_MIN,
-  toTipoOperacionBackend,
-} from "../InformacionComercial.types";
+import { FormData, FormErrors, FormField, FORM_INICIAL } from "../InformacionComercial.types";
+import { validateField, validateAll } from "./useInformacionComercialValidacion";
+import { formatPriceInput, parseFormattedPrice, PRICE_FORMAT_REGEX } from "./useInformacionComercialPrecio";
+import { leerBorrador, guardarBorrador, limpiarBorrador, guardarPaso1 } from "./useInformacionComercialStorage";
 
-// Lista de campos del formulario para iterar en validaciones
-const FORM_FIELDS: FormField[] = [
-  "titulo",
-  "precio",
-  "tipoPropiedad",
-  "tipoOperacion",
-  "descripcion",
-];
-
-// Regex para validar formato de precio boliviano (ej: 1.234,56)
-const PRICE_FORMAT_REGEX = /^\d{1,3}(\.\d{3})*(,\d{1,2})?$/;
-
-// Key del borrador en sessionStorage
-const DRAFT_KEY = "informacionComercialDraft";
-const DRAFT_USER_KEY = "informacionComercialDraftUsuario";
-
-function getIdUsuarioActual(): string {
-  try {
-    const raw = localStorage.getItem("user");
-    return raw ? (JSON.parse(raw)?.id ?? "") : "";
-  } catch {
-    return "";
-  }
-}
-
-/**
- * @Funcionalidad: Verifica si un nombre de campo pertenece al formulario
- * @param {string} fieldName - Nombre del campo a verificar
- * @return {boolean} True si es un campo válido del formulario
- */
-function isFormField(fieldName: string): fieldName is FormField {
-  return FORM_FIELDS.includes(fieldName as FormField);
-}
-
-/**
- * @Funcionalidad: Formatea el input de precio al estándar boliviano con puntos de miles
- * @param {string} inputValue - Valor crudo ingresado por el usuario
- * @return {string} Valor formateado (ej: "1.234,56")
- */
-function formatPriceInput(inputValue: string): string {
-  const sanitized = inputValue.replace(/[^\d,]/g, "");
-  if (!sanitized) return "";
-  const [rawInteger = "", ...rest] = sanitized.split(",");
-  const hasComma = sanitized.includes(",");
-  const integerDigits = rawInteger.replace(/^0+(?=\d)/, "");
-  const normalizedInteger = integerDigits === "" ? (hasComma ? "0" : "") : integerDigits;
-  const integerWithThousands = normalizedInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  const decimalDigits = rest.join("").slice(0, 2);
-  if (!hasComma) return integerWithThousands;
-  return `${integerWithThousands},${decimalDigits}`;
-}
-
-/**
- * @Funcionalidad: Convierte el precio formateado a número para validaciones
- * @param {string} priceValue - Precio en formato boliviano (ej: "1.234,56")
- * @return {number | null} Número parseado o null si no es válido
- */
-function parseFormattedPrice(priceValue: string): number | null {
-  if (!priceValue) return null;
-  const normalized = priceValue.replace(/\./g, "").replace(",", ".");
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-/**
- * @Funcionalidad: Convierte el precio formateado al formato que espera el backend
- * @param {string} priceValue - Precio en formato boliviano (ej: "1.234,56")
- * @return {string} Precio en formato numérico estándar (ej: "1234.56")
- */
-function toBackendPrice(priceValue: string): string {
-  return priceValue.replace(/\./g, "").replace(",", ".");
-}
+const FORM_FIELDS: FormField[] = ["titulo", "precio", "tipoPropiedad", "tipoOperacion", "descripcion"];
 
 export function useInformacionComercialForm() {
   const router = useRouter();
@@ -114,95 +17,23 @@ export function useInformacionComercialForm() {
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [submitStatus, setSubmitStatus]   = useState<"success" | "error" | null>(null);
   const [submitMessage, setSubmitMessage] = useState("");
-  // Indica si el componente ya está montado en el cliente
-  // Evita el error de hydration al mostrar datos del sessionStorage
-  const [bolMounted, setBolMounted] = useState(false);
+  const [bolMounted, setBolMounted]       = useState(false);
 
-  // Recuperar borrador del sessionStorage solo en el cliente tras el montaje
-  // Usa startTransition igual que el hook del paso 2 para evitar hydration error
-useEffect(() => {
-    const idUsuarioActual = getIdUsuarioActual();
-    const idUsuarioDraft  = sessionStorage.getItem(DRAFT_USER_KEY) ?? "";
-
-    if (idUsuarioDraft && idUsuarioDraft !== idUsuarioActual) {
-      sessionStorage.removeItem(DRAFT_KEY);
-      sessionStorage.removeItem(DRAFT_USER_KEY);
-    } else {
-      const strSaved = sessionStorage.getItem(DRAFT_KEY);
-      if (strSaved) {
-        try {
-          const objSaved = JSON.parse(strSaved) as FormData;
-          startTransition(() => {
-            setForm({ ...FORM_INICIAL, ...objSaved });
-          });
-        } catch {
-          sessionStorage.removeItem(DRAFT_KEY);
-        }
-      }
+  useEffect(() => {
+    const objSaved = leerBorrador();
+    if (objSaved) {
+      startTransition(() => {
+        setForm({ ...FORM_INICIAL, ...objSaved });
+      });
     }
-    setTimeout(() => {
-      setBolMounted(true);
-    }, 0);
+    setTimeout(() => setBolMounted(true), 0);
   }, []);
 
-  // Guardar borrador automáticamente cada vez que el form cambia
-useEffect(() => {
+  useEffect(() => {
     if (!bolMounted) return;
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
-    sessionStorage.setItem(DRAFT_USER_KEY, getIdUsuarioActual());
+    guardarBorrador(form);
   }, [form, bolMounted]);
 
-  /**
-   * @Funcionalidad: Valida un campo individual según las reglas de negocio
-   * @param {keyof FormData} name - Nombre del campo a validar
-   * @param {string} value - Valor actual del campo
-   * @return {string | undefined} Mensaje de error o undefined si es válido
-   */
-  function validateField(name: keyof FormData, value: string): string | undefined {
-    switch (name) {
-      case "titulo":
-        if (!value.trim()) return "El título es obligatorio.";
-        if (value.trim().length < TITULO_MIN) return `Mínimo ${TITULO_MIN} caracteres.`;
-        if (value.length > TITULO_MAX) return `Máximo ${TITULO_MAX} caracteres.`;
-        return undefined;
-      case "precio": {
-        if (!value) return "El precio es obligatorio.";
-        if (!PRICE_FORMAT_REGEX.test(value)) return "Ingrese un valor válido (ej: 1.234,56).";
-        const intNum = parseFormattedPrice(value);
-        if (intNum === null) return "El precio debe ser numérico.";
-        if (intNum <= 0) return "El precio debe ser mayor a 0.";
-        if (intNum > PRECIO_MAXIMO) return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
-        return undefined;
-      }
-      case "tipoPropiedad":
-        return value ? undefined : "Seleccione un tipo de propiedad.";
-      case "tipoOperacion":
-        return value ? undefined : "Seleccione un tipo de operación.";
-      case "descripcion":
-        if (!value.trim()) return "La descripción es obligatoria.";
-        if (value.trim().length < DESC_MIN) return `Mínimo ${DESC_MIN} caracteres.`;
-        if (value.length > DESC_MAX) return `Máximo ${DESC_MAX} caracteres.`;
-        return undefined;
-    }
-  }
-
-  /**
-   * @Funcionalidad: Valida todos los campos del formulario de una sola vez
-   * @return {FormErrors} Objeto con los errores encontrados por campo
-   */
-  function validateAll(): FormErrors {
-    const objFieldErrors: FormErrors = {};
-    (Object.keys(form) as FormField[]).forEach((fieldName) => {
-      const strErrorMessage = validateField(fieldName, form[fieldName]);
-      if (strErrorMessage) objFieldErrors[fieldName] = strErrorMessage;
-    });
-    return objFieldErrors;
-  }
-
-  /**
-   * @Funcionalidad: Maneja cambios en inputs de texto y textarea
-   * @param {React.ChangeEvent} e - Evento de cambio del input
-   */
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -217,20 +48,13 @@ useEffect(() => {
     }
   }
 
-  /**
-   * @Funcionalidad: Maneja cambios en el campo precio con formato boliviano
-   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento de cambio del input precio
-   */
   function handlePrecioChange(e: React.ChangeEvent<HTMLInputElement>) {
     const strFormatted = formatPriceInput(e.target.value);
     if (strFormatted) {
       const intNum = parseFormattedPrice(strFormatted);
-      if (intNum !== null && intNum > PRECIO_MAXIMO) {
+      if (intNum !== null && intNum > 999999999) {
         setTouched((prev) => ({ ...prev, precio: true }));
-        setErrors((prev) => ({
-          ...prev,
-          precio: `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`,
-        }));
+        setErrors((prev) => ({ ...prev, precio: `No puede superar ese valor.` }));
         return;
       }
     }
@@ -246,29 +70,17 @@ useEffect(() => {
     }
   }
 
-  /**
-   * @Funcionalidad: Marca el campo como tocado y valida al perder el foco
-   * @param {React.FocusEvent} e - Evento de blur del input
-   */
   function handleBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name as keyof FormData, value) }));
   }
 
-  /**
-   * @Funcionalidad: Valida dropdown al cerrarse sin seleccionar una opción
-   * @param {"tipoPropiedad" | "tipoOperacion"} name - Nombre del campo dropdown
-   */
   function handleDropdownBlur(name: "tipoPropiedad" | "tipoOperacion") {
     setTouched((prev) => ({ ...prev, [name]: true }));
     setErrors((prev) => ({ ...prev, [name]: validateField(name, form[name]) }));
   }
 
-  /**
-   * @Funcionalidad: Registra la opción seleccionada en Tipo de Propiedad
-   * @param {string} strOption - Opción seleccionada por el usuario
-   */
   function handleSelectPropiedad(strOption: string) {
     setForm((prev) => ({ ...prev, tipoPropiedad: strOption }));
     setErrors((prev) => ({ ...prev, tipoPropiedad: undefined, general: undefined }));
@@ -277,10 +89,6 @@ useEffect(() => {
     setSubmitMessage("");
   }
 
-  /**
-   * @Funcionalidad: Registra la opción seleccionada en Tipo de Operación
-   * @param {string} strOption - Opción seleccionada por el usuario
-   */
   function handleSelectOperacion(strOption: string) {
     setForm((prev) => ({ ...prev, tipoOperacion: strOption }));
     setErrors((prev) => ({ ...prev, tipoOperacion: undefined, general: undefined }));
@@ -289,19 +97,13 @@ useEffect(() => {
     setSubmitMessage("");
   }
 
-  /**
-   * @Funcionalidad: Cancela el formulario con confirmación si hay datos ingresados.
-   * Limpia también el borrador guardado en sessionStorage.
-   */
   function handleCancelar() {
     if (isSubmitting) return;
     const bolHasData = Object.values(form).some((value) => value.trim() !== "");
     if (bolHasData) {
       if (!window.confirm("Los datos ingresados se eliminarán. ¿Deseas salir del formulario?")) return;
     }
-    sessionStorage.removeItem(DRAFT_KEY);
-    sessionStorage.removeItem(DRAFT_USER_KEY);
-    sessionStorage.removeItem("informacionComercial");
+    limpiarBorrador();
     setForm(FORM_INICIAL);
     setErrors({});
     setTouched({});
@@ -310,66 +112,25 @@ useEffect(() => {
     router.push("/");
   }
 
-  /**
-   * @Funcionalidad: Valida el formulario, guarda los datos del paso 1 en sessionStorage
-   * incluyendo el id_usuario leído desde localStorage (donde AuthContext lo persiste),
-   * y navega al paso 2. No depende de useAuth ni del AuthProvider.
-   * Los datos NO se envían al backend hasta que el usuario presione Publicar
-   * en el formulario de Características del Inmueble.
-   */
   function handleSiguiente() {
     if (isSubmitting) return;
-
-    // Marcar todos los campos como tocados para mostrar errores
     const objAllTouched: Partial<Record<FormField, boolean>> = {};
     FORM_FIELDS.forEach((fieldName) => { objAllTouched[fieldName] = true; });
     setTouched(objAllTouched);
-
-    const objLocalErrors = validateAll();
+    const objLocalErrors = validateAll(form);
     setErrors(objLocalErrors);
     if (Object.keys(objLocalErrors).length > 0) return;
-
-    // Leer el usuario desde localStorage, donde AuthContext lo guarda
-    // en los tres flujos: email/password, Google y cookie JWT
-    const strStoredUser = localStorage.getItem("user");
-    const strIdUsuario = strStoredUser
-      ? (JSON.parse(strStoredUser)?.id ?? "")
-      : "";
-
-    // Guardar datos finales validados del paso 1 para que el paso 2 los lea al publicar
-    // Se incluye id_usuario para vincularlo en la BD al momento de publicar
-    sessionStorage.setItem("informacionComercial", JSON.stringify({
-      titulo:        form.titulo,
-      precio:        toBackendPrice(form.precio),
-      tipoPropiedad: form.tipoPropiedad,
-      tipoOperacion: toTipoOperacionBackend(form.tipoOperacion),
-      descripcion:   form.descripcion,
-      id_usuario:    strIdUsuario,
-    }));
-
+    guardarPaso1(form);
     router.push("/frontend/publicacion/Caracteristicas");
   }
 
-  // Retorna true si el campo fue tocado y tiene error
   const hasErr = (fieldName: keyof FormData) => touched[fieldName] && !!errors[fieldName];
 
   return {
-    form,
-    errors,
-    touched,
-    hasErr,
-    bolMounted,
-    validateField,
-    handleChange,
-    handlePrecioChange,
-    handleBlur,
-    handleDropdownBlur,
-    handleSelectPropiedad,
-    handleSelectOperacion,
-    handleCancelar,
-    handleSiguiente,
-    isSubmitting,
-    submitStatus,
-    submitMessage,
+    form, errors, touched, hasErr, bolMounted,
+    validateField, handleChange, handlePrecioChange,
+    handleBlur, handleDropdownBlur, handleSelectPropiedad,
+    handleSelectOperacion, handleCancelar, handleSiguiente,
+    isSubmitting, submitStatus, submitMessage,
   };
 }
