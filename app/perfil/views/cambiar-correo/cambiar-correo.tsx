@@ -89,8 +89,10 @@ export default function CambiarCorreoView({
         onClick={onBack}
         className="mb-4 px-0 text-white/80 hover:text-white hover:bg-transparent"
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a Seguridad
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        <span className="text-xs font-black tracking-widest uppercase">
+          Seguridad
+        </span>
       </Button>
       <HeaderCorreo />
       <CorreoActual email_actual={email_actual} />
