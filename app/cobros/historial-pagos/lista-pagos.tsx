@@ -97,7 +97,7 @@ return (
               onClick={() => setPagina(num)}
               className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
                 pagina === num
-                  ? "bg-white text-[var(--primary)] text-black" // Aseguramos que el número activo se vea
+                  ? "bg-white text-[var(--primary)] text-black"
                   : "text-white/60 hover:text-white"
               }`}
             >
