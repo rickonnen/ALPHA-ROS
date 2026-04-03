@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react"; 
-import { Button } from "@/components/ui/button"; 
+import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
@@ -13,7 +13,7 @@ import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 /**
- * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 27/03/2026
+ * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 25/03/2026
  * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
  * Encabezado principal responsivo con menú desplegable para móviles
  * Incluye lógica de autenticación (login/registro), panel de notificaciones, ocultamiento
@@ -27,7 +27,9 @@ const arrNavLinks = [
 
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
-  const strHoverAnim = useHoverAnimation();
+  const strHoverAnim = useHoverAnimation(true); 
+  const strHoverAnimNoTextColor = useHoverAnimation(false);
+
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
 
@@ -49,8 +51,7 @@ export const Header = () => {
   );
 
   const strLinkClassesDesktop =
-    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${strHoverAnim}`;
-  
+    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
   const strLinkClassesMobile =
     `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
 
@@ -58,7 +59,7 @@ export const Header = () => {
     <Link
       href="/"
       aria-label="Go to home page"
-      className={`inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${strHoverAnim}`}
+      className={`inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
     >
       <img
         src="/logo-principal.svg"
@@ -74,7 +75,7 @@ export const Header = () => {
         onClick={() => (user ? setShowNotifications((prev) => !prev) : setShowProtected(true))}
         title="Notificaciones"
         aria-label="Notificaciones"
-        className={`w-10 h-10 bg-transparent border border-foreground/50 rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnim}`}
+        className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
       >
         <img 
           src="/bell_icon.svg" 
@@ -90,7 +91,7 @@ export const Header = () => {
     <div className="flex items-center gap-2">
       <button
         onClick={() => router.push(`/perfil?id=${user.id}`)}
-        className={`flex items-center gap-3 h-10 px-4 bg-transparent border border-foreground/50 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnim}`}
+        className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
         title="Mi perfil"
       >
         <img
@@ -109,7 +110,7 @@ export const Header = () => {
         setAuthMode("login");
         setShowAuth(true);
       }}
-      className={`h-10 px-4 rounded-full bg-transparent border border-foreground/50 flex items-center gap-3 transition-all duration-300 hover:bg-accent hover:shadow-[0_0_12px_rgba(194,110,90,0.3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnim}`}
+      className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
     >
       <div className="relative flex items-center justify-center">
         <img 
@@ -135,7 +136,7 @@ export const Header = () => {
 
           <div className="flex lg:hidden" ref={refMobileMenuButton}>
             <button
-              className={`p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${strHoverAnim}`}
+              className={`p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
               onClick={() => setBolIsMobileMenuOpen((bolPrev) => !bolPrev)}
               aria-expanded={bolIsMobileMenuOpen}
               aria-label="Abrir menú"
@@ -164,8 +165,7 @@ export const Header = () => {
 
             <button 
               onClick={() => router.push(user ? "/publicacion" : "/login")}
-              className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-foreground/50 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnim}`}
-              style={{ backgroundColor: 'var(--secondary)', color: 'var(--secondary-foreground)' }}
+              className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
             >
               PUBLICAR
             </button>
@@ -177,15 +177,20 @@ export const Header = () => {
 
         {bolIsMobileMenuOpen && (
           <>
-            <div className="lg:hidden fixed inset-0 z-40 bg-black/20" onClick={closeMobileMenu} />
-            <div id="mobile-header-menu" ref={refMobileMenuPanel} className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50" onClick={(objEvent) => objEvent.stopPropagation()}>
+            <div className="lg:hidden fixed inset-0 z-40" onClick={closeMobileMenu} />
+            <div 
+              id="mobile-header-menu" 
+              ref={refMobileMenuPanel} 
+              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50" 
+              onClick={(objEvent) => objEvent.stopPropagation()}
+            >
               {user ? (
                 <div className="flex flex-col gap-6">
                    <div onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 cursor-pointer ${strLinkClassesMobile}`}>
-                     <div className="w-10 h-10 bg-background rounded-full p-1 flex items-center justify-center">
+                     <div className="w-10 h-10 bg-background rounded-full p-1 flex items-center justify-center border border-border">
                         <img src="/account_avatar.svg" alt="Perfil" className="w-6 h-6 object-contain brightness-0 invert" />
                      </div>
-                     <span className="uppercase">{user.name}</span>
+                     <span className="uppercase font-semibold">{user.name}</span>
                   </div>
                   <button onClick={() => { logout(); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
                     <LogOut size={20} /> <span className="uppercase">CERRAR SESIÓN</span>
@@ -197,28 +202,28 @@ export const Header = () => {
                     <img src="/account_avatar.svg" alt="Iniciar Sesión" className="w-6 h-6 object-contain brightness-0 invert" />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
-                  <span className="uppercase">INICIAR SESIÓN</span>
+                  <span className="uppercase font-semibold">INICIAR SESIÓN</span>
                 </button>
               )}
 
               <button className={`flex items-center gap-4 text-left border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`} onClick={() => { if (!user) setShowProtected(true); else setShowNotifications((p) => !p); closeMobileMenu(); }}>
-                <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" /> <span>NOTIFICACIONES</span>
+                <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" /> <span className="uppercase">NOTIFICACIONES</span>
               </button>
 
               <button 
                 onClick={() => { router.push("/publicacion"); closeMobileMenu(); }}
-                className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none ${strHoverAnim}`}
+                className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background ${strHoverAnimNoTextColor}`}
               >
                 PUBLICAR
               </button>
 
               {arrNavLinks.map((objLink) => (
-                <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }} className={`cursor-pointer ${strLinkClassesMobile}`}>
+                <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }} className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
                   {objLink.strLabel}
                 </div>
               ))}
 
-              <div onClick={() => { router.push(`/cobros/planes?id=${user?.id}`); closeMobileMenu(); }} className={`border-t border-primary-foreground/10 pt-6 mt-2 cursor-pointer ${strLinkClassesMobile}`}>
+              <div onClick={() => { router.push(`/cobros/planes?id=${user?.id}`); closeMobileMenu(); }} className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
                 PLANES DE PUBLICACIÓN
               </div>
             </div>
