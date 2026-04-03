@@ -40,7 +40,7 @@ export default function CardPago({ pago }: { pago: Pago }) {
 
       <div className="text-sm space-y-2">
         <div className="flex justify-between">
-          <span className="text-[#6B7280]">Fecha:</span>
+          <span className="text-[#6B7280]">Fecha y hora:</span>
           <span className="text-[#2E2E2E]">{pago.fecha}</span>
         </div>
         <div className="flex justify-between">
@@ -64,7 +64,7 @@ export default function CardPago({ pago }: { pago: Pago }) {
       )}
       {pago.estado === "rechazado" && (
         <p className="text-[10px] text-red-500 italic text-right">
-          Por favor, contacte con soporte técnico para más información.
+          .
         </p>
       )}
     </div>
