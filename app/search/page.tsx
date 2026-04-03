@@ -1,148 +1,535 @@
 'use client';
-import { useState } from 'react';
-import PropertyCard, { Property } from '@/components/search/propertyCard';
-import PriceDropdown from '@/components/search/priceDropdown';
+
+import { useEffect, useMemo, useState } from 'react';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+import {
+  buscarPublicaciones,
+  type FiltrosPublicacion,
+  type PublicacionBusqueda,
+} from '@/features/search/search-services';
+import AdvancedFilters from '@/components/search/advancedFilters';
+import { ApplyFiltersButton } from '@/components/search/applyFiltersButton';
 import { ClearFiltersButton } from '@/components/search/clearFiltersButton';
-import { useFilters } from '@/features/filter_search_page/usefilters';
-import Filters from "@/components/search/basicFilters";
-import AdvancedFilters from "@/components/search/advancedFilters";
-import { SortSelect } from "@/components/search/SortSelect";
+import { FilterTypeProperty, type TipoInmueble } from '@/components/search/filterTypeProperty';
 import { OperationTypeFilter, type OperationType } from '@/components/search/operationTypeFilter';
+import PriceDropdown from '@/components/search/priceDropdown';
+import PropertyCard, { type Property } from '@/components/search/propertyCard';
+import SearchAutocomplete from '@/components/search/searchAutocomplete';
+import { SortSelect } from '@/components/search/SortSelect';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
-import { FilterTypeProperty, TipoInmueble } from '@/components/search/filterTypeProperty';
-import { useSearchParams } from 'next/navigation'; 
-import { getPublicacionesOrdenadas } from '@/features/filter_search_page/services';
-
-type Currency = "USD" | "BS";
+type Currency = 'USD' | 'BS';
 
 type AppliedPriceFilter = {
   minPrice?: number;
   maxPrice?: number;
+};
+
+const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
+  { id_tipo_inmueble: 1, nombre_inmueble: 'Casa' },
+  { id_tipo_inmueble: 2, nombre_inmueble: 'Departamento' },
+  { id_tipo_inmueble: 3, nombre_inmueble: 'Cuarto' },
+  { id_tipo_inmueble: 4, nombre_inmueble: 'Terreno' },
+  { id_tipo_inmueble: 5, nombre_inmueble: 'Espacio de cementerio' },
+];
+
+const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
+
+function normalizeText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
-export default function SearchPage() {
-  // estados principales
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
-  const [selectedOperation, setSelectedOperation] = useState<OperationType>("venta");
-  const { hasActiveFilters, clearFilters } = useFilters({
-    appliedPriceFilter,
-    selectedCurrency,
-    onClearPriceFilter: () => setAppliedPriceFilter(null),
-    onResetCurrency: () => setSelectedCurrency("USD"),
+function getQueryValues(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function mapQueryOperationToValue(value: string | null): OperationType | null {
+  const lastOperation = getQueryValues(value)
+    .map((item) => normalizeText(item))
+    .filter(Boolean)
+    .at(-1);
+
+  switch (lastOperation) {
+    case 'venta':
+    case 'compra':
+      return 'venta';
+    case 'alquiler':
+      return 'alquiler';
+    case 'anticretico':
+      return 'anticretico';
+    default:
+      return null;
+  }
+}
+
+function mapQueryPropertyTypeToIds(value: string | null, options: TipoInmueble[]): number[] {
+  const normalizedValues = getQueryValues(value).map((item) => normalizeText(item));
+
+  return options
+    .filter((option) => normalizedValues.includes(normalizeText(option.nombre_inmueble ?? '')))
+    .map((option) => option.id_tipo_inmueble);
+}
+
+function getPropertyTypeLabelsFromIds(ids: number[], options: TipoInmueble[]): string[] {
+  return options
+    .filter((option) => ids.includes(option.id_tipo_inmueble) && option.nombre_inmueble)
+    .map((option) => option.nombre_inmueble as string);
+}
+
+function sortProperties(properties: Property[], sortBy: string): Property[] {
+  const sorted = [...properties];
+
+  sorted.sort((first, second) => {
+    switch (sortBy) {
+      case 'precio-asc':
+        return first.price - second.price;
+      case 'precio-des':
+        return second.price - first.price;
+      case 'm2-menor':
+        return first.terrainArea - second.terrainArea;
+      case 'm2-mayor':
+        return second.terrainArea - first.terrainArea;
+      case 'fecha-antigua':
+        return first.id - second.id;
+      case 'fecha-reciente':
+      default:
+        return second.id - first.id;
+    }
   });
 
-  const handleApplyRange = (priceFilter: AppliedPriceFilter) => setAppliedPriceFilter(priceFilter);
-  const handleCurrencyChange = (currency: Currency) => setSelectedCurrency(currency);
-  const handleSort = (sortOption: string) => {
-    console.log("Ordenar por:", sortOption);
-    // Aquí luego puedes conectar con getPublicacionesOrdenadas
+  return sorted;
+}
+
+function toNumber(value: number | null | undefined): number {
+  return value ?? 0;
+}
+
+function getOperationLabel(value: OperationType): string {
+  switch (value) {
+    case 'alquiler':
+      return 'Alquiler';
+    case 'anticretico':
+      return 'Anticrético';
+    default:
+      return 'Venta';
+  }
+}
+
+function isRenderableImage(url: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  if (url.startsWith('/')) {
+    return true;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname !== 'example.com';
+  } catch {
+    return false;
+  }
+}
+
+function getSafeImages(publication: PublicacionBusqueda): string[] {
+  const validImages = (publication.imagenes ?? []).filter(isRenderableImage);
+
+  if (validImages.length > 0) {
+    return validImages;
+  }
+
+  const fallbackIndex = publication.id_publicacion % LOCAL_FALLBACK_IMAGES.length;
+  return [LOCAL_FALLBACK_IMAGES[fallbackIndex]];
+}
+
+function mapPublicationToProperty(
+  publication: PublicacionBusqueda,
+  selectedOperation: OperationType,
+): Property {
+  const location = [
+    publication.ubicacion?.direccion,
+    publication.ubicacion?.zona,
+    publication.ubicacion?.ciudad,
+    publication.ubicacion?.pais,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  return {
+    id: publication.id_publicacion,
+    title: publication.titulo ?? 'Sin título',
+    type: `${publication.tipo_inmueble ?? 'Inmueble'} en ${publication.tipo_operacion ?? getOperationLabel(selectedOperation)}`,
+    location: location || 'Ubicación no disponible',
+    terrainArea: toNumber(publication.superficie),
+    bedrooms: publication.habitaciones ?? 0,
+    bathrooms: publication.banos ?? 0,
+    price: toNumber(publication.precio),
+    currencySymbol: publication.moneda_simbolo ?? '$us',
+    publishedDate: 'Reciente',
+    whatsappContact: '',
+    images: getSafeImages(publication),
+  };
+}
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [searchLocation, setSearchLocation] = useState('');
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
+  const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
+  const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
+  const [selectedOperation, setSelectedOperation] = useState<OperationType>('venta');
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
+  const [selectedSort, setSelectedSort] = useState('fecha-reciente');
+  const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
+
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(
+      searchLocation.trim() ||
+      selectedOperation !== 'venta' ||
+      selectedPropertyTypes.length > 0 ||
+      advancedFilterValues.habitaciones ||
+      advancedFilterValues.banos ||
+      advancedFilterValues.piscina ||
+      appliedPriceFilter?.minPrice !== undefined ||
+      appliedPriceFilter?.maxPrice !== undefined ||
+      selectedSort !== 'fecha-reciente',
+    );
+  }, [
+    advancedFilterValues.banos,
+    advancedFilterValues.habitaciones,
+    advancedFilterValues.piscina,
+    appliedPriceFilter?.maxPrice,
+    appliedPriceFilter?.minPrice,
+    searchLocation,
+    selectedOperation,
+    selectedPropertyTypes.length,
+    selectedSort,
+  ]);
+
+  const displayedProperties = useMemo(
+    () =>
+      sortProperties(
+        searchResults.map((publication) =>
+          mapPublicationToProperty(publication, selectedOperation),
+        ),
+        selectedSort,
+      ),
+    [searchResults, selectedOperation, selectedSort],
+  );
+
+  const breadcrumbPropertyLabel =
+    getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(', ') ||
+    'Inmuebles';
+  const breadcrumbLocationLabel = searchLocation.trim() || 'Bolivia';
+  const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
+
+  const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
+    setAppliedPriceFilter(priceFilter);
   };
 
-  // prueba mockeado
-  const PROPERTIES_MOCK: Property[] = [
-    { id: 1, title: 'Propiedad de Alto Nivel en Venta Exclusiva', type: 'Casa en Venta', location: 'AV LAS AMERICAS, Sur, Santa Cruz', terrainArea: 1114, bedrooms: 4, bathrooms: 2, price: 1461925, currencySymbol: '$us', publishedDate: 'Publicado hace 5 días', whatsappContact: '59187654321', images: ['/casa1.jpg', '/casa2.jpg'] },
-    { id: 2, title: 'Propiedad de Alto Nivel en Venta Exclusiva', type: 'Casa en Venta', location: 'AV LAS AMERICAS, Sur, Santa Cruz', terrainArea: 1114, bedrooms: 4, bathrooms: 2, price: 1461925, currencySymbol: '$us', publishedDate: 'Publicado hace 5 días', whatsappContact: '59187654321', images: ['/casa2.jpg', '/casa3.jpg'] },
-    { id: 3, title: 'Propiedad de Alto Nivel en Venta Exclusiva', type: 'Casa en Venta', location: 'AV LAS AMERICAS, Sur, Santa Cruz', terrainArea: 1114, bedrooms: 4, bathrooms: 2, price: 1461925, currencySymbol: '$us', publishedDate: 'Publicado hace 5 días', whatsappContact: '59187654321', images: ['/casa3.jpg', '/casa1.jpg'] }
-  ];
+  const handleCurrencyChange = (currency: Currency) => {
+    setSelectedCurrency(currency);
+  };
 
-  
+  const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
+    setIsApplyingFilters(true);
+
+    try {
+      const selectedPropertyLabels = getPropertyTypeLabelsFromIds(
+        selectedPropertyTypes,
+        PROPERTY_TYPE_OPTIONS,
+      );
+
+      const filtros: FiltrosPublicacion = {
+        ubicacion: searchLocation,
+        operacion: selectedOperation,
+        tipoInmueble: selectedPropertyLabels.join(','),
+        habitaciones: advancedFilterValues.habitaciones,
+        banos: advancedFilterValues.banos,
+        piscina: advancedFilterValues.piscina,
+        currency: selectedCurrency,
+        minPrice: appliedPriceFilter?.minPrice,
+        maxPrice: appliedPriceFilter?.maxPrice,
+        ...overrides,
+      };
+
+      const resultados = await buscarPublicaciones(filtros);
+      setSearchResults(resultados);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+      setSearchResults([]);
+      setHasSearched(true);
+    } finally {
+      setIsApplyingFilters(false);
+    }
+  };
+
+  useEffect(() => {
+    const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
+    const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones')) ?? 'venta';
+    const nextPropertyTypes = mapQueryPropertyTypeToIds(searchParams.get('tipo'), PROPERTY_TYPE_OPTIONS);
+    const nextPropertyLabels = getPropertyTypeLabelsFromIds(nextPropertyTypes, PROPERTY_TYPE_OPTIONS);
+    const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
+
+    setSearchLocation(nextLocation);
+    setSelectedOperation(nextOperation);
+    setSelectedPropertyTypes(nextPropertyTypes);
+
+    void runSearch({
+      ubicacion: nextLocation,
+      operacion: nextOperation,
+      tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryString]);
+
+  useEffect(() => {
+    if (isMobileFiltersOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isMobileFiltersOpen]);
+
+  const openMobileFilters = () => {
+    setIsMobileFiltersOpen(true);
+    requestAnimationFrame(() => {
+      setIsMobileFiltersVisible(true);
+    });
+  };
+
+  const closeMobileFilters = () => {
+    setIsMobileFiltersVisible(false);
+    setTimeout(() => {
+      setIsMobileFiltersOpen(false);
+    }, 250);
+  };
+
+  const handleClearFilters = () => {
+    setSearchLocation('');
+    setSelectedOperation('venta');
+    setSelectedPropertyTypes([]);
+    setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
+    setAppliedPriceFilter(null);
+    setSelectedCurrency('USD');
+    setSelectedSort('fecha-reciente');
+    void runSearch({
+      ubicacion: '',
+      operacion: 'venta',
+      tipoInmueble: undefined,
+      habitaciones: '',
+      banos: '',
+      piscina: '',
+      currency: 'USD',
+      minPrice: undefined,
+      maxPrice: undefined,
+    });
+  };
+
+  const handleSort = (sortOption: string) => {
+    setSelectedSort(sortOption);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* esta es la cabecera que va tener los filtros cuando sea movil, por ahora esta en oculto (hidden) */}
-      <div className="flex md:hidden flex-wrap items-center justify-between gap-4 mb-6 border-b pb-4">
-        {/* boton en movil para filtros, esto ustedes lo tiene que mejorar */}
-        <button className="bg-[#E4C5A5] text-[#2C2C2C] px-6 py-2 rounded-md font-medium flex items-center gap-2 hover:bg-[#d4b08c]">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-10">
+      <div className="relative z-[60] mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4 md:hidden">
+        <Button
+          variant="secondary"
+          onClick={openMobileFilters}
+          className="h-10 w-42 px-3 flex items-center gap-1 text-sm"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           Mostrar Filtros
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#a67c52]"></div>
+          <label className="relative inline-flex cursor-pointer items-center">
+            <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
+            <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
           </label>
           <span className="text-sm font-medium text-gray-700">Mapa</span>
         </div>
       </div>
-      {/* hasta aca seria la parte de movil */}
 
-      {/* contenido en un grid de 12 columnas */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {/* sidebar de filtros en desktop  en tres columnas */}
-        <aside className="hidden md:block md:col-span-3 space-y-6">
-          <div className="sticky top-8">
-            <h2 className="text-xl font-bold mb-4">Filtros</h2>
-            {/* este es el espacio para boton del mapa */}
-            <div className="flex items-center gap-2 mb-6 border-b pb-4">
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#a67c52]"></div>
-              </label>
-              <span className="text-sm font-medium text-gray-700">Mapa</span>
+      {isMobileFiltersOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          <div
+            className={`absolute inset-0 bg-black/45 transition-opacity duration-250 ease-out ${
+              isMobileFiltersVisible ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+
+          <div
+            className={`absolute inset-x-0 bottom-0 top-[92px] overflow-hidden rounded-t-[28px] bg-[#F6F4EF] transition-all duration-250 ease-out ${
+              isMobileFiltersVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+            }`}
+          >
+            <div className="h-full overflow-y-auto px-4 py-6">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-[32px] font-semibold text-[#2E2E2E]">Filtros</h2>
+                <button
+                  type="button"
+                  onClick={closeMobileFilters}
+                  className="flex h-10 w-10 items-center justify-center text-[#2E2E2E]"
+                  aria-label="Cerrar filtros"
+                >
+                  <X className="h-7 w-7" />
+                </button>
+              </div>
+
+              <ApplyFiltersButton
+                isLoading={isApplyingFilters}
+                onClick={() => {
+                  void runSearch();
+                }}
+              />
+
+              <div className="my-4 h-px bg-[#D8D2C8]"></div>
+              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros Básicos</p>
+
+              <div className="space-y-3">
+                <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+                <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+                <FilterTypeProperty
+                  tipos={PROPERTY_TYPE_OPTIONS}
+                  selected={selectedPropertyTypes}
+                  onChange={setSelectedPropertyTypes}
+                />
+                <PriceDropdown
+                  selectedCurrency={selectedCurrency}
+                  appliedPriceFilter={appliedPriceFilter}
+                  onCurrencyChange={handleCurrencyChange}
+                  onApplyRange={handleApplyRange}
+                />
+                <AdvancedFilters onChange={setAdvancedFilterValues} />
+              </div>
+
+              <div className="my-4 h-px bg-[#D8D2C8]"></div>
+
+              <div className="mt-4 pb-6">
+                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+              </div>
             </div>
-            {/* hasta aca el boton del mapa */}
+          </div>
+        </div>
+      )}
 
-            {/* filtros */}
-            <div className="border-gray-300 rounded-lg p-10 text-center text-gray-400">
-              <Filters filtrosAvanzados={advancedFilterValues} onResultados={() => {}} />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+        <aside className="hidden space-y-6 md:col-span-3 md:block">
+          <div className="sticky top-8">
+            <div className="border-gray-300 rounded-4xl bg-white p-6">
+              <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+              <div className="mb-4 flex items-center gap-2">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
+                </label>
+                <span className="text-sm font-medium text-gray-700">Mapa</span>
+              </div>
+
+              <ApplyFiltersButton
+                isLoading={isApplyingFilters}
+                onClick={() => {
+                  void runSearch();
+                }}
+              />
+
+              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+              <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+              <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+              <FilterTypeProperty
+                tipos={PROPERTY_TYPE_OPTIONS}
+                selected={selectedPropertyTypes}
+                onChange={setSelectedPropertyTypes}
+              />
+
+              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+
               <PriceDropdown
                 selectedCurrency={selectedCurrency}
                 appliedPriceFilter={appliedPriceFilter}
                 onCurrencyChange={handleCurrencyChange}
                 onApplyRange={handleApplyRange}
               />
-              <div className='mt-3'>
-                
-                <OperationTypeFilter
-                  value={selectedOperation}
-                  onChange={setSelectedOperation}
-                />
-              </div>
-              <AdvancedFilters onChange={(valores) => setAdvancedFilterValues(valores)} />
-              <div className="mt-4">
-                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={clearFilters} />
+
+              <AdvancedFilters onChange={setAdvancedFilterValues} />
+
+              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+              <div>
+                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
               </div>
             </div>
           </div>
         </aside>
-        {/* hasta aca fue lo de desktop */}
 
-        {/* parte principal */}
         <main className={`${isMapOpen ? 'md:col-span-5' : 'md:col-span-9'}`}>
-          {/* cabecera desktop */}
-          <div className="hidden md:flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="mb-6 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
             <div>
-              <nav className="text-sm text-gray-500 mb-1">Casas y Casas en Condominio / Venta</nav>
-              <h1 className="text-xl font-semibold">150 Casas y en Condominio en Venta en Bolivia</h1>
+              <nav className="mb-1 text-sm text-gray-500">{breadcrumb}</nav>
+              <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <SortSelect onSortChange={handleSort} />
             </div>
           </div>
-          {/* cabecera movil */}
-          <div className="block md:hidden mb-4">
-            <nav className="text-sm text-gray-500 mb-1 underline">Casas y Casas en Condominio / Venta</nav>
-            <h1 className="text-lg font-semibold mb-2">150 Casas y en Condominio en Venta en Bolivia</h1>
-            <div className="border border-gray-300 px-3 py-2 rounded-md bg-white w-full text-center">Relevancia</div>
+
+          <div className="mb-4 block md:hidden">
+            <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
+            <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
+            <SortSelect onSortChange={handleSort} />
           </div>
 
-          {/* cards */}
-          <div className={`grid grid-cols-1 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-6`}>
-            {PROPERTIES_MOCK.map((prop) => (
-              <PropertyCard key={prop.id} property={prop} selectedCurrency={selectedCurrency} />
-            ))}
-          </div>
+          {!hasSearched && isApplyingFilters ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+              Cargando inmuebles...
+            </div>
+          ) : displayedProperties.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+              No se encontraron inmuebles con los filtros aplicados.
+            </div>
+          ) : (
+            <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+              {displayedProperties.map((property) => (
+                <PropertyCard key={property.id} property={property} selectedCurrency={selectedCurrency} />
+              ))}
+            </div>
+          )}
         </main>
 
-        {/* mapa movil */}
         {isMapOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[90px] z-40 bg-white md:relative md:inset-auto md:z-0 md:col-span-4 md:h-[calc(90vh-2rem)] md:sticky md:top-4 md:border-2 md:border-gray-200 md:rounded-xl">
-            <div className="w-full h-full bg-gray-100 relative rounded-xl overflow-hidden">
+          <div className="fixed inset-x-0 bottom-0 top-[90px] z-40 bg-white md:relative md:inset-auto md:z-0 md:col-span-4 md:h-[calc(90vh-2rem)] md:sticky md:top-4 md:rounded-xl md:border-2 md:border-gray-200">
+            <div className="relative h-full w-full overflow-hidden rounded-xl bg-gray-100">
               <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                 [Componente Mapa Activo]
               </div>
@@ -151,5 +538,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

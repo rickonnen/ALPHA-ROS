@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
 
