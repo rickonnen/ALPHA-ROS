@@ -12,16 +12,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-interface Props {
-  searchParams: Promise<{
-    id?: string;
-  }>;
-}
-
-export default async function PlanesPublicacion({ searchParams }: Props) {
-  const params = await searchParams;
-  const idUsuario = params.id ?? "";
-
+export default async function PlanesPublicacion() {
   const planes = await getPlanesPublicacion();
 
   return (
@@ -72,10 +63,7 @@ export default async function PlanesPublicacion({ searchParams }: Props) {
                 </p>
               </CardContent>
               <CardFooter className="pt-8 bg-transparent">
-                <BotonContinuarPlan
-                  planId={plan.id_plan}
-                  idUsuario={idUsuario}
-                />
+                <BotonContinuarPlan planId={plan.id_plan} />
               </CardFooter>
             </Card>
           ))}
