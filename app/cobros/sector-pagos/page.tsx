@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import PagoCliente from "./pagoCliente"; // Importamos el componente interactivo
+import PagoCliente from "@/features/cobros/sectorPago/pagoCliente"; // Importamos el componente interactivo
 
 interface Props {
   searchParams: Promise<{

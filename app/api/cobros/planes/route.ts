@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPlanesPublicacion } from '@/app/cobros/planes/getPlanesPublicacion';
+import { getPlanesPublicacion } from '@/features/cobros/planes/getPlanesPublicacion';
 
 export async function GET() {
   try {
