@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import * as React from "react"
 import { useState } from "react"
@@ -10,44 +10,80 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function SortSelect({ onSortChange }: { onSortChange: (value: string) => void }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="w-full p-4">
-      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">
+    <div className="w-full mt-3">
+      <p className="text-xs font-bold text-gray-500 mb-2 ml-1">
         ORDENAMIENTO
       </p>
 
-      <Select onOpenChange={setIsOpen} onValueChange={onSortChange}>
+      <Select onOpenChange={setIsOpen} onValueChange={onSortChange} >
         <SelectTrigger 
-          className="relative w-full h-12 bg-[#D1D5DB] border-none rounded-lg flex items-center justify-center text-gray-800 focus:ring-0 focus:ring-offset-0 [&>svg]:hidden"
+          className={cn(
+            "w-full h-20 flex items-center justify-between px-4 py-6 md:py-4",
+            "bg-[#E7E3DD] border-none rounded-[8px]", 
+            "text-sm font-normal text-[#2E2E2E] focus:ring-0 focus:ring-offset-0",
+            "[&>svg]:hidden" 
+          )}
         >
-          {/* QUITAMOS EL TRUNCATE: Ahora el texto se muestra completo siempre */}
-          <span className="block whitespace-nowrap text-center pr-10">
-            <SelectValue placeholder="Ordenamiento" />
-          </span>
-
+          <SelectValue placeholder="Seleccionar orden"/>
+          
           <ChevronDown 
-            className={`absolute right-4 h-5 w-5 text-gray-900 transition-transform duration-300 !block ${
+            className={cn(
+              "h-4 w-4 text-[#4B4B4B] transition-transform duration-300",
               isOpen ? "rotate-180" : "rotate-0"
-            }`} 
-            aria-hidden="true"
+            )} 
           />
         </SelectTrigger>
 
         <SelectContent 
           position="popper" 
           sideOffset={4}
-          className="w-[var(--radix-select-trigger-width)] bg-[#E5E7EB] rounded-lg shadow-xl border-none"
+          className="w-[var(--radix-select-trigger-width)] bg-white border border-[#C8C0B5] rounded-[16px] shadow-md overflow-hidden p-1"
         >
-          <SelectItem value="precio-asc" className="focus:bg-gray-300 cursor-pointer">Precio (asc)</SelectItem>
-          <SelectItem value="precio-des" className="focus:bg-gray-300 cursor-pointer">Precio (des)</SelectItem>
-          <SelectItem value="fecha-reciente" className="focus:bg-gray-300 cursor-pointer">Fecha de publicación (mas reciente)</SelectItem>
-          <SelectItem value="fecha-antigua" className="focus:bg-gray-300 cursor-pointer">Fecha de publicacion (mas antigua)</SelectItem>
-          <SelectItem value="m2-mayor" className="focus:bg-gray-300 cursor-pointer">Superficie m2 (mayor a menor)</SelectItem>
-          <SelectItem value="m2-menor" className="focus:bg-gray-300 cursor-pointer">Superficie m2 (menor a mayor)</SelectItem>
+          <SelectItem 
+            value="precio-asc" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Precio (menor a mayor)
+          </SelectItem>
+          <SelectItem 
+            value="precio-des" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Precio (mayor a menor)
+          </SelectItem>
+          
+          {/* Textos corregidos para consistencia */}
+          <SelectItem 
+            value="fecha-reciente" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Fecha de publicación (más reciente)
+          </SelectItem>
+          <SelectItem 
+            value="fecha-antigua" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Fecha de publicación (más antigua)
+          </SelectItem>
+
+          <SelectItem 
+            value="m2-mayor" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Superficie m² (mayor a menor)
+          </SelectItem>
+          <SelectItem 
+            value="m2-menor" 
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Superficie m² (menor a mayor)
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>

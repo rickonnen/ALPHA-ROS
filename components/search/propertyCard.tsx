@@ -53,32 +53,28 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
     <div className="group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none">
       
       {/*  lado izquierdo (carrusel) */}
-      <div className="relative w-2/5 sm:w-1/3 shrink-0 overflow-hidden">
+      <div className="relative w-2/5 sm:w-1/3 h-48 shrink-0 overflow-hidden">
         <Carousel className="w-full h-full">
           <CarouselContent className="-ml-0 h-full">
             {property.images.map((img, index) => (
-              <CarouselItem key={index} className="pl-0 relative h-full w-full">
+              <CarouselItem key={index} className="pl-0 basis-full h-full">
                 <Image
                   src={img}
                   alt={`Imagen ${index + 1} de ${property.title}`}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  width={300}
+                  height={200}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   priority={index === 0}
-                  placeholder="empty"
                 />
               </CarouselItem>
             ))}
           </CarouselContent>
           {property.images.length > 1 && (
             <>
-              <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7" />
-              <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7" />
+              <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7 pointer-events-auto z-20" />
+              <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7 pointer-events-auto z-20" />
             </>
           )}
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
-            1/{property.images.length}
-          </div>
         </Carousel>
       </div>
 

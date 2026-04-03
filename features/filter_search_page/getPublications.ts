@@ -1,4 +1,4 @@
-import { prisma } from "./prismaClient";
+import { prisma } from "@/lib/prisma";
 
 export async function getPublications() {
 

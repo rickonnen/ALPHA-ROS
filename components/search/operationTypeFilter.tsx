@@ -27,7 +27,7 @@ type OperationTypeFilterProps = {
 export function OperationTypeFilter({
   value,
   onChange,
-  defaultOpen = true,
+  defaultOpen = false,
 }: OperationTypeFilterProps) {
   const [openItem, setOpenItem] = useState(
     defaultOpen ? "operation-type" : "",
@@ -43,14 +43,23 @@ export function OperationTypeFilter({
       collapsible
       value={openItem}
       onValueChange={setOpenItem}
-      className="w-full"
+      className="w-full mt-3"
     >
-      <AccordionItem value="operation-type" className="space-y-2">
-        <AccordionTrigger>{selectedLabel}</AccordionTrigger>
+      <AccordionItem value="operation-type" className="border-none">
+        <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+          <AccordionTrigger
+            className={cn(
+              "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
+              "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+            )}
+          >
+            {selectedLabel}
+          </AccordionTrigger>
+        </div>
 
-        <AccordionContent>
-          <div className="rounded-2xl border border-[#cfc4b6] bg-white p-3 shadow-sm">
-            <div className="space-y-1">
+        <AccordionContent className="pt-3 pb-0">
+          <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+            <div className="space-y-2">
               {operationTypeOptions.map((option) => {
                 const checked = option.value === value;
 
@@ -63,27 +72,31 @@ export function OperationTypeFilter({
                       setOpenItem("");
                     }}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm text-[#2E2E2E] transition hover:bg-[#F4EFE6]",
-                      checked && "bg-[#F8F3EC]",
+                      "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm text-[#2E2E2E] transition",
+                      checked
+                        ? "bg-[#E7E3DD]"
+                        : "bg-transparent hover:bg-[#F4EFE6]"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex size-4 items-center justify-center rounded-full border transition",
+                        "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
                         checked
-                          ? "border-[#1F3A4D]"
-                          : "border-[#7b746b] bg-white",
+                          ? "border-[#6B6B6B] bg-white"
+                          : "border-[#8A847C] bg-white"
                       )}
                     >
                       <span
                         className={cn(
-                          "size-2 rounded-full bg-[#1F3A4D] transition",
-                          checked ? "scale-100 opacity-100" : "scale-0 opacity-0",
+                          "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                          checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
                         )}
                       />
                     </span>
 
-                    <span>{option.label}</span>
+                    <span className="text-sm text-[#2E2E2E]">
+                      {option.label}
+                    </span>
                   </button>
                 );
               })}
