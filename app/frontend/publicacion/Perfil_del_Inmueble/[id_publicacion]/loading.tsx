@@ -5,7 +5,7 @@
  *                la query del perfil del inmueble (HU4 - Task 4.9)
  * @return JSX con PropertySkeleton como estado de carga
  */
-import { PropertySkeleton } from "@/app/frontend/publicacion/[id_publicacion]/components/PropertySkeleton";
+import { PropertySkeleton } from "@/app/frontend/publicacion/Perfil_del_Inmueble/[id_publicacion]/components/PropertySkeleton";
 
 export default function LoadingPerfilInmueble() {
   return (

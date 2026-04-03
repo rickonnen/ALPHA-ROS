@@ -97,7 +97,7 @@ export default function CaracteristicasPage() {
           sessionStorage.removeItem("imageUploader_userInteracted")
           setSubmitOk(true)
           console.log("ID generado por la DB:", result.idPublicacion)
-          router.push(`/frontend/publicacion/${result.idPublicacion}`)
+          router.push(`/frontend/publicacion/Perfil_del_Inmueble/${result.idPublicacion}`)
         } else {
           const firstError = Object.values(result.errors).flat()[0] ?? null
           setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
