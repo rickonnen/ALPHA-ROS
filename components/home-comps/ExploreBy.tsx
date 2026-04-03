@@ -50,7 +50,10 @@ async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
 
 async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
   const res = await fetch("/backend/home/explore/venta");
-  const { data } = await res.json();
+  const json = await res.json();
+  console.log("respuesta venta:", json);
+  const { data } = json;
+  if (!data) return [];
   return data.map((row: { ciudad: string; total: number }) => ({
     strName:  row.ciudad,
     intCount: Number(row.total),

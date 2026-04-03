@@ -9,7 +9,7 @@
  * @return {JSX.Element | null} AlertDialog controlado o null si bolOpen es false.
  */
 
-import Link       from "next/link";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,17 +21,17 @@ import {
 } from "@/components/ui/alert-dialog";
 // PascalCase para la interfaz - Estándar Alpha-Ros
 interface FreePublicationLimitModalProps {
-  bolOpen:         boolean;   // controla si el modal está visible
-  onBack:          () => void;
-  strPlansHref?:   string;
-  strTitle?:       string;
+  bolOpen: boolean;   // controla si el modal está visible
+  onBack: () => void;
+  strPlansHref?: string;
+  strTitle?: string;
   strDescription?: string;
 }
 export default function FreePublicationLimitModal({
   bolOpen,
   onBack,
-  strPlansHref   = "/frontend/cobros/planes",
-  strTitle       = "Has excedido tus publicaciones gratuitas",
+  strPlansHref = "/frontend/cobros/planes",
+  strTitle = "Has excedido tus publicaciones gratuitas",
   strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
   // No renderizar nada si el modal está cerrado
@@ -63,12 +63,13 @@ export default function FreePublicationLimitModal({
           </Button>
           {/* Botón Ver Planes */}
           <Button
-            asChild
             className="flex-1 border border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 font-semibold"
+            onClick={() => {
+              onBack();
+              window.location.href = strPlansHref;
+            }}
           >
-            <Link href={strPlansHref}>
-              {"Ver Planes →"}
-            </Link>
+            {"Ver Planes →"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

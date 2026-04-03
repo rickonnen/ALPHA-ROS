@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,29 +5,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PlanPublicacion } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-// Función auxiliar para consumir el endpoint
-// app/frontend/cobros/planes/page.tsx
-
-async function obtenerPlanes() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-  // ASEGÚRATE de que la ruta coincida con las carpetas donde pusiste el route.ts
-  const res = await fetch(`${baseUrl}/backend/cobros/planes`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Fallo al obtener los planes de publicación");
-  }
-
-  return res.json();
-}
 
 export default async function PlanesPublicacion() {
-  // Llamamos a la API a través de la función auxiliar
-  const planes = await obtenerPlanes();
+  // Consulta directa a la BD sin fetch para evitar problemas en Server Components
+  const planes = await prisma.planPublicacion.findMany({
+    orderBy: { precio_plan: "asc" },
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -46,7 +32,7 @@ export default async function PlanesPublicacion() {
           </p>
         </div>
 
-        {/* GRID DE TARJETAS DE PLANES (Dinámico) */}
+        {/* GRID DE TARJETAS DE PLANES */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {planes.map((plan: PlanPublicacion) => (
             <Card
@@ -59,9 +45,8 @@ export default async function PlanesPublicacion() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grow">
-                {/* Asegúrate de formatear el precio si es necesario */}
                 <p className="text-2xl font-bold mb-8 text-foreground">
-                  $ {plan.precio_plan?.toString()}
+                  $ {Number(plan.precio_plan).toLocaleString("es-ES")}
                 </p>
                 <p className="text-muted-foreground">
                   + {plan.cant_publicaciones} cupos de publicación
@@ -69,9 +54,7 @@ export default async function PlanesPublicacion() {
               </CardContent>
               <CardFooter className="pt-8 bg-transparent">
                 <Button asChild className="w-full font-bold">
-                  <Link
-                    href={`/frontend/cobros/sector-pagos?planId=${plan.id_plan}`}
-                  >
+                  <Link href={`/frontend/cobros/sector-pagos?planId=${plan.id_plan}`}>
                     Continuar
                   </Link>
                 </Button>
