@@ -23,7 +23,7 @@ export function NotificationItem({
   return (
     <div
       onClick={() => onRead(id)}
-      className={`rounded-lg p-3 flex items-center gap-3 cursor-pointer transition-colors group relative
+      className={`rounded-lg p-2 flex items-center gap-3 max-w-[99%] mx-auto cursor-pointer transition-colors group relative
         ${read ? "bg-[#9EA5AE]/20" : "bg-blue-50 border border-blue-100"}`}
     >
       {/* Ícono mail */}
