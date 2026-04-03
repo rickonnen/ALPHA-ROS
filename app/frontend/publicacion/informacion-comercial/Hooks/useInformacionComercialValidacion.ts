@@ -16,7 +16,7 @@ export function validateField(name: keyof FormData, value: string): string | und
       if (!PRICE_FORMAT_REGEX.test(value)) return "Ingrese un valor válido (ej: 1.234,56).";
       const intNum = parseFormattedPrice(value);
       if (intNum === null) return "El precio debe ser numérico.";
-      if (intNum <= 0) return "El precio debe ser mayor a 0.";
+      if (intNum <= 99) return "El precio minimo debe ser mayor a 99 .";
       if (intNum > PRECIO_MAXIMO) return `No puede superar ${PRECIO_MAXIMO.toLocaleString("es-BO")} Bs.`;
       return undefined;
     }
