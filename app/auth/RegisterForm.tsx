@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
 import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
@@ -16,6 +15,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
   const router = useRouter();
   const { signup } = useAuth();
   const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -43,12 +43,34 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
         newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
       } else if (value.trim().replace(/\s/g, "").length < 3) {
         newErrors.nombre = "El nombre debe tener al menos 3 letras";
-      } else if (/(.)\1\1/.test(value.trim().replace(/\s/g, ""))) {
+      } else if (/(.)\\1\\1/.test(value.trim().replace(/\s/g, ""))) {
         newErrors.nombre = "No se permiten 3 o más letras repetidas consecutivamente";
-      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(value.trim())) {
-        newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+)*$/.test(value.trim())) {
+        newErrors.nombre = "Ingresa un nombre válido";
       } else {
         delete newErrors.nombre;
+      }
+    }
+
+    if (field === "apellido") {
+      if (!value.trim()) {
+        newErrors.apellido = "El apellido es obligatorio";
+      } else if (value.length > 40) {
+        newErrors.apellido = "El apellido no puede exceder 40 caracteres";
+      } else if (/[0-9]/.test(value)) {
+        newErrors.apellido = "Ingresa un apellido válido";
+      } else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(value)) {
+        newErrors.apellido = "Ingresa un apellido válido";
+      } else if (/\s{2,}/.test(value)) {
+        newErrors.apellido = "No se permiten 2 o más espacios consecutivos";
+      } else if (value.trim().replace(/\s/g, "").length < 3) {
+        newErrors.apellido = "El apellido debe tener al menos 3 letras";
+      } else if (/(.)\1\1/.test(value.trim().replace(/\s/g, ""))) {
+        newErrors.apellido = "No se permiten 3 o más letras repetidas consecutivamente";
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(value.trim())) {
+        newErrors.apellido = "Se permite espacio solo después de 3 o más letras";
+      } else {
+        delete newErrors.apellido;
       }
     }
 
@@ -112,10 +134,27 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
       newErrors.nombre = "No se permiten 2 o más espacios consecutivos";
     else if (nombre.trim().replace(/\s/g, "").length < 3)
       newErrors.nombre = "El nombre debe tener al menos 3 letras";
-    else if (/(.)\1\1/.test(nombre.trim().replace(/\s/g, "")))
+    else if (/(.)\\1\\1/.test(nombre.trim().replace(/\s/g, "")))
       newErrors.nombre = "No se permiten 3 o más letras repetidas consecutivamente";
-    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(nombre.trim()))
-      newErrors.nombre = "Se permite espacio solo después de 3 o más letras";
+    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+)*$/.test(nombre.trim()))
+      newErrors.nombre = "Ingresa un nombre válido";
+
+    if (!apellido.trim())
+      newErrors.apellido = "El apellido es obligatorio";
+    else if (apellido.length > 40)
+      newErrors.apellido = "El apellido no puede exceder 40 caracteres";
+    else if (/[0-9]/.test(apellido))
+      newErrors.apellido = "Ingresa un apellido válido";
+    else if (/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/.test(apellido))
+      newErrors.apellido = "Ingresa un apellido válido";
+    else if (/\s{2,}/.test(apellido))
+      newErrors.apellido = "No se permiten 2 o más espacios consecutivos";
+    else if (apellido.trim().replace(/\s/g, "").length < 3)
+      newErrors.apellido = "El apellido debe tener al menos 3 letras";
+    else if (/(.)\1\1/.test(apellido.trim().replace(/\s/g, "")))
+      newErrors.apellido = "No se permiten 3 o más letras repetidas consecutivamente";
+    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(apellido.trim()))
+      newErrors.apellido = "Se permite espacio solo después de 3 o más letras";
 
     if (!email.trim())
       newErrors.email = "El correo es obligatorio";
@@ -140,12 +179,14 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
   }
 
   function isFormValid() {
+    const validationErrors = validate();
     return (
       nombre.trim() !== "" &&
+      apellido.trim() !== "" &&
       email.trim() !== "" &&
       password !== "" &&
       confirmPassword !== "" &&
-      Object.keys(errors).length === 0
+      Object.keys(validationErrors).length === 0
     );
   }
 
@@ -165,7 +206,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     setLoading(true);
 
     try {
-      await signup(nombre, email, password);
+      await signup(nombre, apellido, email, password);
       setShowSuccess(true);
     } catch (err: any) {
       setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
@@ -191,26 +232,25 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
         </h2>
       </div>
 
-      {/* Botón Google — usa signIn de NextAuth directamente, sin popup manual */}
+      {/* Botón Google — Deshabilitado */}
       <button
         type="button"
-        disabled={loading}
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={(e) => e.preventDefault()}
         style={{
           width: "100%",
-          backgroundColor: loading ? "#9ca3af" : "#0F172A",
+          backgroundColor: "#0F172A",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
           border: "none",
-          cursor: loading ? "not-allowed" : "pointer",
+          cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
           marginBottom: "16px",
-          opacity: loading ? 0.6 : 1,
+          opacity: 1,
         }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -230,10 +270,10 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
           <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
         )}
 
-        {/* NOMBRE COMPLETO */}
+        {/* NOMBRE */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
-            Nombre completo
+            Nombre
           </label>
           <div style={{
             display: "flex",
@@ -247,7 +287,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
             <User size={18} style={{ color: "#9ca3af" }} />
             <input
               type="text"
-              placeholder="Tu nombre completo"
+              placeholder="Tu nombre"
               value={nombre}
               maxLength={40}
               onChange={(e) => {
@@ -266,6 +306,45 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
           </div>
           {errors.nombre && (
             <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.nombre}</p>
+          )}
+        </div>
+
+        {/* APELLIDO */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
+            Apellido
+          </label>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            border: `1px solid ${errors.apellido ? "#ef4444" : "#d1d5db"}`,
+            borderRadius: "6px",
+            padding: "10px 12px",
+            gap: "10px",
+            backgroundColor: errors.apellido ? "#fee2e2" : "white",
+          }}>
+            <User size={18} style={{ color: "#9ca3af" }} />
+            <input
+              type="text"
+              placeholder="Tu apellido"
+              value={apellido}
+              maxLength={40}
+              onChange={(e) => {
+                const value = e.target.value.slice(0, 40);
+                setApellido(value);
+                validateField("apellido", value);
+              }}
+              style={{
+                width: "100%",
+                fontSize: "14px",
+                outline: "none",
+                border: "none",
+                backgroundColor: "transparent",
+              }}
+            />
+          </div>
+          {errors.apellido && (
+            <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.apellido}</p>
           )}
         </div>
 

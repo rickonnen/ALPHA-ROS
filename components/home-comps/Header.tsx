@@ -1,34 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button"; 
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react"; 
+import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "../hooks/useScrollDirection";
+import { useHoverAnimation } from "../hooks/useHoverAnimation";
+import { useClickOutside } from "../hooks/useClickOutside";
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
-
+/**
+ * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 25/03/2026
+ * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
+ * Encabezado principal responsivo con menú desplegable para móviles
+ * Incluye lógica de autenticación (login/registro), panel de notificaciones, ocultamiento
+ * @return {object} Componente visual Header para Next.js.
+ */
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
   { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
   { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" },
 ];
 
-/**
- * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 27/03/2026
- * Dev: Erick Eduardo Arnez Torrico        Fecha: 26/03/2026
- * Funcionalidad: Renderizar el encabezado principal responsivo con menú desplegable para móviles.
- * Incluye lógica de autenticación (login/registro), panel de notificaciones, ocultamiento
- * automático inteligente al hacer scroll, animaciones interactivas unificadas (crecimiento y
- * resplandor color terracota), fondo crema personalizado, y optimización de renderizado
- * de enlaces aplicando el principio DRY.
- * @return {object} Componente visual Header para Next.js.
- */
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
+  const strHoverAnim = useHoverAnimation(true); 
+  const strHoverAnimNoTextColor = useHoverAnimation(false);
+
   const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -38,309 +41,210 @@ export const Header = () => {
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
+  const refNotifPanel = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = () => setBolIsMobileMenuOpen(false);
 
+  useClickOutside(
+    [refMobileMenuPanel, refMobileMenuButton],
+    closeMobileMenu,
+    bolIsMobileMenuOpen
+  );
+
   useEffect(() => {
-    if (!bolIsMobileMenuOpen) return;
-
-    const handleClickOutside = (objEvent: MouseEvent) => {
-      const objTargetNode = objEvent.target as Node | null;
-      if (!objTargetNode) return;
-      if (refMobileMenuPanel.current?.contains(objTargetNode)) return;
-      if (refMobileMenuButton.current?.contains(objTargetNode)) return;
-      closeMobileMenu();
+    const handleClickOutside = (e: MouseEvent) => {
+      if (refNotifPanel.current && !refNotifPanel.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
     };
-
-    const handleEscapeKey = (objEvent: KeyboardEvent) => {
-      if (objEvent.key === "Escape") closeMobileMenu();
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    document.addEventListener("keydown", handleEscapeKey);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("keydown", handleEscapeKey);
-    };
-  }, [bolIsMobileMenuOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const strLinkClassesDesktop =
-    "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
+    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
   const strLinkClassesMobile =
-    "text-[15px] font-normal text-[#E7E1D7] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D]";
+    `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
 
   const btnLogoProbol = (
     <Link
       href="/"
       aria-label="Go to home page"
-      className="inline-flex rounded-md transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+      className={`inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
     >
       <img
         src="/logo-principal.svg"
         alt="Portal logo"
-        className="h-10 w-auto object-contain lg:h-6 xl:h-8 2xl:h-12"
+        className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"
       />
     </Link>
   );
 
   // ── Botón de notificaciones (comportamiento según auth) ──
   const btnNotifications = user ? (
-    <div className="relative">
+    <div className="relative" ref={refNotifPanel}>
       <button
-        onClick={() => setShowNotifications((prev) => !prev)}
+        onClick={() => (user ? setShowNotifications((prev) => !prev) : setShowProtected(true))}
         title="Notificaciones"
         aria-label="Notificaciones"
-        className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+        className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
       >
-        <Bell size={20} className="text-[#2E2E2E]" />
+        <img 
+          src="/bell_icon.svg" 
+          alt="Notificaciones" 
+          className="w-6 h-6 object-contain" 
+        />
       </button>
-      {showNotifications && <NotificationPanel />}
+      {user && showNotifications && <NotificationPanel />}
+    </div>
+  );
+
+  const btnProfile = user ? (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => router.push(`/perfil?id=${user.id}`)}
+        className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
+        title="Mi perfil"
+      >
+        <img
+          src="/account_avatar.svg"
+          alt="Perfil"
+          className="w-7 h-7 object-contain"
+        />
+        <span className="text-[15px] font-semibold uppercase text-foreground leading-none">
+          {user.name}
+        </span>
+      </button>
     </div>
   ) : (
     <button
-      onClick={() => setShowProtected(true)}
-      title="Notificaciones"
-      aria-label="Notificaciones"
-      className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
-    >
-      <Bell size={20} className="text-[#2E2E2E]" />
-    </button>
-  );
-
-  // ── Botón de perfil / sesión ──
-  const btnProfile = user ? (
-    <div className="flex items-center gap-2">
-      {/* Ir a Mi Perfil */}
-      <Link href={`/perfil?id=${user.id}`}>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none"
-          title="Mi perfil"
-        >
-          <img
-            src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
-            alt="Perfil"
-            className="w-8 h-8 rounded-full object-contain"
-          />
-          <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
-            {user.name}
-          </span>
-        </Button>
-      </Link>
-
-      {/* Cerrar sesión */}
-      <button
-        onClick={() => {
-          logout();
-          setShowAuth(false);
-        }}
-        title="Cerrar sesión"
-        className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-red-100 hover:shadow-[0_0_12px_#ef4444] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D]"
-      >
-        <LogOut size={18} className="text-red-500" />
-      </button>
-    </div>
-  ) : (
-    <Button
       onClick={() => {
         setAuthMode("login");
         setShowAuth(true);
       }}
-      className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none"
+      className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
     >
-      INICIAR SESIÓN
-    </Button>
+      <div className="relative flex items-center justify-center">
+        <img 
+          src="/account_avatar.svg" 
+          alt="Icono cuenta" 
+          className="w-7 h-7 object-contain" 
+        />
+        <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
+      </div>
+      <span className="text-[15px] font-semibold uppercase text-foreground leading-none pt-0.5">
+        INICIAR SESIÓN
+      </span>
+    </button>
   );
 
   return (
     <>
       <header
-        className={`font-sans fixed top-0 w-full z-50 bg-[#E7E1D7] text-[#2E2E2E] shadow-sm border-b transition-transform duration-300 ${bolHideHeader ? "-translate-y-full" : "translate-y-0"}`}
+        className={`fixed top-0 w-full z-[100] bg-background text-foreground shadow-sm border-b border-border transition-transform duration-300 ${bolHideHeader ? "-translate-y-full" : "translate-y-0"}`}
       >
-        <div className="w-full px-4 lg:px-[40px] h-20 flex items-center justify-between">
-          {/* Logo — móvil */}
+        <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between">
           <div className="flex lg:hidden">{btnLogoProbol}</div>
 
-          {/* Hamburger — móvil */}
           <div className="flex lg:hidden" ref={refMobileMenuButton}>
-            <Button
-              variant="ghost"
-              className="p-2 rounded-md transition-all duration-300 hover:shadow-[0_0_12px_#c26e5a] hover:text-[#c26e5a] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
+            <button
+              className={`p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
               onClick={() => setBolIsMobileMenuOpen((bolPrev) => !bolPrev)}
               aria-expanded={bolIsMobileMenuOpen}
               aria-label="Abrir menú"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="4" x2="20" y1="12" y2="12" />
-                <line x1="4" x2="20" y1="6" y2="6" />
-                <line x1="4" x2="20" y1="18" y2="18" />
-              </svg>
-            </Button>
+              <img 
+                src="/hamburger_icon.svg" 
+                alt="Menú" 
+                className="w-7 h-7 object-contain" 
+              />
+            </button>
           </div>
 
-          {/* Izquierda — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {btnLogoProbol}
-            <Link
-              href={`/cobros/planes?id=${user?.id}`}
-              className={strLinkClassesDesktop}
-            >
+            <Link href={`/cobros/planes?id=${user?.id}`} className={strLinkClassesDesktop}>
               PLANES DE PUBLICACIÓN
             </Link>
           </div>
 
-          {/* Derecha — desktop */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {arrNavLinks.map((objLink) => (
-              <Link
-                key={objLink.strLabel}
-                href={objLink.strHref}
-                className={strLinkClassesDesktop}
-              >
+              <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>
                 {objLink.strLabel}
               </Link>
             ))}
 
-            <Link
-              href={user ? "/publicacion" : "/login"}
-              className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md"
+            <button 
+              onClick={() => router.push(user ? "/publicacion" : "/login")}
+              className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
             >
-              <Button className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                PUBLICAR
-              </Button>
-            </Link>
+              PUBLICAR
+            </button>
 
             {btnNotifications}
             {btnProfile}
           </div>
         </div>
 
-        {/* Menú móvil desplegable */}
         {bolIsMobileMenuOpen && (
           <>
-            <div
-              className="lg:hidden fixed inset-0 z-40 bg-black/20"
-              onClick={closeMobileMenu}
-            />
-            <div
-              id="mobile-header-menu"
-              ref={refMobileMenuPanel}
-              className="lg:hidden absolute top-20 left-0 w-full bg-[#1F3A4D] text-[#E7E1D7] shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
+            <div className="lg:hidden fixed inset-0 z-40" onClick={closeMobileMenu} />
+            <div 
+              id="mobile-header-menu" 
+              ref={refMobileMenuPanel} 
+              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50" 
               onClick={(objEvent) => objEvent.stopPropagation()}
             >
-              {/* Perfil / Login */}
               {user ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    closeMobileMenu();
-                  }}
-                  className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
-                >
-                  <LogOut size={20} />
-                  <span className="uppercase">CERRAR SESIÓN ({user.name})</span>
-                </button>
+                <div className="flex flex-col gap-6">
+                   <div onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 cursor-pointer ${strLinkClassesMobile}`}>
+                     <div className="w-10 h-10 bg-background rounded-full p-1 flex items-center justify-center border border-border">
+                        <img src="/account_avatar.svg" alt="Perfil" className="w-6 h-6 object-contain brightness-0 invert" />
+                     </div>
+                     <span className="uppercase font-semibold">{user.name}</span>
+                  </div>
+                  <button onClick={() => { logout(); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+                    <LogOut size={20} /> <span className="uppercase">CERRAR SESIÓN</span>
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={() => {
-                    setAuthMode("login");
-                    setShowAuth(true);
-                    closeMobileMenu();
-                  }}
-                  className={`flex items-center gap-4 border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
-                >
-                  <img
-                    src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
-                    alt="Perfil"
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                  <span className="uppercase">INICIAR SESIÓN</span>
+                <button onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+                  <div className="relative flex items-center justify-center">
+                    <img src="/account_avatar.svg" alt="Iniciar Sesión" className="w-6 h-6 object-contain brightness-0 invert" />
+                    <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
+                  </div>
+                  <span className="uppercase font-semibold">INICIAR SESIÓN</span>
                 </button>
               )}
 
-              {/* Notificaciones */}
-              <button
-                className={`flex items-center gap-4 text-left border-b border-slate-700 pb-4 ${strLinkClassesMobile}`}
-                onClick={() => {
-                  if (!user) {
-                    setShowProtected(true);
-                    closeMobileMenu();
-                    return;
-                  }
-                  setShowNotifications((prev) => !prev);
-                  closeMobileMenu();
-                }}
-              >
-                <Bell size={20} />
-                <span>NOTIFICACIONES</span>
+              <button className={`flex items-center gap-4 text-left border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`} onClick={() => { if (!user) setShowProtected(true); else setShowNotifications((p) => !p); closeMobileMenu(); }}>
+                <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" /> <span className="uppercase">NOTIFICACIONES</span>
               </button>
 
-              {/* Publicar */}
-              <Link
-                href="/publicacion"
-                prefetch={false}
-                onClick={closeMobileMenu}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D] rounded-md"
+              <button 
+                onClick={() => { router.push("/publicacion"); closeMobileMenu(); }}
+                className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background ${strHoverAnimNoTextColor}`}
               >
-                <Button className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                  PUBLICAR
-                </Button>
-              </Link>
+                PUBLICAR
+              </button>
 
               {arrNavLinks.map((objLink) => (
-                <Link
-                  key={objLink.strLabel}
-                  href={objLink.strHref}
-                  onClick={closeMobileMenu}
-                  className={strLinkClassesMobile}
-                >
+                <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }} className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
                   {objLink.strLabel}
-                </Link>
+                </div>
               ))}
 
-              <Link
-                href={`/cobros/planes?id=${user?.id}`}
-                onClick={closeMobileMenu}
-                className={`border-t border-slate-700 pt-6 mt-2 ${strLinkClassesMobile}`}
-              >
+              <div onClick={() => { router.push(`/cobros/planes?id=${user?.id}`); closeMobileMenu(); }} className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
                 PLANES DE PUBLICACIÓN
-              </Link>
+              </div>
             </div>
           </>
         )}
       </header>
 
-      {/* Modales de autenticación — fuera del <header> para evitar z-index issues */}
-      <ProtectedFeatureModal
-        isOpen={showProtected}
-        featureName="esta función"
-        onClose={() => setShowProtected(false)}
-        onLoginClick={() => {
-          setShowProtected(false);
-          setAuthMode("login");
-          setShowAuth(true);
-        }}
-        onRegisterClick={() => {
-          setShowProtected(false);
-          setAuthMode("register");
-          setShowAuth(true);
-        }}
-      />
-      <AuthModal
-        isOpen={showAuth}
-        onClose={() => setShowAuth(false)}
-        initialMode={authMode}
-      />
+      <ProtectedFeatureModal isOpen={showProtected} featureName="esta función" onClose={() => setShowProtected(false)} onLoginClick={() => { setShowProtected(false); setAuthMode("login"); setShowAuth(true); }} onRegisterClick={() => { setShowProtected(false); setAuthMode("register"); setShowAuth(true); }} />
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} initialMode={authMode} />
     </>
   );
 };

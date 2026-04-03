@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+/*import { NextRequest, NextResponse } from "next/server";
 import { validatePriceFilter } from "../../../features/filter_search_page/priceFilterValidator";
 import { normalizePriceFilterToUsd } from "../../../features/filter_search_page/normalizePriceFilter";
 import { getPublications } from "../../../features/filter_search_page/getPublications";
@@ -56,6 +56,32 @@ export async function POST(req: NextRequest) {
         message: "Failed to process request",
       },
       { status: 500 }
+    );
+  }
+}*/
+import { NextRequest, NextResponse } from 'next/server';
+
+import { searchPublicaciones, type SearchFiltersInput } from '../../../features/filter_search_page/services';
+
+export async function POST(request: NextRequest) {
+  try {
+    const filters = (await request.json()) as SearchFiltersInput;
+    const publications = await searchPublicaciones(filters);
+
+    return NextResponse.json({
+      success: true,
+      publications,
+      total: publications.length,
+    });
+  } catch (error) {
+    console.error('[filter_search_page] Error processing search request:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Failed to process search request',
+      },
+      { status: 500 },
     );
   }
 }

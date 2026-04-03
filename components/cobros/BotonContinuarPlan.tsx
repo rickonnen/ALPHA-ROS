@@ -25,9 +25,7 @@ export function BotonContinuarPlan({ planId, idUsuario }: Props) {
   if (tieneSesion) {
     return (
       <Button asChild className="w-full font-bold">
-        <Link
-          href={`/cobros/sector-pagos?planId=${planId}&id=${idUsuario}`}
-        >
+        <Link href={`/cobros/sector-pagos?planId=${planId}&id=${idUsuario}`}>
           Continuar
         </Link>
       </Button>
