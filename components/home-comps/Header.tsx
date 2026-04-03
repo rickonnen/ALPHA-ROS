@@ -3,8 +3,6 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react"; 
-import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
@@ -14,7 +12,7 @@ import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 /**
  * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 25/03/2026
- * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
+ * Dev: Erick Eduardo Arnez Torrico          Fecha: 26/03/2026
  * Encabezado principal responsivo con menú desplegable para móviles
  * Incluye lógica de autenticación (login/registro), panel de notificaciones, ocultamiento
  * @return {object} Componente visual Header para Next.js.
@@ -185,21 +183,32 @@ export const Header = () => {
               onClick={(objEvent) => objEvent.stopPropagation()}
             >
               {user ? (
-                <div className="flex flex-col gap-6">
-                   <div onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 cursor-pointer ${strLinkClassesMobile}`}>
-                     <div className="w-10 h-10 bg-background rounded-full p-1 flex items-center justify-center border border-border">
-                        <img src="/account_avatar.svg" alt="Perfil" className="w-6 h-6 object-contain brightness-0 invert" />
-                     </div>
-                     <span className="uppercase font-semibold">{user.name}</span>
-                  </div>
-                  <button onClick={() => { logout(); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
-                    <LogOut size={20} /> <span className="uppercase">CERRAR SESIÓN</span>
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }} className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+                <button 
+                  onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }} 
+                  className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
+                >
                   <div className="relative flex items-center justify-center">
-                    <img src="/account_avatar.svg" alt="Iniciar Sesión" className="w-6 h-6 object-contain brightness-0 invert" />
+                    <img 
+                      src="/account_avatar.svg" 
+                      alt="Perfil" 
+                      className="w-6 h-6 object-contain brightness-0 invert" 
+                    />
+                  </div>
+                  <span className="uppercase font-semibold text-left">
+                    PERFIL: {user.name}
+                  </span>
+                </button>
+              ) : (
+                <button 
+                  onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }} 
+                  className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <img 
+                      src="/account_avatar.svg" 
+                      alt="Iniciar Sesión" 
+                      className="w-6 h-6 object-contain brightness-0 invert" 
+                    />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
                   <span className="uppercase font-semibold">INICIAR SESIÓN</span>
