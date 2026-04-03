@@ -1,12 +1,10 @@
 'use client'
 
 /**
- * Dev: Gabriel Paredes Sipe
- * Date modification: 02/04/2026
+ * Dev: Gabriel Paredes Sipe (Modificado por Jimmy)
+ * Date modification: 03/04/2026
  * Modificación: Se agrega id_usuario al FormData antes de llamar a publicarConImagenes.
- *   Lee id_usuario del sessionStorage (guardado por useInformacionComercialForm en paso 1).
- *   Lo adjunta al FormData para que action.ts lo vincule en el INSERT de la BD.
- *   Corrección: se extrae el campo Zona al componente ZonaInput separado.
+ * Corrección HU5: Se integra el modal de límite de publicaciones en el submit final.
  */
 
 import { useState } from 'react'
@@ -20,6 +18,9 @@ import { VideoSection } from './components/VideoSection'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBackend/actions'
 import { useRouter } from "next/navigation"
+
+// IMPORTAMOS TU MODAL
+import FreePublicationLimitModal from '@/app/frontend/publicacion/components/FreePublicationLimitModal'
 
 export default function CaracteristicasPage() {
   const {
@@ -38,6 +39,9 @@ export default function CaracteristicasPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitOk, setSubmitOk] = useState(false)
+  
+  // ESTADO PARA CONTROLAR TU MODAL
+  const [bolShowModal, setBolShowModal] = useState(false)
 
   const [strVideoUrl, setStrVideoUrl] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -99,8 +103,13 @@ export default function CaracteristicasPage() {
           console.log("ID generado por la DB:", result.idPublicacion)
           router.push(`/frontend/publicacion/Perfil_del_Inmueble/${result.idPublicacion}`)
         } else {
-          const firstError = Object.values(result.errors).flat()[0] ?? null
-          setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
+          // VALIDACIÓN HU5: Si el backend rechaza por límite, disparamos el modal
+          if (result.reason === "LIMITE_ALCANZADO") {
+            setBolShowModal(true)
+          } else {
+            const firstError = result.errors ? Object.values(result.errors).flat()[0] : null
+            setSubmitError(firstError as string ?? 'Error al guardar. Intenta de nuevo.')
+          }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : JSON.stringify(err)
@@ -220,6 +229,12 @@ export default function CaracteristicasPage() {
           </div>
         </div>
       </div>
+      
+      {/* RENDERIZAMOS TU MODAL DE LA HU5 */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+      />
     </main>
   )
 }
