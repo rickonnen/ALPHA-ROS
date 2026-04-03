@@ -10,9 +10,7 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     const { nombre, apellido, email, password } = await request.json();
-    // ↳ Recibe: nombre, apellido, email, password del RegisterForm
 
-    // ✅ 1. VALIDAR CAMPOS
     if (!nombre || !apellido || !email || !password) {
       return NextResponse.json(
         { error: "Faltan campos requeridos" },
@@ -20,20 +18,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🆕 2. CREAR USUARIO EN SUPABASE AUTH
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,              // Ya confirmado automático
-      user_metadata: { nombre, apellido }           // Guardar nombre y apellido en metadata
+      email_confirm: true,        
+      user_metadata: { nombre, apellido }       
     });
 
     if (authError) {
       return NextResponse.json({ error: "Error en Auth: " + authError.message }, { status: 400 });
     }
 
-
-    // �📋 3. INSERTAR EN TABLA "Usuario"
     // 3. INSERTAR EN TABLA "Usuario"
     const { error: dbError } = await supabaseAdmin
       .from('Usuario')
@@ -54,14 +49,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Error de Tabla: " + dbError.message }, { status: 400 });
     }
 
-    // 4. CREAR JWT
     const jwtToken = sign(
       { userId: authData.user.id },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
 
-    // 🍪 5. GUARDAR JWT EN COOKIE
     const response = NextResponse.json(
       { message: "¡Registro exitoso!" },
       { status: 201 }  // 201 = Created

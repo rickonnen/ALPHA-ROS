@@ -20,28 +20,23 @@ const handler = NextAuth({
 
   callbacks: {
 
-    // 🔥 SIGN IN
     async signIn({ user, account }: any) {
 
       try {
-
         if (account?.provider === "google") {
 
           const { createClient } = await import("@supabase/supabase-js")
-
           const supabase = createClient(
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
 
-          // 🔎 Verificar si ya existe por id_usuario
           const { data: existingById } = await supabase
             .from("Usuario")
             .select("id_usuario")
             .eq("id_usuario", account.providerAccountId)
             .maybeSingle()
 
-          // 🆕 Crear usuario si no existe
           if (!existingById) {
             await supabase.from("Usuario").insert({
               id_usuario: account.providerAccountId,
@@ -56,54 +51,38 @@ const handler = NextAuth({
             })
 
             console.log("Usuario creado en tabla Usuario")
-
           }
-
         }
 
         return true
-
       } catch (error) {
 
         console.error("Error signIn:", error)
         return false
-
       }
-
     },
 
-    // 🔥 JWT (GUARDAR ID CORRECTO)
     async jwt({ token, account }: any) {
 
       if (account) {
-
         token.id = account.providerAccountId
-
       }
-
       return token
-
     },
 
     async session({ session, token }: any) {
 
       if (session.user) {
-
         session.user.id = token.id as string
-
       }
-
       return session
-
     },
-
   },
 
   pages: {
     signIn: "/",
     error: "/",
   },
-
 })
 
 export { handler as GET, handler as POST }
