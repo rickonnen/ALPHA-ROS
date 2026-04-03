@@ -5,6 +5,7 @@ import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
+import { useAuth } from "@/app/auth/AuthContext"; //NUEVO
 
 type Notification = {
   id: number;
@@ -15,17 +16,21 @@ type Notification = {
 };
 
 export function NotificationPanel() {
+  const { user } = useAuth(); //NUEVO - obtiene el usuario logueado
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cargar notificaciones desde el backend
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        //NUEVO - clave única por usuario
+        const userId = user?.id ?? "guest";
+        const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
+        const localDeletedIds: number[] = stored ? JSON.parse(stored) : [];
+
         const res = await fetch("/api/notifications");
         const data = await res.json();
-        // Mapear "message" del backend a "description" que usa tu UI
         const mapped = data.map((n: any) => ({
           id: n.id,
           title: n.title,
@@ -33,7 +38,9 @@ export function NotificationPanel() {
           read: n.read,
           time: "ahora",
         }));
-        setNotifications(mapped);
+
+        //NUEVO - filtra solo las eliminadas de este usuario
+        setNotifications(mapped.filter((n: any) => !localDeletedIds.includes(n.id)));
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
       } finally {
@@ -42,7 +49,7 @@ export function NotificationPanel() {
     };
 
     fetchNotifications();
-  }, []);
+  }, [user]); //NUEVO - se ejecuta cuando el usuario está disponible
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
@@ -56,14 +63,18 @@ export function NotificationPanel() {
 
   const handleDelete = (id: number) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+
+    //NUEVO - guarda con clave única por usuario
+    const userId = user?.id ?? "guest";
+    const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
+    const current: number[] = stored ? JSON.parse(stored) : [];
+    localStorage.setItem(`deletedNotificationIds_${userId}`, JSON.stringify([...current, id]));
   };
 
   const handleRead = async (id: number) => {
-    // Actualizar localmente
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-    // Sincronizar con backend
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
@@ -76,9 +87,7 @@ export function NotificationPanel() {
   };
 
   const handleMarkAll = async () => {
-    // Actualizar localmente
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    // Sincronizar con backend
     try {
       await fetch("/api/notifications", {
         method: "PATCH",
@@ -91,7 +100,7 @@ export function NotificationPanel() {
   };
 
   return (
-    <div className="absolute right-10 top-26 z-50 w-80 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
+    <div className="absolute right-10 top-26 z-50 w-100 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
       <NotificationHeader total={notifications.length} />
 
       <div className="p-2">
