@@ -136,9 +136,8 @@ export default function PublicacionesView({
   };
 
   const handleInfo = (id: string) => {
-    // TODO: conectar con el equipo de detalle de publicación
-    console.log("Ver info de publicación:", id);
-  };
+  router.push(`/frontend/publicacion/Perfil_del_Inmueble/${id}`);
+};
 
   return (
     <>
@@ -149,7 +148,7 @@ export default function PublicacionesView({
               Mis publicaciones
             </CardTitle>
             <Button
-              onClick={() => router.push("/publicaciones/nueva")}
+              onClick={() => router.push("/frontend/publicacion/informacion-comercial")}
               size="sm"
               className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
             >

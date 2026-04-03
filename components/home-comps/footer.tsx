@@ -7,6 +7,7 @@ import Link from "next/link";
  * legal access links, social media links and home redirection through the logo.
  * @return Footer component rendered at the bottom of frontend pages.
  */
+
 const strBaseLinkClasses = "inline-block rounded-sm text-[#2E2E2E] transition-all duration-300 hover:text-[#C26E5A] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
 
 const strSocialBtnClasses = "inline-flex h-11 w-11 items-center justify-center rounded-sm transition-all duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
@@ -61,7 +62,7 @@ export default function Footer() {
   return (
     <footer className="mt-16 border-t border-[#C4BAA8] bg-[#E7E1D7]">
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-10 px-6 py-10 md:grid-cols-[1.55fr_0.95fr_0.95fr] md:gap-16 md:px-10 lg:gap-24 xl:max-w-[1650px] xl:grid-cols-[1.8fr_1fr_1fr] xl:px-16 2xl:px-24">
-        
+
         <div className="flex items-start">
           <Link
             href="/"
@@ -134,6 +135,7 @@ export default function Footer() {
 
           <span className="text-base text-[#2E2E2E]">© 2026 PROPBOL</span>
         </div>
+        
       </div>
     </footer>
   );
