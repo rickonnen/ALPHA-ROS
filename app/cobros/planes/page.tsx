@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { PlanPublicacion } from "@prisma/client";
 import { BotonContinuarPlan } from "./BotonContinuarPlan";
-import { prisma } from "@/lib/prisma"; // Importa tu instancia de prisma aquí
+import { prisma } from "@/lib/prisma";
 
 interface Props {
   searchParams: Promise<{
