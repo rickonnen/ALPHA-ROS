@@ -57,7 +57,7 @@ export default function FreePublicationLimitModal({
             type="button"
             variant="ghost"
             onClick={onBack}
-            className="flex-1 text-[#C26E5A] hover:text-[#C26E5A] hover:bg-[#C26E5A]/10 font-semibold"
+            className="flex-1 border border-[#C26E5A] text-[#C26E5A] hover:text-[#C26E5A]  hover:bg-[#C26E5A]/10 font-semibold"
           >
             {"< Atrás"}
           </Button>
