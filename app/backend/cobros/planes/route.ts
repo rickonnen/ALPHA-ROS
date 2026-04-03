@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+const ERROR_MESSAGE = 'No se pudieron cargar los planes de publicación.';
 
-// Fíjate que es "export async function GET", NO "export default async function"
 export async function GET() {
   try {
     const planes = await prisma.planPublicacion.findMany({
@@ -14,12 +13,12 @@ export async function GET() {
         precio_plan: 'asc',
       },
     });
-    
+
     return NextResponse.json(planes);
   } catch (error) {
-    console.error("Error al obtener los planes:", error);
+    console.error('Error al obtener los planes:', error);
     return NextResponse.json(
-      { error: "No se pudieron cargar los planes de publicación." }, 
+      { error: ERROR_MESSAGE },
       { status: 500 }
     );
   }
