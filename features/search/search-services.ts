@@ -52,7 +52,7 @@ type SearchResponse = {
 export async function buscarPublicaciones(
   filtros: FiltrosPublicacion,
 ): Promise<PublicacionBusqueda[]> {
-  const response = await fetch('@/app/api/filter_search_page', {
+  const response = await fetch('/api/filter_search_page', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
