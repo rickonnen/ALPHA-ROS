@@ -209,6 +209,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
       await signup(nombre, apellido, email, password);
       setShowSuccess(true);
     } catch (err: any) {
+      // El backend ya devuelve mensajes traducidos
       setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
     } finally {
       setLoading(false);

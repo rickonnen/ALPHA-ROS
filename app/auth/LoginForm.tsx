@@ -87,7 +87,17 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
       await login(email, password);
       setShowSuccess(true);
     } catch (err: any) {
-      setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
+      if (err.code === "INVALID_PASSWORD") {
+        // Error específico de contraseña
+        setErrors({ password: "Contraseña incorrecta" });
+      } else if (err.code === "USER_NOT_FOUND") {
+        // Error de usuario no encontrado - mostrar en el campo de email
+        setErrors({ email: "El correo electrónico no está registrado" });
+      } else if (err.message.includes("No tienes conexión a internet")) {
+        setGeneralError("No tienes conexión a internet");
+      } else {
+        setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
