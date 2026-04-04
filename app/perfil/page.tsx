@@ -13,8 +13,6 @@
     Funcionalidad: Página principal de Mi Perfil
       - Consume GET /backend/perfil/get?id_usuario=...
       - Distribuye los datos reales a cada vista
-      - TODO: reemplazar ID_USUARIO_HARDCODEADO por el id real
-              que llegue desde el header/auth cuando esté listo
 */
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
@@ -23,6 +21,12 @@
 /*  Dev: David Chavez Totora - sow-davidc
     Fecha: 03/04/2026
     Funcionalidad: Implementacion de JWT a todo Perfil
+*/
+/*  Dev: Alvarado Alisson Dalet - sow-alissona
+    Fecha: 04/04/2026
+    Fix: Agrega intRefreshKey al useEffect de fetchUsuario para que al guardar
+         cambios en editar perfil el header (foto, nombre) se actualice
+         inmediatamente sin necesidad de hacer refresh manual de la pagina
 */
 "use client";
 
@@ -59,6 +63,7 @@ function PerfilContent() {
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [intRefreshKey, setIntRefreshKey] = useState(0);
   const [telefonos, setTelefonos] = useState<string[]>([]);
 
   
@@ -67,16 +72,13 @@ function PerfilContent() {
     if (!userId) {
       setError("No se proporcionó un ID de usuario.");
       setLoading(false);
-      
       return;
     }
 
     const fetchUsuario = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `/api/perfil/getUsuario?id_usuario=${userId}`,
-        );
+        const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
         setUsuario(json.data);
@@ -95,7 +97,7 @@ function PerfilContent() {
     };
 
     fetchUsuario();
-  }, [userId]);
+  }, [userId, intRefreshKey]);
 
   const handleTelefonosChange = (nuevosTelefonos: string[]) => {
     setTelefonos(nuevosTelefonos);
@@ -128,6 +130,7 @@ function PerfilContent() {
         email={usuario?.email ?? ""}
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
+        onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
         onTelefonosChange={handleTelefonosChange}
       />
     ),
