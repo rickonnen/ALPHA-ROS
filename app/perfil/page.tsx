@@ -139,9 +139,15 @@ function PerfilContent() {
           >
             <div className="flex items-center gap-4 md:gap-6">
               <img
-                src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}
+                src={
+                  usuario.url_foto_perfil?.trim() ||
+                  "https://github.com/shadcn.png"
+                }
                 alt="User"
                 className="w-20 h-20 md:w-40 md:h-40 rounded-full border-4 border-[var(--primary)]"
+                onError={(e) => {
+                  e.currentTarget.src = "https://github.com/shadcn.png";
+                }}
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
