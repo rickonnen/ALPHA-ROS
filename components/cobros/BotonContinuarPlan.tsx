@@ -5,34 +5,35 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import AuthModal from "@/app/auth/AuthModal";
+import { useAuth } from "@/app/auth/AuthContext";
 
 interface Props {
   planId: number | string;
-  idUsuario: string;
 }
 
-export function BotonContinuarPlan({ planId, idUsuario }: Props) {
+export function BotonContinuarPlan({ planId }: Props) {
+  const { user, isLoading } = useAuth();
+
   const [showProtected, setShowProtected] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  // VERIFICACIÓN A PRUEBA DE BALAS:
-  // Comprobamos que exista, que no esté vacío y que no sea la palabra literal "undefined"
-  const tieneSesion =
-    idUsuario && idUsuario !== "" && idUsuario !== "undefined";
-
-  // Si el usuario ESTÁ logueado, renderizamos el enlace normal
-  if (tieneSesion) {
+  if (isLoading) {
     return (
-      <Button asChild className="w-full font-bold">
-        <Link href={`/cobros/sector-pagos?planId=${planId}&id=${idUsuario}`}>
-          Continuar
-        </Link>
+      <Button disabled className="w-full font-bold">
+        Cargando...
       </Button>
     );
   }
 
-  // Si el usuario NO está logueado, renderizamos un botón que abre el modal
+  if (user) {
+    return (
+      <Button asChild className="w-full font-bold">
+        <Link href={`/cobros/sector-pagos?planId=${planId}`}>Continuar</Link>
+      </Button>
+    );
+  }
+
   return (
     <>
       <Button

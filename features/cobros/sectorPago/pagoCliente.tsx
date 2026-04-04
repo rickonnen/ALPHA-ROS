@@ -17,8 +17,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/app/auth/AuthContext";
+import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 
-// 1. Añadimos "verificando" a la máquina de estados
 type EstadoModal =
   | "cerrado"
   | "confirmacion"
@@ -26,20 +27,19 @@ type EstadoModal =
   | "procesando"
   | "ya_pendiente";
 
-// 2. Interfaz actualizada para recibir precio_plan como número
 interface Props {
   plan: Omit<PlanPublicacion, "precio_plan"> & { precio_plan: number };
-  idUsuario: string;
   planId: string;
 }
 
-export default function PagoCliente({ plan, idUsuario, planId }: Props) {
+export default function PagoCliente({ plan, planId }: Props) {
   const router = useRouter();
-
+  const { user, isLoading } = useAuth();
   const [qrUrl, setQrUrl] = useState<string>("");
   const [generandoQr, setGenerandoQr] = useState(true);
   const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
-
+  const [mostrarRestringido, setMostrarRestringido] = useState(false);
+  const [mostrarLoginLateral, setMostrarLoginLateral] = useState(false);
   // Fetch solo para el QR
   useEffect(() => {
     const cargarQr = async () => {
@@ -58,27 +58,48 @@ export default function PagoCliente({ plan, idUsuario, planId }: Props) {
     cargarQr();
   }, [planId]);
 
-  // Manejo fluido de estados de pago
-  const manejarAceptarPago = async () => {
-    setEstadoModal("verificando"); // Pasamos al estado de carga interno
+  const [modalAuthAbierto, setModalAuthAbierto] = useState(false);
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setMostrarRestringido(true);
+    }
+  }, [user, isLoading]);
 
+
+  // Manejo fluido de estados de pago
+  const [yaPresionóAceptar, setYaPresionóAceptar] = useState(false);
+  const manejarAceptarPago = async () => {
+    if (!user?.id) return;
+
+    setEstadoModal("verificando"); 
     try {
       const res = await fetch("/api/cobros/verificar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_usuario: idUsuario, id_plan: planId }),
+        body: JSON.stringify({ 
+          id_usuario: user.id, 
+          id_plan: planId 
+        }),
       });
-
-      const data = await res.json();
-
-      if (res.status === 409 || data.yaPendiente) {
-        setEstadoModal("ya_pendiente");
+      // para evitar hace duplicado de filas preguntar a la bd, "hay x pago?" 
+      if (res.ok) {
+        setYaPresionóAceptar(true); 
+        setEstadoModal("procesando"); 
       } else {
-        setEstadoModal("procesando");
+        setEstadoModal("ya_pendiente");
       }
     } catch (error) {
-      console.error("Error al registrar:", error);
       setEstadoModal("ya_pendiente");
+    }
+  };
+  //funcion para ver que modal mostrar al dar click al boton verificar pago
+  const alDarClickEnVerificarPrincipal = () => {
+    if (yaPresionóAceptar) {
+      // Si ya aceptó antes en esta visita, enviara al modal de procesando
+      setEstadoModal("procesando"); 
+    } else {
+      // Si es la primera vez mostrara el modal para confirmar o rechazar del modal de confirmacion
+      setEstadoModal("confirmacion");
     }
   };
 
@@ -95,7 +116,10 @@ export default function PagoCliente({ plan, idUsuario, planId }: Props) {
     document.body.removeChild(link);
   };
 
-  const irAlPerfil = () => router.push(`/perfil?id=${idUsuario}`);
+  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+
+  // por si no es un usuario logueado mostrar ese return
+  if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
@@ -114,13 +138,14 @@ export default function PagoCliente({ plan, idUsuario, planId }: Props) {
         </div>
 
         <div className="mt-12">
-          <Link href={`/cobros/planes?id=${idUsuario}`}>
+          <Link href={`/cobros/planes?id=${user?.id}`}>
             <Button variant="default">
               <ArrowLeft className="mr-2 h-4 w-4" /> Volver
             </Button>
           </Link>
         </div>
       </div>
+
 
       {/* Columna Derecha */}
       <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
@@ -153,7 +178,7 @@ export default function PagoCliente({ plan, idUsuario, planId }: Props) {
               variant="default"
               size="lg"
               className="w-full font-semibold text-lg py-6 shadow-md"
-              onClick={() => setEstadoModal("confirmacion")}
+              onClick={alDarClickEnVerificarPrincipal}
             >
               Verificar Pago
             </Button>
@@ -161,13 +186,29 @@ export default function PagoCliente({ plan, idUsuario, planId }: Props) {
               variant="secondary"
               size="lg"
               className="w-full font-bold text-lg py-6 shadow-md transition-colors"
-              onClick={manejarDescarga}
+              //onClick={manejarDescarga}
             >
               DESCARGAR QR
             </Button>
           </div>
         </div>
       </div>
+
+      <ProtectedFeatureModal 
+        isOpen={mostrarRestringido}
+        onClose={() => {
+          setMostrarRestringido(false);
+          router.push("/cobros/planes");
+        }}
+        onLoginClick={() => {
+          setMostrarRestringido(false);
+          setMostrarLoginLateral(true); 
+        }}
+        onRegisterClick={() => {
+          setMostrarRestringido(false);
+          setMostrarLoginLateral(true);
+        }}
+      />
 
       {/* Modales */}
       <AlertDialog
