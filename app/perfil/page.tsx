@@ -23,9 +23,10 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, Loader2 } from "lucide-react";
+
+import { useRouter } from "next/navigation";
 
 import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
@@ -45,8 +46,9 @@ import { useAuth } from "../auth/AuthContext";
 function PerfilContent() {
   const { user } = useAuth();
   console.log("Usuario autenticado en PerfilContent:", user);
-  const searchParams = useSearchParams();
-  const idUsuario = searchParams.get("id") ?? "";
+  const userId = user?.id ?? "";
+  console.log("Tipo de Usuario:", typeof userId);
+  console.log("Usuario:", userId);
 
   const [view, setView] = useState("perfil");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,10 +56,13 @@ function PerfilContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  
+
   useEffect(() => {
-    if (!idUsuario) {
+    if (!userId) {
       setError("No se proporcionó un ID de usuario.");
       setLoading(false);
+      
       return;
     }
 
@@ -65,7 +70,7 @@ function PerfilContent() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/perfil/getUsuario?id_usuario=${idUsuario}`,
+          `/api/perfil/getUsuario?id_usuario=${userId}`,
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -78,7 +83,7 @@ function PerfilContent() {
     };
 
     fetchUsuario();
-  }, [idUsuario]);
+  }, [userId]);
 
   const menuItems = [
     { id: "perfil", name: "MI PERFIL" },
@@ -99,20 +104,20 @@ function PerfilContent() {
       <PerfilView usuario={usuario} telefonos={telefonos} />
     ) : null,
     publicaciones: usuario ? (
-      <PublicacionesView id_usuario={usuario.id_usuario} />
+      <PublicacionesView id_usuario={userId} />
     ) : null,
     seguridad: (
       <SeguridadView
-        id_usuario={idUsuario}
+        id_usuario={userId}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
       />
     ),
     favoritos: usuario ? (
-      <FavoritoView id_usuario={usuario.id_usuario} />
+      <FavoritoView id_usuario={userId} />
     ) : null,
-    historial: <HistorialView id_usuario={idUsuario} />,
+    historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
   };
 
