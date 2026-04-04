@@ -17,6 +17,15 @@
  * flecha de regreso a seguridad, redirección a perfil al éxito con recarga,
  * soporte táctil para mostrar/ocultar contraseña en mobile,
  * botones responsivos apilados en mobile y en fila en desktop
+ * 
+ * Modificado: Dylan Coca Beltran - 03/04/2026
+ * Cambio: Corrección de bugs reportados por QA acorde wireframes — botones en fila para mobile,
+ * reorganización de prioridades de validación con verificación real contra el backend,
+ * validación de contraseña igual a la actual usando el endpoint existente
+ * 
+ * Modificado: Dylan Coca Beltran - 04/04/2026
+ * Cambio: ocultamiento del ojo nativo del navegador en los tres campos y en mobile,
+ * modificacion de textos
  */
 "use client";
 
@@ -68,114 +77,125 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
     setStrErrorModalMessage("");
   };
 
-  const handleSave = async () => {
-    if (bolValidando) return;
+const handleSave = async () => {
+  if (bolValidando) return;
 
-    // Limpiar errores anteriores
-    setStrErrorCurrent("");
-    setStrErrorNew("");
-    setStrErrorConfirm("");
+  // Limpiar errores anteriores
+  setStrErrorCurrent("");
+  setStrErrorNew("");
+  setStrErrorConfirm("");
 
-    // Prioridad 1 — campos vacíos
-    let bolHasErrors = false;
+  // Prioridad 1 — campos vacíos
+  let bolHasErrors = false;
 
-    if (strCurrentPassword === "") {
-      setStrErrorCurrent("Este campo es obligatorio.");
-      bolHasErrors = true;
-    }
-    if (strNewPassword === "") {
-      setStrErrorNew("Este campo es obligatorio.");
-      bolHasErrors = true;
-    }
-    if (strConfirmPassword === "") {
-      setStrErrorConfirm("Este campo es obligatorio.");
-      bolHasErrors = true;
-    }
-    if (bolHasErrors) return;
+  if (strCurrentPassword === "") {
+    setStrErrorCurrent("Este campo es obligatorio.");
+    bolHasErrors = true;
+  }
+  if (strNewPassword === "") {
+    setStrErrorNew("Este campo es obligatorio.");
+    bolHasErrors = true;
+  }
+  if (strConfirmPassword === "") {
+    setStrErrorConfirm("Este campo es obligatorio.");
+    bolHasErrors = true;
+  }
+  if (bolHasErrors) return;
 
-    // Prioridad 2 — caracteres inválidos en nueva contraseña
-    const regexPassword = /^[a-zA-Z0-9 .,;:!?@#$%^&*()_+\-=\[\]{}'"\\|<>\/`~]+$/;
-    if (!regexPassword.test(strNewPassword)) {
-      setStrErrorNew("Solo se permiten letras, números, espacios y signos de puntuación.");
+  // Prioridad 1.5 — espacios al inicio o al final
+  if (strNewPassword !== strNewPassword.trim()) {
+    setStrErrorNew("La contraseña no puede empezar ni terminar con espacios.");
+    return;
+  }
+
+  // Prioridad 2 — caracteres de control invisibles
+  const regexControlChars = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/;
+  if (regexControlChars.test(strNewPassword)) {
+    setStrErrorNew("La contraseña contiene caracteres no permitidos.");
+    return;
+  }
+
+  // Prioridad 2.5 — longitud mínima
+  if (strNewPassword.length < 8) {
+    setStrErrorNew("La contraseña debe tener mínimo 8 caracteres.");
+    return;
+  }
+
+  // Prioridad 3 — contraseñas nuevas no coinciden
+  if (strNewPassword !== strConfirmPassword) {
+    setStrErrorNew("Las contraseñas no concuerdan.");
+    setStrErrorConfirm("Las contraseñas no concuerdan.");
+    return;
+  }
+
+  try {
+    setBolValidando(true);
+
+    // Prioridad 4 — verificar contraseña actual con el backend
+    const res = await fetch("/api/perfil/validarContrasenaActual", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_usuario,
+        password_actual: strCurrentPassword
+      })
+    });
+
+    const json = await res.json();
+
+    if (!res.ok || !json.ok) {
+      setStrErrorModalMessage(json.error || "La contraseña actual es incorrecta.");
+      setBolShowErrorModal(true);
       return;
     }
 
-    // Prioridad 2.5 — requisitos mínimos de seguridad
-      const bolTieneMinimo8 = strNewPassword.length >= 8;
-      const bolTieneMayuscula = /[A-Z]/.test(strNewPassword);
-      const bolTieneEspecial = /[.,;:!?@#$%^&*()_+\-=\[\]{}'"\\|<>\/`~]/.test(strNewPassword);
+    // Prioridad 5 — verificar que nueva != actual contra el backend
+    const resCheck = await fetch("/api/perfil/validarContrasenaActual", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_usuario,
+        password_actual: strNewPassword
+      })
+    });
 
-      if (!bolTieneMinimo8 || !bolTieneMayuscula || !bolTieneEspecial) {
-        setStrErrorNew("La contraseña debe tener mínimo 8 caracteres, una mayúscula y un carácter especial.");
-        return;
-      }
+    const jsonCheck = await resCheck.json();
 
-    // Prioridad 3 — nueva igual a la actual
-    if (strNewPassword === strCurrentPassword) {
+    // Si la nueva contraseña pasa la validación, significa que es igual a la actual
+    if (resCheck.ok && jsonCheck.ok) {
       setStrErrorNew("La nueva contraseña no puede ser igual a la actual.");
       return;
     }
 
-    // Prioridad 4 — contraseñas nuevas no coinciden
-    if (strNewPassword !== strConfirmPassword) {
-      setStrErrorNew("Las contraseñas no concuerdan.");
-      setStrErrorConfirm("Las contraseñas no concuerdan.");
+    // Prioridad 6 — actualizar contraseña
+    const resUpdate = await fetch("/api/perfil/actualizarContrasena", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_usuario,
+        strNewPassword
+      })
+    });
+
+    const jsonUpdate = await resUpdate.json();
+
+    if (!resUpdate.ok || !jsonUpdate.ok) {
+      setStrErrorModalMessage(jsonUpdate.error || "No se pudo actualizar la contraseña.");
+      setBolShowErrorModal(true);
       return;
     }
 
-    // Prioridad 5 — verificar contraseña actual con el backend
-    try {
-      setBolValidando(true);
+    // Todo correcto
+    setBolShowModal(true);
 
-      const res = await fetch("/api/perfil/validarContrasenaActual", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_usuario: id_usuario,
-          email: email,
-          password_actual: strCurrentPassword
-        })
-      });
-
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        setStrErrorModalMessage(json.error || "La contraseña actual es incorrecta.");
-        setBolShowErrorModal(true);
-        return;
-      }
-
-      // Contraseña correcta, ahora actualizar
-      const resUpdate = await fetch("/api/perfil/actualizarContrasena", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_usuario,
-          strNewPassword: strNewPassword
-        })
-      });
-
-      const jsonUpdate = await resUpdate.json();
-
-      if (!resUpdate.ok || !jsonUpdate.ok) {
-        setStrErrorModalMessage(jsonUpdate.error || "No se pudo actualizar la contraseña.");
-        setBolShowErrorModal(true);
-        return;
-      }
-
-      // Todo correcto
-      setBolShowModal(true);
-
-
-    } catch (error) {
-      console.error("Error al validar contraseña:", error);
-      setStrErrorModalMessage("Error de red al validar la contraseña.");
-      setBolShowErrorModal(true);
-    } finally {
-      setBolValidando(false);
-    }
-
-  };
+  } catch (error) {
+    console.error("Error al cambiar contraseña:", error);
+    setStrErrorModalMessage("Error de red al cambiar la contraseña.");
+    setBolShowErrorModal(true);
+  } finally {
+    setBolValidando(false);
+  }
+};
 
   return (
   <div className="p-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -197,7 +217,7 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
       </div>
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight text-white">Cambiar contraseña</h2>
-        <p className="text-sm text-white/60">Elige una contraseña segura que no uses en otros sitios.</p>
+        <p className="text-sm text-white/60">Elige una contraseña segura.</p>
       </div>
     </div>
 
@@ -213,12 +233,19 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
             type={bolShowCurrent ? "text" : "password"}
             value={strCurrentPassword}
             placeholder="••••••••••••"
+            maxLength={72}
             onChange={(e) => setStrCurrentPassword(e.target.value)}
-            className={`h-12 rounded-lg border bg-white/10 pr-10 px-3 text-white/90 placeholder:text-white/30 focus-visible:ring-2 transition-colors ${
-              strErrorCurrent
+            autoComplete="new-password"
+            className={`
+              h-12 rounded-lg border bg-white/10 pr-10 px-3
+              text-white/90 placeholder:text-white/30
+              focus-visible:ring-2 transition-colors
+              [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
+              ${strErrorCurrent
                 ? "border-red-400/70 focus-visible:ring-red-400/40"
                 : "border-white/25 focus-visible:ring-white/30"
-            }`}
+              }
+            `}
           />
           <button
             type="button"
@@ -247,12 +274,19 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
             type={bolShowNew ? "text" : "password"}
             value={strNewPassword}
             placeholder="••••••••••••"
+            maxLength={72}
             onChange={(e) => setStrNewPassword(e.target.value)}
-            className={`h-12 rounded-lg border bg-white/10 pr-10 px-3 text-white/90 placeholder:text-white/30 focus-visible:ring-2 transition-colors ${
-              strErrorNew
-                ? "border-red-400/70 focus-visible:ring-red-400/40"
-                : "border-white/25 focus-visible:ring-white/30"
-            }`}
+            autoComplete="new-password"
+            className={`
+                h-12 rounded-lg border bg-white/10 pr-10 px-3
+                text-white/90 placeholder:text-white/30
+                focus-visible:ring-2 transition-colors
+                [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
+                ${strErrorNew
+                  ? "border-red-400/70 focus-visible:ring-red-400/40"
+                  : "border-white/25 focus-visible:ring-white/30"
+                }
+              `}
           />
           <button
             type="button"
@@ -281,12 +315,19 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
             type={bolShowConfirm ? "text" : "password"}
             value={strConfirmPassword}
             placeholder="••••••••••••"
+            maxLength={72}
             onChange={(e) => setStrConfirmPassword(e.target.value)}
-            className={`h-12 rounded-lg border bg-white/10 pr-10 px-3 text-white/90 placeholder:text-white/30 focus-visible:ring-2 transition-colors ${
-              strErrorConfirm
+            autoComplete="new-password"
+            className={`
+              h-12 rounded-lg border bg-white/10 pr-10 px-3
+              text-white/90 placeholder:text-white/30
+              focus-visible:ring-2 transition-colors
+              [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
+              ${strErrorConfirm
                 ? "border-red-400/70 focus-visible:ring-red-400/40"
                 : "border-white/25 focus-visible:ring-white/30"
-            }`}
+              }
+            `}
           />
           <button
             type="button"
@@ -305,24 +346,26 @@ export default function ChangePasswordForm({ onCancel, id_usuario, email, onSucc
         )}
       </div>
 
-      {/* Botones */}
-      <div className="flex flex-col sm:flex-row gap-3 mt-2">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          disabled={bolValidando}
-          className="w-full sm:w-auto h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSave}
-          disabled={bolValidando}
-          className="w-full sm:w-auto h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
-        >
-          {bolValidando ? "Verificando..." : "Guardar"}
-        </Button>
-      </div>
+        {/* Botones */}
+        <div className="flex flex-row sm:flex-row gap-3 mt-2">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={bolValidando}
+            className="flex-1 sm:flex-none sm:w-auto h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 
+              hover:text-white hover:border-white/40 transition-colors"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={bolValidando}
+            className="flex-1 sm:flex-none sm:w-auto h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold 
+              hover:bg-zinc-200 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
+          >
+            {bolValidando ? "Verificando..." : "Guardar"}
+          </Button>
+        </div>
 
     </div>
 
