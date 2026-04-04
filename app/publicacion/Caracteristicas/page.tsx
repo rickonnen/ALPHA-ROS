@@ -1,15 +1,24 @@
 'use client'
 
+/**
+ * Dev: Gabriel Paredes Sipe (Modificado por Jimmy)
+ * Date modification: 03/04/2026
+ * Modificación: Se agrega id_usuario al FormData antes de llamar a publicarConImagenes.
+ * Corrección HU5: Se integra el modal de límite de publicaciones en el submit final.
+ */
+
 import { useState } from 'react'
-import { useCaracteristicasForm } from '../../../features/publicacion/caracteristicas/Hooks/useCaracteristicasForm'
-import { DireccionForm } from '../../../features/publicacion/caracteristicas/components/DireccionForm'
-import { DepartamentoSelect } from '../../../features/publicacion/caracteristicas/components/DepartamentoSelect'
-import { HabitacionesForm } from '../../../features/publicacion/caracteristicas/components/HabitacionesForm'
-import { ImageUploader } from '../../../features/publicacion/caracteristicas/components/ImageUploader'
-import { VideoSection } from '../../../features/publicacion/caracteristicas/components/VideoSection'
+import { useCaracteristicasForm } from '@/features/publicacion/caracteristicas/Hooks/useCaracteristicasForm'
+import { DireccionForm } from '@/features/publicacion/caracteristicas/components/DireccionForm'
+import { DepartamentoSelect } from '@/features/publicacion/caracteristicas/components/DepartamentoSelect'
+import { ZonaInput } from '@/features/publicacion/caracteristicas/components/Zona'
+import { HabitacionesForm } from '@/features/publicacion/caracteristicas/components/HabitacionesForm'
+import { ImageUploader } from '@/features/publicacion/caracteristicas/components/ImageUploader'
+import { VideoSection } from '@/features/publicacion/caracteristicas/components/VideoSection'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/features/publicacion/CaracteristicasBackend/actions'
 import { useRouter } from "next/navigation"
+import FreePublicationLimitModal from '@/features/publicacion/components/FreePublicationLimitModal'
 
 export default function CaracteristicasPage() {
   const {
@@ -21,12 +30,16 @@ export default function CaracteristicasPage() {
     handleSubmit,
     handleAgregarImagenes,
     handleEliminarImagen,
+    handleReset,
   } = useCaracteristicasForm()
 
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitOk, setSubmitOk] = useState(false)
+
+  // ESTADO PARA CONTROLAR TU MODAL
+  const [bolShowModal, setBolShowModal] = useState(false)
 
   const [strVideoUrl, setStrVideoUrl] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -55,13 +68,15 @@ export default function CaracteristicasPage() {
           return
         }
         const objPaso1 = JSON.parse(strPaso1)
-
+        console.log("objPaso1 completo:", objPaso1)
+        console.log("id_usuario en paso1:", objPaso1.id_usuario)
         const formData = new FormData()
         formData.append('titulo', objPaso1.titulo)
         formData.append('precio', objPaso1.precio)
         formData.append('tipoPropiedad', objPaso1.tipoPropiedad)
         formData.append('tipoOperacion', objPaso1.tipoOperacion)
         formData.append('descripcion', objPaso1.descripcion)
+        formData.append('id_usuario', objPaso1.id_usuario ?? '')
         formData.append('direccion', formValues.direccion)
         formData.append('superficie', formValues.superficie.replace(/\./g, ''))
         formData.append('departamento', formValues.departamento)
@@ -76,19 +91,24 @@ export default function CaracteristicasPage() {
         const result = await publicarConImagenes(formData)
 
         if (result.success) {
-          sessionStorage.removeItem("informacionComercial")
+          sessionStorage.removeItem("caracteristicasInmueble")
+          sessionStorage.removeItem("caracteristicasInmuebleUsuario")
           sessionStorage.removeItem("informacionComercialDraft")
+          sessionStorage.removeItem("informacionComercialDraftUsuario")
+          sessionStorage.removeItem("informacionComercial")
           sessionStorage.removeItem("videoUrl")
+          sessionStorage.removeItem("imageUploader_userInteracted")
           setSubmitOk(true)
-          console.log("ID generado por la DB:", result.idPublicacion);
-          
-          // --- ÚNICO CAMBIO: REDIRECCIÓN ---
-          router.push(`/publicacion/${result.idPublicacion}`);
-          // ---------------------------------
-          
+          console.log("ID generado por la DB:", result.idPublicacion)
+          router.push(`/publicacion/perfil_del_inmueble/${result.idPublicacion}`)
         } else {
-          const firstError = Object.values(result.errors).flat()[0] ?? null
-          setSubmitError(firstError ?? 'Error al guardar. Intenta de nuevo.')
+          // VALIDACIÓN HU5: Si el backend rechaza por límite, disparamos el modal
+          if (result.reason === "LIMITE_ALCANZADO") {
+            setBolShowModal(true)
+          } else {
+            const firstError = result.errors ? Object.values(result.errors).flat()[0] : null
+            setSubmitError(firstError as string ?? 'Error al guardar. Intenta de nuevo.')
+          }
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : JSON.stringify(err)
@@ -102,17 +122,16 @@ export default function CaracteristicasPage() {
   return (
     <main
       className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
-      
       style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
     >
       <div className="w-full max-w-2xl">
-        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-60">
+        <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-[#1F3A4D] pl-0 sm:pl-6 lg:pl-40">
           Crear publicación
         </h1>
       </div>
 
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8">
-        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-[#1F3A4D]">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-xl p-4 sm:p-8 mt-8">
+        <h2 className="text-center font-semibold text-base sm:text-lg tracking-wide mb-4 sm:mb-6 uppercase text-black">
           Caracteristicas del inmueble
         </h2>
 
@@ -136,23 +155,13 @@ export default function CaracteristicasPage() {
             onBlur={onBlur}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="zona" className="text-sm font-medium text-[#2E2E2E]">
-              Zona
-            </label>
-            <input
-              id="zona"
-              type="text"
-              maxLength={100}
-              value={values.zona}
-              onChange={(e) => onChange('zona', e.target.value)}
-              onBlur={() => onBlur('zona')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500"
-            />
-            {touched.zona && errors.zona && (
-              <span className="text-red-500 text-sm">{errors.zona}</span>
-            )}
-          </div>
+          <ZonaInput
+            value={values.zona}
+            error={errors.zona}
+            touched={touched.zona ?? false}
+            onChange={onChange}
+            onBlur={onBlur}
+          />
 
           <HabitacionesForm
             bedroomsValue={values.habitaciones}
@@ -202,9 +211,7 @@ export default function CaracteristicasPage() {
               type="button"
               variant="outline"
               disabled={isSubmitting}
-              onClick={() => {
-                router.push("/publicacion/informacion-comercial")
-              }}
+              onClick={() => router.push("/publicacion/informacion-comercial")}
               className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold"
             >
               Regresar
@@ -221,6 +228,12 @@ export default function CaracteristicasPage() {
           </div>
         </div>
       </div>
+
+      {/* RENDERIZAMOS TU MODAL DE LA HU5 */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+      />
     </main>
   )
 }

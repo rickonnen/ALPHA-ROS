@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button"; 
 import { useScrollDirection } from "../hooks/useScrollDirection";
@@ -9,6 +10,8 @@ import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
@@ -29,16 +32,19 @@ const arrNavLinks = [
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
   const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [showProtected, setShowProtected] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAuth,            setShowAuth]            = useState(false);
+  const [showProtected,       setShowProtected]       = useState(false);
+  const [authMode,            setAuthMode]            = useState<"login" | "register">("login");
+  const [showNotifications,   setShowNotifications]   = useState(false);
+  const [bolShowModal,        setBolShowModal]        = useState(false);
+  const [bolChecking,         setBolChecking]         = useState(false);
 
-  const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
+  const refMobileMenuPanel  = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
-  const refNotifPanel = useRef<HTMLDivElement | null>(null);
+  const refNotifPanel       = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = () => setBolIsMobileMenuOpen(false);
 
@@ -74,6 +80,32 @@ export const Header = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  /**
+   * @Funcionalidad: Verifica el límite de publicaciones antes de navegar al formulario.
+   * Si no está autenticado redirige al login.
+   * Si alcanzó el límite muestra el modal HU5.
+   * Si tiene cupos disponibles navega al formulario.
+   */
+  const handlePublicarClick = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
+  };
 
   const strLinkClassesDesktop =
     "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
@@ -222,14 +254,14 @@ export const Header = () => {
               </Link>
             ))}
 
-            <Link
-              href={user ? "/publicacion" : "/login"}
-              className="transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7] rounded-md"
+            {/* Botón PUBLICAR — verifica límite antes de navegar */}
+            <Button
+              onClick={handlePublicarClick}
+              disabled={bolChecking}
+              className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
             >
-              <Button className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                PUBLICAR
-              </Button>
-            </Link>
+              {bolChecking ? "..." : "PUBLICAR"}
+            </Button>
 
             {btnNotifications}
             {btnProfile}
@@ -296,17 +328,17 @@ export const Header = () => {
                 <span>NOTIFICACIONES</span>
               </button>
 
-              {/* Publicar */}
-              <Link
-                href="/publicacion"
-                prefetch={false}
-                onClick={closeMobileMenu}
-                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D] rounded-md"
+              {/* Publicar mobile — también verifica límite */}
+              <Button
+                onClick={() => {
+                  closeMobileMenu();
+                  handlePublicarClick();
+                }}
+                disabled={bolChecking}
+                className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
               >
-                <Button className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none">
-                  PUBLICAR
-                </Button>
-              </Link>
+                {bolChecking ? "..." : "PUBLICAR"}
+              </Button>
 
               {arrNavLinks.map((objLink) => (
                 <Link
@@ -351,6 +383,11 @@ export const Header = () => {
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         initialMode={authMode}
+      />
+      {/* Modal límite de publicaciones gratuitas */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
       />
     </>
   );

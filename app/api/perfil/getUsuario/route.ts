@@ -37,11 +37,11 @@ export async function GET(req: NextRequest) {
       where: { id_usuario },
       include: {
         UsuarioTelefono: {
-          where: { estado: 1 },
+          //where: { estado: 1 },
           include: { Telefono: true },
         },
         Rol: true,
-        Pais: true,
+        //Pais: true,
       },
     });
 
