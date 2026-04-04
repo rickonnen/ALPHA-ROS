@@ -30,8 +30,15 @@ export default function PaymentVerificationPage() {
         : 'Sin nombre',
       strPlanType: objPayment.PlanPublicacion?.nombre_plan || 'N/A',
       strDate: objPayment.fecha_detalle 
-        ? new Date(objPayment.fecha_detalle).toLocaleDateString('es-BO') 
-        : 'Sin fecha',
+  ? new Date(objPayment.fecha_detalle).toLocaleString('es-BO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false 
+    }) 
+  : 'Sin fecha',
       strPaymentMethod: objPayment.metodo_pago || 'No especificado',
       intStatus: objPayment.estado
     }));
