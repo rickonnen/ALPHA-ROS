@@ -33,6 +33,7 @@ import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
+import { useAuth } from "../auth/AuthContext";
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
     Funcionalidad: Página principal de Mi Perfil
@@ -42,6 +43,9 @@ import HistorialPagosView from "@/app/cobros/historial-pagos/page";
 */
 
 function PerfilContent() {
+  const { user, logout } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+  console.log("Usuario autenticado en PerfilContent:", user);
   const searchParams = useSearchParams();
   const idUsuario = searchParams.get("id") ?? "";
 
@@ -193,8 +197,15 @@ function PerfilContent() {
                     </button>
                   ))}
                   <hr className="my-4" />
-                  <button className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors">
-                    <LogOut className="h-4 w-4" /> CERRAR SESIÓN
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowAuth(false);
+                    }}
+                    className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    CERRAR SESIÓN
                   </button>
                 </nav>
               </div>
@@ -222,7 +233,13 @@ function PerfilContent() {
                   </button>
                 );
               })}
-              <button className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors">
+              <button
+                onClick={() => {
+                  logout();
+                  setShowAuth(false);
+                }}
+                className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
+              >
                 <LogOut className="h-4 w-4" /> SALIR
               </button>
             </nav>
