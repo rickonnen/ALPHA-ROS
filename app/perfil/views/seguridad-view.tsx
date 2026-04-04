@@ -25,7 +25,7 @@ interface SeguridadProps {
   onPerfilActualizado: () => void;
 }
 
-export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onPerfilActualizado }: SeguridadProps) {
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
