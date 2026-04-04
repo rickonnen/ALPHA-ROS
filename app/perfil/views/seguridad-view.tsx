@@ -2,6 +2,12 @@
     Fecha: 28/03/2026
     Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
 */
+/* Dev: Alvarado Alisson Dalet - sow-alissona
+    Fecha: 04/04/2026
+    Fix: Agrega prop onPerfilActualizado para notificar al padre (PerfilPage)
+         que debe re-fetchear el usuario y actualizar el header tras guardar
+         cambios en editar perfil
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -16,9 +22,10 @@ interface SeguridadProps {
   telefonos: string[];
   onSuccess: () => void;
   onTelefonosChange: (nuevosTelefonos: string[]) => void;
-};
+  onPerfilActualizado: () => void;
+}
 
-export default function SeguridadView({id_usuario, email, telefonos, onSuccess, onTelefonosChange}: SeguridadProps) {
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
@@ -84,7 +91,6 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess, 
       </div>
     ),
 
-
     telefonos: (
       <TelefonosView
         telefonos={telefonos}
@@ -99,6 +105,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess, 
         usuario={objUsuario}
         onGuardar={(objDatosActualizados) => {
           setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
+          onPerfilActualizado();
           setSubView("menu");
         }}
         onCancelar={() => setSubView("menu")}
@@ -106,9 +113,9 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess, 
     ) : null,
 
     password: (
-      <ChangePasswordForm 
-        id_usuario={id_usuario} 
-        email={email} 
+      <ChangePasswordForm
+        id_usuario={id_usuario}
+        email={email}
         onCancel={() => setSubView("menu")}
         onSuccess={onSuccess}
       />
@@ -125,6 +132,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess, 
         id_usuario={id_usuario}
       />
     ),
+
     "confirmar-correo": (
       <ConfirmarCorreoView
         id_usuario={id_usuario}
@@ -132,7 +140,6 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess, 
         onBack={() => setSubView("correo")}
       />
     ),
-
   };
 
   return (
