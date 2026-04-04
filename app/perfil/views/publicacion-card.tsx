@@ -20,7 +20,7 @@ export interface Publicacion {
   titulo: string;
   zona: string;
   tipo: string;
-  imagen?: string | null;
+  imagen: string | null;
 }
 
 interface PublicacionCardProps {
@@ -44,6 +44,9 @@ export default function PublicacionCard({
               src={publicacion.imagen}
               alt={publicacion.titulo}
               className="object-cover w-full h-full"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+        }}
             />
           ) : (
             <span className="text-white/30 text-xs text-center">
@@ -55,7 +58,6 @@ export default function PublicacionCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{publicacion.titulo}</p>
-          <p className="text-xs text-white/50">{publicacion.zona}</p>
           <p className="text-xs text-white/50">Tipo: {publicacion.tipo}</p>
         </div>
 
@@ -67,8 +69,7 @@ export default function PublicacionCard({
             className="text-black border-white/60 hover:bg-white/80"
             onClick={() => onInfo(publicacion.id)}
           >
-            <span className="hidden md:inline">Información</span>
-            <span className="md:hidden">Info.</span>
+            Info.
           </Button>
           <Button
             size="sm"
