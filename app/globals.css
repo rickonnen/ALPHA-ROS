@@ -6,8 +6,8 @@
 
 @theme inline {
   /**
- * Fix: corrección de font-sans para usar Geist desde layout.tsx
- */
+  * Fix: corrección de font-sans para usar Geist desde layout.tsx
+  */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -49,6 +49,10 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* ------ */
+  --color-secondary-fund: var(--secondary-fund);
+  --radius: 0.5rem;
 }
 
 :root {
@@ -84,6 +88,41 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --card: var(--background);
+  --card-foreground: var(--foreground);
+  --popover: var(--secondary-fund);
+  --popover-foreground: var(--foreground);
+  --muted: oklch(0.88 0.01 83);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: var(--secondary-fund);
+  --accent-foreground: var(--primary);
+  --destructive: oklch(0.577 0.245 27.3);
+  --border: oklch(0.85 0.015 83);
+  --input: oklch(0.85 0.015 83);
+  --ring: var(--primary);
+  --radius: 0.5rem;
+
+  --sidebar: var(--primary);
+  --sidebar-foreground: var(--primary-foreground);
+  --sidebar-primary: var(--secondary);
+  --sidebar-primary-foreground: var(--secondary-foreground);
+
+  /* fondo principal: Beige arena suave (#F4EFE6)*/
+  --background: oklch(0.95 0.01 82);
+
+  /* fondo secundario: Gris cálido claro (#E7E1D7)*/
+  --secondary-fund: oklch(0.91 0.01 81);
+
+  /* texto principal: Gris profundo (#2E2E2E)*/
+  --foreground: oklch(0.30 0.00 0);
+
+  /* boton primario: Azul petróleo (#1F3A4D)*/
+  --primary: oklch(0.34 0.05 241);
+  --primary-foreground: oklch(0.952 0.01 84.8);
+
+  /* boton secundario: Terracota suave (#C26E5A)*/
+  --secondary: oklch(0.63 0.11 34);
+  --secondary-foreground: oklch(0.952 0.01 84.8);
 }
 
 .dark {
@@ -118,6 +157,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --destructive: oklch(0.704 0.191 22.2);
 }
 
 @layer base {
@@ -129,5 +169,9 @@
   }
   html {
     @apply font-sans;
+  }
+
+  body {
+    @apply antialiased;
   }
 }
