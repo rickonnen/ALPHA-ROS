@@ -64,6 +64,9 @@ function PerfilContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [intRefreshKey, setIntRefreshKey] = useState(0);
+  const [telefonos, setTelefonos] = useState<string[]>([]);
+
+  
 
   useEffect(() => {
     if (!userId) {
@@ -79,6 +82,13 @@ function PerfilContent() {
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
         setUsuario(json.data);
+        //miguel cambio para actualizacion de telefonos
+        const tels =
+          json.data?.UsuarioTelefono?.map(
+            (ut: any) =>
+              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+          ) ?? [];
+        setTelefonos(tels);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -89,6 +99,9 @@ function PerfilContent() {
     fetchUsuario();
   }, [userId, intRefreshKey]);
 
+  const handleTelefonosChange = (nuevosTelefonos: string[]) => {
+    setTelefonos(nuevosTelefonos);
+  };
   const menuItems = [
     { id: "perfil", name: "MI PERFIL" },
     { id: "seguridad", name: "SEGURIDAD" },
@@ -98,10 +111,11 @@ function PerfilContent() {
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
   ];
 
-  const telefonos =
-    usuario?.UsuarioTelefono?.map(
-      (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
-    ) ?? [];
+  //miguel actualizacion telefonos
+  // const telefonos =
+  //   usuario?.UsuarioTelefono?.map(
+  //     (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+  //   ) ?? [];
 
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
     perfil: usuario ? (
@@ -117,6 +131,7 @@ function PerfilContent() {
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
         onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
+        onTelefonosChange={handleTelefonosChange}
       />
     ),
     favoritos: usuario ? (
