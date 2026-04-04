@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/app/auth/AuthContext";
-
+import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 
 type EstadoModal =
   | "cerrado"
@@ -34,11 +34,12 @@ interface Props {
 
 export default function PagoCliente({ plan, planId }: Props) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [qrUrl, setQrUrl] = useState<string>("");
   const [generandoQr, setGenerandoQr] = useState(true);
   const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
-
+  const [mostrarRestringido, setMostrarRestringido] = useState(false);
+  const [mostrarLoginLateral, setMostrarLoginLateral] = useState(false);
   // Fetch solo para el QR
   useEffect(() => {
     const cargarQr = async () => {
@@ -56,6 +57,14 @@ export default function PagoCliente({ plan, planId }: Props) {
     };
     cargarQr();
   }, [planId]);
+
+  const [modalAuthAbierto, setModalAuthAbierto] = useState(false);
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setMostrarRestringido(true);
+    }
+  }, [user, isLoading]);
+
 
   // Manejo fluido de estados de pago
   const [yaPresionóAceptar, setYaPresionóAceptar] = useState(false);
@@ -109,6 +118,9 @@ export default function PagoCliente({ plan, planId }: Props) {
 
   const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
 
+  // por si no es un usuario logueado mostrar ese return
+  if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
       {/* Columna Izquierda */}
@@ -133,6 +145,7 @@ export default function PagoCliente({ plan, planId }: Props) {
           </Link>
         </div>
       </div>
+
 
       {/* Columna Derecha */}
       <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
@@ -180,6 +193,22 @@ export default function PagoCliente({ plan, planId }: Props) {
           </div>
         </div>
       </div>
+
+      <ProtectedFeatureModal 
+        isOpen={mostrarRestringido}
+        onClose={() => {
+          setMostrarRestringido(false);
+          router.push("/cobros/planes");
+        }}
+        onLoginClick={() => {
+          setMostrarRestringido(false);
+          setMostrarLoginLateral(true); 
+        }}
+        onRegisterClick={() => {
+          setMostrarRestringido(false);
+          setMostrarLoginLateral(true);
+        }}
+      />
 
       {/* Modales */}
       <AlertDialog
