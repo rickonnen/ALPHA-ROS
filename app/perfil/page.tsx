@@ -224,13 +224,36 @@ function PerfilContent() {
               id="btns"
               className="hidden md:flex flex-col w-64 z-10 relative"
             >
-              {menuItems.map((btn) => {
+              {menuItems.map((btn, index) => {
                 const isSelected = view === btn.id;
                 return (
                   <button
                     key={btn.id}
+                    tabIndex={0}
                     onClick={() => setView(btn.id)}
-                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setView(btn.id);
+                      }
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const next =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index + 1];
+                        next?.focus();
+                      }
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const prev =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index - 1];
+                        prev?.focus();
+                      }
+                    }}
+                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 ${
                       isSelected
                         ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
                         : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"
@@ -240,7 +263,10 @@ function PerfilContent() {
                   </button>
                 );
               })}
-              <button className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors">
+              <button
+                tabIndex={0}
+                className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors focus-visible:ring-2 focus-visible:ring-red-400/60"
+              >
                 <LogOut className="h-4 w-4" /> SALIR
               </button>
             </nav>
