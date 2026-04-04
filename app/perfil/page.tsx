@@ -20,6 +20,10 @@
     Fecha: 29/03/2026
     Funcionalidad: FIX bd y cambios en Telefono
 */
+/*  Dev: David Chavez Totora - sow-davidc
+    Fecha: 03/04/2026
+    Funcionalidad: Implementacion de JWT a todo Perfil
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
