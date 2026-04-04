@@ -21,11 +21,11 @@ interface SeguridadProps {
   email: string;
   telefonos: string[];
   onSuccess: () => void;
-  onPerfilActualizado: () => void;
   onTelefonosChange: (nuevosTelefonos: string[]) => void;
-};
+  onPerfilActualizado: () => void;
+}
 
-export default function SeguridadView({id_usuario, email, telefonos, onSuccess, onTelefonosChange}: SeguridadProps) {
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
