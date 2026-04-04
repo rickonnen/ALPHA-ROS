@@ -20,12 +20,17 @@
     Fecha: 29/03/2026
     Funcionalidad: FIX bd y cambios en Telefono
 */
+/*  Dev: David Chavez Totora - sow-davidc
+    Fecha: 03/04/2026
+    Funcionalidad: Implementacion de JWT a todo Perfil
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, Loader2 } from "lucide-react";
+
+import { useRouter } from "next/navigation";
 
 import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
@@ -46,8 +51,9 @@ function PerfilContent() {
   const { user, logout } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
-  const searchParams = useSearchParams();
-  const idUsuario = searchParams.get("id") ?? "";
+  const userId = user?.id ?? "";
+  console.log("Tipo de Usuario:", typeof userId);
+  console.log("Usuario:", userId);
 
   const [view, setView] = useState("perfil");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,10 +61,13 @@ function PerfilContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  
+
   useEffect(() => {
-    if (!idUsuario) {
+    if (!userId) {
       setError("No se proporcionó un ID de usuario.");
       setLoading(false);
+      
       return;
     }
 
@@ -66,7 +75,7 @@ function PerfilContent() {
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/perfil/getUsuario?id_usuario=${idUsuario}`,
+          `/api/perfil/getUsuario?id_usuario=${userId}`,
         );
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
@@ -79,7 +88,7 @@ function PerfilContent() {
     };
 
     fetchUsuario();
-  }, [idUsuario]);
+  }, [userId]);
 
   const menuItems = [
     { id: "perfil", name: "MI PERFIL" },
@@ -100,20 +109,20 @@ function PerfilContent() {
       <PerfilView usuario={usuario} telefonos={telefonos} />
     ) : null,
     publicaciones: usuario ? (
-      <PublicacionesView id_usuario={usuario.id_usuario} />
+      <PublicacionesView id_usuario={userId} />
     ) : null,
     seguridad: (
       <SeguridadView
-        id_usuario={idUsuario}
+        id_usuario={userId}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
       />
     ),
     favoritos: usuario ? (
-      <FavoritoView id_usuario={usuario.id_usuario} />
+      <FavoritoView id_usuario={userId} />
     ) : null,
-    historial: <HistorialView id_usuario={idUsuario} />,
+    historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
   };
 
@@ -140,9 +149,15 @@ function PerfilContent() {
           >
             <div className="flex items-center gap-4 md:gap-6">
               <img
-                src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}
+                src={
+                  usuario.url_foto_perfil?.trim() ||
+                  "https://github.com/shadcn.png"
+                }
                 alt="User"
                 className="w-20 h-20 md:w-40 md:h-40 rounded-full border-4 border-[var(--primary)]"
+                onError={(e) => {
+                  e.currentTarget.src = "https://github.com/shadcn.png";
+                }}
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
@@ -217,13 +232,36 @@ function PerfilContent() {
               id="btns"
               className="hidden md:flex flex-col w-64 z-10 relative"
             >
-              {menuItems.map((btn) => {
+              {menuItems.map((btn, index) => {
                 const isSelected = view === btn.id;
                 return (
                   <button
                     key={btn.id}
+                    tabIndex={0}
                     onClick={() => setView(btn.id)}
-                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setView(btn.id);
+                      }
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const next =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index + 1];
+                        next?.focus();
+                      }
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const prev =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index - 1];
+                        prev?.focus();
+                      }
+                    }}
+                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 ${
                       isSelected
                         ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
                         : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"

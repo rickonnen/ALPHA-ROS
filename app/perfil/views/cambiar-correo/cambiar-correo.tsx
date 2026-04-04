@@ -89,8 +89,10 @@ export default function CambiarCorreoView({
         onClick={onBack}
         className="mb-4 px-0 text-white/80 hover:text-white hover:bg-transparent"
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a Seguridad
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        <span className="text-xs font-black tracking-widest uppercase">
+          Seguridad
+        </span>
       </Button>
       <HeaderCorreo />
       <CorreoActual email_actual={email_actual} />
@@ -323,20 +325,13 @@ function NuevoCorreo({
         />
       </div>
 
-      <p
-        className={
-          "mt-1 text-xs transition-colors " +
-          (bolShowRequired || bolShowFormatError
-            ? "text-red-300/80"
-            : "text-white/55")
-        }
-      >
-        {bolShowRequired
-          ? "Rellena este campo."
-          : bolShowFormatError
-            ? "Ingresa un correo válido (ej: nombre@dominio.com)"
-            : "Ingresa el correo al que enviaremos el código."}
-      </p>
+      {(bolShowRequired || bolShowFormatError) && (
+        <p className="mt-1 text-xs text-red-300/80">
+          {bolShowRequired
+            ? "Rellena este campo."
+            : "Ingresa un correo válido (ej: nombre@dominio.com)"}
+        </p>
+      )}
     </section>
   );
 }
@@ -393,13 +388,11 @@ function Contrasena({
         </Button>
       </div>
 
-      <p
-        className={`mt-1 text-xs transition-colors ${bolShowError ? "text-red-300/80" : "text-white/55"}`}
-      >
-        {bolShowError
-          ? "Ingresa tu contraseña actual para confirmar el cambio."
-          : "Necesitamos verificar tu identidad."}
-      </p>
+      {bolShowError && (
+        <p className="mt-1 text-xs text-red-300/80">
+          Ingresa tu contraseña actual para confirmar el cambio.
+        </p>
+      )}
     </section>
   );
 }
