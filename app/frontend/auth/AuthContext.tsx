@@ -111,14 +111,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         credentials: "include",
       });
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       // Cerrar sesión de NextAuth (Google)
       const { signOut } = await import("next-auth/react");
       await signOut({ redirect: false });
-    } catch (_) {}
+    } catch (_) { }
 
+    sessionStorage.removeItem("caracteristicasInmueble");
+    sessionStorage.removeItem("informacionComercial");
+    sessionStorage.removeItem("informacionComercialDraft");
+    sessionStorage.removeItem("videoUrl");
+    sessionStorage.removeItem("imageUploader_userInteracted");
+    
     setUser(null);
     localStorage.removeItem("user");
   };

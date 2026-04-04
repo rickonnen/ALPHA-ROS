@@ -159,35 +159,11 @@ async function guardarPublicacionCompleta(
   const idCiudad = DEPARTAMENTO_CIUDAD[departamento]
 
   // === HU5: Bandera para saber si debemos hacer Rollback en caso de error ===
-  let bolCupoDescontado = false;
 
   try {
     // =========================================================================
     // HU5: BARRERA ATÓMICA DE SEGURIDAD (SQL Nativo para evitar Race Conditions)
     // =========================================================================
-    if (paso1.id_usuario && paso1.id_usuario.trim() !== '') {
-      
-      // 1. Inicialización segura si es la primera publicación
-      await prisma.$executeRaw`
-        UPDATE "Usuario" 
-        SET cant_publicaciones_restantes = 2 
-        WHERE id_usuario = ${paso1.id_usuario}::uuid AND cant_publicaciones_restantes IS NULL;
-      `;
-
-      // 2. Descuento atómico inquebrantable
-      const intFilasActualizadas = await prisma.$executeRaw`
-        UPDATE "Usuario"
-        SET cant_publicaciones_restantes = cant_publicaciones_restantes - 1
-        WHERE id_usuario = ${paso1.id_usuario}::uuid AND cant_publicaciones_restantes > 0;
-      `;
-
-      // 3. Muralla: Si no se actualizó, es porque no hay cupo
-      if (intFilasActualizadas === 0) {
-        return { success: false, errors: {}, reason: "LIMITE_ALCANZADO" };
-      }
-      
-      bolCupoDescontado = true; // Confirmamos que le quitamos el cupo
-    }
     // =========================================================================
 
     // 1. Obtener próximo id_ubicacion (Código original de Gabriel)
@@ -258,17 +234,6 @@ async function guardarPublicacionCompleta(
     // HU5: ROLLBACK DE SEGURIDAD
     // Si Gabriel's queries fallaron, le devolvemos su cupo al usuario.
     // =========================================================================
-    if (bolCupoDescontado && paso1.id_usuario) {
-      try {
-        await prisma.$executeRaw`
-          UPDATE "Usuario"
-          SET cant_publicaciones_restantes = cant_publicaciones_restantes + 1
-          WHERE id_usuario = ${paso1.id_usuario}::uuid;
-        `;
-      } catch (rollbackErr) {
-        console.error('[HU5 Rollback] Error al devolver cupo:', rollbackErr);
-      }
-    }
     // =========================================================================
 
     return {
