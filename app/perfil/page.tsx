@@ -48,7 +48,8 @@ import { useAuth } from "../auth/AuthContext";
 */
 
 function PerfilContent() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
   const userId = user?.id ?? "";
   console.log("Tipo de Usuario:", typeof userId);
@@ -211,8 +212,15 @@ function PerfilContent() {
                     </button>
                   ))}
                   <hr className="my-4" />
-                  <button className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors">
-                    <LogOut className="h-4 w-4" /> CERRAR SESIÓN
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowAuth(false);
+                    }}
+                    className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    CERRAR SESIÓN
                   </button>
                 </nav>
               </div>
@@ -264,8 +272,11 @@ function PerfilContent() {
                 );
               })}
               <button
-                tabIndex={0}
-                className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors focus-visible:ring-2 focus-visible:ring-red-400/60"
+                onClick={() => {
+                  logout();
+                  setShowAuth(false);
+                }}
+                className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
               >
                 <LogOut className="h-4 w-4" /> SALIR
               </button>
