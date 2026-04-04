@@ -1,26 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import PagoCliente from "@/features/cobros/sectorPago/pagoCliente";
-
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 interface Props {
-  searchParams: Promise<{
-    planId?: string;
-    id?: string;
-  }>;
+  searchParams: Promise<{ planId?: string }>;
 }
 
-export default async function PaginaSectorPagos({ searchParams }: Props) {
-  const params = await searchParams;
-  const planId = params.planId;
-  const idUsuario = params.id;
 
-  if (!planId || !idUsuario) {
-    return (
-      <div className="p-10 text-center text-red-500">
-        Faltan datos en la URL.
-      </div>
-    );
+export default async function PaginaSectorPagos({ searchParams }: Props) {
+  const session = await getServerSession();
+  if (!session) {
+    redirect("/cobros/planes?auth_required=true");
+    return null; // Por seguridad, no renderizamos nada más
   }
+
+  const params = await searchParams;
+  const { planId } = await searchParams;
+
+  if (!planId) return <div className="p-10 text-center">Falta el plan.</div>;
 
   // Consulta a la base de datos
   const plan = await prisma.planPublicacion.findUnique({
@@ -39,7 +37,5 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
   };
 
   // Pasamos el plan ya formateado
-  return (
-    <PagoCliente plan={planFormateado} idUsuario={idUsuario} planId={planId} />
-  );
+  return <PagoCliente plan={planFormateado} planId={planId} />;
 }

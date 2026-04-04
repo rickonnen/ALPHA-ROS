@@ -48,12 +48,19 @@ export const Header = () => {
   useClickOutside(
     [refMobileMenuPanel, refMobileMenuButton],
     closeMobileMenu,
-    bolIsMobileMenuOpen
+    bolIsMobileMenuOpen,
   );
 
   useEffect(() => {
     const handleClickOutside = (objEvent: MouseEvent) => {
+<<<<<<< HEAD
       if (refNotifPanel.current && !refNotifPanel.current.contains(objEvent.target as Node)) {
+=======
+      if (
+        refNotifPanel.current &&
+        !refNotifPanel.current.contains(objEvent.target as Node)
+      ) {
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
         setShowNotifications(false);
       }
     };
@@ -61,10 +68,8 @@ export const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const strLinkClassesDesktop =
-    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
-  const strLinkClassesMobile =
-    `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
+  const strLinkClassesDesktop = `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
+  const strLinkClassesMobile = `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
 
   const btnLogoProbol = (
     <Link
@@ -83,7 +88,9 @@ export const Header = () => {
   const btnNotifications = (
     <div className="relative" ref={refNotifPanel}>
       <button
-        onClick={() => (user ? setShowNotifications((prev) => !prev) : setShowProtected(true))}
+        onClick={() =>
+          user ? setShowNotifications((prev) => !prev) : setShowProtected(true)
+        }
         title="Notificaciones"
         aria-label="Notificaciones"
         className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
@@ -169,7 +176,11 @@ export const Header = () => {
 
           <div className="hidden lg:flex flex-row items-center gap-6">
             {arrNavLinks.map((objLink) => (
-              <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>
+              <Link
+                key={objLink.strLabel}
+                href={objLink.strHref}
+                className={strLinkClassesDesktop}
+              >
                 {objLink.strLabel}
               </Link>
             ))}
@@ -188,7 +199,14 @@ export const Header = () => {
 
         {bolIsMobileMenuOpen && (
           <>
+<<<<<<< HEAD
             <div className="lg:hidden fixed inset-0 z-40" onClick={closeMobileMenu} />
+=======
+            <div
+              className="lg:hidden fixed inset-0 z-40"
+              onClick={closeMobileMenu}
+            />
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
             <div
               id="mobile-header-menu"
               ref={refMobileMenuPanel}
@@ -197,7 +215,14 @@ export const Header = () => {
             >
               {user ? (
                 <button
+<<<<<<< HEAD
                   onClick={() => { router.push(`/perfil?id=${user.id}`); closeMobileMenu(); }}
+=======
+                  onClick={() => {
+                    router.push(`/perfil?id=${user.id}`);
+                    closeMobileMenu();
+                  }}
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                   className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
                 >
                   <div className="relative flex items-center justify-center">
@@ -213,7 +238,15 @@ export const Header = () => {
                 </button>
               ) : (
                 <button
+<<<<<<< HEAD
                   onClick={() => { setAuthMode("login"); setShowAuth(true); closeMobileMenu(); }}
+=======
+                  onClick={() => {
+                    setAuthMode("login");
+                    setShowAuth(true);
+                    closeMobileMenu();
+                  }}
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                   className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
                 >
                   <div className="relative flex items-center justify-center">
@@ -224,31 +257,77 @@ export const Header = () => {
                     />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
-                  <span className="uppercase font-semibold">INICIAR SESIÓN</span>
+                  <span className="uppercase font-semibold">
+                    INICIAR SESIÓN
+                  </span>
                 </button>
               )}
 
+<<<<<<< HEAD
               <button className={`flex items-center gap-4 text-left border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`} onClick={() => { if (!user) setShowProtected(true); else setShowNotifications((p) => !p); closeMobileMenu(); }}>
                 <img src="/bell_icon.svg" alt="Campana" className="w-6 h-6 object-contain brightness-0 invert" />
+=======
+              <button
+                className={`flex items-center gap-4 text-left border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
+                onClick={() => {
+                  if (!user) setShowProtected(true);
+                  else setShowNotifications((p) => !p);
+                  closeMobileMenu();
+                }}
+              >
+                <img
+                  src="/bell_icon.svg"
+                  alt="Campana"
+                  className="w-6 h-6 object-contain brightness-0 invert"
+                />
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                 <span className="uppercase">NOTIFICACIONES</span>
               </button>
 
               <button
+<<<<<<< HEAD
                 onClick={() => { router.push("/publicacion"); closeMobileMenu(); }}
+=======
+                onClick={() => {
+                  router.push("/publicacion");
+                  closeMobileMenu();
+                }}
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                 className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background ${strHoverAnimNoTextColor}`}
               >
                 PUBLICAR
               </button>
 
               {arrNavLinks.map((objLink) => (
+<<<<<<< HEAD
                 <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }}
                   className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+=======
+                <div
+                  key={objLink.strLabel}
+                  onClick={() => {
+                    router.push(objLink.strHref);
+                    closeMobileMenu();
+                  }}
+                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}
+                >
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                   {objLink.strLabel}
                 </div>
               ))}
 
+<<<<<<< HEAD
               <div onClick={() => { router.push(`/cobros/planes`); closeMobileMenu(); }}
                 className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
+=======
+              <div
+                onClick={() => {
+                  router.push(`/cobros/planes`);
+                  closeMobileMenu();
+                }}
+                className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}
+              >
+>>>>>>> 8d7dbe29f5df9e9d5debc05b8a717a0c9a6658d0
                 PLANES DE PUBLICACIÓN
               </div>
             </div>
@@ -256,8 +335,26 @@ export const Header = () => {
         )}
       </header>
 
-      <ProtectedFeatureModal isOpen={showProtected} featureName="esta función" onClose={() => setShowProtected(false)} onLoginClick={() => { setShowProtected(false); setAuthMode("login"); setShowAuth(true); }} onRegisterClick={() => { setShowProtected(false); setAuthMode("register"); setShowAuth(true); }} />
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} initialMode={authMode} />
+      <ProtectedFeatureModal
+        isOpen={showProtected}
+        featureName="esta función"
+        onClose={() => setShowProtected(false)}
+        onLoginClick={() => {
+          setShowProtected(false);
+          setAuthMode("login");
+          setShowAuth(true);
+        }}
+        onRegisterClick={() => {
+          setShowProtected(false);
+          setAuthMode("register");
+          setShowAuth(true);
+        }}
+      />
+      <AuthModal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        initialMode={authMode}
+      />
     </>
   );
 };
