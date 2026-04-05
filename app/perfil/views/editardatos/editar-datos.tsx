@@ -28,19 +28,42 @@
  * Fecha: 28/03/2026
  * Fix: Redireccion al perfil tras guardar
  */
+/** Dev: Alvarado Alisson Dalet - sow-alissona
+ * Fecha: 03/04/2026
+ * Fix: Quitar breadcrumb
+ */
+/** Dev: Alvarado Alisson Dalet - sow-alissona
+ * Fecha: 03/04/2026
+ * Fix: Correccion error en redireccion despues del modal
+ */
+/** Dev: Alvarado Alisson Dalet - sow-alissona
+ * Fecha: 04/04/2026
+ * Fix: Limite de caracteres en campos: nombres max 15, apellidos max 15,
+ *      direccion max 40 y deteccion de guardar sin cambios.
+ *      Username editable
+ */
+/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+ * Fecha: 04/04/2026
+ * Fix: Eliminar redireccion tras guardar, el header no se actualizaba
+ *      Ahora solo se llama onGuardar y el padre maneja el re-fetch y
+ *      la navegacion de vuelta al menu
+ */
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import ResultModal from "@/components/ui/ResultModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 
+const intMaxName     = 15;
+const intMaxLastName = 15;
+const intMaxAddress  = 40;
+const intMaxUsername = 15;
+const regexSinAcentos = /^[^\u00C0-\u024F]+$/;
 
 interface EditProfileProps {
   usuario: {
@@ -61,11 +84,11 @@ interface EditProfileProps {
 }
 
 export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProfileProps) {
-  const router = useRouter();
   const [strNombres, setStrNombres] = useState(usuario.nombres ?? "");
   const [strApellidos, setStrApellidos] = useState(usuario.apellidos ?? "");
   const [strDireccion, setStrDireccion] = useState(usuario.direccion ?? "");
   const [strFotoUrl, setStrFotoUrl] = useState(usuario.url_foto_perfil ?? "");
+  const [strUsername, setStrUsername] = useState(usuario.username ?? "");
   const [intPaisId, setIntPaisId] = useState<number | null>(usuario.id_pais ?? null);
   const [arrPaises, setArrPaises] = useState<{ id_pais: number; nombre_pais: string }[]>([]);
   const [bolLoadingPaises, setBolLoadingPaises] = useState(false);
@@ -94,6 +117,23 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   }, []);
 
   const handleGuardar = async () => {
+    const bolSinCambios =
+      strNombres.trim()   === (usuario.nombres?.trim()        ?? "") &&
+      strApellidos.trim() === (usuario.apellidos?.trim()       ?? "") &&
+      strDireccion.trim() === (usuario.direccion?.trim()       ?? "") &&
+      strFotoUrl.trim()   === (usuario.url_foto_perfil?.trim() ?? "") &&
+      strUsername.trim()  === (usuario.username?.trim()        ?? "") &&
+      intPaisId           === (usuario.id_pais ?? null);
+
+    if (bolSinCambios) {
+      setObjModal({
+        type: "error",
+        title: "Sin cambios",
+        message: "No realizaste ningún cambio en tu perfil.",
+      });
+      return;
+    }
+
     if (
       !strNombres.trim() ||
       !strApellidos.trim() ||
@@ -107,6 +147,47 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
       });
       return;
     }
+
+    if (
+      strNombres.trim().length > intMaxName ||
+      strApellidos.trim().length > intMaxLastName ||
+      strDireccion.trim().length > intMaxAddress
+    ) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: `El nombre no puede superar ${intMaxName} caracteres, el apellido ${intMaxLastName} y la dirección ${intMaxAddress}.`,
+      });
+      return;
+    }
+
+    if (!strUsername.trim()) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: "El username no puede estar vacío.",
+      });
+      return;
+    }
+
+    if (strUsername.trim().length > intMaxUsername) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: `El username no puede superar ${intMaxUsername} caracteres.`,
+      });
+      return;
+    }
+
+    if (!regexSinAcentos.test(strUsername.trim())) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: "El username no puede contener letras con acento.",
+      });
+      return;
+    }
+
     setBolLoading(true);
     try {
       const res = await fetch("/api/perfil/updateUsuario", {
@@ -119,6 +200,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
           direccion: strDireccion,
           url_foto_perfil: strFotoUrl,
           id_pais: intPaisId,
+          username: strUsername.trim(),
         }),
       });
       const json = await res.json();
@@ -183,9 +265,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 flex flex-col gap-6">
-          <p className="text-xs font-black tracking-widest text-white/50 uppercase -mt-2">
-            Seguridad › Editar Perfil
-          </p>
           <div>
             <p className="text-xs font-black tracking-widest text-white/50 uppercase mb-4">
               Foto de perfil
@@ -223,37 +302,55 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
             <div className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="nombres" className="text-xs font-black tracking-widest text-white/60 uppercase">
-                    Nombre
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="nombres" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                      Nombre
+                    </Label>
+                    <span className={`text-xs font-black ${strNombres.length >= intMaxName ? "text-red-400" : "text-white/30"}`}>
+                      {strNombres.length}/{intMaxName}
+                    </span>
+                  </div>
                   <Input
                     id="nombres"
                     value={strNombres}
                     onChange={(e) => setStrNombres(e.target.value)}
+                    maxLength={intMaxName}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="apellidos" className="text-xs font-black tracking-widest text-white/60 uppercase">
-                    Apellido
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="apellidos" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                      Apellido
+                    </Label>
+                    <span className={`text-xs font-black ${strApellidos.length >= intMaxLastName ? "text-red-400" : "text-white/30"}`}>
+                      {strApellidos.length}/{intMaxLastName}
+                    </span>
+                  </div>
                   <Input
                     id="apellidos"
                     value={strApellidos}
                     onChange={(e) => setStrApellidos(e.target.value)}
+                    maxLength={intMaxLastName}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="direccion" className="text-xs font-black tracking-widest text-white/60 uppercase">
-                    Dirección
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="direccion" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                      Dirección
+                    </Label>
+                    <span className={`text-xs font-black ${strDireccion.length >= intMaxAddress ? "text-red-400" : "text-white/30"}`}>
+                      {strDireccion.length}/{intMaxAddress}
+                    </span>
+                  </div>
                   <Input
                     id="direccion"
                     value={strDireccion}
                     onChange={(e) => setStrDireccion(e.target.value)}
+                    maxLength={intMaxAddress}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
                   />
                 </div>
@@ -280,28 +377,26 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="usuario" className="text-xs font-black tracking-widest text-white/60 uppercase">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="username" className="text-xs font-black tracking-widest text-white/60 uppercase">
                     Usuario
                   </Label>
-                  <Badge className="text-xs font-black tracking-widest bg-white/10 text-white/40 border-white/20 hover:bg-white/10">
-                    No editable
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-md px-3 py-2">
-                  <span className="text-sm text-white/40 flex-1">
-                    {usuario.username ?? ""}
+                  <span className={`text-xs font-black ${strUsername.length >= intMaxUsername ? "text-red-400" : "text-white/30"}`}>
+                    {strUsername.length}/{intMaxUsername}
                   </span>
-                  {usuario.Pais?.codigo_iso && (
-                    <img
-                      src={`https://flagcdn.com/24x18/${usuario.Pais.codigo_iso.toLowerCase()}.png`}
-                      alt={usuario.Pais.nombre_pais ?? ""}
-                      width={24}
-                      height={18}
-                      className="rounded-sm shadow-md opacity-60"
-                    />
-                  )}
                 </div>
+                <Input
+                  id="username"
+                  value={strUsername}
+                  onChange={(e) => setStrUsername(e.target.value)}
+                  maxLength={intMaxUsername}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30"
+                />
+                {strUsername.trim() && !regexSinAcentos.test(strUsername) && (
+                  <span className="text-xs text-red-400 font-black">
+                    El username no puede contener letras con acento.
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -340,7 +435,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
             setObjModal(null);
             if (bolFueExito && objData) {
               onGuardar(objData);
-              router.push("/perfil");
             }
           }}
           onRetry={objModal.type === "error" ? () => {

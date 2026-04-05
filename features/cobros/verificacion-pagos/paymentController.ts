@@ -1,8 +1,5 @@
 // app/backend/cobros/controllers/paymentController.ts
-import { PrismaClient } from '@prisma/client';
-
-const objPrisma = new PrismaClient();
-
+import { prisma } from '@/lib/prisma';
 // Mapeo de estados según la lógica acordada
 const objStatuses = {
   intPending: 1,
@@ -34,7 +31,7 @@ export const getPaymentsByStatus = async (
 
   // Ejecutamos ambas consultas en paralelo para ahorrar tiempo
   const [arrPayments, intTotalCount] = await Promise.all([
-    objPrisma.detallePago.findMany({
+    prisma.detallePago.findMany({
       where: { estado: intStatusId },
       include: {
         Usuario: {
@@ -48,7 +45,7 @@ export const getPaymentsByStatus = async (
       take: intPageSize,
       orderBy: { id_detalle: 'desc' } // Los más recientes aparecen primero
     }),
-    objPrisma.detallePago.count({
+    prisma.detallePago.count({
       where: { estado: intStatusId }
     })
   ]);
@@ -84,7 +81,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     // Prisma actualizará el estado. 
     // Si cambia de 1 (Pendiente) a 2 (Aceptado), el Trigger trg_pago_aprobado_update 
     // en Supabase se disparará de forma invisible y sumará las publicaciones al usuario.
-    const objUpdatedPayment = await objPrisma.detallePago.update({
+    const objUpdatedPayment = await prisma.detallePago.update({
       where: { id_detalle: intId },
       data: {
         estado: intNewStatus,
