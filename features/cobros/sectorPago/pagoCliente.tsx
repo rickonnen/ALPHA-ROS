@@ -33,8 +33,8 @@ interface Props {
 }
 
 export default function PagoCliente({ plan, planId }: Props) {
-  const router = useRouter();
   const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [qrUrl, setQrUrl] = useState<string>("");
   const [generandoQr, setGenerandoQr] = useState(true);
   const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
@@ -61,7 +61,7 @@ export default function PagoCliente({ plan, planId }: Props) {
   const [modalAuthAbierto, setModalAuthAbierto] = useState(false);
   useEffect(() => {
     if (!isLoading && !user) {
-      setMostrarRestringido(true);
+      router.push("/cobros/planes?auth_required=true");
     }
   }, [user, isLoading]);
 
@@ -164,7 +164,7 @@ export default function PagoCliente({ plan, planId }: Props) {
               <img
                 src={qrUrl}
                 alt="Código QR de Pago"
-                className="h-full w-full object-contain"
+                className="h-[200px] w-[200px] object-contain"
               />
             ) : (
               <span className="text-sm uppercase text-muted-foreground font-medium">
