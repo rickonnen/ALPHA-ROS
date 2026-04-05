@@ -39,8 +39,10 @@ export default function RootLayout({
           <main className="flex-1 pt-18 flex flex-col">
             {children}
           </main>
+          
+          {/* el Footer ahora está dentro de AuthProvider */}
+          <Footer /> 
         </AuthProvider>
-        <Footer />
       </body>
     </html>
   );
