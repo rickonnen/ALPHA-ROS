@@ -9,6 +9,8 @@ import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
+import { useUnreadCount } from "@/components/hooks/useUnreadCount";
+import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
 
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
@@ -35,6 +37,7 @@ export const Header = () => {
   const [showProtected, setShowProtected] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [showNotifications, setShowNotifications] = useState(false);
+  const unreadCount = useUnreadCount(user);
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
@@ -104,7 +107,9 @@ export const Header = () => {
         className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
       >
         <Bell size={20} className="text-[#2E2E2E]" />
+        <NotificationBadge count={unreadCount} />
       </button>
+      
       {showNotifications && <NotificationPanel />}
     </div>
   ) : (
