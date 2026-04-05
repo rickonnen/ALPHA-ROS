@@ -21,20 +21,6 @@ import { caracteristicasSchema, DEPARTAMENTO_CIUDAD } from './schema'
 import type { CaracteristicasInput }                  from './schema'
 import { subirImagen }                                from './cloudinary'
 
-// Mapeo de strings del paso 1 a IDs de la BD
-const TIPO_INMUEBLE_IDS: Record<string, number> = {
-  Casa:          1,
-  Departamento:  2,
-  Terreno:       3,
-  Oficina:       4,
-}
-
-const TIPO_OPERACION_IDS: Record<string, number> = {
-  Venta:       1,
-  Alquiler:    2,
-  Anticretico: 3,
-}
-
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type ActionResult =
@@ -97,6 +83,30 @@ export async function publicarConImagenes(
   const strTipoOperacion = formData.get('tipoOperacion') as string
   const strVideoUrl      = formData.get('videoUrl')      as string | null
 
+  const [tipoInmueble, tipoOperacion] = await Promise.all([
+    prisma.tipoInmueble.findFirst({
+      where: { 
+        nombre_inmueble: { equals: strTipoPropiedad, mode: 'insensitive' } 
+      },
+      select: { id_tipo_inmueble: true }
+    }),
+    prisma.tipoOperacion.findFirst({
+      where: { 
+        nombre_operacion: { equals: strTipoOperacion, mode: 'insensitive' } 
+      },
+      select: { id_tipo_operacion: true }
+    })
+  ]);
+
+  if (!tipoInmueble || !tipoOperacion) {
+    return {
+      success: false,
+      errors: { 
+        general: ['El tipo de propiedad o de operación seleccionado no es válido en la base de datos.'] 
+      },
+    };
+  }
+
   // ID del usuario autenticado — viene del sessionStorage del paso 1
   const strIdUsuario = formData.get('id_usuario') as string
 
@@ -104,8 +114,8 @@ export async function publicarConImagenes(
     titulo:            strTitulo,
     precio:            parseFloat(strPrecio),
     descripcion:       strDescripcion,
-    id_tipo_inmueble:  TIPO_INMUEBLE_IDS[strTipoPropiedad] ?? null,
-    id_tipo_operacion: TIPO_OPERACION_IDS[strTipoOperacion] ?? null,
+    id_tipo_inmueble: tipoInmueble.id_tipo_inmueble,
+  id_tipo_operacion: tipoOperacion.id_tipo_operacion,
     videoUrl:          strVideoUrl || null,
     id_usuario:        strIdUsuario,
   })
@@ -160,23 +170,21 @@ async function guardarPublicacionCompleta(
 
   try {
 
-    // 1. Obtener próximo id_ubicacion (Código original de Gabriel)
-    const ultimaUbicacion = await prisma.ubicacion.findFirst({
-      orderBy: { id_ubicacion: 'desc' },
-      select:  { id_ubicacion: true },
-    })
-    const nextIdUbicacion = (ultimaUbicacion?.id_ubicacion ?? 0) + 1
-
+    
     // 2. Crear Ubicacion
     await prisma.ubicacion.create({
       data: {
-        id_ubicacion: nextIdUbicacion,
         direccion,
         zona,
         id_ciudad: idCiudad,
       },
     })
-
+    
+    // 1. Obtener próximo id_ubicacion (Código original de Gabriel)
+    const ultimaUbicacion = await prisma.ubicacion.findFirst({
+      orderBy: { id_ubicacion: 'desc' },
+      select:  { id_ubicacion: true },
+    })
     // Crear Publicacion vinculada al usuario autenticado
     const resultado = await prisma.$queryRaw<{ id_publicacion: number }[]>`
       INSERT INTO "Publicacion" (
@@ -196,7 +204,7 @@ async function guardarPublicacionCompleta(
         ${banios},
         ${plantas},
         ${garajes},
-        ${nextIdUbicacion},
+        ${1},
         ${paso1.id_usuario}::uuid
       )
       RETURNING id_publicacion
