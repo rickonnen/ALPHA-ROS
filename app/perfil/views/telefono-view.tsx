@@ -380,12 +380,8 @@ export default function TelefonosView({
         className="px-0 text-white/80 hover:text-white hover:bg-transparent cursor-pointer"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a Seguridad
+        Seguridad
       </Button>
-      <p className="text-xs tracking-widest text-white/50 mb-1 pb-5">
-      SEGURIDAD › GESTIONAR TELÉFONOS
-      </p>
-
       <div className="flex items-center gap-3">
         <Smartphone className="h-9 w-9 text-white/70" />
         <div>
