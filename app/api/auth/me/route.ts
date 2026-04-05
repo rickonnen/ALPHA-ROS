@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 export async function GET(request: NextRequest) {
   try {
     const authToken = request.cookies.get("auth_token")?.value;
-    
+
     if (!authToken) {
       return NextResponse.json(
         { error: "No autenticado" },
@@ -39,10 +39,11 @@ export async function GET(request: NextRequest) {
       id: userData.id_usuario,
       name: userData.nombres,
       email: userData.email,
+      rol: userData.rol,
     };
 
     return NextResponse.json({ user }, { status: 200 });
-    
+
   } catch (error) {
     console.error("Get user error:", error);
     return NextResponse.json(
