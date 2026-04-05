@@ -22,6 +22,5 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
     precio_plan: Number(plan.precio_plan),
   };
 
-  // Pasamos los datos. El "bloqueo" lo hará PagoCliente que es Cliente.
   return <PagoCliente plan={planFormateado} planId={planId} />;
 }
