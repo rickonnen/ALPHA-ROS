@@ -23,7 +23,6 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
  * y soporte para el hook de animación con tipos de cursor.
  * @return {object} Componente visual Header para Next.js.
  */
-import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
