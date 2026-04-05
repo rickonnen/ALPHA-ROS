@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button"; 
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
@@ -19,6 +20,9 @@ import { NotificationPanel } from "@/app/home/components/notifications/Notificat
  * y soporte para el hook de animación con tipos de cursor.
  * @return {object} Componente visual Header para Next.js.
  */
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
+
 const arrNavLinks = [
   { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
   { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
@@ -30,18 +34,20 @@ export const Header = () => {
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
 
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [showProtected, setShowProtected] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAuth,            setShowAuth]            = useState(false);
+  const [showProtected,       setShowProtected]       = useState(false);
+  const [authMode,            setAuthMode]            = useState<"login" | "register">("login");
+  const [showNotifications,   setShowNotifications]   = useState(false);
+  const [bolShowModal,        setBolShowModal]        = useState(false);
+  const [bolChecking,         setBolChecking]         = useState(false);
 
-  const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
+  const refMobileMenuPanel  = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
-  const refNotifPanel = useRef<HTMLDivElement | null>(null);
+  const refNotifPanel       = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = () => setBolIsMobileMenuOpen(false);
 
@@ -61,8 +67,38 @@ export const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  /**
+   * @Funcionalidad: Verifica el límite de publicaciones antes de navegar al formulario.
+   * Si no está autenticado redirige al login.
+   * Si alcanzó el límite muestra el modal HU5.
+   * Si tiene cupos disponibles navega al formulario.
+   */
+  const handlePublicarClick = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
+  };
   const strLinkClassesDesktop = `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
   const strLinkClassesMobile = `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
+
+  //const strLinkClassesDesktop =
+  //  "text-[15px] font-normal text-[#2E2E2E] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] hover:scale-110 inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]";
+  //const strLinkClassesMobile =
+  //  "text-[15px] font-normal text-[#E7E1D7] transition-all duration-300 hover:text-[#c26e5a] hover:drop-shadow-[0_0_8px_#c26e5a] rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E7E1D7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1F3A4D]";
 
   const btnLogoProbol = (
     <Link
@@ -178,12 +214,14 @@ export const Header = () => {
               </Link>
             ))}
 
-            <button
-              onClick={() => router.push(user ? "/publicacion" : "/login")}
-              className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
+            {/* Botón PUBLICAR — verifica límite antes de navegar */}
+            <Button
+              onClick={handlePublicarClick}
+              disabled={bolChecking}
+              className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
             >
-              PUBLICAR
-            </button>
+              {bolChecking ? "..." : "PUBLICAR"}
+            </Button>
 
             {btnNotifications}
             {btnProfile}
@@ -239,12 +277,17 @@ export const Header = () => {
                 <span className="uppercase">NOTIFICACIONES</span>
               </button>
 
-              <button
-                onClick={() => { router.push("/publicacion"); closeMobileMenu(); }}
-                className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background ${strHoverAnimNoTextColor}`}
+              {/* Publicar mobile — también verifica límite */}
+              <Button
+                onClick={() => {
+                  closeMobileMenu();
+                  handlePublicarClick();
+                }}
+                disabled={bolChecking}
+                className="w-full h-12 mt-2 flex items-center justify-center bg-[#C26E5A] text-[#E7E1D7] text-[15px] font-semibold transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none disabled:opacity-60"
               >
-                PUBLICAR
-              </button>
+                {bolChecking ? "..." : "PUBLICAR"}
+              </Button>
 
               {arrNavLinks.map((objLink) => (
                 <div key={objLink.strLabel} onClick={() => { router.push(objLink.strHref); closeMobileMenu(); }}
@@ -281,6 +324,11 @@ export const Header = () => {
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
         initialMode={authMode}
+      />
+      {/* Modal límite de publicaciones gratuitas */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
       />
     </>
   );

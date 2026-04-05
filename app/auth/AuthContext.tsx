@@ -108,6 +108,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (_) {}
 
+    sessionStorage.removeItem("caracteristicasInmueble");
+    sessionStorage.removeItem("informacionComercial");
+    sessionStorage.removeItem("informacionComercialDraft");
+    sessionStorage.removeItem("videoUrl");
+    sessionStorage.removeItem("imageUploader_userInteracted");
+
     setUser(null);
   };
 
