@@ -21,7 +21,7 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
+  const [userRol, setUserRol] = useState<number | null>(null);
   // Validaciones en tiempo real
   function validateField(field: string, value: string) {
     const newErrors = { ...errors };
@@ -85,6 +85,11 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
 
     try {
       await login(email, password);
+      const resMe = await fetch("/api/auth/me");
+    if (resMe.ok) {
+      const dataMe = await resMe.json();
+      setUserRol(dataMe.user.rol); 
+    }
       setShowSuccess(true);
     } catch (err: any) {
       setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
@@ -93,11 +98,17 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     }
   }
 
-  // Manejar cierre del modal de éxito
-  function handleSuccessClose() {
+    // Manejar cierre del modal de éxito
+    function handleSuccessClose() {
     setShowSuccess(false);
     if (onClose) onClose();
-    router.push("/");
+    
+
+    if (userRol === 1) {
+      router.push("/admin/verificacion-pagos");
+    } else {
+      router.push("/");
+    }
   }
 
   // UI
