@@ -70,17 +70,22 @@ function PerfilContent() {
   useEffect(() => {
     if (!userId) {
       setError("No se proporcionó un ID de usuario.");
+      setUsuario(null);
       setLoading(false);
       return;
     }
 
+    setError(null);
+
     const fetchUsuario = async () => {
       try {
         setLoading(true);
+        setError(null);
         const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
         setUsuario(json.data);
+        setError(null);
         //miguel cambio para actualizacion de telefonos
         const tels =
           json.data?.UsuarioTelefono
