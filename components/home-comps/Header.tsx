@@ -12,6 +12,9 @@ import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
+
 /**
  * Dev: Rodrigo Saul Zarate Villarroel     Fecha: 03/04/2026
  * Dev: Erick Eduardo Arnez Torrico        Fecha: 26/03/2026
@@ -31,10 +34,10 @@ const arrNavLinks = [
 
 export const Header = () => {
   const bolHideHeader = useScrollDirection();
+  const { user, logout, isLoading } = useAuth();
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
 
-  const { user, logout, isLoading } = useAuth();
   const router = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -92,6 +95,7 @@ export const Header = () => {
       setBolChecking(false);
     }
   };
+
   const strLinkClassesDesktop = `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`;
   const strLinkClassesMobile = `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`;
 
