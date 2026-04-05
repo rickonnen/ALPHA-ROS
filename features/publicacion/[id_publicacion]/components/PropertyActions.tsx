@@ -1,52 +1,49 @@
 "use client";
 
-/**
- * @Dev: Gustavo Montaño
- * @Fecha: 28/03/2026
- * @Modificación: StefanyS — 29/03/2026
- * @Funcionalidad: Botones de acción en la página de detalle del inmueble.
- *                 Al hacer click en "Publicar otro inmueble" consulta el contador
- *                 del usuario. El modal solo se abre si bolShowModal=true,
- *                 nunca al montar el componente.
- * @param {PropertyActionsProps} props - ID del usuario dueño de la publicación.
- * @return {JSX.Element} Footer con botones y modal controlado.
- */
-
-import { useRouter }             from "next/navigation";
-import { useState }              from "react";
-import { Button }                from "@/components/ui/button";
+import { useRouter }          from "next/navigation";
+import { useState }           from "react";
+import { Button }             from "@/components/ui/button";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import { useAuth }            from "@/app/auth/AuthContext"; // ← ajustá la ruta según tu estructura
 
-// PascalCase para la interfaz - Estándar Alpha-Ros
-interface PropertyActionsProps {
-  strUserId: string;
-}
-
-export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
+export const PropertyActions = () => {
   const router = useRouter();
-  // Inicia en false — el modal NUNCA se abre solo al montar
+  const { user } = useAuth(); // ← reemplaza el localStorage
   const [bolShowModal, setBolShowModal] = useState(false);
   const [bolChecking,  setBolChecking]  = useState(false);
 
-  /**
-   * @Dev: StefanyS
-   * @Fecha: 29/03/2026
-   * @Funcionalidad: Verifica el contador SOLO al hacer click.
-   *                 Nunca modifica bolShowModal al montar o al renderizar.
-   * @return {Promise<void>}
-   */
+  const handleVerMisPublicaciones = () => {
+    if (!user) {
+      router.push("/perfil");
+      return;
+    }
+    router.push(`/perfil?id=${user.id}&view=publicaciones`);
+  };
+
   const handleNuevaPublicacion = async () => {
+    if (!user) {
+      router.push("/publicacion/informacion-comercial");
+      return;
+    }
     setBolChecking(true);
     try {
-      const objEstado = await verificarEstadoPublicacion(strUserId);
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      console.log("objEstado:", objEstado);
       if (objEstado.bolLimiteAlcanzado) {
-        // Solo aquí se abre el modal — después de verificar con un click real
         setBolShowModal(true);
       } else {
+        sessionStorage.removeItem("caracteristicasInmueble");
+        sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+        sessionStorage.removeItem("informacionComercialDraft");
+        sessionStorage.removeItem("informacionComercialDraftUsuario");
+        sessionStorage.removeItem("informacionComercial");
+        sessionStorage.removeItem("videoUrl");
+        sessionStorage.removeItem("imageUploader_userInteracted");
         router.push("/publicacion/informacion-comercial");
       }
-    } catch {
+    } catch (error) {
+      console.error("Error verificando publicaciones:", error);
       router.push("/publicacion/informacion-comercial");
     } finally {
       setBolChecking(false);
@@ -60,7 +57,7 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
           type="button"
           variant="outline"
           className="flex-1 md:flex-none min-w-0 border-[#C26E5A] text-[#C26E5A] px-3 md:px-12 py-4 md:py-7 rounded-lg font-bold text-xs! md:text-lg! hover:bg-[#C26E5A]/5"
-          onClick={() => router.push("/perfil")}
+          onClick={handleVerMisPublicaciones}
         >
           Ver mis publicaciones
         </Button>
@@ -75,7 +72,6 @@ export const PropertyActions = ({ strUserId }: PropertyActionsProps) => {
         </Button>
       </footer>
 
-      {/* Modal — siempre en el DOM pero solo visible cuando bolShowModal=true */}
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}

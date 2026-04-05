@@ -8,7 +8,7 @@
  * @return {JSX.Element} Dropdown accesible de departamentos con validación
  */
 import { useState, useRef, useEffect } from 'react'
-import { Departamento, DEPARTAMENTOS } from '../Hooks/useCaracteristicasForm'
+import { DEPARTAMENTOS, Departamento } from '../Hooks/useCaracteristicasTypes'
 
 interface DepartamentoSelectProps {
   value:    Departamento;

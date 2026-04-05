@@ -11,7 +11,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import FavButton from "@/components/ui/fav";
-
+import { useRouter } from "next/navigation"
 export interface Favorito {
   id: string;
   titulo: string;
@@ -27,10 +27,11 @@ interface FavCardProps {
 }
 
 export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProps) {
-  const handleInfo = (id: string) => {
-    console.log("Ver info de publicación:", id);
-  };
+  const router = useRouter()
 
+  const handleInfo = (id: string) => {
+    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+  };
   return (
     <Card className="border mb-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
       <CardContent className="flex items-center gap-4 px-4">
