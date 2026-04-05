@@ -88,10 +88,12 @@ function PerfilContent() {
         setError(null);
         //miguel cambio para actualizacion de telefonos
         const tels =
-          json.data?.UsuarioTelefono?.map(
-            (ut: any) =>
-              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
-          ) ?? [];
+          json.data?.UsuarioTelefono
+            ?.filter((ut: any) => Boolean(ut.estado))
+            .map(
+              (ut: any) =>
+                `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+            ) ?? [];
         setTelefonos(tels);
       } catch (err: any) {
         setError(err.message);
