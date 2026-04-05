@@ -13,12 +13,12 @@ interface CategoryItem {
 }
 
 interface ExploreCategory {
-  strId:        string;
-  strTitle:     string;
-  intTotal:     number;
-  objIcon:      React.ReactNode;
-  arrItems:     CategoryItem[];
-  strLinkHref:  string;
+  strId:         string;
+  strTitle:      string;
+  intTotal:      number;
+  objIcon:       React.ReactNode;
+  arrItems:      CategoryItem[];
+  strLinkHref:   string;
   strLinkLabel: string;
 }
 
@@ -40,7 +40,7 @@ const strDisplayName: Record<string, string> = {
 //  Funciones fetch → API Routes
 // ---------------------------------------------------------------
 async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
-  const res = await fetch("/app/api/home/explore/alquiler");
+  const res = await fetch("/api/home/explore/alquiler");
   const { data } = await res.json();
   return data.map((row: { ciudad: string; total: number }) => ({
     strName:  row.ciudad,
@@ -49,7 +49,7 @@ async function fetchTop5CiudadesAlquiler(): Promise<CategoryItem[]> {
 }
 
 async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
-  const res = await fetch("/app/api/home/explore/venta");
+  const res = await fetch("/api/home/explore/venta");
   const json = await res.json();
   console.log("respuesta venta:", json);
   const { data } = json;
@@ -61,7 +61,7 @@ async function fetchTop5CiudadesVenta(): Promise<CategoryItem[]> {
 }
 
 async function fetchTiposInmueble(): Promise<CategoryItem[]> {
-  const res = await fetch("/app/api/home/explore/tipos");
+  const res = await fetch("/api/home/explore/tipos");
   const { data } = await res.json();
   return data.map((row: { tipo_inmueble: string; total: number }) => ({
     strName:  strDisplayName[row.tipo_inmueble] ?? row.tipo_inmueble,
@@ -218,30 +218,30 @@ export default function ExploreBy() {
 
   const arrCategories: ExploreCategory[] = [
     {
-      strId:        "rentals",
-      strTitle:     "Alquileres",
-      intTotal:     getTotalCount(arrRentals),
-      objIcon:      <Key className="w-4 h-4" />,
-      arrItems:     arrRentals,
-      strLinkHref:  "/busqueda?operacion=Alquiler",
+      strId:         "rentals",
+      strTitle:      "Alquileres",
+      intTotal:      getTotalCount(arrRentals),
+      objIcon:       <Key className="w-4 h-4" />,
+      arrItems:      arrRentals,
+      strLinkHref:   "/busqueda?operacion=Alquiler",
       strLinkLabel: "Ver todas las ciudades",
     },
     {
-      strId:        "sales",
-      strTitle:     "En venta",
-      intTotal:     getTotalCount(arrSales),
-      objIcon:      <Home className="w-4 h-4" />,
-      arrItems:     arrSales,
-      strLinkHref:  "/busqueda?operacion=Venta",
+      strId:         "sales",
+      strTitle:      "En venta",
+      intTotal:      getTotalCount(arrSales),
+      objIcon:       <Home className="w-4 h-4" />,
+      arrItems:      arrSales,
+      strLinkHref:   "/busqueda?operacion=Venta",
       strLinkLabel: "Ver todas las ciudades",
     },
     {
-      strId:        "property-types",
-      strTitle:     "Tipo de inmueble",
-      intTotal:     getTotalCount(arrPropertyTypes),
-      objIcon:      <Tag className="w-4 h-4" />,
-      arrItems:     arrPropertyTypes,
-      strLinkHref:  "/busqueda",
+      strId:         "property-types",
+      strTitle:      "Tipo de inmueble",
+      intTotal:      getTotalCount(arrPropertyTypes),
+      objIcon:       <Tag className="w-4 h-4" />,
+      arrItems:      arrPropertyTypes,
+      strLinkHref:   "/busqueda",
       strLinkLabel: "Ver todos los tipos",
     },
   ];
