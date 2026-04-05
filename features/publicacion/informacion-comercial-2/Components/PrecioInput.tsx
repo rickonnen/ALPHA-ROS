@@ -38,21 +38,26 @@ export default function PrecioInput({
       <Label htmlFor="precio" className="text-[0.875rem] font-medium text-[#1A1714]">
         Precio
       </Label>
-      <Input
-        id="precio"
-        name="precio"
-        type="text"
-        inputMode="decimal"
-        placeholder="0,00 Bs."
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        autoComplete="off"
-        className={`h-10 text-[0.88rem] text-[#1A1714] focus-visible:ring-0 ${
-          // Borde rojo en error, gris por defecto
-          hasError ? "border-[#C0503A]" : "border-[#D4CFC6]"
-        }`}
-      />
+      <div className="relative">
+        <Input
+          id="precio"
+          name="precio"
+          type="text"
+          inputMode="decimal"
+          placeholder="0,00"
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          autoComplete="off"
+          className={`h-10 pr-10 text-[0.88rem] text-[#1A1714] focus-visible:ring-0 ${
+            // Borde rojo en error, gris por defecto
+            hasError ? "border-[#C0503A]" : "border-[#D4CFC6]"
+          }`}
+        />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[0.75rem] font-medium text-[#8A8480]">
+          Bs.
+        </span>
+      </div>
       {/* Mensaje de error inline debajo del campo */}
       {hasError && errorMsg && (
         <span className="text-[0.74rem] text-[#C0503A] leading-snug">

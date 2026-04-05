@@ -1,14 +1,14 @@
 import { z } from 'zod'
 
 export const DEPARTAMENTO_CIUDAD: Record<string, number> = {
-  beni:       1,
-  chuquisaca: 2,
-  cochabamba: 3,
-  la_paz:     4,
-  oruro:      5,
-  pando:      6,
-  potosi:     7,
-  santa_cruz: 8,
+  beni:       7,
+  chuquisaca: 6,
+  cochabamba: 1,
+  la_paz:     2,
+  oruro:      4,
+  pando:      8,
+  potosi:     5,
+  santa_cruz: 3,
   tarija:     9,
 }
 

@@ -1,18 +1,17 @@
 /**
  * @Dev: Gustavo Montaño
- * @Fecha: 28/03/2026
- * @Modificación: StefanyS — 29/03/2026
+ * @Fecha: 02/03/2026
  * @Funcionalidad: Página del Perfil del Inmueble.
  * @param params - Parámetros de ruta dinámica con el ID de la publicación.
  * @return {JSX.Element} Vista completa del perfil del inmueble.
  */
 
-import { notFound }          from "next/navigation";
-import { Tag, Ruler }        from "lucide-react";
-import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
-import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
+import { notFound } from "next/navigation";
+import { Tag, Ruler } from "lucide-react";
+import { MediaGallery } from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
+import { PropertyDetails } from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
-import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
+import { PropertyActions } from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
 
 export default async function PerfilInmueblePage({
   params,
@@ -33,8 +32,8 @@ export default async function PerfilInmueblePage({
   if (!objPerfil) return notFound();
 
   // Task 4.5: Extraer video ID según plataforma
-  const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
-  const bolEsYoutube   = strVideoUrl
+  const strVideoUrl = objPerfil.Video?.[0]?.url_video ?? null;
+  const bolEsYoutube = strVideoUrl
     ? strVideoUrl.includes("youtube.com") || strVideoUrl.includes("youtu.be")
     : false;
   const bolEsInstagram = strVideoUrl
@@ -57,9 +56,9 @@ export default async function PerfilInmueblePage({
 
   // Task 4.8: Dirección desde relación Ubicacion
   const strDireccion = [
-  objPerfil.Ubicacion?.direccion,
-  objPerfil.Ubicacion?.zona,
-].filter(Boolean).join(", ") || "Dirección no disponible";
+    objPerfil.Ubicacion?.direccion,
+    objPerfil.Ubicacion?.zona,
+  ].filter(Boolean).join(", ") || "Dirección no disponible";
 
   // Task 4.4: URLs de imágenes
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
@@ -114,14 +113,14 @@ export default async function PerfilInmueblePage({
         {/* Task 4.6 + 4.7: Detalles */}
         <PropertyDetails
           objInfo={{
-            strTipoInmueble:  objPerfil.TipoInmueble?.nombre_inmueble   ?? "—",
-            strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion  ?? "—",
-            strDepartamento:  objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
-            strZona:          objPerfil.Ubicacion?.zona ?? "—",
-            intHabitaciones:  objPerfil.habitaciones                     ?? 0,
-            intBanos:         objPerfil.banos                            ?? 0,
-            intPlantas:       objPerfil.plantas                          ?? 0,
-            intGarajes:       objPerfil.garajes                          ?? 0,
+            strTipoInmueble: objPerfil.TipoInmueble?.nombre_inmueble ?? "—",
+            strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion ?? "—",
+            strDepartamento: objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
+            strZona: objPerfil.Ubicacion?.zona ?? "—",
+            intHabitaciones: objPerfil.habitaciones ?? 0,
+            intBanos: objPerfil.banos ?? 0,
+            intPlantas: objPerfil.plantas ?? 0,
+            intGarajes: objPerfil.garajes ?? 0,
           }}
         />
 
@@ -139,7 +138,6 @@ export default async function PerfilInmueblePage({
 
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
         <PropertyActions />
-
       </div>
     </main>
   );
