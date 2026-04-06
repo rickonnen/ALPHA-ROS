@@ -91,7 +91,7 @@ interface TelefonosViewProps {
 const MAX_TELEFONOS = 3;
 
 
-const quitarEspacio = (tel: string) => tel.replace(/\s+/g, "");
+// const quitarEspacio = (tel: string) => tel.replace(/\s+/g, "");
 
 const crearTelefonos = (telefonos: string[]) =>
   Array.from({ length: MAX_TELEFONOS }, (_, i) => telefonos[i] ?? "");
@@ -308,13 +308,22 @@ export default function TelefonosView({
       } 
       
       else {
-        const numeroViejo = snapshot.telefonosValues[slotActual]?.trim();
-        if (!numeroViejo || numeroViejo === numeroNuevo) {
-          setSlotEnEdicion(null);
-          setSnapshot(null);
-          setGuardando(false);
-          return;
-        }
+          const numeroViejo = snapshot.telefonosValues[slotActual]?.trim();
+          const numeroNuevoSinEspacios = numeroNuevo.replace(/\s+/g, "");
+          const numeroViejoSinEspacios = numeroViejo?.replace(/\s+/g, "");
+          if (!numeroViejo || numeroViejoSinEspacios === numeroNuevoSinEspacios) {
+            const nuevosValues = [...telefonosValues];
+            nuevosValues[slotActual] = snapshot.telefonosValues[slotActual];
+            setTelefonosValues(nuevosValues);
+
+            const nuevosEditando = [...editando];
+            nuevosEditando[slotActual] = false;
+            setEditando(nuevosEditando);
+            setSlotEnEdicion(null);
+            setSnapshot(null);
+            setGuardando(false);
+            return;
+          }
 
         res = await fetch("/api/perfil/telefono/update", {
           method: "POST",
@@ -409,17 +418,29 @@ export default function TelefonosView({
 
                 <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
                   <input
-                    value={quitarEspacio(telefonosValues[i] || "")}
+                    value={(telefonosValues[i] || "")}
                     placeholder="Sin teléfono"
                     onChange={(e) => handleChange(i, e.target.value)}
                     onPaste={(e) => e.preventDefault()}
                     onKeyDown={(e) => {
                       const permitidos = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
                       if (permitidos.includes(e.key)) return;
-                      if (telefonosValues[i] === "" || telefonosValues[i] === undefined) {
+
+                      const valorActual = telefonosValues[i] || "";
+
+                      if (valorActual === "" || valorActual === undefined) {
                         if (e.key !== "+") e.preventDefault();
                         return;
                       }
+
+                      if (e.key === " ") {
+                        const pos = e.currentTarget.selectionStart ?? valorActual.length;
+                        const charAntes = valorActual[pos - 1];
+                        const charDespues = valorActual[pos];
+                        if (charAntes === " " || charDespues === " ") e.preventDefault();
+                        return;
+                      }
+
                       if (!/^[0-9]$/.test(e.key)) e.preventDefault();
                     }}
                     readOnly={!editando[i]}
