@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation"
 type HistorialItem = {
   id_publicacion: number;
   fecha: string;
@@ -69,7 +69,10 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
       setPaginaActual(nuevoTotal);
     }
   };
-
+  const router = useRouter();
+  const handleInfo = (id: string) => {
+    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+  };
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
@@ -127,7 +130,7 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
                     variant="ghost"
                     size="sm"
                     className="text-blue-300 hover:text-blue-100"
-                    onClick={() => alert(`Publicación: ${item.Publicacion.titulo}`)}
+                    onClick={() => handleInfo(item.id_publicacion.toString())}
                   >
                     Info
                   </Button>

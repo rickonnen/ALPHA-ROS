@@ -124,10 +124,6 @@ export default function PublicacionesView({
     }
   };
 
-  const handleInfo = (id: string) => {
-    router.push(`/publicaciones/${id}`);
-  };
-
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -137,7 +133,7 @@ export default function PublicacionesView({
               Mis publicaciones
             </CardTitle>
             <Button
-              onClick={() => router.push("/publicaciones/nueva")}
+              onClick={() => router.push("/publicacion/informacion-comercial")}
               size="sm"
               className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
             >
@@ -180,7 +176,6 @@ export default function PublicacionesView({
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
-                  onInfo={handleInfo}
                 />
               ))}
             </div>

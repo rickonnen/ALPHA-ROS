@@ -10,18 +10,30 @@ export const useHoverAnimation = (
   includeGlow: boolean = true, 
   cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' = 'pointer'
 ) => {
+  // Mapeo explícito para que Tailwind detecte las clases completas
+  const cursorClasses = {
+    'pointer': 'cursor-pointer',
+    'text': 'cursor-text',
+    'help': 'cursor-help',
+    'not-allowed': 'cursor-not-allowed',
+    'grab': 'cursor-grab',
+    'zoom-in': 'cursor-zoom-in',
+  };
+
+  const strCursorClass = cursorClasses[cursorType];
+
   // Determinamos si debe escalar: No escalamos en inputs (|) ni en elementos bloqueados (Ø)
-  const shouldScale = cursorType !== 'text' && cursorType !== 'not-allowed';
-  const scaleClass = shouldScale ? "hover:scale-110 active:scale-95" : "";
+  const bolShouldScale = cursorType !== 'text' && cursorType !== 'not-allowed';
+  const strScaleClass = bolShouldScale ? "hover:scale-110 active:scale-95" : "";
 
-  // si es input, el cursor es "text" (|) y no escalamos. Si no, es "pointer" con escala.
-  const baseAnimation = `transition-all duration-300 cursor-${cursorType} ${scaleClass}`;
+  // Base de la animación con la clase de cursor estática
+  const strBaseAnimation = `transition-all duration-300 ${strCursorClass} ${strScaleClass}`;
   
-  // resplandor condicional
-  const glow = includeGlow ? "hover:drop-shadow-[0_0_12px_rgba(194,110,90,0.8)]" : "";
+  // Resplandor condicional
+  const strGlow = includeGlow ? "hover:drop-shadow-[0_0_12px_rgba(194,110,90,0.8)]" : "";
   
-  // color de texto condicional
-  const textColor = includeColor ? "hover:text-[oklch(0.63_0.11_34)]" : "";
+  // Color de texto condicional (siguiendo tu estándar oklch del botón secundario)
+  const strTextColor = includeColor ? "hover:text-[oklch(0.63_0.11_34)]" : "";
 
-  return `${baseAnimation} ${glow} ${textColor}`.trim();
+  return `${strBaseAnimation} ${strGlow} ${strTextColor}`.trim();
 };

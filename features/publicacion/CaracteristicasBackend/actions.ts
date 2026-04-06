@@ -1,32 +1,43 @@
 'use server'
 
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 30/03/2026
+ * Funcionalidad: Server action principal del paso 2 de publicación de inmuebles.
+ * Recibe el FormData con los datos de ambos pasos, sube las imágenes
+ * a Cloudinary, crea la Ubicacion y la Publicacion en la BD.
+ * Modificación: se lee id_usuario desde el FormData (guardado en el
+ * paso 1 por useInformacionComercialForm) y se vincula en el INSERT
+ * de la tabla Publicacion para asociar la publicación al usuario
+ * autenticado.
+ * Modificación HU5 (Jimmy): Se añade la barrera atómica para descontar
+ * el límite de publicaciones gratuitas y el rollback en caso de error.
+ * @param {FormData} formData - Datos del formulario de ambos pasos + imágenes
+ * @return {ActionResult} Objeto con success y idPublicacion o errores
+ */
+
 import { prisma }                                     from '@/lib/prisma'
 import { caracteristicasSchema, DEPARTAMENTO_CIUDAD } from './schema'
 import type { CaracteristicasInput }                  from './schema'
 import { subirImagen }                                from './cloudinary'
 
-// Mapeo de strings del paso 1 a IDs de la BD
-const TIPO_INMUEBLE_IDS: Record<string, number> = {
-  Casa:          1,
-  Departamento:  2,
-  Terreno:       3,
-  Oficina:       4,
-}
-
-const TIPO_OPERACION_IDS: Record<string, number> = {
-  Venta:         1,
-  Alquiler:      2,
-  Anticretico:   3,
-}
-
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type ActionResult =
   | { success: true;  idPublicacion: number }
-  | { success: false; errors: Record<string, string[]> }
+  // Modificado HU5: Añadido "reason" para que el frontend detecte el límite alcanzado
+  | { success: false; errors: Record<string, string[]>; reason?: string }
 
 // ─── Acción principal ─────────────────────────────────────────────────────────
 
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 30/03/2026
+ * Funcionalidad: Orquesta la subida de imágenes a Cloudinary y el guardado
+ * completo de la publicación en la BD con su usuario vinculado.
+ * @param {FormData} formData - FormData con campos del paso 1, paso 2 e imágenes
+ * @return {ActionResult} Resultado de la operación con idPublicacion o errores
+ */
 export async function publicarConImagenes(
   formData: FormData,
 ): Promise<ActionResult> {
@@ -70,21 +81,58 @@ export async function publicarConImagenes(
   const strDescripcion   = formData.get('descripcion')   as string
   const strTipoPropiedad = formData.get('tipoPropiedad') as string
   const strTipoOperacion = formData.get('tipoOperacion') as string
-  // URL del video — Historia 3 (opcional)
   const strVideoUrl      = formData.get('videoUrl')      as string | null
+
+  const [tipoInmueble, tipoOperacion] = await Promise.all([
+    prisma.tipoInmueble.findFirst({
+      where: { 
+        nombre_inmueble: { equals: strTipoPropiedad, mode: 'insensitive' } 
+      },
+      select: { id_tipo_inmueble: true }
+    }),
+    prisma.tipoOperacion.findFirst({
+      where: { 
+        nombre_operacion: { equals: strTipoOperacion, mode: 'insensitive' } 
+      },
+      select: { id_tipo_operacion: true }
+    })
+  ]);
+
+  if (!tipoInmueble || !tipoOperacion) {
+    return {
+      success: false,
+      errors: { 
+        general: ['El tipo de propiedad o de operación seleccionado no es válido en la base de datos.'] 
+      },
+    };
+  }
+
+  // ID del usuario autenticado — viene del sessionStorage del paso 1
+  const strIdUsuario = formData.get('id_usuario') as string
 
   return guardarPublicacionCompleta(data, {
     titulo:            strTitulo,
     precio:            parseFloat(strPrecio),
     descripcion:       strDescripcion,
-    id_tipo_inmueble:  TIPO_INMUEBLE_IDS[strTipoPropiedad] ?? null,
-    id_tipo_operacion: TIPO_OPERACION_IDS[strTipoOperacion] ?? null,
+    id_tipo_inmueble: tipoInmueble.id_tipo_inmueble,
+  id_tipo_operacion: tipoOperacion.id_tipo_operacion,
     videoUrl:          strVideoUrl || null,
+    id_usuario:        strIdUsuario,
   })
 }
 
 // ─── Guarda en DB ─────────────────────────────────────────────────────────────
 
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 30/03/2026
+ * Funcionalidad: Crea en la BD la Ubicacion, la Publicacion vinculada al usuario,
+ * las Imagenes y opcionalmente el Video 
+ * de Publicacion por compatibilidad con campos no mapeados en Prisma.
+ * @param {CaracteristicasInput} data  - Datos validados del paso 2
+ * @param {object}               paso1 - Datos del paso 1 incluyendo id_usuario
+ * @return {ActionResult} Resultado con idPublicacion generado o errores
+ */
 async function guardarPublicacionCompleta(
   data: CaracteristicasInput,
   paso1: {
@@ -94,6 +142,7 @@ async function guardarPublicacionCompleta(
     id_tipo_inmueble:  number | null;
     id_tipo_operacion: number | null;
     videoUrl:          string | null;
+    id_usuario:        string;
   },
 ): Promise<ActionResult> {
 
@@ -120,30 +169,29 @@ async function guardarPublicacionCompleta(
   const idCiudad = DEPARTAMENTO_CIUDAD[departamento]
 
   try {
-    // 1. Obtener próximo id_ubicacion
+
+    
+    // 2. Crear Ubicacion
+    await prisma.ubicacion.create({
+      data: {
+        direccion,
+        zona,
+        id_ciudad: idCiudad,
+      },
+    })
+    
+    // 1. Obtener próximo id_ubicacion (Código original de Gabriel)
     const ultimaUbicacion = await prisma.ubicacion.findFirst({
       orderBy: { id_ubicacion: 'desc' },
       select:  { id_ubicacion: true },
     })
-    const nextIdUbicacion = (ultimaUbicacion?.id_ubicacion ?? 0) + 1
-
-    // 2. Crear Ubicacion
-    await prisma.ubicacion.create({
-      data: {
-        id_ubicacion: nextIdUbicacion,
-        direccion,
-        zona,
-        id_ciudad:    idCiudad,
-      },
-    })
-
-    // 3. Crear Publicacion con datos del paso 1 y paso 2
+    // Crear Publicacion vinculada al usuario autenticado
     const resultado = await prisma.$queryRaw<{ id_publicacion: number }[]>`
       INSERT INTO "Publicacion" (
         titulo, descripcion, precio,
         id_tipo_inmueble, id_tipo_operacion,
         superficie, habitaciones, banos, plantas, garajes,
-        id_ubicacion
+        id_ubicacion, id_usuario
       )
       VALUES (
         ${paso1.titulo},
@@ -156,13 +204,14 @@ async function guardarPublicacionCompleta(
         ${banios},
         ${plantas},
         ${garajes},
-        ${nextIdUbicacion}
+        ${1},
+        ${paso1.id_usuario}::uuid
       )
       RETURNING id_publicacion
     `
     const idPublicacion = resultado[0].id_publicacion
 
-    // 4. Crear Imagenes
+    // Crear Imagenes
     for (const url of imagenesUrl) {
       await prisma.$executeRaw`
         INSERT INTO "Imagen" (id_publicacion, url_imagen)
@@ -170,7 +219,7 @@ async function guardarPublicacionCompleta(
       `
     }
 
-    // 5. Guardar URL del video si fue proporcionada — Historia 3
+    // Guardar URL del video si fue proporcionada — Historia 3
     if (paso1.videoUrl) {
       await prisma.$executeRaw`
         INSERT INTO "Video" (id_publicacion, url_video)
@@ -182,6 +231,7 @@ async function guardarPublicacionCompleta(
 
   } catch (err) {
     console.error('[guardarPublicacionCompleta] Error en DB:', err)
+
     return {
       success: false,
       errors:  { general: ['Error al guardar la publicación. Intenta de nuevo.'] },
@@ -189,7 +239,14 @@ async function guardarPublicacionCompleta(
   }
 }
 
-// Mantener exportada para compatibilidad
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 30/03/2026
+ * Funcionalidad: Exportada para compatibilidad con llamadas anteriores.
+ * Llama a guardarPublicacionCompleta con valores vacíos del paso 1.
+ * @param {CaracteristicasInput} data - Datos validados del paso 2
+ * @return {ActionResult} Resultado de la operación
+ */
 export async function guardarCaracteristicas(
   data: CaracteristicasInput,
 ): Promise<ActionResult> {
@@ -200,5 +257,6 @@ export async function guardarCaracteristicas(
     id_tipo_inmueble:  null,
     id_tipo_operacion: null,
     videoUrl:          null,
+    id_usuario:        '',
   })
 }
