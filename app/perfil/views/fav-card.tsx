@@ -17,6 +17,7 @@ export interface Favorito {
   titulo: string;
   zona: string;
   tipo: string;
+  tipo_operacion: string;
   imagen?: string | null;
 }
 
@@ -51,7 +52,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{favorito.titulo}</p>
           <p className="text-xs text-white/50">{favorito.zona}</p>
-          <p className="text-xs text-white/50">Tipo: {favorito.tipo}</p>
+          <p className="text-xs text-white/50">{favorito.tipo} - {favorito.tipo_operacion}</p>
         </div>
 
         <div className="flex gap-2 flex-shrink-0 items-center">
@@ -61,7 +62,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
             className="text-black border-white/60 hover:bg-white/80"
             onClick={() => handleInfo(favorito.id)}
           >
-            <span className="hidden md:inline">Información</span>
+            <span className="hidden md:inline">Info</span>
             <span className="md:hidden">Info.</span>
           </Button>
 

@@ -69,7 +69,7 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="px-6 md:px-8">
         <CardTitle className="text-lg md:text-xl font-bold border-b border-white/20 pb-2 tracking-tight">
-          Información Personal
+          MI PERFIL
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 px-6 md:px-8">
