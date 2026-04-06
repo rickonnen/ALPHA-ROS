@@ -26,7 +26,6 @@ export interface Publicacion {
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
-  onInfo: (id: string) => void;
 }
 
 export default function PublicacionCard({
