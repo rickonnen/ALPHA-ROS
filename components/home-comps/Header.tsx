@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo, useCallback } from "react";
+import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -35,6 +35,8 @@ const arrNavLinks: NavLink[] = [
 ];
 
 export const Header = () => {
+  const [strFotoPerfil, setStrFotoPerfil] = useState<string>("https://github.com/shadcn.png");
+
   const bolHideHeader = useScrollDirection();
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
@@ -90,7 +92,25 @@ export const Header = () => {
   const strLinkClassesMobile = useMemo(() => 
     `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
   [strHoverAnim]);
-
+  useEffect(() => {
+    if (!objUser?.id) {
+      setStrFotoPerfil("https://github.com/shadcn.png");
+      return;
+    }
+  
+    const fetchFoto = async () => {
+      try {
+        const res = await fetch(`/api/perfil/getFoto?id_usuario=${objUser.id}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        setStrFotoPerfil(json.url_foto_perfil);
+      } catch {
+        // Si falla, queda la imagen por defecto
+      }
+    };
+  
+    fetchFoto();
+  }, [objUser?.id]);
   return (
     <>
       <header
@@ -188,7 +208,12 @@ export const Header = () => {
                 onClick={() => objRouter.push(`/perfil?id=${objUser.id}`)}
                 className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
               >
-                <img src="/account_avatar.svg" alt="Perfil" className="w-7 h-7 object-contain" />
+                <img
+                  src={strFotoPerfil}
+                  alt="Perfil"
+                  className="w-7 h-7 object-contain rounded-full"
+                  onError={(e) => { e.currentTarget.src = "https://github.com/shadcn.png"; }}
+                />
                 <span className="text-[15px] font-semibold uppercase text-foreground leading-none">{objUser.name}</span>
               </button>
             ) : (
@@ -217,7 +242,12 @@ export const Header = () => {
               {objUser ? (
                 <button onClick={() => { objRouter.push(`/perfil?id=${objUser.id}`); handleCloseMobileMenu(); }}
                   className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
-                  <img src="/account_avatar.svg" alt="Perfil" className="w-6 h-6 object-contain brightness-0 invert" />
+                  <img
+                    src={strFotoPerfil}
+                    alt="Perfil"
+                    className="w-6 h-6 object-contain rounded-full"
+                    onError={(e) => { e.currentTarget.src = "https://github.com/shadcn.png"; }}
+                  />
                   <span className="uppercase font-semibold">PERFIL: {objUser.name}</span>
                 </button>
               ) : (

@@ -67,7 +67,7 @@ export default function FavoritoView({ id_usuario }: FavoritoViewProps) {
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
         <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full">
-          Mis favoritos
+          FAVORITOS
         </CardTitle>
       </CardHeader>
 
