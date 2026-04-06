@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
           include: { Telefono: true },
         },
         Rol: true,
-        //Pais: true,
+        Pais: true,
       },
     });
 

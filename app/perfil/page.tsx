@@ -43,6 +43,13 @@ import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
 import { useAuth } from "../auth/AuthContext";
+/*  Dev: David Chavez Totora - sow-davidc 
+    Fecha: 05/04/2026
+    Funcionalidad: integracion del modal de confirmacion para el logout
+      - @param {llamada} - se llama con el titulo, mensaje, funcion a ejecutar al confirmar, funcion a ejecutar al cancelar, y opcionalmente los textos de los botones
+      - @return {accion} - se confirma una accion o se cancela, cerrando el modal
+*/
+import ConfirmModal from "@/components/ui/confirmModal";
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
     Funcionalidad: Página principal de Mi Perfil
@@ -53,6 +60,7 @@ import { useAuth } from "../auth/AuthContext";
 
 function PerfilContent() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
   const userId = user?.id ?? "";
@@ -147,6 +155,16 @@ function PerfilContent() {
     historialPagos: <HistorialPagosView />,
   };
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+  const handleConfirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+    router.push("/");
+  };
+
   return (
     <>
       {loading && (
@@ -234,10 +252,7 @@ function PerfilContent() {
                   ))}
                   <hr className="my-4" />
                   <button
-                    onClick={() => {
-                      logout();
-                      setShowAuth(false);
-                    }}
+                    onClick={ handleLogout }
                     className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
@@ -293,13 +308,11 @@ function PerfilContent() {
                 );
               })}
               <button
-                onClick={() => {
-                  logout();
-                  setShowAuth(false);
-                }}
+                onClick={ handleLogout }
                 className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
               >
-                <LogOut className="h-4 w-4" /> SALIR
+                <LogOut className="h-4 w-4"/> 
+                CERRAR SESION
               </button>
             </nav>
 
@@ -311,6 +324,16 @@ function PerfilContent() {
             </div>
           </div>
         </>
+      )}
+      {showLogoutConfirm && (
+        <ConfirmModal
+          title="¿Cerrar sesión?"
+          message="¿Estás seguro de que deseas cerrar sesión?"
+          confirmLabel="Cerrar sesión"
+          cancelLabel="Cancelar"
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       )}
     </>
   );
