@@ -31,9 +31,9 @@ const arrInfoLinks = [
 ];
 
 const arrSocialLinks = [
-  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-12 w-12", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-8 w-8", objStyle: { transform: "scale(1.12)" } },
   { strHref: "https://www.instagram.com/propbol.inmo/", strAriaLabel: "Instagram", strImgSrc: "/logo-instagram.svg", strImgAlt: "Instagram icon", strImgClasses: "h-10 w-10" },
-  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-8 w-8", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-9 w-9", objStyle: { transform: "scale(1.12)" } },
 ];
 
 export default function Footer() {
