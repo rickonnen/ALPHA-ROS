@@ -3,7 +3,6 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
@@ -12,12 +11,11 @@ import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { usePublicarAccion } from "../hooks/usePublicarAccion";
+import { useFotoPerfil } from "../hooks/useFotoPerfil";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
-
 /**
- * Dev: Rodrigo Saul Zarate Villarroel       Fecha: 03/04/2026
+ * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 03/04/2026
  * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
  * Encabezado principal responsivo con menú desplegable para móviles.
  * Incluye lógica de autenticación, panel de notificaciones con cierre automático,
@@ -26,22 +24,22 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 interface NavLink {
   strHref: string;
   strLabel: string;
+  strValue: string;
 }
 
 const arrNavLinks: NavLink[] = [
-  { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
-  { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" },
+  { strHref: "/busqueda", strLabel: "VENTA", strValue: "Venta" },
+  { strHref: "/busqueda", strLabel: "ALQUILER", strValue: "Alquiler" },
+  { strHref: "/busqueda", strLabel: "ANTICRÉTICO", strValue: "Anticrético" },
 ];
 
 export const Header = () => {
-  const [strFotoPerfil, setStrFotoPerfil] = useState<string>("https://github.com/shadcn.png");
-
   const bolHideHeader = useScrollDirection();
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
   
   const { user: objUser, logout, isLoading: bolIsAuthLoading } = useAuth();
+  const { strFotoPerfil } = useFotoPerfil(objUser?.id);
   const objRouter = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -54,7 +52,10 @@ export const Header = () => {
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
-  const refNotifPanel = useRef<HTMLDivElement | null>(null);
+  
+  // separamos los refs para móvil y escritorio
+  const refNotifPanelMobile = useRef<HTMLDivElement | null>(null);
+  const refNotifPanelDesktop = useRef<HTMLDivElement | null>(null);
 
   const objLogoElement = useMemo(() => (
     <Link
@@ -74,6 +75,14 @@ export const Header = () => {
     handleCloseMobileMenu();
   }, [logout, handleCloseMobileMenu]);
 
+  // nueva función para manejar el redireccionamiento con filtros
+  const handleFilterNavigation = (objLink: NavLink) => {
+    const objParams = new URLSearchParams();
+    objParams.set("operaciones", objLink.strValue);
+    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+    handleCloseMobileMenu();
+  };
+
   const { handlePublicar, bolIsChecking: bolIsCheckingLimit } = usePublicarAccion({
     objUser,
     onShowProtected: () => setBolShowProtected(true),
@@ -83,34 +92,16 @@ export const Header = () => {
   });
 
   useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, bolIsMobileMenuOpen);
-  useClickOutside([refNotifPanel], handleCloseNotifications, bolShowNotifications);
+  useClickOutside([refNotifPanelMobile, refNotifPanelDesktop], handleCloseNotifications, bolShowNotifications);
 
   const strLinkClassesDesktop = useMemo(() => 
-    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`,
+    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund cursor-pointer ${strHoverAnim}`,
   [strHoverAnim]);
 
   const strLinkClassesMobile = useMemo(() => 
     `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
   [strHoverAnim]);
-  useEffect(() => {
-    if (!objUser?.id) {
-      setStrFotoPerfil("https://github.com/shadcn.png");
-      return;
-    }
-  
-    const fetchFoto = async () => {
-      try {
-        const res = await fetch(`/api/perfil/getFoto?id_usuario=${objUser.id}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        setStrFotoPerfil(json.url_foto_perfil);
-      } catch {
-        // Si falla, queda la imagen por defecto
-      }
-    };
-  
-    fetchFoto();
-  }, [objUser?.id]);
+
   return (
     <>
       <header
@@ -125,7 +116,7 @@ export const Header = () => {
 
           <div className="flex lg:hidden items-center gap-2">
             {/* Notificaciones para móvil */}
-            <div className="relative" ref={refNotifPanel}>
+            <div className="relative" ref={refNotifPanelMobile}>
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
@@ -137,7 +128,7 @@ export const Header = () => {
                 </button>
               )}
               {objUser && bolShowNotifications && (
-                <div className="absolute right-0 top-full mt-0">
+                <div className="absolute right-[-15px] top-full mt-0">
                   <NotificationPanel />
                 </div>
               )}
@@ -171,7 +162,13 @@ export const Header = () => {
               </div>
             ) : (
               arrNavLinks.map((objLink) => (
-                <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>{objLink.strLabel}</Link>
+                <button 
+                  key={objLink.strLabel} 
+                  onClick={() => handleFilterNavigation(objLink)} 
+                  className={strLinkClassesDesktop}
+                >
+                  {objLink.strLabel}
+                </button>
               ))
             )}
 
@@ -187,7 +184,7 @@ export const Header = () => {
               </button>
             )}
 
-            <div className="relative" ref={refNotifPanel}>
+            <div className="relative" ref={refNotifPanelDesktop}>
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
@@ -270,7 +267,7 @@ export const Header = () => {
               </button>
 
               {arrNavLinks.map((objLink) => (
-                <div key={objLink.strLabel} onClick={() => { objRouter.push(objLink.strHref); handleCloseMobileMenu(); }}
+                <div key={objLink.strLabel} onClick={() => handleFilterNavigation(objLink)}
                   className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
                   {objLink.strLabel}
                 </div>

@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useAuth } from "@/app/auth/AuthContext";
 import { usePublicarAccion } from "../hooks/usePublicarAccion";
@@ -18,9 +19,9 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import { Skeleton } from "@/components/ui/skeleton";
 
 const arrExploreLinks = [
-  { strHref: "/busqueda?strOperacion=compra", strLabel: "Compra" },
-  { strHref: "/busqueda?strOperacion=alquiler", strLabel: "Alquiler" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "Anticrético" },
+  { strHref: "/busqueda", strLabel: "Venta", strValue: "Venta" },
+  { strHref: "/busqueda", strLabel: "Alquiler", strValue: "Alquiler" },
+  { strHref: "/busqueda", strLabel: "Anticrético", strValue: "Anticrético" },
 ];
 
 const arrInfoLinks = [
@@ -37,6 +38,7 @@ const arrSocialLinks = [
 
 export default function Footer() {
   const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
+  const objRouter = useRouter();
   
   const [bolShowAuth, setBolShowAuth] = useState(false);
   const [bolShowProtected, setBolShowProtected] = useState(false);
@@ -56,7 +58,13 @@ export default function Footer() {
     bolIsAuthLoading,
   });
 
-  // Ajuste de ring-primary para coincidir con el color del texto de los títulos
+  // función para manejar la navegación con parámetros de filtro
+  const handleFilterNavigation = (objLink: { strHref: string; strValue: string }) => {
+    const objParams = new URLSearchParams();
+    objParams.set("operaciones", objLink.strValue);
+    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+  };
+
   const strBaseLinkClasses = useMemo(() => 
     `inline-block rounded-sm text-foreground transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`, 
   [strHoverAnim]);
@@ -88,7 +96,14 @@ export default function Footer() {
             ) : (
               <>
                 {arrExploreLinks.map((link) => (
-                  <li key={link.strLabel}><Link href={link.strHref} className={strBaseLinkClasses}>{link.strLabel}</Link></li>
+                  <li key={link.strLabel}>
+                    <button 
+                      onClick={() => handleFilterNavigation(link)} 
+                      className={strBaseLinkClasses}
+                    >
+                      {link.strLabel}
+                    </button>
+                  </li>
                 ))}
                 <li><button onClick={handlePublicar} className={strBaseLinkClasses}>Publica tu inmueble</button></li>
               </>
