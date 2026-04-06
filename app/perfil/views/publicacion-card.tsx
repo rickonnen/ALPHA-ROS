@@ -14,7 +14,7 @@
 */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 export interface Publicacion {
   id: string;
   titulo: string;
@@ -26,18 +26,13 @@ export interface Publicacion {
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
-  onInfo: (id: string) => void;
 }
 
 export default function PublicacionCard({
   publicacion,
   onEliminar,
-  onInfo,
 }: PublicacionCardProps) {
   const router = useRouter();
-  const handleInfo = (id: string) => {
-    router.push(`/publicacion/perfil_del_inmueble/${id}`);
-  };
   return (
     <Card className="border mb-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
       <CardContent className="flex items-center gap-4 px-4">
@@ -49,8 +44,8 @@ export default function PublicacionCard({
               alt={publicacion.titulo}
               className="object-cover w-full h-full"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-        }}
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
           ) : (
             <span className="text-white/30 text-xs text-center">
@@ -71,7 +66,9 @@ export default function PublicacionCard({
             variant="outline"
             size="sm"
             className="text-black border-white/60 hover:bg-white/80"
-            onClick={() => handleInfo(publicacion.id)}
+            onClick={() =>
+              router.push(`/publicacion/perfil_del_inmueble/${publicacion.id}`)
+            }
           >
             Info.
           </Button>
