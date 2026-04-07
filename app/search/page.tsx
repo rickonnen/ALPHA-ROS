@@ -203,6 +203,7 @@ function SearchPageContent() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
+  const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -343,6 +344,8 @@ function SearchPageContent() {
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
+    setAdvancedFiltersKey(prev => prev + 1);
+    
     void runSearch({
       ubicacion: '',
       operacion: 'venta',
@@ -432,7 +435,10 @@ function SearchPageContent() {
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
                 />
-                <AdvancedFilters onChange={setAdvancedFilterValues} />
+                <AdvancedFilters 
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues} 
+                />
               </div>
 
               <div className="my-4 h-px bg-[#D8D2C8]"></div>
@@ -483,7 +489,10 @@ function SearchPageContent() {
                 onApplyRange={handleApplyRange}
               />
 
-              <AdvancedFilters onChange={setAdvancedFilterValues} />
+              <AdvancedFilters 
+                key={advancedFiltersKey}
+                onChange={setAdvancedFilterValues}
+              />
 
               <div className="bg-[#F4EFE6] border-1 my-4"></div>
               <div>
