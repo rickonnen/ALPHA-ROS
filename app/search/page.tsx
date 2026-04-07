@@ -20,6 +20,7 @@ import PriceDropdown from '@/components/search/priceDropdown';
 import PropertyCard, { type Property } from '@/components/search/propertyCard';
 import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
@@ -214,14 +215,14 @@ function SearchPageContent() {
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
-      selectedOperation !== null ||
-      selectedPropertyTypes.length > 0 ||
-      advancedFilterValues.habitaciones ||
-      advancedFilterValues.banos ||
-      advancedFilterValues.piscina ||
-      appliedPriceFilter?.minPrice !== undefined ||
-      appliedPriceFilter?.maxPrice !== undefined ||
-      selectedSort !== 'fecha-reciente',
+        selectedOperation !== null ||
+        selectedPropertyTypes.length > 0 ||
+        advancedFilterValues.habitaciones ||
+        advancedFilterValues.banos ||
+        advancedFilterValues.piscina ||
+        appliedPriceFilter?.minPrice !== undefined ||
+        appliedPriceFilter?.maxPrice !== undefined ||
+        selectedSort !== 'fecha-reciente',
     );
   }, [
     advancedFilterValues.banos,
@@ -238,9 +239,7 @@ function SearchPageContent() {
   const displayedProperties = useMemo(
     () =>
       sortProperties(
-        searchResults.map((publication) =>
-          mapPublicationToProperty(publication, selectedOperation),
-        ),
+        searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
         selectedSort,
       ),
     [searchResults, selectedOperation, selectedSort],
@@ -252,7 +251,6 @@ function SearchPageContent() {
   const breadcrumbLocationLabel = searchLocation.trim() || 'Bolivia';
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
-  // Guardar filtros en URL cuando se aplican
   const saveFiltersToUrl = () => {
     const urlParams = new URLSearchParams();
 
@@ -332,14 +330,13 @@ function SearchPageContent() {
         ? Number(maxPriceParam)
         : undefined;
 
-    const nextCurrency: Currency =
-      currencyParam === 'BS' ? 'BS' : 'USD';
+    const nextCurrency: Currency = currencyParam === 'BS' ? 'BS' : 'USD';
 
-
-    setAppliedPriceFilter({
-      minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice,
-    });
+    setAppliedPriceFilter(
+      nextMinPrice !== undefined || nextMaxPrice !== undefined
+        ? { minPrice: nextMinPrice, maxPrice: nextMaxPrice }
+        : null,
+    );
 
     setSelectedCurrency(nextCurrency);
     setSearchLocation(nextLocation);
@@ -351,7 +348,7 @@ function SearchPageContent() {
       operacion: nextOperation ?? undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
       minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice, 
+      maxPrice: nextMaxPrice,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -393,7 +390,7 @@ function SearchPageContent() {
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
-    setAdvancedFiltersKey(prev => prev + 1);
+    setAdvancedFiltersKey((prev) => prev + 1);
     window.history.pushState(null, '', '/search');
     void runSearch({
       ubicacion: '',
@@ -485,9 +482,9 @@ function SearchPageContent() {
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
                 />
-                <AdvancedFilters 
+                <AdvancedFilters
                   key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues} 
+                  onChange={setAdvancedFilterValues}
                 />
               </div>
 
@@ -502,13 +499,19 @@ function SearchPageContent() {
       )}
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-        <aside className="hidden space-y-6 md:col-span-3 md:block">
+        <aside className="hidden md:col-span-3 md:block">
           <div className="sticky top-8">
-            <div className="border-gray-300 rounded-4xl bg-white p-6">
+            <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+
               <div className="mb-4 flex items-center gap-2">
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
+                  <input
+                    type="checkbox"
+                    checked={isMapOpen}
+                    onChange={() => setIsMapOpen(!isMapOpen)}
+                    className="sr-only peer"
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
                 </label>
                 <span className="text-sm font-medium text-gray-700">Mapa</span>
@@ -522,39 +525,48 @@ function SearchPageContent() {
                 }}
               />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
-              <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
-              <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
-              <FilterTypeProperty
-                tipos={PROPERTY_TYPE_OPTIONS}
-                selected={selectedPropertyTypes}
-                onChange={setSelectedPropertyTypes}
-              />
+              <div className="my-4 h-px bg-[#F4EFE6]" />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+              <div className="min-h-0 flex-1">
+                <ScrollArea className="h-full pr-4">
+                  <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+                  <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+                  <FilterTypeProperty
+                    tipos={PROPERTY_TYPE_OPTIONS}
+                    selected={selectedPropertyTypes}
+                    onChange={setSelectedPropertyTypes}
+                  />
 
-              <PriceDropdown
-                selectedCurrency={selectedCurrency}
-                appliedPriceFilter={appliedPriceFilter}
-                onCurrencyChange={handleCurrencyChange}
-                onApplyRange={handleApplyRange}
-              />
+                  <div className="my-4 h-px bg-[#F4EFE6]" />
 
-              <AdvancedFilters 
-                key={advancedFiltersKey}
-                onChange={setAdvancedFilterValues}
-              />
+                  <PriceDropdown
+                    selectedCurrency={selectedCurrency}
+                    appliedPriceFilter={appliedPriceFilter}
+                    onCurrencyChange={handleCurrencyChange}
+                    onApplyRange={handleApplyRange}
+                  />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
-              <div>
-                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+                  <AdvancedFilters
+                    key={advancedFiltersKey}
+                    onChange={setAdvancedFilterValues}
+                  />
+
+                  <div className="my-4 h-px bg-[#F4EFE6]" />
+
+                  <div className="pb-2">
+                    <ClearFiltersButton
+                      hasActiveFilters={hasActiveFilters}
+                      onClear={handleClearFilters}
+                    />
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </div>
         </aside>
 
         <main className={`${isMapOpen ? 'md:col-span-5' : 'md:col-span-9'}`}>
-          <div className="mb-6 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
+          <div className="mb-3 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
             <div>
               <nav className="mb-1 text-sm text-gray-500">{breadcrumb}</nav>
               <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
@@ -564,7 +576,7 @@ function SearchPageContent() {
             </div>
           </div>
 
-          <div className="mb-4 block md:hidden">
+          <div className="mb-2 block md:hidden">
             <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
             <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
             <SortSelect onSortChange={handleSort} />
@@ -579,11 +591,33 @@ function SearchPageContent() {
               No se encontraron inmuebles con los filtros aplicados.
             </div>
           ) : (
-            <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
-              {displayedProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} selectedCurrency={selectedCurrency} />
-              ))}
-            </div>
+            <>
+              <div className="md:hidden">
+                <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                  {displayedProperties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      selectedCurrency={selectedCurrency}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="hidden md:block">
+                <ScrollArea className="h-[605px] pr-2">
+                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                    {displayedProperties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        selectedCurrency={selectedCurrency}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </>
           )}
         </main>
 
