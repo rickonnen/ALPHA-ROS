@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { convertUsdToBs, convertBsToUsd } from "@/features/filter_search_page/currencyConverter";
 import CurrencySwitch from "./currencySwitch";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +36,40 @@ export default function PriceDropdown({
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [accordionValue, setAccordionValue] = useState("");
-  const [hasAppliedRange, setHasAppliedRange] = useState(false);
+  const previousCurrencyRef = useRef<Currency>(selectedCurrency);
 
   const maxAllowedPrice = 999999999;
+
+  const handlePriceInputChange =
+    (field: "min" | "max") => (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.trim();
+
+      if (value === "") {
+        setPriceError(null);
+
+        if (field === "min") {
+          setMinPriceInput("");
+        } else {
+          setMaxPriceInput("");
+        }
+        return;
+      }
+
+      const onlyDigits = /^\d+$/.test(value);
+
+      if (!onlyDigits) {
+        setPriceError("Solo se permiten números");
+        return;
+      }
+
+      setPriceError(null);
+
+      if (field === "min") {
+        setMinPriceInput(value);
+      } else {
+        setMaxPriceInput(value);
+      }
+    };
 
   const handleApplyRange = () => {
     const parsedMinPrice =
@@ -47,17 +79,17 @@ export default function PriceDropdown({
       maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput);
 
     if (selectedCurrency !== "USD" && selectedCurrency !== "BS") {
-      setPriceError("Moneda invalida");
+      setPriceError("Moneda inválida");
       return;
     }
 
     if (parsedMinPrice !== undefined && Number.isNaN(parsedMinPrice)) {
-      setPriceError("Precio minimo debe ser un numero");
+      setPriceError("Precio mínimo debe ser un número");
       return;
     }
 
     if (parsedMaxPrice !== undefined && Number.isNaN(parsedMaxPrice)) {
-      setPriceError("Precio máximo debe ser un numero");
+      setPriceError("Precio máximo debe ser un número");
       return;
     }
 
@@ -72,12 +104,12 @@ export default function PriceDropdown({
     }
 
     if (parsedMinPrice !== undefined && parsedMinPrice > maxAllowedPrice) {
-      setPriceError("Precio mínimo excede el valor maximo permitido");
+      setPriceError("Precio mínimo excede el valor máximo permitido");
       return;
     }
 
     if (parsedMaxPrice !== undefined && parsedMaxPrice > maxAllowedPrice) {
-      setPriceError("Precio máximo excede el valor maximo permitido");
+      setPriceError("Precio máximo excede el valor máximo permitido");
       return;
     }
 
@@ -86,7 +118,7 @@ export default function PriceDropdown({
       parsedMaxPrice !== undefined &&
       parsedMinPrice > parsedMaxPrice
     ) {
-      setPriceError("Precio mínimo no puede ser mayor a precio maximo");
+      setPriceError("Precio mínimo no puede ser mayor a precio máximo");
       return;
     }
 
@@ -98,7 +130,6 @@ export default function PriceDropdown({
     });
 
     setAccordionValue("");
-    setHasAppliedRange(true);
   };
 
   const formatPriceValue = (value: number) => {
@@ -106,18 +137,26 @@ export default function PriceDropdown({
   };
 
   const getTriggerLabel = () => {
-    if (!hasAppliedRange) {
-      return "Precio";
-    }
+    const parsedMinInput =
+      minPriceInput.trim() === "" ? undefined : Number(minPriceInput);
+    const parsedMaxInput =
+      maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput);
 
-    const minPrice = appliedPriceFilter?.minPrice;
-    const maxPrice = appliedPriceFilter?.maxPrice;
+    const minPrice =
+      parsedMinInput !== undefined && !Number.isNaN(parsedMinInput)
+        ? parsedMinInput
+        : appliedPriceFilter?.minPrice;
+
+    const maxPrice =
+      parsedMaxInput !== undefined && !Number.isNaN(parsedMaxInput)
+        ? parsedMaxInput
+        : appliedPriceFilter?.maxPrice;
 
     const hasMinPrice = minPrice !== undefined;
     const hasMaxPrice = maxPrice !== undefined;
 
     if (!hasMinPrice && !hasMaxPrice) {
-      return selectedCurrency;
+      return "Precio";
     }
 
     if (hasMinPrice && hasMaxPrice) {
@@ -130,6 +169,80 @@ export default function PriceDropdown({
 
     return `${selectedCurrency} hasta ${formatPriceValue(maxPrice!)}`;
   };
+
+  useEffect(() => {
+    const previousCurrency = previousCurrencyRef.current;
+
+    if (previousCurrency === selectedCurrency) return;
+
+    const convertValue = (value: string) => {
+      if (value.trim() === "") return "";
+
+      const parsedValue = Number(value);
+
+      if (Number.isNaN(parsedValue)) return "";
+
+      if (previousCurrency === "USD" && selectedCurrency === "BS") {
+        return String(convertUsdToBs(parsedValue));
+      }
+
+      if (previousCurrency === "BS" && selectedCurrency === "USD") {
+        return String(convertBsToUsd(parsedValue));
+      }
+
+      return value;
+    };
+
+    setMinPriceInput((prev) => convertValue(prev));
+    setMaxPriceInput((prev) => convertValue(prev));
+
+    previousCurrencyRef.current = selectedCurrency;
+    setPriceError(null);
+  }, [selectedCurrency]);
+
+  useEffect(() => {
+    const previousCurrency = previousCurrencyRef.current;
+
+    if (previousCurrency === selectedCurrency) return;
+
+    const convertNumber = (value?: number) => {
+      if (value === undefined) return undefined;
+
+      if (previousCurrency === "USD" && selectedCurrency === "BS") {
+        return convertUsdToBs(value);
+      }
+
+      if (previousCurrency === "BS" && selectedCurrency === "USD") {
+        return convertBsToUsd(value);
+      }
+
+      return value;
+    };
+
+    const convertValue = (value: string) => {
+      if (value.trim() === "") return "";
+
+      const parsedValue = Number(value);
+
+      if (Number.isNaN(parsedValue)) return "";
+
+      const converted = convertNumber(parsedValue);
+      return converted !== undefined ? String(converted) : "";
+    };
+
+    setMinPriceInput((prev) => convertValue(prev));
+    setMaxPriceInput((prev) => convertValue(prev));
+
+    if (appliedPriceFilter) {
+      onApplyRange({
+        minPrice: convertNumber(appliedPriceFilter.minPrice),
+        maxPrice: convertNumber(appliedPriceFilter.maxPrice),
+      });
+    }
+
+    previousCurrencyRef.current = selectedCurrency;
+    setPriceError(null);
+  }, [selectedCurrency, appliedPriceFilter, onApplyRange]);
 
   return (
     <div className="w-full mt-3">
@@ -161,37 +274,35 @@ export default function PriceDropdown({
 
               <div className="mt-3 flex justify-center gap-2">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={`Min ${selectedCurrency}`}
                   className={cn(
                     "h-10 w-full rounded-[12px] border bg-white px-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#7A756D]",
-                    priceError?.toLowerCase().includes("mínimo") ||
+                    priceError === "Solo se permiten números" ||
+                      priceError?.toLowerCase().includes("mínimo") ||
                       priceError?.toLowerCase().includes("minimo")
                       ? "border-red-500"
                       : "border-[#C8C0B5]"
                   )}
                   value={minPriceInput}
-                  onChange={(e) => {
-                    setMinPriceInput(e.target.value);
-                    setPriceError(null);
-                  }}
+                  onChange={handlePriceInputChange("min")}
                 />
 
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={`Max ${selectedCurrency}`}
                   className={cn(
                     "h-10 w-full rounded-[12px] border bg-white px-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#7A756D]",
-                    priceError?.toLowerCase().includes("máximo") ||
+                    priceError === "Solo se permiten números" ||
+                      priceError?.toLowerCase().includes("máximo") ||
                       priceError?.toLowerCase().includes("maximo")
                       ? "border-red-500"
                       : "border-[#C8C0B5]"
                   )}
                   value={maxPriceInput}
-                  onChange={(e) => {
-                    setMaxPriceInput(e.target.value);
-                    setPriceError(null);
-                  }}
+                  onChange={handlePriceInputChange("max")}
                 />
               </div>
 
@@ -201,7 +312,7 @@ export default function PriceDropdown({
 
               <Button
                 className={cn(
-                  "mt-4 w-full h-10 rounded-[12px] bg-[#1F3A4D] text-base text-white hover:bg-[#C26E5A]",
+                  "mt-4 h-10 w-full rounded-[12px] bg-[#1F3A4D] text-base text-white hover:bg-[#C26E5A]",
                   priceError && "mt-3"
                 )}
                 type="button"
