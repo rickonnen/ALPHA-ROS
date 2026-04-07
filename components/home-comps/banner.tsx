@@ -9,7 +9,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
  * Funcionalidad: Renderiza el banner principal del Home con imágenes cargadas
  * desde Cloudinary. El texto se muestra solo en la primera imagen del carrusel.
  * El banner ocupa aproximadamente 3/4 de la vista para dejar espacio al filtro.
- * @return {React.ReactNode} Componente Banner renderizado
  */
 interface BannerImage {
   intId: number;
@@ -19,12 +18,10 @@ interface BannerImage {
   intOrder: number;
 }
 
-/** Intervalo de autoplay en milisegundos */
 const INT_AUTOPLAY_DELAY: number = 5000;
 
 /**
  * Imágenes del banner obtenidas desde Cloudinary.
- * Reemplazar por las URLs reales del proyecto.
  */
 const ARR_BANNER_IMAGES: BannerImage[] = [
   {
@@ -74,7 +71,6 @@ export default function Banner() {
   /**
    * Avanza el carrusel a la siguiente imagen.
    * Si llega a la última, vuelve a la primera.
-   * @return {void} No retorna ningún valor
    */
   const goToNextImage = useCallback((): void => {
     setIntCurrentIndex((intPreviousIndex: number) => {
@@ -89,7 +85,6 @@ export default function Banner() {
   /**
    * Retrocede el carrusel a la imagen anterior.
    * Si está en la primera, salta a la última.
-   * @return {void} No retorna ningún valor
    */
   const goToPreviousImage = useCallback((): void => {
     setIntCurrentIndex((intPreviousIndex: number) => {
@@ -101,19 +96,24 @@ export default function Banner() {
     });
   }, [arrActiveImages.length]);
 
-  /**
-   * Navega directamente hacia una imagen específica.
-   * @param {number} intSelectedIndex Índice de la imagen seleccionada
-   * @return {void} No retorna ningún valor
-   */
+  
   const goToSelectedImage = (intSelectedIndex: number): void => {
     setIntCurrentIndex(intSelectedIndex);
   };
 
-  /**
-   * Observa la visibilidad del banner para pausar el autoplay
-   * cuando el usuario ya no lo tiene en pantalla.
-   */
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        goToPreviousImage();
+      } else if (event.key === "ArrowRight") {
+        goToNextImage();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNextImage, goToPreviousImage]);
+
   useEffect(() => {
     const objObserver: IntersectionObserver = new IntersectionObserver(
       ([objEntry]: IntersectionObserverEntry[]) => {
@@ -131,16 +131,11 @@ export default function Banner() {
     };
   }, []);
 
-  /**
-   * Inicia o pausa el temporizador automático del carrusel
-   * según cantidad de imágenes y visibilidad del banner.
-   */
   useEffect(() => {
     if (!bolShowControls || !bolIsVisible) {
       if (objTimerRef.current) {
         clearInterval(objTimerRef.current);
       }
-
       return;
     }
 
@@ -151,9 +146,8 @@ export default function Banner() {
         clearInterval(objTimerRef.current);
       }
     };
-  }, [bolShowControls, bolIsVisible, goToNextImage]);
+  }, [bolShowControls, bolIsVisible, goToNextImage, intCurrentIndex]);
 
-  // Protege el render si no existen imágenes activas
   if (arrActiveImages.length === 0) {
     return (
       <section className="w-full overflow-hidden font-sans">

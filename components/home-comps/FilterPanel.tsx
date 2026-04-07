@@ -178,7 +178,7 @@ export default function FilterPanel() {
         <div className="relative flex flex-1 items-center gap-2 px-1">
           <input
             type="text"
-            placeholder="Search for..."
+            placeholder="Buscar por..."
             className="flex-1 bg-transparent px-2 py-2 md:py-0 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund rounded-md text-foreground placeholder:text-muted-foreground"
             value={strCity}
             maxLength={intMaxCityLength}
