@@ -9,12 +9,12 @@ import { useState, useEffect } from "react";
  * URL de la imagen o una imagen por defecto en caso de ausencia o error
  */
 export const useFotoPerfil = (idUsuario: string | undefined) => {
-  const [strFotoPerfil, setStrFotoPerfil] = useState<string>("https://github.com/shadcn.png");
+  const [strFotoPerfil, setStrFotoPerfil] = useState<string>("/account_avatar.svg");
   const [bolLoading, setBolLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!idUsuario) {
-      setStrFotoPerfil("https://github.com/shadcn.png");
+      setStrFotoPerfil("/account_avatar.svg");
       setBolLoading(false);
       return;
     }
@@ -22,15 +22,20 @@ export const useFotoPerfil = (idUsuario: string | undefined) => {
     const fetchFoto = async () => {
       try {
         setBolLoading(true);
-        // usamos la API (route.ts) David - StackOverFlow
         const res = await fetch(`/api/perfil/getFoto?id_usuario=${idUsuario}`);
         if (!res.ok) throw new Error("Error en la red");
         
         const json = await res.json();
-        setStrFotoPerfil(json.url_foto_perfil);
+
+        // verificamos que la propiedad exista y no sea nula/vacía
+        if (json.url_foto_perfil) {
+          setStrFotoPerfil(json.url_foto_perfil);
+        } else {
+          setStrFotoPerfil("/account_avatar.svg");
+        }
       } catch (error) {
-        // el estado ya tiene la imagen por defecto
         console.error("Error al cargar la foto:", error);
+        setStrFotoPerfil("/account_avatar.svg");
       } finally {
         setBolLoading(false);
       }
