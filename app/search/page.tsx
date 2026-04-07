@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -13,7 +12,10 @@ import AdvancedFilters from '@/components/search/advancedFilters';
 import { ApplyFiltersButton } from '@/components/search/applyFiltersButton';
 import { ClearFiltersButton } from '@/components/search/clearFiltersButton';
 import { FilterTypeProperty, type TipoInmueble } from '@/components/search/filterTypeProperty';
-import { OperationTypeFilter, type OperationType } from '@/components/search/operationTypeFilter';
+import {
+  OperationTypeFilter,
+  type OperationTypeValue,
+} from '@/components/search/operationTypeFilter';
 import PriceDropdown from '@/components/search/priceDropdown';
 import PropertyCard, { type Property } from '@/components/search/propertyCard';
 import SearchAutocomplete from '@/components/search/searchAutocomplete';
@@ -57,7 +59,7 @@ function getQueryValues(value: string | null): string[] {
     .filter(Boolean);
 }
 
-function mapQueryOperationToValue(value: string | null): OperationType | null {
+function mapQueryOperationToValue(value: string | null): OperationTypeValue {
   const lastOperation = getQueryValues(value)
     .map((item) => normalizeText(item))
     .filter(Boolean)
@@ -118,7 +120,11 @@ function toNumber(value: number | null | undefined): number {
   return value ?? 0;
 }
 
-function getOperationLabel(value: OperationType): string {
+function getOperationLabel(value: OperationTypeValue): string {
+  if (!value) {
+    return 'Todas las Operaciones';
+  }
+
   switch (value) {
     case 'alquiler':
       return 'Alquiler';
@@ -159,7 +165,7 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
 
 function mapPublicationToProperty(
   publication: PublicacionBusqueda,
-  selectedOperation: OperationType,
+  selectedOperation: OperationTypeValue,
 ): Property {
   const location = [
     publication.ubicacion?.direccion,
@@ -196,18 +202,19 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
-  const [selectedOperation, setSelectedOperation] = useState<OperationType>('venta');
+  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>(null);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
+  const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
-      selectedOperation !== 'venta' ||
+      selectedOperation !== null ||
       selectedPropertyTypes.length > 0 ||
       advancedFilterValues.habitaciones ||
       advancedFilterValues.banos ||
@@ -245,6 +252,25 @@ function SearchPageContent() {
   const breadcrumbLocationLabel = searchLocation.trim() || 'Bolivia';
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
+  // Guardar filtros en URL cuando se aplican
+  const saveFiltersToUrl = () => {
+    const urlParams = new URLSearchParams();
+
+    if (searchLocation) urlParams.set('ciudad', searchLocation);
+    if (selectedOperation !== null) urlParams.set('operaciones', selectedOperation);
+    if (selectedPropertyTypes.length > 0) {
+      const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
+      urlParams.set('tipo', labels);
+    }
+    if (appliedPriceFilter?.minPrice !== undefined) urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
+    if (appliedPriceFilter?.maxPrice !== undefined) urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
+    if (selectedCurrency !== 'USD') urlParams.set('currency', selectedCurrency);
+    if (selectedSort !== 'fecha-reciente') urlParams.set('sort', selectedSort);
+
+    const newUrl = `/search?${urlParams.toString()}`;
+    window.history.pushState(null, '', newUrl);
+  };
+
   const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
     setAppliedPriceFilter(priceFilter);
   };
@@ -264,7 +290,7 @@ function SearchPageContent() {
 
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
-        operacion: selectedOperation,
+        operacion: selectedOperation ?? undefined,
         tipoInmueble: selectedPropertyLabels.join(','),
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
@@ -289,7 +315,7 @@ function SearchPageContent() {
 
   useEffect(() => {
     const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
-    const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones')) ?? 'venta';
+    const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones'));
     const nextPropertyTypes = mapQueryPropertyTypeToIds(searchParams.get('tipo'), PROPERTY_TYPE_OPTIONS);
     const nextPropertyLabels = getPropertyTypeLabelsFromIds(nextPropertyTypes, PROPERTY_TYPE_OPTIONS);
     const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
@@ -300,7 +326,7 @@ function SearchPageContent() {
 
     void runSearch({
       ubicacion: nextLocation,
-      operacion: nextOperation,
+      operacion: nextOperation ?? undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -337,15 +363,17 @@ function SearchPageContent() {
 
   const handleClearFilters = () => {
     setSearchLocation('');
-    setSelectedOperation('venta');
+    setSelectedOperation(null);
     setSelectedPropertyTypes([]);
     setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
+    setAdvancedFiltersKey(prev => prev + 1);
+    window.history.pushState(null, '', '/search');
     void runSearch({
       ubicacion: '',
-      operacion: 'venta',
+      operacion: undefined,
       tipoInmueble: undefined,
       habitaciones: '',
       banos: '',
@@ -411,6 +439,7 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
                 }}
               />
@@ -432,7 +461,10 @@ function SearchPageContent() {
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
                 />
-                <AdvancedFilters onChange={setAdvancedFilterValues} />
+                <AdvancedFilters 
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues} 
+                />
               </div>
 
               <div className="my-4 h-px bg-[#D8D2C8]"></div>
@@ -461,6 +493,7 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
                 }}
               />
@@ -483,7 +516,10 @@ function SearchPageContent() {
                 onApplyRange={handleApplyRange}
               />
 
-              <AdvancedFilters onChange={setAdvancedFilterValues} />
+              <AdvancedFilters 
+                key={advancedFiltersKey}
+                onChange={setAdvancedFilterValues}
+              />
 
               <div className="bg-[#F4EFE6] border-1 my-4"></div>
               <div>
