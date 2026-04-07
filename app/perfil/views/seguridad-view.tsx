@@ -8,6 +8,10 @@
          que debe re-fetchear el usuario y actualizar el header tras guardar
          cambios en editar perfil
 */
+/* Dev: Camila Magne - xdev/sow-camilaM
+   Fecha: 06/04/2026
+   Fix: Corrección de defecto, ajustando la cantidad (4) y tamaño de asteriscos en la sección password según mockup oficial.
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -62,7 +66,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Password</p>
-            <p className="text-sm text-gray-300">********</p>
+            <p className="text-lg text-gray-300 tracking-widest mt-1">****</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
