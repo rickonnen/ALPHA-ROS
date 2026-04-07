@@ -1,620 +1,156 @@
 [
   {
-    "id": 1,
-    "title": "Recordatorio",
-    "message": "Tienes una nueva cita agendada para mañana, a las 8am en el centro de la ciudad",
-    "read": true
+    "id": 22,
+    "title": "BIENVENIDO",
+    "message": "Has iniciado sesión con éxito",
+    "read": true,
+    "createdAt": "2026-03-29T17:00:00Z"
   },
   {
-    "id": 2,
+    "id": 21,
+    "title": "COMPRA EXITOSA",
+    "message": "Has recibido un plan pro",
+    "read": true,
+    "createdAt": "2026-04-07T18:55:00Z"
+  },
+  {
+    "id": 20,
+    "title": "COMPRA EX",
+    "message": "Has recibido un plan pro",
+    "read": true,
+    "createdAt": "2026-04-07T19:30:00Z"
+  },
+  {
+    "id": 19,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 1400",
+    "read": true,
+    "createdAt": "2026-04-07T16:30:00Z"
+  },
+  {
+    "id": 18,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 1300",
+    "read": true,
+    "createdAt": "2026-04-07T15:45:00Z"
+  },
+  {
+    "id": 17,
+    "title": "Nuevo favorito",
+    "message": "Alguien guardó tu propiedad como favorita",
+    "read": true,
+    "createdAt": "2026-04-07T14:20:00Z"
+  },
+  {
+    "id": 16,
+    "title": "Nuevo mensaje",
+    "message": "Un agente quiere contactarse contigo acerca de una nueva propiedad de su interés",
+    "read": true,
+    "createdAt": "2026-04-07T13:10:00Z"
+  },
+  {
+    "id": 15,
+    "title": "Pago recibido",
+    "message": "¡Buenas noticias! Has recibido un pago de Bs. 900. El monto ya está disponible para su uso.",
+    "read": true,
+    "createdAt": "2026-04-07T11:00:00Z"
+  },
+  {
+    "id": 14,
+    "title": "Recordatorio",
+    "message": "Tienes una nueva cita agendada para mañana, a las 8am en el centro de la ciudad",
+    "read": true,
+    "createdAt": "2026-04-07T09:30:00Z"
+  },
+  {
+    "id": 13,
     "title": "Mensaje inmobiliario",
     "message": "Nueva propiedad disponible en tu zona",
-    "read": false
+    "read": true,
+    "createdAt": "2026-04-06T18:00:00Z"
+  },
+  {
+    "id": 12,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 800",
+    "read": true,
+    "createdAt": "2026-04-06T15:30:00Z"
+  },
+  {
+    "id": 11,
+    "title": "Pago recibido",
+    "message": "Se ha recibido un pago exitosamente por un monto de Bs. 900. El dinero ya se encuentra disponible.",
+    "read": true,
+    "createdAt": "2026-04-06T12:00:00Z"
+  },
+  {
+    "id": 10,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 1000",
+    "read": true,
+    "createdAt": "2026-04-06T09:15:00Z"
+  },
+  {
+    "id": 9,
+    "title": "Nuevo favorito",
+    "message": "Alguien guardó tu propiedad",
+    "read": true,
+    "createdAt": "2026-04-05T20:00:00Z"
+  },
+  {
+    "id": 8,
+    "title": "Pago recibido",
+    "message": "Has recibido Bs. 900. Si no realizaste esta operación o no la esperabas, toma precauciones.",
+    "read": true,
+    "createdAt": "2026-04-05T16:45:00Z"
+  },
+  {
+    "id": 7,
+    "title": "Pago recibido",
+    "message": "Has recibido Bs. 900. Si no reconoces este pago, revisa la información.",
+    "read": true,
+    "createdAt": "2026-04-05T13:30:00Z"
+  },
+  {
+    "id": 6,
+    "title": "Mensaje inmobiliario",
+    "message": "Un agente ha actualizado los detalles de una propiedad que tienes guardada",
+    "read": true,
+    "createdAt": "2026-04-05T10:00:00Z"
+  },
+  {
+    "id": 5,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 1100",
+    "read": true,
+    "createdAt": "2026-04-04T17:20:00Z"
+  },
+  {
+    "id": 4,
+    "title": "Pago recibido",
+    "message": "Has recibido un pago de Bs. 1200",
+    "read": true,
+    "createdAt": "2026-04-04T14:00:00Z"
   },
   {
     "id": 3,
     "title": "Nuevo mensaje",
-    "message": "Un agente quiere contactarse contigo, a cerca de una nueva propiedad que es de su interes",
-    "read": true
+    "message": "Tienes un nuevo mensaje de un agente inmobiliario",
+    "read": true,
+    "createdAt": "2026-04-03T11:30:00Z"
   },
   {
-    "id": 4,
-    "title": "Nuevo favorito",
-    "message": "Alguien guardó tu propiedad",
-    "read": true
-  },
-  {
-    "id": 5,
-    "title": "Pago recibido 5",
-    "message": "¡Buenas noticias! Has recibido un pago de Bs. 900. El monto ya está disponible para su uso.",
-    "read": false
-  },
-  {
-    "id": 6,
-    "title": "Pago recibido 6",
-    "message": "Has recibido Bs. 900. Si no realizaste esta operación o no la esperabas, toma precauciones",
-    "read": true
-  },
-  {
-    "id": 7,
-    "title": "Pago recibido 7",
-    "message": "Has recibido Bs. 900. Si no reconoces este pago, revisa la información",
-    "read": false
-  },
-  {
-    "id": 8,
-    "title": "Pago recibido 8",
-    "message": "Has recibido un pago de Bs. 800",
-    "read": false
-  },
-  {
-    "id": 9,
-    "title": "Pago recibido 9",
-    "message": "Se ha recibido un pago exitosamente por un monto de Bs. 900. El dinero ya se encuentra disponible",
-    "read": true
-  },
-  {
-    "id": 10,
-    "title": "Pago recibido 1000",
-    "message": "Has recibido un pago de Bs. 1000",
-    "read": true
-  },
-  {
-    "id": 11,
-    "title": "Pago recibido 1100",
-    "message": "Has recibido un pago de Bs. 1100",
-    "read": true
-  },
-  {
-    "id": 12,
-    "title": "Pago recibido 1200",
-    "message": "Has recibido un pago de Bs. 1200",
-    "read": true
-  },
-  {
-    "id": 13,
-    "title": "Pago recibido 1300",
+    "id": 2,
+    "title": "Pago recibido",
     "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 14,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 15,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 16,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 17,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 18,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 19,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 20,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 21,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 22,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 23,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 24,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 25,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 26,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 27,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 28,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 29,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 30,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 31,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 32,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 33,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 34,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 35,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 36,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 37,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 38,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 39,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 40,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 41,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 42,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": true
-  },
-  {
-    "id": 43,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 44,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": true
-  },
-  {
-    "id": 45,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 46,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": true
-  },
-  {
-    "id": 47,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 48,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 49,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 50,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 51,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 52,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 53,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 54,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 55,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 56,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 57,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 58,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 59,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 60,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 61,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 62,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 63,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 64,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 65,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 66,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 67,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 68,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 69,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 70,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 71,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 72,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 73,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 74,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 75,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 76,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 77,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 78,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 79,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 80,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 81,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 82,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 83,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 84,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 85,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 86,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 87,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 88,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 89,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 90,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 91,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 92,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 93,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 94,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 95,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 96,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 97,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 98,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 99,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 100,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
-  },
-  {
-    "id": 111,
-    "title": "Pago recibido 1400",
-    "message": "Has recibido un pago de Bs. 1400",
-    "read": false
-  },
-  {
-    "id": 102,
-    "title": "Pago recibido 1500",
-    "message": "Has recibido un pago de Bs. 1500",
-    "read": false
-  },
-  {
-    "id": 103,
-    "title": "Pago recibido 1300",
-    "message": "Has recibido un pago de Bs. 1300",
-    "read": false
+    "read": true,
+    "createdAt": "2026-04-02T09:00:00Z"
+  },
+  {
+    "id": 1,
+    "title": "Bienvenido",
+    "message": "Tu cuenta ha sido creada exitosamente. ¡Bienvenido a la plataforma!",
+    "read": true,
+    "createdAt": "2026-04-01T08:00:00Z"
   }
 ]

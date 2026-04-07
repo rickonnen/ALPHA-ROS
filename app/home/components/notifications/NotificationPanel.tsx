@@ -13,7 +13,19 @@ type Notification = {
   description: string;
   read: boolean;
   time?: string;
+  createdAt?: string | null;
 };
+
+function formatRelativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (hours < 24) return `hace ${hours} h`;
+  return `hace ${days} d`;
+}
 
 export function NotificationPanel() {
   const { user } = useAuth(); //NUEVO - obtiene el usuario logueado
@@ -37,11 +49,15 @@ export function NotificationPanel() {
           title: n.title,
           description: n.message,
           read: n.read,
-          time: "ahora",
+          createdAt: n.createdAt ?? null,   // ← agrega esta línea
+          time: n.createdAt ? formatRelativeTime(n.createdAt) : "ahora",
         }));
-
-        //NUEVO - filtra solo las eliminadas de este usuario
-        setNotifications(mapped.filter((n: any) => !localDeletedIds.includes(n.id)));
+        
+        const sorted = mapped.sort((a: any, b: any) =>
+          new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()  // ← cambia esta línea
+        );
+        
+        setNotifications(sorted.filter((n: any) => !localDeletedIds.includes(n.id)));
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
         setHasError(true);
