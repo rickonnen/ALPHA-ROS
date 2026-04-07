@@ -70,7 +70,7 @@ export default async function PerfilInmueblePage({
 
         {/* Task 4.3: Título */}
         <header className="mb-10">
-          <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
         </header>
@@ -131,7 +131,7 @@ export default async function PerfilInmueblePage({
             <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
               Descripción
             </h2>
-            <p className="whitespace-pre-line text-base leading-relaxed opacity-90">
+            <p className="whitespace-pre-line text-base leading-relaxed opacity-90 break-words">
               {objPerfil.descripcion}
             </p>
           </div>
