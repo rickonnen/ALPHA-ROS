@@ -20,6 +20,7 @@ export function NotificationPanel() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -43,6 +44,7 @@ export function NotificationPanel() {
         setNotifications(mapped.filter((n: any) => !localDeletedIds.includes(n.id)));
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -116,6 +118,15 @@ export function NotificationPanel() {
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
           Cargando notificaciones...
         </div>
+      ) : hasError ? (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+          <BellOff size={22} />
+        </div>
+        <p className="text-gray-500 text-sm font-medium">
+          No fue posible cargar las notificaciones.
+        </p>
+      </div>
       ) : visibleNotifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
