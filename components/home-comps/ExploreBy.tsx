@@ -132,9 +132,15 @@ function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
       </div>
 
       <div className="flex-1 px-4 py-4 space-y-1.5">
-        {objCategory.arrItems.map((objItem, intIndex) => (
-          <CategoryRow key={objItem.strName} objItem={objItem} intIndex={intIndex} />
-        ))}
+        {objCategory.arrItems.length === 0 ? (
+          <div className="flex items-center justify-center h-full min-h-[140px]">
+            <p className="text-sm text-[#2E2E2E]/40 font-medium">Aún no existentes</p>
+          </div>
+        ) : (
+          objCategory.arrItems.map((objItem, intIndex) => (
+            <CategoryRow key={objItem.strName} objItem={objItem} intIndex={intIndex} />
+          ))
+        )}
       </div>
 
       <div className="px-5 py-4 border-t border-[#D6CFC3]/70">
@@ -165,11 +171,21 @@ function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
 // ---------------------------------------------------------------
 function ExploreCardSkeleton() {
   return (
-    <div className="flex flex-col rounded-2xl overflow-hidden bg-[#F5F1EA] border border-[#D6CFC3] shadow-sm animate-pulse">
+    <div className="relative flex flex-col rounded-2xl overflow-hidden bg-[#F5F1EA] border border-[#D6CFC3] shadow-sm animate-pulse">
+
+      {/* Ruedita cargando centrada sobre el skeleton */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#F5F1EA]/50 backdrop-blur-[1px]">
+        <div className="h-8 w-8 rounded-full border-4 border-[#D6CFC3] border-t-[#1F3A4D] animate-spin" />
+        <p className="mt-2 text-xs text-[#1F3A4D]/50 font-medium">Cargando...</p>
+      </div>
+
+      {/* Header de las cards */}
       <div className="px-5 py-4 bg-[#1F3A4D] flex justify-between items-center">
         <div className="h-4 w-24 bg-[#E7E1D7]/30 rounded" />
         <div className="h-4 w-12 bg-[#E7E1D7]/30 rounded" />
       </div>
+
+      {/* Filas */}
       <div className="flex-1 px-4 py-4 space-y-1.5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex justify-between px-3 py-2.5 rounded-lg bg-[#F4EFE6]">
@@ -178,9 +194,12 @@ function ExploreCardSkeleton() {
           </div>
         ))}
       </div>
+
+      {/* Footer de las cards */}
       <div className="px-5 py-4 border-t border-[#D6CFC3]/70">
         <div className="h-3 w-36 bg-[#D6CFC3] rounded" />
       </div>
+
     </div>
   );
 }
@@ -223,7 +242,7 @@ export default function ExploreBy() {
       intTotal:      getTotalCount(arrRentals),
       objIcon:       <Key className="w-4 h-4" />,
       arrItems:      arrRentals,
-      strLinkHref:   "/busqueda?operacion=Alquiler",
+      strLinkHref:   "/busqueda?operaciones=Alquiler",
       strLinkLabel: "Ver todas las ciudades",
     },
     {
@@ -232,7 +251,7 @@ export default function ExploreBy() {
       intTotal:      getTotalCount(arrSales),
       objIcon:       <Home className="w-4 h-4" />,
       arrItems:      arrSales,
-      strLinkHref:   "/busqueda?operacion=Venta",
+      strLinkHref:   "/busqueda?operaciones=Venta",
       strLinkLabel: "Ver todas las ciudades",
     },
     {
