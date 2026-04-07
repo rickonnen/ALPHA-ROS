@@ -245,6 +245,25 @@ function SearchPageContent() {
   const breadcrumbLocationLabel = searchLocation.trim() || 'Bolivia';
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
+  // Guardar filtros en URL cuando se aplican
+  const saveFiltersToUrl = () => {
+    const urlParams = new URLSearchParams();
+
+    if (searchLocation) urlParams.set('ciudad', searchLocation);
+    if (selectedOperation !== 'venta') urlParams.set('operaciones', selectedOperation);
+    if (selectedPropertyTypes.length > 0) {
+      const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
+      urlParams.set('tipo', labels);
+    }
+    if (appliedPriceFilter?.minPrice !== undefined) urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
+    if (appliedPriceFilter?.maxPrice !== undefined) urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
+    if (selectedCurrency !== 'USD') urlParams.set('currency', selectedCurrency);
+    if (selectedSort !== 'fecha-reciente') urlParams.set('sort', selectedSort);
+
+    const newUrl = `/search?${urlParams.toString()}`;
+    window.history.pushState(null, '', newUrl);
+  };
+
   const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
     setAppliedPriceFilter(priceFilter);
   };
@@ -291,18 +310,10 @@ function SearchPageContent() {
     const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
     const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones')) ?? 'venta';
     const nextPropertyTypes = mapQueryPropertyTypeToIds(searchParams.get('tipo'), PROPERTY_TYPE_OPTIONS);
-    const nextPropertyLabels = getPropertyTypeLabelsFromIds(nextPropertyTypes, PROPERTY_TYPE_OPTIONS);
-    const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
 
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
-
-    void runSearch({
-      ubicacion: nextLocation,
-      operacion: nextOperation,
-      tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
@@ -343,6 +354,7 @@ function SearchPageContent() {
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
+    window.history.pushState(null, '', '/search');
     void runSearch({
       ubicacion: '',
       operacion: 'venta',
@@ -411,6 +423,7 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
                 }}
               />
@@ -461,6 +474,7 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
                 }}
               />
