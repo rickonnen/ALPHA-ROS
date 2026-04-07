@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Image from 'next/image';
 import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import SearchDetailModal from './SearchDetailModal';
 
 type Currency = "USD" | "BS";
 // defini esta interfaz para los datos pero esto no se si deberia ir aqui, pero por ahora aqui
@@ -25,7 +27,8 @@ export interface Property {
   currencySymbol: string; 
   publishedDate: string;  
   whatsappContact: string; 
-  images: string[];       
+  images: string[];
+  usuarioTelefono?: string;
 }
 
 interface PropertyCardProps {
@@ -34,6 +37,7 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, selectedCurrency }: PropertyCardProps) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   
     const exchangeRate = 6.96;
 
@@ -48,6 +52,9 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
 
   
   const isContactAvailable = !!property.whatsappContact;
+  
+  // Usar teléfono del usuario si está disponible, sino usar el whatsappContact
+  const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
 
   return (
     <div className="group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none">
@@ -125,7 +132,11 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button size="sm" className="h-8 text-[11px]">
+            <Button 
+              size="sm" 
+              className="h-8 text-[11px]"
+              onClick={() => setIsDetailOpen(true)}
+            >
               Ver Detalle
             </Button>
             <Button 
@@ -136,7 +147,7 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
               asChild={isContactAvailable}
             >
               {isContactAvailable ? (
-                <a href={`https://wa.me/${property.whatsappContact}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://wa.me/${telefonoParaWhatsapp}`} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="w-3.5 h-3.5 text-green-600" />
                   <span className="hidden xl:inline">WhatsApp</span>
                 </a>
@@ -148,6 +159,14 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
 
         </div>
       </div>
+
+      {/* Modal de detalle */}
+      <SearchDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        publicacionId={property.id}
+        selectedCurrency={selectedCurrency}
+      />
     </div>
   );
 }
