@@ -1,47 +1,47 @@
+/**
+ * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 03/04/2026
+ * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
+ * Encabezado principal responsivo con menú desplegable para móviles.
+ */
 "use client";
 
-import { useRef, useState, useMemo, useCallback, useEffect } from "react";
+import { useRef, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import Image from "next/image";
+
 import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { usePublicarAccion } from "../hooks/usePublicarAccion";
+import { useFotoPerfil } from "../hooks/useFotoPerfil";
+import { useAuth } from "@/app/auth/AuthContext";
+
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
-import { useAuth } from "@/app/auth/AuthContext";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { usePublicarAccion } from "../hooks/usePublicarAccion";
-import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
-
-/**
- * Dev: Rodrigo Saul Zarate Villarroel       Fecha: 03/04/2026
- * Dev: Erick Eduardo Arnez Torrico         Fecha: 26/03/2026
- * Encabezado principal responsivo con menú desplegable para móviles.
- * Incluye lógica de autenticación, panel de notificaciones con cierre automático,
- * verificación de límites de publicación y optimización de renders con Skeletons.
- */
 interface NavLink {
   strHref: string;
   strLabel: string;
+  strValue: string;
 }
 
 const arrNavLinks: NavLink[] = [
-  { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
-  { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" },
+  { strHref: "/busqueda", strLabel: "EN VENTA", strValue: "Venta" },
+  { strHref: "/busqueda", strLabel: "ALQUILER", strValue: "Alquiler" },
+  { strHref: "/busqueda", strLabel: "ANTICRÉTICO", strValue: "Anticrético" },
 ];
 
 export const Header = () => {
-  const [strFotoPerfil, setStrFotoPerfil] = useState<string>("https://github.com/shadcn.png");
-
   const bolHideHeader = useScrollDirection();
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
   
   const { user: objUser, logout, isLoading: bolIsAuthLoading } = useAuth();
+  const { strFotoPerfil } = useFotoPerfil(objUser?.id);
   const objRouter = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -49,68 +49,70 @@ export const Header = () => {
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
   const [bolShowNotifications, setBolShowNotifications] = useState(false);
-  
   const [bolShowLimitModal, setBolShowLimitModal] = useState(false);
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
-  const refNotifPanel = useRef<HTMLDivElement | null>(null);
+  const refNotifPanelMobile = useRef<HTMLDivElement | null>(null);
+  const refNotifPanelDesktop = useRef<HTMLDivElement | null>(null);
 
-  const objLogoElement = useMemo(() => (
-    <Link
-      href="/"
-      aria-label="Go to home page"
-      className={`inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
-    >
-      <img src="/logo-principal.svg" alt="Portal logo" className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" />
-    </Link>
-  ), [strHoverAnim]);
+  // clases comunes para evitar reconstruir strings
+  const clsFocusBase = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund";
+  
+  const strLinkClassesDesktop = useMemo(() => 
+    `text-body-info font-normal text-foreground inline-block rounded-md px-1 cursor-pointer ${clsFocusBase} ${strHoverAnim}`,
+  [strHoverAnim]);
+
+  const strLinkClassesMobile = useMemo(() => 
+    `text-body-info font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
+  [strHoverAnim]);
 
   const handleCloseMobileMenu = useCallback(() => setBolIsMobileMenuOpen(false), []);
   const handleCloseNotifications = useCallback(() => setBolShowNotifications(false), []);
   
-  const handleLogoutAction = useCallback(() => {
-    logout();
+  //cmanejadores de modales
+  const handleOpenLogin = useCallback(() => {
+    setStrAuthMode("login");
+    setBolShowAuth(true);
     handleCloseMobileMenu();
-  }, [logout, handleCloseMobileMenu]);
+    setBolShowProtected(false);
+  }, [handleCloseMobileMenu]);
+
+  const handleOpenRegister = useCallback(() => {
+    setStrAuthMode("register");
+    setBolShowAuth(true);
+    handleCloseMobileMenu();
+    setBolShowProtected(false);
+  }, [handleCloseMobileMenu]);
+
+  const handleFilterNavigation = useCallback((objLink: NavLink) => {
+    const objParams = new URLSearchParams();
+    objParams.set("operaciones", objLink.strValue);
+    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+    handleCloseMobileMenu();
+  }, [objRouter, handleCloseMobileMenu]);
 
   const { handlePublicar, bolIsChecking: bolIsCheckingLimit } = usePublicarAccion({
     objUser,
     onShowProtected: () => setBolShowProtected(true),
     onShowLimit: () => setBolShowLimitModal(true),
     onCloseMobileMenu: handleCloseMobileMenu,
-    bolIsAuthLoading: bolIsAuthLoading,
+    bolIsAuthLoading,
   });
 
   useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, bolIsMobileMenuOpen);
-  useClickOutside([refNotifPanel], handleCloseNotifications, bolShowNotifications);
+  useClickOutside([refNotifPanelMobile, refNotifPanelDesktop], handleCloseNotifications, bolShowNotifications);
 
-  const strLinkClassesDesktop = useMemo(() => 
-    `text-[15px] font-normal text-foreground inline-block rounded-md px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`,
-  [strHoverAnim]);
+  const objLogoElement = useMemo(() => (
+    <Link href="/" aria-label="Ir a inicio" className={`inline-flex items-center gap-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}>
+      <Image src="/logo-principal.svg" alt="Logo PROBOL" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
+      <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
+        <span className="text-primary">PRO</span>
+        <span className="text-secondary">BOL</span>
+      </span>
+    </Link>
+  ), [strHoverAnim]);
 
-  const strLinkClassesMobile = useMemo(() => 
-    `text-[15px] font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
-  [strHoverAnim]);
-  useEffect(() => {
-    if (!objUser?.id) {
-      setStrFotoPerfil("https://github.com/shadcn.png");
-      return;
-    }
-  
-    const fetchFoto = async () => {
-      try {
-        const res = await fetch(`/api/perfil/getFoto?id_usuario=${objUser.id}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        setStrFotoPerfil(json.url_foto_perfil);
-      } catch {
-        // Si falla, queda la imagen por defecto
-      }
-    };
-  
-    fetchFoto();
-  }, [objUser?.id]);
   return (
     <>
       <header
@@ -119,25 +121,28 @@ export const Header = () => {
         }`}
       >
         <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between">
+          
+          {/* mobil lado izquierdo */}
           <div className="flex lg:hidden">
             {bolIsAuthLoading ? <Skeleton className="h-10 w-28" /> : objLogoElement}
           </div>
 
+          {/* mobil lado derecho */}
           <div className="flex lg:hidden items-center gap-2">
-            {/* Notificaciones para móvil */}
-            <div className="relative" ref={refNotifPanel}>
+            <div className="relative" ref={refNotifPanelMobile}>
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
                 <button
+                  aria-label="Notificaciones"
                   onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 rounded-md flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnim}`}
+                  className={`w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
                 >
-                  <img src="/bell_icon.svg" alt="Notificaciones" className="w-6 h-6 object-contain" />
+                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
                 </button>
               )}
               {objUser && bolShowNotifications && (
-                <div className="absolute right-0 top-full mt-0">
+                <div className="absolute right-[-15px] top-full mt-0">
                   <NotificationPanel />
                 </div>
               )}
@@ -145,34 +150,45 @@ export const Header = () => {
 
             <div ref={refMobileMenuButton}>
               <button
-                className={`p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`}
-                onClick={() => setBolIsMobileMenuOpen((bolPrev) => !bolPrev)}
+                aria-label="Menú principal"
+                aria-expanded={bolIsMobileMenuOpen}
+                className={`p-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}
+                onClick={() => setBolIsMobileMenuOpen((p) => !p)}
               >
-                <img src="/hamburger_icon.svg" alt="Menú" className="w-7 h-7 object-contain" />
+                <img src="/hamburger_icon.svg" alt="" className="w-7 h-7 object-contain" />
               </button>
             </div>
           </div>
 
+          {/* pc lado izquierdo */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {bolIsAuthLoading ? <Skeleton className="h-10 w-32" /> : objLogoElement}
-            {bolIsAuthLoading ? (
-              <Skeleton className="h-5 w-40" />
-            ) : (
-              <Link href={`/cobros/planes`} className={strLinkClassesDesktop}>PLANES DE PUBLICACIÓN</Link>
-            )}
           </div>
 
+          {/* pc lado derecho */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {bolIsAuthLoading ? (
               <div className="flex gap-6">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-20" />
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-5 w-20" />)}
               </div>
             ) : (
               arrNavLinks.map((objLink) => (
-                <Link key={objLink.strLabel} href={objLink.strHref} className={strLinkClassesDesktop}>{objLink.strLabel}</Link>
+                <button 
+                  key={objLink.strLabel} 
+                  onClick={() => handleFilterNavigation(objLink)} 
+                  className={strLinkClassesDesktop}
+                >
+                  {objLink.strLabel}
+                </button>
               ))
+            )}
+
+            {bolIsAuthLoading ? (
+              <Skeleton className="h-5 w-32" />
+            ) : (
+              <Link href="/cobros/planes" className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase`}>
+                planes de<br />publicacion
+              </Link>
             )}
 
             {bolIsAuthLoading ? (
@@ -181,21 +197,22 @@ export const Header = () => {
               <button
                 onClick={handlePublicar}
                 disabled={bolIsCheckingLimit}
-                className={`text-[15px] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 ${strHoverAnimNoTextColor}`}
+                className={`text-body-info px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
                 PUBLICAR
               </button>
             )}
 
-            <div className="relative" ref={refNotifPanel}>
+            <div className="relative" ref={refNotifPanelDesktop}>
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
                 <button
+                  aria-label="Notificaciones"
                   onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
+                  className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
                 >
-                  <img src="/bell_icon.svg" alt="Notificaciones" className="w-6 h-6 object-contain" />
+                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
                 </button>
               )}
               {objUser && bolShowNotifications && <NotificationPanel />}
@@ -205,91 +222,94 @@ export const Header = () => {
               <Skeleton className="h-10 w-36 rounded-full" />
             ) : objUser ? (
               <button
+                aria-label="Perfil de usuario"
                 onClick={() => objRouter.push(`/perfil?id=${objUser.id}`)}
-                className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
+                className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
-                <img
-                  src={strFotoPerfil}
-                  alt="Perfil"
-                  className="w-7 h-7 object-contain rounded-full"
-                  onError={(e) => { e.currentTarget.src = "https://github.com/shadcn.png"; }}
-                />
-                <span className="text-[15px] font-semibold uppercase text-foreground leading-none">{objUser.name}</span>
+                <img src={strFotoPerfil} alt="" className="w-7 h-7 object-contain rounded-full bg-muted" onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; }} />
+                <span className="text-body-info font-semibold uppercase text-foreground leading-none">{objUser.name}</span>
               </button>
             ) : (
               <button
-                onClick={() => { setStrAuthMode("login"); setBolShowAuth(true); }}
-                className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${strHoverAnimNoTextColor}`}
+                onClick={handleOpenLogin}
+                className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
                 <div className="relative flex items-center justify-center">
-                  <img src="/account_avatar.svg" alt="Icono cuenta" className="w-7 h-7 object-contain" />
+                  <img src="/account_avatar.svg" alt="" className="w-7 h-7 object-contain" />
                   <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
                 </div>
-                <span className="text-[15px] font-semibold uppercase text-foreground leading-none pt-0.5">INICIAR SESIÓN</span>
+                <span className="text-body-info font-semibold uppercase text-foreground leading-none pt-0.5">INICIAR SESIÓN</span>
               </button>
             )}
           </div>
         </div>
 
+        {/* movil menú desplegable */}
         {bolIsMobileMenuOpen && (
           <>
-            <div className="lg:hidden fixed inset-0 z-40" onClick={handleCloseMobileMenu} />
-            <div
+            <div className="lg:hidden fixed inset-0 z-40" onClick={handleCloseMobileMenu} aria-hidden="true" />
+            <nav
+              aria-label="Menú móvil"
               ref={refMobileMenuPanel}
-              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 gap-6 z-50"
+              className="lg:hidden absolute top-18 left-0 w-full bg-primary text-primary-foreground shadow-xl flex flex-col px-8 py-6 z-50 animate-in slide-in-from-top-2"
               onClick={(e) => e.stopPropagation()}
             >
               {objUser ? (
-                <button onClick={() => { objRouter.push(`/perfil?id=${objUser.id}`); handleCloseMobileMenu(); }}
-                  className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
-                  <img
-                    src={strFotoPerfil}
-                    alt="Perfil"
-                    className="w-6 h-6 object-contain rounded-full"
-                    onError={(e) => { e.currentTarget.src = "https://github.com/shadcn.png"; }}
-                  />
-                  <span className="uppercase font-semibold">PERFIL: {objUser.name}</span>
+                <button
+                  onClick={() => { objRouter.push(`/perfil?id=${objUser.id}`); handleCloseMobileMenu(); }}
+                  className={`flex items-center gap-4 pb-12 w-full text-left uppercase ${strLinkClassesMobile}`}
+                >
+                  <img src={strFotoPerfil} alt="" className="w-7 h-7 object-contain rounded-full bg-primary-foreground/20" onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; }} />
+                  <span>{objUser.name}</span>
                 </button>
               ) : (
-                <button onClick={() => { setStrAuthMode("login"); setBolShowAuth(true); handleCloseMobileMenu(); }}
-                  className={`flex items-center gap-4 border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
+                <button
+                  onClick={handleOpenLogin}
+                  className={`flex items-center gap-4 pb-12 w-full text-left uppercase ${strLinkClassesMobile}`}
+                >
                   <div className="relative flex items-center justify-center">
-                    <img src="/account_avatar.svg" alt="Login" className="w-6 h-6 object-contain brightness-0 invert" />
+                    <img src="/account_avatar.svg" alt="" className="w-7 h-7 object-contain brightness-0 invert" />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
-                  <span className="uppercase font-semibold pt-0.5">INICIAR SESIÓN</span>
+                  <span>INICIAR SESIÓN</span>
                 </button>
               )}
 
-              <button 
-                onClick={handlePublicar}
-                disabled={bolIsCheckingLimit || bolIsAuthLoading}
-                className={`w-full h-12 mt-2 flex items-center justify-center bg-secondary text-secondary-foreground text-[15px] font-semibold rounded-lg disabled:opacity-60 ${strHoverAnimNoTextColor}`}
-              >
-                PUBLICAR
-              </button>
+              <div className="flex flex-col gap-6">
+                <button 
+                  onClick={handlePublicar}
+                  disabled={bolIsCheckingLimit || bolIsAuthLoading}
+                  className={`border-b border-primary-foreground/10 pb-4 w-full text-left uppercase disabled:opacity-60 ${strLinkClassesMobile}`}
+                >
+                  PUBLICAR
+                </button>
 
-              {arrNavLinks.map((objLink) => (
-                <div key={objLink.strLabel} onClick={() => { objRouter.push(objLink.strHref); handleCloseMobileMenu(); }}
-                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 ${strLinkClassesMobile}`}>
-                  {objLink.strLabel}
+                <div onClick={() => { objRouter.push(`/cobros/planes`); handleCloseMobileMenu(); }}
+                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 uppercase ${strLinkClassesMobile}`}>
+                  PLANES DE PUBLICACIÓN
                 </div>
-              ))}
 
-              <div onClick={() => { objRouter.push(`/cobros/planes`); handleCloseMobileMenu(); }}
-                className={`pt-2 cursor-pointer ${strLinkClassesMobile}`}>
-                PLANES DE PUBLICACIÓN
+                {arrNavLinks.map((objLink) => (
+                  <button 
+                    key={objLink.strLabel} 
+                    onClick={() => handleFilterNavigation(objLink)}
+                    className={`text-left border-b border-primary-foreground/10 pb-4 uppercase w-full ${strLinkClassesMobile}`}
+                  >
+                    {objLink.strLabel}
+                  </button>
+                ))}
               </div>
-            </div>
+            </nav>
           </>
         )}
       </header>
 
+      {/* modals */}
       <ProtectedFeatureModal
         isOpen={bolShowProtected}
         onClose={() => setBolShowProtected(false)}
-        onLoginClick={() => { setBolShowProtected(false); setStrAuthMode("login"); setBolShowAuth(true); }}
-        onRegisterClick={() => { setBolShowProtected(false); setStrAuthMode("register"); setBolShowAuth(true); }}
+        onLoginClick={handleOpenLogin}
+        onRegisterClick={handleOpenRegister}
       />
       
       <AuthModal 
