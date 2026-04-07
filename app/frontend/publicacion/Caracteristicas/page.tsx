@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * Dev: Gabriel Paredes Sipe (Modificado por Jimmy)
- * Date modification: 03/04/2026
- * Modificación: Se agrega id_usuario al FormData antes de llamar a publicarConImagenes.
- * Corrección HU5: Se integra el modal de límite de publicaciones en el submit final.
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 06/04/2026
+ * Corrección: Se integra el modal de límite de publicaciones en el submit final
+ * Corrección: Se agrega modal de confirmación antes de publicar el inmueble
  */
 
 import { useState } from 'react'
@@ -18,8 +18,6 @@ import { VideoSection } from './components/VideoSection'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/app/backend/publicacion/CaracteristicasBackend/actions'
 import { useRouter } from "next/navigation"
-
-// IMPORTAMOS TU MODAL
 import FreePublicationLimitModal from '@/app/frontend/publicacion/components/FreePublicationLimitModal'
 
 export default function CaracteristicasPage() {
@@ -36,12 +34,11 @@ export default function CaracteristicasPage() {
   } = useCaracteristicasForm()
 
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitOk, setSubmitOk] = useState(false)
-  
-  // ESTADO PARA CONTROLAR TU MODAL
-  const [bolShowModal, setBolShowModal] = useState(false)
+  const [isSubmitting,    setIsSubmitting]    = useState(false)
+  const [submitError,     setSubmitError]     = useState<string | null>(null)
+  const [submitOk,        setSubmitOk]        = useState(false)
+  const [bolShowModal,    setBolShowModal]    = useState(false)
+  const [bolConfirmar,    setBolConfirmar]    = useState(false)
 
   const [strVideoUrl, setStrVideoUrl] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -49,19 +46,26 @@ export default function CaracteristicasPage() {
   })
 
   const onChange = handleChange as (field: string, value: string) => void
-  const onBlur = handleBlur as (field: string) => void
+  const onBlur   = handleBlur   as (field: string) => void
 
   const handleVideoUrl = (url: string) => {
     setStrVideoUrl(url)
     sessionStorage.setItem("videoUrl", url)
   }
 
-  const onSubmit = () => {
+  // RM2-13: primero validar el form, si pasa mostrar modal de confirmación
+  const onClickPublicar = () => {
     setSubmitError(null)
+    handleSubmit(() => {
+      setBolConfirmar(true)
+    })
+  }
 
+  // RM2-13: el usuario confirmó en el modal, ahora sí publicar
+  const onConfirmarPublicar = () => {
+    setBolConfirmar(false)
     handleSubmit(async (formValues) => {
       setIsSubmitting(true)
-
       try {
         const strPaso1 = sessionStorage.getItem("informacionComercial")
         if (!strPaso1) {
@@ -103,7 +107,6 @@ export default function CaracteristicasPage() {
           console.log("ID generado por la DB:", result.idPublicacion)
           router.push(`/frontend/publicacion/Perfil_del_Inmueble/${result.idPublicacion}`)
         } else {
-          // VALIDACIÓN HU5: Si el backend rechaza por límite, disparamos el modal
           if (result.reason === "LIMITE_ALCANZADO") {
             setBolShowModal(true)
           } else {
@@ -171,15 +174,15 @@ export default function CaracteristicasPage() {
             garagesValue={values.garajes}
             errors={{
               habitaciones: errors.habitaciones,
-              banios: errors.banios,
-              plantas: errors.plantas,
-              garajes: errors.garajes,
+              banios:       errors.banios,
+              plantas:      errors.plantas,
+              garajes:      errors.garajes,
             }}
             touched={{
               habitaciones: touched.habitaciones ?? false,
-              banios: touched.banios ?? false,
-              plantas: touched.plantas ?? false,
-              garajes: touched.garajes ?? false,
+              banios:       touched.banios       ?? false,
+              plantas:      touched.plantas      ?? false,
+              garajes:      touched.garajes      ?? false,
             }}
             onChange={onChange}
             onBlur={onBlur}
@@ -221,7 +224,7 @@ export default function CaracteristicasPage() {
             <Button
               type="button"
               disabled={isSubmitting}
-              onClick={onSubmit}
+              onClick={onClickPublicar}
               className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold disabled:opacity-60"
             >
               {isSubmitting ? 'Publicando...' : 'Publicar'}
@@ -229,8 +232,39 @@ export default function CaracteristicasPage() {
           </div>
         </div>
       </div>
-      
-      {/* RENDERIZAMOS TU MODAL DE LA HU5 */}
+
+      {/* RM2-13: Modal de confirmación antes de publicar */}
+      {bolConfirmar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm mx-4 flex flex-col gap-4">
+            <h3 className="text-base font-semibold text-[#1F3A4D] text-center">
+              ¿Confirmar publicación?
+            </h3>
+            <p className="text-sm text-gray-500 text-center">
+              ¿Estás seguro de que deseas publicar este inmueble? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 justify-center mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBolConfirmar(false)}
+                className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 py-2 font-semibold"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={onConfirmarPublicar}
+                className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 py-2 font-semibold"
+              >
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HU5: Modal de límite de publicaciones */}
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}

@@ -1,17 +1,13 @@
 /**
  * Dev: Gabriel Paredes Sipe
- * Date modification: 02/04/2026
+ * Date modification: 06/04/2026
  * Funcionalidad: Componente de formulario para ingresar habitaciones,
- *                baños, garajes y plantas de un inmueble con validación.
- *                Corrección de bug: el span de error se renderiza en ambas
- *                celdas de la fila solo cuando al menos una celda de esa
- *                fila tiene error, evitando espacio extra innecesario.
- *                Corrección: borde rojo en inputs cuando touched && error.
- *                Corrección: máximo 2 dígitos permitidos y rango 1–50
- *                validado desde el hook con mensaje de error visible.
+ *                baños, garajes y plantas de un inmueble con validación
+ * Corrección: asterisco (*) en labels de campos obligatorios
  * @param {HabitacionesFormProps} props - Valores, errores, touched, onChange y onBlur
  * @return {JSX.Element} Grid de inputs numéricos para características del inmueble
  */
+import React from 'react'
 
 interface HabitacionesFormProps {
   bedroomsValue:  string;
@@ -69,7 +65,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="habitaciones" className="text-sm font-medium text-[#2E2E2E]">
-          Nro de Habitaciones
+          Nro de Habitaciones <span className="font-normal text-muted-foreground">*</span>
         </label>
         <input
           id="habitaciones"
@@ -87,7 +83,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="banios" className="text-sm font-medium text-[#2E2E2E]">
-          Nro de Baños
+          Nro de Baños <span className="font-normal text-muted-foreground">*</span>
         </label>
         <input
           id="banios"
@@ -105,7 +101,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="garajes" className="text-sm font-medium text-[#2E2E2E]">
-          Nro de Garajes
+          Nro de Garajes <span className="font-normal text-muted-foreground">*</span>
         </label>
         <input
           id="garajes"
@@ -123,7 +119,7 @@ export function HabitacionesForm({ bedroomsValue, bathroomsValue, floorsValue, g
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="plantas" className="text-sm font-medium text-[#2E2E2E]">
-          Nro de Plantas
+          Nro de Plantas <span className="font-normal text-muted-foreground">*</span>
         </label>
         <input
           id="plantas"

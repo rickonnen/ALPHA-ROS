@@ -1,13 +1,23 @@
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 02/04/2026
+ * Funcionalidad: Validación del formulario de características del inmueble
+ *                Corrección:superficie validada con máximo de 1.000.000 m²
+ *                Corrección:zona validada con mínimo de 5 caracteres
+ */
+
 import {
   CaracteristicasFormValues,
   CaracteristicasFormErrors,
   MAX_VALOR_NUMERICO,
   MAX_CARACTERES_ZONA,
+  MIN_CARACTERES_ZONA,
   MIN_IMAGENES,
   MAX_IMAGENES,
   TIPOS_IMAGEN_PERMITIDOS,
   TAMANO_MAXIMO_IMAGEN_MB,
   MIN_CARACTERES_DIRECCION,
+  MAX_SUPERFICIE,
 } from './useCaracteristicasTypes'
 
 function esNumeroEnteroValido(valor: string): boolean {
@@ -17,6 +27,11 @@ function esNumeroEnteroValido(valor: string): boolean {
 function esNumeroDecimalPositivo(valor: string): boolean {
   const limpio = valor.replace(/\./g, '')
   return /^\d+$/.test(limpio) && parseInt(limpio, 10) > 0;
+}
+
+function superficieEnRango(valor: string): boolean {
+  const limpio = parseInt(valor.replace(/\./g, ''), 10)
+  return limpio <= MAX_SUPERFICIE;
 }
 
 export function validate(values: CaracteristicasFormValues): CaracteristicasFormErrors {
@@ -32,6 +47,8 @@ export function validate(values: CaracteristicasFormValues): CaracteristicasForm
     errors.superficie = 'La superficie es obligatoria.';
   } else if (!esNumeroDecimalPositivo(values.superficie)) {
     errors.superficie = 'La superficie debe ser un número mayor a 0.';
+  } else if (!superficieEnRango(values.superficie)) {
+    errors.superficie = 'Máximo 1.000.000 m².';
   }
 
   if (!values.departamento) {
@@ -40,6 +57,8 @@ export function validate(values: CaracteristicasFormValues): CaracteristicasForm
 
   if (!values.zona.trim()) {
     errors.zona = 'La zona es obligatoria.';
+  } else if (values.zona.trim().length < MIN_CARACTERES_ZONA) {
+    errors.zona = `La zona debe tener al menos ${MIN_CARACTERES_ZONA} caracteres.`;
   } else if (values.zona.length > MAX_CARACTERES_ZONA) {
     errors.zona = `La zona no puede superar ${MAX_CARACTERES_ZONA} caracteres.`;
   }
