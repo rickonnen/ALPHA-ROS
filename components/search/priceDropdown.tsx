@@ -37,6 +37,7 @@ export default function PriceDropdown({
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [accordionValue, setAccordionValue] = useState("");
   const previousCurrencyRef = useRef<Currency>(selectedCurrency);
+  const previousAppliedFilterRef = useRef<AppliedPriceFilter | null>(appliedPriceFilter);
 
   const maxAllowedPrice = 999999999;
 
@@ -122,18 +123,38 @@ export default function PriceDropdown({
       return;
     }
 
+    const normalizedMinPrice =
+      parsedMinPrice === undefined
+        ? undefined
+        : selectedCurrency === "BS"
+          ? convertBsToUsd(parsedMinPrice)
+          : parsedMinPrice;
+
+    const normalizedMaxPrice =
+      parsedMaxPrice === undefined
+        ? undefined
+        : selectedCurrency === "BS"
+          ? convertBsToUsd(parsedMaxPrice)
+          : parsedMaxPrice;
+
     setPriceError(null);
 
     onApplyRange({
-      minPrice: parsedMinPrice,
-      maxPrice: parsedMaxPrice,
+      minPrice: normalizedMinPrice,
+      maxPrice: normalizedMaxPrice,
     });
 
     setAccordionValue("");
   };
 
   const formatPriceValue = (value: number) => {
-    return value.toLocaleString("es-BO");
+    const displayValue =
+      selectedCurrency === "BS" ? Math.round(value) : value;
+
+    return displayValue.toLocaleString("es-BO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: selectedCurrency === "BS" ? 0 : 2,
+    });
   };
 
   const getTriggerLabel = () => {
@@ -142,15 +163,20 @@ export default function PriceDropdown({
     const parsedMaxInput =
       maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput);
 
+    const formatFilterValue = (value?: number) => {
+      if (value === undefined) return undefined;
+      return selectedCurrency === "BS" ? convertUsdToBs(value) : value;
+    };
+
     const minPrice =
       parsedMinInput !== undefined && !Number.isNaN(parsedMinInput)
         ? parsedMinInput
-        : appliedPriceFilter?.minPrice;
+        : formatFilterValue(appliedPriceFilter?.minPrice);
 
     const maxPrice =
       parsedMaxInput !== undefined && !Number.isNaN(parsedMaxInput)
         ? parsedMaxInput
-        : appliedPriceFilter?.maxPrice;
+        : formatFilterValue(appliedPriceFilter?.maxPrice);
 
     const hasMinPrice = minPrice !== undefined;
     const hasMaxPrice = maxPrice !== undefined;
@@ -183,7 +209,7 @@ export default function PriceDropdown({
       if (Number.isNaN(parsedValue)) return "";
 
       if (previousCurrency === "USD" && selectedCurrency === "BS") {
-        return String(convertUsdToBs(parsedValue));
+        return String(Math.round(convertUsdToBs(parsedValue)));
       }
 
       if (previousCurrency === "BS" && selectedCurrency === "USD") {
@@ -201,48 +227,43 @@ export default function PriceDropdown({
   }, [selectedCurrency]);
 
   useEffect(() => {
-    const previousCurrency = previousCurrencyRef.current;
+    const minFromFilter = appliedPriceFilter?.minPrice;
+    const maxFromFilter = appliedPriceFilter?.maxPrice;
 
-    if (previousCurrency === selectedCurrency) return;
+    const hasFilterValues =
+      minFromFilter !== undefined || maxFromFilter !== undefined;
 
-    const convertNumber = (value?: number) => {
-      if (value === undefined) return undefined;
+    const previousMin = previousAppliedFilterRef.current?.minPrice;
+    const previousMax = previousAppliedFilterRef.current?.maxPrice;
 
-      if (previousCurrency === "USD" && selectedCurrency === "BS") {
-        return convertUsdToBs(value);
+    const previousHadFilterValues =
+      previousMin !== undefined || previousMax !== undefined;
+
+    if (!hasFilterValues) {
+      if (previousHadFilterValues) {
+        setMinPriceInput("");
+        setMaxPriceInput("");
       }
 
-      if (previousCurrency === "BS" && selectedCurrency === "USD") {
-        return convertBsToUsd(value);
-      }
-
-      return value;
-    };
-
-    const convertValue = (value: string) => {
-      if (value.trim() === "") return "";
-
-      const parsedValue = Number(value);
-
-      if (Number.isNaN(parsedValue)) return "";
-
-      const converted = convertNumber(parsedValue);
-      return converted !== undefined ? String(converted) : "";
-    };
-
-    setMinPriceInput((prev) => convertValue(prev));
-    setMaxPriceInput((prev) => convertValue(prev));
-
-    if (appliedPriceFilter) {
-      onApplyRange({
-        minPrice: convertNumber(appliedPriceFilter.minPrice),
-        maxPrice: convertNumber(appliedPriceFilter.maxPrice),
-      });
+      previousAppliedFilterRef.current = appliedPriceFilter;
+      return;
     }
 
-    previousCurrencyRef.current = selectedCurrency;
-    setPriceError(null);
-  }, [selectedCurrency, appliedPriceFilter, onApplyRange]);
+    const formatValueForInput = (value?: number) => {
+      if (value === undefined) return "";
+
+      if (selectedCurrency === "BS") {
+        return String(Math.round(convertUsdToBs(value)));
+      }
+
+      return String(value);
+    };
+
+    setMinPriceInput(formatValueForInput(minFromFilter));
+    setMaxPriceInput(formatValueForInput(maxFromFilter));
+
+    previousAppliedFilterRef.current = appliedPriceFilter;
+  }, [appliedPriceFilter, selectedCurrency]);
 
   return (
     <div className="w-full mt-3">

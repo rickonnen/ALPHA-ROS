@@ -295,7 +295,6 @@ function SearchPageContent() {
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
         piscina: advancedFilterValues.piscina,
-        currency: selectedCurrency,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
         ...overrides,
@@ -319,7 +318,30 @@ function SearchPageContent() {
     const nextPropertyTypes = mapQueryPropertyTypeToIds(searchParams.get('tipo'), PROPERTY_TYPE_OPTIONS);
     const nextPropertyLabels = getPropertyTypeLabelsFromIds(nextPropertyTypes, PROPERTY_TYPE_OPTIONS);
     const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
+    const minPriceParam = searchParams.get('minPrice');
+    const maxPriceParam = searchParams.get('maxPrice');
+    const currencyParam = searchParams.get('currency');
 
+    const nextMinPrice =
+      minPriceParam !== null && minPriceParam.trim() !== ''
+        ? Number(minPriceParam)
+        : undefined;
+
+    const nextMaxPrice =
+      maxPriceParam !== null && maxPriceParam.trim() !== ''
+        ? Number(maxPriceParam)
+        : undefined;
+
+    const nextCurrency: Currency =
+      currencyParam === 'BS' ? 'BS' : 'USD';
+
+
+    setAppliedPriceFilter({
+      minPrice: nextMinPrice,
+      maxPrice: nextMaxPrice,
+    });
+
+    setSelectedCurrency(nextCurrency);
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
@@ -328,6 +350,8 @@ function SearchPageContent() {
       ubicacion: nextLocation,
       operacion: nextOperation ?? undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
+      minPrice: nextMinPrice,
+      maxPrice: nextMaxPrice, 
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -378,7 +402,6 @@ function SearchPageContent() {
       habitaciones: '',
       banos: '',
       piscina: '',
-      currency: 'USD',
       minPrice: undefined,
       maxPrice: undefined,
     });
@@ -441,6 +464,7 @@ function SearchPageContent() {
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
+                  closeMobileFilters();
                 }}
               />
 
