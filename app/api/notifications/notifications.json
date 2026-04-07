@@ -2,19 +2,19 @@
   {
     "id": 1,
     "title": "Recordatorio",
-    "message": "Tienes una nueva cita agendada para mañana",
+    "message": "Tienes una nueva cita agendada para mañana, a las 8am en el centro de la ciudad",
     "read": true
   },
   {
     "id": 2,
     "title": "Mensaje inmobiliario",
     "message": "Nueva propiedad disponible en tu zona",
-    "read": true
+    "read": false
   },
   {
     "id": 3,
     "title": "Nuevo mensaje",
-    "message": "Un agente quiere contactarse contigo",
+    "message": "Un agente quiere contactarse contigo, a cerca de una nueva propiedad que es de su interes",
     "read": true
   },
   {
@@ -26,31 +26,31 @@
   {
     "id": 5,
     "title": "Pago recibido 5",
-    "message": "Has recibido un pago de Bs. 500",
-    "read": true
+    "message": "¡Buenas noticias! Has recibido un pago de Bs. 900. El monto ya está disponible para su uso.",
+    "read": false
   },
   {
     "id": 6,
     "title": "Pago recibido 6",
-    "message": "Has recibido un pago de Bs. 600",
+    "message": "Has recibido Bs. 900. Si no realizaste esta operación o no la esperabas, toma precauciones",
     "read": true
   },
   {
     "id": 7,
     "title": "Pago recibido 7",
-    "message": "Has recibido un pago de Bs. 700",
-    "read": true
+    "message": "Has recibido Bs. 900. Si no reconoces este pago, revisa la información",
+    "read": false
   },
   {
     "id": 8,
     "title": "Pago recibido 8",
     "message": "Has recibido un pago de Bs. 800",
-    "read": true
+    "read": false
   },
   {
     "id": 9,
     "title": "Pago recibido 9",
-    "message": "Has recibido un pago de Bs. 900",
+    "message": "Se ha recibido un pago exitosamente por un monto de Bs. 900. El dinero ya se encuentra disponible",
     "read": true
   },
   {
