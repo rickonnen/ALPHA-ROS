@@ -1,6 +1,6 @@
 /**
- * Dev: Marcela C.
- * Date: 01/04/2026
+ * Dev: Gustavo Montaño
+ * Date: 07/04/2026
  * Funcionalidad: Grilla desktop adaptativa según cantidad de media (HU4 - Tasks 4.4, 4.5, 4.11)
  * @param arrImagenesSafe - URLs de imágenes con fallback aplicado
  * @param strVideoId      - ID del video YouTube (opcional)
@@ -48,19 +48,19 @@ export const MediaGalleryDesktop = ({
     <div className="relative bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm group cursor-pointer h-full">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-  src={arrImagenesSafe[intCurrentIndex]}
-  onError={(e) => onImgError(e, intCurrentIndex)}
-  onClick={() => onOpenLightbox(intCurrentIndex)}
-  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-  alt={`Vista ${intCurrentIndex + 1}`}
-/>
+        src={arrImagenesSafe[intCurrentIndex]}
+        onError={(e) => onImgError(e, intCurrentIndex)}
+        onClick={() => onOpenLightbox(intCurrentIndex)}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        alt={`Vista ${intCurrentIndex + 1}`}
+      />
       <div
         onClick={() => onOpenLightbox(intCurrentIndex)}
         className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10"
       >
         <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
       </div>
-      {intCurrentIndex > 0 && (
+      {intCurrentIndex > 0 && !bolCase2 && (
         <button
           onClick={(e) => { e.stopPropagation(); onPrev(); }}
           className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white transition z-10"
@@ -68,8 +68,7 @@ export const MediaGalleryDesktop = ({
           <ChevronLeft className="w-5 h-5 text-[#2E2E2E]" />
         </button>
       )}
-      {/* Right arrow */}
-      {intCurrentIndex < arrImagenesSafe.length - 1 && (
+      {intCurrentIndex < arrImagenesSafe.length - 1 && !bolCase2 && (
         <button
           onClick={(e) => { e.stopPropagation(); onNext(); }}
           className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow hover:bg-white transition z-10"
@@ -77,8 +76,7 @@ export const MediaGalleryDesktop = ({
           <ChevronRight className="w-5 h-5 text-[#2E2E2E]" />
         </button>
       )}
-      {/* Dots — only if more than 1 image */}
-      {intImgCount > 1 && (
+      {intImgCount > 1 && !bolCase2 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-10">
           {arrImagenesSafe.map((_, intIdx) => (
             <div
@@ -90,7 +88,6 @@ export const MediaGalleryDesktop = ({
       )}
     </div>
   );
-
   const SlotVideo = strVideoId ? (
     <iframe
       className="w-full h-full border-0 rounded-2xl"
@@ -106,8 +103,6 @@ export const MediaGalleryDesktop = ({
       allowFullScreen
     />
   ) : null;
-
- 
   if (bolCase1) {
     return (
       <div className="hidden lg:block h-125">
@@ -115,31 +110,31 @@ export const MediaGalleryDesktop = ({
       </div>
     );
   }
- 
   if (bolCase2) {
     return (
       <div className="hidden lg:grid grid-cols-2 gap-4 h-125">
-        {/* Slot 1: main image */}
         {SlotPrincipal}
-        {/* Slot 2: video or second image */}
         <div className="bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-inner">
           {bolHasVideo ? (
             SlotVideo
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={arrImagenesSafe[1]}
-              onError={(e) => onImgError(e, 1)}
-              onClick={() => onOpenLightbox(1)}
-              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
-              alt="Vista secundaria"
-            />
+            <div className="relative w-full h-full group cursor-pointer" onClick={() => onOpenLightbox(1)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={arrImagenesSafe[1]}
+                onError={(e) => onImgError(e, 1)}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                alt="Vista secundaria"
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+              </div>
+            </div>
           )}
         </div>
       </div>
     );
   }
-
 
   const intSlot2Idx = bolHasVideo
     ? (intCurrentIndex + 1) % intImgCount
@@ -148,39 +143,42 @@ export const MediaGalleryDesktop = ({
 
   return (
     <div className="hidden lg:grid grid-cols-3 gap-4 h-125">
-      {/* Slot 1: main image */}
       <div className="col-span-2 h-full">
         {SlotPrincipal}
       </div>
-      {/* Right column */}
       <div className="flex flex-col gap-4">
-        {/* Slot 2: video or image */}
         <div className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-inner">
           {bolHasVideo ? (
             SlotVideo
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={arrImagenesSafe[intSlot2Idx]}
-              onError={(e) => onImgError(e, intSlot2Idx)}
-              onClick={() => onOpenLightbox(intSlot2Idx)}
-              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition"
-              alt="Vista secundaria"
-            />
+            <div className="relative w-full h-full group cursor-pointer" onClick={() => onOpenLightbox(intSlot2Idx)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={arrImagenesSafe[intSlot2Idx]}
+                onError={(e) => onImgError(e, intSlot2Idx)}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                alt="Vista secundaria"
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+              </div>
+            </div>
           )}
         </div>
-        {/* Slot 3: always an image */}
         <div
-          className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:opacity-90 transition"
+          className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm relative group cursor-pointer"
           onClick={() => onOpenLightbox(bolHasVideo ? intSlot2Idx : intSlot3Idx)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={arrImagenesSafe[bolHasVideo ? intSlot2Idx : intSlot3Idx] || strFallback}
             onError={(e) => onImgError(e, bolHasVideo ? intSlot2Idx : intSlot3Idx)}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             alt="Vista adicional"
           />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+            <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+          </div>
         </div>
       </div>
     </div>
