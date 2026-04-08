@@ -83,6 +83,8 @@ export default function PagoCliente({ plan, planId }: Props) {
       });
       // para evitar hace duplicado de filas preguntar a la bd, "hay x pago?" 
       if (res.ok) {
+        //para solucionar el error de refrescar o volver con retrocede
+        sessionStorage.setItem(`notificado_${planId}`, "true");
         setYaPresionóAceptar(true); 
         setEstadoModal("procesando"); 
       } else {
@@ -92,6 +94,17 @@ export default function PagoCliente({ plan, planId }: Props) {
       setEstadoModal("ya_pendiente");
     }
   };
+
+  //aqui borrmaos nuestra sessionStorage para mas comprars en el futuro
+  useEffect(() => {
+    const yaFueNotificado = sessionStorage.getItem(`notificado_${planId}`);
+    if (yaFueNotificado) {
+      sessionStorage.removeItem(`notificado_${planId}`);
+      router.push("/cobros/planes");
+    }
+  }, [planId, router]);
+
+
   //funcion para ver que modal mostrar al dar click al boton verificar pago
   const alDarClickEnVerificarPrincipal = () => {
     if (yaPresionóAceptar) {
@@ -120,6 +133,14 @@ export default function PagoCliente({ plan, planId }: Props) {
 
   // por si no es un usuario logueado mostrar ese return
   if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
+
+  const formateadorPrecio = new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const precioFormateado = formateadorPrecio.format(Number(plan.precio_plan));
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
@@ -154,7 +175,7 @@ export default function PagoCliente({ plan, planId }: Props) {
             Total a pagar
           </h2>
           <div className="text-3xl mb-10 text-foreground font-semibold">
-            $ {Number(plan.precio_plan).toLocaleString("es-ES")}
+            $ {precioFormateado}
           </div>
 
           <div className="mb-10 flex h-64 w-64 items-center justify-center overflow-hidden rounded-md border border-border shadow-sm">
