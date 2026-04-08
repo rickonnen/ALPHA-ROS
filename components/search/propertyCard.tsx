@@ -34,9 +34,20 @@ export interface Property {
 interface PropertyCardProps {
   property: Property;
   selectedCurrency: Currency;
+  isHovered?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onClick?: () => void;
 }
 
-export default function PropertyCard({ property, selectedCurrency }: PropertyCardProps) {
+export default function PropertyCard({ 
+  property, 
+  selectedCurrency,
+  isHovered = false,
+  onMouseEnter,
+  onMouseLeave,
+  onClick
+}: PropertyCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
     const exchangeRate = 6.96;
@@ -57,7 +68,16 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
   const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
 
   return (
-    <div className="group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none">
+    <div 
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      className={`group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none cursor-pointer ${
+        isHovered 
+          ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
+          : 'border-gray-100'
+      }`}
+    >
       
       {/*  lado izquierdo (carrusel) */}
       <div className="relative w-2/5 sm:w-1/3 h-48 shrink-0 overflow-hidden">

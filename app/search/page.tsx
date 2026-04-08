@@ -23,6 +23,8 @@ import { SortSelect } from '@/components/search/SortSelect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import SearchMapClient from './SearchMapClient';
+import { convertPublicacionesToLocations } from '@/lib/locations';
 
 type Currency = 'USD' | 'BS';
 
@@ -211,6 +213,9 @@ function SearchPageContent() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
   const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
+  const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -498,7 +503,7 @@ function SearchPageContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:min-h-[calc(100vh-200px)]">
         <aside className="hidden md:col-span-3 md:block">
           <div className="sticky top-8">
             <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
@@ -592,26 +597,56 @@ function SearchPageContent() {
             </div>
           ) : (
             <>
-              <div className="md:hidden">
+              <div className={`md:hidden ${isMapOpen ? 'hidden' : ''}`}>
                 <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                   {displayedProperties.map((property) => (
                     <PropertyCard
                       key={property.id}
                       property={property}
                       selectedCurrency={selectedCurrency}
+                      isHovered={hoveredId === property.id}
+                      onMouseEnter={() => {
+                        setHoveredId(property.id);
+                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                        if (location?.latitud && location?.longitud) {
+                          setHoveredPos([Number(location.latitud), Number(location.longitud)]);
+                        }
+                      }}
+                      onMouseLeave={() => setHoveredPos(null)}
+                      onClick={() => {
+                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                        if (location?.latitud && location?.longitud) {
+                          setSelectedPos([Number(location.latitud), Number(location.longitud)]);
+                        }
+                      }}
                     />
                   ))}
                 </div>
               </div>
 
               <div className="hidden md:block">
-                <ScrollArea className="h-[605px] pr-2">
+                <ScrollArea className="h-[605px] pr-4">
                   <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                     {displayedProperties.map((property) => (
                       <PropertyCard
                         key={property.id}
                         property={property}
                         selectedCurrency={selectedCurrency}
+                        isHovered={hoveredId === property.id}
+                        onMouseEnter={() => {
+                          setHoveredId(property.id);
+                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                          if (location?.latitud && location?.longitud) {
+                            setHoveredPos([Number(location.latitud), Number(location.longitud)]);
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredPos(null)}
+                        onClick={() => {
+                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                          if (location?.latitud && location?.longitud) {
+                            setSelectedPos([Number(location.latitud), Number(location.longitud)]);
+                          }
+                        }}
                       />
                     ))}
                   </div>
@@ -622,12 +657,14 @@ function SearchPageContent() {
         </main>
 
         {isMapOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[90px] z-40 bg-white md:relative md:inset-auto md:z-0 md:col-span-4 md:h-[calc(90vh-2rem)] md:sticky md:top-4 md:rounded-xl md:border-2 md:border-gray-200">
-            <div className="relative h-full w-full overflow-hidden rounded-xl bg-gray-100">
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                [Componente Mapa Activo]
-              </div>
-            </div>
+          <div className="fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden">
+            <SearchMapClient 
+              locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
+              hoveredId={hoveredId}
+              selectedPos={selectedPos}
+              hoveredPos={hoveredPos}
+              setSelectedPos={setSelectedPos}
+            />
           </div>
         )}
       </div>

@@ -5,7 +5,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
 import MarkerClusterGroup from "react-leaflet-cluster"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-import { Location } from "@/lib/locations-placeholder-data"
+import type { Location } from "@/lib/locations"
 import ChangeView from "./ChangeView"
 import { createPriceIcon, createClusterIcon } from "./icons"
 
