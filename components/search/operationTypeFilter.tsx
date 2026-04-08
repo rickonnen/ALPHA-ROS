@@ -13,14 +13,15 @@ import { cn } from "@/lib/utils";
 export const operationTypeOptions = [
   { value: "venta", label: "En venta" },
   { value: "alquiler", label: "Alquiler" },
-  { value: "anticretico", label: "Anticretico" },
+  { value: "anticretico", label: "Anticrético" },
 ] as const;
 
 export type OperationType = (typeof operationTypeOptions)[number]["value"];
+export type OperationTypeValue = OperationType | null;
 
 type OperationTypeFilterProps = {
-  value: OperationType;
-  onChange: (value: OperationType) => void;
+  value: OperationTypeValue;
+  onChange: (value: OperationTypeValue) => void;
   defaultOpen?: boolean;
 };
 
@@ -35,7 +36,7 @@ export function OperationTypeFilter({
 
   const selectedLabel =
     operationTypeOptions.find((option) => option.value === value)?.label ??
-    "Selecciona una opcion";
+    "Tipo de Operación";
 
   return (
     <Accordion
@@ -68,7 +69,7 @@ export function OperationTypeFilter({
                     key={option.value}
                     type="button"
                     onClick={() => {
-                      onChange(option.value);
+                      onChange(checked ? null : option.value);
                       setOpenItem("");
                     }}
                     className={cn(
