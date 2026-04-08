@@ -314,6 +314,23 @@ function SearchPageContent() {
       setIsApplyingFilters(false);
     }
   };
+  
+// Cargar estado del mapa desde localStorage al montar componente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMapState = localStorage.getItem('searchMapOpen');
+      if (savedMapState !== null) {
+        setIsMapOpen(JSON.parse(savedMapState));
+      }
+    }
+  }, []);
+
+  // Guardar estado del mapa en localStorage cuando cambia
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('searchMapOpen', JSON.stringify(isMapOpen));
+    }
+  }, [isMapOpen]);
 
   useEffect(() => {
     const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
@@ -532,9 +549,12 @@ function SearchPageContent() {
 
               <div className="my-4 h-px bg-[#F4EFE6]" />
 
+              <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+
+              <div className="my-4 h-px bg-[#F4EFE6]" />
+
               <div className="min-h-0 flex-1">
                 <ScrollArea className="h-full pr-4">
-                  <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
                   <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
                   <FilterTypeProperty
                     tipos={PROPERTY_TYPE_OPTIONS}

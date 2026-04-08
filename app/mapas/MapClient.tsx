@@ -1,11 +1,20 @@
 // app/mapas/MapClient.tsx
 "use client"
 
+import dynamic from "next/dynamic"
 import { useState } from "react"
 import { locations, Location } from "@/lib/locations-placeholder-data"
 import { Button } from "@/components/ui/button"
-import PropertyMap from "./components/Map"
 import PropertyCard from "./components/PropertyCard"
+
+const PropertyMap = dynamic(() => import("./components/Map"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-400">
+      Cargando mapa...
+    </div>
+  ),
+})
 
 export default function MapClient() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
