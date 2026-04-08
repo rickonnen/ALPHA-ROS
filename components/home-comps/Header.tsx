@@ -107,7 +107,7 @@ export const Header = () => {
     <Link href="/" aria-label="Ir a inicio" className={`inline-flex items-center gap-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}>
       <Image src="/logo-principal.svg" alt="Logo PROBOL" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
-        <span className="text-primary">PRO</span>
+        <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>
       </span>
     </Link>
