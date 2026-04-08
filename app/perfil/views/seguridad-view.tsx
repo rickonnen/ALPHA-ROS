@@ -1,4 +1,4 @@
-/* Dev: Camila - xdev/sow-camila
+/* Dev: Camila Magne Hinojosa - xdev/sow-camila
     Fecha: 28/03/2026
     Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
 */
@@ -8,9 +8,13 @@
          que debe re-fetchear el usuario y actualizar el header tras guardar
          cambios en editar perfil
 */
-/* Dev: Camila Magne - xdev/sow-camilaM
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
    Fecha: 06/04/2026
    Fix: Corrección de defecto, ajustando la cantidad (4) y tamaño de asteriscos en la sección password según mockup oficial.
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+   Fecha: 07/04/2026
+   Style: Sincronización de animaciones de vistas con perfil-view y agregado de línea separadora en el título principal.
 */
 "use client";
 import { useState, useEffect } from "react";
@@ -148,8 +152,14 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
 
   return (
     <div className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}>
-      {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
-      {VIEWS[subView] || VIEWS.menu}
+      {subView === "menu" && (
+        <h1 className="text-2xl font-bold border-b border-gray-600/50 pb-4 mb-4">
+          Seguridad
+        </h1>
+      )}
+      <div key={subView} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {VIEWS[subView] || VIEWS.menu}
+      </div>
     </div>
   );
 }
