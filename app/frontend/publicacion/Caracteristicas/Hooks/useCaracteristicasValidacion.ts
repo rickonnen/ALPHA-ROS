@@ -1,9 +1,10 @@
 /**
  * Dev: Gabriel Paredes Sipe
- * Date modification: 02/04/2026
+ * Date modification: 06/04/2026
  * Funcionalidad: Validación del formulario de características del inmueble
- *                Corrección:superficie validada con máximo de 1.000.000 m²
- *                Corrección:zona validada con mínimo de 5 caracteres
+ *                Corrección: superficie validada con máximo de 1.000.000 m²
+ *                Corrección: zona validada con mínimo de 5 caracteres
+ *                Corrección: campos numéricos permiten valor 0
  */
 
 import {
@@ -21,7 +22,7 @@ import {
 } from './useCaracteristicasTypes'
 
 function esNumeroEnteroValido(valor: string): boolean {
-  return /^\d+$/.test(valor) && parseInt(valor, 10) > 0 && parseInt(valor, 10) <= MAX_VALOR_NUMERICO;
+  return /^\d+$/.test(valor) && parseInt(valor, 10) >= 0 && parseInt(valor, 10) <= MAX_VALOR_NUMERICO;
 }
 
 function esNumeroDecimalPositivo(valor: string): boolean {
@@ -63,28 +64,28 @@ export function validate(values: CaracteristicasFormValues): CaracteristicasForm
     errors.zona = `La zona no puede superar ${MAX_CARACTERES_ZONA} caracteres.`;
   }
 
-  if (!values.habitaciones) {
+  if (values.habitaciones === '') {
     errors.habitaciones = 'El número de habitaciones es obligatorio.';
   } else if (!esNumeroEnteroValido(values.habitaciones)) {
-    errors.habitaciones = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.habitaciones = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.banios) {
+  if (values.banios === '') {
     errors.banios = 'El número de baños es obligatorio.';
   } else if (!esNumeroEnteroValido(values.banios)) {
-    errors.banios = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.banios = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.plantas) {
+  if (values.plantas === '') {
     errors.plantas = 'El número de plantas es obligatorio.';
   } else if (!esNumeroEnteroValido(values.plantas)) {
-    errors.plantas = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.plantas = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.garajes) {
+  if (values.garajes === '') {
     errors.garajes = 'El número de garajes es obligatorio.';
   } else if (!esNumeroEnteroValido(values.garajes)) {
-    errors.garajes = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.garajes = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
   if (values.imagenes.length < MIN_IMAGENES) {
