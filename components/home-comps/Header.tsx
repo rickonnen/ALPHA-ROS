@@ -118,7 +118,7 @@ export const Header = () => {
         <span className="text-secondary">BOL</span>
       </span>
     </Link>
-  );
+  ), [strHoverAnim]);
 
   // ── Botón de notificaciones (comportamiento según auth) ──
   const btnNotifications = user ? (
