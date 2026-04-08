@@ -41,7 +41,7 @@ export function PaymentRejectModal({
 }: PaymentRejectModalProps) {
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-[500px] bg-[#F3F3F3] rounded-2xl p-8 border-none shadow-md">
+      <AlertDialogContent className="w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -54,20 +54,20 @@ export function PaymentRejectModal({
             <AlertTriangle className="h-6 w-6 text-white" />
           </div>
         </div>
-        {/* Texto descriptivo con el mismo formato y espaciado */}
-        <p className="text-center text-gray-700 text-sm mb-8">
+        
+        <p className="text-center text-gray-700 text-sm sm:text-base mb-8">
           Deseas rechazar el pago del cliente correspondiente:{" "}
           <span className="font-semibold">{strClientName}</span>{" "}
           para el plan <span className="font-semibold">{strPlanName}</span>
         </p>
-        {/* Botones de acción con estilo simétrico para cancelar o rechazar */}
-        <div className="flex justify-between px-6">
-          <AlertDialogCancel className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded-xl text-sm font-semibold capitalize border-none">
+
+        <div className="flex flex-col-reverse sm:flex-row justify-center sm:justify-between gap-3 sm:px-6">
+          <AlertDialogCancel className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-black px-6 py-2.5 sm:py-2 rounded-xl text-sm font-semibold capitalize border-none mt-0">
             cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded-xl text-sm font-semibold capitalize border-none"
+            className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-black px-6 py-2.5 sm:py-2 rounded-xl text-sm font-semibold capitalize border-none"
           >
             rechazar
           </AlertDialogAction>
