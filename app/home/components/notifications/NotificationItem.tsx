@@ -1,5 +1,6 @@
 "use client";
 import { Mail, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 type Props = {
   id: number;
@@ -20,6 +21,17 @@ export function NotificationItem({
   onDelete,
   onRead,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [description]);
+
   return (
     <div
       onClick={() => onRead(id)}
@@ -42,9 +54,26 @@ export function NotificationItem({
         >
           {title}
         </span>
-        <span className="text-gray-500 text-[13px] font-medium leading-5 truncate">
+
+        <span
+          ref={textRef}
+          className={`text-gray-500 text-[13px] font-medium leading-5 break-words ${!expanded ? "line-clamp-1" : ""}`}
+        >
           {description}
         </span>
+
+        {isTruncated && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded((prev) => !prev);
+            }}
+            className="text-blue-500 text-[12px] font-medium text-left hover:underline w-fit"
+          >
+            {expanded ? "Ocultar" : "Ver más"}
+          </button>
+        )}
+
         <span className="text-gray-400 text-xs mt-0.5">{time}</span>
       </div>
 

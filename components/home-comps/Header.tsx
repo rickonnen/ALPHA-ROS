@@ -21,6 +21,8 @@ import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
+import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
+import { useUnreadCount } from "@/components/hooks/useUnreadCount";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface NavLink {
@@ -42,6 +44,7 @@ export const Header = () => {
   
   const { user: objUser, logout, isLoading: bolIsAuthLoading } = useAuth();
   const { strFotoPerfil } = useFotoPerfil(objUser?.id);
+  const unreadCount = useUnreadCount(objUser);
   const objRouter = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -134,12 +137,13 @@ export const Header = () => {
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
                 <button
-                  aria-label="Notificaciones"
-                  onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
-                >
-                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                </button>
+                     aria-label="Notificaciones"
+                     onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
+                     className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
+>
+                    <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
+                    <NotificationBadge count={unreadCount} />
+                    </button>
               )}
               {objUser && bolShowNotifications && (
                 <div className="absolute right-[-15px] top-full mt-0">
@@ -207,13 +211,14 @@ export const Header = () => {
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
-                <button
-                  aria-label="Notificaciones"
-                  onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
-                >
-                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                </button>
+               <button
+                aria-label="Notificaciones"
+                onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
+                className={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
+              >
+                <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
+                <NotificationBadge count={unreadCount} />
+              </button>
               )}
               {objUser && bolShowNotifications && <NotificationPanel />}
             </div>
