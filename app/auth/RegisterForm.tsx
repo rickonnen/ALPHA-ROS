@@ -75,28 +75,34 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
       }
     }
 
-    if (field === "email") {
-      if (!value.trim()) {
-        newErrors.email = "El correo es obligatorio";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        newErrors.email = "Ingresa un correo electrónico válido";
-      } else {
-        delete newErrors.email;
-      }
-    }
+    if (field === 'email') {
+  if (!value.trim())
+    newErrors.email = 'El correo es obligatorio';
+  else if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value.trim()))
+    newErrors.email = 'Ingresa un correo electrónico válido';
+  else if (/\.{2,}/.test(value) || value.startsWith('.') || value.includes('@.'))
+    newErrors.email = 'Ingresa un correo electrónico válido';
+  else
+    delete newErrors.email;
+}
 
-    if (field === "password") {
-      if (!value) {
-        newErrors.password = "La contraseña es obligatoria";
-      } else if (value.length < 8) {
-        newErrors.password = "La contraseña no cumple los requisitos mínimos";
-      } else if (value.length > 15) {
-        newErrors.password = "La contraseña debe tener entre 8 y 15 caracteres";
-      } else if (!/[A-Z]/.test(value)) {
-        newErrors.password = "Debe incluir al menos una mayúscula";
-      } else {
-        delete newErrors.password;
-      }
+    if (field === 'password') {
+  if (!value)
+    newErrors.password = 'La contraseña es obligatoria';
+  else if (/\s/.test(value))
+    newErrors.password = 'La contraseña no puede contener espacios';
+  else if (value.length < 8)
+    newErrors.password = 'La contraseña no cumple los requisitos mínimos';
+  else if (value.length > 15)
+    newErrors.password = 'La contraseña debe tener entre 8 y 15 caracteres';
+  else if (!/[A-Z]/.test(value))
+    newErrors.password = 'Debe incluir al menos una mayúscula';
+  else if (!/[0-9]/.test(value))
+    newErrors.password = 'Debe incluir al menos un número';
+  else if (!/[^A-Za-z0-9]/.test(value))
+    newErrors.password = 'Debe incluir al menos un carácter especial';
+  else
+    delete newErrors.password;
       if (confirmPassword) {
         if (value !== confirmPassword) {
           newErrors.confirmPassword = "Las contraseñas no coinciden";
@@ -156,19 +162,19 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+(\s[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]{3,})*$/.test(apellido.trim()))
       newErrors.apellido = "Se permite espacio solo después de 3 o más letras";
 
-    if (!email.trim())
-      newErrors.email = "El correo es obligatorio";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      newErrors.email = "Ingresa un correo electrónico válido";
+    if (!email.trim()) newErrors.email = 'El correo es obligatorio';
+else if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email.trim()))
+  newErrors.email = 'Ingresa un correo electrónico válido';
+else if (/\.{2,}/.test(email) || email.startsWith('.') || email.includes('@.'))
+  newErrors.email = 'Ingresa un correo electrónico válido';
 
-    if (!password)
-      newErrors.password = "La contraseña es obligatoria";
-    else if (password.length < 8)
-      newErrors.password = "La contraseña no cumple los requisitos mínimos";
-    else if (password.length > 15)
-      newErrors.password = "La contraseña debe tener entre 8 y 15 caracteres";
-    else if (!/[A-Z]/.test(password))
-      newErrors.password = "Debe incluir al menos una mayúscula";
+   if (!password) newErrors.password = 'La contraseña es obligatoria';
+else if (/\s/.test(password)) newErrors.password = 'La contraseña no puede contener espacios';
+else if (password.length < 8) newErrors.password = 'La contraseña no cumple los requisitos mínimos';
+else if (password.length > 15) newErrors.password = 'La contraseña debe tener entre 8 y 15 caracteres';
+else if (!/[A-Z]/.test(password)) newErrors.password = 'Debe incluir al menos una mayúscula';
+else if (!/[0-9]/.test(password)) newErrors.password = 'Debe incluir al menos un número';
+else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al menos un carácter especial';
 
     if (!confirmPassword)
       newErrors.confirmPassword = "Debes confirmar tu contraseña";
@@ -332,7 +338,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
           <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Contraseña</label>
           <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.password ? "#fee2e2" : "white" }}>
             <Lock size={18} style={{ color: "#9ca3af" }} />
-            <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 caracteres" value={password} maxLength={15}
+            <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 y maximo 15 caracteres" value={password} maxLength={15}
               onChange={(e) => { const value = e.target.value.slice(0, 15); setPassword(value); validateField("password", value); }}
               style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
             <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -392,3 +398,4 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     </div>
   );
 }
+
