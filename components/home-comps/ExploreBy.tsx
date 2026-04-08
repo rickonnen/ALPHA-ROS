@@ -13,13 +13,14 @@ interface CategoryItem {
 }
 
 interface ExploreCategory {
-  strId:         string;
-  strTitle:      string;
-  intTotal:      number;
-  objIcon:       React.ReactNode;
-  arrItems:      CategoryItem[];
-  strLinkHref:   string;
-  strLinkLabel: string;
+  strId:            string;
+  strTitle:         string;
+  intTotal:         number;
+  objIcon:          React.ReactNode;
+  arrItems:         CategoryItem[];
+  strLinkHref:      string;
+  strLinkLabel:     string;
+  fnBuildItemHref:  (strName: string) => string;
 }
 
 // ---------------------------------------------------------------
@@ -28,12 +29,16 @@ interface ExploreCategory {
 const getTotalCount = (arrItems: CategoryItem[]) =>
   arrItems.reduce((intSum, objItem) => intSum + objItem.intCount, 0);
 
+// Reemplaza espacios por "+" para usarlos en query params
+const toQueryParam = (strValue: string) =>
+  strValue.replace(/ /g, "+");
+
 const strDisplayName: Record<string, string> = {
-  Casa:         "Casas",
-  Departamento: "Departamentos",
-  Cuarto:       "Cuartos",
-  Terreno:      "Terrenos",
-  Oficina:      "Oficinas",
+  Casa:         "Casa",
+  Departamento: "Departamento",
+  Cuarto:       "Cuarto",
+  Terreno:      "Terreno",
+  Oficina:      "Oficina",
 };
 
 // ---------------------------------------------------------------
@@ -70,14 +75,24 @@ async function fetchTiposInmueble(): Promise<CategoryItem[]> {
 }
 
 // ---------------------------------------------------------------
-//  Sub-componentes (sin cambios)
+//  Sub-componentes
 // ---------------------------------------------------------------
-function CategoryRow({ objItem, intIndex }: { objItem: CategoryItem; intIndex: number }) {
+
+function CategoryRow({
+  objItem,
+  intIndex,
+  strHref,
+}: {
+  objItem:  CategoryItem;
+  intIndex: number;
+  strHref:  string;
+}) {
   return (
-    <div
+    <Link
+      href={strHref}
       className="group/row flex justify-between items-center px-3 py-2.5 rounded-lg
            bg-[#F4EFE6] hover:bg-[#E7E1D7] transition-all duration-200
-           hover:shadow-sm cursor-default"
+           hover:shadow-sm cursor-pointer"
       style={{ animationDelay: `${intIndex * 60}ms` }}
     >
       <span className="text-sm text-[#2E2E2E] font-medium group-hover/row:text-[#1F3A4D] transition-colors duration-200">
@@ -90,7 +105,7 @@ function CategoryRow({ objItem, intIndex }: { objItem: CategoryItem; intIndex: n
       >
         {objItem.intCount.toLocaleString("es-BO")}
       </span>
-    </div>
+    </Link>
   );
 }
 
@@ -138,7 +153,12 @@ function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
           </div>
         ) : (
           objCategory.arrItems.map((objItem, intIndex) => (
-            <CategoryRow key={objItem.strName} objItem={objItem} intIndex={intIndex} />
+            <CategoryRow
+              key={objItem.strName}
+              objItem={objItem}
+              intIndex={intIndex}
+              strHref={objCategory.fnBuildItemHref(objItem.strName)}
+            />
           ))
         )}
       </div>
@@ -172,20 +192,14 @@ function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
 function ExploreCardSkeleton() {
   return (
     <div className="relative flex flex-col rounded-2xl overflow-hidden bg-[#F5F1EA] border border-[#D6CFC3] shadow-sm animate-pulse">
-
-      {/* Ruedita cargando centrada sobre el skeleton */}
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[#F5F1EA]/50 backdrop-blur-[1px]">
         <div className="h-8 w-8 rounded-full border-4 border-[#D6CFC3] border-t-[#1F3A4D] animate-spin" />
         <p className="mt-2 text-xs text-[#1F3A4D]/50 font-medium">Cargando...</p>
       </div>
-
-      {/* Header de las cards */}
       <div className="px-5 py-4 bg-[#1F3A4D] flex justify-between items-center">
         <div className="h-4 w-24 bg-[#E7E1D7]/30 rounded" />
         <div className="h-4 w-12 bg-[#E7E1D7]/30 rounded" />
       </div>
-
-      {/* Filas */}
       <div className="flex-1 px-4 py-4 space-y-1.5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex justify-between px-3 py-2.5 rounded-lg bg-[#F4EFE6]">
@@ -194,12 +208,9 @@ function ExploreCardSkeleton() {
           </div>
         ))}
       </div>
-
-      {/* Footer de las cards */}
       <div className="px-5 py-4 border-t border-[#D6CFC3]/70">
         <div className="h-3 w-36 bg-[#D6CFC3] rounded" />
       </div>
-
     </div>
   );
 }
@@ -237,31 +248,37 @@ export default function ExploreBy() {
 
   const arrCategories: ExploreCategory[] = [
     {
-      strId:         "rentals",
-      strTitle:      "Alquileres",
-      intTotal:      getTotalCount(arrRentals),
-      objIcon:       <Key className="w-4 h-4" />,
-      arrItems:      arrRentals,
-      strLinkHref:   "/busqueda?operaciones=Alquiler",
-      strLinkLabel: "Ver todas las ciudades",
+      strId:           "rentals",
+      strTitle:        "Alquileres",
+      intTotal:        getTotalCount(arrRentals),
+      objIcon:         <Key className="w-4 h-4" />,
+      arrItems:        arrRentals,
+      strLinkHref:     "/busqueda?operaciones=Alquiler",
+      strLinkLabel:    "Ver todas las ciudades",
+      fnBuildItemHref: (strName) =>
+        `/busqueda?operaciones=Alquiler&ciudad=${toQueryParam(strName)}`,
     },
     {
-      strId:         "sales",
-      strTitle:      "En venta",
-      intTotal:      getTotalCount(arrSales),
-      objIcon:       <Home className="w-4 h-4" />,
-      arrItems:      arrSales,
-      strLinkHref:   "/busqueda?operaciones=Venta",
-      strLinkLabel: "Ver todas las ciudades",
+      strId:           "sales",
+      strTitle:        "En venta",
+      intTotal:        getTotalCount(arrSales),
+      objIcon:         <Home className="w-4 h-4" />,
+      arrItems:        arrSales,
+      strLinkHref:     "/busqueda?operaciones=Venta",
+      strLinkLabel:    "Ver todas las ciudades",
+      fnBuildItemHref: (strName) =>
+        `/busqueda?operaciones=Venta&ciudad=${toQueryParam(strName)}`,
     },
     {
-      strId:         "property-types",
-      strTitle:      "Tipo de inmueble",
-      intTotal:      getTotalCount(arrPropertyTypes),
-      objIcon:       <Tag className="w-4 h-4" />,
-      arrItems:      arrPropertyTypes,
-      strLinkHref:   "/busqueda",
-      strLinkLabel: "Ver todos los tipos",
+      strId:           "property-types",
+      strTitle:        "Tipo de inmueble",
+      intTotal:        getTotalCount(arrPropertyTypes),
+      objIcon:         <Tag className="w-4 h-4" />,
+      arrItems:        arrPropertyTypes,
+      strLinkHref:     "/busqueda",
+      strLinkLabel:    "Ver todos los tipos",
+      fnBuildItemHref: (strName) =>
+        `/busqueda?tipo=${toQueryParam(strName)}`,
     },
   ];
 
