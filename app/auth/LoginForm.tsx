@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -22,6 +22,8 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false); // BUG 4 y 9
+  const [hasInternet, setHasInternet] = useState(true);
+  const [blockedByConnection, setBlockedByConnection] = useState(false);
 
   function validateField(field: string, value: string) {
     const newErrors = { ...errors };
@@ -90,21 +92,80 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   }
 
   //  BUG 4 y 9 — manejar clic en Google
-const googleClickedRef = useRef(false);
+  const googleClickedRef = useRef(false);
+  useEffect(() => {
+    async function verifyConnection() {
+      const isConnected = await checkInternetConnection();
 
-async function handleGoogleSignIn() {
-  if (googleClickedRef.current) return; // bloqueo inmediato
-  googleClickedRef.current = true;
+      setHasInternet(isConnected);
 
-  setGoogleLoading(true);
+      if (!isConnected) {
+        setGeneralError("No tienes conexión a internet");
+      }
+    }
 
-  try {
-    await signIn("google", { callbackUrl: "/" });
-  } catch (error) {
-    googleClickedRef.current = false; // desbloquea si falla
-    setGoogleLoading(false);
+    verifyConnection();
+
+    const handleOffline = () => {
+      console.log("Conexión perdida");
+      setHasInternet(false);
+      setGeneralError("No tienes conexión a internet");
+    };
+
+    const handleOnline = () => {
+      console.log("Conexión restaurada");
+      setHasInternet(true);
+      setGeneralError("");
+      setBlockedByConnection(false);
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
+  async function handleGoogleSignIn() {
+    if (googleClickedRef.current) return;
+
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      setGeneralError("No tienes conexión a internet");
+      setBlockedByConnection(true);
+      return;
+    }
+
+    googleClickedRef.current = true;
+    setGoogleLoading(true);
+
+    try {
+      await signIn("google", { callbackUrl: "/" });
+    } catch (error) {
+      googleClickedRef.current = false;
+      setGoogleLoading(false);
+    }
   }
-}
+
+  //Bug 3 
+  async function checkInternetConnection() {
+    if (!navigator.onLine) {
+      console.log("Sin conexión (navigator)");
+      return false;
+    }
+    try {
+      await fetch("https://www.google.com", {
+        mode: "no-cors",
+      });
+      console.log("Conexión a internet OK");
+      return true;
+    } catch (error) {
+      console.log("Error de conexión real:", error);
+      return false;
+    }
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
@@ -117,24 +178,30 @@ async function handleGoogleSignIn() {
       {/* Botón Google */}
       <button
         type="button"
-        disabled={loading || googleLoading}
+        disabled={loading || googleLoading || blockedByConnection}
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: googleLoading ? "#9ca3af" : "#0F172A",
+          backgroundColor: blockedByConnection || googleLoading
+            ? "#9ca3af"
+            : "#0F172A",
+
+          cursor: blockedByConnection || googleLoading
+            ? "not-allowed"
+            : "pointer",
+
+          opacity: blockedByConnection ? 0.5 : googleLoading ? 0.6 : 1,
           color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
           border: "none",
-          cursor: googleLoading ? "not-allowed" : "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
           marginBottom: "16px",
-          opacity: googleLoading ? 0.6 : 1,
-           pointerEvents: googleLoading ? "none" : "auto",
+          pointerEvents: googleLoading ? "none" : "auto",
         }}
       >
         {googleLoading ? (
@@ -158,7 +225,6 @@ async function handleGoogleSignIn() {
         )}
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
-
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
