@@ -80,7 +80,7 @@ export default function Footer() {
             <Link href="/" className={`inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverIconAnim}`}>
               <img src="/logo-principal.svg" alt="Logo" className="h-10 w-auto" />
               <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
-                <span className="text-primary">PRO</span>
+                <span className="text-primary">PROP</span>
                 <span className="text-secondary">BOL</span>
               </span>
             </Link>
