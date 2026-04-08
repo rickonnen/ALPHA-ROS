@@ -14,26 +14,25 @@
 */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
+import { useRouter } from "next/navigation";
 export interface Publicacion {
   id: string;
   titulo: string;
   zona: string;
   tipo: string;
-  imagen?: string | null;
+  imagen: string | null;
 }
 
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
-  onInfo: (id: string) => void;
 }
 
 export default function PublicacionCard({
   publicacion,
   onEliminar,
-  onInfo,
 }: PublicacionCardProps) {
+  const router = useRouter();
   return (
     <Card className="border mb-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
       <CardContent className="flex items-center gap-4 px-4">
@@ -44,6 +43,9 @@ export default function PublicacionCard({
               src={publicacion.imagen}
               alt={publicacion.titulo}
               className="object-cover w-full h-full"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
           ) : (
             <span className="text-white/30 text-xs text-center">
@@ -55,7 +57,6 @@ export default function PublicacionCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{publicacion.titulo}</p>
-          <p className="text-xs text-white/50">{publicacion.zona}</p>
           <p className="text-xs text-white/50">Tipo: {publicacion.tipo}</p>
         </div>
 
@@ -65,10 +66,11 @@ export default function PublicacionCard({
             variant="outline"
             size="sm"
             className="text-black border-white/60 hover:bg-white/80"
-            onClick={() => onInfo(publicacion.id)}
+            onClick={() =>
+              router.push(`/publicacion/perfil_del_inmueble/${publicacion.id}`)
+            }
           >
-            <span className="hidden md:inline">Información</span>
-            <span className="md:hidden">Info.</span>
+            Info.
           </Button>
           <Button
             size="sm"

@@ -40,6 +40,51 @@ export interface PublicacionBusqueda {
   } | null;
   imagenes?: string[];
   caracteristicas?: string[];
+  usuario?: {
+    nombres?: string | null;
+    apellidos?: string | null;
+    email?: string | null;
+    telefono?: string | null;
+  } | null;
+}
+
+export interface PublicacionDetalleBusqueda {
+  id_publicacion: number;
+  titulo?: string;
+  descripcion?: string;
+  precio?: number;
+  superficie?: number;
+  habitaciones?: number;
+  banos?: number;
+  garajes?: number;
+  plantas?: number;
+  tipo_inmueble?: string;
+  tipo_operacion?: string;
+  estado_construccion?: string;
+  estado_publicacion?: string;
+  moneda?: {
+    nombre?: string;
+    simbolo?: string;
+    tasa_cambio?: number;
+  };
+  ubicacion?: {
+    direccion?: string;
+    zona?: string;
+    ciudad?: string;
+    pais?: string;
+    latitud?: number;
+    longitud?: number;
+  };
+  imagenes?: Array<{ url_imagen?: string }>;
+  caracteristicas?: Array<{ nombre_caracteristica?: string }>;
+  usuario?: {
+    nombres?: string;
+    apellidos?: string;
+    email?: string;
+    telefono?: string;
+    url_foto_perfil?: string;
+    username?: string;
+  };
 }
 
 type SearchResponse = {

@@ -1,6 +1,6 @@
 // components/admin/AccessDenied.tsx
-import { Lock, Home } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Lock, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function AccessDenied() {
   return (
@@ -12,15 +12,16 @@ export function AccessDenied() {
         ACCESO RESTRINGIDO
       </h3>
       <p className="text-muted-foreground max-w-sm mb-8 font-medium">
-        Tu cuenta actual no cuenta con los privilegios de administrador necesarios para gestionar esta sección.
+        Tu cuenta actual no cuenta con los privilegios de administrador
+        necesarios para gestionar esta sección.
       </p>
-      <Button 
-        onClick={() => window.location.href = "/"}
+      <Button
+        onClick={() => (window.location.href = "/")}
         variant="default"
         className="font-bold px-8"
       >
         <Home className="mr-2 h-4 w-4" /> VOLVER AL PORTAL
       </Button>
     </div>
-  )
+  );
 }

@@ -44,6 +44,19 @@
  */
 
 
+/**
+ * Author: Miguel Angel Condori
+ * Date: (2026-04-04):
+ *  Se agregó prop onTelefonosChange para propagar cambios al componente padre.
+ *  Se implementó helper notificarCambios para sincronizar Perfil y Seguridad sin recargar.
+ *  Se añadió helper quitarEspacio para mostrar teléfonos sin espacio solo en esta vista.
+ *  Se restringió el input para aceptar únicamente '+' al inicio y números consecutivos.
+ *  Se bloqueó el pegado de texto (onPaste) para evitar caracteres no permitidos.
+ *  Se reemplazó emoji de teléfono por ícono Smartphone de lucide-react.
+ *  Se añadió cursor-pointer a todos los botones interactivos.
+ */
+
+
 "use client";
 
 import { useState } from "react";
@@ -60,12 +73,13 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Smartphone } from "lucide-react";
 
 interface TelefonosViewProps {
   id_usuario: string;
   telefonos: string[];
   onBack: () => void;
+  onTelefonosChange: (nuevosTelefonos: string[]) => void;
 }
 
 /**
@@ -75,6 +89,9 @@ interface TelefonosViewProps {
  *
  */
 const MAX_TELEFONOS = 3;
+
+
+// const quitarEspacio = (tel: string) => tel.replace(/\s+/g, "");
 
 const crearTelefonos = (telefonos: string[]) =>
   Array.from({ length: MAX_TELEFONOS }, (_, i) => telefonos[i] ?? "");
@@ -92,6 +109,7 @@ export default function TelefonosView({
   id_usuario,
   telefonos,
   onBack,
+  onTelefonosChange,
 }: TelefonosViewProps) {
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(true);
@@ -112,6 +130,16 @@ export default function TelefonosView({
 
   const [slotEnEdicion, setSlotEnEdicion] = useState<number | null>(null);
   const [snapshot, setSnapshot] = useState<SnapshotTelefonos | null>(null);
+
+  const notificarCambios = (
+    nuevosValues: string[],
+    nuevosActivos: boolean[],
+  ) => {
+    const telefonosActualizados = nuevosValues.filter(
+      (v, i) => nuevosActivos[i] && v.trim(),
+    );
+    onTelefonosChange(telefonosActualizados);
+  };
 
   const cantidadActivos = telefonosActivos.filter(Boolean).length;
   const hayEdicionAbierta = slotEnEdicion !== null;
@@ -240,6 +268,7 @@ export default function TelefonosView({
         setSnapshot(null);
         setTelefonoAEliminar(null);
         setOpenDelete(false);
+        notificarCambios(nuevosValues, nuevosActivos);
       }
     } catch (error) {
       console.error(error);
@@ -279,13 +308,22 @@ export default function TelefonosView({
       } 
       
       else {
-        const numeroViejo = snapshot.telefonosValues[slotActual]?.trim();
-        if (!numeroViejo || numeroViejo === numeroNuevo) {
-          setSlotEnEdicion(null);
-          setSnapshot(null);
-          setGuardando(false);
-          return;
-        }
+          const numeroViejo = snapshot.telefonosValues[slotActual]?.trim();
+          const numeroNuevoSinEspacios = numeroNuevo.replace(/\s+/g, "");
+          const numeroViejoSinEspacios = numeroViejo?.replace(/\s+/g, "");
+          if (!numeroViejo || numeroViejoSinEspacios === numeroNuevoSinEspacios) {
+            const nuevosValues = [...telefonosValues];
+            nuevosValues[slotActual] = snapshot.telefonosValues[slotActual];
+            setTelefonosValues(nuevosValues);
+
+            const nuevosEditando = [...editando];
+            nuevosEditando[slotActual] = false;
+            setEditando(nuevosEditando);
+            setSlotEnEdicion(null);
+            setSnapshot(null);
+            setGuardando(false);
+            return;
+          }
 
         res = await fetch("/api/perfil/telefono/update", {
           method: "POST",
@@ -330,6 +368,7 @@ export default function TelefonosView({
 
         setSlotEnEdicion(null);
         setSnapshot(null);
+        notificarCambios(nuevosValues, nuevosActivos);
       }
     } catch (error) {
       console.error(error);
@@ -347,17 +386,13 @@ export default function TelefonosView({
         type="button"
         variant="ghost"
         onClick={onBack}
-        className="px-0 text-white/80 hover:text-white hover:bg-transparent"
+        className="px-0 text-white/80 hover:text-white hover:bg-transparent cursor-pointer"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a Seguridad
+        Seguridad
       </Button>
-      <p className="text-xs tracking-widest text-white/50 mb-1 pb-5">
-      SEGURIDAD › GESTIONAR TELÉFONOS
-      </p>
-
-      <div className="flex items-start gap-3">
-        <div className="text-2xl">📞</div>
+      <div className="flex items-center gap-3">
+        <Smartphone className="h-9 w-9 text-white/70" />
         <div>
           <h2 className="text-xl font-bold">Gestionar teléfonos</h2>
           <p className="text-sm text-white/70">
@@ -383,9 +418,31 @@ export default function TelefonosView({
 
                 <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
                   <input
-                    value={telefonosValues[i] || ""}
+                    value={(telefonosValues[i] || "")}
                     placeholder="Sin teléfono"
                     onChange={(e) => handleChange(i, e.target.value)}
+                    onPaste={(e) => e.preventDefault()}
+                    onKeyDown={(e) => {
+                      const permitidos = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
+                      if (permitidos.includes(e.key)) return;
+
+                      const valorActual = telefonosValues[i] || "";
+
+                      if (valorActual === "" || valorActual === undefined) {
+                        if (e.key !== "+") e.preventDefault();
+                        return;
+                      }
+
+                      if (e.key === " ") {
+                        const pos = e.currentTarget.selectionStart ?? valorActual.length;
+                        const charAntes = valorActual[pos - 1];
+                        const charDespues = valorActual[pos];
+                        if (charAntes === " " || charDespues === " ") e.preventDefault();
+                        return;
+                      }
+
+                      if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+                    }}
                     readOnly={!editando[i]}
                     className={`h-10 px-3 rounded-md border border-white/20 text-sm text-white placeholder:text-white/40 w-full ${
                       editando[i] ? "bg-white/20" : "bg-white/10"
@@ -397,7 +454,7 @@ export default function TelefonosView({
                     variant="outline"
                     onClick={() => handleEditar(i)}
                     disabled={hayEdicionAbierta && slotEnEdicion !== i}
-                    className="h-10 w-full text-xs sm:text-sm border-white/25 bg-transparent text-white/80 hover:bg-white/10 disabled:opacity-40"
+                    className="h-10 w-full text-xs sm:text-sm border-white/25 bg-transparent text-white/80 hover:bg-white/10 disabled:opacity-40 cursor-pointer"
                   >
                     {slotEnEdicion === i ? "Editando" : "Editar"}
                   </Button>
@@ -408,7 +465,7 @@ export default function TelefonosView({
                       variant="outline"
                       onClick={() => handleEliminarClick(i)}
                       disabled={hayEdicionAbierta}
-                      className="h-10 w-full border-red-500 bg-transparent text-red-400 hover:bg-red-500/20 text-xs sm:text-sm disabled:opacity-40"
+                      className="h-10 w-full border-red-500 bg-transparent text-red-400 hover:bg-red-500/20 text-xs sm:text-sm disabled:opacity-40 cursor-pointer"
                     >
                       <span className="sm:hidden">🗑</span>
                       <span className="hidden sm:inline">Eliminar</span>
@@ -422,12 +479,12 @@ export default function TelefonosView({
           )}
         </CardContent>
 
-        <div className="flex justify-center px-4 pb-4">
+        <div className="flex justify-start px-4 pb-4">
           <button
             type="button"
             onClick={handleAgregarTelefono}
             disabled={!puedeAgregar}
-            className={`h-10 w-full sm:w-auto px-4 border-2 border-dashed border-white/30 rounded-md text-white/60 transition text-sm ${
+            className={`h-10 w-full sm:w-auto px-4 border-2 border-dashed border-white/30 rounded-md text-white/60 cursor-pointer transition text-sm ${
               puedeAgregar ? "hover:bg-white/10" : "opacity-50 cursor-not-allowed"
             }`}
           >
@@ -442,7 +499,7 @@ export default function TelefonosView({
           variant="outline"
           onClick={handleCancelar}
           disabled={!hayEdicionAbierta || guardando}
-          className="border-white/30 bg-transparent text-white/70 hover:bg-white/10 disabled:opacity-40"
+          className="border-white/30 bg-transparent text-white/70 hover:bg-white/10 disabled:opacity-40 cursor-pointer"
         >
           Cancelar
         </Button>
@@ -451,9 +508,9 @@ export default function TelefonosView({
           type="button"
           onClick={handleGuardar}
           disabled={!hayEdicionAbierta || guardando}
-          className="font-semibold bg-transparent border border-white/30 text-white hover:bg-white/10 disabled:opacity-40"
+          className="font-semibold bg-transparent border border-white/30 text-white hover:bg-white/10 disabled:opacity-40 cursor-pointer"
         >
-          {guardando ? "Guardando..." : "Guardar cambios"}
+          {guardando ? "Guardando..." : "Confirmar cambios"}
         </Button>
       </div>
 
@@ -483,7 +540,7 @@ export default function TelefonosView({
             <div className="w-full flex justify-center">
               <AlertDialogAction
                 onClick={() => setOpen(false)}
-                className={`px-6 ${
+                className={`px-6 cursor-pointer ${
                   success
                     ? "bg-primary text-primary-foreground"
                     : "bg-red-500 hover:bg-red-600 text-white"
@@ -498,7 +555,7 @@ export default function TelefonosView({
 
       <AlertDialog open={openDelete}>
         <AlertDialogContent className="text-center bg-white border border-gray-200 text-black">
-          <AlertDialogTitle className="text-lg font-bold">
+          <AlertDialogTitle className="text-lg font-bold ">
             ¿Eliminar teléfono?
           </AlertDialogTitle>
 
@@ -510,7 +567,7 @@ export default function TelefonosView({
             <AlertDialogCancel
               onClick={() => setOpenDelete(false)}
               disabled={guardando}
-              className="disabled:opacity-50"
+              className="disabled:opacity-50 cursor-pointer"
             >
               Cancelar
             </AlertDialogCancel>
@@ -518,7 +575,7 @@ export default function TelefonosView({
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={guardando}
-              className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+              className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 cursor-pointer"
             >
               {guardando ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>

@@ -2,8 +2,7 @@
  * @Dev: Gustavo Montaño
  * @Fecha: 28/03/2026
  * @Modificación: StefanyS — 29/03/2026
- * @Funcionalidad: Página del Perfil del Inmueble. Pasa strUserId a PropertyActions
- *                 para que la verificación del contador ocurra solo al hacer click.
+ * @Funcionalidad: Página del Perfil del Inmueble.
  * @param params - Parámetros de ruta dinámica con el ID de la publicación.
  * @return {JSX.Element} Vista completa del perfil del inmueble.
  */
@@ -33,10 +32,6 @@ export default async function PerfilInmueblePage({
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
 
-  // 5. ID del usuario dueño de esta publicación
-  //    TODO: reemplazar por usuario autenticado desde sesión cuando esté disponible
-  const strUserId = objPerfil.id_usuario ?? "";
-
   // Task 4.5: Extraer video ID según plataforma
   const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
   const bolEsYoutube   = strVideoUrl
@@ -61,7 +56,10 @@ export default async function PerfilInmueblePage({
     : null;
 
   // Task 4.8: Dirección desde relación Ubicacion
-  const strDireccion = objPerfil.Ubicacion?.direccion ?? "Dirección no disponible";
+  const strDireccion = [
+  objPerfil.Ubicacion?.direccion,
+  objPerfil.Ubicacion?.zona,
+].filter(Boolean).join(", ") || "Dirección no disponible";
 
   // Task 4.4: URLs de imágenes
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
@@ -91,7 +89,7 @@ export default async function PerfilInmueblePage({
             <p className="text-base md:text-3xl">
               <span className="font-bold text-[#1F3A4D]">Precio:</span>{" "}
               <span className="font-medium">
-                {Number(objPerfil.precio).toLocaleString("de-DE")} $
+                {Number(objPerfil.precio).toLocaleString("de-DE")} Bs.
               </span>
             </p>
           </div>
@@ -119,7 +117,7 @@ export default async function PerfilInmueblePage({
             strTipoInmueble:  objPerfil.TipoInmueble?.nombre_inmueble   ?? "—",
             strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion  ?? "—",
             strDepartamento:  objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
-            strZona:          objPerfil.Zona?.nombre_zona                ?? "—",
+            strZona:          objPerfil.Ubicacion?.zona ?? "—",
             intHabitaciones:  objPerfil.habitaciones                     ?? 0,
             intBanos:         objPerfil.banos                            ?? 0,
             intPlantas:       objPerfil.plantas                          ?? 0,
@@ -140,7 +138,7 @@ export default async function PerfilInmueblePage({
         </section>
 
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
-        <PropertyActions strUserId={strUserId} />
+        <PropertyActions />
 
       </div>
     </main>

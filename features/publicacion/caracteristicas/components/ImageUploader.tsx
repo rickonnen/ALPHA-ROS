@@ -1,6 +1,6 @@
 /**
  * Dev: Gabriel Paredes
- * Date modification: 29/03/2026
+ * Date modification: 02/04/2026
  * Funcionalidad: Componente para subir imágenes de un inmueble con
  *                validación de formato, peso, resolución y aspecto.
  *                Corrección: muestra mensaje de error en rojo cuando
@@ -9,6 +9,8 @@
  *                Aviso: informa al usuario que las imágenes deben
  *                volver a seleccionarse si recarga la página,
  *                controlado por interacción real del usuario.
+ *                Corrección: borde rojo permanente sin interferencia
+ *                del hover cuando hay error de validación.
  * @param {ImageUploaderProps} props - files, onChange, onRemove, error, touched
  * @return {JSX.Element} Uploader de imágenes con previsualizaciones y validaciones
  */
@@ -89,25 +91,18 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
   const [fieldError,  setFieldError]  = useState<string | null>(null)
   const [wasVisited,  setWasVisited]  = useState<boolean>(false)
 
-  // Al montar: solo mostrar aviso si el usuario realmente interactuó
-  // en esta misma pestaña antes de recargar (navegación real, no nueva pestaña)
   useEffect(() => {
     try {
-      // sessionStorage existe por pestaña; al abrir una nueva pestaña
-      // aunque comparta la URL, sessionStorage parte vacío.
-      // Solo activamos el aviso si hay marca Y no hay archivos cargados.
       const interacted = sessionStorage.getItem(SESSION_KEY) === 'true'
       if (interacted && files.length === 0) {
         startTransition(() => setWasVisited(true))
       } else {
-        // Si hay archivos o no hubo interacción, limpiar marca
         sessionStorage.removeItem(SESSION_KEY)
       }
     } catch { /* SSR */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Estado controlado externamente por el hook ────────────────────────────
   const limitReached = files.length >= MAX_FILES
 
   // ── Manejo de archivo seleccionado ──────────────────────────────────────────
@@ -145,7 +140,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
       return
     }
 
-    // Marcar interacción real del usuario en esta pestaña
     try {
       sessionStorage.setItem(SESSION_KEY, 'true')
     } catch { /* SSR */ }
@@ -169,7 +163,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
   const handleRemove = (index: number) => {
     setFieldError(null)
-    // Si elimina todas las imágenes, limpiar marca para no mostrar aviso innecesario
     if (files.length === 1) {
       try { sessionStorage.removeItem(SESSION_KEY) } catch { /* SSR */ }
       setWasVisited(false)
@@ -179,8 +172,9 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
-  const showExternalError = touched && error
+  const showExternalError = touched && !!error
   const showFieldError    = !!fieldError
+  const showRedBorder     = !limitReached && (showFieldError || showExternalError)
 
   return (
     <div className="flex flex-col gap-2">
@@ -207,11 +201,12 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         onClick={handleButtonClick}
         className={[
           'flex items-center justify-between w-full',
-          'border border-gray-300 rounded-md px-3 py-2',
+          'border rounded-md px-3 py-2',
           'text-sm text-left transition-colors',
           limitReached
             ? 'bg-gray-50 cursor-not-allowed text-gray-300'
-            : 'bg-white cursor-pointer hover:border-gray-400',
+            : `bg-white cursor-pointer ${showRedBorder ? '' : 'hover:border-gray-400'}`,
+          showRedBorder ? 'border-red-400' : 'border-gray-300',
         ].join(' ')}
       >
         {limitReached
