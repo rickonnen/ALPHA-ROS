@@ -21,16 +21,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Primero verificar si el usuario existe
+    const userExists = await prisma.usuario.findFirst({
+      where: { email: email },
+      select: { id_usuario: true }
+    });
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password
     });
 
     if (authError || !authData.user) {
-      return NextResponse.json(
-        { error: "Email o contraseña incorrectos" },
-        { status: 401 }
-      );
+      // Si el usuario existe pero el login falló, es por contraseña incorrecta
+      if (userExists) {
+        return NextResponse.json(
+          { 
+            error: "Contraseña incorrecta",
+            code: "INVALID_PASSWORD"
+          },
+          { status: 401 }
+        );
+      } else {
+        // Usuario no encontrado
+        return NextResponse.json(
+          { 
+            error: "El correo electrónico no está registrado",
+            code: "USER_NOT_FOUND"
+          },
+          { status: 401 }
+        );
+      }
     }
 
     const userData = await prisma.usuario.findUnique({
@@ -50,8 +71,7 @@ export async function POST(request: NextRequest) {
       process.env.JWT_SECRET!,           
       { expiresIn: "7d" }          
     );
-    // ↳ Ejemplo de JWT:
-    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhYmMxMjMifQ.xxxxx
+    
 
     const response = NextResponse.json(
       { message: "Sesión iniciada exitosamente" },
@@ -68,7 +88,17 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  } catch (error) {
+  } catch (error: any) {
+    // Detectar errores de conexión a base de datos
+    if (error.code === "P1011" || 
+        error.message?.includes("Can't reach database") ||
+        error.message?.includes("database server")) {
+      return NextResponse.json(
+        { error: "No tienes conexión a internet" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Error en el servidor: " + String(error) },
       { status: 500 }

@@ -33,7 +33,7 @@ export function NotificationTabs({
         </TabsList>
       </Tabs>
 
-      {unreadCount > 0 && (
+      {activeTab === "unread" && unreadCount > 0 && (
         <button
           onClick={onMarkAll}
           className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100 transition"

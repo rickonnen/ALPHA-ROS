@@ -674,9 +674,9 @@ model Publicacion {
   id_estado_construccion    Int?                        @db.SmallInt
   id_tipo_inmueble          Int?                        @db.SmallInt
   id_tipo_operacion         Int?                        @db.SmallInt
-  id_ubicacion              Int?
-  id_moneda                 Int?
-  id_etiqueta  x`             Int?                        @db.SmallInt
+  id_ubicacion              Int?                        @db.SmallInt 
+  id_moneda                 Int?                      @db.SmallInt
+  id_etiqueta               Int?                        @db.SmallInt
   id_estado                 Int?                        @db.SmallInt
   id_zona                   Int?                        @db.SmallInt
   id_usuario                String?                     @db.Uuid
