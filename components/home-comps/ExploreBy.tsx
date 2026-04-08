@@ -20,7 +20,7 @@ interface ExploreCategory {
   arrItems:         CategoryItem[];
   strLinkHref:      string;
   strLinkLabel:     string;
-  fnBuildItemHref:  (strName: string) => string; // 👈 NUEVO
+  fnBuildItemHref:  (strName: string) => string;
 }
 
 // ---------------------------------------------------------------
@@ -78,7 +78,6 @@ async function fetchTiposInmueble(): Promise<CategoryItem[]> {
 //  Sub-componentes
 // ---------------------------------------------------------------
 
-// 👇 Ahora recibe href y se envuelve en Link
 function CategoryRow({
   objItem,
   intIndex,
@@ -158,7 +157,7 @@ function ExploreCard({ objCategory }: { objCategory: ExploreCategory }) {
               key={objItem.strName}
               objItem={objItem}
               intIndex={intIndex}
-              strHref={objCategory.fnBuildItemHref(objItem.strName)} // 👈 NUEVO
+              strHref={objCategory.fnBuildItemHref(objItem.strName)}
             />
           ))
         )}
@@ -257,7 +256,7 @@ export default function ExploreBy() {
       strLinkHref:     "/busqueda?operaciones=Alquiler",
       strLinkLabel:    "Ver todas las ciudades",
       fnBuildItemHref: (strName) =>
-        `/busqueda?operaciones=Alquiler&ciudad=${toQueryParam(strName)}`, // 👈 ej: Santa+Cruz
+        `/busqueda?operaciones=Alquiler&ciudad=${toQueryParam(strName)}`,
     },
     {
       strId:           "sales",
@@ -268,7 +267,7 @@ export default function ExploreBy() {
       strLinkHref:     "/busqueda?operaciones=Venta",
       strLinkLabel:    "Ver todas las ciudades",
       fnBuildItemHref: (strName) =>
-        `/busqueda?operaciones=Venta&ciudad=${toQueryParam(strName)}`, // 👈 ej: Cochabamba
+        `/busqueda?operaciones=Venta&ciudad=${toQueryParam(strName)}`,
     },
     {
       strId:           "property-types",
@@ -279,7 +278,7 @@ export default function ExploreBy() {
       strLinkHref:     "/busqueda",
       strLinkLabel:    "Ver todos los tipos",
       fnBuildItemHref: (strName) =>
-        `/busqueda?tipo=${toQueryParam(strName)}`, // 👈 ej: Casas
+        `/busqueda?tipo=${toQueryParam(strName)}`,
     },
   ];
 
