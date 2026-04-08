@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import PasswordStrength from "./PasswordStrength";
 import SuccessModal from "./SuccessModal";
 import { useAuth } from "./AuthContext";
+import { isValidEmail, getSuspiciousDomainSuggestion } from "@/lib/utils";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -78,11 +79,14 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     if (field === 'email') {
   if (!value.trim())
     newErrors.email = 'El correo es obligatorio';
-  else if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value.trim()))
-    newErrors.email = 'Ingresa un correo electrónico válido';
-  else if (/\.{2,}/.test(value) || value.startsWith('.') || value.includes('@.'))
-    newErrors.email = 'Ingresa un correo electrónico válido';
-  else
+  else if (!isValidEmail(value.trim())) {
+    const suggestion = getSuspiciousDomainSuggestion(value.trim());
+    if (suggestion) {
+      newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
+    } else {
+      newErrors.email = 'Ingresa un correo electrónico válido';
+    }
+  } else
     delete newErrors.email;
 }
 
@@ -163,10 +167,14 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
       newErrors.apellido = "Se permite espacio solo después de 3 o más letras";
 
     if (!email.trim()) newErrors.email = 'El correo es obligatorio';
-else if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email.trim()))
-  newErrors.email = 'Ingresa un correo electrónico válido';
-else if (/\.{2,}/.test(email) || email.startsWith('.') || email.includes('@.'))
-  newErrors.email = 'Ingresa un correo electrónico válido';
+else if (!isValidEmail(email.trim())) {
+  const suggestion = getSuspiciousDomainSuggestion(email.trim());
+  if (suggestion) {
+    newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
+  } else {
+    newErrors.email = 'Ingresa un correo electrónico válido';
+  }
+}
 
    if (!password) newErrors.password = 'La contraseña es obligatoria';
 else if (/\s/.test(password)) newErrors.password = 'La contraseña no puede contener espacios';
@@ -326,7 +334,7 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
           <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Correo electrónico</label>
           <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.email ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.email ? "#fee2e2" : "white" }}>
             <Mail size={18} style={{ color: "#9ca3af" }} />
-            <input type="email" placeholder="ejemplo@correo.com" value={email}
+            <input type="email" placeholder="usuario@gmail.com" value={email}
               onChange={(e) => { setEmail(e.target.value); validateField("email", e.target.value); }}
               style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
           </div>
