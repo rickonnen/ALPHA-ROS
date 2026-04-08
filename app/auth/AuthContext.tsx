@@ -1,5 +1,6 @@
 "use client";  // Componente de cliente (React)
 import React, { createContext, useState, useContext, useEffect, useRef } from "react";
+import { signOut } from "next-auth/react"; 
 
 interface User {
   id: string;
@@ -16,7 +17,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const INACTIVITY_TIMEOUT = 15 * 60 * 1000; 
+const INACTIVITY_TIMEOUT = 30 * 1000; 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -196,13 +197,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
       });
     } catch (_) {}
+ //  NUEVO — cierra también la sesión de Google/NextAuth
+    try {
+      await signOut({ redirect: false });
+    } catch (_) {}
 
     setUser(null);
   };
 
   const logout = logoutInternal;
 
-  return (
+  
+    return (
     <>
       {sessionExpiredMessage && (
         <div style={{
