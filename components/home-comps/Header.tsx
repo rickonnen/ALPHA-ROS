@@ -21,8 +21,8 @@ import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
-import { useUnreadCount } from "@/components/hooks/useUnreadCount";
 import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
+import { useUnreadCount } from "@/components/hooks/useUnreadCount";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface NavLink {
@@ -44,14 +44,10 @@ export const Header = () => {
   
   const { user: objUser, logout, isLoading: bolIsAuthLoading } = useAuth();
   const { strFotoPerfil } = useFotoPerfil(objUser?.id);
+  const unreadCount = useUnreadCount(objUser);
   const objRouter = useRouter();
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [showProtected, setShowProtected] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [showNotifications, setShowNotifications] = useState(false);
-  const unreadCount = useUnreadCount(user);
   const [bolShowAuth, setBolShowAuth] = useState(false);
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
@@ -120,77 +116,6 @@ export const Header = () => {
     </Link>
   ), [strHoverAnim]);
 
-  // ── Botón de notificaciones (comportamiento según auth) ──
-  const btnNotifications = user ? (
-    <div className="relative" ref={refNotifPanel}>
-      <button
-        onClick={() => setShowNotifications((prev) => !prev)}
-        title="Notificaciones"
-        aria-label="Notificaciones"
-        className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
-      >
-        <Bell size={20} className="text-[#2E2E2E]" />
-        <NotificationBadge count={unreadCount} />
-      </button>
-      
-      {showNotifications && <NotificationPanel />}
-    </div>
-  ) : (
-    <button
-      onClick={() => setShowProtected(true)}
-      title="Notificaciones"
-      aria-label="Notificaciones"
-      className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#E7E1D7]"
-    >
-      <Bell size={20} className="text-[#2E2E2E]" />
-    </button>
-  );
-
-  // ── Botón de perfil / sesión ──
-  const btnProfile = user ? (
-    <div className="flex items-center gap-2">
-      {/* Ir a Mi Perfil */}
-      <Link href={`/perfil?id=${user.id}`}>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-3 h-10 px-2 bg-[#E7E1D7] rounded-full pr-4 transition-all duration-300 hover:bg-[#d9d2c7] hover:shadow-[0_0_12px_#C26E5A] focus-visible:outline-none"
-          title="Mi perfil"
-        >
-          <img
-            src="https://res.cloudinary.com/drjab27cq/image/upload/v1774550604/icon_profile_jxubhg.png"
-            alt="Perfil"
-            className="w-8 h-8 rounded-full object-contain"
-          />
-          <span className="text-[15px] font-semibold uppercase text-[#2E2E2E]">
-            {user.name}
-          </span>
-        </Button>
-      </Link>
-
-      {/* Cerrar sesión */}
-      <button
-        onClick={() => {
-          logout();
-          setShowAuth(false);
-        }}
-        title="Cerrar sesión"
-        className="w-10 h-10 bg-[#E7E1D7] rounded-full flex items-center justify-center transition-all duration-300 hover:bg-red-100 hover:shadow-[0_0_12px_#ef4444] hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F3A4D]"
-      >
-        <LogOut size={18} className="text-red-500" />
-      </button>
-    </div>
-  ) : (
-    <Button
-      onClick={() => {
-        setAuthMode("login");
-        setShowAuth(true);
-      }}
-      className="text-[15px] px-6 h-10 font-semibold bg-[#C26E5A] text-[#E7E1D7] transition-all duration-300 hover:bg-[#b05f4c] hover:shadow-[0_0_15px_#C26E5A] focus-visible:outline-none"
-    >
-      INICIAR SESIÓN
-    </Button>
-  );
-
   return (
     <>
       <header
@@ -212,12 +137,13 @@ export const Header = () => {
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
                 <button
-                  aria-label="Notificaciones"
-                  onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
-                >
-                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                </button>
+                     aria-label="Notificaciones"
+                     onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
+                     className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
+>
+                    <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
+                    <NotificationBadge count={unreadCount} />
+                    </button>
               )}
               {objUser && bolShowNotifications && (
                 <div className="absolute right-[-15px] top-full mt-0">
@@ -285,13 +211,14 @@ export const Header = () => {
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
-                <button
-                  aria-label="Notificaciones"
-                  onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                  className={`w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
-                >
-                  <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                </button>
+               <button
+                aria-label="Notificaciones"
+                onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
+                className={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
+              >
+                <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
+                <NotificationBadge count={unreadCount} />
+              </button>
               )}
               {objUser && bolShowNotifications && <NotificationPanel />}
             </div>
