@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -90,16 +90,21 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   }
 
   //  BUG 4 y 9 — manejar clic en Google
-  async function handleGoogleSignIn() {
-    if (googleLoading) return; // ← evita múltiples clics
-    setGoogleLoading(true);
-    try {
-      await signIn("google", { callbackUrl: "/" });
-    } finally {
-      setGoogleLoading(false);
-    }
-  }
+const googleClickedRef = useRef(false);
 
+async function handleGoogleSignIn() {
+  if (googleClickedRef.current) return; // bloqueo inmediato
+  googleClickedRef.current = true;
+
+  setGoogleLoading(true);
+
+  try {
+    await signIn("google", { callbackUrl: "/" });
+  } catch (error) {
+    googleClickedRef.current = false; // desbloquea si falla
+    setGoogleLoading(false);
+  }
+}
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
@@ -129,6 +134,7 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
           gap: "8px",
           marginBottom: "16px",
           opacity: googleLoading ? 0.6 : 1,
+           pointerEvents: googleLoading ? "none" : "auto",
         }}
       >
         {googleLoading ? (
@@ -140,6 +146,7 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
             borderTop: "2px solid transparent",
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
+            pointerEvents: googleLoading ? "none" : "auto",
           }} />
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
