@@ -91,9 +91,19 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     document.body.removeChild(link);
   };
 
+  
+  const formateadorPrecio = new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const precioFormateado = formateadorPrecio.format(Number(plan.precio_plan));
+
   const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
 
     return {
+      precioFormateado,
       qrUrl,
       generandoQr,
       estadoModal,

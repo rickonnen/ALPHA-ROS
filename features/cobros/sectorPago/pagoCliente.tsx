@@ -19,6 +19,7 @@ export default function PagoCliente({ plan, planId }: Props) {
   const { user, isLoading } = useAuth();
 
   const {
+    precioFormateado,
     qrUrl,
     generandoQr,
     estadoModal,
@@ -27,9 +28,6 @@ export default function PagoCliente({ plan, planId }: Props) {
     alDarClickEnVerificarPrincipal,
     irAlPerfil,
   } = usePagoCliente(plan, planId);
-
-  // por si no es un usuario logueado mostrar ese return
-  if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
 
   // por si no es un usuario logueado mostrar ese return
   if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
@@ -67,20 +65,25 @@ export default function PagoCliente({ plan, planId }: Props) {
             Total a pagar
           </h2>
           <div className="text-3xl mb-10 text-foreground font-semibold">
-            $ {Number(plan.precio_plan).toLocaleString("es-ES")}
+            $ {precioFormateado}
           </div>
 
-          <div className="mb-10 flex h-64 w-64 items-center justify-center overflow-hidden rounded-md border border-border shadow-sm">
+          <div className="mb-10 flex h-80 w-80 items-center justify-center rounded-md border border-border shadow-sm bg-white p-6">
             {generandoQr ? (
-              <Skeleton className="h-full w-full" />
+              <Skeleton className="h-[300px] w-[300px]" />
             ) : qrUrl ? (
               <img
                 src={qrUrl}
                 alt="Código QR de Pago"
-                className="h-[200px] w-[200px] object-contain"
+                /* Usamos 300x300. 
+                  Esto garantiza que a una distancia de ~70cm se escanee al instante.
+                */
+                width={300}
+                height={300}
+                className="h-[300px] w-[300px] block object-contain" 
               />
             ) : (
-              <span className="text-sm uppercase text-muted-foreground font-medium">
+              <span className="text-sm uppercase text-muted-foreground font-medium text-center">
                 Error al cargar QR
               </span>
             )}
