@@ -21,7 +21,6 @@ export default function PaymentVerificationPage() {
   const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
   const [bolIsAuthorized, setBolIsAuthorized] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("pending");
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const formatData = useCallback((arrDatabaseData: any[]): PaymentRecord[] => {
 
     if (!arrDatabaseData || !Array.isArray(arrDatabaseData)) return [];
@@ -115,53 +114,17 @@ export default function PaymentVerificationPage() {
         <AccessDenied />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          
-          {/* VERSIÓN MÓVIL: Custom Dropdown (Elegante y controlable) */}
-          <div className="sm:hidden mb-6 relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full bg-card border border-border text-foreground text-sm font-semibold rounded-lg p-3.5 shadow-sm flex justify-between items-center outline-none focus:ring-2 focus:ring-primary"
+          <div className="sm:hidden mb-6">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="w-full bg-card border border-border text-foreground text-base font-semibold rounded-lg focus:ring-2 focus:ring-primary focus:border-primary block p-3.5 shadow-sm outline-none"
             >
-              {/* Muestra el nombre de la pestaña activa */}
-              {activeTab === 'pending' ? 'Pagos Pendientes' : activeTab === 'accepted' ? 'Pagos Aceptados' : 'Pagos Rechazados'}
-              
-              {/* Icono de flecha */}
-              <svg 
-                className={`w-4 h-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-
-            {/* Opciones del menú (Solo aparecen si está abierto) */}
-            {isDropdownOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-                <button
-                  onClick={() => { setActiveTab('pending'); setIsDropdownOpen(false); }}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 ${activeTab === 'pending' ? 'text-primary bg-muted/20' : 'text-muted-foreground'}`}
-                >
-                  Pagos Pendientes
-                </button>
-                <div className="border-b border-border/50"></div>
-                <button
-                  onClick={() => { setActiveTab('accepted'); setIsDropdownOpen(false); }}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 ${activeTab === 'accepted' ? 'text-primary bg-muted/20' : 'text-muted-foreground'}`}
-                >
-                  Pagos Aceptados
-                </button>
-                <div className="border-b border-border/50"></div>
-                <button
-                  onClick={() => { setActiveTab('rejected'); setIsDropdownOpen(false); }}
-                  className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 ${activeTab === 'rejected' ? 'text-primary bg-muted/20' : 'text-muted-foreground'}`}
-                >
-                  Pagos Rechazados
-                </button>
-              </div>
-            )}
+              <option value="pending">Pagos Pendientes</option>
+              <option value="accepted">Pagos Aceptados</option>
+              <option value="rejected">Pagos Rechazados</option>
+            </select>
           </div>
-
-          {/* VERSIÓN ESCRITORIO: Pestañas normales (Se ocultan en móvil) */}
           <TabsList className="hidden sm:flex bg-transparent h-auto p-0 space-x-1 mb-8">
             <TabsTrigger value="pending" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-px transition-all">
               Pagos Pendientes
