@@ -25,7 +25,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShieldCheck, Mail, RefreshCcw, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ResultModal from "@/components/ui/modal";
@@ -299,7 +299,18 @@ export default function ConfirmarCorreoView({
             disabled={bolSubmitting}
             className="h-11 min-w-40 rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10"
           >
-            <RefreshCcw className="mr-2 h-4 w-4" />
+            <svg
+              className="mr-2 h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M 3 12 A 9 9 0 1 1 12 21" />
+              <polyline points="17 21 12 21 13 16" />
+            </svg>
             Reenviar codigo
           </Button>
 
