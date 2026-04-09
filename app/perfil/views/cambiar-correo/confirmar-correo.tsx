@@ -237,7 +237,7 @@ export default function ConfirmarCorreoView({
                 Confirmar nuevo correo
               </h2>
               <p className="text-base text-white/70">
-                Ingresa el codigo enviado a {" "}
+                Ingresa el código enviado a {" "}
                 {maskEmail(nuevo_email)}
               </p>
             </div>
@@ -256,10 +256,10 @@ export default function ConfirmarCorreoView({
 
           <div>
             <p className="mb-2 text-sm font-black uppercase tracking-wider text-white/70">
-              Codigo de verificacion
+              Código de verificación
             </p>
 
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-6 gap-2 md:flex md:gap-3">
               {arrOtp.map((digit, idx) => (
                 <Input
                   key={idx}
@@ -272,13 +272,13 @@ export default function ConfirmarCorreoView({
                   onChange={(e) => handleOtpChange(idx, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                   onPaste={handleOtpPaste}
-                  className="h-16 w-full min-w-0 rounded-xl border-2 border-white/25 bg-white/5 px-0 text-center text-2xl sm:text-3xl font-black tracking-normal text-white focus-visible:border-white focus-visible:ring-0"
+                  className="h-16 w-full min-w-0 rounded-xl border-2 border-white/25 bg-white/5 px-0 text-center text-2xl font-black tracking-normal text-white focus-visible:border-white focus-visible:ring-0 md:w-16 md:flex-none md:text-3xl"
                 />
               ))}
             </div>
 
             <p className="mt-2 text-sm text-white/65">
-              El codigo expira en {formatTime(intTimeLeft)}.
+              El código expira en {formatTime(intTimeLeft)}.
             </p>
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function ConfirmarCorreoView({
               <path d="M 3 12 A 9 9 0 1 1 12 21" />
               <polyline points="17 21 12 21 13 16" />
             </svg>
-            Reenviar codigo
+            Reenviar código
           </Button>
 
           <Button
