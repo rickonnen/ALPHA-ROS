@@ -26,8 +26,6 @@ export function useUnreadCount(user: any) {
       return;
     }
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 300);
-    return () => clearInterval(interval);
   }, [fetchUnreadCount, user]);
 
   return unreadCount;
