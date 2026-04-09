@@ -1,4 +1,4 @@
-/** *Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
  * Fecha: 26/03/2026
  * Funcionalidad: Editar datos de el usuario desde la vista de mi perfil
  * @param {String} nombres - Para editar datos
@@ -48,6 +48,10 @@
  *      Ahora solo se llama onGuardar y el padre maneja el re-fetch y
  *      la navegacion de vuelta al menu
  */
+/** Dev: Alvarado Alisson Dalet - sow-AlissonA
+ * Fecha: 08/04/2026
+ * Funcionalidad: Subir foto desde el explorador de archivos
+ */
 "use client";
 import { useState, useEffect } from "react";
 import ResultModal from "@/components/ui/ResultModal";
@@ -93,6 +97,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   const [arrPaises, setArrPaises] = useState<{ id_pais: number; nombre_pais: string }[]>([]);
   const [bolLoadingPaises, setBolLoadingPaises] = useState(false);
   const [bolLoading, setBolLoading] = useState(false);
+  const [bolLoadingFoto, setBolLoadingFoto] = useState(false);
   const [objModal, setObjModal] = useState<{
     type: "success" | "error";
     title: string;
@@ -230,10 +235,45 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   };
 
   const handleCambiarFoto = () => {
-    const strNuevaUrl = window.prompt("Ingresa la URL de tu nueva foto de perfil:");
-    if (strNuevaUrl && strNuevaUrl.trim() !== "") {
-      setStrFotoUrl(strNuevaUrl.trim());
-    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setBolLoadingFoto(true);
+      try {
+        const formData = new FormData();
+        formData.append("foto", file);
+
+        const res = await fetch("/api/perfil/uploadFoto", {
+          method: "POST",
+          body: formData,
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+          setObjModal({
+            type: "error",
+            title: "Error al subir foto",
+            message: json.error ?? "No se pudo subir la imagen.",
+          });
+          return;
+        }
+
+        setStrFotoUrl(json.url);
+      } catch {
+        setObjModal({
+          type: "error",
+          title: "Error de conexión",
+          message: "No se pudo subir la imagen. Intenta nuevamente.",
+        });
+      } finally {
+        setBolLoadingFoto(false);
+      }
+    };
+    input.click();
   };
 
   const handleEliminarFoto = () => {
@@ -280,13 +320,19 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 <Button
                   variant="outline"
                   onClick={handleCambiarFoto}
+                  disabled={bolLoadingFoto}
                   className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white text-xs font-black tracking-widest"
                 >
-                  Cambiar foto
+                  {bolLoadingFoto ? (
+                    <><Loader2 className="animate-spin h-4 w-4 mr-2" />Subiendo...</>
+                  ) : (
+                    "Cambiar foto"
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleEliminarFoto}
+                  disabled={bolLoadingFoto}
                   className="bg-transparent border-red-300/50 text-red-300 hover:bg-red-400/10 hover:text-red-200 text-xs font-black tracking-widest"
                 >
                   Eliminar foto
