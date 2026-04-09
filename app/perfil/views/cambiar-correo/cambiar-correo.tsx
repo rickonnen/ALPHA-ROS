@@ -244,10 +244,10 @@ function HeaderCorreo() {
 
         <div>
           <CardTitle className="text-3xl font-extrabold tracking-tight text-white">
-            Cambiar correo electrónico
+            Cambiar correo
           </CardTitle>
           <CardDescription className="mt-1 text-base text-white/70">
-            Te enviaremos un código de verificación al nuevo correo.
+            Te enviaremos un código de verificación.
           </CardDescription>
         </div>
       </div>
