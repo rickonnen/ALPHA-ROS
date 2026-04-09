@@ -1,16 +1,10 @@
+
 /**
  * Dev: Gabriel Paredes
- * Date modification: 02/04/2026
+ * Date modification: 06/04/2026
  * Funcionalidad: Componente para subir imágenes de un inmueble con
- *                validación de formato, peso, resolución y aspecto.
- *                Corrección: muestra mensaje de error en rojo cuando
- *                el usuario intenta agregar una imagen superando el
- *                límite máximo de 5 imágenes permitidas.
- *                Aviso: informa al usuario que las imágenes deben
- *                volver a seleccionarse si recarga la página,
- *                controlado por interacción real del usuario.
- *                Corrección: borde rojo permanente sin interferencia
- *                del hover cuando hay error de validación.
+ *                validación de formato, peso, resolución y aspecto
+ * Corrección: asterisco (*) en label de campo obligatorio
  * @param {ImageUploaderProps} props - files, onChange, onRemove, error, touched
  * @return {JSX.Element} Uploader de imágenes con previsualizaciones y validaciones
  */
@@ -20,8 +14,6 @@
 import React, { useRef, useState, useEffect, startTransition } from 'react'
 import { File as FileIcon, X } from 'lucide-react'
 
-// ─── Constantes (CA-21 / CA-22 / CA-23 / CA-24 / CA-25) ──────────────────────
-
 const MAX_FILES       = 5
 const MAX_SIZE_BYTES  = 10 * 1024 * 1024
 const MIN_WIDTH       = 1280
@@ -30,10 +22,7 @@ const ACCEPTED_TYPES  = ['image/jpeg', 'image/png']
 const ACCEPTED_RATIOS = [4 / 3, 16 / 9]
 const RATIO_TOLERANCE = 0.02
 
-// Clave para sessionStorage — identifica interacción real del usuario
 const SESSION_KEY = 'imageUploader_userInteracted'
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export interface ImageUploaderProps {
   files?:    File[]
@@ -42,8 +31,6 @@ export interface ImageUploaderProps {
   error?:    string
   touched?:  boolean
 }
-
-// ─── Validación de dimensiones y aspecto ─────────────────────────────────────
 
 function validateImageDimensions(
   file: File,
@@ -84,8 +71,6 @@ function validateImageDimensions(
   })
 }
 
-// ─── Componente ───────────────────────────────────────────────────────────────
-
 export function ImageUploader({ files = [], onChange, onRemove, error, touched }: ImageUploaderProps) {
   const inputRef                      = useRef<HTMLInputElement>(null)
   const [fieldError,  setFieldError]  = useState<string | null>(null)
@@ -105,8 +90,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
   const limitReached = files.length >= MAX_FILES
 
-  // ── Manejo de archivo seleccionado ──────────────────────────────────────────
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setFieldError(null)
     setWasVisited(false)
@@ -115,25 +98,21 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
 
     e.target.value = ''
 
-    // CA-21: formato
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setFieldError('Solo se aceptan imágenes en formato JPG y PNG.')
       return
     }
 
-    // CA-25: peso
     if (file.size > MAX_SIZE_BYTES) {
       setFieldError('El archivo supera el peso máximo de 10 MB.')
       return
     }
 
-    // CA-22: límite
     if (files.length >= MAX_FILES) {
       setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
       return
     }
 
-    // CA-23 + CA-24: dimensiones y aspecto
     const { ok, error: dimError } = await validateImageDimensions(file)
     if (!ok) {
       setFieldError(dimError ?? 'Imagen no válida.')
@@ -147,8 +126,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
     onChange?.([file])
   }
 
-  // ── Trigger manual con validación de límite ──────────────────────────────────
-
   const handleButtonClick = () => {
     if (limitReached) {
       setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
@@ -159,8 +136,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
     inputRef.current?.click()
   }
 
-  // ── Eliminar imagen ──────────────────────────────────────────────────────────
-
   const handleRemove = (index: number) => {
     setFieldError(null)
     if (files.length === 1) {
@@ -170,8 +145,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
     onRemove?.(index)
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
   const showExternalError = touched && !!error
   const showFieldError    = !!fieldError
   const showRedBorder     = !limitReached && (showFieldError || showExternalError)
@@ -179,12 +152,10 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
   return (
     <div className="flex flex-col gap-2">
 
-      {/* Label */}
       <label className="text-sm font-medium text-[#2E2E2E]">
-        Insertar imagen de la propiedad
+        Insertar imagen de la propiedad <span className="font-normal text-muted-foreground">*</span>
       </label>
 
-      {/* Input oculto */}
       <input
         ref={inputRef}
         type="file"
@@ -194,7 +165,6 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         onChange={handleFileChange}
       />
 
-      {/* Trigger — input falso con ícono de archivo */}
       <button
         type="button"
         aria-label="Subir imagen"
@@ -216,17 +186,14 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         <FileIcon className="w-5 h-5 shrink-0 text-gray-700" />
       </button>
 
-      {/* Error de validación del campo */}
       {showFieldError && (
         <span className="text-red-500 text-sm">{fieldError}</span>
       )}
 
-      {/* Error externo del hook */}
       {showExternalError && (
         <span className="text-red-500 text-sm">{error}</span>
       )}
 
-      {/* Vistas previas */}
       {files.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
           {files.map((file, idx) => (
@@ -254,14 +221,12 @@ export function ImageUploader({ files = [], onChange, onRemove, error, touched }
         </div>
       )}
 
-      {/* Contador — solo visible cuando hay imágenes */}
       {files.length > 0 && (
         <p className="text-xs text-gray-400 text-right">
           {files.length} / {MAX_FILES} imágenes
         </p>
       )}
 
-      {/* Aviso: solo si el usuario subió imágenes en esta pestaña y luego recargó */}
       {wasVisited && files.length === 0 && (
         <span className="text-red-500" style={{ fontSize: '14px' }}>
           Por favor, inserte su imagen de nuevo.

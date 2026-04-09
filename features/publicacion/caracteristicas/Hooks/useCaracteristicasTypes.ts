@@ -1,3 +1,12 @@
+
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 02/04/2026
+ * Funcionalidad: Tipos, interfaces y constantes del formulario de características.
+ *                Corrección RM2-15: se agrega constante MAX_SUPERFICIE = 1000000
+ *                para limitar el campo superficie a 1 km
+ */
+
 export type Departamento = 'beni' | 'chuquisaca' | 'cochabamba' | 'la_paz' | 'oruro' | 'pando' | 'potosi' | 'santa_cruz' | 'tarija' | '';
 
 export interface CaracteristicasFormValues {
@@ -41,11 +50,13 @@ export const TAMANO_MAXIMO_IMAGEN_MB  = 10;
 export const MIN_IMAGENES             = 1;
 export const MAX_IMAGENES             = 5;
 export const MAX_CARACTERES_ZONA      = 100;
+export const MIN_CARACTERES_ZONA      = 5;
 export const MAX_VALOR_NUMERICO       = 50;
 export const MIN_RESOLUCION_ANCHO     = 1280;
 export const MIN_RESOLUCION_ALTO      = 720;
 export const MIN_CARACTERES_DIRECCION = 10;
 export const MAX_CARACTERES_DIRECCION = 200;
+export const MAX_SUPERFICIE           = 1000000;
 
 export const INITIAL_VALUES: CaracteristicasFormValues = {
   direccion:    '',

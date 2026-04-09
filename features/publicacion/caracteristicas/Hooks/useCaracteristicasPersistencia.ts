@@ -1,3 +1,4 @@
+
 import { CaracteristicasFormValues } from './useCaracteristicasTypes'
 
 const SESSION_KEY = 'caracteristicasInmueble';
