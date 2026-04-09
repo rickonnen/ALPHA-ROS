@@ -156,7 +156,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     if (suggestion) {
       newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
     } else {
-      newErrors.email = 'Ingresa un correo electrónico válido';
+      newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, chatmail.com, .edu.bo';
     }
   } else
     delete newErrors.email;
@@ -244,7 +244,7 @@ else if (!isValidEmail(email.trim())) {
   if (suggestion) {
     newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
   } else {
-    newErrors.email = 'Ingresa un correo electrónico válido';
+    newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, chatmail.com, .edu.bo';
   }
 }
 
@@ -548,6 +548,7 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
               <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 y maximo 15 caracteres" value={password} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setPassword(value); validateField("password", value); }}
                 style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{password.length}/15</span>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                 style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -565,6 +566,7 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
               <input type={showConfirm ? "text" : "password"} placeholder="Confirmar contraseña" value={confirmPassword} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setConfirmPassword(value); validateField("confirmPassword", value); }}
                 style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{confirmPassword.length}/15</span>
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                 style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
