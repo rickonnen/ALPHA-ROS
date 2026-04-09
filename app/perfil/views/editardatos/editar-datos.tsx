@@ -52,6 +52,10 @@
  * Fecha: 08/04/2026
  * Funcionalidad: Subir foto desde el explorador de archivos
  */
+/** Dev: Alvarado Alisson Dalet - sow-AlissonA
+ * Fecha: 09/04/2026
+ * Fix: Validacion de minimo 3 letras en username
+ */
 "use client";
 import { useState, useEffect } from "react";
 import ResultModal from "@/components/ui/ResultModal";
@@ -63,11 +67,12 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-const intMaxName     = 15;
-const intMaxLastName = 15;
-const intMaxAddress  = 40;
-const intMaxUsername = 15;
-const regexSinAcentos = /^[^\u00C0-\u024F]+$/;
+const intMaxName          = 15;
+const intMaxLastName      = 15;
+const intMaxAddress       = 40;
+const intMaxUsername      = 15;
+const intMinLetrasUsername = 3;
+const regexSinAcentos     = /^[^\u00C0-\u024F]+$/;
 
 interface EditProfileProps {
   usuario: {
@@ -193,6 +198,16 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
       return;
     }
 
+    const intCantLetras = (strUsername.trim().match(/[a-zA-Z]/g) ?? []).length;
+    if (intCantLetras < intMinLetrasUsername) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: `El username debe contener al menos ${intMinLetrasUsername} letras.`,
+      });
+      return;
+    }
+
     setBolLoading(true);
     try {
       const res = await fetch("/api/perfil/updateUsuario", {
@@ -285,6 +300,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     }
   };
 
+  const intLetrasUsername = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -441,6 +457,11 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 {strUsername.trim() && !regexSinAcentos.test(strUsername) && (
                   <span className="text-xs text-red-400 font-black">
                     El username no puede contener letras con acento.
+                  </span>
+                )}
+                {strUsername.trim() && intLetrasUsername < intMinLetrasUsername && (
+                  <span className="text-xs text-red-400 font-black">
+                    El username debe contener al menos {intMinLetrasUsername} letras.
                   </span>
                 )}
               </div>
