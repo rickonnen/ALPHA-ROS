@@ -26,7 +26,7 @@ const handler = NextAuth({
 
     async signIn({ user, account }: any) {
       if (!account) {
-        return "/api/google-cancelado"
+           return false  // NUEVO
       }
       try {
         if (account?.provider === "google") {
@@ -56,7 +56,7 @@ const handler = NextAuth({
           })
           if (authError) {
             console.error("Error creando en auth.users:", authError)
-            return "/api/google-cancelado"
+              return false  // NUEVO
           }
 
           const supabaseUserId = authData.user.id
@@ -75,13 +75,13 @@ const handler = NextAuth({
           if (dbError) {
             console.error("Error insertando en tabla Usuario:", dbError)
             await supabase.auth.admin.deleteUser(supabaseUserId)
-            return "/api/google-cancelado"
+            return false  // NUEVO
           }
         }
         return true
       } catch (error) {
         console.error("Error signIn Google:", error)
-        return "/api/google-cancelado"
+        return false // NUEVO
       }
     },
 
@@ -102,7 +102,26 @@ const handler = NextAuth({
           token.id = data.id_usuario
         }
       }
-      return token
+////////////////Nuevo para q de mi perfil problema de caracteres
+ // Si no existe, busca por email guardado en el token
+  if (!token.id && token.email) {
+    const { createClient } = await import("@supabase/supabase-js")
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data } = await supabase
+      .from("Usuario")
+      .select("id_usuario")
+      .eq("email", token.email)
+      .maybeSingle()
+
+    if (data?.id_usuario) {
+      token.id = data.id_usuario
+    }
+  }
+///////////////hasta aqui
+  return token
     },
 
     async session({ session, token }: any) {
@@ -126,25 +145,11 @@ const handler = NextAuth({
       return baseUrl
 
     },
-
-    async redirect({ url, baseUrl }: any) {
-      if (
-        url.includes("error=Callback") ||
-        url.includes("error=OAuthCallback") ||
-        url.includes("access_denied")
-      ) {
-        return baseUrl
-      }
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      if (url.startsWith(baseUrl)) return url
-      return baseUrl
-    },
-
   },
 
   pages: {
-    signIn: "/api/google-cancelado",
-    error: "/api/google-cancelado",
+    signIn: "/",
+    error: "/",     
   },
 
 })
