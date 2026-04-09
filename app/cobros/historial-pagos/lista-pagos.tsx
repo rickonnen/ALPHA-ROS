@@ -59,7 +59,15 @@ const pagosAdaptados: Pago[] = Array.isArray(pagos) ? pagos.map((p: any) => ({
   })) : [];
 
   if (loading) return <p className="text-sm text-gray-500">Cargando...</p>;
-  if (error) return <div className="text-center py-10 text-red-500 text-sm">{error}</div>;
+  if (error) {
+  return (
+    <div className="flex justify-center items-start mt-6">
+      <div className="bg-[#F5F5F5] text-[#2E2E2E] text-sm px-8 py-4 rounded-lg shadow-sm">
+        {error}
+      </div>
+    </div>
+  );
+}
   if (pagosAdaptados.length === 0) return <div className="text-center py-10 text-gray-500 text-sm">No existen pagos registrados.</div>;
 
   const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);

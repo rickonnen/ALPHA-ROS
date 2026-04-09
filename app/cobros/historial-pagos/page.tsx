@@ -35,6 +35,7 @@ function HistorialPagosContent() {
             </TabsTrigger>
             <TabsTrigger
               value="rechazados"
+              disabled
               className="px-4 py-2 text-sm font-medium rounded-md bg-[#D6B0AA] text-white opacity-80"
             >
               PAGOS RECHAZADOS
