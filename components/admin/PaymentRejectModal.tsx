@@ -69,7 +69,7 @@ export function PaymentRejectModal({
             onClick={onConfirm}
             className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-black px-6 py-2.5 sm:py-2 rounded-xl text-sm font-semibold capitalize border-none"
           >
-            rechazar
+            aceptar
           </AlertDialogAction>
         </div>
       </AlertDialogContent>

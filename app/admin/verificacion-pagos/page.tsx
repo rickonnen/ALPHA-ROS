@@ -116,7 +116,7 @@ export default function PaymentVerificationPage() {
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           
-          {/* VERSIÓN MÓVIL: Custom Dropdown (Elegante y controlable) */}
+          {/* VERSIÓN MÓVIL */}
           <div className="sm:hidden mb-6 relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -134,7 +134,7 @@ export default function PaymentVerificationPage() {
               </svg>
             </button>
 
-            {/* Opciones del menú (Solo aparecen si está abierto) */}
+            {/* Opciones del menú  */}
             {isDropdownOpen && (
               <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
                 <button
@@ -161,7 +161,7 @@ export default function PaymentVerificationPage() {
             )}
           </div>
 
-          {/* VERSIÓN ESCRITORIO: Pestañas normales (Se ocultan en móvil) */}
+          {/* VERSIÓN ESCRITORIO: Pestañas normales */}
           <TabsList className="hidden sm:flex bg-transparent h-auto p-0 space-x-1 mb-8">
             <TabsTrigger value="pending" className="px-6 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-t-lg rounded-b-none data-[state=active]:bg-card data-[state=active]:text-primary border border-transparent data-[state=active]:border-border data-[state=active]:border-b-transparent relative z-10 translate-y-px transition-all">
               Pagos Pendientes

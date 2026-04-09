@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/app/auth/AuthContext";
 import { Header } from "@/components/home-comps/Header";
 import Footer from "@/components/home-comps/footer";
+import { GlobalShortcut } from "@/components/GlobalShortcut";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default function RootLayout({
         <AuthProvider>
           {/* El Header es fixed (z-50), por lo tanto no ocupa espacio físico */}
           <Header />
-
+              <GlobalShortcut />
           {/* CORRECCIÓN: pt-18 (72px) para compensar la altura h-18 del Header */}
           <main className="flex-1 pt-18 flex flex-col">
             {children}
