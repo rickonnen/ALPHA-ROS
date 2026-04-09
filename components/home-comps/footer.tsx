@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useAuth } from "@/app/auth/AuthContext";
 import { usePublicarAccion } from "../hooks/usePublicarAccion";
@@ -18,9 +19,9 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import { Skeleton } from "@/components/ui/skeleton";
 
 const arrExploreLinks = [
-  { strHref: "/busqueda?strOperacion=compra", strLabel: "Compra" },
-  { strHref: "/busqueda?strOperacion=alquiler", strLabel: "Alquiler" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "Anticrético" },
+  { strHref: "/busqueda", strLabel: "En venta", strValue: "Venta" },
+  { strHref: "/busqueda", strLabel: "Alquiler", strValue: "Alquiler" },
+  { strHref: "/busqueda", strLabel: "Anticrético", strValue: "Anticrético" },
 ];
 
 const arrInfoLinks = [
@@ -30,13 +31,14 @@ const arrInfoLinks = [
 ];
 
 const arrSocialLinks = [
-  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-12 w-12", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-8 w-8", objStyle: { transform: "scale(1.12)" } },
   { strHref: "https://www.instagram.com/propbol.inmo/", strAriaLabel: "Instagram", strImgSrc: "/logo-instagram.svg", strImgAlt: "Instagram icon", strImgClasses: "h-10 w-10" },
-  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-8 w-8", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-9 w-9", objStyle: { transform: "scale(1.12)" } },
 ];
 
 export default function Footer() {
   const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
+  const objRouter = useRouter();
   
   const [bolShowAuth, setBolShowAuth] = useState(false);
   const [bolShowProtected, setBolShowProtected] = useState(false);
@@ -56,27 +58,37 @@ export default function Footer() {
     bolIsAuthLoading,
   });
 
-  // Ajuste de ring-primary para coincidir con el color del texto de los títulos
+  // función para manejar la navegación con parámetros de filtro
+  const handleFilterNavigation = (objLink: { strHref: string; strValue: string }) => {
+    const objParams = new URLSearchParams();
+    objParams.set("operaciones", objLink.strValue);
+    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+  };
+
   const strBaseLinkClasses = useMemo(() => 
     `inline-block rounded-sm text-foreground transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`, 
   [strHoverAnim]);
 
   return (
-    <footer className="mt-16 border-t border-border bg-secondary-fund">
+    <footer className="mt-16 border-t border-border bg-secondary-fund text-body-info">
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-10 px-6 py-10 md:grid-cols-[1.55fr_0.95fr_0.95fr] md:px-10 lg:gap-24 xl:max-w-[1650px] xl:grid-cols-[1.8fr_1fr_1fr] xl:px-16 2xl:px-24">
         
         <div className="flex items-start">
           {bolIsAuthLoading ? (
             <Skeleton className="h-10 w-32" />
           ) : (
-            <Link href="/" className={`${strHoverIconAnim} rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund`}>
+            <Link href="/" className={`inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverIconAnim}`}>
               <img src="/logo-principal.svg" alt="Logo" className="h-10 w-auto" />
+              <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
+                <span className="text-primary">PROP</span>
+                <span className="text-secondary">BOL</span>
+              </span>
             </Link>
           )}
         </div>
 
         <div className="md:pl-6 lg:pl-10 xl:pl-16">
-          <h3 className="mb-4 text-lg font-semibold text-primary cursor-default">Explorar</h3>
+          <h3 className="mb-4 text-subtitle font-heading font-semibold text-primary cursor-default">Explorar</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>
@@ -88,7 +100,14 @@ export default function Footer() {
             ) : (
               <>
                 {arrExploreLinks.map((link) => (
-                  <li key={link.strLabel}><Link href={link.strHref} className={strBaseLinkClasses}>{link.strLabel}</Link></li>
+                  <li key={link.strLabel}>
+                    <button 
+                      onClick={() => handleFilterNavigation(link)} 
+                      className={strBaseLinkClasses}
+                    >
+                      {link.strLabel}
+                    </button>
+                  </li>
                 ))}
                 <li><button onClick={handlePublicar} className={strBaseLinkClasses}>Publica tu inmueble</button></li>
               </>
@@ -97,7 +116,7 @@ export default function Footer() {
         </div>
 
         <div className="md:pl-4 lg:pl-8 xl:pl-12">
-          <h3 className="mb-4 text-lg font-semibold text-primary cursor-default">Información</h3>
+          <h3 className="mb-4 text-subtitle font-heading font-semibold text-primary cursor-default">Información</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>
@@ -132,7 +151,7 @@ export default function Footer() {
                   <img src={soc.strImgSrc} alt={soc.strAriaLabel} className={soc.strImgClasses} />
                 </a>
               ))}
-              <span className="cursor-default">© 2026 PROPBOL</span>
+              <span className="text-foreground cursor-default">© 2026 PROPBOL</span>
             </>
           )}
         </div>

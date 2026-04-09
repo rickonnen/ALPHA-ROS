@@ -53,6 +53,11 @@
   /* ------ */
   --color-secondary-fund: var(--secondary-fund);
   --radius: 0.5rem;
+
+  /* escala tipográfica personalizada para títulos, subtítulos y cuerpo */
+  --text-main-title: var(--text-3xl);
+  --text-subtitle: var(--text-xl);
+  --text-body-info: var(--text-base);
 }
 
 :root {
@@ -123,6 +128,13 @@
   /* boton secundario: Terracota suave (#C26E5A)*/
   --secondary: oklch(0.63 0.11 34);
   --secondary-foreground: oklch(0.952 0.01 84.8);
+
+  /* Título Principal (Hero/Propiedad) */
+  --text-3xl: 1.875rem; 
+  /* Subtítulos (Secciones destacadas) */
+  --text-xl: 1.25rem;
+  /* Cuerpo e Información general */
+  --text-base: 1rem;
 }
 
 .dark {
@@ -158,6 +170,11 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --destructive: oklch(0.704 0.191 22.2);
+
+  /* jerarquía visual en modo oscuro */
+  --text-3xl: 1.875rem;
+  --text-xl: 1.25rem;
+  --text-base: 1rem;
 }
 
 @layer base {

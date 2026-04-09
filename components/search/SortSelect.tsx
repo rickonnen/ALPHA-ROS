@@ -17,9 +17,6 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
 
   return (
     <div className="w-full mt-3">
-      <p className="text-xs font-bold text-gray-500 mb-2 ml-1">
-        ORDENAMIENTO
-      </p>
 
       <Select onOpenChange={setIsOpen} onValueChange={onSortChange} >
         <SelectTrigger 
@@ -30,7 +27,7 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
             "[&>svg]:hidden" 
           )}
         >
-          <SelectValue placeholder="Seleccionar orden"/>
+          <SelectValue placeholder="Ordenado por"/>
           
           <ChevronDown 
             className={cn(

@@ -26,7 +26,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
-      return NextResponse.json({ error: "Error en Auth: " + authError.message }, { status: 400 });
+      // Mapear errores de Supabase a mensajes en español
+      const errorMsg = authError.message?.toLowerCase() || "";
+      let errorMessage = authError.message || "Error al registrarse";
+      
+      if (errorMsg.includes("already registered") || 
+          errorMsg.includes("already exists") || 
+          errorMsg.includes("already been registered") ||
+          errorMsg.includes("duplicate") ||
+          errorMsg.includes("user already exists")) {
+        errorMessage = "El correo electrónico ingresado ya se encuentra registrado. Por favor, inicia sesión o intenta con uno distinto.";
+      }
+      
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     // 3. INSERTAR EN TABLA "Usuario"
@@ -57,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       { message: "¡Registro exitoso!" },
-      { status: 201 }  // 201 = Created
+      { status: 201 }  
     );
 
     response.cookies.set("auth_token", jwtToken, {
@@ -70,7 +82,17 @@ export async function POST(request: NextRequest) {
 
     return response;
 
-  } catch (error) {
+  } catch (error: any) {
+    // Detectar errores de conexión a base de datos
+    if (error.code === "P1011" || 
+        error.message?.includes("Can't reach database") ||
+        error.message?.includes("database server")) {
+      return NextResponse.json(
+        { error: "No tienes conexión a internet" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Error en el servidor: " + String(error) },
       { status: 500 }

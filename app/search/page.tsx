@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -13,13 +12,19 @@ import AdvancedFilters from '@/components/search/advancedFilters';
 import { ApplyFiltersButton } from '@/components/search/applyFiltersButton';
 import { ClearFiltersButton } from '@/components/search/clearFiltersButton';
 import { FilterTypeProperty, type TipoInmueble } from '@/components/search/filterTypeProperty';
-import { OperationTypeFilter, type OperationType } from '@/components/search/operationTypeFilter';
+import {
+  OperationTypeFilter,
+  type OperationTypeValue,
+} from '@/components/search/operationTypeFilter';
 import PriceDropdown from '@/components/search/priceDropdown';
 import PropertyCard, { type Property } from '@/components/search/propertyCard';
 import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import SearchMapClient from './SearchMapClient';
+import { convertPublicacionesToLocations } from '@/lib/locations';
 
 type Currency = 'USD' | 'BS';
 
@@ -57,7 +62,7 @@ function getQueryValues(value: string | null): string[] {
     .filter(Boolean);
 }
 
-function mapQueryOperationToValue(value: string | null): OperationType | null {
+function mapQueryOperationToValue(value: string | null): OperationTypeValue {
   const lastOperation = getQueryValues(value)
     .map((item) => normalizeText(item))
     .filter(Boolean)
@@ -118,7 +123,11 @@ function toNumber(value: number | null | undefined): number {
   return value ?? 0;
 }
 
-function getOperationLabel(value: OperationType): string {
+function getOperationLabel(value: OperationTypeValue): string {
+  if (!value) {
+    return 'Todas las Operaciones';
+  }
+
   switch (value) {
     case 'alquiler':
       return 'Alquiler';
@@ -159,7 +168,7 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
 
 function mapPublicationToProperty(
   publication: PublicacionBusqueda,
-  selectedOperation: OperationType,
+  selectedOperation: OperationTypeValue,
 ): Property {
   const location = [
     publication.ubicacion?.direccion,
@@ -196,25 +205,29 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
-  const [selectedOperation, setSelectedOperation] = useState<OperationType>('venta');
+  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>(null);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
+  const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
+  const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
-      selectedOperation !== 'venta' ||
-      selectedPropertyTypes.length > 0 ||
-      advancedFilterValues.habitaciones ||
-      advancedFilterValues.banos ||
-      advancedFilterValues.piscina ||
-      appliedPriceFilter?.minPrice !== undefined ||
-      appliedPriceFilter?.maxPrice !== undefined ||
-      selectedSort !== 'fecha-reciente',
+        selectedOperation !== null ||
+        selectedPropertyTypes.length > 0 ||
+        advancedFilterValues.habitaciones ||
+        advancedFilterValues.banos ||
+        advancedFilterValues.piscina ||
+        appliedPriceFilter?.minPrice !== undefined ||
+        appliedPriceFilter?.maxPrice !== undefined ||
+        selectedSort !== 'fecha-reciente',
     );
   }, [
     advancedFilterValues.banos,
@@ -231,9 +244,7 @@ function SearchPageContent() {
   const displayedProperties = useMemo(
     () =>
       sortProperties(
-        searchResults.map((publication) =>
-          mapPublicationToProperty(publication, selectedOperation),
-        ),
+        searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
         selectedSort,
       ),
     [searchResults, selectedOperation, selectedSort],
@@ -244,6 +255,24 @@ function SearchPageContent() {
     'Inmuebles';
   const breadcrumbLocationLabel = searchLocation.trim() || 'Bolivia';
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
+
+  const saveFiltersToUrl = () => {
+    const urlParams = new URLSearchParams();
+
+    if (searchLocation) urlParams.set('ciudad', searchLocation);
+    if (selectedOperation !== null) urlParams.set('operaciones', selectedOperation);
+    if (selectedPropertyTypes.length > 0) {
+      const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
+      urlParams.set('tipo', labels);
+    }
+    if (appliedPriceFilter?.minPrice !== undefined) urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
+    if (appliedPriceFilter?.maxPrice !== undefined) urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
+    if (selectedCurrency !== 'USD') urlParams.set('currency', selectedCurrency);
+    if (selectedSort !== 'fecha-reciente') urlParams.set('sort', selectedSort);
+
+    const newUrl = `/search?${urlParams.toString()}`;
+    window.history.pushState(null, '', newUrl);
+  };
 
   const handleApplyRange = (priceFilter: AppliedPriceFilter) => {
     setAppliedPriceFilter(priceFilter);
@@ -264,12 +293,11 @@ function SearchPageContent() {
 
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
-        operacion: selectedOperation,
+        operacion: selectedOperation ?? undefined,
         tipoInmueble: selectedPropertyLabels.join(','),
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
         piscina: advancedFilterValues.piscina,
-        currency: selectedCurrency,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
         ...overrides,
@@ -286,22 +314,63 @@ function SearchPageContent() {
       setIsApplyingFilters(false);
     }
   };
+  
+// Cargar estado del mapa desde localStorage al montar componente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMapState = localStorage.getItem('searchMapOpen');
+      if (savedMapState !== null) {
+        setIsMapOpen(JSON.parse(savedMapState));
+      }
+    }
+  }, []);
+
+  // Guardar estado del mapa en localStorage cuando cambia
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('searchMapOpen', JSON.stringify(isMapOpen));
+    }
+  }, [isMapOpen]);
 
   useEffect(() => {
     const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
-    const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones')) ?? 'venta';
+    const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones'));
     const nextPropertyTypes = mapQueryPropertyTypeToIds(searchParams.get('tipo'), PROPERTY_TYPE_OPTIONS);
     const nextPropertyLabels = getPropertyTypeLabelsFromIds(nextPropertyTypes, PROPERTY_TYPE_OPTIONS);
     const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
+    const minPriceParam = searchParams.get('minPrice');
+    const maxPriceParam = searchParams.get('maxPrice');
+    const currencyParam = searchParams.get('currency');
 
+    const nextMinPrice =
+      minPriceParam !== null && minPriceParam.trim() !== ''
+        ? Number(minPriceParam)
+        : undefined;
+
+    const nextMaxPrice =
+      maxPriceParam !== null && maxPriceParam.trim() !== ''
+        ? Number(maxPriceParam)
+        : undefined;
+
+    const nextCurrency: Currency = currencyParam === 'BS' ? 'BS' : 'USD';
+
+    setAppliedPriceFilter(
+      nextMinPrice !== undefined || nextMaxPrice !== undefined
+        ? { minPrice: nextMinPrice, maxPrice: nextMaxPrice }
+        : null,
+    );
+
+    setSelectedCurrency(nextCurrency);
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
 
     void runSearch({
       ubicacion: nextLocation,
-      operacion: nextOperation,
+      operacion: nextOperation ?? undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
+      minPrice: nextMinPrice,
+      maxPrice: nextMaxPrice,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -337,20 +406,21 @@ function SearchPageContent() {
 
   const handleClearFilters = () => {
     setSearchLocation('');
-    setSelectedOperation('venta');
+    setSelectedOperation(null);
     setSelectedPropertyTypes([]);
     setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
+    setAdvancedFiltersKey((prev) => prev + 1);
+    window.history.pushState(null, '', '/search');
     void runSearch({
       ubicacion: '',
-      operacion: 'venta',
+      operacion: undefined,
       tipoInmueble: undefined,
       habitaciones: '',
       banos: '',
       piscina: '',
-      currency: 'USD',
       minPrice: undefined,
       maxPrice: undefined,
     });
@@ -411,7 +481,9 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
+                  closeMobileFilters();
                 }}
               />
 
@@ -432,7 +504,10 @@ function SearchPageContent() {
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
                 />
-                <AdvancedFilters onChange={setAdvancedFilterValues} />
+                <AdvancedFilters
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues}
+                />
               </div>
 
               <div className="my-4 h-px bg-[#D8D2C8]"></div>
@@ -445,14 +520,20 @@ function SearchPageContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-        <aside className="hidden space-y-6 md:col-span-3 md:block">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:min-h-[calc(100vh-200px)]">
+        <aside className="hidden md:col-span-3 md:block">
           <div className="sticky top-8">
-            <div className="border-gray-300 rounded-4xl bg-white p-6">
+            <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+
               <div className="mb-4 flex items-center gap-2">
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
+                  <input
+                    type="checkbox"
+                    checked={isMapOpen}
+                    onChange={() => setIsMapOpen(!isMapOpen)}
+                    className="sr-only peer"
+                  />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
                 </label>
                 <span className="text-sm font-medium text-gray-700">Mapa</span>
@@ -461,40 +542,56 @@ function SearchPageContent() {
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
+                  saveFiltersToUrl();
                   void runSearch();
                 }}
               />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+              <div className="my-4 h-px bg-[#F4EFE6]" />
+
               <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
-              <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
-              <FilterTypeProperty
-                tipos={PROPERTY_TYPE_OPTIONS}
-                selected={selectedPropertyTypes}
-                onChange={setSelectedPropertyTypes}
-              />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
+              <div className="my-4 h-px bg-[#F4EFE6]" />
 
-              <PriceDropdown
-                selectedCurrency={selectedCurrency}
-                appliedPriceFilter={appliedPriceFilter}
-                onCurrencyChange={handleCurrencyChange}
-                onApplyRange={handleApplyRange}
-              />
+              <div className="min-h-0 flex-1">
+                <ScrollArea className="h-full pr-4">
+                  <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+                  <FilterTypeProperty
+                    tipos={PROPERTY_TYPE_OPTIONS}
+                    selected={selectedPropertyTypes}
+                    onChange={setSelectedPropertyTypes}
+                  />
 
-              <AdvancedFilters onChange={setAdvancedFilterValues} />
+                  <div className="my-4 h-px bg-[#F4EFE6]" />
 
-              <div className="bg-[#F4EFE6] border-1 my-4"></div>
-              <div>
-                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+                  <PriceDropdown
+                    selectedCurrency={selectedCurrency}
+                    appliedPriceFilter={appliedPriceFilter}
+                    onCurrencyChange={handleCurrencyChange}
+                    onApplyRange={handleApplyRange}
+                  />
+
+                  <AdvancedFilters
+                    key={advancedFiltersKey}
+                    onChange={setAdvancedFilterValues}
+                  />
+
+                  <div className="my-4 h-px bg-[#F4EFE6]" />
+
+                  <div className="pb-2">
+                    <ClearFiltersButton
+                      hasActiveFilters={hasActiveFilters}
+                      onClear={handleClearFilters}
+                    />
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </div>
         </aside>
 
         <main className={`${isMapOpen ? 'md:col-span-5' : 'md:col-span-9'}`}>
-          <div className="mb-6 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
+          <div className="mb-3 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
             <div>
               <nav className="mb-1 text-sm text-gray-500">{breadcrumb}</nav>
               <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
@@ -504,7 +601,7 @@ function SearchPageContent() {
             </div>
           </div>
 
-          <div className="mb-4 block md:hidden">
+          <div className="mb-2 block md:hidden">
             <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
             <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
             <SortSelect onSortChange={handleSort} />
@@ -519,21 +616,75 @@ function SearchPageContent() {
               No se encontraron inmuebles con los filtros aplicados.
             </div>
           ) : (
-            <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
-              {displayedProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} selectedCurrency={selectedCurrency} />
-              ))}
-            </div>
+            <>
+              <div className={`md:hidden ${isMapOpen ? 'hidden' : ''}`}>
+                <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                  {displayedProperties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      selectedCurrency={selectedCurrency}
+                      isHovered={hoveredId === property.id}
+                      onMouseEnter={() => {
+                        setHoveredId(property.id);
+                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                        if (location?.latitud && location?.longitud) {
+                          setHoveredPos([Number(location.latitud), Number(location.longitud)]);
+                        }
+                      }}
+                      onMouseLeave={() => setHoveredPos(null)}
+                      onClick={() => {
+                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                        if (location?.latitud && location?.longitud) {
+                          setSelectedPos([Number(location.latitud), Number(location.longitud)]);
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="hidden md:block">
+                <ScrollArea className="h-[605px] pr-4">
+                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                    {displayedProperties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        selectedCurrency={selectedCurrency}
+                        isHovered={hoveredId === property.id}
+                        onMouseEnter={() => {
+                          setHoveredId(property.id);
+                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                          if (location?.latitud && location?.longitud) {
+                            setHoveredPos([Number(location.latitud), Number(location.longitud)]);
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredPos(null)}
+                        onClick={() => {
+                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                          if (location?.latitud && location?.longitud) {
+                            setSelectedPos([Number(location.latitud), Number(location.longitud)]);
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </>
           )}
         </main>
 
         {isMapOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[90px] z-40 bg-white md:relative md:inset-auto md:z-0 md:col-span-4 md:h-[calc(90vh-2rem)] md:sticky md:top-4 md:rounded-xl md:border-2 md:border-gray-200">
-            <div className="relative h-full w-full overflow-hidden rounded-xl bg-gray-100">
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                [Componente Mapa Activo]
-              </div>
-            </div>
+          <div className="fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden">
+            <SearchMapClient 
+              locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
+              hoveredId={hoveredId}
+              selectedPos={selectedPos}
+              hoveredPos={hoveredPos}
+              setSelectedPos={setSelectedPos}
+            />
           </div>
         )}
       </div>
