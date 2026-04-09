@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ListaPagos from "./lista-pagos";
+import ListaPagos from "../../../components/cobros/lista-pagos";
 
 function HistorialPagosContent() {
   const searchParams = useSearchParams();
