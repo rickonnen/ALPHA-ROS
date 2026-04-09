@@ -135,9 +135,7 @@ function PerfilContent() {
     perfil: usuario ? (
       <PerfilView usuario={usuario} telefonos={telefonos} />
     ) : null,
-    publicaciones: usuario ? (
-      <PublicacionesView id_usuario={userId} />
-    ) : null,
+    publicaciones: usuario ? <PublicacionesView id_usuario={userId} /> : null,
     seguridad: (
       <SeguridadView
         id_usuario={userId}
@@ -148,9 +146,7 @@ function PerfilContent() {
         onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
       />
     ),
-    favoritos: usuario ? (
-      <FavoritoView id_usuario={userId} />
-    ) : null,
+    favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
   };
