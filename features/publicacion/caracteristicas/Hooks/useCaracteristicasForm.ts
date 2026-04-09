@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect, startTransition } from 'react'
 import { CaracteristicasFormValues, CaracteristicasFormErrors, INITIAL_VALUES, MAX_IMAGENES } from './useCaracteristicasTypes'
 import { validate } from './useCaracteristicasValidacion'
@@ -33,7 +34,7 @@ export function useCaracteristicasForm() {
       const updated = { ...valuesRef.current, [field]: value };
       valuesRef.current = updated;
       setValues(updated);
-      if (touchedRef.current[field] && field !== 'superficie') {
+      if (touchedRef.current[field]) {
         setErrors((prev: CaracteristicasFormErrors) => ({ ...prev, [field]: validate(updated)[field] }));
       }
     }, [],
