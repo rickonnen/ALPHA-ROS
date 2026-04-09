@@ -35,21 +35,17 @@ const SUSPICIOUS_DOMAINS: Record<string, string> = {
   "protonmail.co": "protonmail.com",
 };
 
-
-// Lista de TLDs válidos y comunes (extensiones de dominio)
-const VALID_TLDS = new Set<string>([
-  // Los más comunes
-  "com", "org", "net", "edu", "gov", "mil", "int",
-  // Códigos de país más comunes
-  "es", "mx", "ar", "co", "pe", "cl", "br", "uk", "us", "de", "fr", "it", "pt", "nl", "be", "se", "ch", "au", "nz", "jp", "cn", "in", "ru", "kr", "th", "id", "ph", "sg", "my", "vn", "ie", "gr", "pl", "cz", "tr", "ua", "kz", "ng", "za", "eg", "ae", "il", "th", "br", "ca", "mx",
-  // Extensiones genéricas más nuevas
-  "info", "biz", "name", "pro", "mobi", "asia", "tel", "travel", "xxx", "cat", "jobs", "post", "geo", "aero", "coop", "museum",
-  // Nuevos TLDs (gTLD)
-  "app", "blog", "cloud", "dev", "io", "online", "shop", "site", "me", "tv", "cc", "ws", "ai", "work", "tech", "xyz", "top", "win", "download", "stream", "webcam", "wiki", "link", "email", "support",
-  // País genéricos populares
-  "com.ar", "com.br", "com.mx", "com.es", "co.uk", "co.za", "com.au", "com.cn", "com.my", "com.ph", "com.th", "com.vn", "co.nz", "ie", "fr", "de", "it", "nl", "be", "pt", "gr",
+// Dominios específicos permitidos (whitelist)
+const ALLOWED_DOMAINS = new Set([
+  'gmail.com',
+  'outlook.com',
+  'hotmail.com',
+  'icloud.com',
+  'live.com',
+  'office365.com',
+  'yahoo.com',
+  'chatmail.com'
 ]);
-
 
 /**
  * Valida un correo electrónico con criterios estrictos
@@ -99,41 +95,8 @@ export function isValidEmail(email: string): boolean {
     return false;
   }
   
-  // 5. Validar que cada etiqueta del dominio sea válido
-  const domainParts = domain.split(".");
-  if (domainParts.length < 2) {
-    return false;
-  }
-  
-  for (const part of domainParts) {
-    if (part.length === 0 || part.length > 63) {
-      return false;
-    }
-    // Cada parte solo puede contener caracteres alfanuméricos y guiones
-    if (!/^[a-zA-Z0-9-]+$/.test(part)) {
-      return false;
-    }
-    // No puede empezar o terminar con guión
-    if (part.startsWith("-") || part.endsWith("-")) {
-      return false;
-    }
-  }
-  
-  // 6. Validar el TLD (extensión)
-  // Detectar si el TLD es válido conocido, o si es un formato válido (para extensiones nuevas)
-  const tld = domainParts[domainParts.length - 1];
-  
-  // Verificar en lista de TLDs válidos conocidos
-  if (!VALID_TLDS.has(tld)) {
-    // Si no está en la lista, validar formato básico pero ser más restrictivo
-    // Solo aceptar TLDs alfabéticos de al menos 2 caracteres
-    if (!/^[a-z]{2,6}$/.test(tld)) {
-      return false;
-    }
-  }
-  
-  // 7. Última validación: verificar si el dominio está en lista de sospechosos
-  if (SUSPICIOUS_DOMAINS[domain]) {
+  // 5. VERIFICACIÓN CLAVE: Solo aceptar dominios en la whitelist o .edu.bo
+  if (!ALLOWED_DOMAINS.has(domain) && !domain.endsWith('.edu.bo')) {
     return false;
   }
   
@@ -156,3 +119,5 @@ export function getSuspiciousDomainSuggestion(email: string): string | null {
   // Buscar si el dominio está en la lista de sospechosos
   return SUSPICIOUS_DOMAINS[domain] || null;
 }
+
+

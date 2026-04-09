@@ -9,21 +9,24 @@ export function useUnreadCount(user: any) {
     fetch("/api/notifications")
       .then(r => r.json())
       .then((data: { id: number; read: boolean }[]) => {
-      const userId = (user as any)?.id ?? "guest";
-      const stored = typeof window !== "undefined" 
-        ? localStorage.getItem(`deletedNotificationIds_${userId}`) 
-        : null;
-      const deletedIds: number[] = stored ? JSON.parse(stored) : [];
-      const filtered = data.filter(n => !deletedIds.includes(n.id));
-      setUnreadCount(filtered.filter(n => !n.read).length);
-    })
-    .catch(console.error);
-}, [user]);
-useEffect(() => {
+        const userId = (user as any)?.id ?? "guest";
+        const stored = typeof window !== "undefined" 
+          ? localStorage.getItem(`deletedNotificationIds_${userId}`) 
+          : null;
+        const deletedIds: number[] = stored ? JSON.parse(stored) : [];
+        const filtered = data.filter(n => !deletedIds.includes(n.id));
+        setUnreadCount(filtered.filter(n => !n.read).length);
+      })
+      .catch(console.error);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 300);
-    return () => clearInterval(interval);
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, user]);
 
   return unreadCount;
 }
