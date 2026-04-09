@@ -13,13 +13,26 @@ type Notification = {
   description: string;
   read: boolean;
   time?: string;
+  createdAt?: string | null;
 };
+
+function formatRelativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (hours < 24) return `hace ${hours} h`;
+  return `hace ${days} d`;
+}
 
 export function NotificationPanel() {
   const { user } = useAuth(); //NUEVO - obtiene el usuario logueado
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -36,13 +49,18 @@ export function NotificationPanel() {
           title: n.title,
           description: n.message,
           read: n.read,
-          time: "ahora",
+          createdAt: n.createdAt ?? null,   // ← agrega esta línea
+          time: n.createdAt ? formatRelativeTime(n.createdAt) : "ahora",
         }));
-
-        //NUEVO - filtra solo las eliminadas de este usuario
-        setNotifications(mapped.filter((n: any) => !localDeletedIds.includes(n.id)));
+        
+        const sorted = mapped.sort((a: any, b: any) =>
+          new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()  // ← cambia esta línea
+        );
+        
+        setNotifications(sorted.filter((n: any) => !localDeletedIds.includes(n.id)));
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -100,7 +118,7 @@ export function NotificationPanel() {
   };
 
   return (
-    <div className="absolute right-10 top-26 z-50 w-100 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
+    <div className="absolute right-0 top-full mt-4 z-[110] w-100 h-111 rounded-2xl shadow-lg bg-white flex flex-col max-h-120">
       <NotificationHeader total={notifications.length} />
 
       <div className="p-2">
@@ -116,6 +134,15 @@ export function NotificationPanel() {
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
           Cargando notificaciones...
         </div>
+      ) : hasError ? (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+          <BellOff size={22} />
+        </div>
+        <p className="text-gray-500 text-sm font-medium">
+          No fue posible cargar las notificaciones.
+        </p>
+      </div>
       ) : visibleNotifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">

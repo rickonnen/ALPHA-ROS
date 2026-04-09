@@ -1,112 +1,103 @@
-// app/backend/cobros/route.ts
-import { NextResponse } from 'next/server';
-import { getPaymentsByStatus, updatePaymentStatus } from '../../../../features/cobros/verificacion-pagos/paymentController';
-import { cookies } from 'next/headers';
-import { PrismaClient } from '@prisma/client';
-
-const objPrisma = new PrismaClient();
+import { NextRequest, NextResponse } from 'next/server';
+import { getPaymentsByStatus, updatePaymentStatus } from '@/features/cobros/verificacion-pagos/paymentController';
+import { verify } from "jsonwebtoken";
+import { prisma } from '@/lib/prisma';
 
 /**
  * Dev: Gabriel
- * Fecha: 29/03/2026
- * Funcionalidad: Valida si el usuario es Administrador (Rol 2) extrayendo el ID de la cookie 'auth-token'.
- * @return {boolean} bolIsAdmin - True si el usuario existe y tiene rol 2.
+ * Funcionalidad: Valida si el usuario es Administrador (Rol 1) .
  */
-async function isAdmin(): Promise<boolean> {
+async function isAdmin(request: NextRequest): Promise<boolean> {
   try {
-    const objCookieStore = await cookies();
-    let strUserId = objCookieStore.get('auth-token')?.value;
+    const authToken = request.cookies.get("auth_token")?.value;
 
-    // Se fuerza el ID del Admin si no hay Cookies
-    if (!strUserId) {
-      console.log(" Cookie no encontrada. Usando ID de bypass para pruebas.");
-      strUserId = "4ce5fb58-95d8-4b43-8e49-4d75711f1837"; 
+    if (!authToken) {
+      console.log("No se encontró la cookie 'auth_token'.");
+      return false;
     }
-  
-    const objUser = await objPrisma.usuario.findUnique({
-      where: { id_usuario: strUserId },
+
+    const decoded = verify(authToken, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
+
+    if (!decoded || !decoded.userId) {
+      console.log("El token no contiene un userId válido.");
+      return false;
+    }
+
+    const objUser = await prisma.usuario.findUnique({
+      where: { id_usuario: decoded.userId },
       select: { rol: true }
     });
     
-    const bolIsAdmin = objUser?.rol === 2;
-    console.log(` ID: ${strUserId} | Rol: ${objUser?.rol} | ¿Admin?: ${bolIsAdmin}`);
+    const bolIsAdmin = objUser?.rol === 1;
+
+    //console.log(` ID JWT: ${decoded.userId} | Rol DB: ${objUser?.rol} | Acceso Admin: ${bolIsAdmin}`);
     
-    //return bolIsAdmin;
-    return true;
+    return bolIsAdmin; 
   } catch (objError) {
+    console.error(" Error verificando el JWT en isAdmin:", objError);
     return false;
   }
 }
 
 /**
  * GET: Recupera la lista de pagos con filtros de estado y paginación.
- * Protegido: Solo accesible para Rol 2: administrador.
  */
-export async function GET(objRequest: Request) {
+export async function GET(request: NextRequest) {
   try {
-    // Verificación de seguridad previa
-    if (!(await isAdmin())) {
-      return NextResponse.json(
-        { error: 'No autorizado. Se requiere nivel de acceso: Administrador (Rol 2).' }, 
-        { status: 403 }
-      );
+    if (!(await isAdmin(request))) {
+      return NextResponse.json({ error: '403' }, { status: 403 });
     }
-    
-    const { searchParams: objSearchParams } = new URL(objRequest.url);
-    
-    // Parámetros de consulta
-    const strStatus = objSearchParams.get('status') || 'Pendiente';
-    const intPage = Number(objSearchParams.get('page')) || 1;
-    const intLimit = Number(objSearchParams.get('limit')) || 10;
 
-    // Ejecución de la lógica del controlador
-    const objResult = await getPaymentsByStatus(strStatus, intPage, intLimit);
-
-    return NextResponse.json(objResult, { status: 200 });
+    const { searchParams } = new URL(request.url);
+    const strStatus = searchParams.get('status');
     
-  } catch (objError) {
-    console.error('Error en GET /backend/cobros:', objError);
-    return NextResponse.json(
-      { error: 'Error interno al cargar los registros de pagos' }, 
-      { status: 500 }
-    );
+    // Capturar los parámetros de la URL
+    const intPage = Number(searchParams.get('page')) || 1;
+    const intLimit = Number(searchParams.get('limit')) || 10;
+
+    if (strStatus !== 'all') {
+      //  PASAR los parámetros al controlador
+      const objResult = await getPaymentsByStatus(strStatus || 'Pendiente', intPage, intLimit);
+      return NextResponse.json(objResult);
+    }
+
+    // Para el caso de 'all' (carga inicial)
+    const [pending, accepted, rejected] = await Promise.all([
+      getPaymentsByStatus('Pendiente', 1, 10),
+      getPaymentsByStatus('Aceptado', 1, 10),
+      getPaymentsByStatus('Rechazado', 1, 10)
+    ]);
+
+    return NextResponse.json({ pending, accepted, rejected });
+
+  } catch (error) {
+    return NextResponse.json({ error: 'Error' }, { status: 500 });
   }
 }
 
 /**
  * PATCH: Actualiza el estado de un pago específico.
- * Protegido: Solo accesible para Rol 2: Administrador.
  */
-export async function PATCH(objRequest: Request) {
+export async function PATCH(request: NextRequest) {
   try {
-    // Verificación de seguridad previa
-    if (!(await isAdmin())) {
-      return NextResponse.json(
-        { error: 'No autorizado para realizar modificaciones' }, 
-        { status: 403 }
-      );
+    if (!(await isAdmin(request))) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     
-    const objBody = await objRequest.json();
+    const objBody = await request.json();
     const { id: intId, status: strStatus } = objBody;
 
     if (!intId || !strStatus) {
-      return NextResponse.json(
-        { error: 'Faltan parámetros obligatorios: ID y Estado' }, 
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Faltan parámetros obligatorios' }, { status: 400 });
     }
 
-    // Actualización mediante el controlador
     const objUpdatedPayment = await updatePaymentStatus(Number(intId), strStatus);
-
     return NextResponse.json(objUpdatedPayment, { status: 200 });
     
   } catch (objError) {
-    console.error('Error en PATCH /backend/cobros:', objError);
-    return NextResponse.json(
-      { error: 'No se pudo procesar la actualización del pago' }, 
-      { status: 500 }
-    );
+    console.error("Error en PATCH /verificacion-pagos:", objError);
+    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 });
   }
 }

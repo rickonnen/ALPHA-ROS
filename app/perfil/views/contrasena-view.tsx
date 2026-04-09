@@ -364,7 +364,6 @@ const handleSave = async () => {
           setBolShowModal(false);
           handleReset();
           onSuccess();
-          window.location.reload();
         }}
       />
     )}

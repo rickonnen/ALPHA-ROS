@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { Button} from "@/components/ui/button";
 interface ApplyFiltersButtonProps {
   isLoading: boolean;
@@ -16,7 +16,7 @@ export function ApplyFiltersButton({
       variant="default"
       onClick={onClick}
       disabled={isLoading}
-      className="px-12 py-6 w-full text-base"
+      className="px-12 py-5 w-full text-base text-white hover:bg-blue-950 cursor-pointer transition-colors"
     >
       {isLoading ? 'Buscando...' : 'Aplicar filtros'}
     </Button>

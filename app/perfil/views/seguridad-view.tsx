@@ -1,6 +1,20 @@
-/* Dev: Camila - xdev/sow-camila
+/* Dev: Camila Magne Hinojosa - xdev/sow-camila
     Fecha: 28/03/2026
     Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
+*/
+/* Dev: Alvarado Alisson Dalet - sow-alissona
+    Fecha: 04/04/2026
+    Fix: Agrega prop onPerfilActualizado para notificar al padre (PerfilPage)
+         que debe re-fetchear el usuario y actualizar el header tras guardar
+         cambios en editar perfil
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+   Fecha: 06/04/2026
+   Fix: Corrección de defecto, ajustando la cantidad (4) y tamaño de asteriscos en la sección password según mockup oficial.
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+   Fecha: 07/04/2026
+   Style: Sincronización de animaciones de vistas con perfil-view y agregado de línea separadora en el título principal.
 */
 "use client";
 import { useState, useEffect } from "react";
@@ -15,8 +29,11 @@ interface SeguridadProps {
   email: string;
   telefonos: string[];
   onSuccess: () => void;
-};
-export default function SeguridadView({id_usuario, email, telefonos, onSuccess}: SeguridadProps) {
+  onTelefonosChange: (nuevosTelefonos: string[]) => void;
+  onPerfilActualizado: () => void;
+}
+
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
   const [objUsuario, setObjUsuario] = useState<any>(null);
@@ -82,12 +99,12 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
       </div>
     ),
 
-
     telefonos: (
       <TelefonosView
         telefonos={telefonos}
         id_usuario={id_usuario}
         onBack={() => setSubView("menu")}
+        onTelefonosChange={onTelefonosChange}
       />
     ),
 
@@ -96,6 +113,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         usuario={objUsuario}
         onGuardar={(objDatosActualizados) => {
           setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
+          onPerfilActualizado();
           setSubView("menu");
         }}
         onCancelar={() => setSubView("menu")}
@@ -103,9 +121,9 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
     ) : null,
 
     password: (
-      <ChangePasswordForm 
-        id_usuario={id_usuario} 
-        email={email} 
+      <ChangePasswordForm
+        id_usuario={id_usuario}
+        email={email}
         onCancel={() => setSubView("menu")}
         onSuccess={onSuccess}
       />
@@ -122,6 +140,7 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         id_usuario={id_usuario}
       />
     ),
+
     "confirmar-correo": (
       <ConfirmarCorreoView
         id_usuario={id_usuario}
@@ -129,13 +148,18 @@ export default function SeguridadView({id_usuario, email, telefonos, onSuccess}:
         onBack={() => setSubView("correo")}
       />
     ),
-
   };
 
   return (
     <div className={`p-8 text-white ${subView === "menu" ? "space-y-6" : "space-y-0"}`}>
-      {subView === "menu" && <h1 className="text-2xl font-bold">Seguridad</h1>}
-      {VIEWS[subView] || VIEWS.menu}
+      {subView === "menu" && (
+        <h1 className="text-2xl font-bold border-b border-gray-600/50 pb-4 mb-4">
+          Seguridad
+        </h1>
+      )}
+      <div key={subView} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {VIEWS[subView] || VIEWS.menu}
+      </div>
     </div>
   );
 }

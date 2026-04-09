@@ -133,27 +133,34 @@ export function VideoSection({ onURLChange, defaultUrl = "" }: VideoSectionProps
     /**
      * @Dev: AndresC
      * @Fecha: 28/03/2026
-     * @Funcionalidad: Renderiza el label e input vacío base del componente (Shadcn UI).
+     * @Funcionalidad: Renderiza el label e input del componente con estilo Shadcn UI.
      */
-    <div className="flex flex-col gap-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+    <div className="flex flex-col gap-3" style={{ fontFamily: 'var(--font-geist-sans)' }}>
       <Label htmlFor="video" className="text-sm font-medium text-[#2E2E2E]">
-        URL o Reel (Vista previa de la propiedad)
+        URL o Reel (Vista previa de la propiedad) <span className="font-normal text-muted-foreground">- Opcional</span>
       </Label>
 
-      <div className="relative flex items-center gap-2">
+      <div className="relative flex items-center w-full">
         <Input
           id="video"
-          placeholder="Pega el link de youtube o instagram aquí..."
+          placeholder="Link de YouTube o Instagram aquí..."
           value={strUrl}
           onChange={handleInputChange}
-          className={strUrl && !objPreview.id ? "border-red-500 focus-visible:ring-red-500" : ""}
+          className={`pr-10 ${strUrl && !objPreview.id ? "border-red-500 focus-visible:ring-red-500" : ""}`}
         />
-        <Link2Icon className="text-muted-foreground ml-2" />
+        <Link2Icon className="absolute right-3 w-4 h-4 text-muted-foreground pointer-events-none" />
       </div>
+
+      {/* Mensaje informativo (Se oculta si el usuario escribe y hay error) */}
+      {!strUrl && (
+        <p className="text-[0.8rem] text-muted-foreground">
+          Puedes dejar este campo en blanco si aún no tienes un video.
+        </p>
+      )}
 
       {/* Mostrar error solo cuando hay entrada pero no hay una vista previa válida */}
       {strUrl && !objPreview.id && (
-        <p className="text-sm text-red-500">
+        <p className="text-[0.8rem] font-medium text-red-500">
           Por favor, introduce una URL válida de YouTube o Instagram (Reel/Post).
         </p>
       )}
@@ -174,7 +181,7 @@ export function VideoSection({ onURLChange, defaultUrl = "" }: VideoSectionProps
           )}
           {/* Instagram: ancho compacto fijo, centrado */}
           {objPreview.platform === 'instagram' && (
-            <div className="w-[320px] overflow-hidden rounded-xl border border-border shadow-md bg-white aspect-4/5">
+            <div className="w-[320px] overflow-hidden rounded-xl border border-border shadow-md bg-white aspect-[4/5]">
               <iframe
                 src={`https://www.instagram.com/p/${objPreview.id}/embed`}
                 title="Instagram Reel player"

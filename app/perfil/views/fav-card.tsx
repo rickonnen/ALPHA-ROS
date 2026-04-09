@@ -11,12 +11,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import FavButton from "@/components/ui/fav";
-
+import { useRouter } from "next/navigation"
 export interface Favorito {
   id: string;
   titulo: string;
   zona: string;
   tipo: string;
+  tipo_operacion: string;
   imagen?: string | null;
 }
 
@@ -27,10 +28,11 @@ interface FavCardProps {
 }
 
 export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProps) {
-  const handleInfo = (id: string) => {
-    console.log("Ver info de publicación:", id);
-  };
+  const router = useRouter()
 
+  const handleInfo = (id: string) => {
+    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+  };
   return (
     <Card className="border mb-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all duration-200">
       <CardContent className="flex items-center gap-4 px-4">
@@ -50,7 +52,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{favorito.titulo}</p>
           <p className="text-xs text-white/50">{favorito.zona}</p>
-          <p className="text-xs text-white/50">Tipo: {favorito.tipo}</p>
+          <p className="text-xs text-white/50">{favorito.tipo} - {favorito.tipo_operacion}</p>
         </div>
 
         <div className="flex gap-2 flex-shrink-0 items-center">
@@ -60,7 +62,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
             className="text-black border-white/60 hover:bg-white/80"
             onClick={() => handleInfo(favorito.id)}
           >
-            <span className="hidden md:inline">Información</span>
+            <span className="hidden md:inline">Info</span>
             <span className="md:hidden">Info.</span>
           </Button>
 

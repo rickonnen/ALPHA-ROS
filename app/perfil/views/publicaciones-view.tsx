@@ -124,10 +124,6 @@ export default function PublicacionesView({
     }
   };
 
-  const handleInfo = (id: string) => {
-    router.push(`/publicaciones/${id}`);
-  };
-
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -137,9 +133,10 @@ export default function PublicacionesView({
               Mis publicaciones
             </CardTitle>
             <Button
-              onClick={() => router.push("/publicaciones/nueva")}
+              autoFocus
+              onClick={() => router.push("/publicacion/informacion-comercial")}
               size="sm"
-              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)]"
             >
               + Agregar
             </Button>
@@ -180,7 +177,6 @@ export default function PublicacionesView({
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
-                  onInfo={handleInfo}
                 />
               ))}
             </div>
@@ -206,7 +202,7 @@ export default function PublicacionesView({
                     variant="ghost"
                     size="sm"
                     onClick={() => setPaginaActual(num)}
-                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)] ${
                       paginaActual === num
                         ? "bg-white text-[var(--primary)]"
                         : "text-white/60 hover:text-white"
