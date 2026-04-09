@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import CredentialsProvider from "next-auth/providers/credentials"
 
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
@@ -20,13 +21,65 @@ const handler = NextAuth({
         },
       },
     }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          const { createClient } = await import("@supabase/supabase-js")
+          const supabase = createClient(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+
+          // Autenticar contra Supabase
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
+          })
+
+          if (error || !data?.user) {
+            console.error("Error autenticando:", error?.message)
+            return null
+          }
+
+          // Obtener datos del usuario
+          const { data: userData } = await supabase
+            .from("Usuario")
+            .select("*")
+            .eq("id_usuario", data.user.id)
+            .maybeSingle()
+
+          if (!userData) {
+            return null
+          }
+
+          return {
+            id: data.user.id,
+            email: data.user.email,
+            name: userData.nombres,
+          }
+        } catch (error) {
+          console.error("Error en authorize:", error)
+          return null
+        }
+      },
+    }),
   ],
 
   callbacks: {
 
     async signIn({ user, account }: any) {
+      // Permitir credenciales sin account
       if (!account) {
-           return false  // NUEVO
+        return true
       }
       try {
         if (account?.provider === "google") {
@@ -56,7 +109,7 @@ const handler = NextAuth({
           })
           if (authError) {
             console.error("Error creando en auth.users:", authError)
-              return false  // NUEVO
+            return "/api/google-cancelado"
           }
 
           const supabaseUserId = authData.user.id
@@ -75,17 +128,21 @@ const handler = NextAuth({
           if (dbError) {
             console.error("Error insertando en tabla Usuario:", dbError)
             await supabase.auth.admin.deleteUser(supabaseUserId)
-            return false  // NUEVO
+            return "/api/google-cancelado"
           }
         }
         return true
       } catch (error) {
-        console.error("Error signIn Google:", error)
-        return false // NUEVO
+        console.error("Error signIn:", error)
+        return false
       }
     },
 
     async jwt({ token, account, user }: any) {
+      if (user?.id) {
+        token.id = user.id;
+      }
+      
       if (account?.provider === "google" && user?.email) {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
@@ -102,26 +159,7 @@ const handler = NextAuth({
           token.id = data.id_usuario
         }
       }
-////////////////Nuevo para q de mi perfil problema de caracteres
- // Si no existe, busca por email guardado en el token
-  if (!token.id && token.email) {
-    const { createClient } = await import("@supabase/supabase-js")
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data } = await supabase
-      .from("Usuario")
-      .select("id_usuario")
-      .eq("email", token.email)
-      .maybeSingle()
-
-    if (data?.id_usuario) {
-      token.id = data.id_usuario
-    }
-  }
-///////////////hasta aqui
-  return token
+      return token
     },
 
     async session({ session, token }: any) {
@@ -145,11 +183,25 @@ const handler = NextAuth({
       return baseUrl
 
     },
+
+    async redirect({ url, baseUrl }: any) {
+      if (
+        url.includes("error=Callback") ||
+        url.includes("error=OAuthCallback") ||
+        url.includes("access_denied")
+      ) {
+        return baseUrl
+      }
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith(baseUrl)) return url
+      return baseUrl
+    },
+
   },
 
   pages: {
-    signIn: "/",
-    error: "/",     
+    signIn: "/api/google-cancelado",
+    error: "/api/google-cancelado",
   },
 
 })
