@@ -1,9 +1,10 @@
-"use client";
 /**
  * dev: Kevin isnado
  * ultima modif: 30/03/2026 - horas: 6:15 pm
  * descripcion: Card de pago - Soporte para estados: pendiente, realizado, rechazado.
  */
+
+"use client";
 
 import { Button } from "@/components/ui/button";
 
@@ -50,7 +51,7 @@ export default function CardPago({ pago }: { pago: Pago }) {
         <div className="flex justify-between">
           <span className="text-[#6B7280]">{pago.estado === "realizado" ? "Total pagado:" : "Monto:"}</span>
           <span className="text-[#2E2E2E]">
-            ${Number(pago.monto).toFixed(2)} <span className="text-gray-400">(≈ Bs {(pago.monto * 7).toFixed(2)})</span>
+            ${Number(pago.monto).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-gray-400">(≈ Bs {(pago.monto * 7).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
           </span>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ListaPagos from "./lista-pagos";
+import ListaPagos from "../../../components/cobros/lista-pagos";
 
 function HistorialPagosContent() {
   const searchParams = useSearchParams();
@@ -36,7 +36,7 @@ function HistorialPagosContent() {
             <TabsTrigger
               value="rechazados"
               disabled
-              className="px-4 py-2 text-sm font-medium rounded-md bg-[#D6B0AA] text-white opacity-80 cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium rounded-md bg-[#D6B0AA] text-white opacity-80"
             >
               PAGOS RECHAZADOS
             </TabsTrigger>
@@ -48,6 +48,9 @@ function HistorialPagosContent() {
           
           <TabsContent value="realizados">
             <ListaPagos estado="realizado" id_usuario={id_usuario} />
+          </TabsContent>
+          <TabsContent value="rechazados">
+            <ListaPagos estado="rechazado" id_usuario={id_usuario} />
           </TabsContent>
         </Tabs>
       </CardContent>
