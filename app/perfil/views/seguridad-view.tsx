@@ -119,6 +119,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         onGuardar={(objDatosActualizados) => {
           setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
           onPerfilActualizado();
+          window.dispatchEvent(new Event("perfil:foto-actualizada"));
           setSubView("menu");
         }}
         onCancelar={() => setSubView("menu")}
