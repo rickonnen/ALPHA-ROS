@@ -113,14 +113,16 @@ export const Header = () => {
 
   const strLinkClassesDesktop = useMemo(
     () =>
-      `text-body-info font-normal text-foreground inline-block rounded-md px-1 cursor-pointer ${clsFocusBase} ${strHoverAnim}`,
+      `text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-normal text-foreground inline-block rounded-md px-1 cursor-pointer whitespace-nowrap ${clsFocusBase} ${strHoverAnim}`,
     [strHoverAnim],
   );
 
   const strLinkClassesMobile = useMemo(
     () =>
-      `text-body-info font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
-    [strHoverAnim],
+      `text-body-info font-normal text-primary-foreground rounded-md 
+       hover:bg-primary-foreground/10 active:bg-primary-foreground/20 
+       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary`,
+    [],
   );
 
   const handleCloseMobileMenu = useCallback(
@@ -132,7 +134,6 @@ export const Header = () => {
     [],
   );
 
-  //cmanejadores de modales
   const handleOpenLogin = useCallback(() => {
     setStrAuthMode("login");
     setBolShowAuth(true);
@@ -182,7 +183,7 @@ export const Header = () => {
       <Link
         href="/"
         aria-label="Ir a inicio"
-        className={`inline-flex items-center gap-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}
+        className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}
       >
         <Image
           src="/logo-principal.svg"
@@ -208,9 +209,10 @@ export const Header = () => {
           bolHideHeader ? "-translate-y-full" : "translate-y-0"
         }`}
       >
-        <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between">
+        <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between gap-4 lg:gap-8">
+          
           {/* mobil lado izquierdo */}
-          <div className="flex lg:hidden">
+          <div className="flex lg:hidden shrink-0">
             {bolIsAuthLoading ? (
               <Skeleton className="h-10 w-28" />
             ) : (
@@ -219,7 +221,7 @@ export const Header = () => {
           </div>
 
           {/* mobil lado derecho */}
-          <div className="flex lg:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2 shrink-0">
             <div className="relative" ref={refNotifPanelMobile}>
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
@@ -231,7 +233,7 @@ export const Header = () => {
                       ? setBolShowNotifications((p) => !p)
                       : setBolShowProtected(true)
                   }
-                  className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
+                  className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase}`}
                 >
                   <img
                     src="/bell_icon.svg"
@@ -252,7 +254,7 @@ export const Header = () => {
               <button
                 aria-label="Menú principal"
                 aria-expanded={bolIsMobileMenuOpen}
-                className={`p-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}
+                className={`p-2 rounded-md ${clsFocusBase}`}
                 onClick={() => setBolIsMobileMenuOpen((p) => !p)}
               >
                 <img
@@ -264,8 +266,8 @@ export const Header = () => {
             </div>
           </div>
 
-          {/* pc lado izquierdo */}
-          <div className="hidden lg:flex flex-row items-center gap-6">
+          {/* pc lado izquierdo (Solo Logo) */}
+          <div className="hidden lg:flex flex-row items-center shrink-0">
             {bolIsAuthLoading ? (
               <Skeleton className="h-10 w-32" />
             ) : (
@@ -274,7 +276,8 @@ export const Header = () => {
           </div>
 
           {/* pc lado derecho */}
-          <div className="hidden lg:flex flex-row items-center gap-6">
+          <div className="hidden lg:flex flex-row items-center gap-x-4 md:gap-x-6">
+            
             {bolIsAuthLoading ? (
               <div className="flex gap-6">
                 {[1, 2, 3].map((i) => (
@@ -298,7 +301,7 @@ export const Header = () => {
             ) : (
               <Link
                 href="/cobros/planes"
-                className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase`}
+                className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase whitespace-nowrap`}
               >
                 planes de
                 <br />
@@ -312,7 +315,7 @@ export const Header = () => {
               <button
                 onClick={handlePublicar}
                 disabled={bolIsCheckingLimit}
-                className={`text-body-info px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 ${clsFocusBase} ${strHoverAnimNoTextColor}`}
+                className={`text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] px-6 h-10 font-semibold rounded-lg border border-border bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 whitespace-nowrap ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
                 PUBLICAR
               </button>
@@ -358,7 +361,7 @@ export const Header = () => {
                     e.currentTarget.src = "/account_avatar.svg";
                   }}
                 />
-                <span className="text-body-info font-semibold uppercase text-foreground leading-none">
+                <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">
                   {strNombreHeader}
                 </span>
               </button>
@@ -375,7 +378,7 @@ export const Header = () => {
                   />
                   <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
                 </div>
-                <span className="text-body-info font-semibold uppercase text-foreground leading-none pt-0.5">
+                <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none pt-0.5 whitespace-nowrap">
                   INICIAR SESIÓN
                 </span>
               </button>
