@@ -44,13 +44,14 @@ interface PublicacionesViewProps {
   id_usuario: string;
 }
 
-const ITEMS_POR_PAGINA = 4;
+const ITEMS_POR_PAGINA = 5;
 
 export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
   const router = useRouter();
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [publicacionesRestantes, setPublicacionesRestantes] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function PublicacionesView({
         if (activo) {
           setPublicaciones(json.data);
           setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(json.cant_publicaciones_restantes ?? 0);
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -128,18 +130,25 @@ export default function PublicacionesView({
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
               Mis publicaciones
             </CardTitle>
-            <Button
-              autoFocus
-              onClick={() => router.push("/publicacion/informacion-comercial")}
-              size="sm"
-              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)]"
-            >
-              + Agregar
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-white/60 text-sm whitespace-nowrap">
+                {publicacionesRestantes} publicaciones restantes
+              </span>
+              <Button
+                autoFocus
+                onClick={() =>
+                  router.push("/publicacion/informacion-comercial")
+                }
+                size="sm"
+                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)]"
+              >
+                + Agregar
+              </Button>
+            </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
         </CardHeader>
