@@ -11,6 +11,18 @@ import { useState, useEffect } from "react";
 export const useFotoPerfil = (idUsuario: string | undefined) => {
   const [strFotoPerfil, setStrFotoPerfil] = useState<string>("/account_avatar.svg");
   const [bolLoading, setBolLoading] = useState<boolean>(true);
+  const [intRefreshKey, setIntRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const handleFotoActualizada = () => {
+      setIntRefreshKey((prev) => prev + 1);
+    };
+
+    window.addEventListener("perfil:foto-actualizada", handleFotoActualizada);
+    return () => {
+      window.removeEventListener("perfil:foto-actualizada", handleFotoActualizada);
+    };
+  }, []);
 
   useEffect(() => {
     if (!idUsuario) {
@@ -22,7 +34,9 @@ export const useFotoPerfil = (idUsuario: string | undefined) => {
     const fetchFoto = async () => {
       try {
         setBolLoading(true);
-        const res = await fetch(`/api/perfil/getFoto?id_usuario=${idUsuario}`);
+        const res = await fetch(`/api/perfil/getFoto?id_usuario=${idUsuario}&r=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("Error en la red");
         
         const json = await res.json();
@@ -42,7 +56,7 @@ export const useFotoPerfil = (idUsuario: string | undefined) => {
     };
 
     fetchFoto();
-  }, [idUsuario]);
+  }, [idUsuario, intRefreshKey]);
 
   return { strFotoPerfil, bolLoading };
 };
