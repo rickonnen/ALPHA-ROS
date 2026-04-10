@@ -99,6 +99,7 @@ export function NotificationPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAsRead", notificationId: id }),
       });
+      window.dispatchEvent(new Event("refresh-notification-badge"));
     } catch (error) {
       console.error("Error al marcar como leída:", error);
     }
@@ -112,6 +113,7 @@ export function NotificationPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAllAsRead" }),
       });
+      window.dispatchEvent(new Event("refresh-notification-badge"));
     } catch (error) {
       console.error("Error al marcar todas como leídas:", error);
     }
