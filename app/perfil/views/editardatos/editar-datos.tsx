@@ -41,12 +41,7 @@
  * Fix: Limite de caracteres en campos: nombres max 15, apellidos max 15,
  *      direccion max 40 y deteccion de guardar sin cambios.
  *      Username editable
- */
-/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
- * Fecha: 04/04/2026
- * Fix: Eliminar redireccion tras guardar, el header no se actualizaba
- *      Ahora solo se llama onGuardar y el padre maneja el re-fetch y
- *      la navegacion de vuelta al menu
+ *      Eliminar redireccion tras guardar
  */
 /** Dev: Alvarado Alisson Dalet - sow-AlissonA
  * Fecha: 08/04/2026
@@ -55,6 +50,7 @@
 /** Dev: Alvarado Alisson Dalet - sow-AlissonA
  * Fecha: 09/04/2026
  * Fix: Validacion de minimo 3 letras en username
+ *      Restriccion de emojis en username
  */
 "use client";
 import { useState, useEffect } from "react";
@@ -67,12 +63,13 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-const intMaxName          = 15;
-const intMaxLastName      = 15;
-const intMaxAddress       = 40;
-const intMaxUsername      = 15;
+const intMaxName           = 15;
+const intMaxLastName       = 15;
+const intMaxAddress        = 40;
+const intMaxUsername       = 15;
 const intMinLetrasUsername = 3;
-const regexSinAcentos     = /^[^\u00C0-\u024F]+$/;
+const regexSinAcentos      = /^[^\u00C0-\u024F]+$/;
+const regexSinEmojis       = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FE0F}]/u;
 
 interface EditProfileProps {
   usuario: {
@@ -194,6 +191,15 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
         type: "error",
         title: "Campos inválidos",
         message: "El username no puede contener letras con acento.",
+      });
+      return;
+    }
+
+    if (regexSinEmojis.test(strUsername.trim())) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: "El username no puede contener emojis.",
       });
       return;
     }
@@ -457,6 +463,11 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 {strUsername.trim() && !regexSinAcentos.test(strUsername) && (
                   <span className="text-xs text-red-400 font-black">
                     El username no puede contener letras con acento.
+                  </span>
+                )}
+                {strUsername.trim() && regexSinEmojis.test(strUsername) && (
+                  <span className="text-xs text-red-400 font-black">
+                    El username no puede contener emojis.
                   </span>
                 )}
                 {strUsername.trim() && intLetrasUsername < intMinLetrasUsername && (
