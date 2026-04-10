@@ -43,8 +43,7 @@ const ALLOWED_DOMAINS = new Set([
   'icloud.com',
   'live.com',
   'office365.com',
-  'yahoo.com',
-  'chatmail.com'
+  'yahoo.com'
 ]);
 
 /**
@@ -95,8 +94,8 @@ export function isValidEmail(email: string): boolean {
     return false;
   }
   
-  // 5. VERIFICACIÓN CLAVE: Solo aceptar dominios en la whitelist o .edu.bo
-  if (!ALLOWED_DOMAINS.has(domain) && !domain.endsWith('.edu.bo')) {
+  // 5. VERIFICACIÓN CLAVE: Solo aceptar dominios en la whitelist o .edu
+  if (!ALLOWED_DOMAINS.has(domain) && !domain.endsWith('.edu')) {
     return false;
   }
   

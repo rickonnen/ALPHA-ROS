@@ -1,24 +1,66 @@
 import { NextResponse } from "next/server";
-import notifications from "@/app/api/notifications/notifications.json";
-import fs from "fs";
-import path from "path";
 
-// Ruta al archivo JSON
-const notificationsPath = path.join(process.cwd(), "app/api/notifications/notifications.json");
-
-// Función para leer notificaciones actualizadas
-const readNotifications = () => {
-  const data = fs.readFileSync(notificationsPath, "utf-8");
-  return JSON.parse(data);
-};
-
-// Función para escribir notificaciones
-const writeNotifications = (data: any) => {
-  fs.writeFileSync(notificationsPath, JSON.stringify(data, null, 2));
-};
+let notifications =
+ [
+  {
+    id: 8,
+    title: "COMPRA EXITOSA",
+    message: "Adquiriste el plan profesional exitosamente!!",
+    read: false,
+    createdAt: "2026-04-07T19:30:00Z"
+  },
+  {
+    id: 7,
+    title: "Nuevo mensaje",
+    message: "Un agente quiere contactarse contigo acerca de una nueva propiedad de tu interés",
+    read: false,
+    createdAt: "2026-04-07T13:10:00Z"
+  },
+  {
+    id: 6,
+    title: "Recordatorio",
+    message: "Tienes una nueva cita agendada para mañana, a las 8am en el centro de la ciudad",
+    read: false,
+    createdAt: "2026-04-07T09:30:00Z"
+  },
+  {
+    id: 5,
+    title: "Mensaje inmobiliario",
+    message: "Nueva propiedad disponible en tu zona",
+    read: false,
+    createdAt: "2026-04-06T18:00:00Z"
+  },
+  {
+    id: 4,
+    title: "Pago recibido",
+    message: "Se ha recibido un pago exitosamente por un monto de Bs. 900. El dinero ya se encuentra disponible.",
+    read: false,
+    createdAt: "2026-04-06T12:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Nuevo favorito",
+    message: "Alguien guardó tu propiedad",
+    read: false,
+    createdAt: "2026-04-05T20:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Mensaje inmobiliario",
+    message: "Un agente ha actualizado los detalles de una propiedad que tienes guardada",
+    read: false,
+    createdAt: "2026-04-05T10:00:00Z"
+  },
+  {
+    id: 1,
+    title: "Bienvenido",
+    message: "Tu cuenta ha sido creada exitosamente. ¡Bienvenido a la plataforma!",
+    read: false,
+    createdAt: "2026-04-01T08:00:00Z"
+  }
+]
 
 export async function GET() {
-  const notifications = readNotifications();
   return NextResponse.json(notifications);
 }
 
@@ -27,51 +69,20 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { action, notificationId } = body;
     
-    let currentNotifications = readNotifications();
-    
     if (action === "markAllAsRead") {
-      // Marcar todas como leídas
-      currentNotifications = currentNotifications.map((notif: any) => ({
-        ...notif,
-        read: true
-      }));
-      
-      writeNotifications(currentNotifications);
-      
-      return NextResponse.json({ 
-        success: true, 
-        notifications: currentNotifications,
-        message: "Todas las notificaciones marcadas como leídas"
-      });
+      notifications = notifications.map(n => ({ ...n, read: true }));
+      return NextResponse.json({ success: true, notifications });
     }
     
     if (action === "markAsRead" && notificationId) {
-      // Marcar una específica como leída
-      currentNotifications = currentNotifications.map((notif: any) =>
-        notif.id === notificationId
-          ? { ...notif, read: true }
-          : notif
+      notifications = notifications.map(n =>
+        n.id === notificationId ? { ...n, read: true } : n
       );
-      
-      writeNotifications(currentNotifications);
-      
-      return NextResponse.json({ 
-        success: true, 
-        notifications: currentNotifications,
-        message: "Notificación marcada como leída"
-      });
+      return NextResponse.json({ success: true, notifications });
     }
     
-    return NextResponse.json(
-      { error: "Acción no válida" },
-      { status: 400 }
-    );
-    
+    return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
   } catch (error) {
-    console.error("Error en PATCH /api/notifications:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
