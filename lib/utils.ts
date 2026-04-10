@@ -43,8 +43,7 @@ const ALLOWED_DOMAINS = new Set([
   'icloud.com',
   'live.com',
   'office365.com',
-  'yahoo.com',
-  'chatmail.com'
+  'yahoo.com'
 ]);
 
 /**
