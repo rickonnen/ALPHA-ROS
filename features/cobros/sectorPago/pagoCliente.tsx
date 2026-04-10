@@ -65,12 +65,12 @@ export default function PagoCliente({ plan, planId }: Props) {
             Total a pagar
           </h2>
           <div className="text-3xl mb-10 text-foreground font-semibold">
-            $ {precioFormateado}
+            $ {Number(plan.precio_plan).toLocaleString("es-ES")}
           </div>
 
           <div className="mb-10 flex h-80 w-80 items-center justify-center rounded-md border border-border shadow-sm bg-white p-6">
             {generandoQr ? (
-              <Skeleton className="h-[300px] w-[300px]" />
+              <Skeleton className="h-[600px] w-[600px]" />
             ) : qrUrl ? (
               <img
                 src={qrUrl}
@@ -78,9 +78,9 @@ export default function PagoCliente({ plan, planId }: Props) {
                 /* Usamos 300x300. 
                   Esto garantiza que a una distancia de ~70cm se escanee al instante.
                 */
-                width={300}
-                height={300}
-                className="h-[300px] w-[300px] block object-contain" 
+                width={600}
+                height={600}
+                className="h-[600px] w-[600px] block object-contain" 
               />
             ) : (
               <span className="text-sm uppercase text-muted-foreground font-medium text-center">
