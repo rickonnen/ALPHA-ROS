@@ -69,8 +69,8 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
-            <p className="font-semibold">Cambiar Password</p>
-            <p className="text-lg text-gray-300 tracking-widest mt-1">****</p>
+            <p className="font-semibold">Cambiar Contraseña</p>
+            <p className="text-sm text-gray-300">********</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>

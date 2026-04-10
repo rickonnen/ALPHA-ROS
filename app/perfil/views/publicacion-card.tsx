@@ -65,7 +65,7 @@ export default function PublicacionCard({
           <Button
             variant="outline"
             size="sm"
-            className="text-black border-white/60 hover:bg-white/80"
+            className="text-black border-white/60 hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)]"
             onClick={() =>
               router.push(`/publicacion/perfil_del_inmueble/${publicacion.id}`)
             }
@@ -74,7 +74,7 @@ export default function PublicacionCard({
           </Button>
           <Button
             size="sm"
-            className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80"
+            className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
             onClick={() => onEliminar(publicacion.id)}
           >
             Eliminar
