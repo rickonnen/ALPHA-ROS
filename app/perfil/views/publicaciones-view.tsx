@@ -44,7 +44,7 @@ interface PublicacionesViewProps {
   id_usuario: string;
 }
 
-const ITEMS_POR_PAGINA = 4;
+const ITEMS_POR_PAGINA = 5;
 
 export default function PublicacionesView({
   id_usuario,
