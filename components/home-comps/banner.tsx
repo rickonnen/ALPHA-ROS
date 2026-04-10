@@ -1,57 +1,89 @@
 "use client";
 
+import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCarousel } from "../hooks/useCarousel"; // Ajusta la ruta según tu estructura
+import { useCarousel } from "../hooks/useCarousel";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 /**
  * @Dev: Rodrigo Chalco     Fecha: 26/03/2026
  * Funcionalidad: Renderiza el banner principal del Home con imágenes cargadas
  * desde Cloudinary. El texto se muestra solo en la primera imagen del carrusel.
- * El banner ocupa aproximadamente 3/4 de la vista para dejar espacio al filtro.
+ * Desde la segunda imagen en adelante soporta versión desktop y mobile.
  */
+
 interface BannerImage {
   intId: number;
-  strImageUrl: string;
+  strImageUrl?: string;
+  strImageUrlDesktop?: string;
+  strImageUrlMobile?: string;
   strPublicId: string;
   bolIsActive: boolean;
   intOrder: number;
 }
 
+/**
+ * Retorna la URL correcta según dispositivo.
+ * - Primera imagen: usa strImageUrl (responsive única)
+ * - Resto: usa strImageUrlMobile o strImageUrlDesktop según el dispositivo
+ */
+function getImageUrl(objImage: BannerImage, bolIsMobile: boolean): string {
+  if (objImage.strImageUrl) {
+    return objImage.strImageUrl;
+  }
+
+  if (bolIsMobile && objImage.strImageUrlMobile) {
+    return objImage.strImageUrlMobile;
+  }
+
+  return objImage.strImageUrlDesktop ?? "";
+}
+
 const INT_AUTOPLAY_DELAY: number = 5000;
 
-/**
- * Imágenes del banner obtenidas desde Cloudinary.
- */
 const ARR_BANNER_IMAGES: BannerImage[] = [
   {
     intId: 1,
-    strImageUrl: "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774558931/pexels-binyaminmellish-1396122_i3p4d2.jpg",
-    strPublicId: "banner_inicio/casa1",
+    strImageUrl:
+      "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774558931/pexels-binyaminmellish-1396122_i3p4d2.jpg",
+    strPublicId: "banner_inicio/1",
     bolIsActive: true,
     intOrder: 1,
   },
   {
     intId: 2,
-    strImageUrl: "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774560131/todd-kent-178j8tJrNlc-unsplash_mocaei.jpg",
-    strPublicId: "banner_inicio/casa2",
+    strImageUrlDesktop:
+      "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1775801912/final_de_los_finales_ousbkl.png",
+    strImageUrlMobile:
+      "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1775801412/esta_02_1_m3tquo.png",
+    strPublicId: "banner_inicio/2",
     bolIsActive: true,
     intOrder: 2,
   },
   {
     intId: 3,
-    strImageUrl: "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774560110/clay-banks-kiv1ggvkgQk-unsplash_sqpwkb.jpg",
-    strPublicId: "banner_inicio/casa3",
+    strImageUrlDesktop:
+      "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1775794035/pubilcacion2_z49hqo.png",
+    strImageUrlMobile:
+      "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1775794414/movil2_xb4ehq.png",
+    strPublicId: "banner_inicio/3",
     bolIsActive: true,
     intOrder: 3,
   },
 ];
 
 export default function Banner() {
-  const arrActiveImages: BannerImage[] = ARR_BANNER_IMAGES.filter(
-    (objImage: BannerImage) => objImage.bolIsActive,
-  ).sort(
-    (objFirstImage: BannerImage, objSecondImage: BannerImage) =>
-      objFirstImage.intOrder - objSecondImage.intOrder,
+  const bolIsMobile = useIsMobile();
+
+  const arrActiveImages: BannerImage[] = useMemo(
+    () =>
+      ARR_BANNER_IMAGES.filter(
+        (objImage: BannerImage) => objImage.bolIsActive,
+      ).sort(
+        (objFirstImage: BannerImage, objSecondImage: BannerImage) =>
+          objFirstImage.intOrder - objSecondImage.intOrder,
+      ),
+    [],
   );
 
   const {
@@ -61,10 +93,10 @@ export default function Banner() {
     goToNextImage,
     goToPreviousImage,
     goToSelectedImage,
-    touchHandlers
+    touchHandlers,
   } = useCarousel({
     intTotalItems: arrActiveImages.length,
-    intAutoPlayDelay: INT_AUTOPLAY_DELAY
+    intAutoPlayDelay: INT_AUTOPLAY_DELAY,
   });
 
   if (arrActiveImages.length === 0) {
@@ -85,7 +117,7 @@ export default function Banner() {
       className="w-full overflow-hidden font-sans"
       aria-label="Main home banner"
     >
-      <div 
+      <div
         className="relative h-[63svh] sm:h-[66svh] md:h-[68svh] lg:h-[70svh] xl:h-[73svh] overflow-hidden"
         {...touchHandlers}
       >
@@ -99,15 +131,16 @@ export default function Banner() {
               className="relative h-full min-w-full flex-shrink-0"
             >
               <img
-                src={objImage.strImageUrl}
+                src={getImageUrl(objImage, bolIsMobile)}
                 alt={`Banner ${intIndex + 1}`}
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
               />
 
-              <div className="absolute inset-0 bg-black/35" />
+              {intIndex === 0 && (
+                <div className="absolute inset-0 bg-black/35" />
+              )}
 
-              {/* El texto pertenece solo a la primera imagen */}
               {intIndex === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center px-4 text-center sm:px-6 md:px-8 lg:px-10">
                   <div className="max-w-[320px] sm:max-w-2xl lg:max-w-4xl select-none">
