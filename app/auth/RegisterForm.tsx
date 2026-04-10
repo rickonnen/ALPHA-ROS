@@ -42,6 +42,10 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
   const [emailExists, setEmailExists] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
 
+  // Estados para verificación de conexión a internet
+  const [hasInternet, setHasInternet] = useState(true);
+  const [blockedByConnection, setBlockedByConnection] = useState(false);
+
   // Contador regresivo de 2 minutos
   useEffect(() => {
     if (!verificationStep || !expiresAt) return;
@@ -101,6 +105,58 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     return () => clearTimeout(timeout);
   }, [email]);
 
+  // Verificar conexión a internet al montar y escuchar cambios
+  useEffect(() => {
+    async function verifyConnection() {
+      const isConnected = await checkInternetConnection();
+      setHasInternet(isConnected);
+
+      if (!isConnected) {
+        setGeneralError("No tienes conexión a internet");
+      }
+    }
+
+    verifyConnection();
+
+    const handleOffline = () => {
+      console.log("Conexión perdida");
+      setHasInternet(false);
+      setGeneralError("No tienes conexión a internet");
+    };
+
+    const handleOnline = () => {
+      console.log("Conexión restaurada");
+      setHasInternet(true);
+      setGeneralError("");
+      setBlockedByConnection(false);
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
+  async function checkInternetConnection() {
+    if (!navigator.onLine) {
+      console.log("Sin conexión (navigator)");
+      return false;
+    }
+    try {
+      await fetch("https://www.google.com", {
+        mode: "no-cors",
+      });
+      console.log("Conexión a internet OK");
+      return true;
+    } catch (error) {
+      console.log("Error de conexión real:", error);
+      return false;
+    }
+  }
+
   function validateField(field: string, value: string) {
     const newErrors = { ...errors };
 
@@ -156,7 +212,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     if (suggestion) {
       newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
     } else {
-      newErrors.email = 'Ingresa un correo electrónico válido';
+      newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu';
     }
   } else
     delete newErrors.email;
@@ -244,7 +300,7 @@ else if (!isValidEmail(email.trim())) {
   if (suggestion) {
     newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
   } else {
-    newErrors.email = 'Ingresa un correo electrónico válido';
+    newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu';
   }
 }
 
@@ -281,6 +337,14 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
+
+    // Verificar conexión a internet
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      setGeneralError("No tienes conexión a internet");
+      setBlockedByConnection(true);
+      return;
+    }
 
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -339,6 +403,13 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
   async function handleVerifyCode() {
     if (!userInputCode || userInputCode.length !== 6) {
       setVerificationError("El código debe tener 6 dígitos");
+      return;
+    }
+
+    // Verificar conexión a internet
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      setVerificationError("No tienes conexión a internet");
       return;
     }
 
@@ -403,6 +474,13 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
   }
 
   async function handleResendCode() {
+    // Verificar conexión a internet
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      setVerificationError("No tienes conexión a internet");
+      return;
+    }
+
     setLoading(true);
     try {
       await handleSendVerification();
@@ -416,6 +494,14 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
   // ⭐ BUG 4 y 9 — manejar clic en Google
   async function handleGoogleSignIn() {
     if (googleLoading) return; // ← evita múltiples clics
+
+    const isConnected = await checkInternetConnection();
+    if (!isConnected) {
+      setGeneralError("No tienes conexión a internet");
+      setBlockedByConnection(true);
+      return;
+    }
+
     setGoogleLoading(true);
     try {
       await signIn("google", { callbackUrl: "/" });
@@ -441,11 +527,11 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
       {/* Botón Google */}
       <button
         type="button"
-        disabled={loading || googleLoading}
+        disabled={loading || googleLoading || blockedByConnection}
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: googleLoading ? "#9ca3af" : "#0F172A",
+          backgroundColor: googleLoading || blockedByConnection ? "#9ca3af" : "#0F172A",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
@@ -548,6 +634,7 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
               <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 y maximo 15 caracteres" value={password} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setPassword(value); validateField("password", value); }}
                 style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{password.length}/15</span>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                 style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -565,6 +652,7 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
               <input type={showConfirm ? "text" : "password"} placeholder="Confirmar contraseña" value={confirmPassword} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setConfirmPassword(value); validateField("confirmPassword", value); }}
                 style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{confirmPassword.length}/15</span>
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                 style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -575,10 +663,10 @@ else if (!/[^A-Za-z0-9]/.test(password)) newErrors.password = 'Debe incluir al m
 
           <button
             type="submit"
-            disabled={loading || !isFormValid()}
+            disabled={loading || !isFormValid() || blockedByConnection}
             style={{
               width: "100%",
-              backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C85A4F",
+              backgroundColor: loading || !isFormValid() || blockedByConnection ? "#e5a89f" : "#C85A4F",
               color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px",
               border: "none", cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.5 : 1, marginTop: "8px",

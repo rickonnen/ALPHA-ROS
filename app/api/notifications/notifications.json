@@ -3,7 +3,7 @@
     "id": 8,
     "title": "COMPRA EXITOSA",
     "message": "Adquiriste el plan profesional exitosamente!!",
-    "read": true,
+    "read": false,
     "createdAt": "2026-04-07T19:30:00Z"
   },
   {
