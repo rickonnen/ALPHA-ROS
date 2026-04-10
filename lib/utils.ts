@@ -94,8 +94,8 @@ export function isValidEmail(email: string): boolean {
     return false;
   }
   
-  // 5. VERIFICACIÓN CLAVE: Solo aceptar dominios en la whitelist o .edu.bo
-  if (!ALLOWED_DOMAINS.has(domain) && !domain.endsWith('.edu.bo')) {
+  // 5. VERIFICACIÓN CLAVE: Solo aceptar dominios en la whitelist o .edu
+  if (!ALLOWED_DOMAINS.has(domain) && !domain.endsWith('.edu')) {
     return false;
   }
   
