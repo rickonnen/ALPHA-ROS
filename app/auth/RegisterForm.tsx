@@ -212,7 +212,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
     if (suggestion) {
       newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
     } else {
-      newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu.bo';
+      newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu';
     }
   } else
     delete newErrors.email;
@@ -300,7 +300,7 @@ else if (!isValidEmail(email.trim())) {
   if (suggestion) {
     newErrors.email = `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
   } else {
-    newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu.bo';
+    newErrors.email = 'Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu';
   }
 }
 
