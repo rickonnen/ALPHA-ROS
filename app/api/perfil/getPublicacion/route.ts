@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const [publicaciones, total] = await prisma.$transaction([
+    const [publicaciones, total, usuario] = await prisma.$transaction([
       prisma.publicacion.findMany({
         where: { id_usuario },
         skip,
@@ -45,6 +45,10 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.publicacion.count({ where: { id_usuario } }),
+      prisma.usuario.findUnique({        // ← NUEVO
+        where: { id_usuario },
+        select: { cant_publicaciones_restantes: true },
+      }),
     ]);
 
     const data = publicaciones.map((pub) => ({
@@ -54,7 +58,14 @@ export async function GET(req: NextRequest) {
       imagen: pub.Imagen[0]?.url_imagen ?? null,
     }));
 
-    return NextResponse.json({ data, total, page, limit }, { status: 200 });
+    return NextResponse.json({ 
+      data, 
+      total, 
+      page, 
+      limit,
+      cant_publicaciones_restantes: usuario?.cant_publicaciones_restantes ?? 0
+    }, { status: 200 });
+    
   } catch (error) {
     console.error("Error al obtener publicaciones:", error);
     return NextResponse.json(

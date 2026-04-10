@@ -51,6 +51,7 @@ export default function PublicacionesView({
 }: PublicacionesViewProps) {
   const router = useRouter();
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [publicacionesRestantes, setPublicacionesRestantes] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function PublicacionesView({
         if (activo) {
           setPublicaciones(json.data);
           setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(json.cant_publicaciones_restantes ?? 0);
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -132,6 +134,9 @@ export default function PublicacionesView({
             <CardTitle className="text-xl font-bold tracking-tight">
               Mis publicaciones
             </CardTitle>
+            <span className="text-white/60 text-sm mr-auto ml-3">
+              {publicacionesRestantes} publicaciones disponibles
+            </span>
             <Button
               autoFocus
               onClick={() => router.push("/publicacion/informacion-comercial")}
