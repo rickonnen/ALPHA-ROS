@@ -16,6 +16,10 @@
    Fecha: 07/04/2026
    Style: Sincronización de animaciones de vistas con perfil-view y agregado de línea separadora en el título principal.
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+   Fecha: 09/04/2026
+   Fix: Resolución del defecto de navegación por teclado ilógica. Restauración de corrección visual de la contraseña (****).
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -55,8 +59,9 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
     menu: (
       <div className="space-y-4">
         <button
+          autoFocus
           onClick={() => setSubView("perfil")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Editar Perfil</p>
@@ -66,17 +71,17 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         </button>
         <button
           onClick={() => setSubView("password")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Contraseña</p>
-            <p className="text-sm text-gray-300">********</p>
+            <p className="text-lg text-gray-300 tracking-widest mt-1">****</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
         <button
           onClick={() => setSubView("correo")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
@@ -86,7 +91,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         </button>
         <button
           onClick={() => setSubView("telefonos")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
