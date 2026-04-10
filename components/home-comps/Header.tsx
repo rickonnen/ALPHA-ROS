@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useRef, useState, useMemo, useCallback } from "react";
+import { useRef, useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -41,11 +41,15 @@ export const Header = () => {
   const bolHideHeader = useScrollDirection();
   const strHoverAnim = useHoverAnimation(true);
   const strHoverAnimNoTextColor = useHoverAnimation(false);
-  
-  const { user: objUser, logout, isLoading: bolIsAuthLoading } = useAuth();
+
+  const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
   const { strFotoPerfil } = useFotoPerfil(objUser?.id);
   const unreadCount = useUnreadCount(objUser);
   const objRouter = useRouter();
+  const [objNombreHeader, setObjNombreHeader] = useState<{
+    idUsuario: string;
+    nombre: string;
+  }>({ idUsuario: "", nombre: "" });
 
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
   const [bolShowAuth, setBolShowAuth] = useState(false);
@@ -54,25 +58,80 @@ export const Header = () => {
   const [bolShowNotifications, setBolShowNotifications] = useState(false);
   const [bolShowLimitModal, setBolShowLimitModal] = useState(false);
 
+  useEffect(() => {
+    if (!objUser?.id) return;
+
+    const fetchNombreActualizado = async () => {
+      try {
+        const res = await fetch(
+          `/api/perfil/getUsuario?id_usuario=${objUser.id}`,
+          {
+            cache: "no-store",
+          },
+        );
+        if (!res.ok) return;
+
+        const json = await res.json();
+        const strNombres = json?.data?.nombres?.trim() ?? "";
+        const strApellidos = json?.data?.apellidos?.trim() ?? "";
+        const strNombreCompleto = `${strNombres} ${strApellidos}`.trim();
+        const strUsername = json?.data?.username?.trim() ?? "";
+
+        setObjNombreHeader({
+          idUsuario: objUser.id,
+          nombre: strNombreCompleto || strUsername || objUser.name || "",
+        });
+      } catch {}
+    };
+
+    const handlePerfilActualizado = () => {
+      void fetchNombreActualizado();
+    };
+
+    window.addEventListener("perfil:foto-actualizada", handlePerfilActualizado);
+    return () => {
+      window.removeEventListener(
+        "perfil:foto-actualizada",
+        handlePerfilActualizado,
+      );
+    };
+  }, [objUser?.id, objUser?.name]);
+
+  const strNombreHeader =
+    objNombreHeader.idUsuario === (objUser?.id ?? "") && objNombreHeader.nombre
+      ? objNombreHeader.nombre
+      : (objUser?.name ?? "");
+
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
   const refNotifPanelMobile = useRef<HTMLDivElement | null>(null);
   const refNotifPanelDesktop = useRef<HTMLDivElement | null>(null);
 
   // clases comunes para evitar reconstruir strings
-  const clsFocusBase = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund";
-  
-  const strLinkClassesDesktop = useMemo(() => 
-    `text-body-info font-normal text-foreground inline-block rounded-md px-1 cursor-pointer ${clsFocusBase} ${strHoverAnim}`,
-  [strHoverAnim]);
+  const clsFocusBase =
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund";
 
-  const strLinkClassesMobile = useMemo(() => 
-    `text-body-info font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
-  [strHoverAnim]);
+  const strLinkClassesDesktop = useMemo(
+    () =>
+      `text-body-info font-normal text-foreground inline-block rounded-md px-1 cursor-pointer ${clsFocusBase} ${strHoverAnim}`,
+    [strHoverAnim],
+  );
 
-  const handleCloseMobileMenu = useCallback(() => setBolIsMobileMenuOpen(false), []);
-  const handleCloseNotifications = useCallback(() => setBolShowNotifications(false), []);
-  
+  const strLinkClassesMobile = useMemo(
+    () =>
+      `text-body-info font-normal text-primary-foreground rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${strHoverAnim}`,
+    [strHoverAnim],
+  );
+
+  const handleCloseMobileMenu = useCallback(
+    () => setBolIsMobileMenuOpen(false),
+    [],
+  );
+  const handleCloseNotifications = useCallback(
+    () => setBolShowNotifications(false),
+    [],
+  );
+
   //cmanejadores de modales
   const handleOpenLogin = useCallback(() => {
     setStrAuthMode("login");
@@ -88,33 +147,59 @@ export const Header = () => {
     setBolShowProtected(false);
   }, [handleCloseMobileMenu]);
 
-  const handleFilterNavigation = useCallback((objLink: NavLink) => {
-    const objParams = new URLSearchParams();
-    objParams.set("operaciones", objLink.strValue);
-    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
-    handleCloseMobileMenu();
-  }, [objRouter, handleCloseMobileMenu]);
+  const handleFilterNavigation = useCallback(
+    (objLink: NavLink) => {
+      const objParams = new URLSearchParams();
+      objParams.set("operaciones", objLink.strValue);
+      objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+      handleCloseMobileMenu();
+    },
+    [objRouter, handleCloseMobileMenu],
+  );
 
-  const { handlePublicar, bolIsChecking: bolIsCheckingLimit } = usePublicarAccion({
-    objUser,
-    onShowProtected: () => setBolShowProtected(true),
-    onShowLimit: () => setBolShowLimitModal(true),
-    onCloseMobileMenu: handleCloseMobileMenu,
-    bolIsAuthLoading,
-  });
+  const { handlePublicar, bolIsChecking: bolIsCheckingLimit } =
+    usePublicarAccion({
+      objUser,
+      onShowProtected: () => setBolShowProtected(true),
+      onShowLimit: () => setBolShowLimitModal(true),
+      onCloseMobileMenu: handleCloseMobileMenu,
+      bolIsAuthLoading,
+    });
 
-  useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, bolIsMobileMenuOpen);
-  useClickOutside([refNotifPanelMobile, refNotifPanelDesktop], handleCloseNotifications, bolShowNotifications);
+  useClickOutside(
+    [refMobileMenuPanel, refMobileMenuButton],
+    handleCloseMobileMenu,
+    bolIsMobileMenuOpen,
+  );
+  useClickOutside(
+    [refNotifPanelMobile, refNotifPanelDesktop],
+    handleCloseNotifications,
+    bolShowNotifications,
+  );
 
-  const objLogoElement = useMemo(() => (
-    <Link href="/" aria-label="Ir a inicio" className={`inline-flex items-center gap-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="Logo PROBOL" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
-      <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
-        <span className="text-primary">PROP</span>
-        <span className="text-secondary">BOL</span>
-      </span>
-    </Link>
-  ), [strHoverAnim]);
+  const objLogoElement = useMemo(
+    () => (
+      <Link
+        href="/"
+        aria-label="Ir a inicio"
+        className={`inline-flex items-center gap-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}
+      >
+        <Image
+          src="/logo-principal.svg"
+          alt="Logo PROBOL"
+          width={40}
+          height={40}
+          className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"
+          priority
+        />
+        <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
+          <span className="text-primary">PROP</span>
+          <span className="text-secondary">BOL</span>
+        </span>
+      </Link>
+    ),
+    [strHoverAnim],
+  );
 
   return (
     <>
@@ -124,10 +209,13 @@ export const Header = () => {
         }`}
       >
         <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between">
-          
           {/* mobil lado izquierdo */}
           <div className="flex lg:hidden">
-            {bolIsAuthLoading ? <Skeleton className="h-10 w-28" /> : objLogoElement}
+            {bolIsAuthLoading ? (
+              <Skeleton className="h-10 w-28" />
+            ) : (
+              objLogoElement
+            )}
           </div>
 
           {/* mobil lado derecho */}
@@ -137,13 +225,21 @@ export const Header = () => {
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
                 <button
-                     aria-label="Notificaciones"
-                     onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                     className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
->
-                    <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                    <NotificationBadge count={unreadCount} />
-                    </button>
+                  aria-label="Notificaciones"
+                  onClick={() =>
+                    objUser
+                      ? setBolShowNotifications((p) => !p)
+                      : setBolShowProtected(true)
+                  }
+                  className={`relative w-10 h-10 rounded-md flex items-center justify-center ${clsFocusBase} ${strHoverAnim}`}
+                >
+                  <img
+                    src="/bell_icon.svg"
+                    alt=""
+                    className="w-6 h-6 object-contain"
+                  />
+                  <NotificationBadge count={unreadCount} />
+                </button>
               )}
               {objUser && bolShowNotifications && (
                 <div className="absolute right-[-15px] top-full mt-0">
@@ -159,27 +255,37 @@ export const Header = () => {
                 className={`p-2 rounded-md ${clsFocusBase} ${strHoverAnim}`}
                 onClick={() => setBolIsMobileMenuOpen((p) => !p)}
               >
-                <img src="/hamburger_icon.svg" alt="" className="w-7 h-7 object-contain" />
+                <img
+                  src="/hamburger_icon.svg"
+                  alt=""
+                  className="w-7 h-7 object-contain"
+                />
               </button>
             </div>
           </div>
 
           {/* pc lado izquierdo */}
           <div className="hidden lg:flex flex-row items-center gap-6">
-            {bolIsAuthLoading ? <Skeleton className="h-10 w-32" /> : objLogoElement}
+            {bolIsAuthLoading ? (
+              <Skeleton className="h-10 w-32" />
+            ) : (
+              objLogoElement
+            )}
           </div>
 
           {/* pc lado derecho */}
           <div className="hidden lg:flex flex-row items-center gap-6">
             {bolIsAuthLoading ? (
               <div className="flex gap-6">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-5 w-20" />)}
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-5 w-20" />
+                ))}
               </div>
             ) : (
               arrNavLinks.map((objLink) => (
-                <button 
-                  key={objLink.strLabel} 
-                  onClick={() => handleFilterNavigation(objLink)} 
+                <button
+                  key={objLink.strLabel}
+                  onClick={() => handleFilterNavigation(objLink)}
                   className={strLinkClassesDesktop}
                 >
                   {objLink.strLabel}
@@ -190,8 +296,13 @@ export const Header = () => {
             {bolIsAuthLoading ? (
               <Skeleton className="h-5 w-32" />
             ) : (
-              <Link href="/cobros/planes" className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase`}>
-                planes de<br />publicacion
+              <Link
+                href="/cobros/planes"
+                className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase`}
+              >
+                planes de
+                <br />
+                publicacion
               </Link>
             )}
 
@@ -211,14 +322,22 @@ export const Header = () => {
               {bolIsAuthLoading ? (
                 <Skeleton className="w-10 h-10 rounded-full" />
               ) : (
-               <button
-                aria-label="Notificaciones"
-                onClick={() => objUser ? setBolShowNotifications((p) => !p) : setBolShowProtected(true)}
-                className={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
-              >
-                <img src="/bell_icon.svg" alt="" className="w-6 h-6 object-contain" />
-                <NotificationBadge count={unreadCount} />
-              </button>
+                <button
+                  aria-label="Notificaciones"
+                  onClick={() =>
+                    objUser
+                      ? setBolShowNotifications((p) => !p)
+                      : setBolShowProtected(true)
+                  }
+                  className={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
+                >
+                  <img
+                    src="/bell_icon.svg"
+                    alt=""
+                    className="w-6 h-6 object-contain"
+                  />
+                  <NotificationBadge count={unreadCount} />
+                </button>
               )}
               {objUser && bolShowNotifications && <NotificationPanel />}
             </div>
@@ -231,8 +350,17 @@ export const Header = () => {
                 onClick={() => objRouter.push(`/perfil?id=${objUser.id}`)}
                 className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
-                <img src={strFotoPerfil} alt="" className="w-7 h-7 object-contain rounded-full bg-muted" onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; }} />
-                <span className="text-body-info font-semibold uppercase text-foreground leading-none">{objUser.name}</span>
+                <img
+                  src={strFotoPerfil}
+                  alt=""
+                  className="w-7 h-7 object-contain rounded-full bg-muted"
+                  onError={(e) => {
+                    e.currentTarget.src = "/account_avatar.svg";
+                  }}
+                />
+                <span className="text-body-info font-semibold uppercase text-foreground leading-none">
+                  {strNombreHeader}
+                </span>
               </button>
             ) : (
               <button
@@ -240,10 +368,16 @@ export const Header = () => {
                 className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 ${clsFocusBase} ${strHoverAnimNoTextColor}`}
               >
                 <div className="relative flex items-center justify-center">
-                  <img src="/account_avatar.svg" alt="" className="w-7 h-7 object-contain" />
+                  <img
+                    src="/account_avatar.svg"
+                    alt=""
+                    className="w-7 h-7 object-contain"
+                  />
                   <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
                 </div>
-                <span className="text-body-info font-semibold uppercase text-foreground leading-none pt-0.5">INICIAR SESIÓN</span>
+                <span className="text-body-info font-semibold uppercase text-foreground leading-none pt-0.5">
+                  INICIAR SESIÓN
+                </span>
               </button>
             )}
           </div>
@@ -252,7 +386,11 @@ export const Header = () => {
         {/* movil menú desplegable */}
         {bolIsMobileMenuOpen && (
           <>
-            <div className="lg:hidden fixed inset-0 z-40" onClick={handleCloseMobileMenu} aria-hidden="true" />
+            <div
+              className="lg:hidden fixed inset-0 z-40"
+              onClick={handleCloseMobileMenu}
+              aria-hidden="true"
+            />
             <nav
               aria-label="Menú móvil"
               ref={refMobileMenuPanel}
@@ -261,11 +399,21 @@ export const Header = () => {
             >
               {objUser ? (
                 <button
-                  onClick={() => { objRouter.push(`/perfil?id=${objUser.id}`); handleCloseMobileMenu(); }}
+                  onClick={() => {
+                    objRouter.push(`/perfil?id=${objUser.id}`);
+                    handleCloseMobileMenu();
+                  }}
                   className={`flex items-center gap-4 pb-12 w-full text-left uppercase ${strLinkClassesMobile}`}
                 >
-                  <img src={strFotoPerfil} alt="" className="w-7 h-7 object-contain rounded-full bg-primary-foreground/20" onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; }} />
-                  <span>{objUser.name}</span>
+                  <img
+                    src={strFotoPerfil}
+                    alt=""
+                    className="w-7 h-7 object-contain rounded-full bg-primary-foreground/20"
+                    onError={(e) => {
+                      e.currentTarget.src = "/account_avatar.svg";
+                    }}
+                  />
+                  <span>{strNombreHeader}</span>
                 </button>
               ) : (
                 <button
@@ -273,7 +421,11 @@ export const Header = () => {
                   className={`flex items-center gap-4 pb-12 w-full text-left uppercase ${strLinkClassesMobile}`}
                 >
                   <div className="relative flex items-center justify-center">
-                    <img src="/account_avatar.svg" alt="" className="w-7 h-7 object-contain brightness-0 invert" />
+                    <img
+                      src="/account_avatar.svg"
+                      alt=""
+                      className="w-7 h-7 object-contain brightness-0 invert"
+                    />
                     <div className="absolute w-[120%] h-[2px] bg-background rotate-45 rounded-full" />
                   </div>
                   <span>INICIAR SESIÓN</span>
@@ -281,7 +433,7 @@ export const Header = () => {
               )}
 
               <div className="flex flex-col gap-6">
-                <button 
+                <button
                   onClick={handlePublicar}
                   disabled={bolIsCheckingLimit || bolIsAuthLoading}
                   className={`border-b border-primary-foreground/10 pb-4 w-full text-left uppercase disabled:opacity-60 ${strLinkClassesMobile}`}
@@ -289,14 +441,19 @@ export const Header = () => {
                   PUBLICAR
                 </button>
 
-                <div onClick={() => { objRouter.push(`/cobros/planes`); handleCloseMobileMenu(); }}
-                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 uppercase ${strLinkClassesMobile}`}>
+                <div
+                  onClick={() => {
+                    objRouter.push(`/cobros/planes`);
+                    handleCloseMobileMenu();
+                  }}
+                  className={`cursor-pointer border-b border-primary-foreground/10 pb-4 uppercase ${strLinkClassesMobile}`}
+                >
                   PLANES DE PUBLICACIÓN
                 </div>
 
                 {arrNavLinks.map((objLink) => (
-                  <button 
-                    key={objLink.strLabel} 
+                  <button
+                    key={objLink.strLabel}
                     onClick={() => handleFilterNavigation(objLink)}
                     className={`text-left border-b border-primary-foreground/10 pb-4 uppercase w-full ${strLinkClassesMobile}`}
                   >
@@ -316,11 +473,11 @@ export const Header = () => {
         onLoginClick={handleOpenLogin}
         onRegisterClick={handleOpenRegister}
       />
-      
-      <AuthModal 
-        isOpen={bolShowAuth} 
-        onClose={() => setBolShowAuth(false)} 
-        initialMode={strAuthMode} 
+
+      <AuthModal
+        isOpen={bolShowAuth}
+        onClose={() => setBolShowAuth(false)}
+        initialMode={strAuthMode}
       />
 
       <FreePublicationLimitModal
