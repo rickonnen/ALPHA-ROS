@@ -24,30 +24,39 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     // Manejo fluido de estados de pago
     const [yaPresionoAceptar, setYaPresionoAceptar] = useState(false);
     const manejarAceptarPago = async () => {
-    if (!user?.id) return;
-    setEstadoModal("verificando");
-    try {
-      const res = await fetch("/api/cobros/verificar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_usuario: user.id,
-          id_plan: planId,
-        }),
-      });
+      if (!user?.id) return;
+      setEstadoModal("verificando");
+      try {
+        const res = await fetch("/api/cobros/verificar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_usuario: user.id,
+            id_plan: planId,
+          }),
+        });
 
-      if (res.ok) {
-        setYaPresionoAceptar(true);
-        setEstadoModal("procesando");
-      } else {
+        if (res.ok) {
+          sessionStorage.setItem(`notificado_${planId}`, "true");
+          setYaPresionoAceptar(true);
+          setEstadoModal("procesando");
+        } else {
+          setEstadoModal("ya_pendiente");
+        }
+      } catch (error) {
         setEstadoModal("ya_pendiente");
       }
-    } catch (error) {
-      setEstadoModal("ya_pendiente");
+    };
+
+  useEffect(() => {
+    const yaFueNotificado = sessionStorage.getItem(`notificado_${planId}`);
+    if (yaFueNotificado) {
+      sessionStorage.removeItem(`notificado_${planId}`);
+      router.push("/cobros/planes");
     }
-  };
+  }, [planId, router]);
 
     // Fetch solo para el QR
     useEffect(() => {
@@ -79,31 +88,24 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     };
 
     const manejarDescarga = async () => {
-    if (!qrUrl) return;
-    const respuestaImagen = await fetch(qrUrl);
-    const blob = await respuestaImagen.blob();
-    const urlBlob = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = urlBlob;
-    link.download = `QR_Plan_${plan.nombre_plan}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+      if (!qrUrl) return;
+      const respuestaImagen = await fetch(qrUrl);
+      const blob = await respuestaImagen.blob();
+      const urlBlob = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.download = `QR_Plan_${plan.nombre_plan}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
 
   
-  const formateadorPrecio = new Intl.NumberFormat('en-US', {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
-  const precioFormateado = formateadorPrecio.format(Number(plan.precio_plan));
 
   const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
 
     return {
-      precioFormateado,
       qrUrl,
       generandoQr,
       estadoModal,

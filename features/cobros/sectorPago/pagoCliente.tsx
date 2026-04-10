@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/app/auth/AuthContext";
+import { useEffect } from "react";
 import { usePagoCliente } from "@/components/hooks/usePagoCliente";
+import { useRouter } from "next/navigation";
 import ModalPago from "@/components/cobros/ModalPago";
 
 interface Props {
@@ -17,9 +19,9 @@ interface Props {
 export default function PagoCliente({ plan, planId }: Props) {
   
   const { user, isLoading } = useAuth();
+  const router = useRouter();
 
   const {
-    precioFormateado,
     qrUrl,
     generandoQr,
     estadoModal,
@@ -30,7 +32,13 @@ export default function PagoCliente({ plan, planId }: Props) {
   } = usePagoCliente(plan, planId);
 
   // por si no es un usuario logueado mostrar ese return
-  if (isLoading) return <div className="min-h-screen bg-background animate-pulse" />;
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/cobros/planes?auth_required=true");
+    }
+  }, [user, isLoading, router]);
+
+ 
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
@@ -70,17 +78,14 @@ export default function PagoCliente({ plan, planId }: Props) {
 
           <div className="mb-10 flex h-80 w-80 items-center justify-center rounded-md border border-border shadow-sm bg-white p-6">
             {generandoQr ? (
-              <Skeleton className="h-[600px] w-[600px]" />
+              <Skeleton className="h-[300px] w-[300px]" />
             ) : qrUrl ? (
               <img
                 src={qrUrl}
                 alt="Código QR de Pago"
-                /* Usamos 300x300. 
-                  Esto garantiza que a una distancia de ~70cm se escanee al instante.
-                */
-                width={600}
-                height={600}
-                className="h-[600px] w-[600px] block object-contain" 
+                width={300}
+                height={300}
+                className="h-[300px] w-[300px] block object-contain" 
               />
             ) : (
               <span className="text-sm uppercase text-muted-foreground font-medium text-center">
