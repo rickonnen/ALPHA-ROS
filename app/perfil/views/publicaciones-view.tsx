@@ -39,6 +39,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
+import { useAuth } from "@/app/auth/AuthContext";
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 
 interface PublicacionesViewProps {
   id_usuario: string;
@@ -50,6 +53,7 @@ export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -57,6 +61,8 @@ export default function PublicacionesView({
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [bolShowModal, setBolShowModal] = useState(false);
+  const [bolChecking,  setBolChecking]  = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -124,6 +130,26 @@ export default function PublicacionesView({
     }
   };
 
+  const handleAgregar = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
+  };
+
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -133,11 +159,12 @@ export default function PublicacionesView({
               Mis publicaciones
             </CardTitle>
             <Button
-              onClick={() => router.push("/publicacion/informacion-comercial")}
+              onClick={handleAgregar}
+              disabled={bolChecking}
               size="sm"
-              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60"
             >
-              + Agregar
+              {bolChecking ? "..." : "+ Agregar"}
             </Button>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
@@ -226,7 +253,7 @@ export default function PublicacionesView({
         </CardContent>
       </Card>
 
-      {/* Modal de confirmación */}
+      {/* Modal de confirmación de eliminación */}
       {idAEliminar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
@@ -276,6 +303,12 @@ export default function PublicacionesView({
           </div>
         </div>
       )}
+
+      {/* Modal límite de publicaciones gratuitas */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+      />
     </>
   );
 }
