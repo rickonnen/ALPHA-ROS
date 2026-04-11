@@ -159,9 +159,7 @@ export default function PublicacionesView({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
               Mis publicaciones
-            </CardTitle>            
-              {bolChecking ? "..." : "+ Agregar"}
-            </Button>
+            </CardTitle> 
             <div className="flex items-center justify-center gap-2">
               <span className="text-white/60 text-sm whitespace-nowrap">
                 {publicacionesRestantes} publicaciones restantes
@@ -172,7 +170,7 @@ export default function PublicacionesView({
                 size="sm"
                 className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60"
               >
-                + Agregar
+                {bolChecking ? "..." : "+ Agregar"}
               </Button>
             </div>
           </div>
