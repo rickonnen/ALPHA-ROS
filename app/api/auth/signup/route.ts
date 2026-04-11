@@ -18,8 +18,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalizar email a minúsculas
+    const normalizedEmail = email.toLowerCase();
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password,
       email_confirm: true,        
       user_metadata: { nombre, apellido }       
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
       .upsert([
         {
           id_usuario: authData.user.id,
-          email: email,
+          email: normalizedEmail,
           nombres: nombre,
           apellidos: apellido,
           rol: 2,

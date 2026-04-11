@@ -96,12 +96,12 @@ function PerfilContent() {
         setError(null);
         //miguel cambio para actualizacion de telefonos
         const tels =
-          json.data?.UsuarioTelefono
-            ?.filter((ut: any) => Boolean(ut.estado))
-            .map(
-              (ut: any) =>
-                `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
-            ) ?? [];
+          json.data?.UsuarioTelefono?.filter((ut: any) =>
+            Boolean(ut.estado),
+          ).map(
+            (ut: any) =>
+              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+          ) ?? [];
         setTelefonos(tels);
       } catch (err: any) {
         setError(err.message);
@@ -135,9 +135,7 @@ function PerfilContent() {
     perfil: usuario ? (
       <PerfilView usuario={usuario} telefonos={telefonos} />
     ) : null,
-    publicaciones: usuario ? (
-      <PublicacionesView id_usuario={userId} />
-    ) : null,
+    publicaciones: usuario ? <PublicacionesView id_usuario={userId} /> : null,
     seguridad: (
       <SeguridadView
         id_usuario={userId}
@@ -148,15 +146,13 @@ function PerfilContent() {
         onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
       />
     ),
-    favoritos: usuario ? (
-      <FavoritoView id_usuario={userId} />
-    ) : null,
+    favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-    const handleLogout = () => {
+  const handleLogout = () => {
     setShowLogoutConfirm(true);
   };
   const handleConfirmLogout = async () => {
@@ -190,12 +186,12 @@ function PerfilContent() {
               <img
                 src={
                   usuario.url_foto_perfil?.trim() ||
-                  "https://github.com/shadcn.png"
+                  "https://i.imgur.com/WxNkK7J.png"
                 }
                 alt="User"
                 className="w-20 h-20 md:w-40 md:h-40 rounded-full border-4 border-[var(--primary)]"
                 onError={(e) => {
-                  e.currentTarget.src = "https://github.com/shadcn.png";
+                  e.currentTarget.src = "https://i.imgur.com/WxNkK7J.png";
                 }}
               />
               <div className="text-left">
@@ -252,7 +248,7 @@ function PerfilContent() {
                   ))}
                   <hr className="my-4" />
                   <button
-                    onClick={ handleLogout }
+                    onClick={handleLogout}
                     className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
@@ -279,6 +275,11 @@ function PerfilContent() {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         setView(btn.id);
+                        setTimeout(() => {
+                          const dinamicContent =
+                            document.getElementById("dinamic");
+                          dinamicContent?.focus();
+                        }, 100);
                       }
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
@@ -297,10 +298,10 @@ function PerfilContent() {
                         prev?.focus();
                       }
                     }}
-                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-1 ${
+                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline ${
                       isSelected
-                        ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
-                        : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"
+                        ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20 focus-visible:outline-white"
+                        : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10 focus-visible:outline-[var(--primary)]"
                     }`}
                   >
                     {btn.name}
@@ -308,17 +309,18 @@ function PerfilContent() {
                 );
               })}
               <button
-                onClick={ handleLogout }
+                onClick={handleLogout}
                 className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
               >
-                <LogOut className="h-4 w-4"/> 
+                <LogOut className="h-4 w-4" />
                 CERRAR SESION
               </button>
             </nav>
 
             <div
               id="dinamic"
-              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px]"
+              tabIndex={-1}
+              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
             >
               {VIEWS_COMPONENTS[view] ?? VIEWS_COMPONENTS.perfil}
             </div>

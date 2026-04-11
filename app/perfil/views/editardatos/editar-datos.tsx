@@ -1,4 +1,4 @@
-/** *Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
+/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
  * Fecha: 26/03/2026
  * Funcionalidad: Editar datos de el usuario desde la vista de mi perfil
  * @param {String} nombres - Para editar datos
@@ -41,12 +41,16 @@
  * Fix: Limite de caracteres en campos: nombres max 15, apellidos max 15,
  *      direccion max 40 y deteccion de guardar sin cambios.
  *      Username editable
+ *      Eliminar redireccion tras guardar
  */
-/** Dev: Alvarado Alisson Dalet - xdev/sow-AlissonA
- * Fecha: 04/04/2026
- * Fix: Eliminar redireccion tras guardar, el header no se actualizaba
- *      Ahora solo se llama onGuardar y el padre maneja el re-fetch y
- *      la navegacion de vuelta al menu
+/** Dev: Alvarado Alisson Dalet - sow-AlissonA
+ * Fecha: 08/04/2026
+ * Funcionalidad: Subir foto desde el explorador de archivos
+ */
+/** Dev: Alvarado Alisson Dalet - sow-AlissonA
+ * Fecha: 09/04/2026
+ * Fix: Validacion de minimo 3 letras en username
+ *      Restriccion de emojis en username
  */
 "use client";
 import { useState, useEffect } from "react";
@@ -59,11 +63,13 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-const intMaxName     = 15;
-const intMaxLastName = 15;
-const intMaxAddress  = 40;
-const intMaxUsername = 15;
-const regexSinAcentos = /^[^\u00C0-\u024F]+$/;
+const intMaxName           = 15;
+const intMaxLastName       = 15;
+const intMaxAddress        = 40;
+const intMaxUsername       = 15;
+const intMinLetrasUsername = 3;
+const regexSinAcentos      = /^[^\u00C0-\u024F]+$/;
+const regexSinEmojis       = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FE0F}]/u;
 
 interface EditProfileProps {
   usuario: {
@@ -93,6 +99,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   const [arrPaises, setArrPaises] = useState<{ id_pais: number; nombre_pais: string }[]>([]);
   const [bolLoadingPaises, setBolLoadingPaises] = useState(false);
   const [bolLoading, setBolLoading] = useState(false);
+  const [bolLoadingFoto, setBolLoadingFoto] = useState(false);
   const [objModal, setObjModal] = useState<{
     type: "success" | "error";
     title: string;
@@ -188,6 +195,25 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
       return;
     }
 
+    if (regexSinEmojis.test(strUsername.trim())) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: "El username no puede contener emojis.",
+      });
+      return;
+    }
+
+    const intCantLetras = (strUsername.trim().match(/[a-zA-Z]/g) ?? []).length;
+    if (intCantLetras < intMinLetrasUsername) {
+      setObjModal({
+        type: "error",
+        title: "Campos inválidos",
+        message: `El username debe contener al menos ${intMinLetrasUsername} letras.`,
+      });
+      return;
+    }
+
     setBolLoading(true);
     try {
       const res = await fetch("/api/perfil/updateUsuario", {
@@ -230,10 +256,45 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   };
 
   const handleCambiarFoto = () => {
-    const strNuevaUrl = window.prompt("Ingresa la URL de tu nueva foto de perfil:");
-    if (strNuevaUrl && strNuevaUrl.trim() !== "") {
-      setStrFotoUrl(strNuevaUrl.trim());
-    }
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setBolLoadingFoto(true);
+      try {
+        const formData = new FormData();
+        formData.append("foto", file);
+
+        const res = await fetch("/api/perfil/uploadFoto", {
+          method: "POST",
+          body: formData,
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+          setObjModal({
+            type: "error",
+            title: "Error al subir foto",
+            message: json.error ?? "No se pudo subir la imagen.",
+          });
+          return;
+        }
+
+        setStrFotoUrl(json.url);
+      } catch {
+        setObjModal({
+          type: "error",
+          title: "Error de conexión",
+          message: "No se pudo subir la imagen. Intenta nuevamente.",
+        });
+      } finally {
+        setBolLoadingFoto(false);
+      }
+    };
+    input.click();
   };
 
   const handleEliminarFoto = () => {
@@ -245,6 +306,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     }
   };
 
+  const intLetrasUsername = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -280,13 +342,19 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 <Button
                   variant="outline"
                   onClick={handleCambiarFoto}
+                  disabled={bolLoadingFoto}
                   className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white text-xs font-black tracking-widest"
                 >
-                  Cambiar foto
+                  {bolLoadingFoto ? (
+                    <><Loader2 className="animate-spin h-4 w-4 mr-2" />Subiendo...</>
+                  ) : (
+                    "Cambiar foto"
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleEliminarFoto}
+                  disabled={bolLoadingFoto}
                   className="bg-transparent border-red-300/50 text-red-300 hover:bg-red-400/10 hover:text-red-200 text-xs font-black tracking-widest"
                 >
                   Eliminar foto
@@ -395,6 +463,16 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                 {strUsername.trim() && !regexSinAcentos.test(strUsername) && (
                   <span className="text-xs text-red-400 font-black">
                     El username no puede contener letras con acento.
+                  </span>
+                )}
+                {strUsername.trim() && regexSinEmojis.test(strUsername) && (
+                  <span className="text-xs text-red-400 font-black">
+                    El username no puede contener emojis.
+                  </span>
+                )}
+                {strUsername.trim() && intLetrasUsername < intMinLetrasUsername && (
+                  <span className="text-xs text-red-400 font-black">
+                    El username debe contener al menos {intMinLetrasUsername} letras.
                   </span>
                 )}
               </div>

@@ -5,25 +5,43 @@ export function useUnreadCount(user: any) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnreadCount = useCallback(async () => {
-    if (!user) return;
-    fetch("/api/notifications")
-      .then(r => r.json())
-      .then((data: { id: number; read: boolean }[]) => {
-      const userId = (user as any)?.id ?? "guest";
-      const stored = typeof window !== "undefined" 
-        ? localStorage.getItem(`deletedNotificationIds_${userId}`) 
-        : null;
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    
+    try {
+      const response = await fetch("/api/notifications");
+      const data = await response.json();
+      const userId = user?.id ?? "guest";
+      const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
       const deletedIds: number[] = stored ? JSON.parse(stored) : [];
-      const filtered = data.filter(n => !deletedIds.includes(n.id));
-      setUnreadCount(filtered.filter(n => !n.read).length);
-    })
-    .catch(console.error);
-}, [user]);
-useEffect(() => {
+      const filtered = data.filter((n: any) => !deletedIds.includes(n.id));
+      setUnreadCount(filtered.filter((n: any) => !n.read).length);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 300);
-    return () => clearInterval(interval);
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, user]);
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    const handleRefresh = () => fetchUnreadCount();
+    window.addEventListener("refresh-notification-badge", handleRefresh);
+    
+    return () => window.removeEventListener("refresh-notification-badge", handleRefresh);
+  }, [fetchUnreadCount, user]);
 
   return unreadCount;
 }

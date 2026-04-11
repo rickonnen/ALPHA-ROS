@@ -29,13 +29,20 @@
          apellidos max 15 caracteres, direccion max 40 caracteres
          Agregar username a campos editables
 */
+/*  Dev: Alvarado Alisson Dalet - sow-AlissonA
+    Fecha: 09/04/2026
+    Fix: Validacion de minimo 3 letras en username
+         Restriccion de emojis en username
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-const intMaxName   = 15;
-const intMaxLastName = 15;
-const intMaxAddress = 40;
-const intMaxUsername  = 15;
+const intMaxName           = 15;
+const intMaxLastName       = 15;
+const intMaxAddress        = 40;
+const intMaxUsername       = 15;
+const intMinLetrasUsername = 3;
+const regexSinEmojis       = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FE0F}]/u;
 
 export async function PUT(req: NextRequest) {
   try {
@@ -54,7 +61,7 @@ export async function PUT(req: NextRequest) {
     const strDireccion = direccion?.trim() ?? "";
     const strUsername  = username?.trim();
 
-    // --- Validaciones de nombre ---
+    // Nombre y apellido
     if (!strNombres || strNombres === "") {
       return NextResponse.json(
         { error: "El campo nombre no puede estar vacío" },
@@ -114,6 +121,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Username
     if (!strUsername || strUsername === "") {
       return NextResponse.json(
         { error: "El campo username no puede estar vacío." },
@@ -131,6 +139,21 @@ export async function PUT(req: NextRequest) {
     if (!regexSinAcentos.test(strUsername)) {
       return NextResponse.json(
         { error: "El username no puede contener letras con acento." },
+        { status: 400 }
+      );
+    }
+
+    if (regexSinEmojis.test(strUsername)) {
+      return NextResponse.json(
+        { error: "El username no puede contener emojis." },
+        { status: 400 }
+      );
+    }
+
+    const intCantLetras = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
+    if (intCantLetras < intMinLetrasUsername) {
+      return NextResponse.json(
+        { error: `El username debe contener al menos ${intMinLetrasUsername} letras.` },
         { status: 400 }
       );
     }

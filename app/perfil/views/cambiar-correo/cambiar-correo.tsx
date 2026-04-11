@@ -94,6 +94,7 @@ export default function CambiarCorreoView({
           Seguridad
         </span>
       </Button>
+      <div className="mb-4 border-b border-white/15" />
       <HeaderCorreo />
       <CorreoActual email_actual={email_actual} />
       <NuevoCorreo
@@ -243,11 +244,11 @@ function HeaderCorreo() {
         </div>
 
         <div>
-          <CardTitle className="text-3xl font-extrabold tracking-tight text-white">
-            Cambiar correo electrónico
+          <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+            Cambiar correo
           </CardTitle>
           <CardDescription className="mt-1 text-base text-white/70">
-            Te enviaremos un código de verificación al nuevo correo.
+            Te enviaremos un código de verificación.
           </CardDescription>
         </div>
       </div>
@@ -407,11 +408,11 @@ function BotonesAccion({
   bolValidandoContrasena,
 }: BotonesAccionProps) {
   return (
-    <div className="mt-8 flex gap-3">
+    <div className="mt-8 flex w-full gap-3">
       <Button
         type="button"
         variant="outline"
-        className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
+        className="h-10 flex-1 md:flex-none md:w-36 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
         onClick={onClick}
         disabled={bolValidandoContrasena}
       >
@@ -420,7 +421,7 @@ function BotonesAccion({
 
       <Button
         type="button"
-        className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
+        className="h-10 flex-1 md:flex-none md:w-36 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
         onClick={onConfirm}
         disabled={bolValidandoContrasena}
       >
