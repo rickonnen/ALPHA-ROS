@@ -8,7 +8,8 @@
 export const useHoverAnimation = (
   includeColor: boolean = true, 
   includeGlow: boolean = true, 
-  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' = 'pointer'
+  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' = 'pointer',
+  isAnimated: boolean = true 
 ) => {
   // Mapeo explícito para que Tailwind detecte las clases completas
   const cursorClasses = {
@@ -23,14 +24,17 @@ export const useHoverAnimation = (
   const strCursorClass = cursorClasses[cursorType];
 
   // Determinamos si debe escalar: No escalamos en inputs (|) ni en elementos bloqueados (Ø)
-  const bolShouldScale = cursorType !== 'text' && cursorType !== 'not-allowed';
-  const strScaleClass = bolShouldScale ? "hover:scale-110 active:scale-95" : "";
+  const bolShouldScale = isAnimated && cursorType !== 'text' && cursorType !== 'not-allowed';
+  const strScaleClass = bolShouldScale 
+    ? "hover:scale-[1.02] md:hover:scale-[1.05] lg:hover:scale-110 active:scale-95" 
+    : "";
 
   // Base de la animación con la clase de cursor estática
-  const strBaseAnimation = `transition-all duration-300 ${strCursorClass} ${strScaleClass}`;
+  const strTransition = isAnimated ? "transition-all duration-300" : "";
+  const strBaseAnimation = `${strTransition} ${strCursorClass} ${strScaleClass}`;
   
   // Resplandor condicional
-  const strGlow = includeGlow ? "hover:drop-shadow-[0_0_12px_rgba(194,110,90,0.8)]" : "";
+  const strGlow = includeGlow ? "hover:drop-shadow-[0_0_0.75rem_rgba(194,110,90,0.8)]" : "";
   
   // Color de texto condicional (siguiendo tu estándar oklch del botón secundario)
   const strTextColor = includeColor ? "hover:text-[oklch(0.63_0.11_34)]" : "";
