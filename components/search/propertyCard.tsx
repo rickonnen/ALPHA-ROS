@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Image from 'next/image';
 import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import SearchDetailModal from './SearchDetailModal';
 
 type Currency = "USD" | "BS";
 // defini esta interfaz para los datos pero esto no se si deberia ir aqui, pero por ahora aqui
@@ -25,15 +27,28 @@ export interface Property {
   currencySymbol: string; 
   publishedDate: string;  
   whatsappContact: string; 
-  images: string[];       
+  images: string[];
+  usuarioTelefono?: string;
 }
 
 interface PropertyCardProps {
   property: Property;
   selectedCurrency: Currency;
+  isHovered?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onClick?: () => void;
 }
 
-export default function PropertyCard({ property, selectedCurrency }: PropertyCardProps) {
+export default function PropertyCard({ 
+  property, 
+  selectedCurrency,
+  isHovered = false,
+  onMouseEnter,
+  onMouseLeave,
+  onClick
+}: PropertyCardProps) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   
     const exchangeRate = 6.96;
 
@@ -48,37 +63,45 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
 
   
   const isContactAvailable = !!property.whatsappContact;
+  
+  // Usar teléfono del usuario si está disponible, sino usar el whatsappContact
+  const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
 
   return (
-    <div className="group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none">
+    <div 
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      className={`group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none cursor-pointer ${
+        isHovered 
+          ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
+          : 'border-gray-100'
+      }`}
+    >
       
       {/*  lado izquierdo (carrusel) */}
-      <div className="relative w-2/5 sm:w-1/3 shrink-0 overflow-hidden">
+      <div className="relative w-2/5 sm:w-1/3 h-48 shrink-0 overflow-hidden">
         <Carousel className="w-full h-full">
           <CarouselContent className="-ml-0 h-full">
             {property.images.map((img, index) => (
-              <CarouselItem key={index} className="pl-0 relative h-full w-full">
+              <CarouselItem key={index} className="pl-0 basis-full h-full">
                 <Image
                   src={img}
                   alt={`Imagen ${index + 1} de ${property.title}`}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  width={300}
+                  height={200}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   priority={index === 0}
-                  placeholder="empty"
                 />
               </CarouselItem>
             ))}
           </CarouselContent>
           {property.images.length > 1 && (
             <>
-              <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7" />
-              <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7" />
+              <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7 pointer-events-auto z-20" />
+              <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white w-6 h-6 sm:w-7 sm:h-7 pointer-events-auto z-20" />
             </>
           )}
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
-            1/{property.images.length}
-          </div>
         </Carousel>
       </div>
 
@@ -129,7 +152,11 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button size="sm" className="h-8 text-[11px]">
+            <Button 
+              size="sm" 
+              className="h-8 text-[11px]"
+              onClick={() => setIsDetailOpen(true)}
+            >
               Ver Detalle
             </Button>
             <Button 
@@ -140,7 +167,7 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
               asChild={isContactAvailable}
             >
               {isContactAvailable ? (
-                <a href={`https://wa.me/${property.whatsappContact}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://wa.me/${telefonoParaWhatsapp}`} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="w-3.5 h-3.5 text-green-600" />
                   <span className="hidden xl:inline">WhatsApp</span>
                 </a>
@@ -152,6 +179,14 @@ export default function PropertyCard({ property, selectedCurrency }: PropertyCar
 
         </div>
       </div>
+
+      {/* Modal de detalle */}
+      <SearchDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        publicacionId={property.id}
+        selectedCurrency={selectedCurrency}
+      />
     </div>
   );
 }

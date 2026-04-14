@@ -510,7 +510,7 @@ model CategoriaNotificacion {
 model Ciudad {
   id_ciudad         Int                 @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
   nombre_ciudad     String?             @db.VarChar(128)
-  descripcion_corta String?             @map("descripcion-corta")
+  descripcion_corta String?             @map("descripcion-corta") @db.VarChar(128)
   url_banner        String?
   CiudadImagen      CiudadImagen[]
   HistorialBusqueda HistorialBusqueda[]
@@ -570,7 +570,7 @@ model Etiquetas {
 
 model Favorito {
   id_publicacion Int
-  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String      @db.Uuid
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
@@ -583,7 +583,7 @@ model HistorialBusqueda {
   id_ciudad         Int           @db.SmallInt
   id_tipo_operacion Int           @db.SmallInt
   fecha_busqueda    DateTime      @db.Timestamptz(6)
-  id_usuario        String        @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario        String        @db.Uuid
   Ciudad            Ciudad        @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(HB)-id_ciudad(Ciudad)")
   TipoOperacion     TipoOperacion @relation(fields: [id_tipo_operacion], references: [id_tipo_operacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_tipo_operacion(HB)-id_tipo_operacion(TipoOperacion)")
   Usuario           Usuario       @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_usuario(HB)-id_usuario(Usuario)")
@@ -595,7 +595,7 @@ model HistorialBusqueda {
 model HistorialVistos {
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
-  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String      @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
 
@@ -629,9 +629,9 @@ model Notificacion {
   id_categoria          Int?
   leido                 Boolean?
   creado_en             DateTime?              @db.Timestamptz(6)
-  id_publicacion        Int                    @default(autoincrement())
+  id_publicacion        Int?
   id_usuario            String?                @db.Uuid
-  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
+  Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
   Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_usuario")
 
@@ -656,7 +656,7 @@ model PlanPublicacion {
   activo             Boolean?      @default(false)
   id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
-  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onDelete: NoAction, onUpdate: NoAction, map: "fk_qr_url")
 
   @@schema("public")
 }
@@ -769,6 +769,7 @@ model Ubicacion {
 }
 
 model Usuario {
+  id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
   email                        String?             @db.VarChar(320)
   nombres                      String?             @db.VarChar(100)
   apellidos                    String?             @db.VarChar(100)
@@ -780,7 +781,6 @@ model Usuario {
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?             @db.VarChar(128)
-  id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
   id_pais                      Int?                @db.SmallInt
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
@@ -808,6 +808,15 @@ model UsuarioTelefono {
   @@schema("public")
 }
 
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@schema("public")
+}
+
 model Video {
   id_video       Int          @id(map: "Video_pk") @default(autoincrement()) @db.SmallInt
   id_publicacion Int?
@@ -829,7 +838,7 @@ model Zona {
 }
 
 model otp_cambio_correo {
-  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_otp         String   @id(map: "otp_cambio_correo_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
   nuevo_email    String   @db.VarChar(320)
   otp_hash       String
@@ -840,7 +849,7 @@ model otp_cambio_correo {
   consumido      Boolean  @default(false)
   creado_en      DateTime @default(now()) @db.Timestamptz(6)
   actualizado_en DateTime @default(now()) @db.Timestamptz(6)
-  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_otp_cambio_correo_usuario")
 
   @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
   @@index([expira_en], map: "idx_otp_cambio_correo_expira")
