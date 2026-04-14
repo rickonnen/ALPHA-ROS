@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 
 type EstadoModal =
   | "cerrado"
-  | "confirmacion"
-  | "verificando"
-  | "procesando"
-  | "ya_pendiente";
+  | "descargarQR" 
+  | "confirmacion_pago" 
+  | "verificando_pago" 
+  | "adjuntar_comprobante" 
+  | "pendiente_pago"; 
 
   type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
   precio_plan: number;
@@ -25,7 +26,7 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     const [yaPresionoAceptar, setYaPresionoAceptar] = useState(false);
     const manejarAceptarPago = async () => {
       if (!user?.id) return;
-      setEstadoModal("verificando");
+      setEstadoModal("verificando_pago");
       try {
         const res = await fetch("/api/cobros/verificar", {
           method: "POST",
@@ -41,12 +42,12 @@ export function usePagoCliente(plan: PlanPago, planId: string){
         if (res.ok) {
           sessionStorage.setItem(`notificado_${planId}`, "true");
           setYaPresionoAceptar(true);
-          setEstadoModal("procesando");
+          setEstadoModal("pendiente_pago");
         } else {
-          setEstadoModal("ya_pendiente");
+          setEstadoModal("pendiente_pago");
         }
       } catch (error) {
-        setEstadoModal("ya_pendiente");
+        setEstadoModal("pendiente_pago");
       }
     };
 
@@ -80,10 +81,10 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     const alDarClickEnVerificarPrincipal = () => {
         if (yaPresionoAceptar) {
         // Si ya aceptó antes en esta visita, enviara al modal de procesando
-        setEstadoModal("procesando"); 
+        setEstadoModal("verificando_pago"); 
         } else {
         // Si es la primera vez mostrara el modal para confirmar o rechazar del modal de confirmacion
-        setEstadoModal("confirmacion");
+        setEstadoModal("confirmacion_pago");
         }
     };
 

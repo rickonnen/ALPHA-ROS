@@ -13,16 +13,19 @@ import {
 
 type EstadoModal =
   | "cerrado"
-  | "confirmacion"
-  | "verificando"
-  | "procesando"
-  | "ya_pendiente";
+  | "descargarQR" 
+  | "confirmacion_pago" 
+  | "verificando_pago" 
+  | "adjuntar_comprobante" 
+  | "pendiente_pago"; 
 
 interface Props {
   estadoModal: EstadoModal;
   setEstadoModal: (estado: EstadoModal) => void;
   manejarAceptarPago: () => void;
   irAlPerfil: () => void;
+  manejarDescarga: () => void;
+  nombrePlan: string;
 }
 
 export default function PagoModal({
@@ -30,6 +33,8 @@ export default function PagoModal({
   setEstadoModal,
   manejarAceptarPago,
   irAlPerfil,
+  manejarDescarga,
+  nombrePlan,
 }: Props) {
   return (
       <AlertDialog
@@ -39,21 +44,35 @@ export default function PagoModal({
         }}
       >
         <AlertDialogContent>
-          {/* 3. FIX DE ACCESIBILIDAD PARA RADIX UI */}
           {estadoModal === "cerrado" && (
             <AlertDialogTitle className="sr-only">
               Cerrando diálogo...
             </AlertDialogTitle>
           )}
 
-          {estadoModal === "verificando" && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <AlertDialogTitle>Verificando</AlertDialogTitle>
-            </div>
+          {estadoModal === "verificando_pago" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Verificando pago
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Este proceso puede durar algunas horas. 
+                  Puedes revisar el estado de tu pago en tu perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}> 
+                  ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
           )}
 
-          {estadoModal === "confirmacion" && (
+          {estadoModal === "confirmacion_pago" && (
             <>
               <AlertDialogHeader>
                 <AlertDialogTitle>
@@ -80,13 +99,35 @@ export default function PagoModal({
             </>
           )}
 
-          {estadoModal === "procesando" && (
+          {estadoModal === "adjuntar_comprobante" && (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Verificando pago</AlertDialogTitle>
+                <AlertDialogTitle>Adjuntar comprobante</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Este proceso puede durar algunas horas. Puedes revisar el
-                  estado de tu pago en tu perfil.
+                  Esta acción enviará tu comprobante al equipo de 
+                  administración para su validación inmediata.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}> 
+                  seleccionar archivo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {estadoModal === "pendiente_pago" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ya tienes una solicitud pendiente</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Estamos verificando un comprobante para este plan. 
+                  No es necesario realizar otro pago. Te 
+                  notificaremos en cuanto el administrador valide 
+                  la transacción.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -100,21 +141,23 @@ export default function PagoModal({
             </>
           )}
 
-          {estadoModal === "ya_pendiente" && (
+          {estadoModal === "descargarQR" && (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Pago en proceso</AlertDialogTitle>
+                <AlertDialogTitle>
+                  Descargar QR
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Ya tienes un pago pendiente de verificación. Por favor, espera
-                  a que se complete o revisa el estado en tu perfil.
+                  Deseas descargar el QR correspondiente al plan 
+                  {nombrePlan}?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  Cerrar
+                  cancelar
                 </AlertDialogCancel>
-                <AlertDialogAction onClick={irAlPerfil}>
-                  Ir a mi perfil
+                <AlertDialogAction onClick={manejarDescarga}> 
+                  aceptar
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>

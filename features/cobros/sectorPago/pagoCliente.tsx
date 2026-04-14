@@ -27,6 +27,7 @@ export default function PagoCliente({ plan, planId }: Props) {
     estadoModal,
     setEstadoModal,
     manejarAceptarPago,
+    manejarDescarga,
     alDarClickEnVerificarPrincipal,
     irAlPerfil,
   } = usePagoCliente(plan, planId);
@@ -107,9 +108,18 @@ export default function PagoCliente({ plan, planId }: Props) {
               variant="secondary"
               size="lg"
               className="w-full font-bold text-lg py-6 shadow-md transition-colors"
-              //onClick={manejarDescarga}
+              onClick={() => setEstadoModal("descargarQR")}
             >
               DESCARGAR QR
+            </Button>
+
+            <Button
+              variant="outline" 
+              size="lg"
+              className="w-full font-semibold text-lg py-6 shadow-md"
+              onClick={() => setEstadoModal("adjuntar_comprobante")}
+            >
+              Adjuntar comprobante
             </Button>
           </div>
         </div>
@@ -117,8 +127,10 @@ export default function PagoCliente({ plan, planId }: Props) {
       <ModalPago
         estadoModal={estadoModal}
         setEstadoModal={setEstadoModal}
+        manejarDescarga={manejarDescarga}
         manejarAceptarPago={manejarAceptarPago}
         irAlPerfil={irAlPerfil}
+        nombrePlan={plan.nombre_plan ?? "seleccionado"}
       />                                  
     </div>
   );
