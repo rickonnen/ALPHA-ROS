@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PlanPublicacion } from "@prisma/client";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ type EstadoModal =
   | "pendiente_pago"; 
 
   type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
-  precio_plan: number;
+    precio_plan: number;
   };
   
 export function usePagoCliente(plan: PlanPago, planId: string){
@@ -24,15 +24,16 @@ export function usePagoCliente(plan: PlanPago, planId: string){
 
     // Manejo fluido de estados de pago
     const [yaPresionoAceptar, setYaPresionoAceptar] = useState(false);
+
     const manejarAceptarPago = async () => {
-      if (!user?.id) return;
-      setEstadoModal("verificando_pago");
+      if (!user?.id || !archivoSeleccionado) return;
+      
+      setEstadoModal("verificando_pago"); // Feedback visual de carga
+
       try {
         const res = await fetch("/api/cobros/verificar", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id_usuario: user.id,
             id_plan: planId,
@@ -40,24 +41,23 @@ export function usePagoCliente(plan: PlanPago, planId: string){
         });
 
         if (res.ok) {
-          sessionStorage.setItem(`notificado_${planId}`, "true");
           setYaPresionoAceptar(true);
-          setEstadoModal("pendiente_pago");
-        } else {
-          setEstadoModal("pendiente_pago");
-        }
+          setEstadoPagoBD(1);
+          setEstadoModal("verificando_pago");
+        } 
       } catch (error) {
-        setEstadoModal("pendiente_pago");
+        console.error("Error en la verificación");
       }
     };
 
-  useEffect(() => {
-    const yaFueNotificado = sessionStorage.getItem(`notificado_${planId}`);
-    if (yaFueNotificado) {
-      sessionStorage.removeItem(`notificado_${planId}`);
-      router.push("/cobros/planes");
-    }
-  }, [planId, router]);
+
+    //useEffect(() => {
+    //  const yaFueNotificado = sessionStorage.getItem(`notificado_${planId}`);
+    //  if (yaFueNotificado) {
+    //    sessionStorage.removeItem(`notificado_${planId}`);
+    //    router.push("/cobros/planes");
+    //  }
+    //}, [planId, router]);
 
     // Fetch solo para el QR
     useEffect(() => {
@@ -77,15 +77,56 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     cargarQr();
     }, [planId]);
 
-      //funcion para ver que modal mostrar al dar click al boton verificar pago
-    const alDarClickEnVerificarPrincipal = () => {
-        if (yaPresionoAceptar) {
-        // Si ya aceptó antes en esta visita, enviara al modal de procesando
-        setEstadoModal("verificando_pago"); 
-        } else {
-        // Si es la primera vez mostrara el modal para confirmar o rechazar del modal de confirmacion
-        setEstadoModal("confirmacion_pago");
+
+    const [estadoPagoBD, setEstadoPagoBD] = useState<number | null>(null);
+    useEffect(() => {
+      const obtenerEstado = async () => {
+        if (!user?.id) return;
+
+        try {
+          const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+          const data = await res.json();
+          
+          console.log("Respuesta de la tabla de pagos:", data);
+          
+          setEstadoPagoBD(data.estado); 
+        } catch (error) {
+          console.error("Error al obtener estado:", error);
         }
+      };
+
+      obtenerEstado();
+    }, [user?.id, planId]);
+
+    const [hayPendientesEnTabla, setHayPendientesEnTabla] = useState(false);
+    useEffect(() => {
+      const verificarTablaPagos = async () => {
+        if (!user?.id) return;
+        try {
+          const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+          const data = await res.json();
+          
+          setHayPendientesEnTabla(data.tienePendientes); 
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      verificarTablaPagos();
+    }, [user?.id]);
+    
+    const tienePagoPendiente = hayPendientesEnTabla;
+
+    const alDarClickEnVerificarPrincipal = () => {
+      console.log("Estado actual en BD:", estadoPagoBD);
+      console.log("¿Tiene pago pendiente?:", tienePagoPendiente);
+      if (tienePagoPendiente) {
+        setEstadoModal("pendiente_pago"); 
+        return;
+      }
+
+      if (archivoSeleccionado) {
+        setEstadoModal("confirmacion_pago");
+      }
     };
 
     const manejarDescarga = async () => {
@@ -101,11 +142,19 @@ export function usePagoCliente(plan: PlanPago, planId: string){
       document.body.removeChild(link);
     };
 
-  
-
-
-  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
-
+    const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        if (file.type.startsWith("image/")) {
+          setArchivoSeleccionado(file);
+        } else {
+          alert("Por favor, selecciona solo archivos de imagen (PNG, JPG).");
+        }
+      }
+    };
+    const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+    const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     return {
       qrUrl,
       generandoQr,
@@ -114,7 +163,12 @@ export function usePagoCliente(plan: PlanPago, planId: string){
       yaPresionoAceptar,
       manejarAceptarPago,
       alDarClickEnVerificarPrincipal,
+      fileInputRef,
+      tienePagoPendiente,
       manejarDescarga,
       irAlPerfil,
+      archivoSeleccionado,  
+      setArchivoSeleccionado,   
+      manejarSeleccionArchivo,
    };
 }

@@ -30,6 +30,12 @@ export default function PagoCliente({ plan, planId }: Props) {
     manejarDescarga,
     alDarClickEnVerificarPrincipal,
     irAlPerfil,
+    archivoSeleccionado,       
+    setArchivoSeleccionado,   
+    yaPresionoAceptar,
+    manejarSeleccionArchivo,
+    fileInputRef,
+    tienePagoPendiente,
   } = usePagoCliente(plan, planId);
 
   // por si no es un usuario logueado mostrar ese return
@@ -38,8 +44,6 @@ export default function PagoCliente({ plan, planId }: Props) {
       router.push("/cobros/planes?auth_required=true");
     }
   }, [user, isLoading, router]);
-
- 
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
@@ -99,6 +103,7 @@ export default function PagoCliente({ plan, planId }: Props) {
             <Button
               variant="default"
               size="lg"
+              disabled={!archivoSeleccionado && !tienePagoPendiente}
               className="w-full font-semibold text-lg py-6 shadow-md"
               onClick={alDarClickEnVerificarPrincipal}
             >
@@ -113,14 +118,46 @@ export default function PagoCliente({ plan, planId }: Props) {
               DESCARGAR QR
             </Button>
 
-            <Button
-              variant="outline" 
-              size="lg"
-              className="w-full font-semibold text-lg py-6 shadow-md"
-              onClick={() => setEstadoModal("adjuntar_comprobante")}
-            >
-              Adjuntar comprobante
-            </Button>
+            <input
+              type="file"
+              className="hidden"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={manejarSeleccionArchivo}
+            />
+            {tienePagoPendiente ? (
+              <Button 
+                variant="default" 
+                disabled 
+                className="w-full font-medium text-lg py-6 bg-[#1D3547] opacity-50 cursor-not-allowed"
+              >
+                Adjuntar comprobante
+              </Button>
+            ) : (
+              <>
+                {!archivoSeleccionado ? (
+                  <Button
+                    variant="default"
+                    className="w-full font-medium text-lg py-6 bg-[#1D3547]"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Adjuntar comprobante
+                  </Button>
+                ) : (
+                  <div className="flex items-center justify-center gap-3 py-4">
+                    <span className="text-sm font-medium italic border-b border-gray-400 text-[#1D3547]">
+                      {archivoSeleccionado.name}
+                    </span>
+                    <button 
+                      onClick={() => setArchivoSeleccionado(null)}
+                      className="text-red-600 font-bold text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -131,6 +168,8 @@ export default function PagoCliente({ plan, planId }: Props) {
         manejarAceptarPago={manejarAceptarPago}
         irAlPerfil={irAlPerfil}
         nombrePlan={plan.nombre_plan ?? "seleccionado"}
+        archivoSeleccionado={archivoSeleccionado} 
+        setArchivoSeleccionado={setArchivoSeleccionado}
       />                                  
     </div>
   );

@@ -10,6 +10,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useState, useRef } from "react";
+
 
 type EstadoModal =
   | "cerrado"
@@ -26,6 +28,8 @@ interface Props {
   irAlPerfil: () => void;
   manejarDescarga: () => void;
   nombrePlan: string;
+  archivoSeleccionado: File | null;
+  setArchivoSeleccionado: (file: File | null) => void;
 }
 
 export default function PagoModal({
@@ -35,7 +39,18 @@ export default function PagoModal({
   irAlPerfil,
   manejarDescarga,
   nombrePlan,
+  archivoSeleccionado,
+  setArchivoSeleccionado,
 }: Props) {
+
+const fileInputRef = useRef<HTMLInputElement>(null);
+const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setArchivoSeleccionado(e.target.files[0]);
+  }
+};
+
+
   return (
       <AlertDialog
         open={estadoModal !== "cerrado"}
@@ -107,12 +122,34 @@ export default function PagoModal({
                   Esta acción enviará tu comprobante al equipo de 
                   administración para su validación inmediata.
                 </AlertDialogDescription>
+
+                {/* aqui se mostrara el archivo seleccionado */}
+                {archivoSeleccionado && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed border-primary/30 flex items-center justify-center">
+                    <p className="text-sm font-medium text-primary animate-in fade-in zoom-in duration-300">
+                      {archivoSeleccionado.name}
+                    </p>
+                  </div>
+                )}
               </AlertDialogHeader>
+              <input
+                type="file"
+                className="hidden"
+                ref={fileInputRef}
+                accept=".pdf"
+                onChange={manejarSeleccionArchivo}
+              />
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
                   cancelar
                 </AlertDialogCancel>
-                <AlertDialogAction onClick={irAlPerfil}> 
+      
+                <AlertDialogAction 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }}
+                >
                   seleccionar archivo
                 </AlertDialogAction>
               </AlertDialogFooter>
