@@ -45,6 +45,14 @@ export default function PagoCliente({ plan, planId }: Props) {
     }
   }, [user, isLoading, router]);
 
+  if (isLoading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D3547]"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row bg-background">
       {/* Columna Izquierda */}
@@ -113,7 +121,7 @@ export default function PagoCliente({ plan, planId }: Props) {
               variant="secondary"
               size="lg"
               className="w-full font-bold text-lg py-6 shadow-md transition-colors"
-              onClick={() => setEstadoModal("descargarQR")}
+              onClick={manejarDescarga}
             >
               DESCARGAR QR
             </Button>

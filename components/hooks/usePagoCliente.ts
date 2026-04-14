@@ -1,14 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PlanPublicacion } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
 type EstadoModal =
   | "cerrado"
-  | "descargarQR" 
   | "confirmacion_pago" 
   | "verificando_pago" 
-  | "adjuntar_comprobante" 
   | "pendiente_pago"; 
 
   type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
@@ -22,13 +20,32 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     const router = useRouter();
     const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
 
+
+    const obtenerEstadoDePagos = async () => {
+        if (!user?.id) return;
+        try {
+            const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+            const data = await res.json();
+            
+            console.log("Actualizando estados desde BD:", data);
+            setEstadoPagoBD(data.estado); 
+            setHayPendientesEnTabla(data.tienePendientes); 
+        } catch (error) {
+            console.error("Error al obtener estado:", error);
+        }
+    };
+
+    useEffect(() => {
+        obtenerEstadoDePagos();
+    }, [user?.id, planId]);
+
     // Manejo fluido de estados de pago
     const [yaPresionoAceptar, setYaPresionoAceptar] = useState(false);
 
     const manejarAceptarPago = async () => {
       if (!user?.id || !archivoSeleccionado) return;
       
-      setEstadoModal("verificando_pago"); // Feedback visual de carga
+      setEstadoModal("verificando_pago"); 
 
       try {
         const res = await fetch("/api/cobros/verificar", {
@@ -43,7 +60,7 @@ export function usePagoCliente(plan: PlanPago, planId: string){
         if (res.ok) {
           setYaPresionoAceptar(true);
           setEstadoPagoBD(1);
-          setEstadoModal("verificando_pago");
+          setHayPendientesEnTabla(true);
         } 
       } catch (error) {
         console.error("Error en la verificación");
@@ -62,6 +79,7 @@ export function usePagoCliente(plan: PlanPago, planId: string){
     // Fetch solo para el QR
     useEffect(() => {
       const cargarQr = async () => {
+        
             try {
             const resQr = await fetch(`/api/cobros/descargar?planId=${planId}`);
             const dataQr = await resQr.json();
@@ -114,7 +132,9 @@ export function usePagoCliente(plan: PlanPago, planId: string){
       verificarTablaPagos();
     }, [user?.id]);
     
-    const tienePagoPendiente = hayPendientesEnTabla;
+    const tienePagoPendiente = useMemo(() => {
+        return hayPendientesEnTabla || (estadoPagoBD !== null && estadoPagoBD !== 2 && estadoPagoBD !== 3);
+    }, [hayPendientesEnTabla, estadoPagoBD]);
 
     const alDarClickEnVerificarPrincipal = () => {
       console.log("Estado actual en BD:", estadoPagoBD);

@@ -15,10 +15,8 @@ import { useState, useRef } from "react";
 
 type EstadoModal =
   | "cerrado"
-  | "descargarQR" 
   | "confirmacion_pago" 
   | "verificando_pago" 
-  | "adjuntar_comprobante" 
   | "pendiente_pago"; 
 
 interface Props {
@@ -114,48 +112,6 @@ const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
             </>
           )}
 
-          {estadoModal === "adjuntar_comprobante" && (
-            <>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Adjuntar comprobante</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta acción enviará tu comprobante al equipo de 
-                  administración para su validación inmediata.
-                </AlertDialogDescription>
-
-                {/* aqui se mostrara el archivo seleccionado */}
-                {archivoSeleccionado && (
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed border-primary/30 flex items-center justify-center">
-                    <p className="text-sm font-medium text-primary animate-in fade-in zoom-in duration-300">
-                      {archivoSeleccionado.name}
-                    </p>
-                  </div>
-                )}
-              </AlertDialogHeader>
-              <input
-                type="file"
-                className="hidden"
-                ref={fileInputRef}
-                accept=".pdf"
-                onChange={manejarSeleccionArchivo}
-              />
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  cancelar
-                </AlertDialogCancel>
-      
-                <AlertDialogAction 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  seleccionar archivo
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </>
-          )}
-
           {estadoModal === "pendiente_pago" && (
             <>
               <AlertDialogHeader>
@@ -178,27 +134,6 @@ const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
             </>
           )}
 
-          {estadoModal === "descargarQR" && (
-            <>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  Descargar QR
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Deseas descargar el QR correspondiente al plan 
-                  {nombrePlan}?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  cancelar
-                </AlertDialogCancel>
-                <AlertDialogAction onClick={manejarDescarga}> 
-                  aceptar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </>
-          )}
         </AlertDialogContent>
       </AlertDialog>
   );
