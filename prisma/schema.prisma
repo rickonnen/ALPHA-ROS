@@ -23,7 +23,7 @@ model CategoriaNotificacion {
 model Ciudad {
   id_ciudad         Int                 @id(map: "Ciudad_pk") @db.SmallInt
   nombre_ciudad     String?             @db.VarChar(128)
-  descripcion_corta String?             @map("descripcion-corta")
+  descripcion_corta String?             @map("descripcion-corta") @db.VarChar(128)
   url_banner        String?
   CiudadImagen      CiudadImagen[]
   HistorialBusqueda HistorialBusqueda[]
@@ -43,7 +43,7 @@ model DetallePago {
   id_detalle      Int              @id(map: "DetallePago_pk") @db.SmallInt
   id_usuario      String?          @db.VarChar(128)
   id_plan         Int?             @db.SmallInt
-  fecha_detalle   DateTime?        @db.Date
+  fecha_detalle   DateTime?        @default(now()) @db.Timestamptz(6)
   estado          Int?             @db.SmallInt
   metodo_pago     String?          @db.VarChar(50)
   PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_planpublicacion")
@@ -72,6 +72,8 @@ model Etiquetas {
 model Favorito {
   id_usuario     String      @db.VarChar(128)
   id_publicacion Int
+  id_usuario     String      @db.Uuid
+  fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
 
@@ -83,6 +85,7 @@ model HistorialBusqueda {
   id_ciudad         Int           @db.SmallInt
   id_tipo_operacion Int           @db.SmallInt
   fecha_busqueda    DateTime      @db.Timestamptz(6)
+  id_usuario        String        @db.Uuid
   Ciudad            Ciudad        @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(HB)-id_ciudad(Ciudad)")
   TipoOperacion     TipoOperacion @relation(fields: [id_tipo_operacion], references: [id_tipo_operacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_tipo_operacion(HB)-id_tipo_operacion(TipoOperacion)")
   Usuario           Usuario       @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_usuario(HB)-id_usuario(Usuario)")
@@ -94,6 +97,7 @@ model HistorialVistos {
   id_usuario     String      @db.VarChar(128)
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
+  id_usuario     String      @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
 
@@ -123,8 +127,9 @@ model Notificacion {
   id_categoria          Int?
   leido                 Boolean?
   creado_en             DateTime?              @db.Timestamptz(6)
-  id_publicacion        Int                    @default(autoincrement())
-  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
+  id_publicacion        Int?
+  id_usuario            String?                @db.Uuid
+  Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
   Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_usuario")
 }
@@ -134,6 +139,9 @@ model Pais {
   nombre_pais String?     @db.VarChar(128)
   codigo_iso  String?     @db.Char(2)
   Ubicacion   Ubicacion[]
+  Usuario     Usuario[]
+
+  @@schema("public")
 }
 
 model PlanPublicacion {
@@ -141,7 +149,12 @@ model PlanPublicacion {
   nombre_plan        String?       @db.VarChar(128)
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
+  activo             Boolean?      @default(false)
+  id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onDelete: NoAction, onUpdate: NoAction, map: "fk_qr_url")
+
+  @@schema("public")
 }
 
 model Publicacion {
@@ -190,8 +203,11 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo Int     @id(map: "MetodoPago_pk") @db.SmallInt
-  qr_URL    String?
+  id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL          String?
+  PlanPublicacion PlanPublicacion[]
+
+  @@schema("public")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -202,11 +218,12 @@ model Rol {
 }
 
 model Telefono {
+  id_telefono     Int               @id(map: "Telefono_pk") @default(autoincrement()) @db.SmallInt
   nro_telefono    String            @db.VarChar(12)
   codigo_pais     Int               @db.SmallInt
   UsuarioTelefono UsuarioTelefono[]
 
-  @@id([nro_telefono, codigo_pais], map: "Telefono_pk")
+  @@schema("public")
 }
 
 model TipoInmueble {
@@ -237,7 +254,7 @@ model Ubicacion {
 }
 
 model Usuario {
-  id_usuario                   String              @id(map: "Usuario_pk") @db.VarChar(128)
+  id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
   email                        String?             @db.VarChar(320)
   password                     String?             @db.VarChar(256)
   nombres                      String?             @db.VarChar(100)
@@ -249,24 +266,41 @@ model Usuario {
   google_id                    String?             @db.VarChar(404)
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
+  username                     String?             @db.VarChar(128)
+  id_pais                      Int?                @db.SmallInt
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
   HistorialVistos              HistorialVistos[]
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
+  users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+  Pais                         Pais?               @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   UsuarioTelefono              UsuarioTelefono[]
+  otp_cambio_correo            otp_cambio_correo[]
+
+  @@schema("public")
 }
 
 model UsuarioTelefono {
-  id_usuario   String   @db.VarChar(128)
-  nro_telefono String   @db.VarChar(12)
-  codigo_pais  Int      @db.SmallInt
-  Telefono     Telefono @relation(fields: [nro_telefono, codigo_pais], references: [nro_telefono, codigo_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
-  Usuario      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
+  id_uste     Int      @id(map: "UsuarioTelefono_pk") @default(autoincrement()) @db.SmallInt
+  id_telefono Int      @db.SmallInt
+  id_usuario  String   @db.Uuid
+  estado      Int?     @default(1) @db.SmallInt
+  Telefono    Telefono @relation(fields: [id_telefono], references: [id_telefono], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
+  Usuario     Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
 
-  @@id([id_usuario, nro_telefono, codigo_pais], map: "UsuarioTelefono_pk")
+  @@schema("public")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@schema("public")
 }
 
 model Video {
@@ -283,4 +317,96 @@ model Zona {
   coordenadas String?
   Publicacion Publicacion[]
   Ciudad      Ciudad?       @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
+
+  @@schema("public")
+}
+
+model otp_cambio_correo {
+  id_otp         String   @id(map: "otp_cambio_correo_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String   @db.Uuid
+  nuevo_email    String   @db.VarChar(320)
+  otp_hash       String
+  expira_en      DateTime @db.Timestamptz(6)
+  reenviar_desde DateTime @db.Timestamptz(6)
+  intentos       Int      @default(0)
+  max_intentos   Int      @default(5)
+  consumido      Boolean  @default(false)
+  creado_en      DateTime @default(now()) @db.Timestamptz(6)
+  actualizado_en DateTime @default(now()) @db.Timestamptz(6)
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_otp_cambio_correo_usuario")
+
+  @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
+  @@index([expira_en], map: "idx_otp_cambio_correo_expira")
+  @@index([id_usuario], map: "idx_otp_cambio_correo_usuario")
+  @@schema("public")
+}
+
+enum aal_level {
+  aal1
+  aal2
+  aal3
+
+  @@schema("auth")
+}
+
+enum code_challenge_method {
+  s256
+  plain
+
+  @@schema("auth")
+}
+
+enum factor_status {
+  unverified
+  verified
+
+  @@schema("auth")
+}
+
+enum factor_type {
+  totp
+  webauthn
+  phone
+
+  @@schema("auth")
+}
+
+enum oauth_authorization_status {
+  pending
+  approved
+  denied
+  expired
+
+  @@schema("auth")
+}
+
+enum oauth_client_type {
+  public
+  confidential
+
+  @@schema("auth")
+}
+
+enum oauth_registration_type {
+  dynamic
+  manual
+
+  @@schema("auth")
+}
+
+enum oauth_response_type {
+  code
+
+  @@schema("auth")
+}
+
+enum one_time_token_type {
+  confirmation_token
+  reauthentication_token
+  recovery_token
+  email_change_token_new
+  email_change_token_current
+  phone_change_token
+
+  @@schema("auth")
 }
