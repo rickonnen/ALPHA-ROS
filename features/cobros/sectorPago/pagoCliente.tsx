@@ -15,9 +15,7 @@ interface Props {
   planId: string;
 }
 
-
 export default function PagoCliente({ plan, planId }: Props) {
-  
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -30,15 +28,14 @@ export default function PagoCliente({ plan, planId }: Props) {
     manejarDescarga,
     alDarClickEnVerificarPrincipal,
     irAlPerfil,
-    archivoSeleccionado,       
-    setArchivoSeleccionado,   
-    yaPresionoAceptar,
+    archivoSeleccionado,
+    setArchivoSeleccionado,
     manejarSeleccionArchivo,
     fileInputRef,
     tienePagoPendiente,
+    estaCargandoEstado,
   } = usePagoCliente(plan, planId);
 
-  // por si no es un usuario logueado mostrar ese return
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/cobros/planes?auth_required=true");
@@ -48,7 +45,7 @@ export default function PagoCliente({ plan, planId }: Props) {
   if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D3547]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D3547]"></div>
       </div>
     );
   }
@@ -61,9 +58,7 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
           <h1 className="mb-8 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
             {plan.nombre_plan}
           </h1>
-          <h2 className="mb-4 text-xl font-bold text-foreground">
-            Descripción
-          </h2>
+          <h2 className="mb-4 text-xl font-bold text-foreground">Descripción</h2>
           <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
             Adquiere {plan.cant_publicaciones} cupos por un precio especial.
           </div>
@@ -78,13 +73,10 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
         </div>
       </div>
 
-
       {/* Columna Derecha */}
       <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
         <div className="flex flex-col items-center w-full max-w-sm">
-          <h2 className="text-2xl font-medium text-muted-foreground mb-2">
-            Total a pagar
-          </h2>
+          <h2 className="text-2xl font-medium text-muted-foreground mb-2">Total a pagar</h2>
           <div className="text-3xl mb-10 text-foreground font-semibold">
             $ {Number(plan.precio_plan).toLocaleString("es-ES")}
           </div>
@@ -98,7 +90,7 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
                 alt="Código QR de Pago"
                 width={300}
                 height={300}
-                className="h-[300px] w-[300px] block object-contain" 
+                className="h-[300px] w-[300px] block object-contain"
               />
             ) : (
               <span className="text-sm uppercase text-muted-foreground font-medium text-center">
@@ -108,15 +100,22 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <Button
-              variant="default"
-              size="lg"
-              disabled={!archivoSeleccionado && !tienePagoPendiente}
-              className="w-full font-semibold text-lg py-6 shadow-md"
-              onClick={alDarClickEnVerificarPrincipal}
-            >
-              Verificar Pago
-            </Button>
+            {/* Botón Principal de Verificar */}
+            {estaCargandoEstado ? (
+              <Skeleton className="w-full h-[60px] rounded-md" />
+            ) : (
+              <Button
+                variant="default"
+                size="lg"
+                disabled={!archivoSeleccionado && !tienePagoPendiente}
+                className="w-full font-semibold text-lg py-6 shadow-md"
+                onClick={alDarClickEnVerificarPrincipal}
+              >
+                Verificar Pago
+              </Button>
+            )}
+
+            {/* Botón de Descargar QR (este puede ser estático o skeleton si prefieres) */}
             <Button
               variant="secondary"
               size="lg"
@@ -126,6 +125,7 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
               DESCARGAR QR
             </Button>
 
+            {/* Input oculto */}
             <input
               type="file"
               className="hidden"
@@ -133,10 +133,14 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
               accept="image/*"
               onChange={manejarSeleccionArchivo}
             />
-            {tienePagoPendiente ? (
-              <Button 
-                variant="default" 
-                disabled 
+
+            {/* Lógica dinámica de Adjuntar Comprobante */}
+            {estaCargandoEstado ? (
+              <Skeleton className="w-full h-[60px] rounded-md" />
+            ) : tienePagoPendiente ? (
+              <Button
+                variant="default"
+                disabled
                 className="w-full font-medium text-lg py-6 bg-[#1D3547] opacity-50 cursor-not-allowed"
               >
                 Adjuntar comprobante
@@ -152,13 +156,13 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
                     Adjuntar comprobante
                   </Button>
                 ) : (
-                  <div className="flex items-center justify-center gap-3 py-4">
-                    <span className="text-sm font-medium italic border-b border-gray-400 text-[#1D3547]">
+                  <div className="flex items-center justify-center gap-3 py-2 bg-muted/50 rounded-lg border border-dashed border-gray-300">
+                    <span className="text-sm font-medium truncate max-w-[200px]">
                       {archivoSeleccionado.name}
                     </span>
-                    <button 
+                    <button
                       onClick={() => setArchivoSeleccionado(null)}
-                      className="text-red-600 font-bold text-2xl"
+                      className="text-red-500 font-bold text-2xl hover:text-red-700"
                     >
                       ×
                     </button>
@@ -169,6 +173,7 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
           </div>
         </div>
       </div>
+      
       <ModalPago
         estadoModal={estadoModal}
         setEstadoModal={setEstadoModal}
@@ -176,9 +181,9 @@ z        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[
         manejarAceptarPago={manejarAceptarPago}
         irAlPerfil={irAlPerfil}
         nombrePlan={plan.nombre_plan ?? "seleccionado"}
-        archivoSeleccionado={archivoSeleccionado} 
+        archivoSeleccionado={archivoSeleccionado}
         setArchivoSeleccionado={setArchivoSeleccionado}
-      />                                  
+      />
     </div>
   );
 }

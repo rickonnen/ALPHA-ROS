@@ -1,194 +1,160 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { PlanPublicacion } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
-type EstadoModal =
+export type EstadoModal =
   | "cerrado"
-  | "confirmacion_pago" 
-  | "verificando_pago" 
-  | "pendiente_pago"; 
+  | "confirmacion_pago"
+  | "verificando_pago"
+  | "pendiente_pago";
 
-  type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
-    precio_plan: number;
-  };
+type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
+  precio_plan: number;
+};
+
+export function usePagoCliente(plan: PlanPago, planId: string) {
+  const { user } = useAuth();
+  const router = useRouter();
   
-export function usePagoCliente(plan: PlanPago, planId: string){
-    const { user } = useAuth();
-    const [qrUrl, setQrUrl] = useState("");
-    const [generandoQr, setGenerandoQr] = useState(true);
-    const router = useRouter();
-    const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
+  // Estados de UI
+  const [qrUrl, setQrUrl] = useState("");
+  const [generandoQr, setGenerandoQr] = useState(true);
+  const [estadoModal, setEstadoModal] = useState<EstadoModal>("cerrado");
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+  
+  // Estados de Sincronización con BD
+  const [estadoPagoBD, setEstadoPagoBD] = useState<number | null>(null);
+  const [hayPendientesEnTabla, setHayPendientesEnTabla] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [estaCargandoEstado, setEstaCargandoEstado] = useState(true);
 
-    const obtenerEstadoDePagos = async () => {
-        if (!user?.id) return;
-        try {
-            const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
-            const data = await res.json();
-            
-            console.log("Actualizando estados desde BD:", data);
-            setEstadoPagoBD(data.estado); 
-            setHayPendientesEnTabla(data.tienePendientes); 
-        } catch (error) {
-            console.error("Error al obtener estado:", error);
-        }
-    };
-
-    useEffect(() => {
-        obtenerEstadoDePagos();
-    }, [user?.id, planId]);
-
-    // Manejo fluido de estados de pago
-    const [yaPresionoAceptar, setYaPresionoAceptar] = useState(false);
-
-    const manejarAceptarPago = async () => {
-      if (!user?.id || !archivoSeleccionado) return;
+  const refrescarEstadoGlobal = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+      const data = await res.json();
       
-      setEstadoModal("verificando_pago"); 
+      setEstadoPagoBD(data.estado);
+      setHayPendientesEnTabla(data.tienePendientes);
+    } catch (error) {
+      console.error("Error al sincronizar estado:", error);
+    }finally {
+      setEstaCargandoEstado(false); 
+    }
+  }, [user?.id]);
 
+  // 2. EFECTO INICIAL: Carga el QR y el estado de la cuenta
+  useEffect(() => {
+    const inicializarDatos = async () => {
+      if (!user?.id) return;
+      
+      // Cargar QR
       try {
-        const res = await fetch("/api/cobros/verificar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id_usuario: user.id,
-            id_plan: planId,
-          }),
-        });
+        const resQr = await fetch(`/api/cobros/descargar?planId=${planId}`);
+        const dataQr = await resQr.json();
+        if (dataQr?.url) setQrUrl(dataQr.url);
+      } catch (e) { console.error("Error QR:", e); }
+      finally { setGenerandoQr(false); }
 
-        if (res.ok) {
-          setYaPresionoAceptar(true);
-          setEstadoPagoBD(1);
-          setHayPendientesEnTabla(true);
-        } 
-      } catch (error) {
-        console.error("Error en la verificación");
-      }
+      // Cargar Estado de Pagos
+      await refrescarEstadoGlobal();
     };
 
+    inicializarDatos();
+  }, [user?.id, planId, refrescarEstadoGlobal]);
 
-    //useEffect(() => {
-    //  const yaFueNotificado = sessionStorage.getItem(`notificado_${planId}`);
-    //  if (yaFueNotificado) {
-    //    sessionStorage.removeItem(`notificado_${planId}`);
-    //    router.push("/cobros/planes");
-    //  }
-    //}, [planId, router]);
+  // 3. LÓGICA DE BLOQUEO: ¿Puede o no pagar?
+  const tienePagoPendiente = useMemo(() => {
+    // Bloqueamos si hay pendientes generales o si el registro actual está en espera (Estado 1)
+    return hayPendientesEnTabla || (estadoPagoBD !== null && estadoPagoBD === 1);
+  }, [hayPendientesEnTabla, estadoPagoBD]);
 
-    // Fetch solo para el QR
-    useEffect(() => {
-      const cargarQr = async () => {
+  // 4. ACCIÓN: Al dar click en el botón principal de verificar
+  const alDarClickEnVerificarPrincipal = () => {
+    if (tienePagoPendiente) {
+      setEstadoModal("pendiente_pago");
+      return;
+    }
+
+    if (archivoSeleccionado) {
+      setEstadoModal("confirmacion_pago");
+    } else {
+      // Si no hay archivo, abrimos el selector automáticamente
+      fileInputRef.current?.click();
+    }
+  };
+
+  // 5. ACCIÓN: Procesar la subida (Cloudinary + Prisma)
+  const manejarAceptarPago = async () => {
+    if (!user?.id || !archivoSeleccionado) return;
+
+    setEstadoModal("verificando_pago");
+
+    const formData = new FormData();
+    formData.append("file", archivoSeleccionado);
+    formData.append("id_usuario", user.id);
+    formData.append("id_plan", planId);
+
+    try {
+      const res = await fetch("/api/cobros/verificar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        // Bloqueo instantáneo (Optimistic UI)
+        setEstadoPagoBD(1);
+        setHayPendientesEnTabla(true);
+        setArchivoSeleccionado(null);
         
-            try {
-            const resQr = await fetch(`/api/cobros/descargar?planId=${planId}`);
-            const dataQr = await resQr.json();
-            if (dataQr && dataQr.url) {
-            setQrUrl(dataQr.url);
-            }
-        } catch (error) {
-            console.error("Error al cargar QR:", error);
-        } finally {
-            setGenerandoQr(false);
-        }
-    };
-    cargarQr();
-    }, [planId]);
-
-
-    const [estadoPagoBD, setEstadoPagoBD] = useState<number | null>(null);
-    useEffect(() => {
-      const obtenerEstado = async () => {
-        if (!user?.id) return;
-
-        try {
-          const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
-          const data = await res.json();
-          
-          console.log("Respuesta de la tabla de pagos:", data);
-          
-          setEstadoPagoBD(data.estado); 
-        } catch (error) {
-          console.error("Error al obtener estado:", error);
-        }
-      };
-
-      obtenerEstado();
-    }, [user?.id, planId]);
-
-    const [hayPendientesEnTabla, setHayPendientesEnTabla] = useState(false);
-    useEffect(() => {
-      const verificarTablaPagos = async () => {
-        if (!user?.id) return;
-        try {
-          const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
-          const data = await res.json();
-          
-          setHayPendientesEnTabla(data.tienePendientes); 
-        } catch (error) {
-          console.error(error);
-        }
-      };
-      verificarTablaPagos();
-    }, [user?.id]);
-    
-    const tienePagoPendiente = useMemo(() => {
-        return hayPendientesEnTabla || (estadoPagoBD !== null && estadoPagoBD !== 2 && estadoPagoBD !== 3);
-    }, [hayPendientesEnTabla, estadoPagoBD]);
-
-    const alDarClickEnVerificarPrincipal = () => {
-      console.log("Estado actual en BD:", estadoPagoBD);
-      console.log("¿Tiene pago pendiente?:", tienePagoPendiente);
-      if (tienePagoPendiente) {
-        setEstadoModal("pendiente_pago"); 
-        return;
+        // Refrescamos en 2 segundos para confirmar que la BD se actualizó bien
+        setTimeout(refrescarEstadoGlobal, 2000);
       }
+    } catch (error) {
+      console.error("Error en el envío");
+      setEstadoModal("cerrado");
+    }
+  };
 
-      if (archivoSeleccionado) {
-        setEstadoModal("confirmacion_pago");
-      }
-    };
+  // --- Helpers Adicionales ---
+  const manejarDescarga = async () => {
+    if (!qrUrl) return;
+    const res = await fetch(qrUrl);
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `QR_Plan_${plan.nombre_plan}.png`;
+    link.click();
+  };
 
-    const manejarDescarga = async () => {
-      if (!qrUrl) return;
-      const respuestaImagen = await fetch(qrUrl);
-      const blob = await respuestaImagen.blob();
-      const urlBlob = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = urlBlob;
-      link.download = `QR_Plan_${plan.nombre_plan}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    };
+  const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      if (file.type.startsWith("image/")) setArchivoSeleccionado(file);
+      else alert("Selecciona una imagen (JPG/PNG)");
+    }
+  };
 
-    const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        if (file.type.startsWith("image/")) {
-          setArchivoSeleccionado(file);
-        } else {
-          alert("Por favor, selecciona solo archivos de imagen (PNG, JPG).");
-        }
-      }
-    };
-    const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
-    const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    return {
-      qrUrl,
-      generandoQr,
-      estadoModal,
-      setEstadoModal,
-      yaPresionoAceptar,
-      manejarAceptarPago,
-      alDarClickEnVerificarPrincipal,
-      fileInputRef,
-      tienePagoPendiente,
-      manejarDescarga,
-      irAlPerfil,
-      archivoSeleccionado,  
-      setArchivoSeleccionado,   
-      manejarSeleccionArchivo,
-   };
+  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+
+  return {
+    qrUrl,
+    generandoQr,
+    estadoModal,
+    setEstadoModal,
+    manejarAceptarPago,
+    alDarClickEnVerificarPrincipal,
+    fileInputRef,
+    tienePagoPendiente,
+    manejarDescarga,
+    irAlPerfil,
+    archivoSeleccionado,
+    setArchivoSeleccionado,
+    manejarSeleccionArchivo,
+    estaCargandoEstado,
+  };
 }
