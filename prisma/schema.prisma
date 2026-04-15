@@ -857,6 +857,15 @@ model otp_cambio_correo {
   @@schema("public")
 }
 
+model verification_codes {
+  email      String    @id
+  code       String
+  expires_at DateTime  @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
 enum aal_level {
   aal1
   aal2
