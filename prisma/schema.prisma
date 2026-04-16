@@ -602,7 +602,7 @@ model Etiquetas {
 
 model Favorito {
   id_publicacion Int
-  id_usuario     String      @db.Uuid
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
@@ -628,7 +628,7 @@ model HistorialBusqueda {
 model HistorialVistos {
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
-  id_usuario     String      @db.Uuid
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
 
@@ -662,7 +662,7 @@ model Notificacion {
   id_categoria          Int?
   leido                 Boolean?
   creado_en             DateTime?              @db.Timestamptz(6)
-  id_publicacion        Int?
+  id_publicacion        Int                    @default(autoincrement())
   id_usuario            String?                @db.Uuid
   email_enviado         Boolean?
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
@@ -893,15 +893,6 @@ model UsuarioTelefono {
   @@schema("public")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@schema("public")
-}
-
 model Video {
   id_video       Int          @id(map: "Video_pk") @default(autoincrement()) @db.SmallInt
   id_publicacion Int?
@@ -923,7 +914,7 @@ model Zona {
 }
 
 model otp_cambio_correo {
-  id_otp         String   @id(map: "otp_cambio_correo_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
   nuevo_email    String   @db.VarChar(320)
   otp_hash       String
@@ -934,7 +925,7 @@ model otp_cambio_correo {
   consumido      Boolean  @default(false)
   creado_en      DateTime @default(now()) @db.Timestamptz(6)
   actualizado_en DateTime @default(now()) @db.Timestamptz(6)
-  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_otp_cambio_correo_usuario")
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
   @@index([expira_en], map: "idx_otp_cambio_correo_expira")
