@@ -137,19 +137,34 @@ interface AdvancedFiltersValues {
 
 interface Props {
   onChange: (valores: AdvancedFiltersValues) => void;
+  value?: AdvancedFiltersValues;
 }
 
-export default function FiltrosAvanzado({ onChange }: Props) {
+export default function FiltrosAvanzado({ onChange, value }: Props) {
   const [abierto, setAbierto] = useState(false);
 
-  const [habitaciones, setHabitaciones] = useState("");
-  const [banos, setBanos] = useState("");
-  const [piscina, setPiscina] = useState("");
-  const [minSurface, setMinSurface] = useState("");
-  const [maxSurface, setMaxSurface] = useState("");
+  const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
+  const [banos, setBanos] = useState(value?.banos ?? "");
+  const [piscina, setPiscina] = useState(value?.piscina ?? "");
+  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
+  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setHabitaciones(value?.habitaciones ?? "");
+    setBanos(value?.banos ?? "");
+    setPiscina(value?.piscina ?? "");
+    setMinSurface(value?.minSurface ?? "");
+    setMaxSurface(value?.maxSurface ?? "");
+  }, [
+    value?.habitaciones,
+    value?.banos,
+    value?.piscina,
+    value?.minSurface,
+    value?.maxSurface,
+  ]);
 
   const actualizar = (
     campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
@@ -307,4 +322,4 @@ export default function FiltrosAvanzado({ onChange }: Props) {
       </Accordion>
     </div>
   );
-}
+} 

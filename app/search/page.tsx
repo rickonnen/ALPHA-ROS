@@ -357,7 +357,7 @@ function SearchPageContent() {
       setIsApplyingFilters(false);
     }
   };
-  
+
   // Cargar estado del mapa desde localStorage al montar componente
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -578,6 +578,7 @@ function SearchPageContent() {
                 />
                 <AdvancedFilters
                   key={advancedFiltersKey}
+                  value={advancedFilterValues}
                   onChange={setAdvancedFilterValues}
                 />
               </div>
@@ -645,6 +646,7 @@ function SearchPageContent() {
 
                   <AdvancedFilters
                     key={advancedFiltersKey}
+                    value={advancedFilterValues}
                     onChange={setAdvancedFilterValues}
                   />
 
