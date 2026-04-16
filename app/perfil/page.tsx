@@ -13,19 +13,28 @@
     Funcionalidad: Página principal de Mi Perfil
       - Consume GET /backend/perfil/get?id_usuario=...
       - Distribuye los datos reales a cada vista
-      - TODO: reemplazar ID_USUARIO_HARDCODEADO por el id real
-              que llegue desde el header/auth cuando esté listo
 */
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
     Funcionalidad: FIX bd y cambios en Telefono
 */
+/*  Dev: David Chavez Totora - sow-davidc
+    Fecha: 03/04/2026
+    Funcionalidad: Implementacion de JWT a todo Perfil
+*/
+/*  Dev: Alvarado Alisson Dalet - sow-alissona
+    Fecha: 04/04/2026
+    Fix: Agrega intRefreshKey al useEffect de fetchUsuario para que al guardar
+         cambios en editar perfil el header (foto, nombre) se actualice
+         inmediatamente sin necesidad de hacer refresh manual de la pagina
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, Loader2 } from "lucide-react";
+
+import { useRouter } from "next/navigation";
 
 import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
@@ -34,6 +43,13 @@ import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
 import { useAuth } from "../auth/AuthContext";
+/*  Dev: David Chavez Totora - sow-davidc 
+    Fecha: 05/04/2026
+    Funcionalidad: integracion del modal de confirmacion para el logout
+      - @param {llamada} - se llama con el titulo, mensaje, funcion a ejecutar al confirmar, funcion a ejecutar al cancelar, y opcionalmente los textos de los botones
+      - @return {accion} - se confirma una accion o se cancela, cerrando el modal
+*/
+import ConfirmModal from "@/components/ui/confirmModal";
 /*  Dev: David Chavez Totora - xdev/davidc
     Fecha: 29/03/2026
     Funcionalidad: Página principal de Mi Perfil
@@ -44,33 +60,49 @@ import { useAuth } from "../auth/AuthContext";
 
 function PerfilContent() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
-  const searchParams = useSearchParams();
-  const idUsuario = searchParams.get("id") ?? "";
+  const userId = user?.id ?? "";
+  console.log("Tipo de Usuario:", typeof userId);
+  console.log("Usuario:", userId);
 
   const [view, setView] = useState("perfil");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [telefonos, setTelefonos] = useState<string[]>([]);
+  const [intRefreshKey, setIntRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (!idUsuario) {
+    if (!userId) {
       setError("No se proporcionó un ID de usuario.");
+      setUsuario(null);
       setLoading(false);
       return;
     }
 
+    setError(null);
+
     const fetchUsuario = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `/api/perfil/getUsuario?id_usuario=${idUsuario}`,
-        );
+        setError(null);
+        const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
         if (!res.ok) throw new Error("No se pudo cargar el perfil");
         const json = await res.json();
         setUsuario(json.data);
+        setError(null);
+        //miguel cambio para actualizacion de telefonos
+        const tels =
+          json.data?.UsuarioTelefono?.filter((ut: any) =>
+            Boolean(ut.estado),
+          ).map(
+            (ut: any) =>
+              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+          ) ?? [];
+        setTelefonos(tels);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -79,8 +111,11 @@ function PerfilContent() {
     };
 
     fetchUsuario();
-  }, [idUsuario]);
+  }, [userId, intRefreshKey]);
 
+  const handleTelefonosChange = (nuevosTelefonos: string[]) => {
+    setTelefonos(nuevosTelefonos);
+  };
   const menuItems = [
     { id: "perfil", name: "MI PERFIL" },
     { id: "seguridad", name: "SEGURIDAD" },
@@ -90,31 +125,40 @@ function PerfilContent() {
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
   ];
 
-  const telefonos =
-    usuario?.UsuarioTelefono?.map(
-      (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
-    ) ?? [];
+  //miguel actualizacion telefonos
+  // const telefonos =
+  //   usuario?.UsuarioTelefono?.map(
+  //     (ut: any) => `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+  //   ) ?? [];
 
   const VIEWS_COMPONENTS: Record<string, React.ReactNode> = {
     perfil: usuario ? (
       <PerfilView usuario={usuario} telefonos={telefonos} />
     ) : null,
-    publicaciones: usuario ? (
-      <PublicacionesView id_usuario={usuario.id_usuario} />
-    ) : null,
+    publicaciones: usuario ? <PublicacionesView id_usuario={userId} /> : null,
     seguridad: (
       <SeguridadView
-        id_usuario={idUsuario}
+        id_usuario={userId}
         email={usuario?.email ?? ""}
         telefonos={telefonos}
         onSuccess={() => setView("perfil")}
+        onTelefonosChange={handleTelefonosChange}
+        onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
       />
     ),
-    favoritos: usuario ? (
-      <FavoritoView id_usuario={usuario.id_usuario} />
-    ) : null,
-    historial: <HistorialView id_usuario={idUsuario} />,
+    favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
+    historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
+  };
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+  const handleConfirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+    router.push("/");
   };
 
   return (
@@ -140,9 +184,15 @@ function PerfilContent() {
           >
             <div className="flex items-center gap-4 md:gap-6">
               <img
-                src={usuario.url_foto_perfil ?? "https://github.com/shadcn.png"}
+                src={
+                  usuario.url_foto_perfil?.trim() ||
+                  "https://i.imgur.com/WxNkK7J.png"
+                }
                 alt="User"
                 className="w-20 h-20 md:w-40 md:h-40 rounded-full border-4 border-[var(--primary)]"
+                onError={(e) => {
+                  e.currentTarget.src = "https://i.imgur.com/WxNkK7J.png";
+                }}
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
@@ -198,10 +248,7 @@ function PerfilContent() {
                   ))}
                   <hr className="my-4" />
                   <button
-                    onClick={() => {
-                      logout();
-                      setShowAuth(false);
-                    }}
+                    onClick={handleLogout}
                     className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
@@ -217,16 +264,44 @@ function PerfilContent() {
               id="btns"
               className="hidden md:flex flex-col w-64 z-10 relative"
             >
-              {menuItems.map((btn) => {
+              {menuItems.map((btn, index) => {
                 const isSelected = view === btn.id;
                 return (
                   <button
                     key={btn.id}
+                    tabIndex={0}
                     onClick={() => setView(btn.id)}
-                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest outline-none ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setView(btn.id);
+                        setTimeout(() => {
+                          const dinamicContent =
+                            document.getElementById("dinamic");
+                          dinamicContent?.focus();
+                        }, 100);
+                      }
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const next =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index + 1];
+                        next?.focus();
+                      }
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const prev =
+                          document.querySelectorAll<HTMLElement>(
+                            "#btns button",
+                          )[index - 1];
+                        prev?.focus();
+                      }
+                    }}
+                    className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline ${
                       isSelected
-                        ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20"
-                        : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10"
+                        ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20 focus-visible:outline-white"
+                        : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10 focus-visible:outline-[var(--primary)]"
                     }`}
                   >
                     {btn.name}
@@ -234,24 +309,33 @@ function PerfilContent() {
                 );
               })}
               <button
-                onClick={() => {
-                  logout();
-                  setShowAuth(false);
-                }}
+                onClick={handleLogout}
                 className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
               >
-                <LogOut className="h-4 w-4" /> SALIR
+                <LogOut className="h-4 w-4" />
+                CERRAR SESION
               </button>
             </nav>
 
             <div
               id="dinamic"
-              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px]"
+              tabIndex={-1}
+              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
             >
               {VIEWS_COMPONENTS[view] ?? VIEWS_COMPONENTS.perfil}
             </div>
           </div>
         </>
+      )}
+      {showLogoutConfirm && (
+        <ConfirmModal
+          title="¿Cerrar sesión?"
+          message="¿Estás seguro de que deseas cerrar sesión?"
+          confirmLabel="Cerrar sesión"
+          cancelLabel="Cancelar"
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       )}
     </>
   );

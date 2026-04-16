@@ -27,42 +27,50 @@ export async function GET(req: NextRequest) {
   if (!id_usuario) {
     return NextResponse.json(
       { error: "Falta el parámetro id_usuario" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   try {
-    const [publicaciones, total] = await prisma.$transaction([
+    const [publicaciones, total, usuario] = await prisma.$transaction([
       prisma.publicacion.findMany({
         where: { id_usuario },
         skip,
         take: limit,
         orderBy: { id_publicacion: "desc" },
-        select: {
-          id_publicacion: true,
-          titulo: true,
-          Ubicacion: { select: { zona: true } },
-          TipoOperacion: { select: { nombre_operacion: true } },
-          Imagen: { select: { url_imagen: true }, take: 1 },
+        include: {
+          Imagen: { take: 1 },
+          Zona: true,
+          TipoInmueble: true,
         },
       }),
       prisma.publicacion.count({ where: { id_usuario } }),
+      prisma.usuario.findUnique({        // ← NUEVO
+        where: { id_usuario },
+        select: { cant_publicaciones_restantes: true },
+      }),
     ]);
 
-    const data = publicaciones.map((pub: any) => ({
+    const data = publicaciones.map((pub) => ({
       id: String(pub.id_publicacion),
-      titulo: pub.titulo,
-      zona: pub.Ubicacion?.zona ?? "Sin zona",
-      tipo: pub.TipoOperacion?.nombre_operacion ?? "Sin tipo",
-      imagen: pub.Imagen?.[0]?.url_imagen ?? null,
+      titulo: pub.titulo ?? "Sin título",
+      tipo: pub.TipoInmueble?.nombre_inmueble ?? "Sin tipo",
+      imagen: pub.Imagen[0]?.url_imagen ?? null,
     }));
 
-    return NextResponse.json({ data, total, page, limit }, { status: 200 });
+    return NextResponse.json({ 
+      data, 
+      total, 
+      page, 
+      limit,
+      cant_publicaciones_restantes: usuario?.cant_publicaciones_restantes ?? 0
+    }, { status: 200 });
+    
   } catch (error) {
     console.error("Error al obtener publicaciones:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

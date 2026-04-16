@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
             Imagen: { take: 1 },
             Zona: true,
             TipoInmueble: true,
+            TipoOperacion: true,
           },
         },
       },
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
       titulo: fav.Publicacion.titulo ?? "Sin título",
       zona: fav.Publicacion.Zona?.nombre_zona ?? "Sin zona",
       tipo: fav.Publicacion.TipoInmueble?.nombre_inmueble ?? "Sin tipo",
+      tipo_operacion: fav.Publicacion.TipoOperacion?.nombre_operacion ?? "Sin operación",
       imagen: fav.Publicacion.Imagen[0]?.url_imagen ?? null,
       fecha_add: fav.fecha_add,
     }));

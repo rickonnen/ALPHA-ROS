@@ -1,6 +1,6 @@
-import Banner from "@/components/home-comps/banner";
-import FilterPanel from "@/components/home-comps/FilterPanel";
-import ExploreBy from "@/components/home-comps/ExploreBy";
+import Banner from "@/components/homeComponents/banner";
+import FilterPanel from "@/components/homeComponents/filterPanel";
+import ExploreBy from "@/components/homeComponents/exploreBy";
 
 export default function HomePage() {
   return (

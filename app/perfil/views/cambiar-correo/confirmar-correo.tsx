@@ -25,7 +25,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShieldCheck, Mail, RefreshCcw } from "lucide-react";
+import { ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ResultModal from "@/components/ui/modal";
@@ -90,7 +90,7 @@ export default function ConfirmarCorreoView({
 
   const openSuccessModal = (message: string, bolRedirect = false) => {
     setStrModalType("success");
-    setStrModalTitle("Operación exitosa");
+    setStrModalTitle("¡Correo Actualizado!");
     setStrModalMessage(message);
     setBolRedirectToPerfilOnClose(bolRedirect);
     setBolShowResultModal(true);
@@ -102,7 +102,7 @@ export default function ConfirmarCorreoView({
     setStrModalMessage("");
 
     if (bolRedirectToPerfilOnClose) {
-      window.location.assign("/perfil");
+      window.location.reload();
     }
   };
 
@@ -203,7 +203,7 @@ export default function ConfirmarCorreoView({
         return;
       }
 
-      openSuccessModal("Correo actualizado correctamente.", true);
+      openSuccessModal("Tu correo se cambió exitosamente.", true);
     } catch (error) {
       console.error("Error al verificar OTP:", error);
       openErrorModal("Error de red al verificar el código.");
@@ -213,103 +213,128 @@ export default function ConfirmarCorreoView({
   };
 
   return (
-    <div className="mx-auto mt-auto max-w-2xl rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
-      <div className="border-b border-white/15 p-5">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
-            <ShieldCheck className="h-6 w-6 text-emerald-600" />
+    <div className="m-4">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="mb-4 px-0 text-white/80 hover:text-white hover:bg-transparent"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        <span className="text-xs font-black tracking-widest uppercase">
+          Seguridad
+        </span>
+      </Button>
+      <div className="mb-4 border-b border-white/15" />
+      <div className="mx-auto mt-auto max-w-2xl rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
+        <div className="border-b border-white/15 p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
+              <ShieldCheck className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                Confirmar nuevo correo
+              </h2>
+              <p className="text-base text-white/70">
+                Ingresa el código enviado a {" "}
+                {maskEmail(nuevo_email)}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div className="space-y-5 p-5">
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
+            <Input
+              readOnly
+              value={nuevo_email}
+              className="h-11 rounded-xl border-white/20 bg-white/10 pl-10 text-white/85 placeholder:text-white/45"
+            />
+          </div>
+
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight">
-              Confirmar nuevo correo electronico
-            </h2>
-            <p className="text-base text-white/70">
-              Ingresa el codigo de 6 digitos que enviamos a{" "}
-              {maskEmail(nuevo_email)}
+            <p className="mb-2 text-sm font-black uppercase tracking-wider text-white/70">
+              Código de verificación
+            </p>
+
+            <div className="grid grid-cols-6 gap-2 md:flex md:gap-3">
+              {arrOtp.map((digit, idx) => (
+                <Input
+                  key={idx}
+                  ref={(el) => {
+                    arrRefs.current[idx] = el;
+                  }}
+                  value={digit}
+                  inputMode="numeric"
+                  maxLength={1}
+                  onChange={(e) => handleOtpChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  onPaste={handleOtpPaste}
+                  className="h-16 w-full min-w-0 rounded-xl border-2 border-white/25 bg-white/5 px-0 text-center text-2xl font-black tracking-normal text-white focus-visible:border-white focus-visible:ring-0 md:w-16 md:flex-none md:text-3xl"
+                />
+              ))}
+            </div>
+
+            <p className="mt-2 text-sm text-white/65">
+              El código expira en {formatTime(intTimeLeft)}.
             </p>
           </div>
         </div>
-      </div>
 
-      <div className="space-y-5 p-5">
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/55" />
-          <Input
-            readOnly
-            value={nuevo_email}
-            className="h-11 rounded-xl border-white/20 bg-white/10 pl-10 text-white/85 placeholder:text-white/45"
+        <div className="flex flex-col gap-3 border-t border-white/15 p-5 md:flex-row md:flex-wrap md:items-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancelar}
+            className="order-3 h-11 w-full rounded-xl border-white/25 bg-white/10 text-white/80 hover:bg-white/15 md:order-1 md:w-auto md:min-w-32"
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleReenviar}
+            disabled={bolSubmitting}
+            className="order-2 h-11 w-full rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10 md:order-2 md:w-auto md:min-w-40"
+          >
+            <svg
+              className="mr-2 h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M 3 12 A 9 9 0 1 1 12 21" />
+              <polyline points="17 21 12 21 13 16" />
+            </svg>
+            Reenviar código
+          </Button>
+
+          <Button
+            type="button"
+            onClick={handleConfirmar}
+            disabled={!bolOtpCompleto || bolSubmitting || intTimeLeft === 0}
+            className="order-1 h-11 w-full rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50 md:order-3 md:w-auto md:min-w-36"
+          >
+            {bolSubmitting ? "Verificando..." : "Confirmar"}
+          </Button>
+        </div>
+
+        {bolShowResultModal && (
+          <ResultModal
+            type={strModalType}
+            title={strModalTitle}
+            message={strModalMessage}
+            onClose={handleCloseModal}
+            onRetry={handleCloseModal}
           />
-        </div>
-
-        <div>
-          <p className="mb-2 text-sm font-black uppercase tracking-wider text-white/70">
-            Codigo de verificacion
-          </p>
-
-          <div className="flex gap-3">
-            {arrOtp.map((digit, idx) => (
-              <Input
-                key={idx}
-                ref={(el) => {
-                  arrRefs.current[idx] = el;
-                }}
-                value={digit}
-                inputMode="numeric"
-                maxLength={1}
-                onChange={(e) => handleOtpChange(idx, e.target.value)}
-                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                onPaste={handleOtpPaste}
-                className="h-16 w-16 rounded-xl border-2 border-white/25 bg-white/5 text-center text-3xl font-black tracking-widest text-white focus-visible:border-white focus-visible:ring-0"
-              />
-            ))}
-          </div>
-
-          <p className="mt-2 text-sm text-white/65">
-            El codigo expira en {formatTime(intTimeLeft)}.
-          </p>
-        </div>
+        )}
       </div>
-
-      <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 p-5">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancelar}
-          className="h-11 min-w-32 rounded-xl border-white/25 bg-white/10 text-white/80 hover:bg-white/15"
-        >
-          Cancelar
-        </Button>
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleReenviar}
-          disabled={bolSubmitting}
-          className="h-11 min-w-40 rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10"
-        >
-          <RefreshCcw className="mr-2 h-4 w-4" />
-          Reenviar codigo
-        </Button>
-
-        <Button
-          type="button"
-          onClick={handleConfirmar}
-          disabled={!bolOtpCompleto || bolSubmitting || intTimeLeft === 0}
-          className="h-11 min-w-36 rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50"
-        >
-          {bolSubmitting ? "Verificando..." : "Confirmar"}
-        </Button>
-      </div>
-
-      {bolShowResultModal && (
-        <ResultModal
-          type={strModalType}
-          title={strModalTitle}
-          message={strModalMessage}
-          onClose={handleCloseModal}
-          onRetry={handleCloseModal}
-        />
-      )}
     </div>
   );
 }

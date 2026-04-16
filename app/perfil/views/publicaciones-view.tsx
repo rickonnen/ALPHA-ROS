@@ -33,41 +33,37 @@
 */
 
 "use client";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
+import { useAuth } from "@/app/auth/AuthContext";
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 
 interface PublicacionesViewProps {
   id_usuario: string;
 }
 
-const ITEMS_POR_PAGINA = 10;
+const ITEMS_POR_PAGINA = 5;
 
 export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [publicacionesRestantes, setPublicacionesRestantes] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [bolShowModal, setBolShowModal] = useState(false);
+  const [bolChecking,  setBolChecking]  = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -75,13 +71,14 @@ export default function PublicacionesView({
       try {
         setCargando(true);
         const res = await fetch(
-          `/api/perfil/misPublicaciones?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
+          `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
         );
         if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
         const json = await res.json();
         if (activo) {
           setPublicaciones(json.data);
           setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(json.cant_publicaciones_restantes ?? 0);
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -135,26 +132,47 @@ export default function PublicacionesView({
     }
   };
 
-  const handleInfo = (id: string) => {
-    // TODO: conectar con el equipo de detalle de publicación
-    console.log("Ver info de publicación:", id);
+  const handleAgregar = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
   };
 
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
               Mis publicaciones
-            </CardTitle>
-            <Button
-              onClick={() => router.push("/publicaciones/nueva")}
-              size="sm"
-              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
-            >
-              + Agregar
-            </Button>
+            </CardTitle> 
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-white/60 text-sm whitespace-nowrap">
+                {publicacionesRestantes} publicaciones restantes
+              </span>
+              <Button
+                onClick={handleAgregar}
+                disabled={bolChecking}
+                size="sm"
+                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60"
+              >
+                {bolChecking ? "..." : "+ Agregar"}
+              </Button>
+            </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
         </CardHeader>
@@ -192,7 +210,6 @@ export default function PublicacionesView({
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
-                  onInfo={handleInfo}
                 />
               ))}
             </div>
@@ -200,7 +217,7 @@ export default function PublicacionesView({
 
           {/* Paginación */}
           {!cargando && totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
+            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/10 mt-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -218,7 +235,7 @@ export default function PublicacionesView({
                     variant="ghost"
                     size="sm"
                     onClick={() => setPaginaActual(num)}
-                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)] ${
                       paginaActual === num
                         ? "bg-white text-[var(--primary)]"
                         : "text-white/60 hover:text-white"
@@ -243,51 +260,62 @@ export default function PublicacionesView({
         </CardContent>
       </Card>
 
-      {/* Modal de confirmación */}
-      <AlertDialog
-        open={!!idAEliminar}
-        onOpenChange={() => setIdAEliminar(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-red-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </div>
-              <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+      {/* Modal de confirmación de eliminación */}
+      {idAEliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
+            {/* Ícono */}
+            <div className="w-14 h-14 rounded-full border-2 border-red-400 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-7 h-7 text-red-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
             </div>
-            <AlertDialogDescription className="pt-2">
-              Esta acción no se puede deshacer. La publicación será eliminada
-              permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={eliminando}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmarEliminar}
-              disabled={eliminando}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {eliminando ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
+            {/* Texto */}
+            <h2 className="text-lg font-bold text-gray-900">
+              ¿Eliminar publicación?
+            </h2>
+            <p className="text-sm text-gray-500 text-center">
+              ¿Estás seguro de eliminar esta publicación permanentemente?
+            </p>
+
+            {/* Botones */}
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setIdAEliminar(null)}
+                disabled={eliminando}
+                className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEliminar}
+                disabled={eliminando}
+                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition disabled:opacity-50"
+              >
+                {eliminando ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal límite de publicaciones gratuitas */}
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+      />
     </>
   );
 }
