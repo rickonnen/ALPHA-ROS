@@ -204,7 +204,13 @@ function SearchPageContent() {
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
+  const [advancedFilterValues, setAdvancedFilterValues] = useState({
+    habitaciones: '',
+    banos: '',
+    piscina: '',
+    minSurface: '',
+    maxSurface: '',
+  });
   const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>(null);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
@@ -225,6 +231,8 @@ function SearchPageContent() {
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
+        advancedFilterValues.minSurface ||
+        advancedFilterValues.maxSurface ||
         appliedPriceFilter?.minPrice !== undefined ||
         appliedPriceFilter?.maxPrice !== undefined ||
         selectedSort !== 'fecha-reciente',
@@ -233,6 +241,8 @@ function SearchPageContent() {
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
+    advancedFilterValues.minSurface,
+    advancedFilterValues.maxSurface,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
     searchLocation,
@@ -265,8 +275,18 @@ function SearchPageContent() {
       const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
       urlParams.set('tipo', labels);
     }
-    if (appliedPriceFilter?.minPrice !== undefined) urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
-    if (appliedPriceFilter?.maxPrice !== undefined) urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
+    if (appliedPriceFilter?.minPrice !== undefined) {
+      urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
+    }
+    if (appliedPriceFilter?.maxPrice !== undefined) {
+      urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
+    }
+    if (advancedFilterValues.minSurface.trim()) {
+      urlParams.set('minSurface', advancedFilterValues.minSurface);
+    }
+    if (advancedFilterValues.maxSurface.trim()) {
+      urlParams.set('maxSurface', advancedFilterValues.maxSurface);
+    }
     if (selectedCurrency !== 'USD') urlParams.set('currency', selectedCurrency);
     if (selectedSort !== 'fecha-reciente') urlParams.set('sort', selectedSort);
 
@@ -291,6 +311,27 @@ function SearchPageContent() {
         PROPERTY_TYPE_OPTIONS,
       );
 
+      const minSurface =
+        advancedFilterValues.minSurface.trim() !== ''
+          ? Number(advancedFilterValues.minSurface)
+          : undefined;
+
+      const maxSurface =
+        advancedFilterValues.maxSurface.trim() !== ''
+          ? Number(advancedFilterValues.maxSurface)
+          : undefined;
+
+      if (
+        minSurface !== undefined &&
+        maxSurface !== undefined &&
+        minSurface > maxSurface
+      ) {
+        setSearchResults([]);
+        setHasSearched(true);
+        setIsApplyingFilters(false);
+        return;
+      }
+
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion: selectedOperation ?? undefined,
@@ -298,6 +339,8 @@ function SearchPageContent() {
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
         piscina: advancedFilterValues.piscina,
+        minSurface,
+        maxSurface,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
         ...overrides,
@@ -315,7 +358,7 @@ function SearchPageContent() {
     }
   };
   
-// Cargar estado del mapa desde localStorage al montar componente
+  // Cargar estado del mapa desde localStorage al montar componente
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMapState = localStorage.getItem('searchMapOpen');
@@ -340,6 +383,8 @@ function SearchPageContent() {
     const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
     const minPriceParam = searchParams.get('minPrice');
     const maxPriceParam = searchParams.get('maxPrice');
+    const minSurfaceParam = searchParams.get('minSurface');
+    const maxSurfaceParam = searchParams.get('maxSurface');
     const currencyParam = searchParams.get('currency');
 
     const nextMinPrice =
@@ -352,6 +397,16 @@ function SearchPageContent() {
         ? Number(maxPriceParam)
         : undefined;
 
+    const nextMinSurface =
+      minSurfaceParam !== null && minSurfaceParam.trim() !== ''
+        ? minSurfaceParam.trim()
+        : '';
+
+    const nextMaxSurface =
+      maxSurfaceParam !== null && maxSurfaceParam.trim() !== ''
+        ? maxSurfaceParam.trim()
+        : '';
+
     const nextCurrency: Currency = currencyParam === 'BS' ? 'BS' : 'USD';
 
     setAppliedPriceFilter(
@@ -360,10 +415,17 @@ function SearchPageContent() {
         : null,
     );
 
+    setAdvancedFilterValues((prev) => ({
+      ...prev,
+      minSurface: nextMinSurface,
+      maxSurface: nextMaxSurface,
+    }));
+
     setSelectedCurrency(nextCurrency);
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
+    setAdvancedFiltersKey((prev) => prev + 1);
 
     void runSearch({
       ubicacion: nextLocation,
@@ -371,6 +433,8 @@ function SearchPageContent() {
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
+      minSurface: nextMinSurface !== '' ? Number(nextMinSurface) : undefined,
+      maxSurface: nextMaxSurface !== '' ? Number(nextMaxSurface) : undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -408,7 +472,13 @@ function SearchPageContent() {
     setSearchLocation('');
     setSelectedOperation(null);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
+    setAdvancedFilterValues({
+      habitaciones: '',
+      banos: '',
+      piscina: '',
+      minSurface: '',
+      maxSurface: '',
+    });
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
@@ -421,6 +491,8 @@ function SearchPageContent() {
       habitaciones: '',
       banos: '',
       piscina: '',
+      minSurface: undefined,
+      maxSurface: undefined,
       minPrice: undefined,
       maxPrice: undefined,
     });

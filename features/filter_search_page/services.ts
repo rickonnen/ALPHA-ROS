@@ -16,6 +16,8 @@ export type SearchFiltersInput = {
   currency?: SearchCurrency;
   minPrice?: number;
   maxPrice?: number;
+  minSurface?: number;
+  maxSurface?: number;
 };
 
 export type SearchPublicationResult = {
@@ -194,6 +196,13 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
             },
           },
         };
+  }
+
+  if (filters.minSurface !== undefined || filters.maxSurface !== undefined) {
+    where.superficie = {
+      ...(filters.minSurface !== undefined ? { gte: filters.minSurface } : {}),
+      ...(filters.maxSurface !== undefined ? { lte: filters.maxSurface } : {}),
+    };
   }
 
   if (filters.ubicacion?.trim()) {

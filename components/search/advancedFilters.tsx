@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { Geist } from "next/font/google";
 import {
   Accordion,
@@ -26,12 +26,19 @@ const PISCINA = ["Sí", "No"];
 
 interface SubDropdownProps {
   label: string;
-  opciones: string[];
-  valor: string;
-  onChange: (v: string) => void;
+  opciones?: string[];
+  valor?: string;
+  onChange?: (v: string) => void;
+  children?: React.ReactNode;
 }
 
-function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
+function SubDropdown({
+  label,
+  opciones = [],
+  valor = "",
+  onChange,
+  children,
+}: SubDropdownProps) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,20 +48,21 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         setAbierto(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const hasCustomContent = Boolean(children);
 
   return (
     <div ref={ref} className="w-full">
       <button
         type="button"
-        onClick={() => setAbierto((p) => !p)}
+        onClick={() => setAbierto((prev) => !prev)}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-          {valor || label}
-        </span>
+        <span className="font-normal text-[#2E2E2E]">{valor || label}</span>
 
         <span
           className="text-[#4B4B4B] transition-transform duration-200"
@@ -69,54 +77,66 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
 
       {abierto && (
         <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
-          <div className="space-y-2">
-            {opciones.map((op, i) => {
-              const checked = valor === op;
+          {hasCustomContent ? (
+            children
+          ) : (
+            <div className="space-y-2">
+              {opciones.map((op, i) => {
+                const checked = valor === op;
 
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onMouseDown={() => {
-                    onChange(op);
-                    setAbierto(false);
-                  }}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
-                    checked
-                      ? "bg-[#E7E3DD] text-[#2E2E2E]"
-                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
-                  )}
-                >
-                  <span
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onMouseDown={() => {
+                      onChange?.(op);
+                      setAbierto(false);
+                    }}
                     className={cn(
-                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                      "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
                       checked
-                        ? "border-[#6B6B6B] bg-white"
-                        : "border-[#8A847C] bg-white"
+                        ? "bg-[#E7E3DD] text-[#2E2E2E]"
+                        : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
                     )}
                   >
                     <span
                       className={cn(
-                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
-                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                        "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                        checked
+                          ? "border-[#6B6B6B] bg-white"
+                          : "border-[#8A847C] bg-white"
                       )}
-                    />
-                  </span>
+                    >
+                      <span
+                        className={cn(
+                          "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                          checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                        )}
+                      />
+                    </span>
 
-                  <span className="text-sm text-[#2E2E2E]">{op}</span>
-                </button>
-              );
-            })}
-          </div>
+                    <span className="text-sm text-[#2E2E2E]">{op}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
+interface AdvancedFiltersValues {
+  habitaciones: string;
+  banos: string;
+  piscina: string;
+  minSurface: string;
+  maxSurface: string;
+}
+
 interface Props {
-  onChange: (valores: { habitaciones: string; banos: string; piscina: string }) => void;
+  onChange: (valores: AdvancedFiltersValues) => void;
 }
 
 export default function FiltrosAvanzado({ onChange }: Props) {
@@ -125,16 +145,72 @@ export default function FiltrosAvanzado({ onChange }: Props) {
   const [habitaciones, setHabitaciones] = useState("");
   const [banos, setBanos] = useState("");
   const [piscina, setPiscina] = useState("");
+  const [minSurface, setMinSurface] = useState("");
+  const [maxSurface, setMaxSurface] = useState("");
+  const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const actualizar = (campo: string, valor: string) => {
-    const nuevo = { habitaciones, banos, piscina, [campo]: valor };
-    onChange(nuevo);
+  const actualizar = (
+    campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
+    valor: string
+  ) => {
+    onChange({
+      habitaciones: campo === "habitaciones" ? valor : habitaciones,
+      banos: campo === "banos" ? valor : banos,
+      piscina: campo === "piscina" ? valor : piscina,
+      minSurface: campo === "minSurface" ? valor : minSurface,
+      maxSurface: campo === "maxSurface" ? valor : maxSurface,
+    });
   };
 
+  const handleSurfaceInputChange =
+    (field: "minSurface" | "maxSurface") =>
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.trim();
+
+      if (value === "") {
+        setSurfaceError(null);
+
+        if (field === "minSurface") {
+          setMinSurface("");
+          actualizar("minSurface", "");
+        } else {
+          setMaxSurface("");
+          actualizar("maxSurface", "");
+        }
+        return;
+      }
+
+      const validSurface = /^\d*\.?\d*$/.test(value);
+
+      if (!validSurface) {
+        setSurfaceError("Solo se permiten números");
+        return;
+      }
+
+      setSurfaceError(null);
+
+      if (field === "minSurface") {
+        setMinSurface(value);
+        actualizar("minSurface", value);
+      } else {
+        setMaxSurface(value);
+        actualizar("maxSurface", value);
+      }
+    };
+
+  const surfaceLabel =
+    minSurface && maxSurface
+      ? `${minSurface}m² - ${maxSurface}m²`
+      : minSurface
+      ? `Desde ${minSurface}m²`
+      : maxSurface
+      ? `Hasta ${maxSurface}m²`
+      : "";
+
   return (
-    <div ref={wrapperRef} className={`${geist.className} w-full mt-3`}>
+    <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
       <Accordion
         type="single"
         collapsible
@@ -154,7 +230,7 @@ export default function FiltrosAvanzado({ onChange }: Props) {
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="pt-3 pb-0 overflow-visible">
+          <AccordionContent className="overflow-visible pt-3 pb-0">
             <div className="flex flex-col gap-3 overflow-visible">
               <SubDropdown
                 label="Número total de habitaciones"
@@ -185,6 +261,46 @@ export default function FiltrosAvanzado({ onChange }: Props) {
                   actualizar("piscina", v);
                 }}
               />
+
+              <SubDropdown label="Superficie m²" valor={surfaceLabel}>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Min m²"
+                      value={minSurface}
+                      onChange={handleSurfaceInputChange("minSurface")}
+                      className={cn(
+                        "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
+                        surfaceError === "Solo se permiten números"
+                          ? "border-red-500"
+                          : "border-[#B9B1A5]"
+                      )}
+                    />
+
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Max m²"
+                      value={maxSurface}
+                      onChange={handleSurfaceInputChange("maxSurface")}
+                      className={cn(
+                        "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
+                        surfaceError === "Solo se permiten números"
+                          ? "border-red-500"
+                          : "border-[#B9B1A5]"
+                      )}
+                    />
+                  </div>
+
+                  <div className={surfaceError ? "block" : "hidden"}>
+                    <p className="text-center text-sm text-red-600">
+                      {surfaceError}
+                    </p>
+                  </div>
+                </div>
+              </SubDropdown>
             </div>
           </AccordionContent>
         </AccordionItem>
