@@ -47,11 +47,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
-const intMaxName           = 15;
-const intMaxLastName       = 15;
-const intMaxAddress        = 40;
-const intMaxUsername       = 15;
+const intMaxName           = 50;
+const intMaxLastName       = 50;
+const intMaxAddress        = 200;
+const intMaxUsername       = 20;
 const intMinLetrasUsername = 3;
 const regexSinEmojis       = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FE0F}]/u;
 const regexSoloLetras      = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
