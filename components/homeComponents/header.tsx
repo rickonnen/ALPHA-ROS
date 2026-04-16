@@ -194,7 +194,7 @@ export const Header = () => {
                   onRequireAuth={handleShowProtected}
                   strButtonClasses={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
                 />
-                <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}?id=${objUser.id}`)} 
+                <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}`)} 
                   className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
                   <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className="w-7 h-7 object-cover rounded-full bg-muted" 
                   unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; }} />
