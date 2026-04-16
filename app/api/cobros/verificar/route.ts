@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const id_usuario = data.get("id_usuario") as string;
     const id_plan = data.get("id_plan") as string;
     const file = data.get("file") as File;
-   
+    const tiempo_pago = data.get("tiempo_pago") as string;
+    const mes_pago = data.get("mes_pago") as string;
 
     if (!file) {
       return NextResponse.json({ error: "No se envió el comprobante" }, { status: 400 });
@@ -50,7 +51,9 @@ export async function POST(request: Request) {
         estado: 1,
         metodo_pago: "Transferencia QR",
         fecha_detalle: new Date(),
-        comprobante_url: uploadResponse.secure_url
+        comprobante_url: uploadResponse.secure_url,
+        mes_pago: mes_pago,  
+        tiempo_pago: tiempo_pago,
       }
     });
 
