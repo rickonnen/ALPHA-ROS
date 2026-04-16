@@ -27,17 +27,26 @@ export function usePagoCliente(plan: PlanPago, planId: string) {
   const [estadoPagoBD, setEstadoPagoBD] = useState<number | null>(null);
   const [hayPendientesEnTabla, setHayPendientesEnTabla] = useState(false);
   
+  //para los archiovs de imagenes
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  //
   const [estaCargandoEstado, setEstaCargandoEstado] = useState(true);
 
+  //invoca a route.ts de estado, su funcion GET para ver infomracion de detalle pago y devolver el estado
+  //callback hace para que se mantenga en memoria 
   const refrescarEstadoGlobal = useCallback(async () => {
+    //usuario no logueado termina aca el proceso, el user se toma del token de useAuth()
     if (!user?.id) return;
     try {
+      //aqui se invoca 
       const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+      //los datos del GET se convierten en data en un .json, como no necesitamos url de imagenes, no usamos formdata
+      //recordatorio, aqui se tiene dos datos:  "id" y "estado"
       const data = await res.json();
-      
+      //cambiamos la variable para el estado que se obtuvo en data, si hay pagos pendientes devolverá 1, caso contrario null
       setEstadoPagoBD(data.estado);
+      //lo mismo pero para true y false
       setHayPendientesEnTabla(data.tienePendientes);
     } catch (error) {
       console.error("Error al sincronizar estado:", error);
@@ -46,7 +55,7 @@ export function usePagoCliente(plan: PlanPago, planId: string) {
     }
   }, [user?.id]);
 
-  // 2. EFECTO INICIAL: Carga el QR y el estado de la cuenta
+  
   useEffect(() => {
     const inicializarDatos = async () => {
       if (!user?.id) return;
