@@ -280,7 +280,7 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
           id_pais:          intPaisId,
           username:         strUsername.trim(),
           genero:           strGenero      || null,
-          fecha_nacimiento: strFechaNac    || null,
+          fecha_nac:        strFechaNac    || null,
           estado_civil:     strEstadoCivil || null,
         }),
       });

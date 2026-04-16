@@ -203,6 +203,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Prisma update
+    const dtFechaNac = fecha_nac ? new Date(fecha_nac) : null;
     const objUsuarioActualizado = await prisma.usuario.update({
       where: { id_usuario },
       data: {
@@ -213,7 +214,7 @@ export async function PUT(req: NextRequest) {
         id_pais:          id_pais || null,
         username:         strUsername,
         genero:           genero          ?? null,
-        fecha_nac:        fecha_nac       ?? null,
+        fecha_nac:        dtFechaNac,
         estado_civil:     estado_civil    ?? null,
       },
     });
