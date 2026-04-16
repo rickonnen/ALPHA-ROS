@@ -9,14 +9,18 @@ import { useAuth } from "@/app/auth/AuthContext";
 
 interface Props {
   planId: number | string;
+  isAnnual: boolean; // <-- Nueva prop para saber qué eligió el usuario
 }
 
-export function BotonContinuarPlan({ planId }: Props) {
+export function BotonContinuarPlan({ planId, isAnnual }: Props) {
   const { user, isLoading } = useAuth();
 
   const [showProtected, setShowProtected] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+
+  // Construimos la URL con la modalidad seleccionada
+  const checkoutUrl = `/cobros/sector-pagos?planId=${planId}&modalidad=${isAnnual ? "anual" : "mensual"}`;
 
   if (isLoading) {
     return (
@@ -29,7 +33,7 @@ export function BotonContinuarPlan({ planId }: Props) {
   if (user) {
     return (
       <Button asChild className="w-full font-bold">
-        <Link href={`/cobros/sector-pagos?planId=${planId}`}>Continuar</Link>
+        <Link href={checkoutUrl}>Continuar</Link>
       </Button>
     );
   }
