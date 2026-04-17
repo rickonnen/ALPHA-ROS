@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { X } from "lucide-react"; // 1. Añadimos el import que faltaba
 import {
   Accordion,
   AccordionContent,
@@ -67,7 +68,20 @@ export function OperationTypeFilter({
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]",
               )}
             >
-              <span className="flex-1 truncate text-left">{labelTruncated}</span>
+              {/* BLOQUE UNIDO: Texto + Botón X */}
+              <div className="flex w-full items-center justify-between pr-2">
+                <span className="truncate">{labelTruncated}</span>
+                {value.length > 0 && (
+                  <X
+                    size={16}
+                    className="ml-2 text-[#4B4B4B] hover:text-red-500 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evita que se abra/cierre el acordeón
+                      onChange([]);        // Limpiamos el array de selección
+                    }}
+                  />
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 

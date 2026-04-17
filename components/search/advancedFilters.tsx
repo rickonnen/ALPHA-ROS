@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 import { Geist } from "next/font/google";
 import {
   Accordion,
@@ -52,10 +53,24 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         onClick={() => setAbierto((p) => !p)}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-          {valor || label}
-        </span>
+        
+        {/* 1. El texto se queda solo a la izquierda */}
+      <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
+        {valor || label}
+      </span>
 
+      {/* 2. La X y la Flecha se juntan para irse a la derecha cambio 3*/}
+      <div className="flex items-center gap-2">
+        {valor && (
+          <X 
+            size={16} 
+            className="text-[#4B4B4B] hover:text-red-500 transition-colors" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange("");
+            }} 
+          />
+        )}
         <span
           className="text-[#4B4B4B] transition-transform duration-200"
           style={{
@@ -65,6 +80,7 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         >
           ▾
         </span>
+      </div>
       </button>
 
       {abierto && (

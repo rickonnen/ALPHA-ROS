@@ -1,5 +1,5 @@
 "use client";
-
+import { X } from "lucide-react";
 import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { convertUsdToBs, convertBsToUsd } from "@/features/filter_search_page/currencyConverter";
 import CurrencySwitch from "./currencySwitch";
@@ -267,6 +267,12 @@ export default function PriceDropdown({
 
   return (
     <div className="w-full mt-3">
+      <div className="mb-4">
+       <CurrencySwitch
+        currentCurrency={selectedCurrency}
+        setCurrentCurrency={onCurrencyChange}
+       />
+      </div>
       <Accordion
         type="single"
         collapsible
@@ -282,16 +288,29 @@ export default function PriceDropdown({
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-              {getTriggerLabel()}
+              <div className="flex w-full items-center justify-between pr-2">
+            <span>{getTriggerLabel()}</span>
+            
+            {/* Solo mostramos la X si el usuario ya aplicó algún precio */}
+            {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
+              <X
+                size={18}
+                className="ml-2 text-[#4B4B4B] hover:text-red-500 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation(); // Evita que el menú se abra o cierre
+                  setMinPriceInput(""); // Borra el texto del cuadrito mínimo
+                  setMaxPriceInput(""); // Borra el texto del cuadrito máximo
+                  onApplyRange({ minPrice: undefined, maxPrice: undefined }); // Limpia el filtro
+                }}
+              />
+            )}
+          </div>
             </AccordionTrigger>
           </div>
 
           <AccordionContent className="pt-3 pb-0">
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-4 shadow-sm">
-              <CurrencySwitch
-                currentCurrency={selectedCurrency}
-                setCurrentCurrency={onCurrencyChange}
-              />
+              
 
               <div className="mt-3 flex justify-center gap-2">
                 <input
@@ -308,6 +327,7 @@ export default function PriceDropdown({
                   )}
                   value={minPriceInput}
                   onChange={handlePriceInputChange("min")}
+                  onBlur={handleApplyRange}
                 />
 
                 <input
@@ -324,6 +344,7 @@ export default function PriceDropdown({
                   )}
                   value={maxPriceInput}
                   onChange={handlePriceInputChange("max")}
+                  onBlur={handleApplyRange}
                 />
               </div>
 
@@ -331,16 +352,7 @@ export default function PriceDropdown({
                 <p className="text-center text-sm text-red-600">{priceError}</p>
               </div>
 
-              <Button
-                className={cn(
-                  "mt-4 h-10 w-full rounded-[12px] bg-[#1F3A4D] text-base text-white hover:bg-[#C26E5A]",
-                  priceError && "mt-3"
-                )}
-                type="button"
-                onClick={handleApplyRange}
-              >
-                Aplicar rango
-              </Button>
+              
             </div>
           </AccordionContent>
         </AccordionItem>
