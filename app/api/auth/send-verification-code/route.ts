@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email.toLowerCase();
 
     // Generar y guardar código en memoria
-    const { code } = saveVerificationCode(normalizedEmail);
+    const { code } = await saveVerificationCode(normalizedEmail);
 
     // Enviar email
     await sendVerificationEmail(normalizedEmail, code);

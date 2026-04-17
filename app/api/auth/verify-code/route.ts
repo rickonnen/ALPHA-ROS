@@ -16,16 +16,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
     }
 
-    // Normalizar email a minúsculas
     const normalizedEmail = email.toLowerCase();
 
-    // Validar código usando memoria del servidor
-    const validation = verifyCode(normalizedEmail, verificationCode);
+    // Validar código desde Supabase
+    const validation = await verifyCode(normalizedEmail, verificationCode);
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error || "Código inválido" }, { status: 400 });
     }
 
-    // Proceder con el registro en Supabase
+    // Registrar en Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
       password,
@@ -73,14 +72,10 @@ export async function POST(request: NextRequest) {
     // Generar JWT
     const jwtToken = sign({ userId: authData.user.id }, process.env.JWT_SECRET!, { expiresIn: "7d" });
 
-    console.log(`[VERIFY-CODE] ✅ Registro exitoso para ${normalizedEmail}`);
-    console.log(`[VERIFY-CODE] JWT generado para userId: ${authData.user.id}`);
-    console.log(`[VERIFY-CODE] JWT Token: ${jwtToken.substring(0, 20)}...`);
-
-    const response = NextResponse.json({ 
-      message: "¡Registro exitoso!", 
+    const response = NextResponse.json({
+      message: "¡Registro exitoso!",
       userId: authData.user.id,
-      email: normalizedEmail 
+      email: normalizedEmail
     }, { status: 201 });
 
     response.cookies.set("auth_token", jwtToken, {
@@ -91,12 +86,9 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    console.log(`[VERIFY-CODE] Cookie auth_token establecida`);
-
     return response;
   } catch (error: any) {
     console.error("Error:", error);
     return NextResponse.json({ error: error.message || "Error al verificar" }, { status: 500 });
   }
 }
-

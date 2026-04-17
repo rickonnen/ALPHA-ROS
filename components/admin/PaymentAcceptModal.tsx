@@ -41,33 +41,39 @@ export function PaymentAcceptModal({
 }: PaymentAcceptModalProps) {
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-[500px] bg-[#F3F3F3] rounded-2xl p-8 border-none shadow-md">
+      {/* Añadimos márgenes horizontales (mx-4) para que en móviles no toque los bordes y ajustamos el padding (p-6 sm:p-8) */}
+      <AlertDialogContent className="w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente por temas de accesibilidad */}
         <VisuallyHidden>
           <AlertDialogTitle>
             Confirmación de pago
           </AlertDialogTitle>
         </VisuallyHidden>
+        
         {/* Icono central de advertencia */}
         <div className="flex justify-center mb-4">
           <div className="bg-[#FCA5A5] p-3 rounded-xl">
             <AlertTriangle className="h-6 w-6 text-white" />
           </div>
         </div>
+        
         {/* Texto descriptivo indicando la acción a confirmar */}
-        <p className="text-center text-gray-700 text-sm mb-8">
+        <p className="text-center text-gray-700 text-sm sm:text-base mb-8">
           Deseas aceptar el pago del cliente correspondiente:{" "}
           <span className="font-semibold">{strClientName}</span>{" "}
           para el plan <span className="font-semibold">{strPlanName}</span>
         </p>
-        {/* Botones de acción para cancelar o aceptar */}
-        <div className="flex justify-between px-6">
-          <AlertDialogCancel className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded-xl text-sm font-semibold capitalize">
+        
+        {/* Botones de acción para cancelar o aceptar 
+          CAMBIOS: flex-col en móvil, sm:flex-row en desktop. gap-3 para espaciado.
+        */}
+        <div className="flex flex-col-reverse sm:flex-row justify-center sm:justify-between gap-3 sm:px-6">
+          <AlertDialogCancel className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-black px-6 py-2.5 sm:py-2 rounded-xl text-sm font-semibold capitalize mt-0">
             cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 rounded-xl text-sm font-semibold capitalize"
+            className="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-black px-6 py-2.5 sm:py-2 rounded-xl text-sm font-semibold capitalize"
           >
             aceptar
           </AlertDialogAction>

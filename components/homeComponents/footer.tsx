@@ -66,11 +66,11 @@ export default function Footer() {
   };
 
   const strBaseLinkClasses = useMemo(() => 
-    `inline-block rounded-sm text-foreground transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`, 
+    `inline-block rounded-sm text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] text-foreground transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverAnim}`, 
   [strHoverAnim]);
 
   return (
-    <footer className="mt-16 border-t border-border bg-secondary-fund text-body-info">
+    <footer className="mt-16 border-t border-border bg-secondary-fund">
       <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-10 px-6 py-10 md:grid-cols-[1.55fr_0.95fr_0.95fr] md:px-10 lg:gap-24 xl:max-w-[1650px] xl:grid-cols-[1.8fr_1fr_1fr] xl:px-16 2xl:px-24">
         
         <div className="flex items-start">
@@ -79,7 +79,7 @@ export default function Footer() {
           ) : (
             <Link href="/" className={`inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverIconAnim}`}>
               <img src="/logo-principal.svg" alt="Logo" className="h-10 w-auto" />
-              <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
+              <span className="text-[0.83rem] lg:text-[0.95rem] xl:text-[1.07rem] 2xl:text-[1.5rem] font-heading font-black tracking-tighter leading-none">
                 <span className="text-primary">PROP</span>
                 <span className="text-secondary">BOL</span>
               </span>
@@ -88,7 +88,7 @@ export default function Footer() {
         </div>
 
         <div className="md:pl-6 lg:pl-10 xl:pl-16">
-          <h3 className="mb-4 text-subtitle font-heading font-semibold text-primary cursor-default">Explorar</h3>
+          <h3 className="mb-4 text-[1.07rem] font-heading font-semibold text-primary cursor-default">Explorar</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>
@@ -116,7 +116,7 @@ export default function Footer() {
         </div>
 
         <div className="md:pl-4 lg:pl-8 xl:pl-12">
-          <h3 className="mb-4 text-subtitle font-heading font-semibold text-primary cursor-default">Información</h3>
+          <h3 className="mb-4 text-[1.07rem] font-heading font-semibold text-primary cursor-default">Información</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>
@@ -139,7 +139,7 @@ export default function Footer() {
             <Skeleton className="h-6 w-64" />
           ) : (
             <>
-              <span className="text-muted-foreground cursor-default">Síguenos:</span>
+              <span className="text-muted-foreground text-[0.83rem] md:text-[0.95rem] cursor-default">Síguenos:</span>
               {arrSocialLinks.map((soc) => (
                 <a 
                   key={soc.strAriaLabel} 
@@ -151,7 +151,7 @@ export default function Footer() {
                   <img src={soc.strImgSrc} alt={soc.strAriaLabel} className={soc.strImgClasses} />
                 </a>
               ))}
-              <span className="text-foreground cursor-default">© 2026 PROPBOL</span>
+              <span className="text-foreground text-[0.83rem] md:text-[0.95rem] cursor-default">© 2026 PROPBOL</span>
             </>
           )}
         </div>

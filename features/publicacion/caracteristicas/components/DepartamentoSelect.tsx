@@ -1,13 +1,15 @@
+
 /**
  * Dev: Gabriel Paredes Sipe
- * Date modification: 29/03/2026
+ * Date modification: 06/04/2026
  * Funcionalidad: Componente dropdown para seleccionar el departamento
  *                de Bolivia con validación y accesibilidad.
- *                Corrección: tamaño de letra de mensajes de error ajustado a 14px.
+ * Corrección: asterisco (*) en label de campo obligatorio.
  * @param {DepartamentoSelectProps} props - value, error, touched, onChange y onBlur
  * @return {JSX.Element} Dropdown accesible de departamentos con validación
  */
 import { useState, useRef, useEffect } from 'react'
+import { Label } from "@/components/ui/label"
 import { DEPARTAMENTOS, Departamento } from '../Hooks/useCaracteristicasTypes'
 
 interface DepartamentoSelectProps {
@@ -19,8 +21,8 @@ interface DepartamentoSelectProps {
 }
 
 export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: DepartamentoSelectProps) {
-  const [open,        setOpen]        = useState(false)
-  const [wasOpened,   setWasOpened]   = useState(false)
+  const [open,      setOpen]      = useState(false)
+  const [wasOpened, setWasOpened] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const selectedLabel = DEPARTAMENTOS.find(d => d.value === value)?.label
@@ -29,7 +31,6 @@ export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: 
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
-        // Solo disparar onBlur si el usuario abrió el dropdown al menos una vez
         if (wasOpened) onBlur('departamento')
       }
     }
@@ -52,9 +53,9 @@ export function DepartamentoSelect({ value, error, touched, onChange, onBlur }: 
 
   return (
     <div className="flex flex-col gap-1.5" ref={ref}>
-      <label htmlFor="departamento" className="text-sm font-medium text-[#2E2E2E]">
-        Departamento
-      </label>
+      <Label htmlFor="departamento" className="text-sm font-medium text-[#2E2E2E]">
+        Departamento <span className="font-normal text-muted-foreground">*</span>
+      </Label>
 
       <button
         type="button"

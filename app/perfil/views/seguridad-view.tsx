@@ -16,6 +16,10 @@
    Fecha: 07/04/2026
    Style: Sincronización de animaciones de vistas con perfil-view y agregado de línea separadora en el título principal.
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+   Fecha: 09/04/2026
+   Fix: Resolución del defecto de navegación por teclado ilógica. Restauración de corrección visual de la contraseña (****).
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -36,6 +40,10 @@ interface SeguridadProps {
 export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
+  const [objOtpMeta, setObjOtpMeta] = useState<{
+    expiresInSec?: number;
+    resendAfterSec?: number;
+  }>({});
   const [objUsuario, setObjUsuario] = useState<any>(null);
 
   useEffect(() => {
@@ -55,8 +63,9 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
     menu: (
       <div className="space-y-4">
         <button
+          autoFocus
           onClick={() => setSubView("perfil")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Editar Perfil</p>
@@ -66,17 +75,17 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         </button>
         <button
           onClick={() => setSubView("password")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
-            <p className="font-semibold">Cambiar Password</p>
+            <p className="font-semibold">Cambiar Contraseña</p>
             <p className="text-lg text-gray-300 tracking-widest mt-1">****</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>
         <button
           onClick={() => setSubView("correo")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Cambiar Correo</p>
@@ -86,7 +95,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         </button>
         <button
           onClick={() => setSubView("telefonos")}
-          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
           <div className="text-left">
             <p className="font-semibold">Gestionar Teléfonos</p>
@@ -114,6 +123,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         onGuardar={(objDatosActualizados) => {
           setObjUsuario((prev: any) => ({ ...prev, ...objDatosActualizados }));
           onPerfilActualizado();
+          window.dispatchEvent(new Event("perfil:foto-actualizada"));
           setSubView("menu");
         }}
         onCancelar={() => setSubView("menu")}
@@ -131,13 +141,19 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
 
     correo: (
       <CambiarCorreoView
-        onBack={() => setSubView("menu")}
-        onContinue={(nuevoEmail) => {
+        onBack={() => {
+          setStrNuevoEmailPendiente("");
+          setObjOtpMeta({});
+          setSubView("menu");
+        }}
+        onContinue={(nuevoEmail, otpMeta) => {
           setStrNuevoEmailPendiente(nuevoEmail);
+          setObjOtpMeta(otpMeta ?? {});
           setSubView("confirmar-correo");
         }}
         email_actual={email}
         id_usuario={id_usuario}
+        nuevo_email_inicial={strNuevoEmailPendiente}
       />
     ),
 
@@ -145,6 +161,8 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
       <ConfirmarCorreoView
         id_usuario={id_usuario}
         nuevo_email={strNuevoEmailPendiente}
+        expires_in_sec={objOtpMeta.expiresInSec}
+        resend_after_sec={objOtpMeta.resendAfterSec}
         onBack={() => setSubView("correo")}
       />
     ),

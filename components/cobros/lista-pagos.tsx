@@ -59,14 +59,21 @@ const pagosAdaptados: Pago[] = Array.isArray(pagos) ? pagos.map((p: any) => ({
   })) : [];
 
   if (loading) return <p className="text-sm text-gray-500">Cargando...</p>;
-  if (error) return <div className="text-center py-10 text-red-500 text-sm">{error}</div>;
+  if (error) {
+  return (
+    <div className="flex justify-center items-start mt-6">
+      <div className="bg-[#F5F5F5] text-[#2E2E2E] text-sm px-8 py-4 rounded-lg shadow-sm">
+        {error}
+      </div>
+    </div>
+  );
+}
   if (pagosAdaptados.length === 0) return <div className="text-center py-10 text-gray-500 text-sm">No existen pagos registrados.</div>;
 
   const totalPaginas = Math.ceil(pagosAdaptados.length / ITEMS);
   const datos = pagosAdaptados.slice((pagina - 1) * ITEMS, pagina * ITEMS);
 
 return (
-    // Actualizamos el max-h para igualar al de tus compañeros
     <div className="mt-4 space-y-3 max-h-[50vh] md:max-h-[300px] overflow-y-auto pr-2 block">
       <div className="bg-[#E8A5A0] text-black text-sm px-4 py-2 flex justify-between items-center opacity-80 rounded-sm">
         <span>Últimos 30 días (17/02/2026 - 19/03/2026)</span>
@@ -76,7 +83,6 @@ return (
         <CardPago key={p.id} pago={p} />
       ))}
 
-      {/* Nueva paginación adaptada al estilo del equipo */}
       {totalPaginas > 1 && (
         <div className="flex items-center justify-center gap-2 pt-4 pb-2">
           <Button

@@ -67,7 +67,6 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
           </Button>
 
           <FavButton
-            id_usuario={id_usuario}
             id_publicacion={favorito.id}
             initialFav={true}
             onRemoved={onRemoved}

@@ -17,8 +17,8 @@ export const TIPO_INMUEBLE_IDS: Record<string, number> = {
 
 // Verificar con: SELECT * FROM "TipoOperacion";
 export const TIPO_OPERACION_IDS: Record<string, number> = {
-  Venta:         1,
-  Alquiler:      2,
+  Alquiler:      1,
+  Compra:        2,
   "Anticretico": 3,
 };
 

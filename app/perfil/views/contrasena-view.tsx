@@ -30,6 +30,14 @@
  * reemplazo de regex restrictivo por validación de caracteres de control invisibles,
  * longitud mínima de 8 caracteres como única regla de complejidad,
  * ocultamiento del ojo nativo del navegador en los tres campos
+ * 
+ * Modificado: Dylan Coca Beltran - 09/04/2026
+ * Cambio: Fix HU4B-1 — texto superpuesto con ícono de visibilidad en cadenas largas,
+ * reestructuración de campos a layout flex nativo para separar área de texto y botón,
+ * ocultamiento de ojo nativo del navegador en todos los campos (Chrome, Safari, Edge),
+ * cambio de comportamiento del ojo a click toggle en vez de mantener pulsado,
+ * alineado con WCAG 2.1 criterio 1.4.4 (resize text) y buenas prácticas de UX
+ * para formularios de autenticación según OWASP Authentication Cheat Sheet
  */
 "use client";
 
@@ -232,33 +240,24 @@ const handleSave = async () => {
         <label className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70">
           Contraseña actual
         </label>
-        <div className="relative">
-          <Input
+        <div className={`flex h-12 rounded-lg border bg-white/10 overflow-hidden ${
+          strErrorCurrent ? 'border-red-400/70' : 'border-white/25'
+        }`}>
+          <input
             type={bolShowCurrent ? "text" : "password"}
             value={strCurrentPassword}
             placeholder="••••••••••••"
             maxLength={72}
             onChange={(e) => setStrCurrentPassword(e.target.value)}
             autoComplete="new-password"
-            className={`
-              h-12 rounded-lg border bg-white/10 pr-10 px-3
-              text-white/90 placeholder:text-white/30
-              focus-visible:ring-2 transition-colors
-              [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
-              ${strErrorCurrent
-                ? "border-red-400/70 focus-visible:ring-red-400/40"
-                : "border-white/25 focus-visible:ring-white/30"
-              }
-            `}
+            className="flex-1 min-w-0 bg-transparent px-3 text-white/90 placeholder:text-white/30 
+              focus:outline-none focus:ring-0 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden 
+              [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
           />
           <button
             type="button"
-            onMouseDown={() => setBolShowCurrent(true)}
-            onMouseUp={() => setBolShowCurrent(false)}
-            onMouseLeave={() => setBolShowCurrent(false)}
-            onTouchStart={() => setBolShowCurrent(true)}
-            onTouchEnd={() => setBolShowCurrent(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+            onClick={() => setBolShowCurrent(!bolShowCurrent)}
+            className="flex items-center px-3 border-l border-white/20 text-white/40 hover:text-white/70 transition-colors shrink-0"
           >
             {bolShowCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -273,33 +272,24 @@ const handleSave = async () => {
         <label className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70">
           Nueva contraseña
         </label>
-        <div className="relative">
-          <Input
+        <div className={`flex h-12 rounded-lg border bg-white/10 overflow-hidden ${
+          strErrorNew ? 'border-red-400/70' : 'border-white/25'
+        }`}>
+          <input
             type={bolShowNew ? "text" : "password"}
             value={strNewPassword}
             placeholder="••••••••••••"
             maxLength={72}
             onChange={(e) => setStrNewPassword(e.target.value)}
             autoComplete="new-password"
-            className={`
-                h-12 rounded-lg border bg-white/10 pr-10 px-3
-                text-white/90 placeholder:text-white/30
-                focus-visible:ring-2 transition-colors
-                [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
-                ${strErrorNew
-                  ? "border-red-400/70 focus-visible:ring-red-400/40"
-                  : "border-white/25 focus-visible:ring-white/30"
-                }
-              `}
+            className="flex-1 min-w-0 bg-transparent px-3 text-white/90 placeholder:text-white/30 
+              focus:outline-none focus:ring-0 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden 
+              [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
           />
           <button
             type="button"
-            onMouseDown={() => setBolShowNew(true)}
-            onMouseUp={() => setBolShowNew(false)}
-            onMouseLeave={() => setBolShowNew(false)}
-            onTouchStart={() => setBolShowNew(true)}
-            onTouchEnd={() => setBolShowNew(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+            onClick={() => setBolShowNew(!bolShowNew)}
+            className="flex items-center px-3 border-l border-white/20 text-white/40 hover:text-white/70 transition-colors shrink-0"
           >
             {bolShowNew ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -314,33 +304,24 @@ const handleSave = async () => {
         <label className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70">
           Confirmar contraseña
         </label>
-        <div className="relative">
-          <Input
+        <div className={`flex h-12 rounded-lg border bg-white/10 overflow-hidden ${
+          strErrorConfirm ? 'border-red-400/70' : 'border-white/25'
+        }`}>
+          <input
             type={bolShowConfirm ? "text" : "password"}
             value={strConfirmPassword}
             placeholder="••••••••••••"
             maxLength={72}
             onChange={(e) => setStrConfirmPassword(e.target.value)}
             autoComplete="new-password"
-            className={`
-              h-12 rounded-lg border bg-white/10 pr-10 px-3
-              text-white/90 placeholder:text-white/30
-              focus-visible:ring-2 transition-colors
-              [&::-ms-reveal]:hidden [&::-ms-clear]:hidden
-              ${strErrorConfirm
-                ? "border-red-400/70 focus-visible:ring-red-400/40"
-                : "border-white/25 focus-visible:ring-white/30"
-              }
-            `}
+            className="flex-1 min-w-0 bg-transparent px-3 text-white/90 placeholder:text-white/30 
+              focus:outline-none focus:ring-0 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden 
+              [&::-webkit-contacts-auto-fill-button]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
           />
           <button
             type="button"
-            onMouseDown={() => setBolShowConfirm(true)}
-            onMouseUp={() => setBolShowConfirm(false)}
-            onMouseLeave={() => setBolShowConfirm(false)}
-            onTouchStart={() => setBolShowConfirm(true)}
-            onTouchEnd={() => setBolShowConfirm(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
+            onClick={() => setBolShowConfirm(!bolShowConfirm)}
+            className="flex items-center px-3 border-l border-white/20 text-white/40 hover:text-white/70 transition-colors shrink-0"
           >
             {bolShowConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>

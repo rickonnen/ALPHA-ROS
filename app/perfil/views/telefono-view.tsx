@@ -195,7 +195,7 @@ export default function TelefonosView({
     if (slotEnEdicion !== index) return;
 
     const nuevosValues = [...telefonosValues];
-    nuevosValues[index] = value;
+    nuevosValues[index] = value.slice(0, 15);
     setTelefonosValues(nuevosValues);
   };
 
@@ -420,6 +420,7 @@ export default function TelefonosView({
                   <input
                     value={(telefonosValues[i] || "")}
                     placeholder="Sin teléfono"
+                    maxLength={15}
                     onChange={(e) => handleChange(i, e.target.value)}
                     onPaste={(e) => e.preventDefault()}
                     onKeyDown={(e) => {
@@ -427,6 +428,11 @@ export default function TelefonosView({
                       if (permitidos.includes(e.key)) return;
 
                       const valorActual = telefonosValues[i] || "";
+
+                      if (valorActual.length >= 15) { 
+                        e.preventDefault();
+                        return;
+                      }
 
                       if (valorActual === "" || valorActual === undefined) {
                         if (e.key !== "+") e.preventDefault();
