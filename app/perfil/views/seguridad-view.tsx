@@ -137,13 +137,17 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
 
     correo: (
       <CambiarCorreoView
-        onBack={() => setSubView("menu")}
+        onBack={() => {
+          setStrNuevoEmailPendiente("");
+          setSubView("menu");
+        }}
         onContinue={(nuevoEmail) => {
           setStrNuevoEmailPendiente(nuevoEmail);
           setSubView("confirmar-correo");
         }}
         email_actual={email}
         id_usuario={id_usuario}
+        nuevo_email_inicial={strNuevoEmailPendiente}
       />
     ),
 

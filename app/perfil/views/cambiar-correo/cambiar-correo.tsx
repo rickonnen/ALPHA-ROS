@@ -61,6 +61,7 @@ interface CambiarCorreoProps {
   onContinue: (nuevoEmail: string) => void;
   id_usuario: string;
   email_actual: string;
+  nuevo_email_inicial?: string;
 }
 
 export default function CambiarCorreoView({
@@ -68,8 +69,9 @@ export default function CambiarCorreoView({
   onContinue,
   id_usuario,
   email_actual,
+  nuevo_email_inicial = "",
 }: CambiarCorreoProps) {
-  const [strNewEmail, setStrNewEmail] = useState("");
+  const [strNewEmail, setStrNewEmail] = useState(nuevo_email_inicial);
   const [strPassword, setStrPassword] = useState("");
   const [bolTrySubmit, setBolTrySubmit] = useState(false);
   const [bolValidandoContrasena, setBolValidandoContrasena] = useState(false);
