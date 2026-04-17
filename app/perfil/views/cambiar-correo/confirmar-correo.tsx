@@ -88,9 +88,13 @@ export default function ConfirmarCorreoView({
     setBolShowResultModal(true);
   };
 
-  const openSuccessModal = (message: string, bolRedirect = false) => {
+  const openSuccessModal = (
+    title: string,
+    message: string,
+    bolRedirect = false,
+  ) => {
     setStrModalType("success");
-    setStrModalTitle("¡Correo Actualizado!");
+    setStrModalTitle(title);
     setStrModalMessage(message);
     setBolRedirectToPerfilOnClose(bolRedirect);
     setBolShowResultModal(true);
@@ -173,7 +177,11 @@ export default function ConfirmarCorreoView({
       setArrOtp(Array(OTP_LENGTH).fill(""));
       setIntTimeLeft(OTP_EXP_SECONDS);
       arrRefs.current[0]?.focus();
-      openSuccessModal("Código reenviado correctamente.", false);
+      openSuccessModal(
+        "Código reenviado",
+        "Código reenviado correctamente.",
+        false,
+      );
     } catch (error) {
       console.error("Error al reenviar OTP:", error);
       openErrorModal("Error de red al reenviar código.");
@@ -210,7 +218,11 @@ export default function ConfirmarCorreoView({
         return;
       }
 
-      openSuccessModal("Tu correo se cambió exitosamente.", true);
+      openSuccessModal(
+        "¡Correo Actualizado!",
+        "Tu correo se cambió exitosamente.",
+        true,
+      );
     } catch (error) {
       console.error("Error al verificar OTP:", error);
       openErrorModal("Error de red al verificar el código.");
