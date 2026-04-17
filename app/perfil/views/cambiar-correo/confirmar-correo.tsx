@@ -199,6 +199,13 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_EXPIRED") {
+          openErrorModal(
+            "El código ya expiró. Solicita uno nuevo con Reenviar código.",
+          );
+          return;
+        }
+
         openErrorModal(json.message || "No se pudo verificar el código.");
         return;
       }
@@ -318,7 +325,7 @@ export default function ConfirmarCorreoView({
           <Button
             type="button"
             onClick={handleConfirmar}
-            disabled={!bolOtpCompleto || bolSubmitting || intTimeLeft === 0}
+            disabled={!bolOtpCompleto || bolSubmitting}
             className="order-1 h-11 w-full rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50 md:order-3 md:w-auto md:min-w-36"
           >
             {bolSubmitting ? "Verificando..." : "Confirmar"}
