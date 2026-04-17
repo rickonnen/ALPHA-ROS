@@ -278,7 +278,7 @@ export default function ConfirmarCorreoView({
         </span>
       </Button>
       <div className="mb-4 border-b border-white/15" />
-      <div className="mx-auto mt-auto max-w-2xl rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
+      <div className="mt-auto w-full rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
         <div className="border-b border-white/15 p-5">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
