@@ -27,6 +27,7 @@ import ChangePasswordForm from "./contrasena-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
+import Autenticacion2FAView from "./2fa/autenticacion-2fa";
 
 interface SeguridadProps {
   id_usuario: string;
@@ -105,6 +106,16 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           </div>
           <span className="text-gray-400">›</span>
         </button>
+        <button
+          onClick={() => setSubView("2fa")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Autenticacion 2FA</p>
+            <p className="text-sm text-gray-300">Autenticacion en Dos Pasos</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
       </div>
     ),
 
@@ -164,6 +175,13 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         expires_in_sec={objOtpMeta.expiresInSec}
         resend_after_sec={objOtpMeta.resendAfterSec}
         onBack={() => setSubView("correo")}
+      />
+    ),
+
+    "2fa": (
+      <Autenticacion2FAView
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")}
       />
     ),
   };
