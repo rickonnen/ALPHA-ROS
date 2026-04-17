@@ -40,6 +40,10 @@ interface SeguridadProps {
 export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
   const [subView, setSubView] = useState("menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
+  const [objOtpMeta, setObjOtpMeta] = useState<{
+    expiresInSec?: number;
+    resendAfterSec?: number;
+  }>({});
   const [objUsuario, setObjUsuario] = useState<any>(null);
 
   useEffect(() => {
@@ -139,10 +143,12 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
       <CambiarCorreoView
         onBack={() => {
           setStrNuevoEmailPendiente("");
+          setObjOtpMeta({});
           setSubView("menu");
         }}
-        onContinue={(nuevoEmail) => {
+        onContinue={(nuevoEmail, otpMeta) => {
           setStrNuevoEmailPendiente(nuevoEmail);
+          setObjOtpMeta(otpMeta ?? {});
           setSubView("confirmar-correo");
         }}
         email_actual={email}
@@ -155,6 +161,8 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
       <ConfirmarCorreoView
         id_usuario={id_usuario}
         nuevo_email={strNuevoEmailPendiente}
+        expires_in_sec={objOtpMeta.expiresInSec}
+        resend_after_sec={objOtpMeta.resendAfterSec}
         onBack={() => setSubView("correo")}
       />
     ),

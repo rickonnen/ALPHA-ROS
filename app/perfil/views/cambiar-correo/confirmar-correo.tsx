@@ -32,11 +32,14 @@ import ResultModal from "@/components/ui/modal";
 interface ConfirmarCorreoProps {
   id_usuario: string;
   nuevo_email: string;
+  expires_in_sec?: number;
+  resend_after_sec?: number;
   onBack: () => void;
 }
 
 const OTP_LENGTH = 6;
-const OTP_EXP_SECONDS = 600; // 10 min
+const OTP_EXP_SECONDS_FALLBACK = 600; // 10 min
+const OTP_RESEND_SECONDS_FALLBACK = 60;
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split("@");
@@ -48,10 +51,16 @@ function maskEmail(email: string): string {
 export default function ConfirmarCorreoView({
   id_usuario,
   nuevo_email,
+  expires_in_sec,
+  resend_after_sec,
   onBack,
 }: ConfirmarCorreoProps) {
+  const intInitialOtpSeconds = expires_in_sec ?? OTP_EXP_SECONDS_FALLBACK;
+  const intInitialResendSeconds =
+    resend_after_sec ?? OTP_RESEND_SECONDS_FALLBACK;
   const [arrOtp, setArrOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
-  const [intTimeLeft, setIntTimeLeft] = useState(OTP_EXP_SECONDS);
+  const [intTimeLeft, setIntTimeLeft] = useState(intInitialOtpSeconds);
+  const [intResendLeft, setIntResendLeft] = useState(intInitialResendSeconds);
   const [bolSubmitting, setBolSubmitting] = useState(false);
   const arrRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -74,6 +83,14 @@ export default function ConfirmarCorreoView({
     }, 1000);
     return () => clearInterval(timer);
   }, [intTimeLeft]);
+
+  useEffect(() => {
+    if (intResendLeft <= 0) return;
+    const timer = setInterval(() => {
+      setIntResendLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [intResendLeft]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -170,12 +187,28 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_COOLDOWN") {
+          setIntResendLeft(
+            Number.isFinite(json.resendAfterSec)
+              ? json.resendAfterSec
+              : OTP_RESEND_SECONDS_FALLBACK,
+          );
+        }
         openErrorModal(json.message || "No se pudo reenviar el código.");
         return;
       }
 
       setArrOtp(Array(OTP_LENGTH).fill(""));
-      setIntTimeLeft(OTP_EXP_SECONDS);
+      setIntTimeLeft(
+        Number.isFinite(json.expiresInSec)
+          ? json.expiresInSec
+          : OTP_EXP_SECONDS_FALLBACK,
+      );
+      setIntResendLeft(
+        Number.isFinite(json.resendAfterSec)
+          ? json.resendAfterSec
+          : OTP_RESEND_SECONDS_FALLBACK,
+      );
       arrRefs.current[0]?.focus();
       openSuccessModal(
         "Código reenviado",
@@ -316,7 +349,7 @@ export default function ConfirmarCorreoView({
             type="button"
             variant="outline"
             onClick={handleReenviar}
-            disabled={bolSubmitting}
+            disabled={bolSubmitting || intResendLeft > 0}
             className="order-2 h-11 w-full rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10 md:order-2 md:w-auto md:min-w-40"
           >
             <svg
@@ -331,7 +364,9 @@ export default function ConfirmarCorreoView({
               <path d="M 3 12 A 9 9 0 1 1 12 21" />
               <polyline points="17 21 12 21 13 16" />
             </svg>
-            Reenviar código
+            {intResendLeft > 0
+              ? `Reenviar en ${formatTime(intResendLeft)}`
+              : "Reenviar código"}
           </Button>
 
           <Button

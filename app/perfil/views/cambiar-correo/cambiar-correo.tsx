@@ -58,7 +58,10 @@ import { useState } from "react";
 
 interface CambiarCorreoProps {
   onBack: () => void;
-  onContinue: (nuevoEmail: string) => void;
+  onContinue: (
+    nuevoEmail: string,
+    otpMeta?: { expiresInSec?: number; resendAfterSec?: number },
+  ) => void;
   id_usuario: string;
   email_actual: string;
   nuevo_email_inicial?: string;
@@ -210,7 +213,10 @@ export default function CambiarCorreoView({
               return;
             }
 
-            onContinue(strNuevoEmail);
+            onContinue(strNuevoEmail, {
+              expiresInSec: jsonOtp.expiresInSec,
+              resendAfterSec: jsonOtp.resendAfterSec,
+            });
           } catch (error) {
             console.error("Error en validación de cambio de correo:", error);
             setStrErrorModalMessage(
