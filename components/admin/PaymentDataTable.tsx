@@ -29,6 +29,7 @@ interface PaymentDataTableProps {
   intCurrentPage?: number;
   intTotalPages?: number;
   onPageChange?: (intPage: number) => void;
+  onViewReceipt?: (strUrl: string) => void;
 }
 
 const TableSkeleton = ({ bolShowActions }: { bolShowActions: boolean }) => (
@@ -70,7 +71,8 @@ export function PaymentDataTable({
   bolIsLoading = false,
   intCurrentPage = 1,
   intTotalPages = 1,
-  onPageChange
+  onPageChange,
+  onViewReceipt
 }: PaymentDataTableProps) {
   const [bolShowAcceptModal, setBolShowAcceptModal] = useState<boolean>(false);
   const [bolShowRejectModal, setBolShowRejectModal] = useState<boolean>(false);
@@ -154,7 +156,17 @@ export function PaymentDataTable({
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-medium">Método:</span>
-                  <span className="text-right truncate">{objPayment.strPaymentMethod}</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-right truncate">{objPayment.strPaymentMethod}</span>
+                    {objPayment.strReceiptUrl && (
+                      <button
+                        onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
+                        className="text-primary font-bold text-sm underline hover:text-primary/80 transition-colors cursor-pointer mt-1"
+                      >
+                        ver detalles
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -211,7 +223,21 @@ export function PaymentDataTable({
                     <TableCell className="px-6 py-4 font-medium text-foreground border-r border-border truncate max-w-[250px]">{objPayment.strClientName}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border truncate max-w-[200px]">{objPayment.strPlanType}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">{objPayment.strDate}</TableCell>
-                    <TableCell className={`px-6 py-4 text-muted-foreground truncate max-w-[200px] ${bolShowActions ? 'border-r border-border' : ''}`}>{objPayment.strPaymentMethod}</TableCell>
+                    <TableCell className={`px-6 py-4 truncate max-w-[200px] ${bolShowActions ? 'border-r border-border' : ''}`}>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-muted-foreground">{objPayment.strPaymentMethod}</span>
+                        
+                        {/* Renderizamos "ver detalles" solo si existe una URL de comprobante */}
+                        {objPayment.strReceiptUrl && (
+                          <button
+                            onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
+                            className="text-primary font-bold text-sm text-left underline hover:text-primary/80 transition-colors w-fit cursor-pointer"
+                          >
+                            ver detalles
+                          </button>
+                        )}
+                      </div>
+                    </TableCell>
                     {bolShowActions && (
                       <TableCell className="px-6 py-4">
                         <div className="flex justify-center space-x-2">
