@@ -58,9 +58,13 @@ import { useState } from "react";
 
 interface CambiarCorreoProps {
   onBack: () => void;
-  onContinue: (nuevoEmail: string) => void;
+  onContinue: (
+    nuevoEmail: string,
+    otpMeta?: { expiresInSec?: number; resendAfterSec?: number },
+  ) => void;
   id_usuario: string;
   email_actual: string;
+  nuevo_email_inicial?: string;
 }
 
 export default function CambiarCorreoView({
@@ -68,8 +72,9 @@ export default function CambiarCorreoView({
   onContinue,
   id_usuario,
   email_actual,
+  nuevo_email_inicial = "",
 }: CambiarCorreoProps) {
-  const [strNewEmail, setStrNewEmail] = useState("");
+  const [strNewEmail, setStrNewEmail] = useState(nuevo_email_inicial);
   const [strPassword, setStrPassword] = useState("");
   const [bolTrySubmit, setBolTrySubmit] = useState(false);
   const [bolValidandoContrasena, setBolValidandoContrasena] = useState(false);
@@ -94,6 +99,7 @@ export default function CambiarCorreoView({
           Seguridad
         </span>
       </Button>
+      <div className="mb-4 border-b border-white/15" />
       <HeaderCorreo />
       <CorreoActual email_actual={email_actual} />
       <NuevoCorreo
@@ -207,7 +213,10 @@ export default function CambiarCorreoView({
               return;
             }
 
-            onContinue(strNuevoEmail);
+            onContinue(strNuevoEmail, {
+              expiresInSec: jsonOtp.expiresInSec,
+              resendAfterSec: jsonOtp.resendAfterSec,
+            });
           } catch (error) {
             console.error("Error en validación de cambio de correo:", error);
             setStrErrorModalMessage(
@@ -243,11 +252,11 @@ function HeaderCorreo() {
         </div>
 
         <div>
-          <CardTitle className="text-3xl font-extrabold tracking-tight text-white">
-            Cambiar correo electrónico
+          <CardTitle className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+            Cambiar correo
           </CardTitle>
           <CardDescription className="mt-1 text-base text-white/70">
-            Te enviaremos un código de verificación al nuevo correo.
+            Te enviaremos un código de verificación.
           </CardDescription>
         </div>
       </div>
@@ -304,7 +313,7 @@ function NuevoCorreo({
         htmlFor="nuevo-correo-input"
         className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
       >
-        Nuevo Correo
+        Nuevo Correo <span className="text-red-300">*</span>
       </Label>
       <div className="relative">
         <Input
@@ -356,7 +365,7 @@ function Contrasena({
         htmlFor="contrasena-input"
         className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
       >
-        Contraseña
+        Contraseña <span className="text-red-300">*</span>
       </Label>
       <div className="relative">
         <Input
@@ -407,11 +416,11 @@ function BotonesAccion({
   bolValidandoContrasena,
 }: BotonesAccionProps) {
   return (
-    <div className="mt-8 flex gap-3">
+    <div className="mt-8 flex w-full gap-3">
       <Button
         type="button"
         variant="outline"
-        className="w-36 h-10 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
+        className="h-10 flex-1 md:flex-none md:w-36 rounded-lg border-white/25 bg-transparent text-white/70 hover:bg-white/10 hover:text-white hover:border-white/40 transition-colors"
         onClick={onClick}
         disabled={bolValidandoContrasena}
       >
@@ -420,7 +429,7 @@ function BotonesAccion({
 
       <Button
         type="button"
-        className="w-36 h-10 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
+        className="h-10 flex-1 md:flex-none md:w-36 rounded-lg bg-zinc-100 border border-zinc-300 text-zinc-700 font-bold hover:bg-zinc-200 hover:border-zinc-400 hover:text-zinc-800 transition-colors shadow-sm shadow-black/20 disabled:opacity-60"
         onClick={onConfirm}
         disabled={bolValidandoContrasena}
       >

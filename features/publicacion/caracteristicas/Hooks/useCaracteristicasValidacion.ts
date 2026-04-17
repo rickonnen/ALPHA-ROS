@@ -1,22 +1,38 @@
+/**
+ * Dev: Gabriel Paredes Sipe
+ * Date modification: 06/04/2026
+ * Funcionalidad: Validación del formulario de características del inmueble
+ *                Corrección: superficie validada con máximo de 1.000.000 m²
+ *                Corrección: zona validada con mínimo de 5 caracteres
+ *                Corrección: campos numéricos permiten valor 0
+ */
+
 import {
   CaracteristicasFormValues,
   CaracteristicasFormErrors,
   MAX_VALOR_NUMERICO,
   MAX_CARACTERES_ZONA,
+  MIN_CARACTERES_ZONA,
   MIN_IMAGENES,
   MAX_IMAGENES,
   TIPOS_IMAGEN_PERMITIDOS,
   TAMANO_MAXIMO_IMAGEN_MB,
   MIN_CARACTERES_DIRECCION,
+  MAX_SUPERFICIE,
 } from './useCaracteristicasTypes'
 
 function esNumeroEnteroValido(valor: string): boolean {
-  return /^\d+$/.test(valor) && parseInt(valor, 10) > 0 && parseInt(valor, 10) <= MAX_VALOR_NUMERICO;
+  return /^\d+$/.test(valor) && parseInt(valor, 10) >= 0 && parseInt(valor, 10) <= MAX_VALOR_NUMERICO;
 }
 
 function esNumeroDecimalPositivo(valor: string): boolean {
   const limpio = valor.replace(/\./g, '')
   return /^\d+$/.test(limpio) && parseInt(limpio, 10) > 0;
+}
+
+function superficieEnRango(valor: string): boolean {
+  const limpio = parseInt(valor.replace(/\./g, ''), 10)
+  return limpio <= MAX_SUPERFICIE;
 }
 
 export function validate(values: CaracteristicasFormValues): CaracteristicasFormErrors {
@@ -32,6 +48,8 @@ export function validate(values: CaracteristicasFormValues): CaracteristicasForm
     errors.superficie = 'La superficie es obligatoria.';
   } else if (!esNumeroDecimalPositivo(values.superficie)) {
     errors.superficie = 'La superficie debe ser un número mayor a 0.';
+  } else if (!superficieEnRango(values.superficie)) {
+    errors.superficie = 'Máximo 1.000.000 m².';
   }
 
   if (!values.departamento) {
@@ -40,32 +58,34 @@ export function validate(values: CaracteristicasFormValues): CaracteristicasForm
 
   if (!values.zona.trim()) {
     errors.zona = 'La zona es obligatoria.';
+  } else if (values.zona.trim().length < MIN_CARACTERES_ZONA) {
+    errors.zona = `La zona debe tener al menos ${MIN_CARACTERES_ZONA} caracteres.`;
   } else if (values.zona.length > MAX_CARACTERES_ZONA) {
     errors.zona = `La zona no puede superar ${MAX_CARACTERES_ZONA} caracteres.`;
   }
 
-  if (!values.habitaciones) {
+  if (values.habitaciones === '') {
     errors.habitaciones = 'El número de habitaciones es obligatorio.';
   } else if (!esNumeroEnteroValido(values.habitaciones)) {
-    errors.habitaciones = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.habitaciones = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.banios) {
+  if (values.banios === '') {
     errors.banios = 'El número de baños es obligatorio.';
   } else if (!esNumeroEnteroValido(values.banios)) {
-    errors.banios = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.banios = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.plantas) {
+  if (values.plantas === '') {
     errors.plantas = 'El número de plantas es obligatorio.';
   } else if (!esNumeroEnteroValido(values.plantas)) {
-    errors.plantas = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.plantas = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
-  if (!values.garajes) {
+  if (values.garajes === '') {
     errors.garajes = 'El número de garajes es obligatorio.';
   } else if (!esNumeroEnteroValido(values.garajes)) {
-    errors.garajes = `Debe ser un número entero entre 1 y ${MAX_VALOR_NUMERICO}.`;
+    errors.garajes = `Debe ser un número entero entre 0 y ${MAX_VALOR_NUMERICO}.`;
   }
 
   if (values.imagenes.length < MIN_IMAGENES) {
