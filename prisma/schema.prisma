@@ -491,6 +491,7 @@ model webauthn_credentials {
   @@schema("auth")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Blogs {
   id_blog           Int               @id @default(autoincrement())
   id_user           String            @db.Uuid
@@ -508,6 +509,7 @@ model Blogs {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Caracteristica {
   id_caracteristica         Int                         @id(map: "Caracteristica_pk") @default(autoincrement())
   nombre_caracteristica     String?                     @db.VarChar(128)
@@ -516,6 +518,7 @@ model Caracteristica {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CategoriaNotificacion {
   id_categoria     Int            @id(map: "CategoriaNotificacion_pk") @default(autoincrement())
   nombre_categoria String?        @db.VarChar(128)
@@ -524,6 +527,7 @@ model CategoriaNotificacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Ciudad {
   id_ciudad         Int            @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
   nombre_ciudad     String?        @db.VarChar(128)
@@ -536,6 +540,7 @@ model Ciudad {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CiudadImagen {
   id_ciudad_imagen  Int     @id(map: "CiudadImagen_pk") @default(autoincrement()) @db.SmallInt
   id_ciudad         Int?    @db.SmallInt
@@ -546,6 +551,7 @@ model CiudadImagen {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ComentariosBlog {
   id_comentario  Int       @id @default(autoincrement())
   id_blog        Int
@@ -558,6 +564,7 @@ model ComentariosBlog {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model DetallePago {
   id_detalle      Int              @id(map: "DetallePago_pk") @default(autoincrement()) @db.SmallInt
   id_plan         Int?             @db.SmallInt
@@ -566,8 +573,8 @@ model DetallePago {
   metodo_pago     String?          @db.VarChar(50)
   id_usuario      String?          @db.Uuid
   comprobante_url String?
-  razon_rechazo   String?          @db.VarChar(128)
   mes_pago        String?          @db.VarChar
+  razon_rechazo   String?          @db.VarChar(128)
   tiempo_pago     String?          @db.VarChar
   PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_planpublicacion")
   Usuario         Usuario?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_usuario")
@@ -575,6 +582,7 @@ model DetallePago {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model EstadoConstruccion {
   id_estado_construccion     Int           @id(map: "EstadoConstruccion_pk") @default(autoincrement()) @db.SmallInt
   nombre_estado_construccion String?       @db.VarChar(128)
@@ -583,6 +591,7 @@ model EstadoConstruccion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model EstadoPublicacion {
   id_estado     Int           @id(map: "EstadoPublicacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_estado String?       @db.VarChar(128)
@@ -591,6 +600,7 @@ model EstadoPublicacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Etiquetas {
   id_etiqueta     Int           @id(map: "Etiquetas_pk") @default(autoincrement()) @db.SmallInt
   nombre_etiqueta String?       @db.VarChar(128)
@@ -600,6 +610,7 @@ model Etiquetas {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Favorito {
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -611,6 +622,7 @@ model Favorito {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model HistorialBusqueda {
   id_hb      Int       @id @default(autoincrement())
   id_usuario String    @db.Uuid
@@ -625,10 +637,11 @@ model HistorialBusqueda {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model HistorialVistos {
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
-  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String      @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
 
@@ -636,6 +649,7 @@ model HistorialVistos {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Imagen {
   id_imagen      Int          @id(map: "Imagen_pk") @default(autoincrement())
   id_publicacion Int?
@@ -645,6 +659,7 @@ model Imagen {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Moneda {
   id_moneda   Int           @id(map: "Moneda_pk") @default(autoincrement())
   nombre      String?       @db.VarChar(128)
@@ -655,6 +670,7 @@ model Moneda {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Notificacion {
   id_notificacion       String                 @id(map: "Notificacion_pk") @db.Uuid
   titulo                String?                @db.VarChar(256)
@@ -662,18 +678,19 @@ model Notificacion {
   id_categoria          Int?
   leido                 Boolean?
   creado_en             DateTime?              @db.Timestamptz(6)
-  id_publicacion        Int                    @default(autoincrement())
+  id_publicacion        Int?
   id_usuario            String?                @db.Uuid
   email_enviado         Boolean?
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
-  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
+  Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
   Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_usuario")
 
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Pais {
   id_pais     Int         @id(map: "Pais_pk") @default(autoincrement()) @db.SmallInt
   nombre_pais String?     @db.VarChar(128)
@@ -684,6 +701,7 @@ model Pais {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PlanPublicacion {
   id_plan            Int           @id(map: "PlanPublicacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_plan        String?       @db.VarChar(128)
@@ -692,12 +710,11 @@ model PlanPublicacion {
   activo             Boolean?      @default(false)
   id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
-  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
-  Usuario            Usuario[]
 
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Publicacion {
   id_publicacion            Int                         @id(map: "Publicacion_pk") @default(autoincrement())
   titulo                    String?                     @db.VarChar(256)
@@ -737,6 +754,7 @@ model Publicacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PublicacionCaracteristica {
   id_publicacion         Int
   id_caracteristica      Int
@@ -748,14 +766,15 @@ model PublicacionCaracteristica {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model QrUrl {
-  id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
-  qr_URL          String?
-  PlanPublicacion PlanPublicacion[]
+  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL    String?
 
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Recuperacion_password {
   id_recuperacion  Int       @id @default(autoincrement())
   id_usuario       String    @db.Uuid
@@ -769,6 +788,7 @@ model Recuperacion_password {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model RedesVinculadas {
   id_redv      Int      @id @default(autoincrement())
   id_usuario   String   @db.Uuid
@@ -781,6 +801,7 @@ model RedesVinculadas {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
   nombre_rol String?   @db.VarChar(30)
@@ -789,6 +810,7 @@ model Rol {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Sesion {
   id_sesion         Int       @id @default(autoincrement())
   id_usuario        String    @db.Uuid
@@ -801,6 +823,7 @@ model Sesion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Telefono {
   id_telefono     Int               @id(map: "Telefono_pk") @default(autoincrement()) @db.SmallInt
   nro_telefono    String            @db.VarChar(12)
@@ -810,6 +833,7 @@ model Telefono {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model TipoInmueble {
   id_tipo_inmueble Int           @id(map: "TipoInmueble_pk") @default(autoincrement()) @db.SmallInt
   nombre_inmueble  String?       @db.VarChar(128)
@@ -818,6 +842,7 @@ model TipoInmueble {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model TipoOperacion {
   id_tipo_operacion Int           @id(map: "TipoOperacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_operacion  String?       @db.VarChar(128)
@@ -826,6 +851,7 @@ model TipoOperacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Ubicacion {
   id_ubicacion Int           @id(map: "Ubicacion_pk") @default(autoincrement())
   id_pais      Int?          @db.SmallInt
@@ -842,7 +868,9 @@ model Ubicacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Usuario {
+  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   email                        String?                 @db.VarChar(320)
   nombres                      String?                 @db.VarChar(100)
   apellidos                    String?                 @db.VarChar(100)
@@ -854,13 +882,11 @@ model Usuario {
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?                 @db.VarChar(128)
-  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   id_pais                      Int?                    @db.SmallInt
   fecha_nac                    DateTime?               @db.Date
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?                    @default(0)
-  id_plan                      Int?                    @db.SmallInt
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
@@ -872,7 +898,6 @@ model Usuario {
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
   Sesion                       Sesion[]
-  PlanPublicacion              PlanPublicacion?        @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
   users                        users                   @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
   Pais                         Pais?                   @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                    @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
@@ -882,6 +907,7 @@ model Usuario {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model UsuarioTelefono {
   id_uste     Int      @id(map: "UsuarioTelefono_pk") @default(autoincrement()) @db.SmallInt
   id_telefono Int      @db.SmallInt
@@ -893,6 +919,7 @@ model UsuarioTelefono {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Video {
   id_video       Int          @id(map: "Video_pk") @default(autoincrement()) @db.SmallInt
   id_publicacion Int?
@@ -902,6 +929,7 @@ model Video {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Zona {
   id_zona     Int           @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
   nombre_zona String?       @db.VarChar(128)
@@ -913,8 +941,9 @@ model Zona {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model otp_cambio_correo {
-  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_otp         String   @id(map: "otp_cambio_correo_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
   nuevo_email    String   @db.VarChar(320)
   otp_hash       String
@@ -925,20 +954,11 @@ model otp_cambio_correo {
   consumido      Boolean  @default(false)
   creado_en      DateTime @default(now()) @db.Timestamptz(6)
   actualizado_en DateTime @default(now()) @db.Timestamptz(6)
-  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_otp_cambio_correo_usuario")
 
   @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
   @@index([expira_en], map: "idx_otp_cambio_correo_expira")
   @@index([id_usuario], map: "idx_otp_cambio_correo_usuario")
-  @@schema("public")
-}
-
-model verification_codes {
-  email      String    @id
-  code       String
-  expires_at DateTime  @db.Timestamp(6)
-  created_at DateTime? @default(now()) @db.Timestamp(6)
-
   @@schema("public")
 }
 
