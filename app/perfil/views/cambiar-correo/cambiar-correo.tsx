@@ -313,7 +313,7 @@ function NuevoCorreo({
         htmlFor="nuevo-correo-input"
         className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
       >
-        Nuevo Correo
+        Nuevo Correo <span className="text-red-300">*</span>
       </Label>
       <div className="relative">
         <Input
@@ -365,7 +365,7 @@ function Contrasena({
         htmlFor="contrasena-input"
         className="mb-2 block text-sm font-black uppercase tracking-wider text-white/70"
       >
-        Contraseña
+        Contraseña <span className="text-red-300">*</span>
       </Label>
       <div className="relative">
         <Input

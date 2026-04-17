@@ -193,6 +193,10 @@ export default function ConfirmarCorreoView({
               ? json.resendAfterSec
               : OTP_RESEND_SECONDS_FALLBACK,
           );
+          openErrorModal(
+            "Espera unos segundos antes de reenviar el código.",
+          );
+          return;
         }
         openErrorModal(json.message || "No se pudo reenviar el código.");
         return;
