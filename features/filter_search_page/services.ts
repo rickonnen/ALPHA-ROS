@@ -116,16 +116,30 @@ function getPropertyTypeNames(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function getOperationIds(value: string | undefined): number[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => OPERACION_ID[normalizeText(item)])
+    .filter((id): id is number => Boolean(id))
+    .filter((id, index, array) => array.indexOf(id) === index);
+}
+
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   const where: Prisma.PublicacionWhereInput = {
     id_estado: 1,
   };
 
-  if (filters.operacion) {
-    const operationId = OPERACION_ID[normalizeText(filters.operacion)];
-    if (operationId) {
-      where.id_tipo_operacion = operationId;
-    }
+  const operationIds = getOperationIds(filters.operacion);
+  if (operationIds.length === 1) {
+    where.id_tipo_operacion = operationIds[0];
+  } else if (operationIds.length > 1) {
+    where.id_tipo_operacion = {
+      in: operationIds,
+    };
   }
 
   const propertyTypeNames = getPropertyTypeNames(filters.tipoInmueble);

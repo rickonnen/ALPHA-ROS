@@ -15,6 +15,7 @@ import { FilterTypeProperty, type TipoInmueble } from '@/components/search/filte
 import {
   OperationTypeFilter,
   type OperationTypeValue,
+  operationTypeOptions,
 } from '@/components/search/operationTypeFilter';
 import PriceDropdown from '@/components/search/priceDropdown';
 import PropertyCard, { type Property } from '@/components/search/propertyCard';
@@ -63,22 +64,26 @@ function getQueryValues(value: string | null): string[] {
 }
 
 function mapQueryOperationToValue(value: string | null): OperationTypeValue {
-  const lastOperation = getQueryValues(value)
+  return getQueryValues(value)
     .map((item) => normalizeText(item))
-    .filter(Boolean)
-    .at(-1);
-
-  switch (lastOperation) {
-    case 'venta':
-    case 'compra':
-      return 'venta';
-    case 'alquiler':
-      return 'alquiler';
-    case 'anticretico':
-      return 'anticretico';
-    default:
-      return null;
-  }
+    .map((item) => {
+      switch (item) {
+        case 'venta':
+        case 'compra':
+        case 'en venta':
+          return 'venta';
+        case 'alquiler':
+        case 'en alquiler':
+          return 'alquiler';
+        case 'anticretico':
+          return 'anticretico';
+        default:
+          return null;
+      }
+    })
+    .filter((item, index, array): item is NonNullable<typeof item> =>
+      item !== null && array.indexOf(item) === index,
+    );
 }
 
 function mapQueryPropertyTypeToIds(value: string | null, options: TipoInmueble[]): number[] {
@@ -124,18 +129,14 @@ function toNumber(value: number | null | undefined): number {
 }
 
 function getOperationLabel(value: OperationTypeValue): string {
-  if (!value) {
+  if (value.length === 0) {
     return 'Todas las Operaciones';
   }
 
-  switch (value) {
-    case 'alquiler':
-      return 'Alquiler';
-    case 'anticretico':
-      return 'Anticrético';
-    default:
-      return 'Venta';
-  }
+  return operationTypeOptions
+    .filter((option) => value.includes(option.value))
+    .map((option) => option.label)
+    .join(', ');
 }
 
 function isRenderableImage(url: string): boolean {
@@ -181,9 +182,9 @@ function mapPublicationToProperty(
 
   return {
     id: publication.id_publicacion,
-    title: publication.titulo ?? 'Sin título',
+    title: publication.titulo ?? 'Sin tÃƒÆ’Ã‚Â­tulo',
     type: `${publication.tipo_inmueble ?? 'Inmueble'} en ${publication.tipo_operacion ?? getOperationLabel(selectedOperation)}`,
-    location: location || 'Ubicación no disponible',
+    location: location || 'UbicaciÃƒÆ’Ã‚Â³n no disponible',
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
@@ -205,7 +206,7 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
   const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
-  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>(null);
+  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>([]);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
@@ -220,7 +221,7 @@ function SearchPageContent() {
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
-        selectedOperation !== null ||
+        selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
@@ -260,7 +261,23 @@ function SearchPageContent() {
     const urlParams = new URLSearchParams();
 
     if (searchLocation) urlParams.set('ciudad', searchLocation);
-    if (selectedOperation !== null) urlParams.set('operaciones', selectedOperation);
+        if (selectedOperation.length > 0) {
+      const selectedOperationLabels = operationTypeOptions
+        .filter((option) => selectedOperation.includes(option.value))
+        .map((option) => {
+          switch (option.value) {
+            case 'venta':
+              return 'Venta';
+            case 'alquiler':
+              return 'Alquiler';
+            case 'anticretico':
+              return 'Anticrético';
+          }
+        })
+        .join(',');
+
+      urlParams.set('operaciones', selectedOperationLabels);
+    }
     if (selectedPropertyTypes.length > 0) {
       const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
       urlParams.set('tipo', labels);
@@ -293,7 +310,7 @@ function SearchPageContent() {
 
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
-        operacion: selectedOperation ?? undefined,
+        operacion: selectedOperation.length > 0 ? selectedOperation.join(',') : undefined,
         tipoInmueble: selectedPropertyLabels.join(','),
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
@@ -367,7 +384,7 @@ function SearchPageContent() {
 
     void runSearch({
       ubicacion: nextLocation,
-      operacion: nextOperation ?? undefined,
+      operacion: nextOperation.length > 0 ? nextOperation.join(',') : undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
@@ -406,7 +423,7 @@ function SearchPageContent() {
 
   const handleClearFilters = () => {
     setSearchLocation('');
-    setSelectedOperation(null);
+    setSelectedOperation([]);
     setSelectedPropertyTypes([]);
     setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
     setAppliedPriceFilter(null);
@@ -488,7 +505,7 @@ function SearchPageContent() {
               />
 
               <div className="my-4 h-px bg-[#D8D2C8]"></div>
-              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros Básicos</p>
+              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros BÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡sicos</p>
 
               <div className="space-y-3">
                 <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
