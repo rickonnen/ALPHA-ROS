@@ -1,5 +1,5 @@
 /**
- * Dev: Marcela C.
+ * Dev: Gustavo Montaño
  * Date: 27/03/2026
  * Funcionalidad: Vista desktop de detalles del inmueble en grilla 2 columnas
  *                (HU4 - Tasks 4.6, 4.7)

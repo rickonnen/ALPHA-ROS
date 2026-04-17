@@ -1,3 +1,13 @@
+/**
+ * Dev: Gustavo Montaño
+ * Date: 17/04/2026
+ * Funcionalidad: Footer con acciones para ver el historial de publicaciones o crear una nueva. Valida el estado de la suscripción/límite de publicaciones del usuario y limpia las variables de sessionStorage (borradores) antes de iniciar un nuevo registro.
+ * @param router - Hook de Next.js para la navegación hacia el perfil o el formulario de publicación
+ * @param user - Objeto del contexto de autenticación con los datos del usuario activo
+ * @param bolShowModal - Estado booleano que controla la apertura del modal de advertencia de límite alcanzado
+ * @param bolChecking - Estado booleano que muestra el estado de carga y deshabilita el botón de publicación durante la verificación
+ * @return JSX con los botones responsivos de acción y el componente FreePublicationLimitModal
+ */
 "use client";
 
 import { useRouter }          from "next/navigation";
