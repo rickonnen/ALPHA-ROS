@@ -14,20 +14,21 @@
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import ResultModal from "@/components/ui/modal";
+import { useAuth } from "@/app/auth/AuthContext";
 
 interface FavButtonProps {
-  id_usuario: string;
   id_publicacion: string;
   initialFav?: boolean;
   onRemoved?: (id_publicacion: string) => void;
 }
 
 export default function FavButton({
-  id_usuario,
   id_publicacion,
   initialFav = true,
   onRemoved,
 }: FavButtonProps) {
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
   const [esFavorito, setEsFavorito] = useState(initialFav);
   const [cargando, setCargando] = useState(false);
 
@@ -45,7 +46,7 @@ export default function FavButton({
       const res = await fetch("/api/perfil/addFav", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_usuario, id_publicacion }),
+        body: JSON.stringify({ userId, id_publicacion }),
       });
 
       if (!res.ok) {
@@ -75,7 +76,7 @@ export default function FavButton({
     try {
       setCargando(true);
       const res = await fetch(
-        `/api/perfil/deleteFav?id_usuario=${id_usuario}&id_publicacion=${id_publicacion}`,
+        `/api/perfil/deleteFav?id_usuario=${userId}&id_publicacion=${id_publicacion}`,
         { method: "DELETE" }
       );
 
