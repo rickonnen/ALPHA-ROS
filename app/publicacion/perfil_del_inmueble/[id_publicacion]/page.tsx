@@ -71,11 +71,8 @@ export default async function PerfilInmueblePage({
           />
           
           {/* BOTÓN SUPERPUESTO: Esquina inferior derecha */}
-          <div className="absolute bottom-6 right-6 z-20">
-            <FavButton
-              id_publicacion={intId.toString()} 
-              initialFav={false} // Cámbialo si ya sabes si es favorito
-            />
+          <div className="absolute bottom-14 right-8 z-20">
+            <FavButton id_publicacion={intId.toString()} />
           </div>
         </div>
         {/* Task 4.3: Precio y Superficie */}
