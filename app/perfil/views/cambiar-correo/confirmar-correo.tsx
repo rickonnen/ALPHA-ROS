@@ -32,11 +32,14 @@ import ResultModal from "@/components/ui/modal";
 interface ConfirmarCorreoProps {
   id_usuario: string;
   nuevo_email: string;
+  expires_in_sec?: number;
+  resend_after_sec?: number;
   onBack: () => void;
 }
 
 const OTP_LENGTH = 6;
-const OTP_EXP_SECONDS = 600; // 10 min
+const OTP_EXP_SECONDS_FALLBACK = 600; // 10 min
+const OTP_RESEND_SECONDS_FALLBACK = 60;
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split("@");
@@ -48,10 +51,16 @@ function maskEmail(email: string): string {
 export default function ConfirmarCorreoView({
   id_usuario,
   nuevo_email,
+  expires_in_sec,
+  resend_after_sec,
   onBack,
 }: ConfirmarCorreoProps) {
+  const intInitialOtpSeconds = expires_in_sec ?? OTP_EXP_SECONDS_FALLBACK;
+  const intInitialResendSeconds =
+    resend_after_sec ?? OTP_RESEND_SECONDS_FALLBACK;
   const [arrOtp, setArrOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
-  const [intTimeLeft, setIntTimeLeft] = useState(OTP_EXP_SECONDS);
+  const [intTimeLeft, setIntTimeLeft] = useState(intInitialOtpSeconds);
+  const [intResendLeft, setIntResendLeft] = useState(intInitialResendSeconds);
   const [bolSubmitting, setBolSubmitting] = useState(false);
   const arrRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -75,6 +84,14 @@ export default function ConfirmarCorreoView({
     return () => clearInterval(timer);
   }, [intTimeLeft]);
 
+  useEffect(() => {
+    if (intResendLeft <= 0) return;
+    const timer = setInterval(() => {
+      setIntResendLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [intResendLeft]);
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -88,9 +105,13 @@ export default function ConfirmarCorreoView({
     setBolShowResultModal(true);
   };
 
-  const openSuccessModal = (message: string, bolRedirect = false) => {
+  const openSuccessModal = (
+    title: string,
+    message: string,
+    bolRedirect = false,
+  ) => {
     setStrModalType("success");
-    setStrModalTitle("¡Correo Actualizado!");
+    setStrModalTitle(title);
     setStrModalMessage(message);
     setBolRedirectToPerfilOnClose(bolRedirect);
     setBolShowResultModal(true);
@@ -166,14 +187,38 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_COOLDOWN") {
+          setIntResendLeft(
+            Number.isFinite(json.resendAfterSec)
+              ? json.resendAfterSec
+              : OTP_RESEND_SECONDS_FALLBACK,
+          );
+          openErrorModal(
+            "Espera unos segundos antes de reenviar el código.",
+          );
+          return;
+        }
         openErrorModal(json.message || "No se pudo reenviar el código.");
         return;
       }
 
       setArrOtp(Array(OTP_LENGTH).fill(""));
-      setIntTimeLeft(OTP_EXP_SECONDS);
+      setIntTimeLeft(
+        Number.isFinite(json.expiresInSec)
+          ? json.expiresInSec
+          : OTP_EXP_SECONDS_FALLBACK,
+      );
+      setIntResendLeft(
+        Number.isFinite(json.resendAfterSec)
+          ? json.resendAfterSec
+          : OTP_RESEND_SECONDS_FALLBACK,
+      );
       arrRefs.current[0]?.focus();
-      openSuccessModal("Código reenviado correctamente.", false);
+      openSuccessModal(
+        "Código reenviado",
+        "Código reenviado correctamente.",
+        false,
+      );
     } catch (error) {
       console.error("Error al reenviar OTP:", error);
       openErrorModal("Error de red al reenviar código.");
@@ -199,11 +244,22 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_EXPIRED") {
+          openErrorModal(
+            "El código ya expiró. Solicita uno nuevo con Reenviar código.",
+          );
+          return;
+        }
+
         openErrorModal(json.message || "No se pudo verificar el código.");
         return;
       }
 
-      openSuccessModal("Tu correo se cambió exitosamente.", true);
+      openSuccessModal(
+        "¡Correo Actualizado!",
+        "Tu correo se cambió exitosamente.",
+        true,
+      );
     } catch (error) {
       console.error("Error al verificar OTP:", error);
       openErrorModal("Error de red al verificar el código.");
@@ -226,7 +282,7 @@ export default function ConfirmarCorreoView({
         </span>
       </Button>
       <div className="mb-4 border-b border-white/15" />
-      <div className="mx-auto mt-auto max-w-2xl rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
+      <div className="mt-auto w-full rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
         <div className="border-b border-white/15 p-5">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
@@ -297,7 +353,7 @@ export default function ConfirmarCorreoView({
             type="button"
             variant="outline"
             onClick={handleReenviar}
-            disabled={bolSubmitting}
+            disabled={bolSubmitting || intResendLeft > 0}
             className="order-2 h-11 w-full rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10 md:order-2 md:w-auto md:min-w-40"
           >
             <svg
@@ -312,13 +368,15 @@ export default function ConfirmarCorreoView({
               <path d="M 3 12 A 9 9 0 1 1 12 21" />
               <polyline points="17 21 12 21 13 16" />
             </svg>
-            Reenviar código
+            {intResendLeft > 0
+              ? `Reenviar en ${formatTime(intResendLeft)}`
+              : "Reenviar código"}
           </Button>
 
           <Button
             type="button"
             onClick={handleConfirmar}
-            disabled={!bolOtpCompleto || bolSubmitting || intTimeLeft === 0}
+            disabled={!bolOtpCompleto || bolSubmitting}
             className="order-1 h-11 w-full rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50 md:order-3 md:w-auto md:min-w-36"
           >
             {bolSubmitting ? "Verificando..." : "Confirmar"}
