@@ -23,7 +23,7 @@ import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, List, LayoutGrid } from 'lucide-react';
 import SearchMapClient from './SearchMapClient';
 import { convertPublicacionesToLocations } from '@/lib/locations';
 
@@ -199,6 +199,8 @@ function mapPublicationToProperty(
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
+
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [searchLocation, setSearchLocation] = useState('');
@@ -460,12 +462,46 @@ function SearchPageContent() {
           </svg>
           Mostrar Filtros
         </Button>
+
+        {/*boton mapa */}
         <div className="flex items-center gap-2">
           <label className="relative inline-flex cursor-pointer items-center">
             <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
             <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
           </label>
           <span className="text-sm font-medium text-gray-700">Mapa</span>
+        </div>
+      </div>
+
+      <div className="block md:hidden items-center justify-between gap-4 mb-4">
+        <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
+        <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
+
+        <div className="flex items-center gap-2 justify-between bg-transparent rounded-[10px]">
+          <div className="flex-1 max-w-[250px]">
+            <SortSelect onSortChange={handleSort} />
+          </div>
+        
+          {/* Botones de vista de grid/list*/}
+          <div className="flex items-center gap-2 shrink-0 bg-transparent rounded-[10px] mt-3">
+            {/* Botón de vista de grilla */}
+            <button
+              onClick={()=> setViewMode('grid')}
+              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+              aria-label="vista grilla"
+            >
+            <LayoutGrid className="h-5 w-5" />
+            </button>
+            {/* Botón de vista de lista */}
+            
+            <button
+              onClick={()=> setViewMode('list')}
+              className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+              aria-label="vista lista"
+            >
+            <List className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -505,7 +541,7 @@ function SearchPageContent() {
               />
 
               <div className="my-4 h-px bg-[#D8D2C8]"></div>
-              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros BÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡sicos</p>
+              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros Básicos</p>
 
               <div className="space-y-3">
                 <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
@@ -542,20 +578,44 @@ function SearchPageContent() {
           <div className="sticky top-8">
             <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+              
+              <div className="flex mb-6 items-center justify-between ">
 
-              <div className="mb-4 flex items-center gap-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isMapOpen}
-                    onChange={() => setIsMapOpen(!isMapOpen)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
-                </label>
-                <span className="text-sm font-medium text-gray-700">Mapa</span>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isMapOpen}
+                      onChange={() => setIsMapOpen(!isMapOpen)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
+                  </label>
+                  <span className="text-sm font-medium text-gray-700">Mapa</span>
+                </div>
+
+                {/* Botones de vista de grid/list - solo para desktop */}
+                <div className="mb-4 flex items-center gap-2">
+                  {/* Botón de vista de grilla */}
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+                    aria-label="vista grilla"
+                  >
+                  <LayoutGrid className="h-5 w-5" />
+                  </button>
+                  {/* Botón de vista de lista */}
+                  
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+                    aria-label="vista lista"
+                  >
+                  <List className="h-5 w-5" />
+                  </button>
+                </div>
+
               </div>
-
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
@@ -618,11 +678,11 @@ function SearchPageContent() {
             </div>
           </div>
 
-          <div className="mb-2 block md:hidden">
+          {/* <div className="mb-2 block md:hidden">
             <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
             <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
             <SortSelect onSortChange={handleSort} />
-          </div>
+          </div> */}
 
           {!hasSearched && isApplyingFilters ? (
             <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
@@ -635,12 +695,13 @@ function SearchPageContent() {
           ) : (
             <>
               <div className={`md:hidden ${isMapOpen ? 'hidden' : ''}`}>
-                <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                <div className={`grid grid-cols-1 gap-2 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                   {displayedProperties.map((property) => (
                     <PropertyCard
                       key={property.id}
                       property={property}
                       selectedCurrency={selectedCurrency}
+                      viewMode={viewMode}
                       isHovered={hoveredId === property.id}
                       onMouseEnter={() => {
                         setHoveredId(property.id);
@@ -660,15 +721,16 @@ function SearchPageContent() {
                   ))}
                 </div>
               </div>
-
+              {/* Vista de escritorio - se oculta en mobile si el mapa está abierto */}
               <div className="hidden md:block">
                 <ScrollArea className="h-[605px] pr-4">
-                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen || viewMode == 'list' ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                     {displayedProperties.map((property) => (
                       <PropertyCard
                         key={property.id}
                         property={property}
                         selectedCurrency={selectedCurrency}
+                        viewMode={viewMode}
                         isHovered={hoveredId === property.id}
                         onMouseEnter={() => {
                           setHoveredId(property.id);
