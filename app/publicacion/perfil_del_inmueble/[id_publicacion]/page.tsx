@@ -12,6 +12,7 @@ import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/compo
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
+import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import FavButton from "@/components/ui/fav";
 
 export default async function PerfilInmueblePage({
@@ -24,7 +25,6 @@ export default async function PerfilInmueblePage({
   if (isNaN(intId)) return notFound();
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
-
   // Task 4.5: Extraer video ID según plataforma
   const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
   const bolEsYoutube   = strVideoUrl
@@ -50,12 +50,10 @@ export default async function PerfilInmueblePage({
   objPerfil.Ubicacion?.direccion,
   objPerfil.Ubicacion?.zona,
 ].filter(Boolean).join(", ") || "Dirección no disponible";
-  
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
-
         {/* Task 4.3: Título */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
@@ -68,8 +66,7 @@ export default async function PerfilInmueblePage({
             arrImagenes={arrImagenes}
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
-          />
-          
+          />         
           {/* BOTÓN SUPERPUESTO: Esquina inferior derecha */}
           <div className="absolute bottom-14 right-8 z-20">
             <FavButton id_publicacion={intId.toString()} />
@@ -128,6 +125,26 @@ export default async function PerfilInmueblePage({
             </p>
           </div>
         </section>
+        {/* ContactCard */}
+        {(() => {
+          const arrTelefonos = objPerfil.Usuario?.UsuarioTelefono?.map(
+            (ut) => ut.Telefono ? `+${ut.Telefono.codigo_pais} ${ut.Telefono.nro_telefono}` : ""
+          ).filter(Boolean) || [];
+          return objPerfil.Usuario && (
+            <ContactCard 
+              strTituloInmueble={objPerfil.titulo || "Inmueble"}
+              objPropietario={{
+                strNombres: objPerfil.Usuario.nombres || "Usuario",
+                strApellidos: objPerfil.Usuario.apellidos || "",
+                strUsername: objPerfil.Usuario.username || "usuario",
+                strEmail: objPerfil.Usuario.email || "Correo no disponible",
+                strFotoUrl: objPerfil.Usuario.url_foto_perfil || null,
+                arrTelefonos: arrTelefonos, 
+                strDireccion: (objPerfil.Usuario as unknown as { direccion?: string }).direccion || null,
+              }} 
+            />
+          );
+        })()}
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
         <PropertyActions />
 
