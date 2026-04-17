@@ -16,7 +16,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
   useEffect(() => {
     setIsLogin(initialMode === "login");
   }, [initialMode]);
-
   if (!isOpen) return null;
 
   return (
@@ -61,8 +60,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
           ) : (
             <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} />
           )}
-        </div>
-      </div>
+        </div> 
+      </div>  
     </div>
   );
 }

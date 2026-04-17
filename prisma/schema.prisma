@@ -769,31 +769,46 @@ model Ubicacion {
 }
 
 model Usuario {
-  id_usuario                   String              @id(map: "Usuario_pk") @db.Uuid
-  email                        String?             @db.VarChar(320)
-  nombres                      String?             @db.VarChar(100)
-  apellidos                    String?             @db.VarChar(100)
-  ci                           String?             @db.VarChar(20)
+  id_usuario                   String                   @id(map: "Usuario_pk") @db.Uuid
+  email                        String?                  @db.VarChar(320)
+  nombres                      String?                  @db.VarChar(100)
+  apellidos                    String?                  @db.VarChar(100)
+  ci                           String?                  @db.VarChar(20)
   rol                          Int?
-  estado                       Int?                @db.SmallInt
-  direccion                    String?             @db.VarChar(200)
-  google_id                    String?             @db.VarChar(404)
+  estado                       Int?                     @db.SmallInt
+  direccion                    String?                  @db.VarChar(200)
+  google_id                    String?                  @db.VarChar(404)
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
-  username                     String?             @db.VarChar(128)
-  id_pais                      Int?                @db.SmallInt
+  username                     String?                  @db.VarChar(128)
+  id_pais                      Int?                     @db.SmallInt
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
   HistorialVistos              HistorialVistos[]
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
-  users                        users               @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
-  Pais                         Pais?               @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
-  Rol                          Rol?                @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  users                        users                    @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+  Pais                         Pais?                    @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
+  Rol                          Rol?                     @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  UsuarioAutenticacion2FA      UsuarioAutenticacion2FA?
   UsuarioTelefono              UsuarioTelefono[]
   otp_cambio_correo            otp_cambio_correo[]
 
+  @@schema("public")
+}
+
+model UsuarioAutenticacion2FA {
+  id_2fa               String   @id(map: "UsuarioAutenticacion2FA_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario           String   @unique @db.Uuid
+  secret_totp          String?
+  esta_activado        Boolean  @default(false)
+  codigos_recuperacion String[] @default([])
+  creado_en            DateTime @default(now()) @db.Timestamptz(6)
+  actualizado_en       DateTime @default(now()) @db.Timestamptz(6)
+  Usuario              Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_autenticacion2fa_usuario")
+
+  @@index([id_usuario], map: "idx_usuario_autenticacion2fa_usuario")
   @@schema("public")
 }
 
@@ -854,6 +869,15 @@ model otp_cambio_correo {
   @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
   @@index([expira_en], map: "idx_otp_cambio_correo_expira")
   @@index([id_usuario], map: "idx_otp_cambio_correo_usuario")
+  @@schema("public")
+}
+
+model verification_codes {
+  email      String    @id
+  code       String
+  expires_at DateTime  @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+
   @@schema("public")
 }
 
