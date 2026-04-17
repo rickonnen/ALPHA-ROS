@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client';
 
-import { convertBsToUsd } from './currencyConverter';
 import { prisma } from './prismaClient';
 
 export type SearchCurrency = 'USD' | 'BS';
@@ -84,6 +83,8 @@ const TIPO_INMUEBLE_ID: Record<string, number> = {
   terreno: 3,
 };
 
+const BS_EXCHANGE_RATE = 6.96;
+
 function normalizeText(value: string): string {
   return value
     .trim()
@@ -103,6 +104,14 @@ function toNumber(value: Prisma.Decimal | number | null | undefined): number | n
 function parseMinimum(value: string): number | null {
   const match = value.match(/\+?(\d+)/);
   return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function convertBsToUsd(amount: number): number {
+  return roundToTwo(amount / BS_EXCHANGE_RATE);
 }
 
 function getPropertyTypeNames(value: string | undefined): string[] {
