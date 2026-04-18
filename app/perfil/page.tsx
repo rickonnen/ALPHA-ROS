@@ -72,7 +72,9 @@ function PerfilContent() {
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [telefonos, setTelefonos] = useState<string[]>([]);
+  
   const [intRefreshKey, setIntRefreshKey] = useState(0);
 
   useEffect(() => {
