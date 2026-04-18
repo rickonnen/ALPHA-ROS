@@ -693,7 +693,7 @@ model PlanPublicacion {
   id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
   QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
-  Usuario            Usuario[]
+  Suscripcion        Suscripcion[]
 
   @@schema("public")
 }
@@ -801,6 +801,21 @@ model Sesion {
   @@schema("public")
 }
 
+model Suscripcion {
+  id_suscripcion  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario      String          @unique @db.Uuid
+  id_plan         Int             @db.SmallInt
+  fecha_inicio    DateTime        @default(now()) @db.Timestamptz(6)
+  fecha_fin       DateTime        @db.Timestamptz(6)
+  modalidad       String
+  notificado_7d   Boolean         @default(false)
+  notificado_48h  Boolean         @default(false)
+  PlanPublicacion PlanPublicacion @relation(fields: [id_plan], references: [id_plan], onUpdate: NoAction, map: "fk_plan")
+  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario")
+
+  @@schema("public")
+}
+
 model Telefono {
   id_telefono     Int               @id(map: "Telefono_pk") @default(autoincrement()) @db.SmallInt
   nro_telefono    String            @db.VarChar(12)
@@ -860,7 +875,6 @@ model Usuario {
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?                    @default(0)
-  id_plan                      Int?                    @db.SmallInt
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
@@ -872,7 +886,7 @@ model Usuario {
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
   Sesion                       Sesion[]
-  PlanPublicacion              PlanPublicacion?        @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
+  Suscripcion                  Suscripcion?
   users                        users                   @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
   Pais                         Pais?                   @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                    @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")

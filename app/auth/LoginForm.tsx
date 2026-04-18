@@ -89,8 +89,8 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
         },
         {
           enableHighAccuracy: false,
-          timeout: 3000,
-          maximumAge: 0,
+          timeout: 10000,
+          maximumAge: 60000,
         }
       );
     });
