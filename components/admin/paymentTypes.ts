@@ -13,6 +13,7 @@ export type PaymentRecord = {
   strDate: string;
   strPaymentMethod: string;
   strReceiptUrl?: string | null;
+  strReason?: string | null;
   intStatus: number; // 0: PENDING, 1: ACCEPTED, 2: REJECTED
 };
 
