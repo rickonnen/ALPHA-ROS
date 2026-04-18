@@ -60,6 +60,7 @@ import ConfirmModal from "@/components/ui/confirmModal";
 
 function PerfilContent() {
   const { user, logout } = useAuth();
+  const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
@@ -76,46 +77,49 @@ function PerfilContent() {
   const [telefonos, setTelefonos] = useState<string[]>([]);
   
   const [intRefreshKey, setIntRefreshKey] = useState(0);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setAuthReady(true), 500); // gracia para hidratación
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-  if (userId) {
-    setError(null);
-    const fetchUsuario = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
-        if (!res.ok) throw new Error("No se pudo cargar el perfil");
-        const json = await res.json();
-        setUsuario(json.data);
-        
-        const tels = json.data?.UsuarioTelefono?.filter((ut: any) =>
+    if (!authReady) return; // ← esperar antes de evaluar userId
+    
+    if (userId) {
+      setError(null);
+      const fetchUsuario = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
+          if (!res.ok) throw new Error("No se pudo cargar el perfil");
+          const json = await res.json();
+          setUsuario(json.data);
+          const tels = json.data?.UsuarioTelefono?.filter((ut: any) =>
             Boolean(ut.estado)
           ).map((ut: any) =>
-              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
+            `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
           ) ?? [];
-        setTelefonos(tels);
-      } catch (err: any) {
-        setError("Usuario no encontrado en la base de datos.");
-        await logout();
-        setTimeout(() => router.push("/"), 2000);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsuario();
-  } 
-  
-  else {
-    const timer = setTimeout(() => {
-      if (!userId) {
+          setTelefonos(tels);
+        } catch (err: any) {
+          setError("Usuario no encontrado.");
+          await logout();
+          setTimeout(() => router.push("/"), 2000);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUsuario();
+    } else {
+      // userId vacío incluso después del tiempo de gracia → sesión inválida
+      const timer = setTimeout(() => {
         setError("Sesión no válida. Redirigiendo...");
         router.push("/");
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }
-}, [userId, intRefreshKey, router]);
+      }, 8000); // ← más tiempo para el deploy (era 5000)
+    
+      return () => clearTimeout(timer);
+    }
+  }, [userId, authReady, intRefreshKey, router]);
 
   const handleTelefonosChange = (nuevosTelefonos: string[]) => {
     setTelefonos(nuevosTelefonos);
