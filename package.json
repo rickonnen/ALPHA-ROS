@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
-    "@supabase/supabase-js": "^2.103.0",
+    "@supabase/supabase-js": "^2.103.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",

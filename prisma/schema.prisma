@@ -527,7 +527,7 @@ model CategoriaNotificacion {
 model Ciudad {
   id_ciudad         Int            @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
   nombre_ciudad     String?        @db.VarChar(128)
-  descripcion_corta String?        @map("descripcion-corta")
+  descripcion_corta String?        @map("descripcion-corta") @db.VarChar(128)
   url_banner        String?
   CiudadImagen      CiudadImagen[]
   Ubicacion         Ubicacion[]
@@ -667,7 +667,7 @@ model Notificacion {
   email_enviado         Boolean?
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
-  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
+  Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
   Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_usuario")
 
@@ -692,8 +692,8 @@ model PlanPublicacion {
   activo             Boolean?      @default(false)
   id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
-  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
-  Usuario            Usuario[]
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onDelete: NoAction, onUpdate: NoAction, map: "fk_qr_url")
+  Suscripcion        Suscripcion[]
 
   @@schema("public")
 }
@@ -760,9 +760,9 @@ model Recuperacion_password {
   id_recuperacion  Int       @id @default(autoincrement())
   id_usuario       String    @db.Uuid
   codigo           String?   @db.VarChar(6)
-  fecha_creacion   DateTime? @default(now()) @db.Timestamptz(6)
+  fecha_creacion   DateTime? @db.Timestamptz(6)
   fecha_expiracion DateTime? @db.Timestamptz(6)
-  usado            Boolean?  @default(false)
+  usado            Boolean?
   metodo_envio     String?   @db.VarChar(128)
   Usuario          Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_recuperacion_usuario")
 
@@ -774,7 +774,7 @@ model RedesVinculadas {
   id_usuario   String   @db.Uuid
   proveedor    String?  @db.VarChar(50)
   id_proveedor String?  @db.VarChar(50)
-  estado       Boolean? @default(true)
+  estado       Boolean?
   Usuario      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_redesvinculadas_usuario")
 
   @@schema("public")
@@ -785,6 +785,33 @@ model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
   nombre_rol String?   @db.VarChar(30)
   Usuario    Usuario[]
+
+  @@schema("public")
+}
+
+model Sesion {
+  id_sesion         Int       @id @default(autoincrement())
+  id_usuario        String    @db.Uuid
+  latitud           Decimal?  @db.Decimal(9, 6)
+  longitud          Decimal?  @db.Decimal(9, 6)
+  fecha_hora_sesion DateTime? @db.Timestamptz(6)
+  ip                String?   @db.VarChar(128)
+  Usuario           Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_sesion_usuario")
+
+  @@schema("public")
+}
+
+model Suscripcion {
+  id_suscripcion  String          @id @db.Uuid
+  id_usuario      String          @unique @db.Uuid
+  id_plan         Int             @db.SmallInt
+  fecha_inicio    DateTime        @db.Timestamptz(6)
+  fecha_fin       DateTime        @db.Timestamptz(6)
+  modalidad       String
+  notificado_7d   Boolean
+  notificado_48h  Boolean
+  PlanPublicacion PlanPublicacion @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_suscripcion_plan")
+  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_suscripcion_usuario")
 
   @@schema("public")
 }
@@ -843,6 +870,7 @@ model Ubicacion {
 }
 
 model Usuario {
+  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   email                        String?                 @db.VarChar(320)
   nombres                      String?                 @db.VarChar(100)
   apellidos                    String?                 @db.VarChar(100)
@@ -854,13 +882,14 @@ model Usuario {
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?                 @db.VarChar(128)
-  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   id_pais                      Int?                    @db.SmallInt
   fecha_nac                    DateTime?               @db.Date
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
-  publicaciones_hechas         Int?                    @default(0)
+  publicaciones_hechas         Int?
   id_plan                      Int?                    @db.SmallInt
+  dos_fa_secreto              String?                 @db.VarChar(64)
+  dos_fa_habilitado           Boolean?                @default(false)
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
@@ -872,7 +901,7 @@ model Usuario {
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
   Sesion                       Sesion[]
-  PlanPublicacion              PlanPublicacion?        @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
+  Suscripcion                  Suscripcion?
   users                        users                   @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
   Pais                         Pais?                   @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
   Rol                          Rol?                    @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
