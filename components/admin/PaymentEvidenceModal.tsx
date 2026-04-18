@@ -23,7 +23,7 @@ export function PaymentEvidenceModal({
 }: PaymentEvidenceModalProps) {
   return (
     <Dialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl [&>button]:hidden">
+      <DialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
         <VisuallyHidden>
           <DialogTitle>Comprobante de Pago</DialogTitle>
         </VisuallyHidden>
