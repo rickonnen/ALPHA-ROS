@@ -1,29 +1,29 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState }      from 'react'
+import { useRouter }     from 'next/navigation'
+import { DatosAvisoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
 
-// ── Componentes del form (tuyos) ──────────────────────────────
+//Componentes del form 
 // Descomenta cada import cuando tengas el componente listo
-// import { DatosAvisoForm }      from '@/features/publicacion/steps/DatosAvisoForm'
-// import { CategoriaEstadoForm } from '@/features/publicacion/steps/CategoriaEstadoForm'
+// import { CategoriaEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstadoForm'
 // import { UbicacionForm }       from '@/features/publicacion/steps/UbicacionForm'
 // import { CaracteristicasForm } from '@/features/publicacion/steps/CaracteristicasForm'
 // import { ImagenesForm }        from '@/features/publicacion/steps/ImagenesForm'
 // import { VideoForm }           from '@/features/publicacion/steps/VideoForm'
 // import { DescripcionForm }     from '@/features/publicacion/steps/DescripcionForm'
 
-// ── Componente del stepper (otro equipo) ──────────────────────
+//Componente del stepper (stefa y andres) 
 // import { PublicacionStepper }  from '@/features/publicacion/components/PublicacionStepper'
 
-// ── Componentes UI ────────────────────────────────────────────
+// ── Componentes UI 
 import { Button } from '@/components/ui/button'
 
-// ─────────────────────────────────────────────────────────────
+
 // Configuración de pasos
 // Aquí defines el título que aparece en el cuadro azul
 // y el componente que se renderiza en cada paso
-// ─────────────────────────────────────────────────────────────
+
 const STEPS = [
   { title: 'Datos del Aviso'    },
   { title: 'Categoría y Estado' },
@@ -34,9 +34,9 @@ const STEPS = [
   { title: 'Descripción'        },
 ]
 
-// ─────────────────────────────────────────────────────────────
-// 🎨 AJUSTES DE DISEÑO — Toca solo esta sección para personalizar
-// ─────────────────────────────────────────────────────────────
+// 
+//  AJUSTES DE DISEÑO — Toca solo esta sección para personalizar
+// 
 const DISENO = {
 
   // Fondo de toda la página
@@ -52,7 +52,7 @@ const DISENO = {
   // Súbelo para bajar todo el contenido, bájalo para subirlo
   paddingVertical: '24px',
 
-  // Título "Crear publicación" — encima del contenedor
+  // Título "Crear publicación"  encima del contenedor
   tituloPagina: {
     fontSize:     '60px',
     fontWeight:   '700',
@@ -124,15 +124,9 @@ const DISENO = {
     fontWeight:      '600',
   },
 }
-// ─────────────────────────────────────────────────────────────
 // Fin de ajustes de diseño
-// ─────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────
 // Placeholder temporal — reemplaza por el componente real
 // cuando esté listo
-// ─────────────────────────────────────────────────────────────
 function StepPlaceholder({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center h-full text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded-lg">
@@ -142,12 +136,10 @@ function StepPlaceholder({ title }: { title: string }) {
 }
 
 
-// ─────────────────────────────────────────────────────────────
 // Decide qué componente renderizar según el paso actual
 // Cuando tengas cada componente listo:
 //   1. Descomenta el import arriba
 //   2. Reemplaza el StepPlaceholder por el componente real
-// ─────────────────────────────────────────────────────────────
 function StepContent({
   step,
   onNext,
@@ -158,7 +150,7 @@ function StepContent({
   onBack: () => void
 }) {
   switch (step) {
-    case 0: return <StepPlaceholder title={STEPS[0].title} />
+    case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
     // case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
 
     case 1: return <StepPlaceholder title={STEPS[1].title} />
@@ -214,14 +206,14 @@ export default function CrearPublicacionPage() {
       }}
     >
 
-      {/* ── Título de la página ─────────────────────────────── */}
+      {/* Título de la página*/}
       <div style={{ width: '100%', maxWidth: DISENO.contenedor.maxWidth }}>
         <h1 style={DISENO.tituloPagina}>
           Crear publicación
         </h1>
       </div>
 
-      {/* ── Contenedor principal (naranja + azul) ──────────── */}
+      {/* Contenedor principal (naranja + azul) */}
       <div
         style={{
           width:        '100%',
@@ -234,14 +226,14 @@ export default function CrearPublicacionPage() {
         }}
       >
 
-        {/* ── Panel izquierdo — stepper (otro equipo) ────────
+        {/*  Panel izquierdo — stepper (otro equipo)
             Cuando el otro equipo entregue su componente:
             Reemplaza el contenido de este div por:
             <PublicacionStepper currentStep={currentStep} steps={STEPS} />
             Props que necesita el componente:
               - currentStep: número del paso actual (0–6)
               - steps: array con los títulos de cada paso
-        ─────────────────────────────────────────────────── */}
+         */}
         <div
           style={{
             width:           DISENO.panelIzquierdo.width,
@@ -258,7 +250,7 @@ export default function CrearPublicacionPage() {
           </p>
         </div>
 
-        {/* ── Panel derecho — azul ───────────────────────────── */}
+        {/* Panel derecho — azul */}
         <div
           style={{
             flex:            1,
