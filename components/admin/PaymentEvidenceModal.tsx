@@ -23,7 +23,7 @@ export function PaymentEvidenceModal({
 }: PaymentEvidenceModalProps) {
   return (
     <Dialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] w-[95%] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl [&>button]:hidden">
+      <DialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl [&>button]:hidden">
         <VisuallyHidden>
           <DialogTitle>Comprobante de Pago</DialogTitle>
         </VisuallyHidden>
@@ -42,7 +42,7 @@ export function PaymentEvidenceModal({
               <img 
                 src={strUrl} 
                 alt="Comprobante de transferencia" 
-                className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm border border-border"
+                className="w-auto h-auto max-w-full max-h-[50vh] md:max-h-[60vh] object-contain rounded-lg shadow-sm border border-gray-100"
               />
             ) : (
               <div className="flex items-center justify-center text-muted-foreground italic">
@@ -56,7 +56,7 @@ export function PaymentEvidenceModal({
             <Button
               onClick={() => onOpenChange(false)}
               variant="default"
-              className="hover:bg-[#444] flex-1 font-bold px-12 py-6 active:scale-95 transition-transform">
+              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-8 sm:px-12 rounded-xl py-5 sm:py-6 transition-all active:scale-95 text-sm">
               Volver
             </Button>
           </div> 
