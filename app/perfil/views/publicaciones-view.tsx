@@ -31,6 +31,10 @@
       - Botón "+ Agregar" en el header redirige a /publicaciones/nueva
       - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del título de la sección principal a "Publicaciones".
+*/
 
 "use client";
 import { Button } from "@/components/ui/button";
@@ -158,7 +162,7 @@ export default function PublicacionesView({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
-              Mis publicaciones
+              Publicaciones
             </CardTitle> 
             <div className="flex items-center justify-center gap-2">
               <span className="text-white/60 text-sm whitespace-nowrap">
