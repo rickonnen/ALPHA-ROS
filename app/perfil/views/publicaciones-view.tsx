@@ -188,7 +188,6 @@ export default function PublicacionesView({
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
-
             </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
@@ -221,7 +220,7 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando && publicaciones.length > 0 && (
-            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1">
               {publicaciones.map((pub) => (
                 <PublicacionCard
                   key={pub.id}
