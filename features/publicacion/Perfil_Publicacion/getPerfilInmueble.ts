@@ -33,6 +33,8 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
         select: {
           direccion: true,
           zona:      true,
+          latitud: true,
+          longitud: true,
           Ciudad:    { select: { nombre_ciudad: true } },
         },
       },
@@ -67,7 +69,7 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
                 }
               }
             },
-            take: 3 // Tomamos solo el primer teléfono asociado
+            take: 3
           }
         }
       }
