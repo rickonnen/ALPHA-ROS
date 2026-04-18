@@ -79,12 +79,12 @@ function PerfilContent() {
   const [intRefreshKey, setIntRefreshKey] = useState(0);
   
   useEffect(() => {
-    const timer = setTimeout(() => setAuthReady(true), 500); // gracia para hidratación
+    const timer = setTimeout(() => setAuthReady(true), 500);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (!authReady) return; // ← esperar antes de evaluar userId
+    if (!authReady) return;
     
     if (userId) {
       setError(null);
