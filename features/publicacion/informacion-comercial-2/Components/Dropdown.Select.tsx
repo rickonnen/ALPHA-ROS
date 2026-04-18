@@ -145,7 +145,7 @@ export default function DropdownSelect({
                 role="option"
                 aria-selected={strOpt === value}
                 onClick={() => handleSelect(strOpt)}
-                className="flex items-center gap-2 py-[12px] pr-[16px] pl-[32px] text-[0.88rem] text-[#1A1714] hover:bg-[#f5f5f5] cursor-pointer"
+                className="flex items-center gap-2 py-[6px] pr-[16px] pl-[32px] text-[0.88rem] text-[#1A1714] hover:bg-[#f5f5f5] cursor-pointer"
               >
                 {/* Checkmark para la opción seleccionada */}
                 <span className="w-4 flex-shrink-0 absolute left-2">
