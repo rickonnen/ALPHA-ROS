@@ -12,8 +12,9 @@ import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/compo
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
-import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
-import FavButton from "@/components/ui/fav";
+import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
+import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import FavButton             from "@/components/ui/fav";
 
 export default async function PerfilInmueblePage({
   params,
@@ -47,9 +48,12 @@ export default async function PerfilInmueblePage({
     : null;
   // Task 4.8: Dirección desde relación Ubicacion
   const strDireccion = [
-  objPerfil.Ubicacion?.direccion,
-  objPerfil.Ubicacion?.zona,
-].filter(Boolean).join(", ") || "Dirección no disponible";
+    objPerfil.Ubicacion?.direccion,
+    objPerfil.Ubicacion?.zona,
+  ].filter(Boolean).join(", ") || "Dirección no disponible";
+  // Extraemos y convertimos a número las coordenadas (si existen)
+  const lat = objPerfil.Ubicacion?.latitud ? Number(objPerfil.Ubicacion.latitud) : null;
+  const lng = objPerfil.Ubicacion?.longitud ? Number(objPerfil.Ubicacion.longitud) : null;
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
@@ -95,11 +99,17 @@ export default async function PerfilInmueblePage({
             </div>
           </div>
         </div>
-        {/* Task 4.8: Dirección */}
-        <div className="mb-12 text-xl">
-          <p>
+        {/* Task 4.8: Dirección y Mapa */}
+        <div className="mb-12">
+          <p className="text-xl mb-6">
             <span className="font-bold text-[#1F3A4D]">Dirección:</span> {strDireccion}
           </p>
+          {/* Renderizamos el mapa SOLO si tenemos latitud y longitud válidas */}
+          {lat !== null && lng !== null ? (
+            <LocationMapClient lat={lat} lng={lng} />
+          ) : (
+            <p className="text-sm italic text-gray-500">Ubicación exacta en el mapa no disponible.</p>
+          )}
         </div>
         {/* Task 4.6 + 4.7: Detalles */}
         <PropertyDetails
