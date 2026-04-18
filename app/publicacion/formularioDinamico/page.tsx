@@ -7,6 +7,8 @@ import { CategoriaYEstadoForm } from '@/features/publicacion/FormularioDinamicoC
 import { useCategoriaForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
 import { CaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/CaracteristicasDetalleForm'
 import { useCaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/useCaracteristicasDetalleForm'
+import { ImagenesForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/ImagenesForm'
+import { VideoForm }    from '@/features/publicacion/FormularioDinamicoCaracteristicas/Video/Videoform'
 // import { PublicacionStepper }  from '@/features/publicacion/components/PublicacionStepper'
 
 import { Button } from '@/components/ui/button'
@@ -17,7 +19,7 @@ const STEPS = [
   { title: 'Ubicación'          },
   { title: 'Características'    },
   { title: 'Imágenes'           },
-  { title: 'Video'              },
+  { title: 'Video '              },
   { title: 'Descripción'        },
 ]
 
@@ -118,6 +120,7 @@ function CaracteristicasDetalleStep() {
     />
   )
 }
+
 function StepContent({
   step,
   onNext,
@@ -132,8 +135,8 @@ function StepContent({
     case 1: return <CategoriaEstadoStep />
     case 2: return <StepPlaceholder title={STEPS[2].title} />
     case 3: return <CaracteristicasDetalleStep />
-    case 4: return <StepPlaceholder title={STEPS[4].title} />
-    case 5: return <StepPlaceholder title={STEPS[5].title} />
+    case 4: return <ImagenesForm onNext={onNext} onBack={onBack} />
+    case 5: return <VideoForm onNext={onNext} onBack={onBack} />
     case 6: return <StepPlaceholder title={STEPS[6].title} />
     default: return null
   }
