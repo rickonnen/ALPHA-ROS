@@ -10,17 +10,19 @@
  */
 'use client'
 
-import { useRef, useState }  from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Label }             from '@/components/ui/label'
 import { useImagenesForm }   from './useImagenesForm'
 import { MAX_FILES }         from './useImagenesTypes'
 
+
 interface ImagenesFormProps {
-  onNext: () => void
-  onBack: () => void
+  onNext:    () => void
+  onBack:    () => void
+  submitRef: React.MutableRefObject<(() => void) | null>
 }
 
-export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
+export function ImagenesForm({ onNext, onBack, submitRef }: ImagenesFormProps) {
   const {
     values,
     errors,
@@ -32,6 +34,11 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
     handleEliminar,
     handleSubmit,
   } = useImagenesForm()
+   
+  useEffect(() => {
+    submitRef.current = () => handleSubmit(() => onNext())
+    return () => { submitRef.current = null }
+  }, [handleSubmit, onNext, submitRef])
 
   const inputRef                    = useRef<HTMLInputElement>(null)
   const [dragging,  setDragging]    = useState(false)
@@ -121,7 +128,7 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
           {/* Imagen principal */}
           <div
             className="relative rounded-xl overflow-hidden flex-1"
-            style={{ minHeight: '180px', backgroundColor: '#EDE8E0' }}
+            style={{ minHeight: '180px', backgroundColor: '#F4EFE6' }}
           >
             <img
               src={previews[selected]}
