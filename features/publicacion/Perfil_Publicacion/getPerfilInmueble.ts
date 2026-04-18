@@ -40,6 +40,10 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
         },
       },
       Zona:   { select: { nombre_zona: true } },
+      
+      EstadoPublicacion: {
+        select: { nombre_estado: true },
+},
       EstadoConstruccion: {
         select: { nombre_estado_construccion: true },
       },

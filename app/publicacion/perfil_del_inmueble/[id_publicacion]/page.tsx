@@ -15,6 +15,7 @@ import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/compo
 import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
 import FavButton             from "@/components/ui/fav";
+import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 
 export default async function PerfilInmueblePage({
   params,
@@ -59,10 +60,14 @@ export default async function PerfilInmueblePage({
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
         {/* Task 4.3: Título */}
+        {/* Task 4.3: Título */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
+          <PublicationStatusBadge
+            strEstado={objPerfil.EstadoPublicacion?.nombre_estado}
+          />
         </header>
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
         <div className="relative group rounded-3xl overflow-hidden">
@@ -132,7 +137,7 @@ export default async function PerfilInmueblePage({
         {/* Task 4.8: Descripción */}
         <section className="mt-6 mb-6">
           <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
-            <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
+            <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
               Descripción
             </h2>
             <p className="whitespace-pre-line text-base leading-relaxed opacity-90 break-words">
