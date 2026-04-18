@@ -522,6 +522,15 @@ function SearchPageContent() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:min-h-[calc(100vh-200px)]">
         <aside className="hidden md:col-span-3 md:block">
+
+          <button className="mb-3 flex w-full items-center gap-2 rounded-xl bg-[#C26E5A] px-4 py-2.5 text-base font-semibold text-white hover:bg-[#b05e4a] transition-colors">
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+  </svg>
+  Dibujar zona
+</button>
+
           <div className="sticky top-8">
             <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
