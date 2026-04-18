@@ -216,6 +216,7 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -686,16 +687,39 @@ function SearchPageContent() {
         </main>
 
         {isMapOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden">
-            <SearchMapClient 
-              locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
-              hoveredId={hoveredId}
-              selectedPos={selectedPos}
-              hoveredPos={hoveredPos}
-              setSelectedPos={setSelectedPos}
-            />
-          </div>
-        )}
+  <div className={`
+    ${isMapFullscreen 
+      ? 'fixed inset-0 z-[200]' 
+      : 'fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden'
+    }
+  `}>
+    {/* Botón fullscreen - siempre visible */}
+    <button
+      onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+      className="absolute top-3 right-3 z-[999] flex items-center justify-center h-9 w-9 rounded-lg bg-white shadow-md hover:bg-gray-100 transition-colors"
+      title={isMapFullscreen ? 'Compactar mapa' : 'Expandir mapa'}
+    >
+      {isMapFullscreen ? (
+        <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+        </svg>
+      ) : (
+        <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+      )}
+    </button>
+
+    <SearchMapClient
+  key={isMapFullscreen ? 'fullscreen' : 'normal'}
+  locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
+  hoveredId={hoveredId}
+  selectedPos={selectedPos}
+  hoveredPos={hoveredPos}
+  setSelectedPos={setSelectedPos}
+/>
+  </div>
+)}
       </div>
     </div>
   );
