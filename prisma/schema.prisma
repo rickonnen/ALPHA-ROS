@@ -956,21 +956,6 @@ model verification_codes {
   @@schema("public")
 }
 
-model Suscripcion {
-  id_suscripcion  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  id_usuario      String          @unique @db.Uuid
-  id_plan         Int             @db.SmallInt
-  fecha_inicio    DateTime        @default(now()) @db.Timestamptz(6)
-  fecha_fin       DateTime        @db.Timestamptz(6)
-  modalidad       String
-  notificado_7d   Boolean         @default(false)
-  notificado_48h  Boolean         @default(false)
-  PlanPublicacion PlanPublicacion @relation(fields: [id_plan], references: [id_plan], onUpdate: NoAction, map: "fk_plan")
-  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario")
-
-  @@schema("public")
-}
-
 enum aal_level {
   aal1
   aal2
