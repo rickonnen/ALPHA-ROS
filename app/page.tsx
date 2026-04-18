@@ -7,7 +7,7 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center bg-[#F4EFE6] w-full overflow-x-hidden">
       {/* ── Banner ── */}
       <section className="w-full">
-        <Banner />
+        <Banner /> 
       </section>
       {/* ── Filtros ── */}
       <section className="w-full px-4 py-6 sm:px-6 lg:px-10">
