@@ -31,6 +31,11 @@
       - Botón "+ Agregar" en el header redirige a /publicaciones/nueva
       - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del título de la sección principal a "Publicaciones".
+    Feat: Implementación de estados focus-visible para navegación por teclado en el botón "+ Agregar".
+*/
 
 "use client";
 import { Button } from "@/components/ui/button";
@@ -158,7 +163,7 @@ export default function PublicacionesView({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
-              Mis publicaciones
+              Publicaciones
             </CardTitle> 
             <div className="flex items-center justify-center gap-2">
               <span className="text-white/60 text-sm whitespace-nowrap">
@@ -168,10 +173,11 @@ export default function PublicacionesView({
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60"
+                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
+
             </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />

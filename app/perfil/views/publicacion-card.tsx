@@ -12,6 +12,10 @@
       - @param {onInfo}      - callback para ver el detalle de la publicación
       - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del texto del botón secundario a "Ver detalle".
+*/
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -70,7 +74,7 @@ export default function PublicacionCard({
               router.push(`/publicacion/perfil_del_inmueble/${publicacion.id}`)
             }
           >
-            Info.
+            Ver detalle
           </Button>
           <Button
             size="sm"
