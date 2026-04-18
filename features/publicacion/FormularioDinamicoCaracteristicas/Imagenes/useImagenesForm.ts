@@ -1,28 +1,48 @@
-import { useState, useCallback, useRef, useEffect, startTransition, useMemo } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { ImagenesValues, ImagenesErrors, INITIAL_VALUES, MAX_FILES } from './useImagenesTypes'
-import { validate, validateImageDimensions }                          from './useImagenesValidacion'
-import { marcarInteraccion, leerInteraccion, limpiarInteraccion }     from './useImagenesPersistencia'
+import { validate }                                                    from './useImagenesValidacion'
+import {
+  guardarImagenes,
+  leerImagenes,
+  limpiarImagenes,
+  marcarSesionActiva,
+  haySecionActiva,
+} from './imagenesDB'
 
 export function useImagenesForm() {
   const [values,     setValues]     = useState<ImagenesValues>(INITIAL_VALUES)
   const [errors,     setErrors]     = useState<ImagenesErrors>({})
   const [touched,    setTouched]    = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
-  const [wasVisited, setWasVisited] = useState(false)
+  const [cargando,   setCargando]   = useState(true) // true mientras lee IndexedDB
 
   const valuesRef = useRef(values)
 
-  // Detectar si el usuario había subido imágenes y recargó la página
+  // ── Al montar: decide si restaurar o limpiar ──
   useEffect(() => {
-    const interacted = leerInteraccion()
-    if (interacted && valuesRef.current.imagenes.length === 0) {
-      startTransition(() => setWasVisited(true))
-    } else {
-      limpiarInteraccion()
+    async function inicializar() {
+      if (haySecionActiva()) {
+        // El usuario recargó la página (F5) — restaurar imágenes de IndexedDB
+        const archivosGuardados = await leerImagenes()
+        if (archivosGuardados.length > 0) {
+          const restored = { imagenes: archivosGuardados }
+          valuesRef.current = restored
+          setValues(restored)
+        }
+      } else {
+        // El usuario entró de cero — limpiar IndexedDB por si quedó algo de antes
+        await limpiarImagenes()
+        // Marcar que hay una sesión activa
+        // sessionStorage se borra solo cuando cierra la pestaña
+        marcarSesionActiva()
+      }
+      setCargando(false)
     }
+
+    inicializar()
   }, [])
 
-  // URLs de preview estables — evita re-renders que pierden archivos
+  // ── Previews estables ─────────────────────────
   const previews = useMemo(
     () => values.imagenes.map(f => URL.createObjectURL(f)),
     [values.imagenes],
@@ -33,9 +53,9 @@ export function useImagenesForm() {
 
   const limitReached = values.imagenes.length >= MAX_FILES
 
+  // ── Agregar imágenes ──────────────────────────
   const handleAgregar = useCallback(async (files: FileList | File[]) => {
     setFieldError(null)
-    setWasVisited(false)
 
     const arrFiles = Array.from(files)
 
@@ -45,20 +65,9 @@ export function useImagenesForm() {
         setFieldError('Solo se aceptan imágenes JPG y PNG.')
         return
       }
-      // Peso
-      if (file.size > 10 * 1024 * 1024) {
-        setFieldError('El archivo supera el peso máximo de 10 MB.')
-        return
-      }
       // Límite
       if (valuesRef.current.imagenes.length >= MAX_FILES) {
         setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
-        return
-      }
-      // Dimensiones y aspecto
-      const { ok, error: dimError } = await validateImageDimensions(file)
-      if (!ok) {
-        setFieldError(dimError ?? 'Imagen no válida.')
         return
       }
 
@@ -67,28 +76,30 @@ export function useImagenesForm() {
       }
       valuesRef.current = updated
       setValues(updated)
-      marcarInteraccion()
 
-      if (touched) {
-        setErrors(validate(updated))
-      }
+      // ✅ Guardar en IndexedDB para sobrevivir recarga
+      await guardarImagenes(updated.imagenes)
+
+      if (touched) setErrors(validate(updated))
     }
   }, [touched])
 
-  const handleEliminar = useCallback((indice: number) => {
+  // ── Eliminar imagen ───────────────────────────
+  const handleEliminar = useCallback(async (indice: number) => {
     setFieldError(null)
     const updated = {
       imagenes: valuesRef.current.imagenes.filter((_, i) => i !== indice),
     }
-    if (updated.imagenes.length === 0) {
-      limpiarInteraccion()
-      setWasVisited(false)
-    }
     valuesRef.current = updated
     setValues(updated)
+
+    // ✅ Actualizar IndexedDB con la lista sin la imagen eliminada
+    await guardarImagenes(updated.imagenes)
+
     if (touched) setErrors(validate(updated))
   }, [touched])
 
+  // ── Envío ─────────────────────────────────────
   const handleSubmit = useCallback((onSuccess: (values: ImagenesValues) => void) => {
     setTouched(true)
     const validationErrors = validate(valuesRef.current)
@@ -98,14 +109,15 @@ export function useImagenesForm() {
     }
   }, [])
 
-  const handleReset = useCallback(() => {
-    limpiarInteraccion()
+  // ── Reset ─────────────────────────────────────
+  const handleReset = useCallback(async () => {
+    // ✅ Limpia IndexedDB y la sesión
+    await limpiarImagenes()
     valuesRef.current = INITIAL_VALUES
     setValues(INITIAL_VALUES)
     setErrors({})
     setTouched(false)
     setFieldError(null)
-    setWasVisited(false)
   }, [])
 
   return {
@@ -113,7 +125,7 @@ export function useImagenesForm() {
     errors,
     touched,
     fieldError,
-    wasVisited,
+    cargando,      // usar para mostrar un spinner mientras restaura
     previews,
     limitReached,
     isValid: Object.keys(validate(values)).length === 0,

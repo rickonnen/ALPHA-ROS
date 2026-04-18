@@ -26,7 +26,6 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
     errors,
     touched,
     fieldError,
-    wasVisited,
     previews,
     limitReached,
     handleAgregar,
@@ -78,18 +77,18 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
         >
           {/* Ícono nube */}
           <svg
-            viewBox="0 0 64 48"
+            viewBox="0 0 64 64"
             fill="none"
-            style={{ width: '64px', height: '48px' }}
+            style={{ width: '64px', height: '64px' }}
           >
-            <path
-              d="M52 20.5C51.3 13.4 45.3 8 38 8c-5.8 0-10.8 3.4-13.2 8.4C20.5 16.9 16 21.6 16 27.5 16 33.9 21.1 39 27.5 39H51c5.5 0 10-4.5 10-10 0-5.1-3.8-9.3-8.7-9.9-.1 0-.2 0-.3.1z"
-              fill="none"
-              stroke="#C26E5A"
-              strokeWidth="2"
-            />
-            <polyline points="26,28 32,22 38,28" stroke="#C26E5A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-            <line x1="32" y1="22" x2="32" y2="38" stroke="#C26E5A" strokeWidth="2" strokeLinecap="round"/>
+          <path
+            d="M46 28.5C45.3 21.4 39.3 16 32 16c-5.8 0-10.8 3.4-13.2 8.4C14.5 24.9 10 29.6 10 35.5 10 41.9 15.1 47 21.5 47H45c5.5 0 10-4.5 10-10 0-5.1-3.8-9.3-8.7-9.9-.1 0-.2 0-.3.1z"
+            stroke="#C26E5A"
+            strokeWidth="2"
+          />
+          <line x1="32" y1="47" x2="32" y2="31" stroke="#C26E5A" strokeWidth="2" strokeLinecap="round"/>
+          <polyline points="26,38 32,31 38,39
+          " stroke="#C26E5A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
 
           <div className="text-center">
@@ -100,7 +99,7 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
               o haga click para seleccionar
             </p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Minimo 1 - Maximo 5 — Proporcion 4:3 o 16:9
+              Minimo 1 - Maximo 5 
             </p>
           </div>
 
@@ -127,8 +126,8 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
             <img
               src={previews[selected]}
               alt={`Imagen principal ${selected + 1}`}
-              className="w-full h-full object-cover"
-              style={{ maxHeight: '220px' }}
+              className="w-full object-contain"
+              style={{ maxHeight: '220px', width: '100%' }}
             />
             {/* Botón eliminar imagen principal */}
             <button
@@ -208,13 +207,6 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
       {showError && (
         <span className="text-red-500 text-xs">
           {fieldError ?? errors.imagenes}
-        </span>
-      )}
-
-      {/* Aviso de recarga */}
-      {wasVisited && !hasFiles && (
-        <span className="text-red-500 text-xs">
-          Por favor, inserte sus imágenes de nuevo.
         </span>
       )}
 

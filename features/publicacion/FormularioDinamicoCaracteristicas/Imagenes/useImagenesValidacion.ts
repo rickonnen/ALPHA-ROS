@@ -1,4 +1,3 @@
-
 import {
   ImagenesValues,
   ImagenesErrors,
@@ -8,6 +7,8 @@ import {
   MAX_SIZE_BYTES,
 } from './useImagenesTypes'
 
+// ── Validación de formulario ──────────────────
+// Sin restricciones de resolución ni proporción
 export function validate(values: ImagenesValues): ImagenesErrors {
   const errors: ImagenesErrors = {}
 
@@ -33,34 +34,7 @@ export function validate(values: ImagenesValues): ImagenesErrors {
   return errors
 }
 
-// Reutilizada del sprint anterior — valida dimensiones y aspecto
-export function validateImageDimensions(
-  file: File,
-): Promise<{ ok: boolean; error?: string }> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      const { width, height } = img
-      if (width < 1280 || height < 720) {
-        URL.revokeObjectURL(url)
-        return resolve({
-          ok:    false,
-          error: `Resolución mínima 1280×720px. Tu imagen: ${width}×${height}px.`,
-        })
-      }
-      const ratio      = width / height
-      const ratioValid = [4 / 3, 16 / 9].some(r => Math.abs(ratio - r) <= 0.02)
-      if (!ratioValid) {
-        URL.revokeObjectURL(url)
-        return resolve({
-          ok:    false,
-          error: 'Solo se permiten proporciones 4:3 o 16:9.',
-        })
-      }
-      URL.revokeObjectURL(url)
-      resolve({ ok: true })
-    }
-    img.src = url
-  })
-}
+// ── validateImageDimensions eliminada ────────
+// Ya no se valida resolución mínima ni proporción (4:3 / 16:9)
+// Si en el futuro se necesita volver a activar,
+// restaurar la función del sprint anterior
