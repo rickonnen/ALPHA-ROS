@@ -3,26 +3,12 @@
 import { useState }      from 'react'
 import { useRouter }     from 'next/navigation'
 import { DatosAvisoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
+import { CategoriaYEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
+import { useCategoriaForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
 
-//Componentes del form 
-// Descomenta cada import cuando tengas el componente listo
-// import { CategoriaEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstadoForm'
-// import { UbicacionForm }       from '@/features/publicacion/steps/UbicacionForm'
-// import { CaracteristicasForm } from '@/features/publicacion/steps/CaracteristicasForm'
-// import { ImagenesForm }        from '@/features/publicacion/steps/ImagenesForm'
-// import { VideoForm }           from '@/features/publicacion/steps/VideoForm'
-// import { DescripcionForm }     from '@/features/publicacion/steps/DescripcionForm'
-
-//Componente del stepper (stefa y andres) 
 // import { PublicacionStepper }  from '@/features/publicacion/components/PublicacionStepper'
 
-// ── Componentes UI 
 import { Button } from '@/components/ui/button'
-
-
-// Configuración de pasos
-// Aquí defines el título que aparece en el cuadro azul
-// y el componente que se renderiza en cada paso
 
 const STEPS = [
   { title: 'Datos del Aviso'    },
@@ -34,76 +20,49 @@ const STEPS = [
   { title: 'Descripción'        },
 ]
 
-// 
-//  AJUSTES DE DISEÑO — Toca solo esta sección para personalizar
-// 
 const DISENO = {
-
-  // Fondo de toda la página
   pagina: {
     backgroundColor: '#F4EFE6',
   },
-
-  // Posición vertical de todo dentro de <main>
-  // 'center' = centrado en pantalla | 'flex-start' = más arriba
   alineacionVertical: 'center' as 'center' | 'flex-start',
-
-  // Padding top/bottom de <main>
-  // Súbelo para bajar todo el contenido, bájalo para subirlo
   paddingVertical: '24px',
-
-  // Título "Crear publicación"  encima del contenedor
   tituloPagina: {
     fontSize:     '60px',
     fontWeight:   '700',
     color:        '#1F3A4D',
-    marginBottom: '20px',   // separación entre título y contenedor
-    marginLeft:   '-120px', // negativo = izquierda | positivo = derecha
-    marginTop:    '40px',   // baja el título aumentando este valor
+    marginBottom: '20px',
+    marginLeft:   '-120px',
+    marginTop:    '40px',
   },
-
-  // Contenedor principal (naranja + azul juntos)
   contenedor: {
     maxWidth: '1000px',
     height:   '560px',
   },
-
-  // Panel izquierdo naranja (stepper — otro equipo)
   panelIzquierdo: {
     width:           '340px',
     backgroundColor: '#C26E5A',
     padding:         '20px',
   },
-
-  // Panel derecho azul
-  // padding controla el espacio entre el borde azul y el cuadro crema
-  // paddingBottom controla el espacio entre los botones y el borde inferior
   panelDerecho: {
     backgroundColor: '#1F3A4D',
     padding:         '50px',
-    paddingBottom:   '20px', // ← espacio entre botones y borde inferior del panel
+    paddingBottom:   '20px',
   },
-
-  // Título dinámico del paso (dentro del panel azul, encima del cuadro crema)
   tituloPaso: {
     fontSize:     '20px',
     fontWeight:   '600',
     color:        '#ffffff',
-    marginBottom: '20px',  // separación entre el título y el cuadro crema
-    marginLeft:   '0px',   // negativo = izquierda | positivo = derecha
+    marginBottom: '20px',
+    marginLeft:   '0px',
   },
-
-  // Cuadro donde se renderiza el form
   cuadroForm: {
     backgroundColor: '#F4EFE6',
     borderRadius:    '12px',
-    padding:         '25px',
+    padding:         '15px',
   },
-
-  // Botones de navegación
   botones: {
     gap:       '12px',
-    marginTop: '15px', // 'auto' = se pegan al borde inferior | px = separación fija
+    marginTop: '15px',
   },
   botonRegresar: {
     backgroundColor: '#F4EFE6',
@@ -124,9 +83,7 @@ const DISENO = {
     fontWeight:      '600',
   },
 }
-// Fin de ajustes de diseño
-// Placeholder temporal — reemplaza por el componente real
-// cuando esté listo
+
 function StepPlaceholder({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center h-full text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded-lg">
@@ -135,11 +92,19 @@ function StepPlaceholder({ title }: { title: string }) {
   )
 }
 
+function CategoriaEstadoStep() {
+  const { values, errors, touched, handleChange, handleBlur } = useCategoriaForm()
+  return (
+    <CategoriaYEstadoForm
+      values={values}
+      errors={errors}
+      touched={touched}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  )
+}
 
-// Decide qué componente renderizar según el paso actual
-// Cuando tengas cada componente listo:
-//   1. Descomenta el import arriba
-//   2. Reemplaza el StepPlaceholder por el componente real
 function StepContent({
   step,
   onNext,
@@ -151,34 +116,16 @@ function StepContent({
 }) {
   switch (step) {
     case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
-    // case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
-
-    case 1: return <StepPlaceholder title={STEPS[1].title} />
-    // case 1: return <CategoriaEstadoForm onNext={onNext} onBack={onBack} />
-
+    case 1: return <CategoriaEstadoStep />
     case 2: return <StepPlaceholder title={STEPS[2].title} />
-    // case 2: return <UbicacionForm onNext={onNext} onBack={onBack} />
-
     case 3: return <StepPlaceholder title={STEPS[3].title} />
-    // case 3: return <CaracteristicasForm onNext={onNext} onBack={onBack} />
-
     case 4: return <StepPlaceholder title={STEPS[4].title} />
-    // case 4: return <ImagenesForm onNext={onNext} onBack={onBack} />
-
     case 5: return <StepPlaceholder title={STEPS[5].title} />
-    // case 5: return <VideoForm onNext={onNext} onBack={onBack} />
-
     case 6: return <StepPlaceholder title={STEPS[6].title} />
-    // case 6: return <DescripcionForm onNext={onNext} onBack={onBack} />
-
     default: return null
   }
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Page principal
-// ─────────────────────────────────────────────────────────────
 export default function CrearPublicacionPage() {
   const router                        = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
@@ -205,15 +152,12 @@ export default function CrearPublicacionPage() {
         fontFamily:     'var(--font-geist-sans)',
       }}
     >
-
-      {/* Título de la página*/}
       <div style={{ width: '100%', maxWidth: DISENO.contenedor.maxWidth }}>
         <h1 style={DISENO.tituloPagina}>
           Crear publicación
         </h1>
       </div>
 
-      {/* Contenedor principal (naranja + azul) */}
       <div
         style={{
           width:        '100%',
@@ -225,15 +169,6 @@ export default function CrearPublicacionPage() {
           boxShadow:    '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-
-        {/*  Panel izquierdo — stepper (otro equipo)
-            Cuando el otro equipo entregue su componente:
-            Reemplaza el contenido de este div por:
-            <PublicacionStepper currentStep={currentStep} steps={STEPS} />
-            Props que necesita el componente:
-              - currentStep: número del paso actual (0–6)
-              - steps: array con los títulos de cada paso
-         */}
         <div
           style={{
             width:           DISENO.panelIzquierdo.width,
@@ -244,13 +179,11 @@ export default function CrearPublicacionPage() {
             flexDirection:   'column',
           }}
         >
-          {/* Placeholder del stepper */}
           <p style={{ color: '#fff', fontSize: '11px', opacity: 0.5, marginTop: 'auto', textAlign: 'center' }}>
             Stepper — otro equipo
           </p>
         </div>
 
-        {/* Panel derecho — azul */}
         <div
           style={{
             flex:            1,
@@ -261,8 +194,6 @@ export default function CrearPublicacionPage() {
             flexDirection:   'column',
           }}
         >
-
-          {/* Título dinámico del paso */}
           <h2
             style={{
               ...DISENO.tituloPaso,
@@ -274,12 +205,11 @@ export default function CrearPublicacionPage() {
             {STEPS[currentStep].title}
           </h2>
 
-          {/* Cuadro del form */}
           <div
             style={{
               ...DISENO.cuadroForm,
               flex:      1,
-              overflowY: 'auto',
+              overflowY: 'visible',
             }}
           >
             <StepContent
@@ -289,7 +219,6 @@ export default function CrearPublicacionPage() {
             />
           </div>
 
-          {/* Botones de navegación */}
           <div
             style={{
               display:        'flex',
@@ -315,10 +244,8 @@ export default function CrearPublicacionPage() {
               {isLastStep ? 'Publicar' : 'Siguiente'}
             </button>
           </div>
-
         </div>
       </div>
-
     </main>
   )
 }
