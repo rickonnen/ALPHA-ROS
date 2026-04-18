@@ -13,7 +13,7 @@ type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
   precio_plan: number;
 };
 
-export function usePagoCliente(plan: PlanPago, planId: string) {
+export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -75,13 +75,11 @@ export function usePagoCliente(plan: PlanPago, planId: string) {
     inicializarDatos();
   }, [user?.id, planId, refrescarEstadoGlobal]);
 
-  // 3. LÓGICA DE BLOQUEO: ¿Puede o no pagar?
   const tienePagoPendiente = useMemo(() => {
     // Bloqueamos si hay pendientes generales o si el registro actual está en espera (Estado 1)
     return hayPendientesEnTabla || (estadoPagoBD !== null && estadoPagoBD === 1);
   }, [hayPendientesEnTabla, estadoPagoBD]);
 
-  // 4. ACCIÓN: Al dar click en el botón principal de verificar
   const alDarClickEnVerificarPrincipal = () => {
     if (tienePagoPendiente) {
       setEstadoModal("pendiente_pago");
@@ -96,7 +94,6 @@ export function usePagoCliente(plan: PlanPago, planId: string) {
     }
   };
 
-  // 5. ACCIÓN: Procesar la subida (Cloudinary + Prisma)
   const manejarAceptarPago = async () => {
     if (!user?.id || !archivoSeleccionado) return;
 
@@ -106,6 +103,9 @@ export function usePagoCliente(plan: PlanPago, planId: string) {
     formData.append("file", archivoSeleccionado);
     formData.append("id_usuario", user.id);
     formData.append("id_plan", planId);
+    formData.append("tiempo_pago", modalidad);
+    const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
+    formData.append("mes_pago", nombreMes);
 
     try {
       const res = await fetch("/api/cobros/verificar", {

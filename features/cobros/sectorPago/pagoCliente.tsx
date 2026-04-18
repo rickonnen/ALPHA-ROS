@@ -13,9 +13,10 @@ import ModalPago from "@/components/cobros/ModalPago";
 interface Props {
   plan: Omit<PlanPublicacion, "precio_plan"> & { precio_plan: number };
   planId: string;
+  modalidad: string;
 }
 
-export default function PagoCliente({ plan, planId }: Props) {
+export default function PagoCliente({ plan, planId, modalidad }: Props) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -34,7 +35,7 @@ export default function PagoCliente({ plan, planId }: Props) {
     fileInputRef,
     tienePagoPendiente,
     estaCargandoEstado,
-  } = usePagoCliente(plan, planId);
+  } = usePagoCliente(plan, planId, modalidad);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -55,13 +56,34 @@ export default function PagoCliente({ plan, planId }: Props) {
       {/* Columna Izquierda */}
       <div className="flex w-full flex-col justify-between bg-muted/30 p-10 md:w-1/2 lg:p-16">
         <div>
-          <h1 className="mb-8 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
             {plan.nombre_plan}
           </h1>
-          <h2 className="mb-4 text-xl font-bold text-foreground">Descripción</h2>
-          <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
-            Adquiere {plan.cant_publicaciones} cupos por un precio especial.
-          </div>
+
+          <section className="space-y-4">
+            <h2 className="text-xl font-bold text-foreground border-b border-border pb-2">
+              Resumen de suscripción
+            </h2>
+            
+            <p className="text-muted-foreground leading-relaxed">
+              Estás adquiriendo una suscripción <strong className="text-primary capitalize">{modalidad}</strong>. 
+              Acceso completo a todas las funciones por un periodo de{" "}
+              <span className="font-semibold text-foreground">
+                {modalidad === "anual" ? "12 meses" : "30 días"}
+              </span>.
+            </p>
+
+            <div className="bg-muted/50 p-4 rounded-lg border border-border">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                Detalles del plan
+              </h3>
+              <ul className="space-y-2">
+                <li className="flex items-center text-foreground">
+                  Publicar {plan.cant_publicaciones} publicaciones
+                </li>
+              </ul>
+            </div>
+          </section>
         </div>
 
         <div className="mt-12">
