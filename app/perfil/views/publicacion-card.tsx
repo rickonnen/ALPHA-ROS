@@ -1,3 +1,21 @@
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 25/03/2026
+    Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
+      - @param {publicacion} - datos de la publicación a mostrar
+      - @return {PublicacionCard} - muestra miniatura, título, zona y tipo
+*/
+/*  Dev: Candy Camila Ordoñez Pinto
+    Fecha: 28/03/2026
+    Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
+      - @param {publicacion} - datos de la publicación (titulo, zona, tipo, imagen)
+      - @param {onEliminar}  - callback para abrir el AlertDialog de confirmación
+      - @param {onInfo}      - callback para ver el detalle de la publicación
+      - @return {PublicacionCard} - muestra miniatura, título, zona, tipo y botones de acción
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del texto del botón secundario a "Ver detalle".
+*/
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Square, BedDouble, Bath } from "lucide-react";
