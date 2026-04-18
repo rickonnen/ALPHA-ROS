@@ -27,6 +27,7 @@ import ChangePasswordForm from "./contrasena-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
+import RedesView from "./redes-vinculadas/redes-view";
 import Autenticacion2FAView from "./2fa/autenticacion-2fa";
 
 interface SeguridadProps {
@@ -107,6 +108,16 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           <span className="text-gray-400">›</span>
         </button>
         <button
+          onClick={() => setSubView("redes")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Redes Vinculadas</p>
+            <p className="text-sm text-gray-300">Vincula o desvincula tus cuentas de Facebook y Discord</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
+        <button
           onClick={() => setSubView("2fa")}
           className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
         >
@@ -177,7 +188,12 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         onBack={() => setSubView("correo")}
       />
     ),
-
+    "redes": (
+      <RedesView
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")}
+      />
+    ),
     "2fa": (
       <Autenticacion2FAView
         id_usuario={id_usuario}

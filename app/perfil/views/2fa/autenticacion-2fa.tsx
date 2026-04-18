@@ -30,6 +30,29 @@ export default function Autenticacion2FAView({
   const [cargando, setCargando] = useState(false);
   const [mostrarInputCodigo, setMostrarInputCodigo] = useState(false);
 
+  // Cargar estado de 2FA desde servidor al iniciar
+  useEffect(() => {
+    const cargarEstado2FA = async () => {
+      try {
+        const response = await fetch(`/api/perfil/estado-2fa?userId=${id_usuario}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.dos_fa_habilitado) {
+            setBolActivado(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error cargando estado 2FA:", error);
+      }
+    };
+    
+    cargarEstado2FA();
+  }, [id_usuario]);
+
   // Generar secreto y QR cuando se activa 2FA
   useEffect(() => {
     if (bolActivado && !secreto) {
@@ -58,11 +81,20 @@ export default function Autenticacion2FAView({
 
   const handleToggle = () => {
     if (bolActivado) {
+      // Si tiene secreto generado, pedir confirmación
+      if (secreto) {
+        const confirmar = window.confirm(
+          "¿Descartar configuración de 2FA?\n\nEsto eliminará la clave que ya generaste."
+        );
+        if (!confirmar) return;
+      }
+      
       // Desactivar 2FA
       setBolActivado(false);
       setSecreto("");
       setQrCode("");
       setCodigoIngresado("");
+      setMostrarInputCodigo(false);
     } else {
       // Activar 2FA
       setBolActivado(true);
@@ -85,41 +117,52 @@ export default function Autenticacion2FAView({
       return;
     }
 
+    if (!secreto) {
+      alert("Error: Secreto no disponible. Por favor reinicia.");
+      return;
+    }
+
     setCargando(true);
     try {
-      // Verificar el código TOTP
-      const esValido = speakeasy.totp.verify({
-        secret: secreto,
-        encoding: "base32",
-        token: codigoIngresado,
-        window: 2,
+      // Enviar al servidor para verificar
+      const response = await fetch("/api/perfil/verify2FA", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id_usuario,
+          secreto,
+          codigo: codigoIngresado,
+        }),
       });
 
-      if (esValido) {
-        alert("2FA verificado correctamente");
-        // TODO: Guardar 2FA en la base de datos
+      const data = await response.json();
+
+      if (data.esValido) {
+        alert("✓ 2FA activado correctamente. Tu cuenta está protegida.");
+        // Cerrar modal pero mantener toggle activado
         setMostrarInputCodigo(false);
         setCodigoIngresado("");
-        setBolActivado(false);
-        setSecreto("");
-        setQrCode("");
+        // Mantener bolActivado en true para mostrar visualmente que 2FA está activado
+        // setSecreto y qrCode siguen siendo necesarios si el usuario quiere resetear
+        // No limpiar secreto para que se mantenga guardado
       } else {
-        alert("Código inválido. Por favor intenta nuevamente");
+        alert("✗ Código inválido. Por favor intenta nuevamente");
         setCodigoIngresado("");
       }
     } catch (error) {
       console.error("Error verificando código:", error);
-      alert("Error verificando el código");
+      alert("Error al verificar el código. Por favor intenta nuevamente");
     } finally {
       setCargando(false);
     }
   };
 
   const cancelar = () => {
-    setBolActivado(false);
-    setSecreto("");
-    setQrCode("");
+    // Solo limpiar el input y cerrar modal, pero MANTENER el secreto
     setCodigoIngresado("");
+    setMostrarInputCodigo(false);
   };
 
   return (
@@ -173,6 +216,19 @@ export default function Autenticacion2FAView({
       {/* Contenido cuando está activado */}
       {bolActivado && secreto && (
         <div className="mt-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+
+          {/* ADVERTENCIA: Mantener el mismo secreto */}
+          <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex gap-3">
+            <div className="flex-shrink-0 text-amber-400">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="text-sm text-amber-100">
+              <p className="font-semibold mb-1">⚠️ Importante</p>
+              <p>No desactives el toggle mientras estés configurando. Usa el botón "Cancelar" para reintentar.</p>
+            </div>
+          </div>
 
           {/* APP DE AUTENTICACIÓN */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -278,6 +334,7 @@ export default function Autenticacion2FAView({
             </button>
           </div>
 
+          {/* DEBUG: Test endpoint button */}
           {/* Input de código sobrepuesto */}
           {mostrarInputCodigo && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

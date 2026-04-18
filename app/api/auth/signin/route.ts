@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from "next/server";
 import { sign } from "jsonwebtoken";
+import { randomBytes } from 'crypto';
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -24,7 +25,10 @@ export async function POST(request: NextRequest) {
     // Primero verificar si el usuario existe
     const userExists = await prisma.usuario.findFirst({
       where: { email: email },
-      select: { id_usuario: true }
+      select: { 
+        id_usuario: true,
+        // dos_fa_habilitado, dos_fa_secreto pueden no existir aún
+      }
     });
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
@@ -54,6 +58,54 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ✅ NUEVO: Verificar si 2FA está habilitado (usando any por compatibilidad)
+    const userExtra = await (prisma.usuario.findUnique as any)({
+      where: { id_usuario: authData.user.id },
+      select: { 
+        dos_fa_habilitado: true,
+        dos_fa_secreto: true,
+      }
+    }).catch((e: any) => ({
+      dos_fa_habilitado: false,
+      dos_fa_secreto: null
+    }));
+
+    if (userExtra?.dos_fa_habilitado && userExtra?.dos_fa_secreto) {
+      // Crear un token temporal para la verificación 2FA
+      const tempToken = randomBytes(32).toString('hex');
+      
+      // Guardar el token temporal en sesión (aquí usamos una cookie temporal)
+      const response = NextResponse.json(
+        { 
+          requiresOTP: true,
+          message: "Se requiere verificación 2FA",
+          userId: authData.user.id
+        },
+        { status: 200 }
+      );
+
+      // Cookie temporal para guardar el estado de auth incompleto (5 minutos)
+      response.cookies.set("temp_auth_token", tempToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 5 * 60, // 5 minutos
+        path: "/",
+      });
+
+      // Guardar que este usuario está en proceso de verificación 2FA
+      response.cookies.set("pending_2fa_user", authData.user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 5 * 60,
+        path: "/",
+      });
+
+      return response;
+    }
+
+    // ✅ Si no tiene 2FA, proceder normalmente
     const userData = await prisma.usuario.findUnique({
       where: { id_usuario: authData.user.id }, 
       select: { id_usuario: true, nombres: true, email: true, rol: true }
@@ -72,7 +124,6 @@ export async function POST(request: NextRequest) {
       { expiresIn: "7d" }          
     );
     
-
     const response = NextResponse.json(
       { message: "Sesión iniciada exitosamente" },
       { status: 200 }

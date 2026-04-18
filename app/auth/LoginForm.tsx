@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import SuccessModal from "./SuccessModal";
+import OTP2FAModal from "./OTP2FAModal";
 import { useAuth } from "./AuthContext";
 
 interface LoginFormProps {
@@ -13,7 +14,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, fetchUserFromServer, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,6 +25,8 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
   const [googleLoading, setGoogleLoading] = useState(false); // BUG 4 y 9
   const [hasInternet, setHasInternet] = useState(true);
   const [blockedByConnection, setBlockedByConnection] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false); // ✅ NUEVO
+  const [pending2FAUserId, setPending2FAUserId] = useState<string | null>(null); // ✅ NUEVO
 
   const [userRol, setUserRol] = useState<number | null>(null);
   // Validaciones en tiempo real
@@ -86,19 +89,26 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     }
       setShowSuccess(true);
     } catch (err: any) {
-      setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
+      // ✅ NUEVO: Si requiere 2FA, mostrar modal
+      if (err.requiresOTP && err.userId) {
+        setPending2FAUserId(err.userId);
+        setShow2FAModal(true);
+        setGeneralError("");
+      } else {
+        setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
   }
 
     // Manejar cierre del modal de éxito
-    function handleSuccessClose() {
+  function handleSuccessClose() {
     setShowSuccess(false);
     if (onClose) onClose();
     
-
-    if (userRol === 1) {
+    // ✅ Usar user.rol del contexto de autenticación en lugar del estado local
+    if (user?.rol === 1) {
       router.push("/admin/verificacion-pagos");
     } else {
       router.push("/");
@@ -349,6 +359,34 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
         onClose={handleSuccessClose}
         autoCloseDuration={2000}
       />
+
+      {/* ✅ NUEVO: Modal 2FA */}
+      {show2FAModal && pending2FAUserId && (
+        <OTP2FAModal
+          userId={pending2FAUserId}
+          onSuccess={async () => {
+            setShow2FAModal(false);
+            setPending2FAUserId(null);
+            
+            // ✅ Refrescar contexto de autenticación después de 2FA
+            const userFetched = await fetchUserFromServer();
+            
+            if (!userFetched) {
+              console.error("Error al refrescar usuario después de 2FA");
+              setGeneralError("Error al completar la autenticación");
+              return;
+            }
+            
+            // Mostrar éxito y redirigir
+            setShowSuccess(true);
+          }}
+          onCancel={() => {
+            setShow2FAModal(false);
+            setPending2FAUserId(null);
+            setGeneralError("");
+          }}
+        />
+      )}
     </div>
   );
 }
