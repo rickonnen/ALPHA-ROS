@@ -1,13 +1,17 @@
 /**
  * @Dev: Gustavo Montaño
  * @Fecha: 18/04/2026
- * @Funcionalidad: Vista pública del Inmueble (HU2).
- * @param params - Parámetros de ruta dinámica con el ID de la publicación.
- * @return {JSX.Element} Vista completa del inmueble para el explorador.
+ * @Funcionalidad: Vista pública del inmueble (HU2). Renderiza dinámicamente la información 
+ *                 de la propiedad, galería, mapa y contacto en una pestaña independiente.
+ * @param {Promise<{ id_publicacion: string }>} params - Promesa con los parámetros de la 
+ *                                                       ruta dinámica (Next.js App Router).
+ * @param {string} params.id_publicacion - Identificador único de la publicación extraído 
+ *                                         directamente desde la URL.
+ * @return {JSX.Element} Interfaz completa de la vista del inmueble renderizada desde el servidor.
  */
 import { notFound }          from "next/navigation";
-import { Tag, Ruler, ChevronLeft, Home } from "lucide-react"; // <-- Agregados iconos de navegación
-import Link                  from "next/link"; // <-- Agregado Link
+import { Tag, Ruler, ChevronLeft, Home } from "lucide-react"; 
+import Link                  from "next/link"; 
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
@@ -56,7 +60,7 @@ export default async function VistaInmueblePage({
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
         
-        {/* --- NUEVO: Migas de Pan (HU2) --- */}
+        {/* Migas de Pan (HU2) */}
         <nav className="flex flex-wrap items-center gap-2 mb-8 text-sm text-[#2E2E2E]/70">
           <CloseTabButton 
             title="Cerrar pestaña"
@@ -187,7 +191,7 @@ export default async function VistaInmueblePage({
           );
         })()}
 
-        {/* --- NUEVO: Botón Volver al final (Reemplaza a PropertyActions) --- */}
+        {/* Botón Volver al final (Reemplaza a PropertyActions)*/}
         <div className="mt-12 flex justify-start">
           <CloseTabButton className="px-10 py-3 border-2 border-[#C26E5A] text-[#C26E5A] rounded-xl font-bold hover:bg-[#C26E5A]/10 transition-colors">
             Volver

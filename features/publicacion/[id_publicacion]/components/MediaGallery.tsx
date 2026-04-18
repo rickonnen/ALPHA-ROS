@@ -8,6 +8,15 @@
  * @param strReelId   - ID extraído del Reel de Instagram (opcional)
  * @return JSX con galería desktop, mobile y lightbox integrados
  */
+/**
+ * Modicacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 18/04/2026
+ * @Funcionalidad: Integración de renderizado condicional para el botón "Favoritos" (HU2/HU6) sobre la galería existente.
+ * @param {string} id_publicacion - Identificador de la publicación para ejecutar la acción de guardado.
+ * @param {boolean} [mostrarFav=false] - Bandera para habilitar o deshabilitar la visibilidad del componente FavButton.
+ * @return {JSX.Element} Renderizado condicional del botón de favoritos superpuesto en la galería.
+ */
 "use client";
 import React, { useState } from "react";
 import { MediaGalleryDesktop }  from "./MediaGalleryDesktop";

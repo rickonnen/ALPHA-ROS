@@ -1,10 +1,12 @@
 
 /**
  * @Dev: Gustavo Montaño
- * @Fecha: 07/04/2026
- * @Funcionalidad: Página del Perfil del Inmueble.
- * @param params - Parámetros de ruta dinámica con el ID de la publicación.
- * @return {JSX.Element} Vista completa del perfil del inmueble.
+ * @Fecha: 18/04/2026
+ * @Funcionalidad: Perfil privado del inmueble, renderiza dinámicamente los detalles de la propiedad para el propietario, 
+ *                 integrando los botones de gestión (acciones) y deshabilitando funciones de explorador (como Favoritos).
+ * @param {Promise<{ id_publicacion: string }>} params - Promesa con los parámetros de la ruta dinámica (Next.js App Router).
+ * @param {string} params.id_publicacion - Identificador único de la publicación extraído directamente desde la URL.
+ * @return {JSX.Element} Interfaz completa de la vista privada del inmueble renderizada desde el servidor.
  */
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";
@@ -14,7 +16,6 @@ import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/get
 import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
 import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
-import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 
 export default async function PerfilInmueblePage({
@@ -60,7 +61,6 @@ export default async function PerfilInmueblePage({
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
         {/* Task 4.3: Título */}
-        {/* Task 4.3: Título */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
             {objPerfil.titulo}
@@ -84,7 +84,7 @@ export default async function PerfilInmueblePage({
           {/* Bloque Precio */}
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
             <Tag className="w-5 h-5 md:w-6 md:h-6 text-[#2E2E2E] opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
-            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
+            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-subtitle min-[811px]:text-[24px]">
           <span className="font-bold text-[#1F3A4D]">Precio:</span>
           <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
             {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
