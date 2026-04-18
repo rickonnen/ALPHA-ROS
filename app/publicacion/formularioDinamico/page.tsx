@@ -5,9 +5,11 @@ import { useRouter }     from 'next/navigation'
 import { DatosAvisoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
 import { CategoriaYEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
 import { useCategoriaForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
+import { UbicacionForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Ubicacion/UbicacionForm'
 import { CaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/CaracteristicasDetalleForm'
 import { useCaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/useCaracteristicasDetalleForm'
 import { ImagenesForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/ImagenesForm'
+import { DescripcionForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Descripcion/Descripcionform '
 import { VideoForm }    from '@/features/publicacion/FormularioDinamicoCaracteristicas/Video/Videoform'
 // import { PublicacionStepper }  from '@/features/publicacion/components/PublicacionStepper'
 
@@ -19,7 +21,7 @@ const STEPS = [
   { title: 'Ubicación'          },
   { title: 'Características'    },
   { title: 'Imágenes'           },
-  { title: 'Video '              },
+  { title: 'Video '             },
   { title: 'Descripción'        },
 ]
 
@@ -133,11 +135,11 @@ function StepContent({
   switch (step) {
     case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
     case 1: return <CategoriaEstadoStep />
-    case 2: return <StepPlaceholder title={STEPS[2].title} />
+    case 2: return <UbicacionForm onNext={onNext} onBack={onBack} />
     case 3: return <CaracteristicasDetalleStep />
     case 4: return <ImagenesForm onNext={onNext} onBack={onBack} />
     case 5: return <VideoForm onNext={onNext} onBack={onBack} />
-    case 6: return <StepPlaceholder title={STEPS[6].title} />
+    case 6: return <DescripcionForm onNext={onNext} onBack={onBack} />
     default: return null
   }
 }
