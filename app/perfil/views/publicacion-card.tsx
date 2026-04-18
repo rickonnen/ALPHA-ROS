@@ -54,9 +54,9 @@ export default function PublicacionCard({
 
   return (
     <Card className="border border-black/10 bg-white text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden">
-      <CardContent className="flex items-stretch gap-0 p-0">
+      <CardContent className="flex flex-col min-[480px]:flex-row items-stretch gap-0 p-0">
         {/* Miniatura */}
-        <div className="w-40 min-w-[10rem] self-stretch flex-shrink-0 overflow-hidden">
+        <div className="w-full h-40 min-[480px]:w-40 min-[480px]:h-auto min-[480px]:min-w-[10rem] flex-shrink-0 overflow-hidden">
           {publicacion.imagen ? (
             <img
               src={publicacion.imagen}
@@ -79,14 +79,11 @@ export default function PublicacionCard({
         <div className="flex flex-col justify-between flex-1 min-w-0 p-4 gap-2">
           {/* Encabezado */}
           <div>
-            {/* Badge tipo operación */}
             {strEtiqueta && (
               <p className="text-[11px] font-bold text-[#E05A2B] uppercase tracking-wide mb-1">
                 {strEtiqueta}
               </p>
             )}
-
-            {/* Título */}
             <h3
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
@@ -97,8 +94,6 @@ export default function PublicacionCard({
             >
               {publicacion.titulo}
             </h3>
-
-            {/* Dirección */}
             {(publicacion.direccion || publicacion.zona) && (
               <div className="flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
@@ -134,7 +129,7 @@ export default function PublicacionCard({
           </div>
 
           {/* Precio + Botones */}
-          <div className="flex items-center justify-between flex-wrap gap-2 mt-1">
+          <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 mt-1">
             <div>
               {publicacion.precio != null && (
                 <p className="text-xl font-bold text-[#1F3A4D]">
@@ -149,10 +144,10 @@ export default function PublicacionCard({
             </div>
 
             <div className="flex gap-2">
-              {/* Ver Detalle — azul primario */}
               <Button
                 variant="azul"
                 size="sm"
+                className="flex-1 min-[480px]:flex-none"
                 onClick={() =>
                   router.push(
                     `/publicacion/perfil_del_inmueble/${publicacion.id}`,
@@ -161,11 +156,9 @@ export default function PublicacionCard({
               >
                 Ver Detalle
               </Button>
-
-              {/* Eliminar — terracota secundario */}
               <Button
                 size="sm"
-                className="bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--secondary)]/80 border-none"
+                className="flex-1 min-[480px]:flex-none bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--secondary)]/80 border-none"
                 onClick={() => onEliminar(publicacion.id)}
               >
                 Eliminar
