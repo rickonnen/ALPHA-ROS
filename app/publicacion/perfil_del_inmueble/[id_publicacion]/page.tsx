@@ -72,14 +72,12 @@ export default async function PerfilInmueblePage({
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
         <div className="relative group rounded-3xl overflow-hidden">
           <MediaGallery
+            id_publicacion={intId.toString()}
             arrImagenes={arrImagenes}
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
+            mostrarFav={false}
           />         
-          {/* BOTÓN SUPERPUESTO: Esquina inferior derecha */}
-          <div className="absolute bottom-14 right-8 z-20">
-            <FavButton id_publicacion={intId.toString()} />
-          </div>
         </div>
         {/* Task 4.3: Precio y Superficie */}
         <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">

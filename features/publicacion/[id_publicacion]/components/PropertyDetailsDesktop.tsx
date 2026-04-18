@@ -34,7 +34,7 @@ export const PropertyDetailsDesktop = ({ objInfo }: PerfilDetallesProps) => {
       {/* ── DATOS ESPECÍFICOS — condicional por tipo ── */}
       {(!bolEsTerreno || bolTieneCaracteristicas) && (
         <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-8 border border-black/5 shadow-sm">
-          <h2 className="text-2xl font-bold mb-8 border-b border-[#2E2E2E]/5 pb-2 text-[#1F3A4D]">
+          <h2 className="text-3xl font-bold mb-8 border-b border-[#2E2E2E]/5 pb-2 text-[#1F3A4D]">
             Datos Específicos
           </h2>
 
