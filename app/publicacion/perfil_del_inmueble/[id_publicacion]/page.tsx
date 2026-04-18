@@ -114,18 +114,23 @@ export default async function PerfilInmueblePage({
         {/* Task 4.6 + 4.7: Detalles */}
         <PropertyDetails
           objInfo={{
-            strTipoInmueble:  objPerfil.TipoInmueble?.nombre_inmueble   ?? "—",
-            strTipoOperacion: objPerfil.TipoOperacion?.nombre_operacion  ?? "—",
-            strDepartamento:  objPerfil.Ubicacion?.Ciudad?.nombre_ciudad ?? "—",
-            strZona:          objPerfil.Ubicacion?.zona ?? "—",
-            intHabitaciones:  objPerfil.habitaciones                     ?? 0,
-            intBanos:         objPerfil.banos                            ?? 0,
-            intPlantas:       objPerfil.plantas                          ?? 0,
-            intGarajes:       objPerfil.garajes                          ?? 0,
-          }}
-        />
+            strTipoInmueble:       objPerfil.TipoInmueble?.nombre_inmueble                  ?? "—",
+            strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion                 ?? "—",
+            strDepartamento:       objPerfil.Ubicacion?.Ciudad?.nombre_ciudad                ?? "—",
+            strZona:               objPerfil.Zona?.nombre_zona                               ?? "—",
+            strEstadoConstruccion: objPerfil.EstadoConstruccion?.nombre_estado_construccion  ?? "—",
+            intHabitaciones:       objPerfil.habitaciones                                    ?? 0,
+            intBanos:              objPerfil.banos                                           ?? 0,
+            intPlantas:            objPerfil.plantas                                         ?? 0,
+            intGarajes:            objPerfil.garajes                                         ?? 0,
+            arrCaracteristicas:    (objPerfil.PublicacionCaracteristica ?? []).map((item) => ({
+              strNombre:  item.Caracteristica.nombre_caracteristica ?? "",
+              strDetalle: item.detalle_caracteristica ?? null,
+    })),
+  }}
+/>
         {/* Task 4.8: Descripción */}
-        <section className="mt-16 mb-20">
+        <section className="mt-6 mb-6">
           <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
             <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
               Descripción
