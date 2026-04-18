@@ -9,19 +9,19 @@ import { useAuth } from "@/app/auth/AuthContext";
 
 interface Props {
   planId: number | string;
-  isAnnual: boolean;
+  isAnnual: boolean; // Estado del switch (true=anual, false=mensual)
 }
 
 export function BotonContinuarPlan({ planId, isAnnual }: Props) {
   const { user, isLoading: authLoading } = useAuth();
   const [planActualId, setPlanActualId] = useState<number>(7);
+  const [modalidadActual, setModalidadActual] = useState<string>("mensual");
   const [loadingPlan, setLoadingPlan] = useState(false);
 
   const [showProtected, setShowProtected] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
 
-  // URL de destino para el pago
   const checkoutUrl = `/cobros/sector-pagos?planId=${planId}&modalidad=${isAnnual ? "anual" : "mensual"}`;
 
   useEffect(() => {
@@ -35,8 +35,8 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
             body: JSON.stringify({ id_usuario: user.id }),
           });
           const data = await res.json();
-          // Si la API devuelve el plan, lo guardamos; si no, por defecto 7
           setPlanActualId(data.id_plan ?? 7);
+          setModalidadActual(data.modalidad ?? "mensual");
         } catch (e) {
           console.error("Error al obtener plan actual:", e);
         } finally {
@@ -44,24 +44,39 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
         }
       } else {
         setPlanActualId(7);
+        setModalidadActual("mensual");
       }
     }
     obtenerSuscripcion();
   }, [user]);
 
   const idPlanTarjeta = Number(planId);
-  const isCurrentPlan = idPlanTarjeta === planActualId && planActualId !== 7;
+  const viendoAnual = isAnnual;
 
-  // Lógica de textos según comparación
+  // Lógica de estados
+  const esMismoPlan = idPlanTarjeta === planActualId;
+  const esMismaModalidad =
+    (viendoAnual && modalidadActual === "anual") ||
+    (!viendoAnual && modalidadActual === "mensual");
+
+  // Determinar texto
   const getButtonText = () => {
-    if (planActualId === 7) return "Continuar";
-    if (idPlanTarjeta === planActualId) return "Plan actual";
+    if (!user || planActualId === 7) return "Continuar";
+
+    if (esMismoPlan) {
+      if (esMismaModalidad) return "Plan actual";
+      if (viendoAnual && modalidadActual === "mensual")
+        return "Pasar a Anual (-10%)";
+      if (!viendoAnual && modalidadActual === "anual")
+        return "Cambiar a Mensual";
+    }
+
     if (idPlanTarjeta > planActualId) return "Mejorar plan";
-    if (idPlanTarjeta < planActualId) return "Cambiar a plan inferior";
-    return "Continuar";
+    return "Cambiar plan";
   };
 
-  // Mientras carga la auth o la info del plan, mostramos estado deshabilitado
+  const isCurrentSelection = user && esMismoPlan && esMismaModalidad;
+
   if (authLoading || (user && loadingPlan)) {
     return (
       <Button disabled className="w-full font-bold">
@@ -70,21 +85,18 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
     );
   }
 
-  // Si el usuario está logueado
   if (user) {
     return (
       <Button
         asChild
         className="w-full font-bold"
-        variant={isCurrentPlan ? "outline" : "default"}
+        variant={isCurrentSelection ? "outline" : "default"}
       >
-        {/* Aquí siempre usamos checkoutUrl para que funcione el click */}
         <Link href={checkoutUrl}>{getButtonText()}</Link>
       </Button>
     );
   }
 
-  // Si no hay usuario, botón que abre el flujo de registro/login
   return (
     <>
       <Button
