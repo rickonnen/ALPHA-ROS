@@ -46,6 +46,7 @@ export default function PaymentVerificationPage() {
   : 'Sin fecha',
       strPaymentMethod: objPayment.metodo_pago || 'No especificado',
       strReceiptUrl: objPayment.comprobante_url || null,
+      strReason: objPayment.razon_rechazo || null,
       intStatus: objPayment.estado
     }));
   }, []);
@@ -187,6 +188,7 @@ export default function PaymentVerificationPage() {
             <TabsContent value="pending" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.pending.data} 
+                strStatus="Pendiente"
                 bolShowActions={true} 
                 onPaymentUpdated={handlePaymentUpdated} 
                 bolIsLoading={bolIsLoading}
@@ -199,6 +201,7 @@ export default function PaymentVerificationPage() {
             <TabsContent value="accepted" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.accepted.data} 
+                strStatus="Aceptado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.accepted.page}
@@ -210,6 +213,7 @@ export default function PaymentVerificationPage() {
             <TabsContent value="rejected" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.rejected.data} 
+                strStatus="Rechazado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.rejected.page}

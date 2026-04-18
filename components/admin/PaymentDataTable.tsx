@@ -30,39 +30,31 @@ interface PaymentDataTableProps {
   intTotalPages?: number;
   onPageChange?: (intPage: number) => void;
   onViewReceipt?: (strUrl: string) => void;
+  strStatus?: 'Pendiente' | 'Aceptado' | 'Rechazado';
 }
 
-const TableSkeleton = ({ bolShowActions }: { bolShowActions: boolean }) => (
-  <>
-    {Array.from({ length: 5 }).map((_, i) => (
-      <TableRow key={`skeleton-${i}`} className="border-b border-border">
-        <TableCell className="px-6 py-4 border-r border-border">
-          <div className="h-4 w-6 bg-muted animate-pulse rounded mx-auto" />
-        </TableCell>
-        <TableCell className="px-6 py-4 border-r border-border">
-          <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
-        </TableCell>
-        <TableCell className="px-6 py-4 border-r border-border">
-          <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-        </TableCell>
-        <TableCell className="px-6 py-4 border-r border-border">
-          <div className="h-4 w-20 bg-muted animate-pulse rounded" />
-        </TableCell>
-        <TableCell className={`px-6 py-4 ${bolShowActions ? 'border-r border-border' : ''}`}>
-          <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-        </TableCell>
-        {bolShowActions && (
-          <TableCell className="px-6 py-4">
-            <div className="flex justify-center space-x-2">
-              <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
-              <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
-            </div>
-          </TableCell>
-        )}
-      </TableRow>
-    ))}
-  </>
-);
+const TableSkeleton = ({ strStatus }: { strStatus: string }) => {
+
+  const intTotalCells = strStatus === 'Aceptado' ? 5 : 6;
+
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <TableRow key={`skeleton-${i}`} className="border-b border-border">
+          
+          {Array.from({ length: intTotalCells }).map((_, idx) => (
+            <TableCell 
+              key={`cell-${idx}`} 
+              className={`px-6 py-4 ${idx < intTotalCells - 1 ? 'border-r border-border' : ''}`}
+            >
+              <div className="h-4 w-full bg-muted animate-pulse rounded" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+};
 
 export function PaymentDataTable({ 
   arrData, 
@@ -72,7 +64,8 @@ export function PaymentDataTable({
   intCurrentPage = 1,
   intTotalPages = 1,
   onPageChange,
-  onViewReceipt
+  onViewReceipt,
+  strStatus = 'Pendiente'
 }: PaymentDataTableProps) {
   const [bolShowAcceptModal, setBolShowAcceptModal] = useState<boolean>(false);
   const [bolShowRejectModal, setBolShowRejectModal] = useState<boolean>(false);
@@ -85,7 +78,7 @@ export function PaymentDataTable({
     else setBolShowRejectModal(true);
   };
 
-  const updatePaymentStatus = async (strNewStatus: 'Aceptado' | 'Rechazado') => {
+  const updatePaymentStatus = async (strNewStatus: 'Aceptado' | 'Rechazado', strReason?: string) => {
     if (!objSelectedPayment || bolIsProcessing) return;
     
     setBolIsProcessing(true);
@@ -95,7 +88,8 @@ export function PaymentDataTable({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: objSelectedPayment.intId,
-          status: strNewStatus
+          status: strNewStatus,
+          reason: strReason || null
         }),
       });
 
@@ -158,6 +152,12 @@ export function PaymentDataTable({
                   <span className="text-muted-foreground font-medium">Método:</span>
                   <div className="flex flex-col items-end">
                     <span className="text-right truncate">{objPayment.strPaymentMethod}</span>
+                    {objPayment.strReason && (
+                      <div className="flex justify-between items-center mt-1 border-t border-border/50 pt-2">
+                        <span className="text-muted-foreground font-medium text-xs">Razón:</span>
+                        <span className="text-destructive font-bold text-xs text-right">{objPayment.strReason}</span>
+                      </div>
+                    )}
                     {objPayment.strReceiptUrl && (
                       <button
                         onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
@@ -201,18 +201,29 @@ export function PaymentDataTable({
                 <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[25%] border-r border-border">Cliente</TableHead>
                 <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] border-r border-border">Tipo de Plan</TableHead>
                 <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[15%] border-r border-border">Fecha</TableHead>
-                <TableHead className={`h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] ${bolShowActions ? 'border-r border-border' : ''}`}>Método de Pago</TableHead>
-                {bolShowActions && (
-                  <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-48">Acciones</TableHead>
+                <TableHead className={`h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] ${strStatus !== 'Aceptado' ? 'border-r border-border' : ''}`}>Método de Pago</TableHead>
+
+                {strStatus === 'Pendiente' && (
+                  <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-48">
+                    Acciones
+                  </TableHead>
+                )}
+                {strStatus === 'Rechazado' && (
+                  <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase text-center w-48">
+                    Razón de Rechazo
+                  </TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {bolIsLoading ? (
-                <TableSkeleton bolShowActions={bolShowActions} />
+                <TableSkeleton strStatus={strStatus} /> 
               ) : arrData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={bolShowActions ? 6 : 5} className="text-center py-16 text-muted-foreground font-medium italic">
+                  <TableCell 
+                    colSpan={strStatus === 'Aceptado' ? 5 : 6} 
+                    className="text-center py-16 text-muted-foreground font-medium italic"
+                  >
                     No existen registros en esta categoría.
                   </TableCell>
                 </TableRow>
@@ -223,11 +234,11 @@ export function PaymentDataTable({
                     <TableCell className="px-6 py-4 font-medium text-foreground border-r border-border truncate max-w-[250px]">{objPayment.strClientName}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border truncate max-w-[200px]">{objPayment.strPlanType}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">{objPayment.strDate}</TableCell>
-                    <TableCell className={`px-6 py-4 truncate max-w-[200px] ${bolShowActions ? 'border-r border-border' : ''}`}>
+                    <TableCell className={`px-6 py-4 text-muted-foreground truncate max-w-[200px] ${strStatus !== 'Aceptado' ? 'border-r border-border' : ''}`}>
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground">{objPayment.strPaymentMethod}</span>
                         
-                        {/* Renderizamos "ver detalles" solo si existe una URL de comprobante */}
+                        {/* Se supone que siempre debe haber el comprobante pero... , proximo a modificar */}
                         {objPayment.strReceiptUrl && (
                           <button
                             onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
@@ -238,7 +249,7 @@ export function PaymentDataTable({
                         )}
                       </div>
                     </TableCell>
-                    {bolShowActions && (
+                    {strStatus === 'Pendiente' && (
                       <TableCell className="px-6 py-4">
                         <div className="flex justify-center space-x-2">
                           <Button 
@@ -260,6 +271,13 @@ export function PaymentDataTable({
                             Rechazar
                           </Button>
                         </div>
+                      </TableCell>
+                    )}
+                    {strStatus === 'Rechazado' && (
+                      <TableCell className="px-6 py-4 text-center">
+                        <span className="text-sm font-medium text-destructive">
+                          {objPayment.strReason || "-"}
+                        </span>
                       </TableCell>
                     )}
                   </TableRow>
@@ -315,7 +333,7 @@ export function PaymentDataTable({
             onOpenChange={setBolShowRejectModal}
             strClientName={objSelectedPayment.strClientName}
             strPlanName={objSelectedPayment.strPlanType}
-            onConfirm={() => updatePaymentStatus('Rechazado')}
+            onConfirm={(strReason) => updatePaymentStatus('Rechazado', strReason)}
           />
         </>
       )}
