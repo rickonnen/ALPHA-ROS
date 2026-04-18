@@ -2,25 +2,23 @@
  * Dev: Gabriel Paredes
  * Date: 17/04/2026
  * Funcionalidad: Paso 5 — Imágenes de la propiedad.
- *                Zona de drop, selector de archivos, previsualizaciones
- *                con imagen principal grande + miniaturas + slot de agregar.
- *                Reutiliza validaciones del sprint anterior.
- * @param {ImagenesFormProps} props - onNext, onBack
- * @return {JSX.Element} Formulario de imágenes
+ * CAMBIO: se agregó prop opcional `submitRef` para que la page pueda
+ *         disparar la validación desde el botón "Siguiente" externo.
  */
 'use client'
 
-import { useRef, useState }  from 'react'
-import { Label }             from '@/components/ui/label'
-import { useImagenesForm }   from './useImagenesForm'
-import { MAX_FILES }         from './useImagenesTypes'
+import { useRef, useState, useEffect } from 'react'
+import { Label }                        from '@/components/ui/label'
+import { useImagenesForm }              from './useImagenesForm'
+import { MAX_FILES }                    from './useImagenesTypes'
 
 interface ImagenesFormProps {
-  onNext: () => void
-  onBack: () => void
+  onNext:    () => void
+  onBack:    () => void
+  submitRef?: React.MutableRefObject<(() => void) | null>
 }
 
-export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
+export function ImagenesForm({ onNext, onBack, submitRef }: ImagenesFormProps) {
   const {
     values,
     errors,
@@ -34,23 +32,31 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
     handleSubmit,
   } = useImagenesForm()
 
-  const inputRef                    = useRef<HTMLInputElement>(null)
-  const [dragging,  setDragging]    = useState(false)
-  const [selected,  setSelected]    = useState(0) // índice de la imagen principal
+  // Exponer handleSubmit hacia la page — sin deps para que siempre esté fresco
+  useEffect(() => {
+    if (!submitRef) return
+    submitRef.current = () => handleSubmit(() => onNext())
+  })
+  useEffect(() => {
+    if (!submitRef) return
+    return () => { submitRef.current = null }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitRef])
 
-  //Drag & Drop
-  const handleDragOver  = (e: React.DragEvent) => { e.preventDefault(); setDragging(true)  }
-  const handleDragLeave = ()                   => { setDragging(false) }
+  const inputRef                  = useRef<HTMLInputElement>(null)
+  const [dragging,  setDragging]  = useState(false)
+  const [selected,  setSelected]  = useState(0)
+
+  const handleDragOver  = (e: React.DragEvent) => { e.preventDefault(); setDragging(true) }
+  const handleDragLeave = () => { setDragging(false) }
   const handleDrop      = (e: React.DragEvent) => {
     e.preventDefault()
     setDragging(false)
     if (e.dataTransfer.files.length) handleAgregar(e.dataTransfer.files)
   }
 
-  const onClickSiguiente = () => handleSubmit(() => onNext())
-
-  const hasFiles   = values.imagenes.length > 0
-  const showError  = (touched && !!errors.imagenes) || !!fieldError
+  const hasFiles  = values.imagenes.length > 0
+  const showError = (touched && !!errors.imagenes) || !!fieldError
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -65,9 +71,7 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
       {/* Sin imágenes: zona de drop */}
       {!hasFiles && (
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           className="flex-1 flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors"
           style={{
@@ -76,34 +80,17 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
             minHeight:       '220px',
           }}
         >
-          {/* Ícono nube */}
-          <svg
-            viewBox="0 0 64 48"
-            fill="none"
-            style={{ width: '64px', height: '48px' }}
-          >
-            <path
-              d="M52 20.5C51.3 13.4 45.3 8 38 8c-5.8 0-10.8 3.4-13.2 8.4C20.5 16.9 16 21.6 16 27.5 16 33.9 21.1 39 27.5 39H51c5.5 0 10-4.5 10-10 0-5.1-3.8-9.3-8.7-9.9-.1 0-.2 0-.3.1z"
-              fill="none"
-              stroke="#C26E5A"
-              strokeWidth="2"
-            />
+          <svg viewBox="0 0 64 48" fill="none" style={{ width: '64px', height: '48px' }}>
+            <path d="M52 20.5C51.3 13.4 45.3 8 38 8c-5.8 0-10.8 3.4-13.2 8.4C20.5 16.9 16 21.6 16 27.5 16 33.9 21.1 39 27.5 39H51c5.5 0 10-4.5 10-10 0-5.1-3.8-9.3-8.7-9.9-.1 0-.2 0-.3.1z"
+              fill="none" stroke="#C26E5A" strokeWidth="2" />
             <polyline points="26,28 32,22 38,28" stroke="#C26E5A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
             <line x1="32" y1="22" x2="32" y2="38" stroke="#C26E5A" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-
           <div className="text-center">
-            <p className="text-sm font-semibold text-[#1F3A4D]">
-              Arrastra tus imagenes aqui
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              o haga click para seleccionar
-            </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Minimo 1 - Maximo 5 — Proporcion 4:3 o 16:9
-            </p>
+            <p className="text-sm font-semibold text-[#1F3A4D]">Arrastra tus imagenes aqui</p>
+            <p className="text-xs text-gray-500 mt-0.5">o haga click para seleccionar</p>
+            <p className="text-xs text-gray-400 mt-0.5">Minimo 1 - Maximo 5 — Proporcion 4:3 o 16:9</p>
           </div>
-
           <button
             type="button"
             onClick={e => { e.stopPropagation(); inputRef.current?.click() }}
@@ -115,28 +102,19 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
         </div>
       )}
 
-      {/* ── Con imágenes: imagen principal + miniaturas*/}
+      {/* Con imágenes: imagen principal + miniaturas */}
       {hasFiles && (
         <div className="flex flex-col gap-3 flex-1">
-
-          {/* Imagen principal */}
-          <div
-            className="relative rounded-xl overflow-hidden flex-1"
-            style={{ minHeight: '180px', backgroundColor: '#EDE8E0' }}
-          >
+          <div className="relative rounded-xl overflow-hidden flex-1" style={{ minHeight: '180px', backgroundColor: '#EDE8E0' }}>
             <img
               src={previews[selected]}
               alt={`Imagen principal ${selected + 1}`}
               className="w-full h-full object-cover"
               style={{ maxHeight: '220px' }}
             />
-            {/* Botón eliminar imagen principal */}
             <button
               type="button"
-              onClick={() => {
-                handleEliminar(selected)
-                setSelected(prev => Math.max(0, prev - 1))
-              }}
+              onClick={() => { handleEliminar(selected); setSelected(prev => Math.max(0, prev - 1)) }}
               className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-1 shadow"
             >
               <svg className="w-4 h-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
@@ -145,41 +123,25 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
             </button>
           </div>
 
-          {/* Miniaturas + slot agregar */}
           <div className="flex gap-2">
             {values.imagenes.map((_, idx) => (
               <button
-                key={idx}
-                type="button"
-                onClick={() => setSelected(idx)}
+                key={idx} type="button" onClick={() => setSelected(idx)}
                 className="relative rounded-lg overflow-hidden flex-shrink-0 transition-all"
                 style={{
-                  width:       '64px',
-                  height:      '48px',
-                  border:      idx === selected ? '2px solid #C26E5A' : '2px solid transparent',
+                  width: '64px', height: '48px',
+                  border: idx === selected ? '2px solid #C26E5A' : '2px solid transparent',
                   backgroundColor: '#EDE8E0',
                 }}
               >
-                <img
-                  src={previews[idx]}
-                  alt={`Miniatura ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                <img src={previews[idx]} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
-
-            {/* Slot para agregar más imágenes */}
             {!limitReached && (
               <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
+                type="button" onClick={() => inputRef.current?.click()}
                 className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-dashed gap-0.5"
-                style={{
-                  width:           '64px',
-                  height:          '48px',
-                  borderColor:     '#D4B8AE',
-                  backgroundColor: '#EDE8E0',
-                }}
+                style={{ width: '64px', height: '48px', borderColor: '#D4B8AE', backgroundColor: '#EDE8E0' }}
               >
                 <span className="text-lg leading-none text-[#C26E5A] font-light">+</span>
                 <span className="text-[9px] text-[#C26E5A] font-medium leading-none">Insertar</span>
@@ -192,30 +154,17 @@ export function ImagenesForm({ onNext, onBack }: ImagenesFormProps) {
 
       {/* Input oculto */}
       <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png"
-        multiple
-        className="hidden"
-        aria-hidden="true"
-        onChange={e => {
-          if (e.target.files?.length) handleAgregar(e.target.files)
-          e.target.value = ''
-        }}
+        ref={inputRef} type="file" accept="image/jpeg,image/png" multiple
+        className="hidden" aria-hidden="true"
+        onChange={e => { if (e.target.files?.length) handleAgregar(e.target.files); e.target.value = '' }}
       />
 
-      {/* Errores */}
       {showError && (
-        <span className="text-red-500 text-xs">
-          {fieldError ?? errors.imagenes}
-        </span>
+        <span className="text-red-500 text-xs">{fieldError ?? errors.imagenes}</span>
       )}
 
-      {/* Aviso de recarga */}
       {wasVisited && !hasFiles && (
-        <span className="text-red-500 text-xs">
-          Por favor, inserte sus imágenes de nuevo.
-        </span>
+        <span className="text-red-500 text-xs">Por favor, inserte sus imágenes de nuevo.</span>
       )}
 
     </div>
