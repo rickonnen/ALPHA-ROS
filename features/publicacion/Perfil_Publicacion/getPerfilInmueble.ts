@@ -40,6 +40,23 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
         },
       },
       Zona:   { select: { nombre_zona: true } },
+      EstadoConstruccion: {
+        select: { nombre_estado_construccion: true },
+      },
+      /**
+       * Modificacion
+       * Dev: MarcelaC
+       * Date: 17/04/2026
+       * Funcionalidad: Separar datos
+       */
+      PublicacionCaracteristica: {
+        select: {
+          detalle_caracteristica: true,
+          Caracteristica: {
+            select: { nombre_caracteristica: true },
+          },
+        },
+      },
       Video:  { select: { url_video:   true } },
       Imagen: { select: { url_imagen:  true } },
        /**
