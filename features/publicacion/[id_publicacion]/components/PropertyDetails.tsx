@@ -47,24 +47,24 @@ export const DetalleItem = ({
   strValor: string | number;
 }) => (
   <div className="flex justify-between items-center py-2 border-b border-[#2E2E2E]/5 last:border-0">
-    <span className="text-[#2E2E2E]/70 font-medium text-sm md:text-base">
-      {strLabel}
-    </span>
-    <span className="bg-[#C26E5A] text-white px-4 md:px-5 py-1 rounded-full text-xs md:text-sm font-bold min-w-12.5 text-center">
+    <span className="text-[#2E2E2E]/70 font-medium text-base">{strLabel}</span>
+    <span className="bg-[#C26E5A] text-white px-4 md:px-5 py-1 rounded-full text-base font-bold min-w-12.5 text-center">
       {strValor ?? "—"}
     </span>
   </div>
 );
 
 export const CaracteristicaCard = ({ strNombre, strDetalle }: CaracteristicaItem) => (
-  <div className="bg-white/60 rounded-2xl p-4 border border-black/5 flex flex-col items-center gap-1">
-    <h4 className="font-bold text-base text-[#1F3A4D] text-center border-b border-[#2E2E2E]/10 pb-2 w-full text-center">
+  <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-4 border border-black/5 shadow-sm flex flex-col items-center gap-1 min-h-[100px]">
+    <h4 className="font-bold text-base text-[#1F3A4D] text-center border-b border-[#2E2E2E]/10 pb-2 w-full">
       {strNombre}
     </h4>
-    {strDetalle && (
-      <p className="text-sm text-[#2E2E2E] leading-relaxed text-center mt-1">
-        {strDetalle}
-      </p>
-    )}
+    <div className="flex-1 flex items-center justify-center w-full">
+      {strDetalle && (
+        <p className="text-sm text-[#2E2E2E] leading-relaxed text-center">
+          {strDetalle}
+        </p>
+      )}
+    </div>
   </div>
 );
