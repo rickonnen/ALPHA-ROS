@@ -96,6 +96,7 @@ function PerfilContent() {
         setTelefonos(tels);
       } catch (err: any) {
         setError("Usuario no encontrado en la base de datos.");
+        await logout();
         setTimeout(() => router.push("/"), 2000);
       } finally {
         setLoading(false);
