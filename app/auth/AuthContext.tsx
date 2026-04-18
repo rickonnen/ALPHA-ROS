@@ -8,10 +8,19 @@ interface User {
   email: string;
 }
 
+interface LoginTelemetry {
+  latitud?: number | null;
+  longitud?: number | null;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    telemetry?: LoginTelemetry
+  ) => Promise<void>;
   signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -125,13 +134,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user]);  
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    telemetry?: LoginTelemetry
+  ) => {
     try {
       const res = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", 
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          latitud: telemetry?.latitud ?? null,
+          longitud: telemetry?.longitud ?? null,
+        }),
       });
 
       if (!res.ok) {
