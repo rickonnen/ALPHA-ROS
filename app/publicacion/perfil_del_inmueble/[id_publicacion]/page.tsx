@@ -6,13 +6,13 @@
  * @param params - Parámetros de ruta dinámica con el ID de la publicación.
  * @return {JSX.Element} Vista completa del perfil del inmueble.
  */
-
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
+import FavButton from "@/components/ui/fav";
 
 export default async function PerfilInmueblePage({
   params,
@@ -50,7 +50,7 @@ export default async function PerfilInmueblePage({
   objPerfil.Ubicacion?.direccion,
   objPerfil.Ubicacion?.zona,
 ].filter(Boolean).join(", ") || "Dirección no disponible";
-  // Task 4.4: URLs de imágenes
+  
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
@@ -63,11 +63,18 @@ export default async function PerfilInmueblePage({
           </h1>
         </header>
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
-        <MediaGallery
-          arrImagenes={arrImagenes}
-          strVideoId={strVideoId ?? undefined}
-          strReelId={strReelId ?? undefined}
-        />
+        <div className="relative group rounded-3xl overflow-hidden">
+          <MediaGallery
+            arrImagenes={arrImagenes}
+            strVideoId={strVideoId ?? undefined}
+            strReelId={strReelId ?? undefined}
+          />
+          
+          {/* BOTÓN SUPERPUESTO: Esquina inferior derecha */}
+          <div className="absolute bottom-14 right-8 z-20">
+            <FavButton id_publicacion={intId.toString()} />
+          </div>
+        </div>
         {/* Task 4.3: Precio y Superficie */}
         <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">
           {/* Bloque Precio */}

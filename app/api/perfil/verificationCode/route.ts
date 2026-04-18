@@ -280,7 +280,7 @@ export async function POST(req: NextRequest) {
       {
         ok: false,
         reason: "INTERNAL_ERROR",
-        message: "aqui fallo",
+        message: "Error interno del servidor",
       },
       { status: 500 },
     );
