@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { DatosAvisoForm }        from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
-import { CategoriaYEstadoForm }  from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
-import { useCategoriaForm }      from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
-import { UbicacionForm }         from '@/features/publicacion/FormularioDinamicoCaracteristicas/Ubicacion/UbicacionForm'
-import { CaracteristicasDetalleForm }    from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/CaracteristicasDetalleForm'
+import { useRouter }                                 from 'next/navigation'
+
+import { DatosAvisoForm }               from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
+import { CategoriaYEstadoForm }         from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
+import { useCategoriaForm }             from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
+import { UbicacionForm }                from '@/features/publicacion/FormularioDinamicoCaracteristicas/Ubicacion/UbicacionForm'
+import { CaracteristicasDetalleForm }   from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/CaracteristicasDetalleForm'
 import { useCaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/useCaracteristicasDetalleForm'
-import { ImagenesForm }    from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/ImagenesForm'
-import { VideoForm }       from '@/features/publicacion/FormularioDinamicoCaracteristicas/Video/Videoform'
-import { DescripcionForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Descripcion/Descripcionform'
+import { ImagenesForm }                 from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/ImagenesForm'
+import { VideoForm }                    from '@/features/publicacion/FormularioDinamicoCaracteristicas/Video/Videoform'
+import { DescripcionForm }              from '@/features/publicacion/FormularioDinamicoCaracteristicas/Descripcion/Descripcionform'
+import { publicarInmueble }             from '@/features/publicacion/BackendFormulario/actions'
 // import { PublicacionStepper } from '@/features/publicacion/components/PublicacionStepper'
 
-//sessionStorage
+// sessionStorage — paso actual y pasos completados
 const SK_STEP      = 'publicacion_currentStep'
 const SK_COMPLETED = 'publicacion_completedSteps'
 
@@ -30,7 +32,20 @@ function guardarCompletados(set: Set<number>) {
   try { sessionStorage.setItem(SK_COMPLETED, JSON.stringify([...set])) } catch {}
 }
 
-//Pasos
+// Claves de sessionStorage de cada paso — para limpiar al publicar
+const SESSION_KEYS_TO_CLEAN = [
+  SK_STEP,
+  SK_COMPLETED,
+  'datosAviso',
+  'categoriaEstado',
+  'ubicacion',
+  'caracteristicasDetalle',
+  'imagenesPropiedad_interacted',
+  'videoPropiedad',
+  'descripcionPropiedad',
+]
+
+// Pasos
 const STEPS = [
   { title: 'Datos del Aviso',    opcional: false },
   { title: 'Categoría y Estado', opcional: false },
@@ -41,7 +56,7 @@ const STEPS = [
   { title: 'Descripción',        opcional: false },
 ]
 
-//Diseño
+// Diseño
 const DISENO = {
   pagina:             { backgroundColor: '#F4EFE6' },
   alineacionVertical: 'center' as const,
@@ -66,14 +81,14 @@ const DISENO = {
   },
 }
 
-//Tipo ref
+// Tipo ref para triggers de validación por paso
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
-//useStableTrigger
-// Usado SOLO para los pasos que NO instancian su propio hook internamente:
-// paso 1 (CategoriaEstadoStep) y paso 3 (CaracteristicasDetalleStep).
-// Para los demás (DatosAviso, Ubicacion, Imagenes, Descripcion) el form
-// recibe submitRef directamente y actualiza el ref desde adentro.
+// ─────────────────────────────────────────────────────────────
+// useStableTrigger
+// Usado SOLO para pasos que NO instancian su propio hook:
+// paso 1 (CategoriaEstadoStep) y paso 3 (CaracteristicasDetalleStep)
+// ─────────────────────────────────────────────────────────────
 function useStableTrigger(
   triggerRef:    TriggerRef,
   handleSubmit:  (cb: () => void) => void,
@@ -89,9 +104,7 @@ function useStableTrigger(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerRef])
 }
-
-//Paso 1: Categoría y Estado
-// Usa useStableTrigger porque el hook NO está dentro del form — aquí lo instanciamos.
+// Paso 1: Categoría y Estado
 function CategoriaEstadoStep({
   triggerRef,
   advanceDirect,
@@ -108,9 +121,7 @@ function CategoriaEstadoStep({
     />
   )
 }
-
-//Paso 3: Características
-// Igual que Categoría — el hook vive aquí, no dentro del form.
+// Paso 3: Características
 function CaracteristicasDetalleStep({
   triggerRef,
   advanceDirect,
@@ -129,17 +140,19 @@ function CaracteristicasDetalleStep({
   )
 }
 
-//Contenido del paso activo
+// Contenido del paso activo
 function StepContent({
   step,
   advanceDirect,
   onBack,
   triggerRefs,
+  imagenesRef,
 }: {
   step:          number
   advanceDirect: () => void
   onBack:        () => void
   triggerRefs:   Record<number, TriggerRef>
+  imagenesRef:   React.MutableRefObject<File[]>
 }) {
   switch (step) {
     // Paso 0 — DatosAvisoForm instancia su propio hook → le pasamos submitRef
@@ -167,11 +180,13 @@ function StepContent({
       <CaracteristicasDetalleStep triggerRef={triggerRefs[3]} advanceDirect={advanceDirect} />
     )
     // Paso 4 — ImagenesForm instancia su propio hook → le pasamos submitRef
+    // onImagesChange escribe los File[] en imagenesRef para que handlePublicar los lea
     case 4: return (
       <ImagenesForm
         onNext={advanceDirect}
         onBack={onBack}
         submitRef={triggerRefs[4]}
+        onImagesChange={(files) => { imagenesRef.current = files }}
       />
     )
     // Paso 5 — Video, opcional, sin validación
@@ -188,9 +203,13 @@ function StepContent({
   }
 }
 
-//Página principal
+// Página principal
 export default function CrearPublicacionPage() {
   const router = useRouter()
+
+  // ── Sin login por ahora — descomentar useAuth cuando esté listo ──
+  // const { user } = useAuth()
+  const user = null
 
   const [currentStep,    setCurrentStep]    = useState<number>(() =>
     typeof window !== 'undefined' ? leerPaso() : 0
@@ -198,8 +217,13 @@ export default function CrearPublicacionPage() {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(() =>
     typeof window !== 'undefined' ? leerCompletados() : new Set()
   )
-  const [hydrated,  setHydrated]  = useState(() => typeof window !== 'undefined')
-  const [blockMsg,  setBlockMsg]  = useState<string | null>(null)
+  const [hydrated,     setHydrated]     = useState(() => typeof window !== 'undefined')
+  const [blockMsg,     setBlockMsg]     = useState<string | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
+
+  // Ref con los File[] de imágenes — ImagenesForm los escribe aquí via onImagesChange
+  const imagenesRef = useRef<File[]>([])
 
   // triggerRefs — uno por cada paso que necesita validación (todos menos video paso 5)
   const triggerRefs: Record<number, TriggerRef> = {
@@ -224,15 +248,118 @@ export default function CrearPublicacionPage() {
     setCurrentStep(prev => prev + 1)
   }, [isLastStep, currentStep])
 
+  // ─────────────────────────────────────────────────────────
+  // handlePublicar — lee sessionStorage, arma FormData y llama
+  // al server action.
+  //
+  // Cuando el sumario esté listo (otro dev):
+  //   1. En handleNext del último paso muestra el sumario
+  //      en vez de llamar triggerRefs[6] directamente
+  //   2. El onConfirmar del sumario llama handlePublicar()
+  // ─────────────────────────────────────────────────────────
+  const handlePublicar = useCallback(async () => {
+    setPublishError(null)
+    setIsPublishing(true)
+
+    try {
+      const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')            ?? '{}')
+      const categoria       = JSON.parse(sessionStorage.getItem('categoriaEstado')        ?? '{}')
+      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')              ?? '{}')
+      const caracteristicas = JSON.parse(sessionStorage.getItem('caracteristicasDetalle') ?? '{}')
+      const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')         ?? '{}')
+      const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad')   ?? '{}')
+
+      const formData = new FormData()
+
+      // Paso 0 — Datos del Aviso
+      formData.append('titulo',        datosAviso.titulo        ?? '')
+      formData.append('tipoOperacion', datosAviso.tipoOperacion ?? '')
+      formData.append('precio',        String(datosAviso.precio ?? '0'))
+      formData.append('tipoMoneda',    datosAviso.tipoMoneda    ?? 'USD')
+
+      // Paso 1 — Categoría y Estado
+      formData.append('tipoInmueble',       categoria.tipoInmueble              ?? '')
+      formData.append('estadoConstruccion', String(categoria.estadoConstruccion ?? 1))
+
+      // Paso 2 — Ubicación
+      formData.append('direccion',    ubicacion.direccion    ?? '')
+      formData.append('departamento', ubicacion.departamento ?? '')
+      formData.append('zona',         ubicacion.zona         ?? '')
+      if (ubicacion.lat) formData.append('lat', String(ubicacion.lat))
+      if (ubicacion.lng) formData.append('lng', String(ubicacion.lng))
+
+      // Paso 3 — Características
+      formData.append('habitaciones', String(caracteristicas.habitaciones ?? 0))
+      formData.append('banios',       String(caracteristicas.banios       ?? 0))
+      formData.append('garajes',      String(caracteristicas.garajes      ?? 0))
+      formData.append('plantas',      String(caracteristicas.plantas      ?? 0))
+      formData.append('superficie',   String(caracteristicas.superficie   ?? '0'))
+
+      // Paso 4 — Imágenes desde el ref (File objects)
+      if (imagenesRef.current.length === 0) {
+        setPublishError('Debes subir al menos 1 imagen.')
+        setIsPublishing(false)
+        return
+      }
+      imagenesRef.current.forEach(f => formData.append('imagenes', f))
+
+      // Paso 5 — Video (opcional)
+      formData.append('videoUrl', video.url ?? '')
+
+      // Paso 6 — Descripción
+      formData.append('descripcion', descripcion.descripcion ?? '')
+
+      // Usuario — null mientras no haya login
+      // Cuando el login esté listo reemplazar por: user?.id ?? ''
+      formData.append('id_usuario', '')
+
+      const result = await publicarInmueble(formData)
+
+      if (result.success) {
+        SESSION_KEYS_TO_CLEAN.forEach(k => {
+          try { sessionStorage.removeItem(k) } catch {}
+        })
+        router.push(`/publicacion/${result.idPublicacion}`)
+
+      } else if (result.reason === 'LIMITE_ALCANZADO') {
+        // TODO: mostrar modal de límite cuando el login esté integrado
+        setPublishError('Has alcanzado el límite de publicaciones gratuitas.')
+
+      } else {
+        const firstError = Object.values(result.errors ?? {}).flat()[0] as string | undefined
+        setPublishError(firstError ?? 'Error al publicar. Intenta de nuevo.')
+      }
+
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      setPublishError(`Error inesperado: ${msg}`)
+    } finally {
+      setIsPublishing(false)
+    }
+  }, [router])
+
+  // handleNext — avanza al siguiente paso o publica si es el último
   const handleNext = useCallback(() => {
-    if (isLastStep) return
     setBlockMsg(null)
+    setPublishError(null)
+
+    // Último paso (6 — Descripción) → validar y luego publicar
+    // Cuando el sumario esté listo: mostrar sumario aquí en vez de publicar directo
+    if (isLastStep) {
+      triggerRefs[currentStep]?.current?.()
+      return
+    }
+
+    // Video (paso 5) es opcional → avanzar sin validar
     if (currentStep === 5) { advanceDirect(); return }
+
+    // Resto → disparar validación del paso actual
     triggerRefs[currentStep]?.current?.()
   }, [isLastStep, currentStep, advanceDirect, triggerRefs])
 
   const handleBack = useCallback(() => {
     setBlockMsg(null)
+    setPublishError(null)
     if (isFirstStep) router.back()
     else setCurrentStep(prev => prev - 1)
   }, [isFirstStep, router])
@@ -240,7 +367,7 @@ export default function CrearPublicacionPage() {
   /**
    * handleSidebarClick — para el componente del otro equipo.
    *
-   *Para el otro equipo
+   * Para el otro equipo:
    * 1. Descomentar el import de PublicacionStepper arriba.
    * 2. Reemplazar el <div> del panel izquierdo por:
    *
@@ -258,10 +385,10 @@ export default function CrearPublicacionPage() {
    *  Hacia atrás: siempre permitido.
    *  Hacia adelante: solo si ya está en completedSteps o es opcional.
    *  Paso obligatorio no completado: muestra mensaje, no cambia el paso.
-   *
    */
   const handleSidebarClick = useCallback((index: number) => {
     setBlockMsg(null)
+    setPublishError(null)
     if (index === currentStep) return
     if (index < currentStep) { setCurrentStep(index); return }
     if (completedSteps.has(index) || STEPS[index].opcional) {
@@ -293,7 +420,7 @@ export default function CrearPublicacionPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-        {/*Panel izquierdo
+        {/* Panel izquierdo
             Reemplazar este <div> completo por:
 
             <PublicacionStepper
@@ -302,7 +429,7 @@ export default function CrearPublicacionPage() {
               steps={STEPS}
               onStepClick={handleSidebarClick}
             />
-         */}
+        */}
         <div
           style={{
             width: DISENO.panelIzquierdo.width, flexShrink: 0,
@@ -332,6 +459,7 @@ export default function CrearPublicacionPage() {
             )}
           </h2>
 
+          {/* Mensaje de bloqueo de navegación */}
           {blockMsg && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
@@ -341,12 +469,23 @@ export default function CrearPublicacionPage() {
             </div>
           )}
 
+          {/* Error de publicación */}
+          {publishError && (
+            <div style={{
+              backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
+              padding: '8px 12px', marginBottom: '10px', fontSize: '13px', color: '#991b1b', flexShrink: 0,
+            }}>
+              {publishError}
+            </div>
+          )}
+
           <div style={{ ...DISENO.cuadroForm, flex: 1, overflowY: 'auto' }}>
             <StepContent
               step={currentStep}
-              advanceDirect={advanceDirect}
+              advanceDirect={currentStep === 6 ? handlePublicar : advanceDirect}
               onBack={handleBack}
               triggerRefs={triggerRefs}
+              imagenesRef={imagenesRef}
             />
           </div>
 
@@ -354,15 +493,30 @@ export default function CrearPublicacionPage() {
             display: 'flex', justifyContent: 'flex-end',
             gap: DISENO.botones.gap, marginTop: DISENO.botones.marginTop, flexShrink: 0,
           }}>
-            <button type="button" onClick={handleBack}
-              style={{ ...DISENO.botonRegresar, cursor: 'pointer', backgroundColor: '#F4EFE6' }}
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={isPublishing}
+              style={{
+                ...DISENO.botonRegresar,
+                cursor: isPublishing ? 'not-allowed' : 'pointer',
+                backgroundColor: '#F4EFE6',
+                opacity: isPublishing ? 0.6 : 1,
+              }}
             >
               Regresar
             </button>
-            <button type="button" onClick={handleNext}
-              style={{ ...DISENO.botonSiguiente, cursor: 'pointer' }}
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={isPublishing}
+              style={{
+                ...DISENO.botonSiguiente,
+                cursor: isPublishing ? 'not-allowed' : 'pointer',
+                opacity: isPublishing ? 0.6 : 1,
+              }}
             >
-              {isLastStep ? 'Publicar' : 'Siguiente'}
+              {isPublishing ? 'Publicando...' : isLastStep ? 'Publicar' : 'Siguiente'}
             </button>
           </div>
         </div>
