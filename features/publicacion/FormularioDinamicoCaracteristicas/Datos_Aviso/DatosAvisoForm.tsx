@@ -1,5 +1,5 @@
 /**
- * Dev: [tu nombre]
+ * Dev: [Gabriel Paredes]
  * Date: 17/04/2026
  * Funcionalidad: Paso 1 del formulario dinámico de publicación.
  *                Título, tipo de operación, precio y tipo de moneda
