@@ -23,6 +23,7 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       descripcion:  true,
       precio:       true,
       superficie:   true,
+      Moneda:       { select: { simbolo: true, nombre: true } },
       habitaciones: true,
       banos:        true,
       garajes:      true,

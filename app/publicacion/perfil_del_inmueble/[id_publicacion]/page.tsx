@@ -82,11 +82,11 @@ export default async function PerfilInmueblePage({
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
             <Tag className="w-5 h-5 md:w-6 md:h-6 text-[#2E2E2E] opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Precio:</span>
-              <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
-                {Number(objPerfil.precio).toLocaleString("de-DE")} Bs.
-              </span>
-            </div>
+          <span className="font-bold text-[#1F3A4D]">Precio:</span>
+          <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
+            {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
+          </span>
+        </div>
           </div>
           {/* Bloque Superficie */}
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
