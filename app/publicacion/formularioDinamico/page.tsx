@@ -5,7 +5,8 @@ import { useRouter }     from 'next/navigation'
 import { DatosAvisoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
 import { CategoriaYEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
 import { useCategoriaForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
-
+import { CaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/CaracteristicasDetalleForm'
+import { useCaracteristicasDetalleForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Caracteristicas/useCaracteristicasDetalleForm'
 // import { PublicacionStepper }  from '@/features/publicacion/components/PublicacionStepper'
 
 import { Button } from '@/components/ui/button'
@@ -105,6 +106,18 @@ function CategoriaEstadoStep() {
   )
 }
 
+function CaracteristicasDetalleStep() {
+  const { values, errors, touched, handleChange, handleBlur } = useCaracteristicasDetalleForm()
+  return (
+    <CaracteristicasDetalleForm
+      values={values}
+      errors={errors}
+      touched={touched}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  )
+}
 function StepContent({
   step,
   onNext,
@@ -118,7 +131,7 @@ function StepContent({
     case 0: return <DatosAvisoForm onNext={onNext} onBack={onBack} />
     case 1: return <CategoriaEstadoStep />
     case 2: return <StepPlaceholder title={STEPS[2].title} />
-    case 3: return <StepPlaceholder title={STEPS[3].title} />
+    case 3: return <CaracteristicasDetalleStep />
     case 4: return <StepPlaceholder title={STEPS[4].title} />
     case 5: return <StepPlaceholder title={STEPS[5].title} />
     case 6: return <StepPlaceholder title={STEPS[6].title} />

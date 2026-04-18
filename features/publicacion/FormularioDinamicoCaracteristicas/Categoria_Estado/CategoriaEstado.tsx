@@ -22,9 +22,9 @@ export function CategoriaYEstadoForm({
     <div className="flex flex-col">
 
       <div style={{ marginTop: '20px', marginBottom: '-14px' }}>
-        <p style={{ fontWeight: '700', fontSize: '15px', color: '#1A1714', marginBottom: '8px' }}>
-          ¿Qué tipo de propiedad desea publicar?
-        </p>
+       <p className="text-sm font-medium text-[#1A1714]">
+        ¿Qué tipo de propiedad desea publicar?
+      </p>
         <DropdownSelect
           id="tipoPropiedad"
           label=""
@@ -39,7 +39,7 @@ export function CategoriaYEstadoForm({
       </div>
 
       <div style={{ marginTop: '30px' }}>
-        <p style={{ fontWeight: '700', fontSize: '15px', color: '#1A1714', marginBottom: '8px' }}>
+        <p className="text-sm font-medium text-[#1A1714]">
           ¿En qué estado se encuentra tu propiedad?
         </p>
         <DropdownSelect
