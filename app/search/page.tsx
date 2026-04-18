@@ -15,6 +15,7 @@ import { FilterTypeProperty, type TipoInmueble } from '@/components/search/filte
 import {
   OperationTypeFilter,
   type OperationTypeValue,
+  operationTypeOptions,
 } from '@/components/search/operationTypeFilter';
 import PriceDropdown from '@/components/search/priceDropdown';
 import PropertyCard, { type Property } from '@/components/search/propertyCard';
@@ -22,7 +23,7 @@ import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, List, LayoutGrid } from 'lucide-react';
 import SearchMapClient from './SearchMapClient';
 import { convertPublicacionesToLocations } from '@/lib/locations';
 
@@ -63,22 +64,26 @@ function getQueryValues(value: string | null): string[] {
 }
 
 function mapQueryOperationToValue(value: string | null): OperationTypeValue {
-  const lastOperation = getQueryValues(value)
+  return getQueryValues(value)
     .map((item) => normalizeText(item))
-    .filter(Boolean)
-    .at(-1);
-
-  switch (lastOperation) {
-    case 'venta':
-    case 'compra':
-      return 'venta';
-    case 'alquiler':
-      return 'alquiler';
-    case 'anticretico':
-      return 'anticretico';
-    default:
-      return null;
-  }
+    .map((item) => {
+      switch (item) {
+        case 'venta':
+        case 'compra':
+        case 'en venta':
+          return 'venta';
+        case 'alquiler':
+        case 'en alquiler':
+          return 'alquiler';
+        case 'anticretico':
+          return 'anticretico';
+        default:
+          return null;
+      }
+    })
+    .filter((item, index, array): item is NonNullable<typeof item> =>
+      item !== null && array.indexOf(item) === index,
+    );
 }
 
 function mapQueryPropertyTypeToIds(value: string | null, options: TipoInmueble[]): number[] {
@@ -124,18 +129,14 @@ function toNumber(value: number | null | undefined): number {
 }
 
 function getOperationLabel(value: OperationTypeValue): string {
-  if (!value) {
+  if (value.length === 0) {
     return 'Todas las Operaciones';
   }
 
-  switch (value) {
-    case 'alquiler':
-      return 'Alquiler';
-    case 'anticretico':
-      return 'Anticrético';
-    default:
-      return 'Venta';
-  }
+  return operationTypeOptions
+    .filter((option) => value.includes(option.value))
+    .map((option) => option.label)
+    .join(', ');
 }
 
 function isRenderableImage(url: string): boolean {
@@ -181,9 +182,9 @@ function mapPublicationToProperty(
 
   return {
     id: publication.id_publicacion,
-    title: publication.titulo ?? 'Sin título',
+    title: publication.titulo ?? 'Sin tÃƒÆ’Ã‚Â­tulo',
     type: `${publication.tipo_inmueble ?? 'Inmueble'} en ${publication.tipo_operacion ?? getOperationLabel(selectedOperation)}`,
-    location: location || 'Ubicación no disponible',
+    location: location || 'UbicaciÃƒÆ’Ã‚Â³n no disponible',
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
@@ -199,6 +200,8 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
 
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [searchLocation, setSearchLocation] = useState('');
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
@@ -211,7 +214,7 @@ function SearchPageContent() {
     minSurface: '',
     maxSurface: '',
   });
-  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>(null);
+  const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>([]);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
@@ -226,7 +229,7 @@ function SearchPageContent() {
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
-        selectedOperation !== null ||
+        selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
@@ -270,7 +273,23 @@ function SearchPageContent() {
     const urlParams = new URLSearchParams();
 
     if (searchLocation) urlParams.set('ciudad', searchLocation);
-    if (selectedOperation !== null) urlParams.set('operaciones', selectedOperation);
+        if (selectedOperation.length > 0) {
+      const selectedOperationLabels = operationTypeOptions
+        .filter((option) => selectedOperation.includes(option.value))
+        .map((option) => {
+          switch (option.value) {
+            case 'venta':
+              return 'Venta';
+            case 'alquiler':
+              return 'Alquiler';
+            case 'anticretico':
+              return 'Anticrético';
+          }
+        })
+        .join(',');
+
+      urlParams.set('operaciones', selectedOperationLabels);
+    }
     if (selectedPropertyTypes.length > 0) {
       const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
       urlParams.set('tipo', labels);
@@ -334,7 +353,7 @@ function SearchPageContent() {
 
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
-        operacion: selectedOperation ?? undefined,
+        operacion: selectedOperation.length > 0 ? selectedOperation.join(',') : undefined,
         tipoInmueble: selectedPropertyLabels.join(','),
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
@@ -429,7 +448,7 @@ function SearchPageContent() {
 
     void runSearch({
       ubicacion: nextLocation,
-      operacion: nextOperation ?? undefined,
+      operacion: nextOperation.length > 0 ? nextOperation.join(',') : undefined,
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
@@ -470,7 +489,7 @@ function SearchPageContent() {
 
   const handleClearFilters = () => {
     setSearchLocation('');
-    setSelectedOperation(null);
+    setSelectedOperation([]);
     setSelectedPropertyTypes([]);
     setAdvancedFilterValues({
       habitaciones: '',
@@ -515,12 +534,46 @@ function SearchPageContent() {
           </svg>
           Mostrar Filtros
         </Button>
+
+        {/*boton mapa */}
         <div className="flex items-center gap-2">
           <label className="relative inline-flex cursor-pointer items-center">
             <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
             <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
           </label>
           <span className="text-sm font-medium text-gray-700">Mapa</span>
+        </div>
+      </div>
+
+      <div className="block md:hidden items-center justify-between gap-4 mb-4">
+        <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
+        <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
+
+        <div className="flex items-center gap-2 justify-between bg-transparent rounded-[10px]">
+          <div className="flex-1 max-w-[250px]">
+            <SortSelect onSortChange={handleSort} />
+          </div>
+        
+          {/* Botones de vista de grid/list*/}
+          <div className="flex items-center gap-2 shrink-0 bg-transparent rounded-[10px] mt-3">
+            {/* Botón de vista de grilla */}
+            <button
+              onClick={()=> setViewMode('grid')}
+              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+              aria-label="vista grilla"
+            >
+            <LayoutGrid className="h-5 w-5" />
+            </button>
+            {/* Botón de vista de lista */}
+            
+            <button
+              onClick={()=> setViewMode('list')}
+              className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+              aria-label="vista lista"
+            >
+            <List className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -598,20 +651,44 @@ function SearchPageContent() {
           <div className="sticky top-8">
             <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
               <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+              
+              <div className="flex mb-6 items-center justify-between ">
 
-              <div className="mb-4 flex items-center gap-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isMapOpen}
-                    onChange={() => setIsMapOpen(!isMapOpen)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
-                </label>
-                <span className="text-sm font-medium text-gray-700">Mapa</span>
+                <div className="mb-4 flex items-center gap-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isMapOpen}
+                      onChange={() => setIsMapOpen(!isMapOpen)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
+                  </label>
+                  <span className="text-sm font-medium text-gray-700">Mapa</span>
+                </div>
+
+                {/* Botones de vista de grid/list - solo para desktop */}
+                <div className="mb-4 flex items-center gap-2">
+                  {/* Botón de vista de grilla */}
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+                    aria-label="vista grilla"
+                  >
+                  <LayoutGrid className="h-5 w-5" />
+                  </button>
+                  {/* Botón de vista de lista */}
+                  
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
+                    aria-label="vista lista"
+                  >
+                  <List className="h-5 w-5" />
+                  </button>
+                </div>
+
               </div>
-
               <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
@@ -675,11 +752,11 @@ function SearchPageContent() {
             </div>
           </div>
 
-          <div className="mb-2 block md:hidden">
+          {/* <div className="mb-2 block md:hidden">
             <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
             <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
             <SortSelect onSortChange={handleSort} />
-          </div>
+          </div> */}
 
           {!hasSearched && isApplyingFilters ? (
             <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
@@ -692,12 +769,13 @@ function SearchPageContent() {
           ) : (
             <>
               <div className={`md:hidden ${isMapOpen ? 'hidden' : ''}`}>
-                <div className={`grid grid-cols-1 gap-6 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                <div className={`grid grid-cols-1 gap-2 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                   {displayedProperties.map((property) => (
                     <PropertyCard
                       key={property.id}
                       property={property}
                       selectedCurrency={selectedCurrency}
+                      viewMode={viewMode}
                       isHovered={hoveredId === property.id}
                       onMouseEnter={() => {
                         setHoveredId(property.id);
@@ -717,15 +795,16 @@ function SearchPageContent() {
                   ))}
                 </div>
               </div>
-
+              {/* Vista de escritorio - se oculta en mobile si el mapa está abierto */}
               <div className="hidden md:block">
                 <ScrollArea className="h-[605px] pr-4">
-                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
+                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen || viewMode == 'list' ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
                     {displayedProperties.map((property) => (
                       <PropertyCard
                         key={property.id}
                         property={property}
                         selectedCurrency={selectedCurrency}
+                        viewMode={viewMode}
                         isHovered={hoveredId === property.id}
                         onMouseEnter={() => {
                           setHoveredId(property.id);

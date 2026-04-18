@@ -1,5 +1,5 @@
 'use client'
-
+import { X } from "lucide-react";
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -57,11 +57,22 @@ export function FilterTypeProperty({ tipos, selected, onChange }: Props) {
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-              <div className={`${geist.className} flex w-full`}>
-                <span className="flex-1 truncate text-left">
-                  {labelTruncated}
-                </span>
-              </div>
+          <div className={`${geist.className} flex w-full items-center justify-between pr-2`}>
+            <span className="flex-1 truncate text-left">
+              {labelTruncated}
+            </span>
+            {/* Solo añadimos esto: la X que limpia el filtro */}
+            {selected.length > 0 && (
+              <X 
+                size={16} 
+                className="text-[#4B4B4B] hover:text-red-500 transition-colors ml-2" 
+                onClick={(e) => {
+                  e.stopPropagation(); // Para que NO se cierre el menú al borrar
+                  onChange([]);        // Esto borra todo lo que marcaron
+                }} 
+              />
+            )}
+          </div>
             </AccordionTrigger>
           </div>
 
