@@ -87,13 +87,13 @@ export async function PATCH(request: NextRequest) {
     }
     
     const objBody = await request.json();
-    const { id: intId, status: strStatus } = objBody;
+    const { id: intId, status: strStatus, reason: strReason } = objBody;
 
     if (!intId || !strStatus) {
       return NextResponse.json({ error: 'Faltan parámetros obligatorios' }, { status: 400 });
     }
 
-    const objUpdatedPayment = await updatePaymentStatus(Number(intId), strStatus);
+    const objUpdatedPayment = await updatePaymentStatus(Number(intId), strStatus, strReason);
     return NextResponse.json(objUpdatedPayment, { status: 200 });
     
   } catch (objError) {
