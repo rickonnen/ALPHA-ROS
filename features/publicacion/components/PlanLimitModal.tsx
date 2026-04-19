@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * @Dev: jimmyP
- * @Fecha: 29/03/2026
- * @Funcionalidad: Modal HU5. Se muestra cuando el usuario gratuito
- * ha agotado sus 2 publicaciones gratuitas.
+ * @Dev: jimmyP / Oliver
+ * @Fecha: 18/04/2026
+ * @Funcionalidad: Modal HU7. Se muestra cuando el usuario con plan activo
+ * ha agotado el límite de publicaciones permitidas por su plan.
  */
 
 import { useRouter } from "next/navigation";
@@ -18,21 +18,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface FreePublicationLimitModalProps {
+interface PlanLimitModalProps {
   bolOpen: boolean;
   onBack: () => void;
   strPlansHref?: string;
-  strTitle?: string;
-  strDescription?: string;
 }
 
-export default function FreePublicationLimitModal({
+export default function PlanLimitModal({
   bolOpen,
   onBack,
   strPlansHref = "/cobros/planes",
-  strTitle = "Has excedido tus publicaciones gratuitas",
-  strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
-}: FreePublicationLimitModalProps) {
+}: PlanLimitModalProps) {
 
   const router = useRouter();
 
@@ -46,10 +42,12 @@ export default function FreePublicationLimitModal({
       >
         <AlertDialogHeader className="text-center space-y-3">
           <AlertDialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight">
-            {strTitle}
+            Límite de publicaciones alcanzado
           </AlertDialogTitle>
           <AlertDialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
-            {strDescription}
+            Has utilizado la cantidad de publicaciones incluidas en tu plan
+            actual. Para seguir publicando, mejora tu suscripción o adquiere
+            un paquete adicional.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

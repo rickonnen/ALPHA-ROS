@@ -4,14 +4,17 @@ import { useRouter }          from "next/navigation";
 import { useState }           from "react";
 import { Button }             from "@/components/ui/button";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
+import PlanLimitModal            from "@/features/publicacion/components/PlanLimitModal";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
-import { useAuth }            from "@/app/auth/AuthContext"; // ← ajustá la ruta según tu estructura
+import { useAuth }            from "@/app/auth/AuthContext";
 
 export const PropertyActions = () => {
   const router = useRouter();
-  const { user } = useAuth(); // ← reemplaza el localStorage
-  const [bolShowModal, setBolShowModal] = useState(false);
-  const [bolChecking,  setBolChecking]  = useState(false);
+  const { user } = useAuth();
+
+  const [bolChecking,          setBolChecking]          = useState(false);
+  const [bolShowModalGratuito, setBolShowModalGratuito] = useState(false); // HU5
+  const [bolShowModalPlan,     setBolShowModalPlan]     = useState(false); // HU7
 
   const handleVerMisPublicaciones = () => {
     if (!user) {
@@ -26,22 +29,31 @@ export const PropertyActions = () => {
       router.push("/publicacion/informacion-comercial");
       return;
     }
+
     setBolChecking(true);
     try {
       const objEstado = await verificarEstadoPublicacion(user.id);
-      console.log("objEstado:", objEstado);
+
       if (objEstado.bolLimiteAlcanzado) {
-        setBolShowModal(true);
-      } else {
-        sessionStorage.removeItem("caracteristicasInmueble");
-        sessionStorage.removeItem("caracteristicasInmuebleUsuario");
-        sessionStorage.removeItem("informacionComercialDraft");
-        sessionStorage.removeItem("informacionComercialDraftUsuario");
-        sessionStorage.removeItem("informacionComercial");
-        sessionStorage.removeItem("videoUrl");
-        sessionStorage.removeItem("imageUploader_userInteracted");
-        router.push("/publicacion/informacion-comercial");
+        // Decide qué modal mostrar según el tipo de límite
+        if (objEstado.strTipoLimite === "plan") {
+          setBolShowModalPlan(true);      // HU7 — plan activo excedido
+        } else {
+          setBolShowModalGratuito(true);  // HU5 — gratuito excedido
+        }
+        return;
       }
+
+      // Sin límite → limpiar session y navegar
+      sessionStorage.removeItem("caracteristicasInmueble");
+      sessionStorage.removeItem("caracteristicasInmuebleUsuario");
+      sessionStorage.removeItem("informacionComercialDraft");
+      sessionStorage.removeItem("informacionComercialDraftUsuario");
+      sessionStorage.removeItem("informacionComercial");
+      sessionStorage.removeItem("videoUrl");
+      sessionStorage.removeItem("imageUploader_userInteracted");
+      router.push("/publicacion/informacion-comercial");
+
     } catch (error) {
       console.error("Error verificando publicaciones:", error);
       router.push("/publicacion/informacion-comercial");
@@ -72,9 +84,16 @@ export const PropertyActions = () => {
         </Button>
       </footer>
 
+      {/* HU5 — Modal plan gratuito (sin cambios) */}
       <FreePublicationLimitModal
-        bolOpen={bolShowModal}
-        onBack={() => setBolShowModal(false)}
+        bolOpen={bolShowModalGratuito}
+        onBack={() => setBolShowModalGratuito(false)}
+      />
+
+      {/* HU7 — Modal plan activo excedido (nuevo) */}
+      <PlanLimitModal
+        bolOpen={bolShowModalPlan}
+        onBack={() => setBolShowModalPlan(false)}
       />
     </>
   );
