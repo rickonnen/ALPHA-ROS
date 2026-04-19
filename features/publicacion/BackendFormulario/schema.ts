@@ -29,8 +29,8 @@ export const DEPARTAMENTO_CIUDAD: Record<string, number> = {
 
 // Mapeo moneda → id_moneda (tabla Moneda)
 export const MONEDA_IDS: Record<string, number> = {
-  USD: 1,
-  Bs:  2,
+  USD: 2,
+  Bs:  1,
 }
 
 

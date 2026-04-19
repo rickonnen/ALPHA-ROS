@@ -16,7 +16,9 @@ import { publicarInmueble }             from '@/features/publicacion/BackendForm
 // import { PublicacionStepper } from '@/features/publicacion/components/PublicacionStepper'
 import { StepsSidebar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
 
+// ─────────────────────────────────────────────────────────────
 // sessionStorage — paso actual y pasos completados
+// ─────────────────────────────────────────────────────────────
 const SK_STEP      = 'publicacion_currentStep'
 const SK_COMPLETED = 'publicacion_completedSteps'
 
@@ -33,12 +35,14 @@ function guardarCompletados(set: Set<number>) {
   try { sessionStorage.setItem(SK_COMPLETED, JSON.stringify([...set])) } catch {}
 }
 
+// ─────────────────────────────────────────────────────────────
 // Claves de sessionStorage de cada paso — para limpiar al publicar
+// ─────────────────────────────────────────────────────────────
 const SESSION_KEYS_TO_CLEAN = [
   SK_STEP,
   SK_COMPLETED,
   'datosAviso',
-  'categoriaEstado',
+  'categoriaYEstado',       // ← corregido (antes era 'categoriaEstado')
   'ubicacion',
   'caracteristicasDetalle',
   'imagenesPropiedad_interacted',
@@ -46,7 +50,19 @@ const SESSION_KEYS_TO_CLEAN = [
   'descripcionPropiedad',
 ]
 
+// ─────────────────────────────────────────────────────────────
+// Mapeo estadoPropiedad (string) → id_estado_construccion (número)
+// Debe estar sincronizado con la tabla EstadoConstruccion en BD
+// ─────────────────────────────────────────────────────────────
+const ESTADO_IDS: Record<string, number> = {
+  'En Planos':         1,
+  'En Construccion':   2,
+  'Entrega Inmediata': 3,
+}
+
+// ─────────────────────────────────────────────────────────────
 // Pasos
+// ─────────────────────────────────────────────────────────────
 const STEPS = [
   { title: 'Datos del Aviso',    opcional: false },
   { title: 'Categoría y Estado', opcional: false },
@@ -57,7 +73,9 @@ const STEPS = [
   { title: 'Descripción',        opcional: false },
 ]
 
+// ─────────────────────────────────────────────────────────────
 // Diseño
+// ─────────────────────────────────────────────────────────────
 const DISENO = {
   pagina:             { backgroundColor: '#F4EFE6' },
   alineacionVertical: 'center' as const,
@@ -82,13 +100,13 @@ const DISENO = {
   },
 }
 
+// ─────────────────────────────────────────────────────────────
 // Tipo ref para triggers de validación por paso
+// ─────────────────────────────────────────────────────────────
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
 // ─────────────────────────────────────────────────────────────
 // useStableTrigger
-// Usado SOLO para pasos que NO instancian su propio hook:
-// paso 1 (CategoriaEstadoStep) y paso 3 (CaracteristicasDetalleStep)
 // ─────────────────────────────────────────────────────────────
 function useStableTrigger(
   triggerRef:    TriggerRef,
@@ -105,7 +123,10 @@ function useStableTrigger(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerRef])
 }
+
+// ─────────────────────────────────────────────────────────────
 // Paso 1: Categoría y Estado
+// ─────────────────────────────────────────────────────────────
 function CategoriaEstadoStep({
   triggerRef,
   advanceDirect,
@@ -122,7 +143,10 @@ function CategoriaEstadoStep({
     />
   )
 }
+
+// ─────────────────────────────────────────────────────────────
 // Paso 3: Características
+// ─────────────────────────────────────────────────────────────
 function CaracteristicasDetalleStep({
   triggerRef,
   advanceDirect,
@@ -141,7 +165,9 @@ function CaracteristicasDetalleStep({
   )
 }
 
+// ─────────────────────────────────────────────────────────────
 // Contenido del paso activo
+// ─────────────────────────────────────────────────────────────
 function StepContent({
   step,
   advanceDirect,
@@ -156,7 +182,6 @@ function StepContent({
   imagenesRef:   React.MutableRefObject<File[]>
 }) {
   switch (step) {
-    // Paso 0 — DatosAvisoForm instancia su propio hook → le pasamos submitRef
     case 0: return (
       <DatosAvisoForm
         onNext={advanceDirect}
@@ -164,11 +189,9 @@ function StepContent({
         submitRef={triggerRefs[0]}
       />
     )
-    // Paso 1 — CategoriaYEstadoForm no instancia hook → Step wrapper con useStableTrigger
     case 1: return (
       <CategoriaEstadoStep triggerRef={triggerRefs[1]} advanceDirect={advanceDirect} />
     )
-    // Paso 2 — UbicacionForm instancia su propio hook → le pasamos submitRef
     case 2: return (
       <UbicacionForm
         onNext={advanceDirect}
@@ -176,12 +199,9 @@ function StepContent({
         submitRef={triggerRefs[2]}
       />
     )
-    // Paso 3 — CaracteristicasDetalleForm no instancia hook → Step wrapper con useStableTrigger
     case 3: return (
       <CaracteristicasDetalleStep triggerRef={triggerRefs[3]} advanceDirect={advanceDirect} />
     )
-    // Paso 4 — ImagenesForm instancia su propio hook → le pasamos submitRef
-    // onImagesChange escribe los File[] en imagenesRef para que handlePublicar los lea
     case 4: return (
       <ImagenesForm
         onNext={advanceDirect}
@@ -190,9 +210,7 @@ function StepContent({
         onImagesChange={(files) => { imagenesRef.current = files }}
       />
     )
-    // Paso 5 — Video, opcional, sin validación
     case 5: return <VideoForm onNext={advanceDirect} onBack={onBack} />
-    // Paso 6 — DescripcionForm instancia su propio hook → le pasamos submitRef
     case 6: return (
       <DescripcionForm
         onNext={advanceDirect}
@@ -204,13 +222,11 @@ function StepContent({
   }
 }
 
+// ─────────────────────────────────────────────────────────────
 // Página principal
+// ─────────────────────────────────────────────────────────────
 export default function CrearPublicacionPage() {
   const router = useRouter()
-
-  // ── Sin login por ahora — descomentar useAuth cuando esté listo ──
-  // const { user } = useAuth()
-  const user = null
 
   const [currentStep,    setCurrentStep]    = useState<number>(() =>
     typeof window !== 'undefined' ? leerPaso() : 0
@@ -223,10 +239,8 @@ export default function CrearPublicacionPage() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
 
-  // Ref con los File[] de imágenes — ImagenesForm los escribe aquí via onImagesChange
   const imagenesRef = useRef<File[]>([])
 
-  // triggerRefs — uno por cada paso que necesita validación (todos menos video paso 5)
   const triggerRefs: Record<number, TriggerRef> = {
     0: useRef<(() => void) | null>(null),
     1: useRef<(() => void) | null>(null),
@@ -250,13 +264,7 @@ export default function CrearPublicacionPage() {
   }, [isLastStep, currentStep])
 
   // ─────────────────────────────────────────────────────────
-  // handlePublicar — lee sessionStorage, arma FormData y llama
-  // al server action.
-  //
-  // Cuando el sumario esté listo (otro dev):
-  //   1. En handleNext del último paso muestra el sumario
-  //      en vez de llamar triggerRefs[6] directamente
-  //   2. El onConfirmar del sumario llama handlePublicar()
+  // handlePublicar
   // ─────────────────────────────────────────────────────────
   const handlePublicar = useCallback(async () => {
     setPublishError(null)
@@ -264,8 +272,8 @@ export default function CrearPublicacionPage() {
 
     try {
       const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')            ?? '{}')
-      const categoria       = JSON.parse(sessionStorage.getItem('categoriaEstado')        ?? '{}')
-      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')              ?? '{}')
+      const categoria       = JSON.parse(sessionStorage.getItem('categoriaYEstado')      ?? '{}') // ← corregido
+      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')             ?? '{}')
       const caracteristicas = JSON.parse(sessionStorage.getItem('caracteristicasDetalle') ?? '{}')
       const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')         ?? '{}')
       const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad')   ?? '{}')
@@ -279,8 +287,10 @@ export default function CrearPublicacionPage() {
       formData.append('tipoMoneda',    datosAviso.tipoMoneda    ?? 'USD')
 
       // Paso 1 — Categoría y Estado
-      formData.append('tipoInmueble',       categoria.tipoInmueble              ?? '')
-      formData.append('estadoConstruccion', String(categoria.estadoConstruccion ?? 1))
+      // ← CORREGIDO: campos reales del hook son tipoPropiedad y estadoPropiedad
+      formData.append('tipoInmueble', categoria.tipoPropiedad ?? '')
+      const estadoNum = ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1
+      formData.append('estadoConstruccion', String(estadoNum))
 
       // Paso 2 — Ubicación
       formData.append('direccion',    ubicacion.direccion    ?? '')
@@ -311,7 +321,6 @@ export default function CrearPublicacionPage() {
       formData.append('descripcion', descripcion.descripcion ?? '')
 
       // Usuario — null mientras no haya login
-      // Cuando el login esté listo reemplazar por: user?.id ?? ''
       formData.append('id_usuario', '')
 
       const result = await publicarInmueble(formData)
@@ -323,7 +332,6 @@ export default function CrearPublicacionPage() {
         router.push(`/publicacion/${result.idPublicacion}`)
 
       } else if (result.reason === 'LIMITE_ALCANZADO') {
-        // TODO: mostrar modal de límite cuando el login esté integrado
         setPublishError('Has alcanzado el límite de publicaciones gratuitas.')
 
       } else {
@@ -339,22 +347,20 @@ export default function CrearPublicacionPage() {
     }
   }, [router])
 
-  // handleNext — avanza al siguiente paso o publica si es el último
+  // ─────────────────────────────────────────────────────────
+  // handleNext
+  // ─────────────────────────────────────────────────────────
   const handleNext = useCallback(() => {
     setBlockMsg(null)
     setPublishError(null)
 
-    // Último paso (6 — Descripción) → validar y luego publicar
-    // Cuando el sumario esté listo: mostrar sumario aquí en vez de publicar directo
     if (isLastStep) {
       triggerRefs[currentStep]?.current?.()
       return
     }
 
-    // Video (paso 5) es opcional → avanzar sin validar
     if (currentStep === 5) { advanceDirect(); return }
 
-    // Resto → disparar validación del paso actual
     triggerRefs[currentStep]?.current?.()
   }, [isLastStep, currentStep, advanceDirect, triggerRefs])
 
@@ -365,28 +371,6 @@ export default function CrearPublicacionPage() {
     else setCurrentStep(prev => prev - 1)
   }, [isFirstStep, router])
 
-  /**
-   * handleSidebarClick — para el componente del otro equipo.
-   *
-   * Para el otro equipo:
-   * 1. Descomentar el import de PublicacionStepper arriba.
-   * 2. Reemplazar el <div> del panel izquierdo por:
-   *
-   *    <PublicacionStepper
-   *      currentStep={currentStep}
-   *      completedSteps={completedSteps}
-   *      steps={STEPS}
-   *      onStepClick={handleSidebarClick}
-   *    />
-   *
-   * 3. Dentro de PublicacionStepper, al hacer clic en un paso:
-   *    onClick={() => onStepClick(index)}
-   *
-   * Reglas:
-   *  Hacia atrás: siempre permitido.
-   *  Hacia adelante: solo si ya está en completedSteps o es opcional.
-   *  Paso obligatorio no completado: muestra mensaje, no cambia el paso.
-   */
   const handleSidebarClick = useCallback((index: number) => {
     setBlockMsg(null)
     setPublishError(null)
@@ -487,7 +471,6 @@ export default function CrearPublicacionPage() {
               style={{
                 ...DISENO.botonRegresar,
                 cursor: isPublishing ? 'not-allowed' : 'pointer',
-                backgroundColor: '#F4EFE6',
                 opacity: isPublishing ? 0.6 : 1,
               }}
             >
