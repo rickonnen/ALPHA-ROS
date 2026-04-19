@@ -9,6 +9,11 @@ import { Button } from '@/components/ui/button'
 // ─────────────────────────────────────────────────────────────
 // Tipos
 // ─────────────────────────────────────────────────────────────
+type CaracteristicaExtra = {
+    titulo: string
+    detalle: string
+}
+
 type SumarioStorageData = {
     titulo: string
     tipoOperacion: string
@@ -28,6 +33,7 @@ type SumarioStorageData = {
     imagenesNombres: string[]
     videoUrl: string
     descripcion: string
+    caracteristicas: CaracteristicaExtra[]
 }
 
 interface SumarioModalProps {
@@ -127,17 +133,19 @@ function getInitialStorageData(): SumarioStorageData {
         direccion: '', departamento: '', zona: '',
         habitaciones: '', banios: '', garajes: '', plantas: '', superficie: '',
         imagenesPreview: [], imagenesNombres: [],
-        videoUrl: '', descripcion: '',
+        videoUrl: '', descripcion: '', caracteristicas: [],
     }
 
     if (typeof window === 'undefined') return empty
 
-    const datosAviso      = parseJSON<Record<string, string>>(sessionStorage.getItem('datosAviso'),             {})
-    const categoria       = parseJSON<Record<string, string>>(sessionStorage.getItem('categoriaYEstado'),       {})
-    const ubicacion       = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'),              {})
+    const datosAviso = parseJSON<Record<string, string>>(sessionStorage.getItem('datosAviso'), {})
+    const categoria = parseJSON<Record<string, string>>(sessionStorage.getItem('categoriaYEstado'), {})
+    const ubicacion = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'), {})
     const caracteristicas = parseJSON<Record<string, string>>(sessionStorage.getItem('caracteristicasDetalle'), {})
-    const video           = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'),         {})
-    const descripcion     = parseJSON<Record<string, string>>(sessionStorage.getItem('descripcionPropiedad'),   {})
+    const video = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'), {})
+    const descripcionRaw = parseJSON<{ descripcion?: string; caracteristicas?: CaracteristicaExtra[] }>(
+        sessionStorage.getItem('descripcionPropiedad'), {}
+    )
 
     const arrPreview = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesPreview'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
@@ -145,24 +153,27 @@ function getInitialStorageData(): SumarioStorageData {
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
     return {
-        titulo:          datosAviso.titulo           ?? '',
-        tipoOperacion:   datosAviso.tipoOperacion    ?? '',
-        precio:          String(datosAviso.precio    ?? ''),
-        tipoMoneda:      datosAviso.tipoMoneda       ?? 'BOB',
-        tipoPropiedad:   categoria.tipoPropiedad     ?? '',
-        estadoPropiedad: categoria.estadoPropiedad   ?? '',
-        direccion:       ubicacion.direccion         ?? '',
-        departamento:    ubicacion.departamento      ?? '',
-        zona:            ubicacion.zona              ?? '',
-        habitaciones:    String(caracteristicas.habitaciones ?? ''),
-        banios:          String(caracteristicas.banios       ?? ''),
-        garajes:         String(caracteristicas.garajes      ?? ''),
-        plantas:         String(caracteristicas.plantas      ?? ''),
-        superficie:      String(caracteristicas.superficie   ?? ''),
+        titulo: datosAviso.titulo ?? '',
+        tipoOperacion: datosAviso.tipoOperacion ?? '',
+        precio: String(datosAviso.precio ?? ''),
+        tipoMoneda: datosAviso.tipoMoneda ?? 'BOB',
+        tipoPropiedad: categoria.tipoPropiedad ?? '',
+        estadoPropiedad: categoria.estadoPropiedad ?? '',
+        direccion: ubicacion.direccion ?? '',
+        departamento: ubicacion.departamento ?? '',
+        zona: ubicacion.zona ?? '',
+        habitaciones: String(caracteristicas.habitaciones ?? ''),
+        banios: String(caracteristicas.banios ?? ''),
+        garajes: String(caracteristicas.garajes ?? ''),
+        plantas: String(caracteristicas.plantas ?? ''),
+        superficie: String(caracteristicas.superficie ?? ''),
         imagenesPreview: arrPreview,
         imagenesNombres: arrNombres,
-        videoUrl:        video.url                   ?? '',
-        descripcion:     descripcion.descripcion     ?? '',
+        videoUrl: video.url ?? '',
+        descripcion: descripcionRaw.descripcion ?? '',
+        caracteristicas: Array.isArray(descripcionRaw.caracteristicas)
+            ? descripcionRaw.caracteristicas
+            : [],
     }
 }
 
@@ -185,7 +196,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
     const data = useMemo<SumarioStorageData>(() => getInitialStorageData(), [])
 
     const [arrImagenesError, setArrImagenesError] = useState<number[]>([])
-    const [intImagenActual,  setIntImagenActual]  = useState(0)
+    const [intImagenActual, setIntImagenActual] = useState(0)
 
     const bolEsTerreno = useMemo(
         () => normalizeValue(data.tipoPropiedad) === 'terreno',
@@ -202,7 +213,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
 
     const intTotalImagenes = data.imagenesPreview.length
     const bolTieneImagenes = intTotalImagenes > 0
-    const intImagenSafe    = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
+    const intImagenSafe = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
 
     const onPrevImagen = () => {
         if (intTotalImagenes <= 1) return
@@ -232,7 +243,9 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                         <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                         <div className="flex items-center gap-2">
                             {data.estadoPropiedad && (
-                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">{toTitleCase(data.estadoPropiedad)}</Badge>
+                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">
+                                    {toTitleCase(data.estadoPropiedad)}
+                                </Badge>
                             )}
                         </div>
                     </div>
@@ -329,23 +342,22 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                     {/* Datos */}
                     <div className="space-y-3">
                         <h3 className="text-2xl sm:text-4xl font-bold text-[#2E2E2E]">{toText(data.titulo)}</h3>
-
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                             {/* Columna 1 */}
                             <div className="space-y-2">
                                 <SummaryField label="Tipo de propiedad" value={toText(data.tipoPropiedad)} />
-                                <SummaryField label="Dirección"         value={toText(data.direccion)} />
-                                <SummaryField label="Superficie"        value={formatSurface(data.superficie)} />
+                                <SummaryField label="Dirección" value={toText(data.direccion)} />
+                                <SummaryField label="Superficie" value={formatSurface(data.superficie)} />
                                 {!bolEsTerreno && <SummaryField label="Habitaciones" value={toText(data.habitaciones)} />}
                             </div>
 
                             {/* Columna 2 */}
                             <div className="space-y-2">
                                 <SummaryField label="Tipo de operación" value={toTitleCase(data.tipoOperacion)} />
-                                <SummaryField label="Ciudad"            value={strCiudad} />
-                                <SummaryField label="Zona"              value={toText(data.zona)} />
+                                <SummaryField label="Ciudad" value={strCiudad} />
+                                <SummaryField label="Zona" value={toText(data.zona)} />
                                 {!bolEsTerreno && <SummaryField label="Garajes" value={toText(data.garajes)} />}
-                                {!bolEsTerreno && <SummaryField label="Baños"   value={toText(data.banios)} />}
+                                {!bolEsTerreno && <SummaryField label="Baños" value={toText(data.banios)} />}
                                 {!bolEsTerreno && <SummaryField label="Plantas" value={toText(data.plantas)} />}
                             </div>
 
@@ -355,6 +367,22 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                 <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(data.descripcion)}</p>
                             </div>
                         </div>
+                        {/* Características extras — tarjetas */}
+                        {data.caracteristicas.length > 0 && (
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                                {data.caracteristicas.map((c) => (
+                                    <div key={c.titulo} className="rounded-lg overflow-hidden border border-[#DDD6CB]">
+                                        <div className="bg-[#C26E5A] px-3 py-2">
+                                            <p className="text-white text-sm font-bold">{c.titulo}</p>
+                                        </div>
+                                        <div className="bg-[#EDE8DF] px-3 py-2 min-h-[64px]">
+                                            <p className="text-[0.72rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripcion</p>
+                                            <p className="text-sm text-[#2E2E2E]">{c.detalle || 'No especificado'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Botones de acción */}
