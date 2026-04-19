@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 export interface Publicacion {
   id: string;
   titulo: string;
-  zona: string;
+  //zona: string;
   direccion?: string;
   tipo: string;
   tipoOperacion?: string;
@@ -94,11 +94,11 @@ export default function PublicacionCard({
             >
               {publicacion.titulo}
             </h3>
-            {(publicacion.direccion || publicacion.zona) && (
+            {(publicacion.direccion) && (
               <div className="flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
                 <p className="text-xs text-gray-500 truncate">
-                  {[publicacion.direccion, publicacion.zona]
+                  {[publicacion.direccion]
                     .filter(Boolean)
                     .join(", ")}
                 </p>
