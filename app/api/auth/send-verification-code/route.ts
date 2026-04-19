@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveVerificationCode } from "@/lib/verificationCodes";
-import { enviarCodigoVerificacion } from "@/lib/emailService";
+import { enviarCodigoVerificacion } from "@/lib/email/emailService";
 
 export async function POST(request: NextRequest) {
   try {

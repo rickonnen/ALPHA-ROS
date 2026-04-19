@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sign } from "jsonwebtoken";
 import { verifyCode } from "@/lib/verificationCodes";
+import { enviarBienvenida } from "@/lib/email/emailService";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -85,6 +86,8 @@ export async function POST(request: NextRequest) {
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
+
+    await enviarBienvenida(normalizedEmail, nombre);
 
     return response;
   } catch (error: any) {

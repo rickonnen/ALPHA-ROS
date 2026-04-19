@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
 import { sign } from "jsonwebtoken";
-import { enviarBienvenida } from "@/lib/emailService";
+import { enviarBienvenida } from "@/lib/email/emailService";
+
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
