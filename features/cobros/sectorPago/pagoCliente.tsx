@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { PlanPublicacion } from "@prisma/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/app/auth/AuthContext";
 import { useEffect } from "react";
@@ -130,7 +130,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 variant="default"
                 size="lg"
                 disabled={!archivoSeleccionado && !tienePagoPendiente}
-                className="w-full font-semibold text-lg py-6 shadow-md"
+                className="w-full font-semibold text-lg py-6 shadow-md cursor-pointer"
                 onClick={alDarClickEnVerificarPrincipal}
               >
                 Verificar Pago
@@ -141,7 +141,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
             <Button
               variant="secondary"
               size="lg"
-              className="w-full font-bold text-lg py-6 shadow-md transition-colors"
+              className="w-full font-bold text-lg py-6 shadow-md transition-colors cursor-pointer"
               onClick={manejarDescarga}
             >
               DESCARGAR QR
@@ -163,7 +163,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
               <Button
                 variant="default"
                 disabled
-                className="w-full font-medium text-lg py-6 bg-[#1D3547] opacity-50 cursor-not-allowed"
+                className="w-full font-medium text-lg py-6 bg-[#1D3547] opacity-50 cursor-not-allowed cursor-pointer"
               >
                 Adjuntar comprobante
               </Button>
@@ -172,21 +172,31 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 {!archivoSeleccionado ? (
                   <Button
                     variant="default"
-                    className="w-full font-medium text-lg py-6 bg-[#1D3547]"
+                    className="w-full font-medium text-lg py-6 bg-[#1D3547] cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     Adjuntar comprobante
                   </Button>
                 ) : (
-                  <div className="flex items-center justify-center gap-3 py-2 bg-muted/50 rounded-lg border border-dashed border-gray-300">
-                    <span className="text-sm font-medium truncate max-w-[200px]">
-                      {archivoSeleccionado.name}
-                    </span>
+                  <div className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg border border-dashed border-gray-400 animate-in fade-in zoom-in duration-300">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {/* Usamos FileText de Lucide para que se vea más pro que un emoji */}
+                      <span className="text-sm font-medium truncate max-w-[150px] md:max-w-[200px] text-foreground">
+                        {archivoSeleccionado.name}
+                      </span>
+                    </div>
+                    
                     <button
                       onClick={() => setArchivoSeleccionado(null)}
-                      className="text-red-500 font-bold text-2xl hover:text-red-700"
+                      className="ml-4 p-2 hover:bg-red-100 rounded-full transition-all group cursor-pointer"
+                      title="Quitar archivo"
+                      type="button"
                     >
-                      ×
+                      <X 
+                        size={28} 
+                        strokeWidth={3} 
+                        className="text-red-500 group-hover:text-red-700 transition-colors" 
+                      />
                     </button>
                   </div>
                 )}

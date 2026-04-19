@@ -875,7 +875,6 @@ model Usuario {
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?                    @default(0)
-  id_plan                      Int?                    @db.SmallInt
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
