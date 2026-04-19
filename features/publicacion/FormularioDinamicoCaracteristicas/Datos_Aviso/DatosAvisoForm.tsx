@@ -177,7 +177,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
       <div className="flex flex-row items-start gap-3">
 
         {/* Campo Precio — crece para ocupar el espacio disponible */}
-        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+        <div className="flex flex-col gap-1.5" style={{ width: '60px', flexShrink: 0 }}>
           <Label htmlFor="precio" className="text-sm font-medium text-[#1A1714]">
             Precio <span className="font-normal text-muted-foreground">*</span>
           </Label>
