@@ -1,7 +1,6 @@
-// app/mapas/components/Map.tsx
 "use client"
 import { useState, useEffect } from "react"
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
+import { MapContainer, Marker, Popup, TileLayer, Polyline, Polygon, useMap, useMapEvents } from "react-leaflet"
 import MarkerClusterGroup from "react-leaflet-cluster"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
@@ -19,15 +18,79 @@ L.Icon.Default.mergeOptions({
 const DEFAULT_CENTER: [number, number] = [-17.3943, -66.1569];
 const DEFAULT_ZOOM = 15;
 
+// --- 1. INTERFAZ ACTUALIZADA ---
 interface MapProps {
   locations: Location[]
   hoveredId: number | null
   selectedPos: [number, number] | null
   hoveredPos: [number, number] | null
   setSelectedPos: (pos: [number, number]) => void
+  isDrawingMode?: boolean;
+  drawnPolygon?: [number, number][] | null;
+  onPolygonComplete?: (points: [number, number][]) => void;
 }
 
-export default function PropertyMap({ locations, hoveredId, selectedPos, hoveredPos, setSelectedPos }: MapProps) {
+// --- 2. LÓGICA DE DIBUJO ---
+function MapDrawingLogic({ 
+  isDrawingMode, 
+  onPolygonComplete 
+}: { 
+  isDrawingMode?: boolean, 
+  onPolygonComplete?: (pts: [number, number][]) => void 
+}) {
+  const [points, setPoints] = useState<[number, number][]>([]);
+  const map = useMap();
+
+  useEffect(() => {
+    if (isDrawingMode) {
+      map.dragging.disable();
+      map.getContainer().style.cursor = 'crosshair';
+    } else {
+      map.dragging.enable();
+      map.getContainer().style.cursor = '';
+      setPoints([]); 
+    }
+  }, [isDrawingMode, map]);
+
+  useMapEvents({
+    click(e) {
+      if (!isDrawingMode || !onPolygonComplete) return;
+      
+      const newPoints: [number, number][] = [...points, [e.latlng.lat, e.latlng.lng]];
+      setPoints(newPoints);
+
+      if (newPoints.length === 4) {
+        onPolygonComplete(newPoints);
+        setPoints([]); 
+      }
+    },
+  });
+
+  const dotIcon = L.divIcon({ 
+    className: 'bg-red-500 w-3 h-3 rounded-full border-2 border-white shadow-md', 
+    iconSize: [12, 12] 
+  });
+
+  return (
+    <>
+      {points.map((pt, idx) => <Marker key={`pt-${idx}`} position={pt} icon={dotIcon} interactive={false} />)}
+      {points.length > 1 && points.length < 4 && <Polyline positions={points} color="#C26E5A" weight={3} dashArray="5, 10" interactive={false} />}
+      {points.length === 4 && <Polygon positions={points} color="#C26E5A" fillOpacity={0.4} interactive={false} />}
+    </>
+  );
+}
+
+// --- 3. COMPONENTE PRINCIPAL ACTUALIZADO ---
+export default function PropertyMap({ 
+  locations, 
+  hoveredId, 
+  selectedPos, 
+  hoveredPos, 
+  setSelectedPos,
+  isDrawingMode,
+  drawnPolygon,
+  onPolygonComplete
+}: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +109,18 @@ export default function PropertyMap({ locations, hoveredId, selectedPos, hovered
       {(hoveredPos ?? selectedPos) && <ChangeView center={hoveredPos ?? selectedPos} />}
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
+      {/* HERRAMIENTA DE DIBUJO HU2 */}
+      <MapDrawingLogic 
+        isDrawingMode={isDrawingMode} 
+        onPolygonComplete={onPolygonComplete} 
+      />
+
+      {/* ZONA FINAL DIBUJADA HU2 */}
+      {drawnPolygon && (
+        <Polygon positions={drawnPolygon} color="#2563eb" fillColor="#3b82f6" fillOpacity={0.25} weight={2} />
+      )}
+
+      {/* MARCADORES Y CLÚSTERES ORIGINALES */}
       <MarkerClusterGroup disableClusteringAtZoom={17} iconCreateFunction={createClusterIcon}>
         {locations.map((location) => (
           <Marker

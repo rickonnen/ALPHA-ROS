@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import * as turf from '@turf/turf';
 
 import {
   buscarPublicaciones,
@@ -216,7 +217,11 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  
+  // NUEVOS ESTADOS HU2
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [drawnPolygon, setDrawnPolygon] = useState<[number, number][] | null>(null);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -242,14 +247,31 @@ function SearchPageContent() {
     selectedSort,
   ]);
 
-  const displayedProperties = useMemo(
-    () =>
-      sortProperties(
-        searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
-        selectedSort,
-      ),
-    [searchResults, selectedOperation, selectedSort],
-  );
+  // 1. PRIMERO: Filtramos la data cruda usando la zona dibujada (Turf.js)
+  const filteredSearchResults = useMemo(() => {
+    if (!drawnPolygon || drawnPolygon.length < 3) return searchResults;
+    
+    const turfCoords = drawnPolygon.map(p => [p[1], p[0]]);
+    turfCoords.push(turfCoords[0]); 
+    const searchArea = turf.polygon([turfCoords]);
+
+    return searchResults.filter(pub => {
+      const lat = pub.ubicacion?.latitud;
+      const lng = pub.ubicacion?.longitud;
+      if (!lat || !lng) return false;
+      
+      const pt = turf.point([Number(lng), Number(lat)]);
+      return turf.booleanPointInPolygon(pt, searchArea);
+    });
+  }, [searchResults, drawnPolygon]);
+
+  // 2. SEGUNDO: Usamos la data ya filtrada para armar las tarjetas de la izquierda
+  const displayedProperties = useMemo(() => {
+    const properties = filteredSearchResults.map((publication) => 
+      mapPublicationToProperty(publication, selectedOperation)
+    );
+    return sortProperties(properties, selectedSort);
+  }, [filteredSearchResults, selectedOperation, selectedSort]);
 
   const breadcrumbPropertyLabel =
     getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(', ') ||
@@ -316,7 +338,6 @@ function SearchPageContent() {
     }
   };
   
-// Cargar estado del mapa desde localStorage al montar componente
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMapState = localStorage.getItem('searchMapOpen');
@@ -326,7 +347,6 @@ function SearchPageContent() {
     }
   }, []);
 
-  // Guardar estado del mapa en localStorage cuando cambia
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('searchMapOpen', JSON.stringify(isMapOpen));
@@ -522,15 +542,51 @@ function SearchPageContent() {
       )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:min-h-[calc(100vh-200px)]">
+        
         <aside className="hidden md:col-span-3 md:block">
-
-          <button className="mb-3 flex w-full items-center gap-2 rounded-xl bg-[#C26E5A] px-4 py-2.5 text-base font-semibold text-white hover:bg-[#b05e4a] transition-colors">
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
-  </svg>
-  Dibujar zona
-</button>
+        {/* CONTROLES DE ZONA DIBUJADA */}
+          <div className="mb-4">
+            {!drawnPolygon ? (
+              <button 
+                onClick={() => {
+                  setIsDrawingMode(!isDrawingMode);
+                  if (!isMapOpen) setIsMapOpen(true);
+                }}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+                  isDrawingMode ? 'bg-slate-800 hover:bg-slate-900' : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                }`}
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                </svg>
+                {isDrawingMode ? 'Cancelar dibujo' : 'Dibujar zona'}
+              </button>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
+                <span className="text-sm font-medium text-slate-900 text-center">
+                  Zona aplicada: {displayedProperties.length} inmuebles
+                </span>
+                <button 
+                  onClick={async () => {
+                    console.log("Para enviar al POST de MisZonas:", drawnPolygon);
+                    alert("Zona lista para guardar en Base de Datos");
+                  }}
+                  className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                >
+                  Guardar en mi Perfil
+                </button>
+                <button 
+                  onClick={() => {
+                    setDrawnPolygon(null);
+                    setIsDrawingMode(false);
+                  }}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
+                >
+                  Limpiar mapa
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="sticky top-8">
             <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
@@ -687,39 +743,44 @@ function SearchPageContent() {
         </main>
 
         {isMapOpen && (
-  <div className={`
-    ${isMapFullscreen 
-      ? 'fixed inset-0 z-[200]' 
-      : 'fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden'
-    }
-  `}>
-    {/* Botón fullscreen - siempre visible */}
-    <button
-      onClick={() => setIsMapFullscreen(!isMapFullscreen)}
-      className="absolute top-3 right-3 z-[999] flex items-center justify-center h-9 w-9 rounded-lg bg-white shadow-md hover:bg-gray-100 transition-colors"
-      title={isMapFullscreen ? 'Compactar mapa' : 'Expandir mapa'}
-    >
-      {isMapFullscreen ? (
-        <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
-        </svg>
-      ) : (
-        <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-        </svg>
-      )}
-    </button>
+          <div className={`
+            ${isMapFullscreen 
+              ? 'fixed inset-0 z-[200]' 
+              : 'fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden'
+            }
+          `}>
+            <button
+              onClick={() => setIsMapFullscreen(!isMapFullscreen)}
+              className="absolute top-3 right-3 z-[999] flex items-center justify-center h-9 w-9 rounded-lg bg-white shadow-md hover:bg-gray-100 transition-colors"
+              title={isMapFullscreen ? 'Compactar mapa' : 'Expandir mapa'}
+            >
+              {isMapFullscreen ? (
+                <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+              )}
+            </button>
 
-    <SearchMapClient
-  key={isMapFullscreen ? 'fullscreen' : 'normal'}
-  locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
-  hoveredId={hoveredId}
-  selectedPos={selectedPos}
-  hoveredPos={hoveredPos}
-  setSelectedPos={setSelectedPos}
-/>
-  </div>
-)}
+            <SearchMapClient
+              key={isMapFullscreen ? 'fullscreen' : 'normal'}
+              locations={isDrawingMode ? [] : convertPublicacionesToLocations(filteredSearchResults, selectedCurrency)}
+              hoveredId={hoveredId}
+              selectedPos={selectedPos}
+              hoveredPos={hoveredPos}
+              setSelectedPos={setSelectedPos}
+              isDrawingMode={isDrawingMode}
+              drawnPolygon={drawnPolygon}
+              onPolygonComplete={(points: [number, number][]) => {
+                setDrawnPolygon(points);
+                setIsDrawingMode(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
