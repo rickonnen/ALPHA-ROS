@@ -19,13 +19,13 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
 
   const [bolShowHistory, setBolShowHistory] = useState(false);
   const [arrHistory, setArrHistory] = useState<CitySuggestion[]>([]);
+  
+  const [bolShowFullHistoryPanel, setBolShowFullHistoryPanel] = useState(false);
+  const bolIsAuthenticated = !!objUser?.id;
 
-  // cargar historial inicial
   useEffect(() => {
     let bolIsMounted = true;
-    
     if (bolIsAuthLoading) return;
-    const bolIsAuthenticated = !!objUser?.id;
 
     historyService.getHistory(bolIsAuthenticated).then((arrData) => {
       if (bolIsMounted) setArrHistory(arrData);
@@ -37,7 +37,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     };
   }, [objUser, bolIsAuthLoading]);
 
-  // limpia las sugerencias
   const clearSuggestions = useCallback(() => {
     objActiveQueryRef.current = "";
     setArrSuggestions([]);
@@ -46,7 +45,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     setIntSelectedIndex(-1);
   }, []);
 
-  // maneja el foco del input para mostrar historial o sugerencias previas
   const handleInputFocus = useCallback(() => {
     if (strCity.trim().length < 2) {
       if (arrHistory.length > 0) {
@@ -60,7 +58,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     }
   }, [strCity, arrHistory.length, arrSuggestions.length]);
 
-  // delega la carga de sugerencias del servicio
   const fetchSuggestions = useCallback(async (strQuery: string) => {
     const strCleanQuery = strQuery.trim();
     if (strCleanQuery.length < 2) {
@@ -72,7 +69,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
 
     try {
       const arrFinalResults = await fetchMapboxCities(strCleanQuery);
-      
       if (objActiveQueryRef.current !== strCleanQuery) return;
 
       setArrSuggestions(arrFinalResults);
@@ -90,7 +86,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     }
   }, [clearSuggestions]);
 
-  // maneja el cambio de texto en el input y aplica debounce a la búsqueda
   const handleCityChange = useCallback((strVal: string) => {
     const strLimitedValue = strVal.slice(0, intMaxCityLength);
     setStrCity(strLimitedValue);
@@ -115,6 +110,7 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     setStrCity(strName);
     setBolShowHistory(false);
     setBolShowSuggestions(false);
+    setBolShowFullHistoryPanel(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
     
@@ -123,7 +119,6 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     }
   }, []);
 
-  // maneja la selección de una sugerencia o elemento del historial
   const handleSelectSuggestion = useCallback(async (objSuggestion: CitySuggestion) => {
     if (bolIsAuthLoading) return;
 
@@ -133,33 +128,52 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     setBolShowHistory(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
-    const bolIsAuthenticated = !!objUser?.id;
 
-    // delegamos el guardado al servicio y actualizamos el estado local
     const arrUpdated = await historyService.save(objSuggestion, bolIsAuthenticated);
     if (arrUpdated.length > 0) {
       setArrHistory(arrUpdated);
     }
-  }, [objUser, bolIsAuthLoading]);
+  }, [bolIsAuthenticated, bolIsAuthLoading]);
 
-  // maneja la navegación por teclado
+  const handleDeleteHistoryItem = useCallback(async (strId: string) => {
+    const arrUpdated = await historyService.deleteHistoryItem(strId, bolIsAuthenticated);
+    setArrHistory(arrUpdated);
+    if (arrUpdated.length === 0) {
+      setBolShowHistory(false);
+      setBolShowFullHistoryPanel(false);
+    }
+  }, [bolIsAuthenticated]);
+
   const handleKeyDown = useCallback((objEvent: KeyboardEvent<HTMLInputElement>) => {
     const bolIsSuggestionsActive = bolShowSuggestions && arrSuggestions.length > 0;
     const bolIsHistoryActive = bolShowHistory && arrHistory.length > 0 && !bolShowSuggestions && strCity.trim().length < 2;
-    if (!bolIsSuggestionsActive && !bolIsHistoryActive) return;
-    const arrCurrentList = bolIsSuggestionsActive ? arrSuggestions : arrHistory.slice(0, 5);
+    const bolIsFullPanelActive = bolShowFullHistoryPanel && arrHistory.length > 0;
+
+    if (!bolIsSuggestionsActive && !bolIsHistoryActive && !bolIsFullPanelActive) return;
+
+    let arrCurrentList: CitySuggestion[] = [];
+    if (bolIsSuggestionsActive) arrCurrentList = arrSuggestions;
+    else if (bolIsHistoryActive) arrCurrentList = arrHistory.slice(0, 5);
+    else if (bolIsFullPanelActive) arrCurrentList = arrHistory;
+
     if (objEvent.key === "ArrowDown") {
       objEvent.preventDefault();
       setIntSelectedIndex((intPrev) => intPrev < arrCurrentList.length - 1 ? intPrev + 1 : 0);
     } else if (objEvent.key === "ArrowUp") {
       objEvent.preventDefault();
       setIntSelectedIndex((intPrev) => intPrev > 0 ? intPrev - 1 : arrCurrentList.length - 1);
+    } else if (objEvent.key === "Enter") {
+       objEvent.preventDefault();
+       if (intSelectedIndex >= 0 && arrCurrentList[intSelectedIndex]) {
+          handleFillFromHistory(arrCurrentList[intSelectedIndex].strName);
+       }
     } else if (objEvent.key === "Escape") {
       setBolShowSuggestions(false);
       setBolShowHistory(false);
+      setBolShowFullHistoryPanel(false);
       setIntSelectedIndex(-1);
     }
-  }, [bolShowSuggestions, arrSuggestions, bolShowHistory, arrHistory, strCity]);
+  }, [bolShowSuggestions, arrSuggestions, bolShowHistory, arrHistory, strCity, bolShowFullHistoryPanel, intSelectedIndex, handleFillFromHistory]);
 
   return {
     strCity, setStrCity,
@@ -173,5 +187,8 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     handleInputFocus, handleCityChange,
     handleFillFromHistory,
     handleSelectSuggestion, handleKeyDown,
+    bolIsAuthenticated,
+    bolShowFullHistoryPanel, setBolShowFullHistoryPanel,
+    handleDeleteHistoryItem
   };
 }

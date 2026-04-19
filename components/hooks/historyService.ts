@@ -7,40 +7,59 @@ const strStorageKey = "recentCitySearches";
  * funcionalidad: servicio encargado de gestionar el almacenamiento y recuperación del historial de ciudades
  */
 export const historyService = {
-  /**
-   * funcionalidad: recupera el historial de búsquedas guardado en el dispositivo del usuario
-   * @return promesa que resuelve en un arreglo de sugerencias de ciudades
-   */
   async getHistory(blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
     if (blnIsAuthenticated) {
+      try {
+        const objResponse = await fetch('/api/searchHistory');
+        if (objResponse.ok) return await objResponse.json();
+      } catch (error) {
+        console.error("Error obteniendo historial de la BD:", error);
+      }
       return []; 
     }
 
-    // por ahora usa localstorage
     const strStored = localStorage.getItem(strStorageKey);
     if (!strStored) return [];
     return JSON.parse(strStored).slice(0, 5);
   },
-  /**
-   * funcionalidad: guarda una nueva ciudad en el historial, evitando elementos duplicados y manteniendo un límite de 5
-   * @param objData objeto de tipo CitySuggestion que contiene los datos de la ciudad seleccionada
-   * @return promesa que resuelve en el arreglo actualizado del historial
-   */
+
   async save(objData: CitySuggestion, blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
     if (blnIsAuthenticated) {
+      try {
+        const objResponse = await fetch('/api/searchHistory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(objData)
+        });
+        if (objResponse.ok) return await objResponse.json();
+      } catch (error) {
+        console.error("Error guardando historial en la BD:", error);
+      }
       return [objData]; 
     }
 
-    // obtiene el historial actual del almacenamiento
     const arrCurrent = await this.getHistory(false);
-    // filtra el arreglo para eliminar la ciudad si ya existía previamente
-    const arrFiltered = arrCurrent.filter(
-      (objItem) => objItem.strName.toLowerCase() !== objData.strName.toLowerCase()
-    );
-    // agrega la nueva ciudad al inicio de la lista y recorta a 5 elementos
-    const arrUpdated = [objData, ...arrFiltered].slice(0, 5);
-    // sobrescribe el almacenamiento local con el nuevo arreglo
+    const arrFiltered = arrCurrent.filter((objItem) => objItem.strName.toLowerCase() !== objData.strName.toLowerCase());
+    const arrUpdated = [objData, ...arrFiltered].slice(0, 5); // Límite de 5 solo para anónimos
     localStorage.setItem(strStorageKey, JSON.stringify(arrUpdated));
     return arrUpdated;
+  },
+
+  // NUEVO: Método para borrar un registro específico
+  async deleteHistoryItem(strId: string, blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
+    if (blnIsAuthenticated) {
+      try {
+        const objResponse = await fetch(`/api/searchHistory?strId=${strId}`, { method: 'DELETE' });
+        if (objResponse.ok) return await objResponse.json();
+      } catch (error) {
+        console.error("Error eliminando historial en la BD:", error);
+      }
+      return await this.getHistory(true); 
+    }
+
+    const arrCurrent = await this.getHistory(false);
+    const arrFiltered = arrCurrent.filter((objItem) => objItem.strId !== strId);
+    localStorage.setItem(strStorageKey, JSON.stringify(arrFiltered));
+    return arrFiltered;
   }
 };

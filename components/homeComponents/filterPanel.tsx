@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"; 
 import { useCitySearch } from "../hooks/useCitySearch";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
+import { useVerifyJWT } from "../hooks/useVerifyJWT"; 
 
 import GenericDropdown from "./filterPanelSubcomponents/genericDropdown";
 import CitySearchInput from "./filterPanelSubcomponents/citySearchInput";
@@ -26,7 +27,14 @@ export default function FilterPanel() {
   const [strPropertyType, setStrPropertyType] = useState<string | null>(null);
   const [strOpenDropdown, setStrOpenDropdown] = useState<"operation" | "type" | null>(null);
 
-  const citySearchHook = useCitySearch(); 
+  // 1. Obtenemos el usuario autenticado y su estado de carga
+  const { user, loading } = useVerifyJWT();
+
+  // 2. Le pasamos el usuario al hook del buscador para activar sus privilegios
+  const citySearchHook = useCitySearch({ 
+    objUser: user, 
+    bolIsAuthLoading: loading 
+  }); 
 
   const actionBtnHover = useHoverAnimation(false, false, 'pointer'); 
   const chipBtnHover = useHoverAnimation(true, true, 'pointer'); 
