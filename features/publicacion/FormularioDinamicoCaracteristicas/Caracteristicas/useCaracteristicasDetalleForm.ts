@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, startTransition } from 'react'
 import { CaracteristicasDetalleFormValues, CaracteristicasDetalleFormErrors, INITIAL_VALUES } from './useCaracteristicasDetalleTypes'
-import { validate } from './useCaracteristicasDatalleValidacion'
+import { validate } from './useCaracteristicasDetalleValidacion'
 import { leerSesion, guardarSesion, limpiarSesion } from './useCaracteristicasDetallePersistencia'
 
 export function useCaracteristicasDetalleForm() {

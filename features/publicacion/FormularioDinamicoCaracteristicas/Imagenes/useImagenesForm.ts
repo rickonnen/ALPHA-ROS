@@ -77,7 +77,7 @@ export function useImagenesForm() {
       valuesRef.current = updated
       setValues(updated)
 
-      // ✅ Guardar en IndexedDB para sobrevivir recarga
+      // Guardar en IndexedDB para sobrevivir recarga
       await guardarImagenes(updated.imagenes)
 
       if (touched) setErrors(validate(updated))
@@ -93,7 +93,7 @@ export function useImagenesForm() {
     valuesRef.current = updated
     setValues(updated)
 
-    // ✅ Actualizar IndexedDB con la lista sin la imagen eliminada
+    // Actualizar IndexedDB con la lista sin la imagen eliminada
     await guardarImagenes(updated.imagenes)
 
     if (touched) setErrors(validate(updated))
@@ -111,7 +111,7 @@ export function useImagenesForm() {
 
   // ── Reset ─────────────────────────────────────
   const handleReset = useCallback(async () => {
-    // ✅ Limpia IndexedDB y la sesión
+    // Limpia IndexedDB y la sesión
     await limpiarImagenes()
     valuesRef.current = INITIAL_VALUES
     setValues(INITIAL_VALUES)

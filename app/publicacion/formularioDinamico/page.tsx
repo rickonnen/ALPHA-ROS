@@ -266,6 +266,10 @@ export default function CrearPublicacionPage() {
 
   const imagenesRef = useRef<File[]>([])
 
+  // ← AGREGADO: guarda el paso destino cuando el sidebar navega hacia adelante
+  // advanceDirect lo lee para saltar directo en vez de ir al siguiente
+  const pendingStepRef = useRef<number | null>(null)
+
   const triggerRefs: Record<number, TriggerRef> = {
     0: useRef<(() => void) | null>(null),
     1: useRef<(() => void) | null>(null),
@@ -281,11 +285,14 @@ export default function CrearPublicacionPage() {
   const isFirstStep = currentStep === 0
   const isLastStep = currentStep === STEPS.length - 1
 
+  // ← MODIFICADO: si hay pendingStepRef salta al destino del sidebar, si no avanza normal
   const advanceDirect = useCallback(() => {
     if (isLastStep) return
     setBlockMsg(null)
     setCompletedSteps(prev => { const next = new Set(prev); next.add(currentStep); return next })
-    setCurrentStep(prev => prev + 1)
+    const target = pendingStepRef.current
+    pendingStepRef.current = null
+    setCurrentStep(target !== null ? target : prev => prev + 1)
   }, [isLastStep, currentStep])
 
   // ─────────────────────────────────────────────────────────
@@ -364,7 +371,11 @@ export default function CrearPublicacionPage() {
   // ─────────────────────────────────────────────────────────
   // handleNext — en el último paso valida y abre el SumarioModal
   // ─────────────────────────────────────────────────────────
+  // ← MODIFICADO: limpia pendingStepRef y quita el check antes de validar
+  // Si la validación pasa → advanceDirect lo restaura y avanza
+  // Si falla → el check queda quitado, barra baja, errores visibles
   const handleNext = useCallback(() => {
+    pendingStepRef.current = null
     setBlockMsg(null)
     setPublishError(null)
 
@@ -375,27 +386,58 @@ export default function CrearPublicacionPage() {
 
     if (currentStep === 5) { advanceDirect(); return }
 
+    // Quita el check del paso actual antes de validar
+    setCompletedSteps(prev => { const next = new Set(prev); next.delete(currentStep); return next })
     triggerRefs[currentStep]?.current?.()
   }, [isLastStep, currentStep, advanceDirect, triggerRefs])
 
+  // ← MODIFICADO: limpia pendingStepRef, navegación libre sin tocar checks
   const handleBack = useCallback(() => {
+    pendingStepRef.current = null
     setBlockMsg(null)
     setPublishError(null)
     if (isFirstStep) router.back()
     else setCurrentStep(prev => prev - 1)
   }, [isFirstStep, router])
 
+  // ← MODIFICADO: hacia atrás libre; hacia adelante valida el paso actual
+  // primero (igual que "Siguiente") y salta al destino si pasa
   const handleSidebarClick = useCallback((index: number) => {
     setBlockMsg(null)
     setPublishError(null)
     if (index === currentStep) return
-    if (index < currentStep) { setCurrentStep(index); return }
-    if (completedSteps.has(index) || STEPS[index].opcional) {
+
+    // Hacia atrás: siempre libre, sin tocar checks
+    if (index < currentStep) {
+      pendingStepRef.current = null
       setCurrentStep(index)
-    } else {
-      setBlockMsg('Debes completar los pasos anteriores antes de avanzar a este.')
+      return
     }
-  }, [currentStep, completedSteps])
+
+    // Hacia adelante: todos los pasos intermedios (excepto el actual,
+    // que se validará ahora) deben tener check
+    const intermediosCompletos = STEPS
+      .slice(0, index)
+      .every((step, i) => i === currentStep || step.opcional || completedSteps.has(i))
+
+    if (!intermediosCompletos) {
+      setBlockMsg('Debes completar los pasos anteriores antes de avanzar a este.')
+      return
+    }
+
+    // Video (paso 5) es opcional: salta directo sin validar
+    if (currentStep === 5) {
+      setCurrentStep(index)
+      return
+    }
+
+    // Guarda destino, quita check del actual y dispara validación
+    // Si pasa → advanceDirect salta a pendingStepRef.current
+    // Si falla → advanceDirect no se llama, check queda quitado
+    pendingStepRef.current = index
+    setCompletedSteps(prev => { const next = new Set(prev); next.delete(currentStep); return next })
+    triggerRefs[currentStep]?.current?.()
+  }, [currentStep, completedSteps, triggerRefs])
 
   if (!hydrated) return null
 
