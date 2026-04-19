@@ -46,13 +46,10 @@ const getCenter = (depto?: string): [number, number] => {
   return entry ? entry[1] : DEPTO_COORDS["Cochabamba"]
 }
 
-// ── Dos tipos de comando al mapa ───────────────────────────────────────────
-// flyTo: para click manual en el mapa (el que ya funcionaba bien)
-// fitBounds: para sugerencia del buscador (usa el boundingbox real de Nominatim)
 type MapCommand =
-  | { type: "flyTo";    center: [number, number]; zoom: number;   trigger: number }
-  | { type: "fitBounds"; bounds: [[number,number],[number,number]]; trigger: number }
-  | { type: "setCenter"; center: [number, number]; zoom: number;  trigger: number }
+  | { type: "flyTo";     center: [number, number]; zoom: number;                        trigger: number }
+  | { type: "fitBounds"; bounds: [[number,number],[number,number]];                     trigger: number }
+  | { type: "setCenter"; center: [number, number]; zoom: number;                        trigger: number }
 
 function MapController({ cmd }: { cmd: MapCommand }) {
   const map  = useMap()
@@ -63,10 +60,8 @@ function MapController({ cmd }: { cmd: MapCommand }) {
     prev.current = cmd.trigger
 
     if (cmd.type === "flyTo") {
-      // Paso 1: teletransporte inmediato sin animación (evita el bug de distancia larga)
       map.setView(cmd.center, cmd.zoom, { animate: false })
     } else if (cmd.type === "fitBounds") {
-      // Paso 1: ir sin animación, luego fitBounds
       map.setView(cmd.bounds[0], 10, { animate: false })
       setTimeout(() => {
         map.fitBounds(cmd.bounds, { animate: true, duration: 0.6, maxZoom: 15, padding: [30, 30] })
@@ -97,7 +92,7 @@ interface Suggestion {
   display_name: string
   lat:          string
   lon:          string
-  boundingbox:  [string, string, string, string] // [minLat, maxLat, minLng, maxLng]
+  boundingbox:  [string, string, string, string]
   address: {
     road?:         string
     house_number?: string
@@ -123,10 +118,7 @@ interface LocationPickerProps {
 export default function LocationPicker({ deptoActual, onChange }: LocationPickerProps) {
   const [markerPos,       setMarkerPos]       = useState<[number, number] | null>(null)
   const [mapCmd,          setMapCmd]          = useState<MapCommand>({
-    type:    "setCenter",
-    center:  getCenter(deptoActual),
-    zoom:    13,
-    trigger: 0,
+    type: "setCenter", center: getCenter(deptoActual), zoom: 13, trigger: 0,
   })
   const [isLoading,       setIsLoading]       = useState(true)
   const [isGeocoding,     setIsGeocoding]     = useState(false)
@@ -139,7 +131,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const prevDepto    = useRef(deptoActual)
   const seleccionado = useRef(false)
 
-  // Centro inicial del mapa (solo para MapContainer)
   const initialCenter = useRef<[number, number]>(getCenter(deptoActual))
   const initialZoom   = useRef(13)
 
@@ -152,10 +143,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
     setMapCmd(prev => ({
-      type:    "setCenter",
-      center:  getCenter(deptoActual),
-      zoom:    12,
-      trigger: prev.trigger + 1,
+      type: "setCenter", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1,
     }))
   }, [deptoActual])
 
@@ -177,7 +165,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }, 400)
   }, [query])
 
-  // Click manual en el mapa → flyTo (funciona bien, no se toca)
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
@@ -185,9 +172,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     setShowSuggestions(false)
     setSuggestions([])
     seleccionado.current = true
-
     setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
-
     setIsGeocoding(true)
     try {
       const res  = await fetch(
@@ -211,7 +196,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }
   }, [onChange])
 
-  // Selección del buscador → fitBounds con el boundingbox real de Nominatim
   const handleSuggestionClick = useCallback((s: Suggestion) => {
     const lat = parseFloat(parseFloat(s.lat).toFixed(6))
     const lng = parseFloat(parseFloat(s.lon).toFixed(6))
@@ -227,8 +211,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     setSuggestions([])
     setMarkerPos([lat, lng])
 
-    // Decidir entre fitBounds y flyTo según el tamaño del boundingbox
-    // Si el bbox es muy grande (ej. cubre toda una ciudad), ignorarlo y hacer flyTo directo
     const bb      = s.boundingbox
     const minLat  = parseFloat(bb[0])
     const maxLat  = parseFloat(bb[1])
@@ -236,17 +218,12 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     const maxLng  = parseFloat(bb[3])
     const latSpan = Math.abs(maxLat - minLat)
     const lngSpan = Math.abs(maxLng - minLng)
-
-    // Si el bbox abarca más de ~0.02 grados (~2 km) en cualquier eje → flyTo con zoom de calle
     const bboxIsTooBig = latSpan > 0.02 || lngSpan > 0.02
 
     if (bboxIsTooBig) {
       setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     } else {
-      const bounds: [[number, number], [number, number]] = [
-        [minLat, minLng], // SW
-        [maxLat, maxLng], // NE
-      ]
+      const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]]
       setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
     }
 
@@ -308,32 +285,20 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
-            position:     "absolute",
-            top:          "100%",
-            left:         0,
-            right:        0,
-            background:   "#ffffff",
-            border:       `1px solid ${C.borde}`,
-            borderRadius: 6,
-            zIndex:       99999,
-            boxShadow:    "0 6px 20px rgba(0,0,0,0.15)",
-            marginTop:    3,
-            maxHeight:    200,
-            overflowY:    "auto",
+            position: "absolute", top: "100%", left: 0, right: 0,
+            background: "#ffffff", border: `1px solid ${C.borde}`,
+            borderRadius: 6, zIndex: 99999,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+            marginTop: 3, maxHeight: 200, overflowY: "auto",
           }}>
             {suggestions.map((s, i) => (
               <div
                 key={i}
                 onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(s) }}
                 style={{
-                  padding:      "9px 12px",
-                  fontSize:     13,
-                  color:        C.texto,
-                  cursor:       "pointer",
+                  padding: "9px 12px", fontSize: 13, color: C.texto, cursor: "pointer",
                   borderBottom: i < suggestions.length - 1 ? `1px solid ${C.crema}` : "none",
-                  display:      "flex",
-                  alignItems:   "flex-start",
-                  gap:          8,
+                  display: "flex", alignItems: "flex-start", gap: 8,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.crema }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#ffffff" }}
@@ -351,12 +316,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
       {/* Mapa */}
       <div style={{
-        height:       270,
-        borderRadius: 8,
-        overflow:     "hidden",
-        border:       `1.5px solid ${C.borde}`,
-        position:     "relative",
-        zIndex:       1,
+        height: 230, borderRadius: 8, overflow: "hidden",
+        border: `1.5px solid ${C.borde}`, position: "relative", zIndex: 1,
       }}>
         <MapContainer
           center={initialCenter.current}
@@ -378,13 +339,20 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         Busca una dirección arriba o haz clic directamente en el mapa
       </p>
 
-      {/* Dirección y ciudad — readonly */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      {/* Dirección y ciudad — en columna en móvil, lado a lado en desktop */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr",
+        gap: 8,
+      }}
+        className="sm:grid-cols-2"
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <label style={labelStyle}>Dirección seleccionada</label>
           <input readOnly value={direccion} placeholder="—" style={{
             ...inputStyle, background: C.crema,
             color: direccion ? C.texto : C.subtexto,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>

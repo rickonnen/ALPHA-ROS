@@ -25,7 +25,7 @@ export function validate(values: DatosAvisoValues): DatosAvisoErrors {
 
   // Precio
   if (!values.precio) {
-    errors.precio = 'El precio es obligatorio.'
+    errors.precio = 'Campo obligatorio'
   } else if (isNaN(parseFloat(values.precio)) || parseFloat(values.precio) <= 0) {
     errors.precio = 'El precio debe ser mayor a 0.'
   } else if (parseFloat(values.precio) > MAX_PRECIO) {
