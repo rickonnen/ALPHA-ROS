@@ -6,65 +6,70 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true 
 });
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
+  // CONFIGURACIÓN INTERNA (Blindaje para Producción)
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
+  });
+
   try {
     const data = await request.formData();
-    const id_usuario = data.get("id_usuario") as string;
-    const id_plan = data.get("id_plan") as string;
     const file = data.get("file") as File;
-    const tiempo_pago = data.get("tiempo_pago") as string;
-    const mes_pago = data.get("mes_pago") as string;
-
-    if (!file) {
-      return NextResponse.json({ error: "No se envió el comprobante" }, { status: 400 });
+    
+    // Verificación rápida en consola de servidor
+    if (!process.env.CLOUDINARY_API_KEY) {
+      throw new Error("La API KEY no llegó al servidor. Revisa tu archivo .env");
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    //convertir las imagenes de comprobante en webp 500x500px
+
     const uploadResponse: any = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
+      const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: "comprobantes_pagos",
-          format: "webp", 
-          transformation: [
-            { width: 500, height: 500, crop: "fill", gravity: "center" }
-          ],
+          format: "webp",
+          transformation: [{ quality: "auto", fetch_format: "webp" }],
         },
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
         }
-      ).end(buffer);
+      );
+      uploadStream.end(buffer);
     });
 
-    
+    // Crear el detalle del pago en la BD
     await prisma.detallePago.create({
       data: {
-        id_plan: parseInt(id_plan),
-        id_usuario: id_usuario,
-        estado: 1,
+        id_plan: parseInt(data.get("id_plan") as string),
+        id_usuario: data.get("id_usuario") as string,
+        estado: 1, // Pendiente
+        comprobante_url: uploadResponse.secure_url,
+        mes_pago: data.get("mes_pago") as string,
+        tiempo_pago: data.get("tiempo_pago") as string,
         metodo_pago: "Transferencia QR",
         fecha_detalle: new Date(),
-        comprobante_url: uploadResponse.secure_url,
-        mes_pago: mes_pago,  
-        tiempo_pago: tiempo_pago,
       }
     });
 
-    
+    return NextResponse.json({ success: true });
 
-    return NextResponse.json({
-      success: true,
-      mensaje: "Registro creado (Imagen en consola)",
-      url_detectada: uploadResponse.secure_url 
-    });
-  } catch (error) {
-    return NextResponse.json({ error: "Error al registrar" }, { status: 500 });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    return NextResponse.json({ 
+      error: "Error interno", 
+      message: error.message 
+    }, { status: 500 });
   }
 }

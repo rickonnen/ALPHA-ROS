@@ -52,10 +52,21 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-background">
+    <div className="flex min-h-screen flex-col md:flex-row">
       {/* Columna Izquierda */}
-      <div className="flex w-full flex-col justify-between bg-muted/30 p-10 md:w-1/2 lg:p-16">
-        <div>
+      <div className="flex w-full flex-col bg-muted/30 p-10 md:w-1/2 lg:p-16">
+        
+        {/* Contenedor Superior (Título y Descripción) */}
+        <div className="flex flex-col">
+          {/* Botón Volver solo para móvil (arriba según tu lógica previa) */}
+          <div className="block md:hidden mb-6">
+            <Link href={`/cobros/planes?id=${user?.id}`}>
+              <Button variant="default" className="font-bold uppercase text-xs">
+                Volver
+              </Button>
+            </Link>
+          </div>
+
           <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
             {plan.nombre_plan}
           </h1>
@@ -74,7 +85,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
             </p>
 
             <div className="bg-muted/50 p-4 rounded-lg border border-border">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-3">
                 Detalles del plan
               </h3>
               <ul className="space-y-2">
@@ -86,10 +97,14 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
           </section>
         </div>
 
-        <div className="mt-12">
+        {/* ESPACIADOR FLEXIBLE: Esto empuja todo lo que sigue hacia abajo */}
+        <div className="flex-grow" />
+
+        {/* Botón Volver para PC: Pegado abajo */}
+        <div className="hidden md:block mt-10">
           <Link href={`/cobros/planes?id=${user?.id}`}>
-            <Button variant="default">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Volver
+            <Button variant="default" className="font-bold uppercase flex items-center transition-all duration-300 cursor-pointer hover:bg-primary/80">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Volver
             </Button>
           </Link>
         </div>
@@ -130,7 +145,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 variant="default"
                 size="lg"
                 disabled={!archivoSeleccionado && !tienePagoPendiente}
-                className="w-full font-semibold text-lg py-6 shadow-md cursor-pointer"
+                className="w-full font-semibold text-lg py-6 shadow-md cursor-pointer hover:bg-primary/80"
                 onClick={alDarClickEnVerificarPrincipal}
               >
                 Verificar Pago
@@ -163,7 +178,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
               <Button
                 variant="default"
                 disabled
-                className="w-full font-medium text-lg py-6 bg-[#1D3547] opacity-50 cursor-not-allowed cursor-pointer"
+                className="w-full font-medium text-lg py-6 opacity-50 cursor-not-allowed cursor-pointer"
               >
                 Adjuntar comprobante
               </Button>
@@ -172,7 +187,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 {!archivoSeleccionado ? (
                   <Button
                     variant="default"
-                    className="w-full font-medium text-lg py-6 bg-[#1D3547] cursor-pointer"
+                    className="w-full font-medium text-lg py-6 cursor-pointer hover:bg-primary/80"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     Adjuntar comprobante
@@ -180,7 +195,6 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 ) : (
                   <div className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg border border-dashed border-gray-400 animate-in fade-in zoom-in duration-300">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      {/* Usamos FileText de Lucide para que se vea más pro que un emoji */}
                       <span className="text-sm font-medium truncate max-w-[150px] md:max-w-[200px] text-foreground">
                         {archivoSeleccionado.name}
                       </span>
@@ -205,6 +219,8 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
           </div>
         </div>
       </div>
+
+      
       
       <ModalPago
         estadoModal={estadoModal}
