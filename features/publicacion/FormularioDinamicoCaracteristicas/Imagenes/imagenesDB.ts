@@ -75,7 +75,7 @@ export async function leerImagenes(): Promise<File[]> {
   }
 }
 
-// ── Limpia IndexedDB ──────────────────────────
+// Limpia IndexedDB
 export async function limpiarImagenes(): Promise<void> {
   try {
     const db          = await abrirDB()

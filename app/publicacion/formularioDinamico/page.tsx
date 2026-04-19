@@ -152,7 +152,7 @@ function parseIntNullableClient(val: string | undefined | null): number | null {
   return isNaN(n) ? null : n
 }
 
-// ─── Componente interno ───────────────────────────────────────
+//Componente interno
 function FormularioDinamicoInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
@@ -176,11 +176,11 @@ function FormularioDinamicoInner() {
   const [isMobile,          setIsMobile]          = useState(false)
   const [datosListos,       setDatosListos]       = useState(!modoEdicion)
   const [imagenesIniciales, setImagenesIniciales] = useState<string[]>([])
-  // ── KEY ÚNICA DE SESIÓN ───────────────────────────────────────
+  // KEY ÚNICA DE SESIÓN
   // Generada una sola vez al montar. Se pasa a ImagenesForm → useImagenesForm.
   // El hook la compara con la guardada en sessionStorage:
-  //   - Misma key  → F5/recarga → restaurar IndexedDB
-  //   - Key distinta → sesión nueva → limpiar IndexedDB
+  //  Misma key  → F5/recarga → restaurar IndexedDB
+  // Key distinta → sesión nueva → limpiar IndexedDB
   const [sessionKey, setSessionKey] = useState<string>('')
 
   useEffect(() => {
