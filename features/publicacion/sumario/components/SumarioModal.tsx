@@ -39,6 +39,7 @@ type SumarioStorageData = {
 interface SumarioModalProps {
     onClose: () => void
     onConfirmarPublicar?: () => void
+    modoEdicion?: boolean
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -138,12 +139,12 @@ function getInitialStorageData(): SumarioStorageData {
 
     if (typeof window === 'undefined') return empty
 
-    const datosAviso = parseJSON<Record<string, string>>(sessionStorage.getItem('datosAviso'), {})
-    const categoria = parseJSON<Record<string, string>>(sessionStorage.getItem('categoriaYEstado'), {})
-    const ubicacion = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'), {})
+    const datosAviso      = parseJSON<Record<string, string>>(sessionStorage.getItem('datosAviso'),             {})
+    const categoria       = parseJSON<Record<string, string>>(sessionStorage.getItem('categoriaYEstado'),       {})
+    const ubicacion       = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'),              {})
     const caracteristicas = parseJSON<Record<string, string>>(sessionStorage.getItem('caracteristicasDetalle'), {})
-    const video = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'), {})
-    const descripcionRaw = parseJSON<{ descripcion?: string; caracteristicas?: CaracteristicaExtra[] }>(
+    const video           = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'),         {})
+    const descripcionRaw  = parseJSON<{ descripcion?: string; caracteristicas?: CaracteristicaExtra[] }>(
         sessionStorage.getItem('descripcionPropiedad'), {}
     )
 
@@ -152,25 +153,31 @@ function getInitialStorageData(): SumarioStorageData {
     const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
+    // Fallback para modo edición: usar URLs de Cloudinary si no hay previews locales
+    const arrPreviewFinal = arrPreview.length > 0
+        ? arrPreview
+        : parseJSON<string[]>(sessionStorage.getItem('imagenesIniciales'), [])
+            .filter((item) => typeof item === 'string' && item.trim().length > 0)
+
     return {
-        titulo: datosAviso.titulo ?? '',
-        tipoOperacion: datosAviso.tipoOperacion ?? '',
-        precio: String(datosAviso.precio ?? ''),
-        tipoMoneda: datosAviso.tipoMoneda ?? 'BOB',
-        tipoPropiedad: categoria.tipoPropiedad ?? '',
-        estadoPropiedad: categoria.estadoPropiedad ?? '',
-        direccion: ubicacion.direccion ?? '',
-        departamento: ubicacion.departamento ?? '',
-        zona: ubicacion.zona ?? '',
-        habitaciones: String(caracteristicas.habitaciones ?? ''),
-        banios: String(caracteristicas.banios ?? ''),
-        garajes: String(caracteristicas.garajes ?? ''),
-        plantas: String(caracteristicas.plantas ?? ''),
-        superficie: String(caracteristicas.superficie ?? ''),
-        imagenesPreview: arrPreview,
+        titulo:          datosAviso.titulo           ?? '',
+        tipoOperacion:   datosAviso.tipoOperacion    ?? '',
+        precio:          String(datosAviso.precio    ?? ''),
+        tipoMoneda:      datosAviso.tipoMoneda       ?? 'BOB',
+        tipoPropiedad:   categoria.tipoPropiedad     ?? '',
+        estadoPropiedad: categoria.estadoPropiedad   ?? '',
+        direccion:       ubicacion.direccion         ?? '',
+        departamento:    ubicacion.departamento      ?? '',
+        zona:            ubicacion.zona              ?? '',
+        habitaciones:    String(caracteristicas.habitaciones ?? ''),
+        banios:          String(caracteristicas.banios       ?? ''),
+        garajes:         String(caracteristicas.garajes      ?? ''),
+        plantas:         String(caracteristicas.plantas      ?? ''),
+        superficie:      String(caracteristicas.superficie   ?? ''),
+        imagenesPreview: arrPreviewFinal,
         imagenesNombres: arrNombres,
-        videoUrl: video.url ?? '',
-        descripcion: descripcionRaw.descripcion ?? '',
+        videoUrl:        video.url                              ?? '',
+        descripcion:     descripcionRaw.descripcion             ?? '',
         caracteristicas: Array.isArray(descripcionRaw.caracteristicas)
             ? descripcionRaw.caracteristicas
             : [],
@@ -192,11 +199,11 @@ function SummaryField({ label, value }: { label: string; value: string }) {
 // ─────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────
-export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps) {
+export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: SumarioModalProps) {
     const data = useMemo<SumarioStorageData>(() => getInitialStorageData(), [])
 
     const [arrImagenesError, setArrImagenesError] = useState<number[]>([])
-    const [intImagenActual, setIntImagenActual] = useState(0)
+    const [intImagenActual,  setIntImagenActual]  = useState(0)
 
     const bolEsTerreno = useMemo(
         () => normalizeValue(data.tipoPropiedad) === 'terreno',
@@ -213,7 +220,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
 
     const intTotalImagenes = data.imagenesPreview.length
     const bolTieneImagenes = intTotalImagenes > 0
-    const intImagenSafe = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
+    const intImagenSafe    = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
 
     const onPrevImagen = () => {
         if (intTotalImagenes <= 1) return
@@ -249,7 +256,11 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                             )}
                         </div>
                     </div>
-                    <p className="text-sm text-[#6C6761]">Revisa la información de tu inmueble antes de publicarlo.</p>
+                    <p className="text-sm text-[#6C6761]">
+                        {modoEdicion
+                            ? 'Revisa la información de tu inmueble antes de guardarlo.'
+                            : 'Revisa la información de tu inmueble antes de publicarlo.'}
+                    </p>
                 </div>
 
                 <div className="px-5 sm:px-6 pb-6 pt-4 space-y-5">
@@ -342,22 +353,23 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                     {/* Datos */}
                     <div className="space-y-3">
                         <h3 className="text-2xl sm:text-4xl font-bold text-[#2E2E2E]">{toText(data.titulo)}</h3>
+
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                             {/* Columna 1 */}
                             <div className="space-y-2">
                                 <SummaryField label="Tipo de propiedad" value={toText(data.tipoPropiedad)} />
-                                <SummaryField label="Dirección" value={toText(data.direccion)} />
-                                <SummaryField label="Superficie" value={formatSurface(data.superficie)} />
+                                <SummaryField label="Dirección"         value={toText(data.direccion)} />
+                                <SummaryField label="Superficie"        value={formatSurface(data.superficie)} />
                                 {!bolEsTerreno && <SummaryField label="Habitaciones" value={toText(data.habitaciones)} />}
                             </div>
 
                             {/* Columna 2 */}
                             <div className="space-y-2">
                                 <SummaryField label="Tipo de operación" value={toTitleCase(data.tipoOperacion)} />
-                                <SummaryField label="Ciudad" value={strCiudad} />
-                                <SummaryField label="Zona" value={toText(data.zona)} />
+                                <SummaryField label="Ciudad"            value={strCiudad} />
+                                <SummaryField label="Zona"              value={toText(data.zona)} />
                                 {!bolEsTerreno && <SummaryField label="Garajes" value={toText(data.garajes)} />}
-                                {!bolEsTerreno && <SummaryField label="Baños" value={toText(data.banios)} />}
+                                {!bolEsTerreno && <SummaryField label="Baños"   value={toText(data.banios)} />}
                                 {!bolEsTerreno && <SummaryField label="Plantas" value={toText(data.plantas)} />}
                             </div>
 
@@ -367,6 +379,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                 <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(data.descripcion)}</p>
                             </div>
                         </div>
+
                         {/* Características extras — tarjetas */}
                         {data.caracteristicas.length > 0 && (
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
@@ -401,7 +414,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                             onClick={() => onConfirmarPublicar?.()}
                             className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-5 text-sm sm:text-base font-semibold"
                         >
-                            Publicar
+                            {modoEdicion ? 'Guardar' : 'Publicar'}
                         </Button>
                     </div>
 
