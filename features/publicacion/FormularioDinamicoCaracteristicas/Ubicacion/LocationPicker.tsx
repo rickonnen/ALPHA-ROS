@@ -22,7 +22,7 @@ const DEPTO_COORDS: Record<string, [number, number]> = {
   "Oruro":      [-17.9833, -67.1500],
   "Potosí":     [-19.5836, -65.7531],
   "Sucre":      [-19.0431, -65.2592],
-  "Chuquisaca": [-19.0431, -65.2592], 
+  "Chuquisaca": [-19.0431, -65.2592],
   "Tarija":     [-21.5355, -64.7296],
   "Beni":       [-14.8333, -64.9000],
   "Pando":      [-11.0289, -68.7692],
@@ -112,11 +112,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const [ciudad,          setCiudad]          = useState("")
   const [query,           setQuery]           = useState("")
   const [suggestions,     setSuggestions]     = useState<Suggestion[]>([])
-  // showSuggestions se cierra definitivamente al elegir una opción
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevDepto    = useRef(deptoActual)
-  // true = el usuario ya eligió, no volver a mostrar sugerencias hasta que escriba de nuevo
   const seleccionado = useRef(false)
 
   useEffect(() => {
@@ -124,7 +122,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     return () => clearTimeout(t)
   }, [])
 
-  // Cuando cambia el depto externo → vuela con zoom ciudad
   useEffect(() => {
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
@@ -135,9 +132,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }))
   }, [deptoActual])
 
-  // Autocompletado — solo si el usuario está escribiendo activamente
   useEffect(() => {
-    if (seleccionado.current) return   // ya eligió, no buscar
+    if (seleccionado.current) return
     if (query.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(async () => {
@@ -158,6 +154,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
     setMarkerPos([lat, lng])
+    // Zoom al punto clickeado
+    setFlyConfig(prev => ({ center: [lat, lng], zoom: 16, trigger: prev.trigger + 1 }))
     // Cerrar sugerencias al hacer click en el mapa
     setShowSuggestions(false)
     setSuggestions([])
@@ -195,13 +193,11 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     const displayStr   = [direccionStr, ciudadStr].filter(Boolean).join(", ")
     const depto        = detectarDepartamento(lat, lng)
 
-    // Marcar como seleccionado → bloquear nuevo autocompletado hasta que el usuario reescriba
     seleccionado.current = true
     setShowSuggestions(false)
     setSuggestions([])
 
     setMarkerPos([lat, lng])
-    // zoom 15 = nivel calle, se ven cuadras claramente pero no tan extremo
     setFlyConfig(prev => ({ center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     setQuery(displayStr)
     setDireccion(direccionStr)
@@ -209,7 +205,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: paisStr, departamento: depto })
   }, [onChange])
 
-  // Cuando el usuario modifica el texto manualmente → habilitar búsqueda de nuevo
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     seleccionado.current = false
     setQuery(e.target.value)
@@ -243,7 +238,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
-      {/* Buscador — zIndex MUY alto para flotar sobre los controles del mapa */}
+      {/* Buscador */}
       <div style={{ position: "relative", zIndex: 10000 }}>
         <label style={labelStyle}>
           Buscar dirección
@@ -253,7 +248,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           value={query}
           onChange={handleQueryChange}
           onFocus={() => {
-            // Solo mostrar si no hubo selección previa y hay sugerencias
             if (!seleccionado.current && suggestions.length > 0) setShowSuggestions(true)
           }}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
@@ -261,7 +255,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           style={inputStyle}
         />
 
-        {/* Dropdown — zIndex altísimo, por encima de controles del mapa */}
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
             position:  "absolute",
@@ -294,7 +287,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
                 onMouseEnter={e => { e.currentTarget.style.background = C.crema }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#ffffff" }}
               >
-                {/* Pin sin emoji — SVG puro */}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill={C.terracota}
                   style={{ flexShrink: 0, marginTop: 2 }}>
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -306,12 +298,12 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         )}
       </div>
 
-      {/* Mapa — zIndex normal, los controles +/- quedan bajo el dropdown */}
+      {/* Mapa */}
       <div style={{
         height: 270, borderRadius: 8, overflow: "hidden",
         border: `1.5px solid ${C.borde}`,
         position: "relative",
-        zIndex: 1,   // menor que el buscador
+        zIndex: 1,
       }}>
         <MapContainer
           center={flyConfig.center}
