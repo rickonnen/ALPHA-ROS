@@ -5,24 +5,41 @@ import {
   guardarImagenes,
   leerImagenes,
   limpiarImagenes,
-  marcarSesionActiva,
-  haySecionActiva,
+  guardarSessionKey,
+  leerSessionKey,
 } from './imagenesDB'
 
-export function useImagenesForm() {
+// ── CAMBIO CLAVE ──────────────────────────────────────────────────────────
+// El hook recibe `sessionKey` del padre (FormularioDinamico).
+// El padre genera una key única con Date.now() al montar.
+//
+// Lógica al inicializar:
+//   - keyGuardada === sessionKey  →  F5/recarga  →  restaurar de IndexedDB
+//   - keyGuardada !== sessionKey  →  sesión nueva →  limpiar IndexedDB
+//
+// Esto reemplaza el bug de haySecionActiva() que siempre devolvía true
+// durante la navegación interna de Next.js (soft navigation).
+// ─────────────────────────────────────────────────────────────────────────
+
+export function useImagenesForm(sessionKey: string) {
   const [values,     setValues]     = useState<ImagenesValues>(INITIAL_VALUES)
   const [errors,     setErrors]     = useState<ImagenesErrors>({})
   const [touched,    setTouched]    = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
-  const [cargando,   setCargando]   = useState(true) // true mientras lee IndexedDB
+  const [cargando,   setCargando]   = useState(true)
 
   const valuesRef = useRef(values)
 
-  // ── Al montar: decide si restaurar o limpiar ──
   useEffect(() => {
+    if (!sessionKey) return
+
     async function inicializar() {
-      if (haySecionActiva()) {
-        // El usuario recargó la página (F5) — restaurar imágenes de IndexedDB
+      setCargando(true)
+
+      const keyGuardada = leerSessionKey()
+
+      if (keyGuardada === sessionKey) {
+        // Misma sesión (F5 / recarga) → restaurar de IndexedDB
         const archivosGuardados = await leerImagenes()
         if (archivosGuardados.length > 0) {
           const restored = { imagenes: archivosGuardados }
@@ -30,17 +47,20 @@ export function useImagenesForm() {
           setValues(restored)
         }
       } else {
-        // El usuario entró de cero — limpiar IndexedDB por si quedó algo de antes
+        // Sesión nueva (otra publicación, otro editar, click en header)
+        // → limpiar IndexedDB y registrar la nueva key
         await limpiarImagenes()
-        // Marcar que hay una sesión activa
-        // sessionStorage se borra solo cuando cierra la pestaña
-        marcarSesionActiva()
+        guardarSessionKey(sessionKey)
+        valuesRef.current = INITIAL_VALUES
+        setValues(INITIAL_VALUES)
       }
+
       setCargando(false)
     }
 
     inicializar()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey])
 
   // ── Previews estables ─────────────────────────
   const previews = useMemo(
@@ -60,12 +80,10 @@ export function useImagenesForm() {
     const arrFiles = Array.from(files)
 
     for (const file of arrFiles) {
-      // Formato
       if (!['image/jpeg', 'image/png'].includes(file.type)) {
         setFieldError('Solo se aceptan imágenes JPG y PNG.')
         return
       }
-      // Límite
       if (valuesRef.current.imagenes.length >= MAX_FILES) {
         setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
         return
@@ -77,7 +95,6 @@ export function useImagenesForm() {
       valuesRef.current = updated
       setValues(updated)
 
-      // Guardar en IndexedDB para sobrevivir recarga
       await guardarImagenes(updated.imagenes)
 
       if (touched) setErrors(validate(updated))
@@ -93,13 +110,12 @@ export function useImagenesForm() {
     valuesRef.current = updated
     setValues(updated)
 
-    // Actualizar IndexedDB con la lista sin la imagen eliminada
     await guardarImagenes(updated.imagenes)
 
     if (touched) setErrors(validate(updated))
   }, [touched])
 
-  // ── Envío ─────────────────────────────────────
+  //Envío
   const handleSubmit = useCallback((onSuccess: (values: ImagenesValues) => void) => {
     setTouched(true)
     const validationErrors = validate(valuesRef.current)
@@ -109,9 +125,8 @@ export function useImagenesForm() {
     }
   }, [])
 
-  // ── Reset ─────────────────────────────────────
+  //Reset
   const handleReset = useCallback(async () => {
-    // Limpia IndexedDB y la sesión
     await limpiarImagenes()
     valuesRef.current = INITIAL_VALUES
     setValues(INITIAL_VALUES)
@@ -125,7 +140,7 @@ export function useImagenesForm() {
     errors,
     touched,
     fieldError,
-    cargando,      // usar para mostrar un spinner mientras restaura
+    cargando,
     previews,
     limitReached,
     isValid: Object.keys(validate(values)).length === 0,
