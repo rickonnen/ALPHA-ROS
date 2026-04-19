@@ -41,39 +41,9 @@ const STEPS = [
   { title: 'Descripción',        opcional: false },
 ]
 
-//Diseño
-const DISENO = {
-  pagina:             { backgroundColor: '#F4EFE6' },
-  alineacionVertical: 'center' as const,
-  paddingVertical:    '24px',
-  tituloPagina: {
-    fontSize: '60px', fontWeight: '700', color: '#1F3A4D',
-    marginBottom: '20px', marginLeft: '-120px', marginTop: '40px',
-  },
-  contenedor:     { maxWidth: '1000px', height: '560px' },
-  panelIzquierdo: { width: '340px', backgroundColor: '#C26E5A', padding: '20px' },
-  panelDerecho:   { backgroundColor: '#1F3A4D', padding: '50px', paddingBottom: '20px' },
-  tituloPaso:     { fontSize: '20px', fontWeight: '600', color: '#ffffff', marginBottom: '20px' },
-  cuadroForm:     { backgroundColor: '#F4EFE6', borderRadius: '12px', padding: '15px' },
-  botones:        { gap: '12px', marginTop: '15px' },
-  botonRegresar: {
-    backgroundColor: '#F4EFE6', border: '1.5px solid #C26E5A', color: '#C26E5A',
-    borderRadius: '6px', padding: '5px 20px', fontSize: '16px', fontWeight: '600',
-  },
-  botonSiguiente: {
-    backgroundColor: '#C26E5A', border: '1.5px solid #C26E5A', color: '#ffffff',
-    borderRadius: '6px', padding: '5px 20px', fontSize: '16px', fontWeight: '600',
-  },
-}
-
 //Tipo ref
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
-//useStableTrigger
-// Usado SOLO para los pasos que NO instancian su propio hook internamente:
-// paso 1 (CategoriaEstadoStep) y paso 3 (CaracteristicasDetalleStep).
-// Para los demás (DatosAviso, Ubicacion, Imagenes, Descripcion) el form
-// recibe submitRef directamente y actualiza el ref desde adentro.
 function useStableTrigger(
   triggerRef:    TriggerRef,
   handleSubmit:  (cb: () => void) => void,
@@ -91,99 +61,29 @@ function useStableTrigger(
 }
 
 //Paso 1: Categoría y Estado
-// Usa useStableTrigger porque el hook NO está dentro del form — aquí lo instanciamos.
-function CategoriaEstadoStep({
-  triggerRef,
-  advanceDirect,
-}: {
-  triggerRef:    TriggerRef
-  advanceDirect: () => void
-}) {
+function CategoriaEstadoStep({ triggerRef, advanceDirect }: { triggerRef: TriggerRef, advanceDirect: () => void }) {
   const { values, errors, touched, handleChange, handleBlur, handleSubmit } = useCategoriaForm()
   useStableTrigger(triggerRef, handleSubmit, advanceDirect)
-  return (
-    <CategoriaYEstadoForm
-      values={values} errors={errors} touched={touched}
-      onChange={handleChange} onBlur={handleBlur}
-    />
-  )
+  return <CategoriaYEstadoForm values={values} errors={errors} touched={touched} onChange={handleChange} onBlur={handleBlur} />
 }
 
 //Paso 3: Características
-// Igual que Categoría — el hook vive aquí, no dentro del form.
-function CaracteristicasDetalleStep({
-  triggerRef,
-  advanceDirect,
-}: {
-  triggerRef:    TriggerRef
-  advanceDirect: () => void
-}) {
-  const { values, errors, touched, handleChange, handleBlur, handleSubmit } =
-    useCaracteristicasDetalleForm()
+function CaracteristicasDetalleStep({ triggerRef, advanceDirect }: { triggerRef: TriggerRef, advanceDirect: () => void }) {
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit } = useCaracteristicasDetalleForm()
   useStableTrigger(triggerRef, handleSubmit, advanceDirect)
-  return (
-    <CaracteristicasDetalleForm
-      values={values} errors={errors} touched={touched}
-      onChange={handleChange} onBlur={handleBlur}
-    />
-  )
+  return <CaracteristicasDetalleForm values={values} errors={errors} touched={touched} onChange={handleChange} onBlur={handleBlur} />
 }
 
 //Contenido del paso activo
-function StepContent({
-  step,
-  advanceDirect,
-  onBack,
-  triggerRefs,
-}: {
-  step:          number
-  advanceDirect: () => void
-  onBack:        () => void
-  triggerRefs:   Record<number, TriggerRef>
-}) {
+function StepContent({ step, advanceDirect, onBack, triggerRefs }: { step: number, advanceDirect: () => void, onBack: () => void, triggerRefs: Record<number, TriggerRef> }) {
   switch (step) {
-    // Paso 0 — DatosAvisoForm instancia su propio hook → le pasamos submitRef
-    case 0: return (
-      <DatosAvisoForm
-        onNext={advanceDirect}
-        onBack={onBack}
-        submitRef={triggerRefs[0]}
-      />
-    )
-    // Paso 1 — CategoriaYEstadoForm no instancia hook → Step wrapper con useStableTrigger
-    case 1: return (
-      <CategoriaEstadoStep triggerRef={triggerRefs[1]} advanceDirect={advanceDirect} />
-    )
-    // Paso 2 — UbicacionForm instancia su propio hook → le pasamos submitRef
-    case 2: return (
-      <UbicacionForm
-        onNext={advanceDirect}
-        onBack={onBack}
-        submitRef={triggerRefs[2]}
-      />
-    )
-    // Paso 3 — CaracteristicasDetalleForm no instancia hook → Step wrapper con useStableTrigger
-    case 3: return (
-      <CaracteristicasDetalleStep triggerRef={triggerRefs[3]} advanceDirect={advanceDirect} />
-    )
-    // Paso 4 — ImagenesForm instancia su propio hook → le pasamos submitRef
-    case 4: return (
-      <ImagenesForm
-        onNext={advanceDirect}
-        onBack={onBack}
-        submitRef={triggerRefs[4]}
-      />
-    )
-    // Paso 5 — Video, opcional, sin validación
+    case 0: return <DatosAvisoForm onNext={advanceDirect} onBack={onBack} submitRef={triggerRefs[0]} />
+    case 1: return <CategoriaEstadoStep triggerRef={triggerRefs[1]} advanceDirect={advanceDirect} />
+    case 2: return <UbicacionForm onNext={advanceDirect} onBack={onBack} submitRef={triggerRefs[2]} />
+    case 3: return <CaracteristicasDetalleStep triggerRef={triggerRefs[3]} advanceDirect={advanceDirect} />
+    case 4: return <ImagenesForm onNext={advanceDirect} onBack={onBack} submitRef={triggerRefs[4]} />
     case 5: return <VideoForm onNext={advanceDirect} onBack={onBack} />
-    // Paso 6 — DescripcionForm instancia su propio hook → le pasamos submitRef
-    case 6: return (
-      <DescripcionForm
-        onNext={advanceDirect}
-        onBack={onBack}
-        submitRef={triggerRefs[6]}
-      />
-    )
+    case 6: return <DescripcionForm onNext={advanceDirect} onBack={onBack} submitRef={triggerRefs[6]} />
     default: return null
   }
 }
@@ -201,7 +101,6 @@ export default function CrearPublicacionPage() {
   const [hydrated,  setHydrated]  = useState(() => typeof window !== 'undefined')
   const [blockMsg,  setBlockMsg]  = useState<string | null>(null)
 
-  // triggerRefs — uno por cada paso que necesita validación (todos menos video paso 5)
   const triggerRefs: Record<number, TriggerRef> = {
     0: useRef<(() => void) | null>(null),
     1: useRef<(() => void) | null>(null),
@@ -237,29 +136,6 @@ export default function CrearPublicacionPage() {
     else setCurrentStep(prev => prev - 1)
   }, [isFirstStep, router])
 
-  /**
-   * handleSidebarClick — para el componente del otro equipo.
-   *
-   *Para el otro equipo
-   * 1. Descomentar el import de PublicacionStepper arriba.
-   * 2. Reemplazar el <div> del panel izquierdo por:
-   *
-   *    <PublicacionStepper
-   *      currentStep={currentStep}
-   *      completedSteps={completedSteps}
-   *      steps={STEPS}
-   *      onStepClick={handleSidebarClick}
-   *    />
-   *
-   * 3. Dentro de PublicacionStepper, al hacer clic en un paso:
-   *    onClick={() => onStepClick(index)}
-   *
-   * Reglas:
-   *  Hacia atrás: siempre permitido.
-   *  Hacia adelante: solo si ya está en completedSteps o es opcional.
-   *  Paso obligatorio no completado: muestra mensaje, no cambia el paso.
-   *
-   */
   const handleSidebarClick = useCallback((index: number) => {
     setBlockMsg(null)
     if (index === currentStep) return
@@ -274,74 +150,43 @@ export default function CrearPublicacionPage() {
   if (!hydrated) return null
 
   return (
-    <main
-      style={{
-        ...DISENO.pagina,
-        minHeight: '100vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: DISENO.alineacionVertical,
-        padding: `${DISENO.paddingVertical} 16px`, fontFamily: 'var(--font-geist-sans)',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: DISENO.contenedor.maxWidth }}>
-        <h1 style={DISENO.tituloPagina}>Crear publicación</h1>
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 md:p-6 lg:p-8 bg-[#F4EFE6] font-[family-name:var(--font-geist-sans)]">
+      
+      {/* Título de la página adaptativo */}
+      <div className="w-full max-w-[1000px] mb-4 md:mb-6">
+        <h1 className="text-3xl md:text-5xl lg:text-[60px] font-bold text-[#1F3A4D] lg:-ml-[20px] mt-4 md:mt-8">
+          Crear publicación
+        </h1>
       </div>
 
-      <div
-        style={{
-          width: '100%', maxWidth: DISENO.contenedor.maxWidth, height: DISENO.contenedor.height,
-          display: 'flex', borderRadius: '12px', overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-        }}
-      >
-        {/*Panel izquierdo
-            Reemplazar este <div> completo por:
-
-            <PublicacionStepper
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              steps={STEPS}
-              onStepClick={handleSidebarClick}
-            />
-         */}
-        <div
-          style={{
-            width: DISENO.panelIzquierdo.width, flexShrink: 0,
-            backgroundColor: DISENO.panelIzquierdo.backgroundColor,
-            padding: DISENO.panelIzquierdo.padding, display: 'flex', flexDirection: 'column',
-          }}
-        >
-          <p style={{ color: '#fff', fontSize: '11px', opacity: 0.5, marginTop: 'auto', textAlign: 'center' }}>
+      {/* Contenedor Principal: Se apila en móvil (flex-col) y se pone lado a lado en PC (md:flex-row) */}
+      <div className="w-full max-w-[1000px] flex flex-col md:flex-row bg-white rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.12)] md:h-[600px] lg:h-[650px]">
+        
+        {/* Panel izquierdo (Stepper) */}
+        <div className="w-full md:w-[280px] lg:w-[340px] bg-[#C26E5A] p-4 md:p-6 flex flex-col shrink-0">
+          <p className="text-white text-xs opacity-50 mt-auto text-center">
             Stepper — otro equipo
           </p>
         </div>
 
-        {/* Panel derecho */}
-        <div
-          style={{
-            flex: 1, backgroundColor: DISENO.panelDerecho.backgroundColor,
-            padding: DISENO.panelDerecho.padding, paddingBottom: DISENO.panelDerecho.paddingBottom,
-            display: 'flex', flexDirection: 'column',
-          }}
-        >
-          <h2 style={{ ...DISENO.tituloPaso, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>
+        {/* Panel derecho (Formularios) */}
+        <div className="flex-1 bg-[#1F3A4D] p-4 md:p-8 lg:p-[50px] lg:pb-5 flex flex-col h-[500px] md:h-auto">
+          
+          <h2 className="text-lg md:text-xl font-semibold text-white mb-4 uppercase tracking-wider shrink-0">
             {STEPS[currentStep].title}
             {STEPS[currentStep].opcional && (
-              <span style={{ fontSize: '12px', fontWeight: 400, marginLeft: '8px', opacity: 0.6 }}>
-                (opcional)
-              </span>
+              <span className="text-xs font-normal ml-2 opacity-60 normal-case">(opcional)</span>
             )}
           </h2>
 
           {blockMsg && (
-            <div style={{
-              backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
-              padding: '8px 12px', marginBottom: '10px', fontSize: '13px', color: '#991b1b', flexShrink: 0,
-            }}>
+            <div className="bg-red-100 border border-red-300 rounded-md p-2 md:p-3 mb-3 text-xs md:text-sm text-red-800 shrink-0">
               {blockMsg}
             </div>
           )}
 
-          <div style={{ ...DISENO.cuadroForm, flex: 1, overflowY: 'auto' }}>
+          {/* Cuadro Form: ESTE es el que tiene overflow-y-auto. */}
+          <div className="bg-[#F4EFE6] rounded-xl p-3 md:p-4 flex-1 overflow-y-auto custom-scrollbar">
             <StepContent
               step={currentStep}
               advanceDirect={advanceDirect}
@@ -350,21 +195,24 @@ export default function CrearPublicacionPage() {
             />
           </div>
 
-          <div style={{
-            display: 'flex', justifyContent: 'flex-end',
-            gap: DISENO.botones.gap, marginTop: DISENO.botones.marginTop, flexShrink: 0,
-          }}>
-            <button type="button" onClick={handleBack}
-              style={{ ...DISENO.botonRegresar, cursor: 'pointer', backgroundColor: '#F4EFE6' }}
+          {/* Botones de Navegación Responsivos */}
+          <div className="flex justify-end gap-3 mt-4 shrink-0">
+            <button 
+              type="button" 
+              onClick={handleBack}
+              className="bg-[#F4EFE6] border-2 border-[#C26E5A] text-[#C26E5A] rounded-md px-4 md:px-5 py-1.5 md:py-2 text-sm md:text-base font-semibold hover:bg-[#F0DDD9] transition-colors"
             >
               Regresar
             </button>
-            <button type="button" onClick={handleNext}
-              style={{ ...DISENO.botonSiguiente, cursor: 'pointer' }}
+            <button 
+              type="button" 
+              onClick={handleNext}
+              className="bg-[#C26E5A] border-2 border-[#C26E5A] text-white rounded-md px-4 md:px-5 py-1.5 md:py-2 text-sm md:text-base font-semibold hover:bg-[#a65d4b] transition-colors"
             >
               {isLastStep ? 'Publicar' : 'Siguiente'}
             </button>
           </div>
+          
         </div>
       </div>
     </main>
