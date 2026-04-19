@@ -133,6 +133,18 @@ export function PaymentDataTable({
             <div key={objPayment.intId} className="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col gap-3">
               <div className="flex justify-between items-center border-b border-border/50 pb-2">
                 <span className="font-bold text-foreground text-lg">#{objPayment.intId}</span>
+                {/*Se movio el "ver detalles" de "método" a "#" (cosas de wireframe); se cambio la estética*/}
+                {objPayment.strReceiptUrl && (
+                  <div className="flex gap-0 mt-0 pt-0">
+                    <button
+                          onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
+                          className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-2 sm:px-2 rounded-lg py-1 sm:py-1"
+                          disabled={bolIsProcessing}
+                        >
+                          Ver Comprobante
+                        </button>
+                  </div>
+                )}
               </div>
               
               <div className="flex flex-col gap-2 text-[14px]">
@@ -152,23 +164,16 @@ export function PaymentDataTable({
                   <span className="text-muted-foreground font-medium">Método:</span>
                   <div className="flex flex-col items-end">
                     <span className="text-right truncate">{objPayment.strPaymentMethod}</span>
-                    {objPayment.strReason && (
-                      <div className="flex justify-between items-center mt-1 border-t border-border/50 pt-2">
-                        <span className="text-muted-foreground font-medium text-xs">Razón:</span>
-                        <span className="text-destructive font-bold text-xs text-right">{objPayment.strReason}</span>
-                      </div>
-                    )}
-                    {objPayment.strReceiptUrl && (
-                      <button
-                        onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
-                        className="text-primary font-bold text-sm underline hover:text-primary/80 transition-colors cursor-pointer mt-1"
-                      >
-                        ver detalles
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
+              {/*Se separo "razón de rachazo" de "Método"*/}
+              {objPayment.strReason && (
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Razón de Rechazo:</span>
+                  <span className="text-right truncate">{objPayment.strReason}</span>
+                </div>
+              )}
 
               {bolShowActions && (
                 <div className="flex gap-3 mt-2 pt-3 border-t border-border/50">
@@ -179,9 +184,10 @@ export function PaymentDataTable({
                   >
                     Aceptar
                   </Button>
+                  {/*El botón es naranja como en la vista escritorio*/}
                   <Button 
                     onClick={() => handleOpenModal(objPayment, 'reject')}
-                    className="flex-1 font-bold active:scale-95 transition-transform"
+                    className="flex-1 font-semibold text-xs bg-secondary text-secondary-foreground hover:bg-secondary text-white transition-transform"
                     disabled={bolIsProcessing}
                   >
                     Rechazar

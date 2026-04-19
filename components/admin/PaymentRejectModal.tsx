@@ -65,7 +65,8 @@ export function PaymentRejectModal({
 
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="w-[90%] min-w-[450px] min-h-[400px] flex flex-col bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
+      {/*Se lo mejoro para vista movil dado que con el anterior no se adaptaba*/}
+      <AlertDialogContent className="flex flex-col w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -87,15 +88,15 @@ export function PaymentRejectModal({
 
         {/* seleccionar motivo ª; se cambio la estructura a la de shadcn; se llevó el dropdown a lado derecho
          se genero espacio del dropdown con los botones,*/}
-        <div className="mb-20 flex flex-row items-center justify-between gap-4 px-2">
-          <label htmlFor="reason-select" className="text-sm font-bold text-gray-700 whitespace-nowrap shrink-0">
+        <div className="mb-20 flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
+          <label htmlFor="reason-select" className="flex-1 flex-col sm:flex-row text-sm font-bold text-gray-700 whitespace-nowrap">
             Motivo del rechazo <span className="text-red-500">*</span>
           </label>
-          <div className="w-[220px] sm:w-[220px]">
+          <div className="w-full sm:w-[220px]">
             <Select value={strReason} onValueChange={setStrReason}>
               <SelectTrigger className="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
-                <div className="truncate w-full pr-2">
-                  <SelectValue placeholder="Seleccione un motivo..." />
+                <div className="truncate w-full pr-0">
+                  <SelectValue placeholder="Seleccione un motivo" />
                 </div>
               </SelectTrigger>
               <SelectContent 

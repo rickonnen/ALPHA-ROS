@@ -1,8 +1,8 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 
@@ -22,10 +22,10 @@ export function PaymentEvidenceModal({
   strUrl
 }: PaymentEvidenceModalProps) {
   return (
-    <Dialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
+    <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
         <VisuallyHidden>
-          <DialogTitle>Comprobante de Pago</DialogTitle>
+          <AlertDialogTitle>Comprobante de Pago</AlertDialogTitle>
         </VisuallyHidden>
 
         <div className="flex flex-col items-center">
@@ -61,7 +61,7 @@ export function PaymentEvidenceModal({
             </Button>
           </div> 
         </div>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
