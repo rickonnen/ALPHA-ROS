@@ -10,21 +10,21 @@ export const TIPO_INMUEBLE_IDS: Record<string, number> = {
 }
 
 export const TIPO_OPERACION_IDS: Record<string, number> = {
-  Venta:       1,
-  Alquiler:    2,
+  Venta:       2,
+  Alquiler:    1,
   Anticrético: 3,
 }
 
 // Mapeo departamento → id_ciudad (tabla Ciudad)
 export const DEPARTAMENTO_CIUDAD: Record<string, number> = {
-  Beni:         1,
-  Chuquisaca:   2,
-  Cochabamba:   3,
-  'La Paz':     4,
-  Oruro:        5,
-  Pando:        6,
-  Potosí:       7,
-  'Santa Cruz': 8,
+  Beni:         7,
+  Chuquisaca:   6,
+  Cochabamba:   1,
+  'La Paz':     2,
+  Oruro:        4,
+  Pando:        8,
+  Potosí:       5,
+  'Santa Cruz': 3,
   Tarija:       9,
 }
 
