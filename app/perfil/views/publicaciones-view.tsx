@@ -36,7 +36,10 @@
     Fix: Actualización del título de la sección principal a "Publicaciones".
     Feat: Implementación de estados focus-visible para navegación por teclado en el botón "+ Agregar".
 */
-
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 18/04/2026
+    Feat: Integración del modal de límite de publicaciones (Criterio 11).
+*/
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,7 +151,7 @@ export default function PublicacionesView({
     }
   };
 
-  const handleAgregar = async () => {
+  const handleAgregar = async () => { 
     if (!user) {
       router.push("/login");
       return;
@@ -188,7 +191,6 @@ export default function PublicacionesView({
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
-
             </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
@@ -221,7 +223,7 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando && publicaciones.length > 0 && (
-            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1">
               {publicaciones.map((pub) => (
                 <PublicacionCard
                   key={pub.id}
@@ -328,10 +330,10 @@ export default function PublicacionesView({
         </div>
       )}
 
-      {/* Modal límite de publicaciones gratuitas */}
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}
+        strPlansHref="/cobros/planes" 
       />
     </>
   );
