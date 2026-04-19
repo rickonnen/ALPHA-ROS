@@ -7,10 +7,10 @@ interface Step {
 }
 
 interface StepsSidebarProps {
-  steps:          Step[]
-  currentStep:    number
+  steps: Step[]
+  currentStep: number
   completedSteps: Set<number>
-  onStepClick:    (index: number) => void
+  onStepClick: (index: number) => void
 }
 
 export function StepsSidebar({
@@ -19,7 +19,7 @@ export function StepsSidebar({
   completedSteps,
   onStepClick,
 }: StepsSidebarProps) {
-  const totalCompleted  = completedSteps.size
+  const totalCompleted = completedSteps.size
   const progressPercent = Math.round((totalCompleted / steps.length) * 100)
 
   return (
@@ -28,7 +28,7 @@ export function StepsSidebar({
       {/* ── Lista de pasos ─────────────────────── */}
       <div className="flex flex-col gap-0.5 flex-1">
         {steps.map((step, index) => {
-          const isActive    = index === currentStep
+          const isActive = index === currentStep
           const isCompleted = completedSteps.has(index)
           const isClickable = index < currentStep || isCompleted
 
@@ -75,18 +75,18 @@ export function StepsSidebar({
         })}
       </div>
 
-      {/* ── Barra de progreso ──────────────────── */}
+      {/* Barra de progreso */}
       <div className="pt-4 mt-auto">
-        {/* Track */}
-        <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
-          {/* Fill — crece según cuántos pasos están en completedSteps */}
+        <p className="text-[11px] text-white/70 mb-2 text-center">
+          Completa el proceso para publicar tu propiedad
+        </p>
+        <div className="h-5 w-full rounded-full bg-white/20 overflow-hidden">
           <div
             className="h-full rounded-full bg-[#1F3A4D] transition-all duration-500 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        {/* Texto: X/7 pasos completados */}
-        <p className="text-[11px] text-white/70 mt-1.5">
+        <p className="text-[11px] text-white/70 mt-1.5 text-center">
           {totalCompleted}/{steps.length} pasos completados
         </p>
       </div>
