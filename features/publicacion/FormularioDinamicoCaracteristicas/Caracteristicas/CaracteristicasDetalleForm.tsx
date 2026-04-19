@@ -189,7 +189,7 @@ export function CaracteristicasDetalleForm({
         </div>
 
         {/* Superficie */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 col-span-2">
           <label className="text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block text-[#2E2E2E]">
             Superficie
           </label>
