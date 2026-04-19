@@ -498,13 +498,13 @@ export default function CrearPublicacionPage() {
       style={{
         backgroundColor: C.crema, minHeight: '100vh', display: 'flex',
         flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px', fontFamily: 'var(--font-geist-sans)',
+        padding: '8px 16px', fontFamily: 'var(--font-geist-sans)',
       }}
     >
       <div style={{ width: '100%', maxWidth: 1000 }}>
         <h1 style={{
           fontSize: 60, fontWeight: 700, color: C.marino,
-          marginBottom: 20, marginLeft: -120, marginTop: 40,
+          marginBottom: 20, marginTop: 10, marginLeft: -9,
         }}>
           Crear publicación
         </h1>

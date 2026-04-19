@@ -84,17 +84,17 @@ export function CaracteristicasDetalleForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
 
       <p className="text-sm font-medium text-[#1A1714]">
         Detalle las Características de su propiedad
       </p>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1">
 
         {/* Habitaciones */}
-        <div className="flex flex-col gap-1.5">
-          <label className={`text-sm font-medium ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Habitaciones
           </label>
           <div className="flex items-center gap-2">
@@ -117,8 +117,8 @@ export function CaracteristicasDetalleForm({
         </div>
 
         {/* Baños */}
-        <div className="flex flex-col gap-1.5">
-          <label className={`text-sm font-medium ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Baños
           </label>
           <div className="flex items-center gap-2">
@@ -141,8 +141,8 @@ export function CaracteristicasDetalleForm({
         </div>
 
         {/* Garajes */}
-        <div className="flex flex-col gap-1.5">
-          <label className={`text-sm font-medium ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Garajes
           </label>
           <div className="flex items-center gap-2">
@@ -165,8 +165,8 @@ export function CaracteristicasDetalleForm({
         </div>
 
         {/* Plantas */}
-        <div className="flex flex-col gap-1.5">
-          <label className={`text-sm font-medium ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Plantas
           </label>
           <div className="flex items-center gap-2">
@@ -188,9 +188,11 @@ export function CaracteristicasDetalleForm({
           <ErrorMsg visible={!isTerreno && hasError('plantas')} message={errors.plantas} />
         </div>
 
-        {/* Superficie — dentro del grid, ocupa solo col izquierda, mismo ancho que los campos de arriba */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#2E2E2E]">Superficie</label>
+        {/* Superficie */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block text-[#2E2E2E]">
+            Superficie
+          </label>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <input
