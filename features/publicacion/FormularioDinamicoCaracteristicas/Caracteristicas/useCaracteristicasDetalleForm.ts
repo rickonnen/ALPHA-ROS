@@ -3,14 +3,24 @@ import { CaracteristicasDetalleFormValues, CaracteristicasDetalleFormErrors, INI
 import { validate } from './useCaracteristicasDetalleValidacion'
 import { leerSesion, guardarSesion, limpiarSesion } from './useCaracteristicasDetallePersistencia'
 
+function getTipoPropiedad(): string {
+  try {
+    const raw = sessionStorage.getItem('categoriaYEstado')
+    if (!raw) return ''
+    return JSON.parse(raw).tipoPropiedad ?? ''
+  } catch {
+    return ''
+  }
+}
+
 export function useCaracteristicasDetalleForm() {
-  const [values, setValues] = useState<CaracteristicasDetalleFormValues>(INITIAL_VALUES ?? {
-  habitaciones: '',
-  banios:       '',
-  plantas:      '',
-  garajes:      '',
-  superficie:   '',
-})
+  const [values,  setValues]  = useState<CaracteristicasDetalleFormValues>(INITIAL_VALUES ?? {
+    habitaciones: '',
+    banios:       '',
+    plantas:      '',
+    garajes:      '',
+    superficie:   '',
+  })
   const [errors,  setErrors]  = useState<CaracteristicasDetalleFormErrors>({})
   const [touched, setTouched] = useState<Partial<Record<keyof CaracteristicasDetalleFormValues, boolean>>>({})
 
@@ -20,14 +30,36 @@ export function useCaracteristicasDetalleForm() {
   useEffect(() => {
     const { values: savedValues, touched: savedTouched } = leerSesion()
     if (Object.keys(savedValues).length === 0) return
-    const restored = { ...INITIAL_VALUES, ...savedValues }
+
+    const isTerreno = getTipoPropiedad() === 'Terreno'
+
+    const restored: CaracteristicasDetalleFormValues = isTerreno
+      ? { ...INITIAL_VALUES, ...savedValues, habitaciones: '', banios: '', garajes: '', plantas: '' }
+      : { ...INITIAL_VALUES, ...savedValues }
+
+    // Si es Terreno → los campos bloqueados no necesitan touched
+    // Si NO es Terreno y venía de Terreno → los campos estaban vacíos,
+    // resetear touched para que los errores no aparezcan hasta que el usuario toque el campo
+    const restoredTouched: Partial<Record<keyof CaracteristicasDetalleFormValues, boolean>> = isTerreno
+      ? savedTouched
+      : {
+          // Solo conservar touched de campos que tengan valor guardado
+          habitaciones: !!savedValues.habitaciones ? savedTouched.habitaciones : false,
+          banios:       !!savedValues.banios        ? savedTouched.banios       : false,
+          garajes:      !!savedValues.garajes       ? savedTouched.garajes      : false,
+          plantas:      !!savedValues.plantas       ? savedTouched.plantas      : false,
+          superficie:   savedTouched.superficie,
+        }
+
     startTransition(() => {
       valuesRef.current  = restored
-      touchedRef.current = savedTouched
+      touchedRef.current = restoredTouched
       setValues(restored)
-      setTouched(savedTouched)
+      setTouched(restoredTouched)
       setErrors(validate(restored))
     })
+
+    guardarSesion(restored, restoredTouched)
   }, [])
 
   useEffect(() => {
@@ -57,10 +89,20 @@ export function useCaracteristicasDetalleForm() {
     )
     touchedRef.current = allTouched
     setTouched(allTouched)
-    const validationErrors = validate(valuesRef.current)
+
+    const isTerreno = getTipoPropiedad() === 'Terreno'
+    const currentValues: CaracteristicasDetalleFormValues = isTerreno
+      ? { ...valuesRef.current, habitaciones: '', banios: '', garajes: '', plantas: '' }
+      : valuesRef.current
+
+    valuesRef.current = currentValues
+    setValues(currentValues)
+    guardarSesion(currentValues, allTouched)
+
+    const validationErrors = validate(currentValues)
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length === 0) {
-      onSuccess(valuesRef.current)
+      onSuccess(currentValues)
     }
   }, [])
 

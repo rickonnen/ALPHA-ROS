@@ -26,6 +26,8 @@ export function validate(values: CaracteristicasDetalleFormValues): Caracteristi
   const errors: CaracteristicasDetalleFormErrors = {}
   const isTerreno = getTipoPropiedad() === 'Terreno'
 
+  // Para Terreno los campos habitaciones/banios/garajes/plantas están deshabilitados
+  // y se envían como null → no se validan
   if (!isTerreno) {
     if (values.habitaciones === '') {
       errors.habitaciones = 'El número de habitaciones es obligatorio.'

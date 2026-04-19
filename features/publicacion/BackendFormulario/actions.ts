@@ -10,6 +10,13 @@ type ActionResult =
   | { success: true;  idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
 
+// Helper: convierte 'null' | '' | undefined | número en number | null
+function parseIntNullable(raw: FormDataEntryValue | null): number | null {
+  if (!raw || raw === 'null' || raw === '') return null
+  const n = parseInt(raw as string, 10)
+  return isNaN(n) ? null : n
+}
+
 // Action principal
 export async function publicarInmueble(formData: FormData): Promise<ActionResult> {
 
@@ -27,32 +34,32 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: { imagenes: ['Error al subir imágenes. Intenta de nuevo.'] } }
   }
 
-  //2. Armar payload
+  // 2. Armar payload
   const rawIdUsuario = (formData.get('id_usuario') as string) || null
 
   const payload = {
     // Paso 0
-    titulo:         formData.get('titulo')        as string,
-    tipoOperacion:  formData.get('tipoOperacion') as string,
-    precio:         parseFloat(formData.get('precio') as string),
-    tipoMoneda:     (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
+    titulo:        formData.get('titulo')        as string,
+    tipoOperacion: formData.get('tipoOperacion') as string,
+    precio:        parseFloat(formData.get('precio') as string),
+    tipoMoneda:    (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
 
     // Paso 1
-    tipoInmueble:       formData.get('tipoInmueble')                       as string,
+    tipoInmueble:       formData.get('tipoInmueble')                        as string,
     estadoConstruccion: parseInt(formData.get('estadoConstruccion') as string, 10),
 
     // Paso 2
     direccion:    formData.get('direccion')    as string,
     departamento: formData.get('departamento') as string,
     zona:         formData.get('zona')         as string,
-    lat:  formData.get('lat')  ? parseFloat(formData.get('lat')  as string) : undefined,
-    lng:  formData.get('lng')  ? parseFloat(formData.get('lng')  as string) : undefined,
+    lat: formData.get('lat') ? parseFloat(formData.get('lat') as string) : undefined,
+    lng: formData.get('lng') ? parseFloat(formData.get('lng') as string) : undefined,
 
-    // Paso 3
-    habitaciones: parseInt(formData.get('habitaciones') as string, 10),
-    banios:       parseInt(formData.get('banios')       as string, 10),
-    garajes:      parseInt(formData.get('garajes')      as string, 10),
-    plantas:      parseInt(formData.get('plantas')      as string, 10),
+    // Paso 3 — nullable: Terreno → null, campo vacío → null, número → number
+    habitaciones: parseIntNullable(formData.get('habitaciones')),
+    banios:       parseIntNullable(formData.get('banios')),
+    garajes:      parseIntNullable(formData.get('garajes')),
+    plantas:      parseIntNullable(formData.get('plantas')),
     superficie:   parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
 
     // Paso 4
@@ -68,7 +75,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     id_usuario: rawIdUsuario,
   }
 
-  //3. Validar con Zod
+  // 3. Validar con Zod
   const parsed = publicacionSchema.safeParse(payload)
   if (!parsed.success) {
     return {
@@ -79,7 +86,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   const d = parsed.data
 
-  // 4. Verificación de límite — desactivada mientras no hay login ──
+  // 4. Verificación de límite — desactivada mientras no hay login
   // Descomentar cuando el login esté integrado:
   //
   // const usuario = await prisma.usuario.findUnique({
@@ -112,6 +119,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
       })
 
       // 5b. Publicacion — con o sin id_usuario
+      // habitaciones/banios/garajes/plantas pueden ser null (Terreno u otros casos)
       const [pub] = d.id_usuario
         ? await tx.$queryRaw<{ id_publicacion: number }[]>`
             INSERT INTO "Publicacion" (
