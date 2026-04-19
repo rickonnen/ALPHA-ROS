@@ -2,11 +2,9 @@
 
 /**
  * Dev: Gabriel Paredes Sipe
- * Date modification: 18/04/2026
+ * Date modification: 06/04/2026
  * Corrección: Se integra el modal de límite de publicaciones en el submit final
  * Corrección: Se agrega modal de confirmación antes de publicar el inmueble
- * HU5 (solo visual): el paso 2 ahora navega a /publicacion/sumario
- * tras validar los datos, sin publicar directamente desde esta vista.
  */
 
 import { useState } from 'react'
@@ -17,7 +15,6 @@ import { ZonaInput } from '@/features/publicacion/caracteristicas/components/Zon
 import { HabitacionesForm } from '@/features/publicacion/caracteristicas/components/HabitacionesForm'
 import { ImageUploader } from '@/features/publicacion/caracteristicas/components/ImageUploader'
 import { VideoSection } from '@/features/publicacion/caracteristicas/components/VideoSection'
-import { SumarioModal } from '@/features/publicacion/sumario/components/SumarioModal'
 import { Button } from '@/components/ui/button'
 import { publicarConImagenes } from '@/features/publicacion/CaracteristicasBackend/actions'
 import { useRouter } from "next/navigation"
@@ -37,13 +34,11 @@ export default function CaracteristicasPage() {
   } = useCaracteristicasForm()
 
   const router = useRouter()
-  const [isSubmitting,          setIsSubmitting]          = useState(false)
-  const [submitError,           setSubmitError]           = useState<string | null>(null)
-  const [submitOk,              setSubmitOk]              = useState(false)
-  const [bolShowModal,          setBolShowModal]          = useState(false)
-  const [bolConfirmar,          setBolConfirmar]          = useState(false)
-  const [strErrorNavegacion,    setStrErrorNavegacion]    = useState<string | null>(null)
-  const [bolShowSumarioModal,   setBolShowSumarioModal]   = useState(false)
+  const [isSubmitting,    setIsSubmitting]    = useState(false)
+  const [submitError,     setSubmitError]     = useState<string | null>(null)
+  const [submitOk,        setSubmitOk]        = useState(false)
+  const [bolShowModal,    setBolShowModal]    = useState(false)
+  const [bolConfirmar,    setBolConfirmar]    = useState(false)
 
   const [strVideoUrl, setStrVideoUrl] = useState(() => {
     if (typeof window === "undefined") return ""
@@ -58,28 +53,11 @@ export default function CaracteristicasPage() {
     sessionStorage.setItem("videoUrl", url)
   }
 
-  const guardarPreviewImagenes = (files: File[]) => {
-    try {
-      const arrPreviews = files.map((file) => URL.createObjectURL(file))
-      const arrNombres  = files.map((file) => file.name)
-      sessionStorage.setItem('caracteristicasImagenesPreview', JSON.stringify(arrPreviews))
-      sessionStorage.setItem('caracteristicasImagenesNombres', JSON.stringify(arrNombres))
-    } catch {
-      // Solo visual: si falla el preview, el sumario muestra placeholders.
-    }
-  }
-
-  // HU5: primero validar el form, si pasa mostrar SumarioModal
-  const onClickSiguiente = () => {
-    setStrErrorNavegacion(null)
-    handleSubmit((formValues) => {
-      const strPaso1 = sessionStorage.getItem('informacionComercial')
-      if (!strPaso1) {
-        setStrErrorNavegacion('Faltan datos del paso 1. Regresa y completa el formulario.')
-        return
-      }
-      guardarPreviewImagenes(formValues.imagenes)
-      setBolShowSumarioModal(true)
+  // RM2-13: primero validar el form, si pasa mostrar modal de confirmación
+  const onClickPublicar = () => {
+    setSubmitError(null)
+    handleSubmit(() => {
+      setBolConfirmar(true)
     })
   }
 
@@ -223,9 +201,9 @@ export default function CaracteristicasPage() {
             defaultUrl={strVideoUrl}
           />
 
-          {(submitError || strErrorNavegacion) && (
+          {submitError && (
             <p className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-md px-3 py-2">
-              {submitError ?? strErrorNavegacion}
+              {submitError}
             </p>
           )}
 
@@ -246,21 +224,14 @@ export default function CaracteristicasPage() {
             <Button
               type="button"
               disabled={isSubmitting}
-              onClick={onClickSiguiente}
+              onClick={onClickPublicar}
               className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-4 sm:py-5 text-sm sm:text-base font-semibold disabled:opacity-60"
             >
-              {isSubmitting ? 'Publicando...' : 'Siguiente'}
+              {isSubmitting ? 'Publicando...' : 'Publicar'}
             </Button>
           </div>
         </div>
       </div>
-
-      {/* HU5: SumarioModal — se abre al pasar la validación del paso 2 */}
-      {bolShowSumarioModal && (
-        <SumarioModal
-          onClose={() => setBolShowSumarioModal(false)}
-        />
-      )}
 
       {/* RM2-13: Modal de confirmación antes de publicar */}
       {bolConfirmar && (

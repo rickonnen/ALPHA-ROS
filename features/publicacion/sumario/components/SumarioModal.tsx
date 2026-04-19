@@ -6,34 +6,28 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-type Paso1Data = {
-    titulo?: string
-    precio?: string
-    tipoPropiedad?: string
-    tipoOperacion?: string
-    descripcion?: string
-}
-
-type Paso2Data = {
-    direccion?: string
-    superficie?: string
-    departamento?: string
-    ciudad?: string
-    zona?: string
-    habitaciones?: string
-    banios?: string
-    plantas?: string
-    garajes?: string
-    caracteristicasPersonalizadas?: string[]
-}
-
+// ─────────────────────────────────────────────────────────────
+// Tipos
+// ─────────────────────────────────────────────────────────────
 type SumarioStorageData = {
-    paso1: Paso1Data
-    paso2: Paso2Data
+    titulo: string
+    tipoOperacion: string
+    precio: string
+    tipoMoneda: string
+    tipoPropiedad: string
+    estadoPropiedad: string
+    direccion: string
+    departamento: string
+    zona: string
+    habitaciones: string
+    banios: string
+    garajes: string
+    plantas: string
+    superficie: string
     imagenesPreview: string[]
     imagenesNombres: string[]
     videoUrl: string
-    caracteristicasCustom: string[]
+    descripcion: string
 }
 
 interface SumarioModalProps {
@@ -41,6 +35,9 @@ interface SumarioModalProps {
     onConfirmarPublicar?: () => void
 }
 
+// ─────────────────────────────────────────────────────────────
+// Constantes
+// ─────────────────────────────────────────────────────────────
 const DEPARTAMENTOS_LABELS: Record<string, string> = {
     beni: 'Beni',
     chuquisaca: 'Chuquisaca',
@@ -48,86 +45,23 @@ const DEPARTAMENTOS_LABELS: Record<string, string> = {
     la_paz: 'La Paz',
     oruro: 'Oruro',
     pando: 'Pando',
-    potosi: 'Potosi',
+    potosi: 'Potosí',
     santa_cruz: 'Santa Cruz',
     tarija: 'Tarija',
 }
 
+// ─────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────
 function parseJSON<T>(value: string | null, fallback: T): T {
     if (!value) return fallback
-    try {
-        return JSON.parse(value) as T
-    } catch {
-        return fallback
-    }
-}
-
-function getInitialStorageData(): SumarioStorageData {
-    if (typeof window === 'undefined') {
-        return {
-            paso1: {},
-            paso2: {},
-            imagenesPreview: [],
-            imagenesNombres: [],
-            videoUrl: '',
-            caracteristicasCustom: [],
-        }
-    }
-
-    const dataPaso1 = parseJSON<Paso1Data>(sessionStorage.getItem('informacionComercial'), {})
-    const dataPaso2 = parseJSON<Paso2Data>(sessionStorage.getItem('caracteristicasInmueble'), {})
-
-    const arrPreview = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesPreview'), [])
-        .filter((item) => typeof item === 'string' && item.trim().length > 0)
-
-    const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
-        .filter((item) => typeof item === 'string' && item.trim().length > 0)
-
-    const strVideo = sessionStorage.getItem('videoUrl') ?? ''
-
-    const customFromPaso2 = Array.isArray(dataPaso2.caracteristicasPersonalizadas)
-        ? dataPaso2.caracteristicasPersonalizadas
-        : []
-
-    const customFromSession = parseJSON<string[]>(sessionStorage.getItem('caracteristicasPersonalizadas'), [])
-    const mergedCustom = [...customFromPaso2, ...customFromSession]
-        .map((item) => String(item).trim())
-        .filter(Boolean)
-
-    return {
-        paso1: dataPaso1,
-        paso2: dataPaso2,
-        imagenesPreview: arrPreview,
-        imagenesNombres: arrNombres,
-        videoUrl: strVideo,
-        caracteristicasCustom: Array.from(new Set(mergedCustom)),
-    }
+    try { return JSON.parse(value) as T } catch { return fallback }
 }
 
 function toText(value: unknown, fallback = 'No especificado'): string {
     if (value === null || value === undefined) return fallback
     const strValue = String(value).trim()
     return strValue.length > 0 ? strValue : fallback
-}
-
-function formatPrice(value: unknown): string {
-    const strValue = String(value ?? '').trim()
-    if (!strValue) return 'No especificado'
-    const normalized = strValue.replace(/\./g, '').replace(',', '.')
-    const numValue = Number(normalized)
-    if (!Number.isFinite(numValue)) return strValue
-    return new Intl.NumberFormat('es-BO', {
-        style: 'currency',
-        currency: 'BOB',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-    }).format(numValue)
-}
-
-function formatSurface(value: unknown): string {
-    const strValue = String(value ?? '').trim()
-    if (!strValue) return 'No especificado'
-    return `${strValue} m2`
 }
 
 function toTitleCase(value: string): string {
@@ -148,23 +82,93 @@ function normalizeValue(value: string): string {
         .toLowerCase()
 }
 
+function formatSurface(value: unknown): string {
+    const strValue = String(value ?? '').trim()
+    if (!strValue) return 'No especificado'
+    return `${strValue} m²`
+}
+
+function formatPrice(precio: string, tipoMoneda: string): string {
+    const strValue = String(precio ?? '').trim()
+    if (!strValue) return 'No especificado'
+    const numValue = Number(strValue.replace(/\./g, '').replace(',', '.'))
+    if (!Number.isFinite(numValue)) return strValue
+
+    if (tipoMoneda === 'USD') {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency', currency: 'USD',
+            minimumFractionDigits: 0, maximumFractionDigits: 2,
+        }).format(numValue)
+    }
+
+    return new Intl.NumberFormat('es-BO', {
+        style: 'currency', currency: 'BOB',
+        minimumFractionDigits: 0, maximumFractionDigits: 2,
+    }).format(numValue)
+}
+
 function getVideoEmbedUrl(videoUrl: string): string | null {
     const strUrl = videoUrl.trim()
     if (!strUrl) return null
-
     const ytMatch = strUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/)
-    if (ytMatch?.[1]) {
-        return `https://www.youtube.com/embed/${ytMatch[1]}`
-    }
-
+    if (ytMatch?.[1]) return `https://www.youtube.com/embed/${ytMatch[1]}`
     const igMatch = strUrl.match(/instagram\.com\/(?:reel|p)\/([a-zA-Z0-9_-]+)/)
-    if (igMatch?.[1]) {
-        return `https://www.instagram.com/p/${igMatch[1]}/embed`
-    }
-
+    if (igMatch?.[1]) return `https://www.instagram.com/p/${igMatch[1]}/embed`
     return null
 }
 
+// ─────────────────────────────────────────────────────────────
+// Lectura de sessionStorage
+// ─────────────────────────────────────────────────────────────
+function getInitialStorageData(): SumarioStorageData {
+    const empty: SumarioStorageData = {
+        titulo: '', tipoOperacion: '', precio: '', tipoMoneda: 'BOB',
+        tipoPropiedad: '', estadoPropiedad: '',
+        direccion: '', departamento: '', zona: '',
+        habitaciones: '', banios: '', garajes: '', plantas: '', superficie: '',
+        imagenesPreview: [], imagenesNombres: [],
+        videoUrl: '', descripcion: '',
+    }
+
+    if (typeof window === 'undefined') return empty
+
+    const datosAviso      = parseJSON<Record<string, string>>(sessionStorage.getItem('datosAviso'),             {})
+    const categoria       = parseJSON<Record<string, string>>(sessionStorage.getItem('categoriaYEstado'),       {})
+    const ubicacion       = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'),              {})
+    const caracteristicas = parseJSON<Record<string, string>>(sessionStorage.getItem('caracteristicasDetalle'), {})
+    const video           = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'),         {})
+    const descripcion     = parseJSON<Record<string, string>>(sessionStorage.getItem('descripcionPropiedad'),   {})
+
+    const arrPreview = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesPreview'), [])
+        .filter((item) => typeof item === 'string' && item.trim().length > 0)
+    const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
+        .filter((item) => typeof item === 'string' && item.trim().length > 0)
+
+    return {
+        titulo:          datosAviso.titulo           ?? '',
+        tipoOperacion:   datosAviso.tipoOperacion    ?? '',
+        precio:          String(datosAviso.precio    ?? ''),
+        tipoMoneda:      datosAviso.tipoMoneda       ?? 'BOB',
+        tipoPropiedad:   categoria.tipoPropiedad     ?? '',
+        estadoPropiedad: categoria.estadoPropiedad   ?? '',
+        direccion:       ubicacion.direccion         ?? '',
+        departamento:    ubicacion.departamento      ?? '',
+        zona:            ubicacion.zona              ?? '',
+        habitaciones:    String(caracteristicas.habitaciones ?? ''),
+        banios:          String(caracteristicas.banios       ?? ''),
+        garajes:         String(caracteristicas.garajes      ?? ''),
+        plantas:         String(caracteristicas.plantas      ?? ''),
+        superficie:      String(caracteristicas.superficie   ?? ''),
+        imagenesPreview: arrPreview,
+        imagenesNombres: arrNombres,
+        videoUrl:        video.url                   ?? '',
+        descripcion:     descripcion.descripcion     ?? '',
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Subcomponente campo
+// ─────────────────────────────────────────────────────────────
 function SummaryField({ label, value }: { label: string; value: string }) {
     return (
         <div className="bg-[#E8E2D8] rounded-md px-3 py-2 min-h-[60px]">
@@ -173,77 +177,80 @@ function SummaryField({ label, value }: { label: string; value: string }) {
         </div>
     )
 }
+
+// ─────────────────────────────────────────────────────────────
+// Componente principal
+// ─────────────────────────────────────────────────────────────
 export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps) {
-    const objStorageData = useMemo<SumarioStorageData>(() => getInitialStorageData(), [])
-    const objPaso1 = objStorageData.paso1
-    const objPaso2 = objStorageData.paso2
-    const arrImagenesPreview = objStorageData.imagenesPreview
-    const arrImagenesNombres = objStorageData.imagenesNombres
+    const data = useMemo<SumarioStorageData>(() => getInitialStorageData(), [])
+
     const [arrImagenesError, setArrImagenesError] = useState<number[]>([])
-    const [intImagenActual, setIntImagenActual] = useState(0)
-    const strVideoUrl = objStorageData.videoUrl
-    const arrCaracteristicasCustom = objStorageData.caracteristicasCustom
-    const [strPublicarMsg, setStrPublicarMsg] = useState<string | null>(null)
+    const [intImagenActual,  setIntImagenActual]  = useState(0)
+
+    const bolEsTerreno = useMemo(
+        () => normalizeValue(data.tipoPropiedad) === 'terreno',
+        [data.tipoPropiedad],
+    )
 
     const strCiudad = useMemo(() => {
-        const rawCiudad = String(objPaso2.ciudad ?? '').trim()
-        if (rawCiudad.length > 0) return toTitleCase(rawCiudad)
+        const rawDep = data.departamento.trim()
+        if (!rawDep) return 'No especificado'
+        return DEPARTAMENTOS_LABELS[rawDep] ?? toTitleCase(rawDep)
+    }, [data.departamento])
 
-        const rawDepartamento = String(objPaso2.departamento ?? '').trim()
-        if (!rawDepartamento) return 'No especificado'
-        return DEPARTAMENTOS_LABELS[rawDepartamento] ?? toTitleCase(rawDepartamento)
-    }, [objPaso2.ciudad, objPaso2.departamento])
+    const strVideoEmbed = useMemo(() => getVideoEmbedUrl(data.videoUrl), [data.videoUrl])
 
-    const strVideoEmbed = useMemo(() => getVideoEmbedUrl(strVideoUrl), [strVideoUrl])
-
-    const strCaracteristicas = useMemo(() => {
-        if (arrCaracteristicasCustom.length === 0) return 'No especificado'
-        return arrCaracteristicasCustom.join(', ')
-    }, [arrCaracteristicasCustom])
-
-    const bolEsTerreno = useMemo(() => normalizeValue(String(objPaso1.tipoPropiedad ?? '')) === 'terreno', [objPaso1.tipoPropiedad])
-
-    const intTotalImagenes = arrImagenesPreview.length
+    const intTotalImagenes = data.imagenesPreview.length
     const bolTieneImagenes = intTotalImagenes > 0
-    const intImagenSafe = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
-    const intPreviewFija = bolTieneImagenes ? 0 : -1
-
-    const strImagenActual = bolTieneImagenes ? arrImagenesPreview[intImagenSafe] : ''
+    const intImagenSafe    = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
 
     const onPrevImagen = () => {
         if (intTotalImagenes <= 1) return
         setIntImagenActual((prev) => (prev - 1 + intTotalImagenes) % intTotalImagenes)
     }
-
     const onNextImagen = () => {
         if (intTotalImagenes <= 1) return
         setIntImagenActual((prev) => (prev + 1) % intTotalImagenes)
     }
-
     const onImageError = (index: number) => {
         setArrImagenesError((prev) => (prev.includes(index) ? prev : [...prev, index]))
     }
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/45 p-3 sm:p-6 flex items-center justify-center">
-            <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-2xl border border-[#DDD6CB] bg-[#F4EFE6] shadow-xl">
+        <div
+            className="fixed inset-0 z-50 bg-black/45 p-3 sm:p-6 flex items-start justify-center pt-20 sm:pt-24"
+            onClick={onClose}
+        >
+            <div
+                className="w-full max-w-5xl max-h-[82vh] overflow-y-auto rounded-2xl border border-[#DDD6CB] bg-[#F4EFE6] shadow-xl"
+                onClick={e => e.stopPropagation()}
+            >
+
+                {/* Cabecera */}
                 <div className="px-5 sm:px-6 pt-8 sm:pt-10 pb-3 border-b border-[#ECE7DD]">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Resumen de Publicacion</h2>
-                        <Badge className="bg-[#E7A18F] text-white">Paso final</Badge>
+                        <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
+                        <div className="flex items-center gap-2">
+                            {data.estadoPropiedad && (
+                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">{toTitleCase(data.estadoPropiedad)}</Badge>
+                            )}
+                        </div>
                     </div>
-                    <p className="text-sm text-[#6C6761]">Revisa la informacion de tu inmueble antes de publicarlo.</p>
+                    <p className="text-sm text-[#6C6761]">Revisa la información de tu inmueble antes de publicarlo.</p>
                 </div>
 
                 <div className="px-5 sm:px-6 pb-6 pt-4 space-y-5">
+
+                    {/* Galería + video */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="md:col-span-2 rounded-lg overflow-hidden bg-[#F6F2EA] relative min-h-[210px]">
                             {bolTieneImagenes ? (
                                 <>
                                     {!arrImagenesError.includes(intImagenSafe) ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img
-                                            src={strImagenActual}
-                                            alt={arrImagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
+                                            src={data.imagenesPreview[intImagenSafe]}
+                                            alt={data.imagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
                                             className="w-full h-full object-cover min-h-[210px]"
                                             onError={() => onImageError(intImagenSafe)}
                                         />
@@ -252,6 +259,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                             No se pudo cargar la imagen
                                         </div>
                                     )}
+
                                     {intTotalImagenes > 1 && (
                                         <>
                                             <button
@@ -272,16 +280,18 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                             </button>
                                         </>
                                     )}
+
                                     <Badge className="absolute bottom-3 left-3 bg-[#C26E5A] text-white text-sm px-3 py-1">
-                                        {formatPrice(objPaso1.precio)}
+                                        {formatPrice(data.precio, data.tipoMoneda)}
                                     </Badge>
                                 </>
                             ) : (
                                 <div className="w-full h-full min-h-[210px] grid place-items-center text-sm text-[#7B7771]">
-                                    Sin imagenes
+                                    Sin imágenes
                                 </div>
                             )}
                         </div>
+
                         <div className="space-y-3">
                             <div className="bg-[#F6F2EA] rounded-lg overflow-hidden min-h-[100px]">
                                 {strVideoEmbed ? (
@@ -299,13 +309,15 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                     <div className="min-h-[100px] grid place-items-center text-sm text-[#7B7771]">Sin video</div>
                                 )}
                             </div>
+
                             <div className="bg-[#F6F2EA] rounded-lg overflow-hidden min-h-[90px]">
-                                {intPreviewFija >= 0 && !arrImagenesError.includes(intPreviewFija) ? (
+                                {bolTieneImagenes && !arrImagenesError.includes(0) ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
-                                        src={arrImagenesPreview[intPreviewFija]}
-                                        alt={arrImagenesNombres[intPreviewFija] ?? 'Primera imagen'}
+                                        src={data.imagenesPreview[0]}
+                                        alt={data.imagenesNombres[0] ?? 'Primera imagen'}
                                         className="w-full h-full object-cover min-h-[90px]"
-                                        onError={() => onImageError(intPreviewFija)}
+                                        onError={() => onImageError(0)}
                                     />
                                 ) : (
                                     <div className="min-h-[90px] grid place-items-center text-sm text-[#7B7771]">Sin vista previa</div>
@@ -313,35 +325,39 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                             </div>
                         </div>
                     </div>
+
+                    {/* Datos */}
                     <div className="space-y-3">
-                        <h3 className="text-2xl sm:text-4xl font-bold text-[#2E2E2E]">{toText(objPaso1.titulo)}</h3>
+                        <h3 className="text-2xl sm:text-4xl font-bold text-[#2E2E2E]">{toText(data.titulo)}</h3>
+
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                            {/* Columna 1 */}
                             <div className="space-y-2">
-                                <SummaryField label="Tipo de propiedad" value={toText(objPaso1.tipoPropiedad)} />
-                                <SummaryField label="Direccion" value={toText(objPaso2.direccion)} />
-                                <SummaryField label="Superficie" value={formatSurface(objPaso2.superficie)} />
-                                {!bolEsTerreno && <SummaryField label="Habitaciones" value={toText(objPaso2.habitaciones)} />}
-                                <SummaryField label="Caracteristicas" value={strCaracteristicas} />
+                                <SummaryField label="Tipo de propiedad" value={toText(data.tipoPropiedad)} />
+                                <SummaryField label="Dirección"         value={toText(data.direccion)} />
+                                <SummaryField label="Superficie"        value={formatSurface(data.superficie)} />
+                                {!bolEsTerreno && <SummaryField label="Habitaciones" value={toText(data.habitaciones)} />}
                             </div>
+
+                            {/* Columna 2 */}
                             <div className="space-y-2">
-                                <SummaryField label="Tipo de operacion" value={toTitleCase(String(objPaso1.tipoOperacion ?? ''))} />
-                                <SummaryField label="Ciudad" value={strCiudad} />
-                                <SummaryField label="Zona" value={toText(objPaso2.zona)} />
-                                {!bolEsTerreno && <SummaryField label="Garajes" value={toText(objPaso2.garajes)} />}
-                                {!bolEsTerreno && <SummaryField label="Banos" value={toText(objPaso2.banios)} />}
-                                {!bolEsTerreno && <SummaryField label="Plantas" value={toText(objPaso2.plantas)} />}
+                                <SummaryField label="Tipo de operación" value={toTitleCase(data.tipoOperacion)} />
+                                <SummaryField label="Ciudad"            value={strCiudad} />
+                                <SummaryField label="Zona"              value={toText(data.zona)} />
+                                {!bolEsTerreno && <SummaryField label="Garajes" value={toText(data.garajes)} />}
+                                {!bolEsTerreno && <SummaryField label="Baños"   value={toText(data.banios)} />}
+                                {!bolEsTerreno && <SummaryField label="Plantas" value={toText(data.plantas)} />}
                             </div>
+
+                            {/* Columna 3 — descripción */}
                             <div className="bg-[#E8E2D8] rounded-md px-3 py-2 min-h-[364px]">
-                                <p className="text-[0.72rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripcion</p>
-                                <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(objPaso1.descripcion)}</p>
+                                <p className="text-[0.72rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripción</p>
+                                <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(data.descripcion)}</p>
                             </div>
                         </div>
                     </div>
-                    {strPublicarMsg && (
-                        <div className="rounded-md border border-[#E9C6BD] bg-[#FFF4F1] px-3 py-2 text-sm text-[#8A4A3B]">
-                            {strPublicarMsg}
-                        </div>
-                    )}
+
+                    {/* Botones de acción */}
                     <div className="flex flex-wrap justify-between gap-3 pt-1">
                         <Button
                             type="button"
@@ -351,20 +367,16 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                         >
                             Regresar
                         </Button>
+
                         <Button
                             type="button"
-                            onClick={() => {
-                                if (onConfirmarPublicar) {
-                                    onConfirmarPublicar()
-                                } else {
-                                    setStrPublicarMsg('Implementacion HU5 en alcance solo visual: este boton queda listo a nivel UI, sin ejecutar publicacion backend.')
-                                }
-                            }}
+                            onClick={() => onConfirmarPublicar?.()}
                             className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-5 text-sm sm:text-base font-semibold"
                         >
                             Publicar
                         </Button>
                     </div>
+
                 </div>
             </div>
         </div>
