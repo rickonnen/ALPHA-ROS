@@ -8,17 +8,29 @@
  * @param strReelId   - ID extraído del Reel de Instagram (opcional)
  * @return JSX con galería desktop, mobile y lightbox integrados
  */
+/**
+ * Modicacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 18/04/2026
+ * @Funcionalidad: Integración de renderizado condicional para el botón "Favoritos" (HU2/HU6) sobre la galería existente.
+ * @param {string} id_publicacion - Identificador de la publicación para ejecutar la acción de guardado.
+ * @param {boolean} [mostrarFav=false] - Bandera para habilitar o deshabilitar la visibilidad del componente FavButton.
+ * @return {JSX.Element} Renderizado condicional del botón de favoritos superpuesto en la galería.
+ */
 "use client";
 import React, { useState } from "react";
 import { MediaGalleryDesktop }  from "./MediaGalleryDesktop";
 import { MediaGalleryMobile }   from "./MediaGalleryMobile";
 import { MediaGalleryLightbox } from "./MediaGalleryLightbox";
+import FavButton from "@/components/ui/fav";
 interface MediaGalleryProps {
+  id_publicacion: string;
   arrImagenes: string[];
   strVideoId?: string;
   strReelId?:  string;
+  mostrarFav?: boolean;
 }
-export const MediaGallery = ({ arrImagenes, strVideoId, strReelId }: MediaGalleryProps) => {
+export const MediaGallery = ({ id_publicacion, arrImagenes, strVideoId, strReelId, mostrarFav = false }: MediaGalleryProps) => {
   const strFallback = "/company-placeholder.png"; // Task 4.11: fallback empresa
   const [intCurrentIndex, setIntCurrentIndex]   = useState(0);
   const [intLightboxIndex, setIntLightboxIndex] = useState<number | null>(null);
@@ -51,7 +63,14 @@ const handleOpenLightbox = (intIdx: number) => {
   const handleLightboxNext  = () => setIntLightboxIndex((i) => (i !== null && i < arrImagenesSafe.length - 1 ? i + 1 : i));
   return (
     <>
-      <div className="space-y-6 mb-8">
+      {/* 4. AÑADIMOS relative group AL CONTENEDOR PARA POSICIONAR EL BOTÓN */}
+      <div className="space-y-6 mb-8 relative">
+        {/* 5. EL BOTÓN CONDICIONADO */}
+        {mostrarFav && (
+          <div className="absolute bottom-6 right-6 md:bottom-14 md:right-8 z-20">
+            <FavButton id_publicacion={id_publicacion} />
+          </div>
+        )}
         {/* Task 4.4 + 4.5 + 4.11: Grilla desktop — componente de Marcela */}
         <MediaGalleryDesktop
           arrImagenesSafe={arrImagenesSafe}
