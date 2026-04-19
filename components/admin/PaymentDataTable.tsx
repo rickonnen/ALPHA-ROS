@@ -138,7 +138,7 @@ export function PaymentDataTable({
                   <div className="flex gap-0 mt-0 pt-0">
                     <button
                           onClick={() => onViewReceipt && onViewReceipt(objPayment.strReceiptUrl!)}
-                          className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-2 sm:px-2 rounded-lg py-1 sm:py-1"
+                          className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-6 sm:px-2 rounded-lg py-1.5 sm:py-2"
                           disabled={bolIsProcessing}
                         >
                           Ver Comprobante
@@ -187,7 +187,7 @@ export function PaymentDataTable({
                   {/*El botón es naranja como en la vista escritorio*/}
                   <Button 
                     onClick={() => handleOpenModal(objPayment, 'reject')}
-                    className="flex-1 font-semibold text-xs bg-secondary text-secondary-foreground hover:bg-secondary text-white transition-transform"
+                    className="flex-1 font-bold text-xm bg-secondary text-secondary-foreground hover:bg-secondary text-white transition-transform"
                     disabled={bolIsProcessing}
                   >
                     Rechazar
@@ -263,7 +263,7 @@ export function PaymentDataTable({
                             onClick={() => handleOpenModal(objPayment, 'accept')}
                             variant="default" 
                             size="sm" 
-                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95 hover:bg-[#374151] text-white transition-colors cursor-pointer mt-1"
+                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95 hover:bg-gray-400+- text-white transition-colors cursor-pointer mt-1"
                             disabled={bolIsProcessing}
                           >
                             Aceptar
@@ -273,7 +273,7 @@ export function PaymentDataTable({
                             onClick={() => handleOpenModal(objPayment, 'reject')}
                             variant="default" 
                             size="sm" 
-                            className="h-8 px-3 font-semibold text-xs bg-secondary text-secondary-foreground hover:bg-secondary text-white transition-colors cursor-pointer mt-1"
+                            className="h-8 px-3 font-semibold text-xs bg-secondary text-secondary-foreground hover:bg-[#a65d4c] text-white transition-colors cursor-pointer mt-1"
                             disabled={bolIsProcessing}
                           >
                             Rechazar
