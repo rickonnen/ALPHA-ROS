@@ -1,4 +1,4 @@
-import { CitySuggestion } from "../hooks/useCitySearch";
+import { CitySuggestion } from "./mapboxService";
 
 const strStorageKey = "recentCitySearches";
 
@@ -11,7 +11,11 @@ export const historyService = {
    * funcionalidad: recupera el historial de búsquedas guardado en el dispositivo del usuario
    * @return promesa que resuelve en un arreglo de sugerencias de ciudades
    */
-  async getHistory(): Promise<CitySuggestion[]> {
+  async getHistory(blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
+    if (blnIsAuthenticated) {
+      return []; 
+    }
+
     // por ahora usa localstorage
     const strStored = localStorage.getItem(strStorageKey);
     if (!strStored) return [];
@@ -22,9 +26,13 @@ export const historyService = {
    * @param objData objeto de tipo CitySuggestion que contiene los datos de la ciudad seleccionada
    * @return promesa que resuelve en el arreglo actualizado del historial
    */
-  async save(objData: CitySuggestion): Promise<CitySuggestion[]> {
+  async save(objData: CitySuggestion, blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
+    if (blnIsAuthenticated) {
+      return [objData]; 
+    }
+
     // obtiene el historial actual del almacenamiento
-    const arrCurrent = await this.getHistory();
+    const arrCurrent = await this.getHistory(false);
     // filtra el arreglo para eliminar la ciudad si ya existía previamente
     const arrFiltered = arrCurrent.filter(
       (objItem) => objItem.strName.toLowerCase() !== objData.strName.toLowerCase()

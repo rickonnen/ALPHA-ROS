@@ -3,13 +3,19 @@ import type { KeyboardEvent } from "react";
 import { fetchMapboxCities, intMaxCityLength, type CitySuggestion } from "./mapboxService";
 import { historyService } from "./historyService";
 
-export function useCitySearch() {
+export interface UseCitySearchProps {
+  objUser?: any | null;
+  bolIsAuthLoading?: boolean;
+}
+
+export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseCitySearchProps = {}) {
   const [strCity, setStrCity] = useState("");
   const [arrSuggestions, setArrSuggestions] = useState<CitySuggestion[]>([]);
   const [bolShowSuggestions, setBolShowSuggestions] = useState(false);
   const [bolNoResults, setBolNoResults] = useState(false);
   const [intSelectedIndex, setIntSelectedIndex] = useState(-1);
   const objSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const objActiveQueryRef = useRef<string>("");
 
   const [bolShowHistory, setBolShowHistory] = useState(false);
   const [arrHistory, setArrHistory] = useState<CitySuggestion[]>([]);
@@ -17,17 +23,23 @@ export function useCitySearch() {
   // cargar historial inicial
   useEffect(() => {
     let bolIsMounted = true;
-    historyService.getHistory().then((arrData) => {
+    
+    if (bolIsAuthLoading) return;
+    const bolIsAuthenticated = !!objUser?.id;
+
+    historyService.getHistory(bolIsAuthenticated).then((arrData) => {
       if (bolIsMounted) setArrHistory(arrData);
     });
+    
     return () => {
       bolIsMounted = false;
       if (objSearchTimeoutRef.current) clearTimeout(objSearchTimeoutRef.current);
     };
-  }, []);
+  }, [objUser, bolIsAuthLoading]);
 
   // limpia las sugerencias
   const clearSuggestions = useCallback(() => {
+    objActiveQueryRef.current = "";
     setArrSuggestions([]);
     setBolShowSuggestions(false);
     setBolNoResults(false);
@@ -55,13 +67,21 @@ export function useCitySearch() {
       clearSuggestions();
       return;
     }
+
+    objActiveQueryRef.current = strCleanQuery;
+
     try {
       const arrFinalResults = await fetchMapboxCities(strCleanQuery);
+      
+      if (objActiveQueryRef.current !== strCleanQuery) return;
+
       setArrSuggestions(arrFinalResults);
       setBolShowSuggestions(arrFinalResults.length > 0);
       setBolNoResults(arrFinalResults.length === 0);
       setIntSelectedIndex(-1);
     } catch (objError) {
+      if (objActiveQueryRef.current !== strCleanQuery) return;
+
       console.error("search error:", objError);
       setBolNoResults(true);
       setBolShowSuggestions(false);
@@ -90,19 +110,37 @@ export function useCitySearch() {
     }, 300);
   }, [arrHistory.length, clearSuggestions, fetchSuggestions]);
 
+  const handleFillFromHistory = useCallback((strName: string) => {
+    objActiveQueryRef.current = "";
+    setStrCity(strName);
+    setBolShowHistory(false);
+    setBolShowSuggestions(false);
+    setBolNoResults(false);
+    setIntSelectedIndex(-1);
+    
+    if (objSearchTimeoutRef.current) {
+      clearTimeout(objSearchTimeoutRef.current);
+    }
+  }, []);
+
   // maneja la selección de una sugerencia o elemento del historial
   const handleSelectSuggestion = useCallback(async (objSuggestion: CitySuggestion) => {
+    if (bolIsAuthLoading) return;
+
+    objActiveQueryRef.current = "";
     setStrCity(objSuggestion.strName);
     setBolShowSuggestions(false);
     setBolShowHistory(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
+    const bolIsAuthenticated = !!objUser?.id;
+
     // delegamos el guardado al servicio y actualizamos el estado local
-    const arrUpdated = await historyService.save(objSuggestion);
+    const arrUpdated = await historyService.save(objSuggestion, bolIsAuthenticated);
     if (arrUpdated.length > 0) {
       setArrHistory(arrUpdated);
     }
-  }, []);
+  }, [objUser, bolIsAuthLoading]);
 
   // maneja la navegación por teclado
   const handleKeyDown = useCallback((objEvent: KeyboardEvent<HTMLInputElement>) => {
@@ -133,6 +171,7 @@ export function useCitySearch() {
     arrHistory,
     bolShowHistory, setBolShowHistory,
     handleInputFocus, handleCityChange,
+    handleFillFromHistory,
     handleSelectSuggestion, handleKeyDown,
   };
 }

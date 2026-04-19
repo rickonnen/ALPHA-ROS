@@ -32,6 +32,7 @@ export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInpu
     bolShowHistory,
     handleInputFocus,
     handleCityChange,
+    handleFillFromHistory,
     handleSelectSuggestion,
     handleKeyDown,
   } = hookData;
@@ -75,8 +76,12 @@ export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInpu
 
               if (intSelectedIndex >= 0 && arrCurrentList[intSelectedIndex]) {
                 const objSelectedItem = arrCurrentList[intSelectedIndex];
-                handleSelectSuggestion(objSelectedItem);
-                fnOnSearch(false, objSelectedItem.strName);
+                if (bolIsSuggestionsActive) {
+                  handleSelectSuggestion(objSelectedItem);
+                  fnOnSearch(false, objSelectedItem.strName);
+                } else {
+                  handleFillFromHistory(objSelectedItem.strName);
+                }
               } else {
                 fnOnSearch(false);
               }
@@ -113,11 +118,12 @@ export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInpu
                 ref={bolIsSelected ? objActiveItemRef : null}
                 data-active={bolIsSelected}
                 onMouseEnter={() => setIntSelectedIndex(intIndex)}
-                onClick={() => {
+                onMouseDown={(objEvent) => {
+                  objEvent.preventDefault();
                   handleSelectSuggestion(objSuggestion);
                   fnOnSearch(false, objSuggestion.strName);
                 }}
-                className={`flex items-center gap-3 px-3 py-2 mx-1 my-0.5 rounded-lg focus-visible:outline-none transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2 mx-1 my-0.5 rounded-lg focus-visible:outline-none cursor-pointer transition-colors ${
                   bolIsSelected ? "bg-secondary-fund" : "hover:bg-secondary-fund/60"
                 } ${suggestionHover}`}
               >
@@ -163,11 +169,11 @@ export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInpu
                   ref={bolIsSelected ? objActiveItemRef : null}
                   data-active={bolIsSelected}
                   onMouseEnter={() => setIntSelectedIndex(intIndex)}
-                  onClick={() => {
-                    handleSelectSuggestion(objItem);
-                    fnOnSearch(false, objItem.strName);
+                  onMouseDown={(objEvent) => {
+                    objEvent.preventDefault();
+                    handleFillFromHistory(objItem.strName);
                   }}
-                  className={`flex items-center gap-3 px-3 py-2 mx-1 my-0.5 rounded-lg focus-visible:outline-none transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 mx-1 my-0.5 rounded-lg focus-visible:outline-none cursor-pointer transition-colors ${
                     bolIsSelected ? "bg-secondary-fund" : "hover:bg-secondary-fund/60"
                   } ${suggestionHover}`}
                 >
