@@ -119,7 +119,7 @@ export default async function PerfilInmueblePage({
           />
         </header>
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
-        <div className="relative group rounded-3xl overflow-hidden">
+        <div className="relative rounded-3xl overflow-hidden">
           <MediaGallery
             id_publicacion={intId.toString()}
             arrImagenes={arrImagenes}

@@ -10,8 +10,7 @@
  * @return {JSX.Element} Interfaz completa de la vista del inmueble renderizada desde el servidor.
  */
 import { notFound }          from "next/navigation";
-import { Tag, Ruler, ChevronLeft, Home } from "lucide-react"; 
-import Link                  from "next/link"; 
+import { Tag, Ruler }        from "lucide-react";    
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
@@ -59,28 +58,6 @@ export default async function VistaInmueblePage({
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Migas de Pan (HU2) */}
-        <nav className="flex flex-wrap items-center gap-2 mb-8 text-sm text-[#2E2E2E]/70">
-          <CloseTabButton 
-            title="Cerrar pestaña"
-            className="flex items-center gap-1 font-semibold hover:text-[#1F3A4D] transition-colors"
-          >
-            <ChevronLeft size={18} />
-            Volver
-          </CloseTabButton>
-          <span className="text-[#2E2E2E]/30">|</span>
-          <Link href="/" className="hover:text-[#1F3A4D] transition-colors">
-            <Home size={16} />
-          </Link>
-          <span className="text-[#2E2E2E]/30">/</span>
-          <Link href="/busqueda" className="hover:text-[#1F3A4D] transition-colors">
-            Búsqueda
-          </Link>
-          <span className="text-[#2E2E2E]/30">/</span>
-          <span className="text-[#1F3A4D] font-medium">Vista del Inmueble</span>
-        </nav>
-
         {/* Task 4.3: Título */}
         <header className="mb-10">
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
@@ -90,12 +67,13 @@ export default async function VistaInmueblePage({
         </header>
 
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
-        <div className="relative group rounded-3xl overflow-hidden">
+        <div className="relative rounded-3xl overflow-hidden">
           <MediaGallery
-            id_publicacion={intId.toString()} // <--- AGREGA ESTA LÍNEA
+            id_publicacion={intId.toString()}
             arrImagenes={arrImagenes}
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
+            mostrarFav={false}
           />         
           {/* BOTÓN SUPERPUESTO (Solo visible en HU2) */}
           <div className="absolute bottom-14 right-8 z-20">

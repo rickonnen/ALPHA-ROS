@@ -64,7 +64,7 @@ const handleOpenLightbox = (intIdx: number) => {
   return (
     <>
       {/* 4. AÑADIMOS relative group AL CONTENEDOR PARA POSICIONAR EL BOTÓN */}
-      <div className="space-y-6 mb-8 relative group">
+      <div className="space-y-6 mb-8 relative">
         {/* 5. EL BOTÓN CONDICIONADO */}
         {mostrarFav && (
           <div className="absolute bottom-6 right-6 md:bottom-14 md:right-8 z-20">
