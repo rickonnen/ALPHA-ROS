@@ -50,13 +50,13 @@ export function PaymentEvidenceModal({
               </div>
             )}
           </div>
-            {/*Falta corregir en el botón "volver" o cambiar a la genérica x del modal por defecto... spolier quizás me quede con la x */}
+            {/*Solo se agregó "cursor-pointer mt-1", parece que el botón se queda... */}
           {/* Botón Volver*/}
           <div className="w-1 p-3 flex justify-center border-t bg-gray-50/50">
             <Button
               onClick={() => onOpenChange(false)}
               variant="default"
-              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-8 sm:px-12 rounded-xl py-5 sm:py-6 transition-all active:scale-95 text-sm">
+              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-8 sm:px-12 rounded-xl py-5 sm:py-6 transition-all active:scale-95 text-sm cursor-pointer mt-1">
               Volver
             </Button>
           </div> 

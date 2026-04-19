@@ -252,20 +252,22 @@ export function PaymentDataTable({
                     {strStatus === 'Pendiente' && (
                       <TableCell className="px-6 py-4">
                         <div className="flex justify-center space-x-2">
+                          {/*Ahora ya sale el cursor ese de mano/clic al pasar por el botón */}
                           <Button 
                             onClick={() => handleOpenModal(objPayment, 'accept')}
                             variant="default" 
                             size="sm" 
-                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95"
+                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95 hover:bg-[#374151] text-white transition-colors cursor-pointer mt-1"
                             disabled={bolIsProcessing}
                           >
                             Aceptar
                           </Button>
+                          {/*Ahora es naranja... el botón de rechazar */}
                           <Button 
                             onClick={() => handleOpenModal(objPayment, 'reject')}
                             variant="default" 
                             size="sm" 
-                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95"
+                            className="h-8 px-3 font-semibold text-xs bg-secondary text-secondary-foreground hover:bg-secondary text-white transition-colors cursor-pointer mt-1"
                             disabled={bolIsProcessing}
                           >
                             Rechazar
@@ -273,9 +275,10 @@ export function PaymentDataTable({
                         </div>
                       </TableCell>
                     )}
+                    {/* El texto de la columna de rechazo ya no es rojo ª */}
                     {strStatus === 'Rechazado' && (
-                      <TableCell className="px-6 py-4 text-center">
-                        <span className="text-sm font-medium text-destructive">
+                      <TableCell className="h-12 px-6 text-center text-xs font-bold tracking-wider text-muted-foreground w-[20%] border-r border-border">
+                        <span className="text-sm font-medium active:scale-95">
                           {objPayment.strReason || "-"}
                         </span>
                       </TableCell>

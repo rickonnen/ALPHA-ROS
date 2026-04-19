@@ -5,6 +5,13 @@ import {
   AlertDialogContent,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { AlertTriangle } from "lucide-react"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { useState, useEffect } from "react"
@@ -58,7 +65,7 @@ export function PaymentRejectModal({
 
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
+      <AlertDialogContent className="w-[90%] min-w-[450px] min-h-[400px] flex flex-col bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -78,22 +85,30 @@ export function PaymentRejectModal({
           para el plan <span className="font-semibold">{strPlanName}</span>
         </p>
 
-        {/* seleccionar motivo ª */}
-        <div className="mb-8 flex flex-col gap-2">
-          <label htmlFor="reason-select" className="text-sm font-bold text-gray-700">
+        {/* seleccionar motivo ª; se cambio la estructura a la de shadcn; se llevó el dropdown a lado derecho
+         se genero espacio del dropdown con los botones,*/}
+        <div className="mb-20 flex flex-row items-center justify-between gap-4 px-2">
+          <label htmlFor="reason-select" className="text-sm font-bold text-gray-700 whitespace-nowrap shrink-0">
             Motivo del rechazo <span className="text-red-500">*</span>
           </label>
-          <select 
-            id="reason-select"
-            value={strReason}
-            onChange={(e) => setStrReason(e.target.value)}
-            className="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block p-3 outline-none"
-          >
-            <option value="" disabled>Seleccione un motivo...</option>
-            <option value="Comprobante inválido">Comprobante inválido</option>
-            <option value="Monto incorrecto">Monto incorrecto</option>
-            <option value="Datos no coinciden">Datos no coinciden</option>
-          </select>
+          <div className="w-[220px] sm:w-[220px]">
+            <Select value={strReason} onValueChange={setStrReason}>
+              <SelectTrigger className="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
+                <div className="truncate w-full pr-2">
+                  <SelectValue placeholder="Seleccione un motivo..." />
+                </div>
+              </SelectTrigger>
+              <SelectContent 
+                position="popper" 
+                sideOffset={4} 
+                className="rounded-xl border-gray-200 shadow-lg bg-white w-[--radix-select-trigger-width]"
+              >
+                <SelectItem value="Comprobante inválido" className="rounded-lg cursor-pointer">Comprobante inválido</SelectItem>
+                <SelectItem value="Monto incorrecto" className="rounded-lg cursor-pointer">Monto incorrecto</SelectItem>
+                <SelectItem value="Datos no coinciden" className="rounded-lg cursor-pointer">Datos no coinciden</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row justify-center sm:justify-between gap-3 sm:px-6">
