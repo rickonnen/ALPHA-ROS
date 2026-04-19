@@ -5,6 +5,7 @@ import { AuthProvider } from "@/app/auth/AuthContext";
 import { Header } from "@/components/homeComponents/header";
 import Footer from "@/components/homeComponents/footer";
 import { GlobalShortcut } from "@/components/GlobalShortcut";
+import "leaflet/dist/leaflet.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
