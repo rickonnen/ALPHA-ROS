@@ -14,7 +14,6 @@ const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  // CONFIGURACIÓN INTERNA (Blindaje para Producción)
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -26,7 +25,6 @@ export async function POST(request: Request) {
     const data = await request.formData();
     const file = data.get("file") as File;
     
-    // Verificación rápida en consola de servidor
     if (!process.env.CLOUDINARY_API_KEY) {
       throw new Error("La API KEY no llegó al servidor. Revisa tu archivo .env");
     }
@@ -49,7 +47,6 @@ export async function POST(request: Request) {
       uploadStream.end(buffer);
     });
 
-    // Crear el detalle del pago en la BD
     await prisma.detallePago.create({
       data: {
         id_plan: parseInt(data.get("id_plan") as string),
