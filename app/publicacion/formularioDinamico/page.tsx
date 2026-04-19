@@ -54,7 +54,6 @@ const SESSION_KEYS_TO_CLEAN = [
 
 // ─────────────────────────────────────────────────────────────
 // Mapeo estadoPropiedad (string) → id_estado_construccion (número)
-// Debe estar sincronizado con la tabla EstadoConstruccion en BD
 // ─────────────────────────────────────────────────────────────
 const ESTADO_IDS: Record<string, number> = {
   'En Planos': 1,
@@ -148,6 +147,8 @@ function CategoriaEstadoStep({
 
 // ─────────────────────────────────────────────────────────────
 // Paso 3: Características
+// Lee tipoPropiedad desde sessionStorage (guardado por useCategoriaForm en paso 1)
+// para deshabilitar los campos que no aplican cuando el tipo es "Terreno"
 // ─────────────────────────────────────────────────────────────
 function CaracteristicasDetalleStep({
   triggerRef,
@@ -158,11 +159,24 @@ function CaracteristicasDetalleStep({
 }) {
   const { values, errors, touched, handleChange, handleBlur, handleSubmit } =
     useCaracteristicasDetalleForm()
+
+  const tipoPropiedad = (() => {
+    try {
+      const raw = sessionStorage.getItem('categoriaYEstado')
+      return raw ? (JSON.parse(raw).tipoPropiedad ?? '') : ''
+    } catch { return '' }
+  })()
+
   useStableTrigger(triggerRef, handleSubmit, advanceDirect)
+
   return (
     <CaracteristicasDetalleForm
-      values={values} errors={errors} touched={touched}
-      onChange={handleChange} onBlur={handleBlur}
+      values={values}
+      errors={errors}
+      touched={touched}
+      tipoPropiedad={tipoPropiedad}
+      onChange={handleChange}
+      onBlur={handleBlur}
     />
   )
 }
@@ -211,7 +225,6 @@ function StepContent({
         submitRef={triggerRefs[4]}
         onImagesChange={(files) => {
           imagenesRef.current = files
-          // Guardar previews en sessionStorage para el SumarioModal
           try {
             const previews = files.map(f => URL.createObjectURL(f))
             const nombres = files.map(f => f.name)
@@ -292,32 +305,27 @@ export default function CrearPublicacionPage() {
 
       const formData = new FormData()
 
-      // Paso 0 — Datos del Aviso
       formData.append('titulo', datosAviso.titulo ?? '')
       formData.append('tipoOperacion', datosAviso.tipoOperacion ?? '')
       formData.append('precio', String(datosAviso.precio ?? '0'))
       formData.append('tipoMoneda', datosAviso.tipoMoneda ?? 'USD')
 
-      // Paso 1 — Categoría y Estado
       formData.append('tipoInmueble', categoria.tipoPropiedad ?? '')
       const estadoNum = ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1
       formData.append('estadoConstruccion', String(estadoNum))
 
-      // Paso 2 — Ubicación
       formData.append('direccion', ubicacion.direccion ?? '')
       formData.append('departamento', ubicacion.departamento ?? '')
       formData.append('zona', ubicacion.zona ?? '')
       if (ubicacion.lat) formData.append('lat', String(ubicacion.lat))
       if (ubicacion.lng) formData.append('lng', String(ubicacion.lng))
 
-      // Paso 3 — Características
       formData.append('habitaciones', String(caracteristicas.habitaciones ?? 0))
       formData.append('banios', String(caracteristicas.banios ?? 0))
       formData.append('garajes', String(caracteristicas.garajes ?? 0))
       formData.append('plantas', String(caracteristicas.plantas ?? 0))
       formData.append('superficie', String(caracteristicas.superficie ?? '0'))
 
-      // Paso 4 — Imágenes desde el ref (File objects)
       if (imagenesRef.current.length === 0) {
         setPublishError('Debes subir al menos 1 imagen.')
         setIsPublishing(false)
@@ -325,12 +333,8 @@ export default function CrearPublicacionPage() {
       }
       imagenesRef.current.forEach(f => formData.append('imagenes', f))
 
-      // Paso 5 — Video (opcional)
       formData.append('videoUrl', video.url ?? '')
-
-      // Paso 6 — Descripción
       formData.append('descripcion', descripcion.descripcion ?? '')
-
       formData.append('id_usuario', '')
 
       const result = await publicarInmueble(formData)
@@ -365,7 +369,6 @@ export default function CrearPublicacionPage() {
     setPublishError(null)
 
     if (isLastStep) {
-      // Valida el paso 6; si pasa, advanceDirect abre el sumario
       triggerRefs[currentStep]?.current?.()
       return
     }
@@ -416,7 +419,6 @@ export default function CrearPublicacionPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-        {/* Panel izquierdo — StepsSidebar */}
         <StepsSidebar
           currentStep={currentStep}
           completedSteps={completedSteps}
@@ -424,7 +426,6 @@ export default function CrearPublicacionPage() {
           onStepClick={handleSidebarClick}
         />
 
-        {/* Panel derecho */}
         <div
           style={{
             flex: 1, backgroundColor: DISENO.panelDerecho.backgroundColor,
@@ -441,7 +442,6 @@ export default function CrearPublicacionPage() {
             )}
           </h2>
 
-          {/* Mensaje de bloqueo de navegación */}
           {blockMsg && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
@@ -451,7 +451,6 @@ export default function CrearPublicacionPage() {
             </div>
           )}
 
-          {/* Error de publicación */}
           {publishError && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
@@ -464,7 +463,6 @@ export default function CrearPublicacionPage() {
           <div style={{ ...DISENO.cuadroForm, flex: 1, overflowY: 'auto' }}>
             <StepContent
               step={currentStep}
-              // En el paso 6, al pasar validación abre el SumarioModal en vez de avanzar
               advanceDirect={currentStep === 6 ? () => setBolShowSumario(true) : advanceDirect}
               onBack={handleBack}
               triggerRefs={triggerRefs}
@@ -504,7 +502,6 @@ export default function CrearPublicacionPage() {
         </div>
       </div>
 
-      {/* SumarioModal — se abre al completar y validar el paso 6 */}
       {bolShowSumario && (
         <SumarioModal
           onClose={() => setBolShowSumario(false)}
