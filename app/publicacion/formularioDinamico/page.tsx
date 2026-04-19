@@ -14,6 +14,7 @@ import { VideoForm }                    from '@/features/publicacion/FormularioD
 import { DescripcionForm }              from '@/features/publicacion/FormularioDinamicoCaracteristicas/Descripcion/Descripcionform'
 import { publicarInmueble }             from '@/features/publicacion/BackendFormulario/actions'
 // import { PublicacionStepper } from '@/features/publicacion/components/PublicacionStepper'
+import { StepsSidebar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
 
 // sessionStorage — paso actual y pasos completados
 const SK_STEP      = 'publicacion_currentStep'
@@ -420,28 +421,14 @@ export default function CrearPublicacionPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-        {/* Panel izquierdo
-            Reemplazar este <div> completo por:
+        {/* Panel izquierdo - StepsSideBar */}
 
-            <PublicacionStepper
+            <StepsSidebar
               currentStep={currentStep}
               completedSteps={completedSteps}
               steps={STEPS}
               onStepClick={handleSidebarClick}
             />
-        */}
-        <div
-          style={{
-            width: DISENO.panelIzquierdo.width, flexShrink: 0,
-            backgroundColor: DISENO.panelIzquierdo.backgroundColor,
-            padding: DISENO.panelIzquierdo.padding, display: 'flex', flexDirection: 'column',
-          }}
-        >
-          <p style={{ color: '#fff', fontSize: '11px', opacity: 0.5, marginTop: 'auto', textAlign: 'center' }}>
-            Stepper — otro equipo
-          </p>
-        </div>
-
         {/* Panel derecho */}
         <div
           style={{
