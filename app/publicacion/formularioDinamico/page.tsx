@@ -47,11 +47,11 @@ const ESTADO_IDS: Record<string, number> = {
 const STEPS = [
   { title: 'Datos del Aviso',    opcional: false },
   { title: 'Categoría y Estado', opcional: false },
-  { title: 'Ubicación',          opcional: false },
-  { title: 'Características',    opcional: false },
-  { title: 'Imágenes',           opcional: false },
-  { title: 'Video',              opcional: true  },
-  { title: 'Descripción',        opcional: false },
+  { title: 'Ubicación de la Propiedad',          opcional: false },
+  { title: 'Características de la Propiedad',    opcional: false },
+  { title: 'Imágenes de la Propiedad',           opcional: false },
+  { title: 'Video de la Propiedad',              opcional: true  },
+  { title: 'Descripción de la Propiedad',        opcional: false },
 ]
 
 // ─── Colores del proyecto ─────────────────────────────────────
