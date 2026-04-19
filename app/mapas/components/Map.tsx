@@ -1,12 +1,12 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MapContainer, Marker, Popup, TileLayer, Polyline, Polygon, useMap, useMapEvents } from "react-leaflet"
 import MarkerClusterGroup from "react-leaflet-cluster"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import type { Location } from "@/lib/locations"
 import ChangeView from "./ChangeView"
-import { createPriceIcon, createClusterIcon } from "./icons"
+import { createPriceIcon, createClusterIcon, createClusterPopupHTML } from "./icons"
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -18,7 +18,6 @@ L.Icon.Default.mergeOptions({
 const DEFAULT_CENTER: [number, number] = [-17.3943, -66.1569];
 const DEFAULT_ZOOM = 15;
 
-// --- 1. INTERFAZ ACTUALIZADA ---
 interface MapProps {
   locations: Location[]
   hoveredId: number | null
@@ -30,7 +29,15 @@ interface MapProps {
   onPolygonComplete?: (points: [number, number][]) => void;
 }
 
-// --- 2. LÓGICA DE DIBUJO ---
+// Agrega este componente arriba, junto a MapDrawingLogic
+function MapEventHandler({ onReady }: { onReady: (map: L.Map) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    onReady(map);
+  }, [map, onReady]);
+  return null;
+}
+
 function MapDrawingLogic({ 
   isDrawingMode, 
   onPolygonComplete 
@@ -48,20 +55,18 @@ function MapDrawingLogic({
     } else {
       map.dragging.enable();
       map.getContainer().style.cursor = '';
-      setPoints([]); 
+      setPoints([]);
     }
   }, [isDrawingMode, map]);
 
   useMapEvents({
     click(e) {
       if (!isDrawingMode || !onPolygonComplete) return;
-      
       const newPoints: [number, number][] = [...points, [e.latlng.lat, e.latlng.lng]];
       setPoints(newPoints);
-
       if (newPoints.length === 4) {
         onPolygonComplete(newPoints);
-        setPoints([]); 
+        setPoints([]);
       }
     },
   });
@@ -73,14 +78,19 @@ function MapDrawingLogic({
 
   return (
     <>
-      {points.map((pt, idx) => <Marker key={`pt-${idx}`} position={pt} icon={dotIcon} interactive={false} />)}
-      {points.length > 1 && points.length < 4 && <Polyline positions={points} color="#C26E5A" weight={3} dashArray="5, 10" interactive={false} />}
-      {points.length === 4 && <Polygon positions={points} color="#C26E5A" fillOpacity={0.4} interactive={false} />}
+      {points.map((pt, idx) => (
+        <Marker key={`pt-${idx}`} position={pt} icon={dotIcon} interactive={false} />
+      ))}
+      {points.length > 1 && points.length < 4 && (
+        <Polyline positions={points} color="#C26E5A" weight={3} dashArray="5, 10" interactive={false} />
+      )}
+      {points.length === 4 && (
+        <Polygon positions={points} color="#C26E5A" fillOpacity={0.4} interactive={false} />
+      )}
     </>
   );
 }
 
-// --- 3. COMPONENTE PRINCIPAL ACTUALIZADO ---
 export default function PropertyMap({ 
   locations, 
   hoveredId, 
@@ -92,6 +102,14 @@ export default function PropertyMap({
   onPolygonComplete
 }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const popupRef = useRef<L.Popup | null>(null);
+
+  const closePopup = () => {
+    if (popupRef.current) {
+      popupRef.current.remove();
+      popupRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -105,23 +123,75 @@ export default function PropertyMap({
   );
 
   return (
-    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
+    <MapContainer
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
+      className="h-full w-full"
+      >
+  <MapEventHandler onReady={(map) => {
+    map.on('zoomstart', closePopup);
+    map.on('dragstart', closePopup);
+  }} />
+
       {(hoveredPos ?? selectedPos) && <ChangeView center={hoveredPos ?? selectedPos} />}
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* HERRAMIENTA DE DIBUJO HU2 */}
       <MapDrawingLogic 
         isDrawingMode={isDrawingMode} 
         onPolygonComplete={onPolygonComplete} 
       />
 
-      {/* ZONA FINAL DIBUJADA HU2 */}
       {drawnPolygon && (
-        <Polygon positions={drawnPolygon} color="#2563eb" fillColor="#3b82f6" fillOpacity={0.25} weight={2} />
+        <Polygon 
+          positions={drawnPolygon} 
+          color="#2563eb" 
+          fillColor="#3b82f6" 
+          fillOpacity={0.25} 
+          weight={2} 
+        />
       )}
 
-      {/* MARCADORES Y CLÚSTERES ORIGINALES */}
-      <MarkerClusterGroup disableClusteringAtZoom={17} iconCreateFunction={createClusterIcon}>
+      <MarkerClusterGroup
+        disableClusteringAtZoom={17}
+        spiderfyOnMaxZoom={false}
+        showCoverageOnHover={false}
+        iconCreateFunction={createClusterIcon}
+        eventHandlers={{
+          clustermouseover: (e: any) => {
+            const cluster = e.layer;
+            const childMarkers = cluster.getAllChildMarkers();
+
+            const clusterLocations = childMarkers
+              .map((marker: L.Marker) => {
+                const pos = marker.getLatLng();
+                return locations.find(
+                  loc =>
+                    Math.abs(loc.lat - pos.lat) < 0.000001 &&
+                    Math.abs(loc.lng - pos.lng) < 0.000001
+                );
+              })
+              .filter(Boolean) as Location[];
+
+            if (clusterLocations.length === 0) return;
+
+            closePopup();
+
+            const popup = L.popup({
+              closeButton: false,
+              autoClose: false,
+              closeOnClick: false,
+              offset: [0, -10],
+            })
+              .setLatLng(cluster.getLatLng())
+              .setContent(createClusterPopupHTML(clusterLocations))
+              .openOn(e.target._map);
+
+            popupRef.current = popup;
+          },
+          clustermouseout: closePopup,
+          animationend: closePopup,
+        }}
+      >
         {locations.map((location) => (
           <Marker
             key={location.id}
