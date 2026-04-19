@@ -20,6 +20,10 @@
    Fecha: 09/04/2026
    Fix: Resolución del defecto de navegación por teclado ilógica. Restauración de corrección visual de la contraseña (****).
 */
+/* Dev: [Tu nombre] - HU-04
+   Fecha: [fecha]
+   Feature: Agrega opción "Estado de Cuenta" al menú de seguridad.
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -29,6 +33,7 @@ import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
 import RedesView from "./redes-vinculadas/redes-view";
 import Autenticacion2FAView from "./2fa/autenticacion-2fa";
+import EstadoCuentaView from "./estado-cuenta/estado-cuenta-view";
 
 interface SeguridadProps {
   id_usuario: string;
@@ -127,6 +132,19 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           </div>
           <span className="text-gray-400">›</span>
         </button>
+
+        {/* HU-04: Estado de Cuenta */}
+        <button
+          onClick={() => setSubView("estado-cuenta")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Estado de Cuenta</p>
+            <p className="text-sm text-gray-300">Desactivar perfil</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
+
       </div>
     ),
 
@@ -188,18 +206,30 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         onBack={() => setSubView("correo")}
       />
     ),
+
     "redes": (
       <RedesView
         id_usuario={id_usuario}
         onBack={() => setSubView("menu")}
       />
     ),
+
     "2fa": (
       <Autenticacion2FAView
         id_usuario={id_usuario}
         onBack={() => setSubView("menu")}
       />
     ),
+
+    // HU-04
+    "estado-cuenta": (
+      <EstadoCuentaView
+        id_usuario={id_usuario}
+        estadoCuenta={objUsuario?.estado ?? 1}
+        onBack={() => setSubView("menu")}
+      />
+    ),
+
   };
 
   return (
