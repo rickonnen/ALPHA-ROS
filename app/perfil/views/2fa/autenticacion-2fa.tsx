@@ -2,35 +2,29 @@
     Fecha: 15/04/2026
     Epic: SIGN IN_UP
     Funcionalidad: Vista de Autenticación 2FA con app de autenticación (TOTP)
-      - Toggle para activar/desactivar 2FA via app autenticadora
-      - Muestra QR para vincular con Google Authenticator u otra app
 */
 "use client";
 
 import { useState, useEffect } from "react";
 import { ArrowLeft, QrCode, Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
+import IngresarCodigo2FA from "./components/IngresarCodigo2FA";
+import ConfirmarDesactivar2FA from "./components/ConfirmarDesactivar2FA";
 
 interface Autenticacion2FAProps {
   id_usuario: string;
   onBack: () => void;
 }
 
-export default function Autenticacion2FAView({
-  id_usuario,
-  onBack,
-}: Autenticacion2FAProps) {
+export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticacion2FAProps) {
   const [bolActivado, setBolActivado] = useState(false);
   const [secreto, setSecreto] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
-  const [codigoIngresado, setCodigoIngresado] = useState("");
   const [copiado, setCopiado] = useState(false);
-  const [cargando, setCargando] = useState(false);
   const [mostrarInputCodigo, setMostrarInputCodigo] = useState(false);
+  const [mostrarConfirmDesactivar, setMostrarConfirmDesactivar] = useState(false);
 
-  // Cargar estado de 2FA desde servidor al iniciar
   useEffect(() => {
     const cargarEstado2FA = async () => {
       try {
@@ -38,40 +32,29 @@ export default function Autenticacion2FAView({
           method: "GET",
           credentials: "include",
         });
-        
         if (response.ok) {
           const data = await response.json();
-          if (data.dos_fa_habilitado) {
-            setBolActivado(true);
-          }
+          if (data.dos_fa_habilitado) setBolActivado(true);
         }
       } catch (error) {
         console.error("Error cargando estado 2FA:", error);
       }
     };
-    
     cargarEstado2FA();
   }, [id_usuario]);
 
-  // Generar secreto y QR cuando se activa 2FA
   useEffect(() => {
-    if (bolActivado && !secreto) {
-      generarSecreto();
-    }
+    if (bolActivado && !secreto) generarSecreto();
   }, [bolActivado]);
 
   const generarSecreto = async () => {
     try {
-      // Generar secreto TOTP usando speakeasy
       const nuevoSecreto = speakeasy.generateSecret({
         name: `Alpha ROS (${id_usuario})`,
         issuer: "Alpha ROS",
         length: 32,
       });
-
       setSecreto(nuevoSecreto.base32);
-
-      // Generar QR code como data URL
       const qrDataUrl = await QRCode.toDataURL(nuevoSecreto.otpauth_url || "");
       setQrCode(qrDataUrl);
     } catch (error) {
@@ -81,22 +64,8 @@ export default function Autenticacion2FAView({
 
   const handleToggle = () => {
     if (bolActivado) {
-      // Si tiene secreto generado, pedir confirmación
-      if (secreto) {
-        const confirmar = window.confirm(
-          "¿Descartar configuración de 2FA?\n\nEsto eliminará la clave que ya generaste."
-        );
-        if (!confirmar) return;
-      }
-      
-      // Desactivar 2FA
-      setBolActivado(false);
-      setSecreto("");
-      setQrCode("");
-      setCodigoIngresado("");
-      setMostrarInputCodigo(false);
+      setMostrarConfirmDesactivar(true);
     } else {
-      // Activar 2FA
       setBolActivado(true);
     }
   };
@@ -109,60 +78,6 @@ export default function Autenticacion2FAView({
     } catch (error) {
       console.error("Error copiando al portapapeles:", error);
     }
-  };
-
-  const verificarCodigo = async () => {
-    if (codigoIngresado.length !== 6) {
-      alert("Por favor ingresa un código de 6 dígitos");
-      return;
-    }
-
-    if (!secreto) {
-      alert("Error: Secreto no disponible. Por favor reinicia.");
-      return;
-    }
-
-    setCargando(true);
-    try {
-      // Enviar al servidor para verificar
-      const response = await fetch("/api/perfil/verify2FA", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id_usuario,
-          secreto,
-          codigo: codigoIngresado,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.esValido) {
-        alert("✓ 2FA activado correctamente. Tu cuenta está protegida.");
-        // Cerrar modal pero mantener toggle activado
-        setMostrarInputCodigo(false);
-        setCodigoIngresado("");
-        // Mantener bolActivado en true para mostrar visualmente que 2FA está activado
-        // setSecreto y qrCode siguen siendo necesarios si el usuario quiere resetear
-        // No limpiar secreto para que se mantenga guardado
-      } else {
-        alert("✗ Código inválido. Por favor intenta nuevamente");
-        setCodigoIngresado("");
-      }
-    } catch (error) {
-      console.error("Error verificando código:", error);
-      alert("Error al verificar el código. Por favor intenta nuevamente");
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const cancelar = () => {
-    // Solo limpiar el input y cerrar modal, pero MANTENER el secreto
-    setCodigoIngresado("");
-    setMostrarInputCodigo(false);
   };
 
   return (
@@ -213,11 +128,26 @@ export default function Autenticacion2FAView({
         </button>
       </div>
 
+      {/* Confirmar desactivación */}
+      {mostrarConfirmDesactivar && (
+        <ConfirmarDesactivar2FA
+          id_usuario={id_usuario}
+          onSuccess={() => {
+            setBolActivado(false);
+            setSecreto("");
+            setQrCode("");
+            setMostrarInputCodigo(false);
+            setMostrarConfirmDesactivar(false);
+          }}
+          onCancel={() => setMostrarConfirmDesactivar(false)}
+        />
+      )}
+
       {/* Contenido cuando está activado */}
-      {bolActivado && secreto && (
+      {bolActivado && secreto && !mostrarInputCodigo && !mostrarConfirmDesactivar && (
         <div className="mt-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
-          {/* ADVERTENCIA: Mantener el mismo secreto */}
+          {/* ADVERTENCIA */}
           <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex gap-3">
             <div className="flex-shrink-0 text-amber-400">
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -240,34 +170,26 @@ export default function Autenticacion2FAView({
             </p>
           </div>
 
-          {/* INSTRUCCIONES DE CONFIGURACIÓN */}
+          {/* INSTRUCCIONES */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
             <h3 className="text-xs font-bold tracking-widest text-white/80">
               INSTRUCCIONES DE CONFIGURACION
             </h3>
-
-            {/* Paso 1 */}
             <div className="space-y-2">
               <p className="text-sm text-white/80">
                 <span className="font-bold">1.</span> Descarga una app de autenticación
               </p>
             </div>
-
-            {/* Paso 2 */}
             <div className="space-y-3">
               <p className="text-sm text-white/80">
                 <span className="font-bold">2.</span> Escanea este codigo QR o copia la clave
               </p>
-
-              {/* QR Code */}
               <div className="flex flex-col items-center gap-4">
                 {qrCode && (
                   <div className="bg-white p-3 rounded-lg">
                     <img src={qrCode} alt="QR Code 2FA" className="w-40 h-40" />
                   </div>
                 )}
-
-                {/* Botones QR y Copiar */}
                 <div className="flex gap-3 w-full justify-center">
                   <button
                     type="button"
@@ -284,21 +206,13 @@ export default function Autenticacion2FAView({
                     className="px-4 py-2 text-sm font-semibold text-white/80 border border-white/20 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
                   >
                     {copiado ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        COPIADO
-                      </>
+                      <><Check className="h-4 w-4" />COPIADO</>
                     ) : (
-                      <>
-                        <Copy className="h-4 w-4" />
-                        COPIAR CLAVE
-                      </>
+                      <><Copy className="h-4 w-4" />COPIAR CLAVE</>
                     )}
                   </button>
                 </div>
               </div>
-
-              {/* Clave secreta */}
               <div className="bg-black/30 border border-white/10 rounded-lg p-3 text-center">
                 <p className="text-xs text-white/60 mb-2">CLAVE SECRETA</p>
                 <p className="font-mono text-sm text-white/90 tracking-wider break-all">
@@ -306,14 +220,11 @@ export default function Autenticacion2FAView({
                 </p>
               </div>
             </div>
-
-            {/* Paso 3 */}
             <div className="space-y-3">
               <p className="text-sm text-white/80">
                 <span className="font-bold">3.</span> Confirma tu código
               </p>
             </div>
-            
           </div>
 
           {/* Botones de acción */}
@@ -327,69 +238,27 @@ export default function Autenticacion2FAView({
             </button>
             <button
               type="button"
-              onClick={cancelar}
+              onClick={() => { setMostrarInputCodigo(false); }}
               className="flex-1 px-4 py-3 border border-white/20 text-white/80 font-bold text-sm rounded-lg hover:bg-white/5 transition-colors"
             >
               Cancelar
             </button>
           </div>
-
-          {/* DEBUG: Test endpoint button */}
-          {/* Input de código sobrepuesto */}
-          {mostrarInputCodigo && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-slate-800 rounded-2xl w-full max-w-sm p-8 border border-white/10">
-                
-                {/* Header */}
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    INGRESA EL CODIGO
-                  </h3>
-                  <p className="text-sm text-gray-300">
-                    Ingresa el código de 6 dígitos que generó tu app de autenticación
-                  </p>
-                </div>
-
-                {/* Input para el código */}
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={codigoIngresado}
-                  onChange={(e) => setCodigoIngresado(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Ingresa el código"
-                  className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white text-center text-lg font-mono tracking-widest placeholder-slate-500 focus:outline-none focus:border-slate-500 focus:bg-slate-700/70 transition-colors mb-6"
-                  autoFocus
-                />
-
-                {/* Botones */}
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={verificarCodigo}
-                    disabled={cargando || codigoIngresado.length !== 6}
-                    className="flex-1 px-4 py-2 bg-white text-black font-semibold text-sm rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {cargando ? "Verificando..." : "Confirmar"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarInputCodigo(false);
-                      setCodigoIngresado("");
-                    }}
-                    className="flex-1 px-4 py-2 border border-slate-600 text-gray-300 font-semibold text-sm rounded-lg hover:bg-slate-700/50 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
+      {/* Ingresar código TOTP */}
+      {bolActivado && secreto && mostrarInputCodigo && (
+        <IngresarCodigo2FA
+          id_usuario={id_usuario}
+          secreto={secreto}
+          onSuccess={() => setMostrarInputCodigo(false)}
+          onCancel={() => setMostrarInputCodigo(false)}
+        />
+      )}
+
       {/* Estado cuando está desactivado */}
-      {!bolActivado && (
+      {!bolActivado && !mostrarConfirmDesactivar && (
         <p className="mt-3 text-xs text-white/40 tracking-wide">
           Activa el toggle para configurar 2FA con tu app autenticadora.
         </p>
