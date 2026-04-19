@@ -26,38 +26,36 @@ export function validate(values: CaracteristicasDetalleFormValues): Caracteristi
   const errors: CaracteristicasDetalleFormErrors = {}
   const isTerreno = getTipoPropiedad() === 'Terreno'
 
-  // Para Terreno los campos habitaciones/banios/garajes/plantas están deshabilitados
-  // y se envían como null → no se validan
   if (!isTerreno) {
     if (values.habitaciones === '') {
-      errors.habitaciones = 'El número de habitaciones es obligatorio.'
+      errors.habitaciones = 'Campo obligatorio'
     } else if (!esNumeroEnteroValido(values.habitaciones)) {
-      errors.habitaciones = 'Debe ser un número entre 0 y 50'
+      errors.habitaciones = 'Entre 0 y 50'
     }
 
     if (values.banios === '') {
-      errors.banios = 'El número de baños es obligatorio.'
+      errors.banios = 'Campo obligatorio'
     } else if (!esNumeroEnteroValido(values.banios)) {
-      errors.banios = 'Debe ser un número entre 0 y 50'
+      errors.banios = 'Entre 0 y 50'
     }
 
     if (values.plantas === '') {
-      errors.plantas = 'El número de plantas es obligatorio.'
+      errors.plantas = 'Campo obligatorio'
     } else if (!esNumeroEnteroValido(values.plantas)) {
-      errors.plantas = 'Debe ser un número entre 0 y 50.'
+      errors.plantas = 'Entre 0 y 50'
     }
 
     if (values.garajes === '') {
-      errors.garajes = 'El número de garajes es obligatorio.'
+      errors.garajes = 'Campo obligatorio'
     } else if (!esNumeroEnteroValido(values.garajes)) {
-      errors.garajes = 'Debe ser un número entre 0 y 50'
+      errors.garajes = 'Entre 0 y 50'
     }
   }
 
   if (!values.superficie) {
-    errors.superficie = 'La superficie es obligatoria.'
+    errors.superficie = 'Campo obligatorio'
   } else if (!esSuperficieValida(values.superficie)) {
-    errors.superficie = 'Debe ser un número mayor a 0 y máximo 1.000.000 m².'
+    errors.superficie = 'Máximo 1.000.000 m²'
   }
 
   return errors
