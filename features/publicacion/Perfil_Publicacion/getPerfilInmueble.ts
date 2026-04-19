@@ -10,6 +10,17 @@
  * @return Objeto estructurado con todos los datos del inmueble, sus relaciones (Ubicación, 
  *         Tipo, Multimedia) y el perfil del anunciante, o null si el ID es inválido o no existe.
  */
+ /**
+ * Modificacion
+ * Dev: Gustavo Montaño
+ * Date: 17/04/2026
+ * Funcionalidad: Extracción de los datos del creador de la publicación 
+ *                para poblar la tarjeta de contacto directo.
+ * @param Usuario - Relación del ORM Prisma para acceder a la tabla del 
+ *                publicador y sus teléfonos vinculados.
+ * @return Objeto con los campos nombres, apellidos, username, email, 
+ *                url_foto_perfil y el primer número de teléfono registrado.
+ */
 import { prisma } from "@/lib/prisma";
 
 export async function getPerfilInmueble(intIdPublicacion: number) {
@@ -19,6 +30,7 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
   const objPerfilInmueble = await prisma.publicacion.findUnique({
     where: { id_publicacion: intIdPublicacion },
     select: {
+      id_usuario: true,
       titulo:       true,
       descripcion:  true,
       precio:       true,
@@ -63,19 +75,10 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       },
       Video:  { select: { url_video:   true } },
       Imagen: { select: { url_imagen:  true } },
-       /**
-       * Modificacion
-       * Dev: Gustavo Montaño
-       * Date: 17/04/2026
-       * Funcionalidad: Extracción de los datos del creador de la publicación 
-       *                para poblar la tarjeta de contacto directo.
-       * @param Usuario - Relación del ORM Prisma para acceder a la tabla del 
-       *                publicador y sus teléfonos vinculados.
-       * @return Objeto con los campos nombres, apellidos, username, email, 
-       *                url_foto_perfil y el primer número de teléfono registrado.
-       */
+      //Parte para el ContactCard
       Usuario: {
         select: {
+          id_usuario: true,
           nombres: true,
           apellidos: true,
           username: true,

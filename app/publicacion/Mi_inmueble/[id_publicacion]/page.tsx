@@ -8,7 +8,24 @@
  * @param {string} params.id_publicacion - Identificador único de la publicación extraído directamente desde la URL.
  * @return {JSX.Element} Interfaz completa de la vista privada del inmueble renderizada desde el servidor.
  */
-import { notFound }          from "next/navigation";
+/**
+  * @Modificacion
+  * @Dev: Gustavo Montaño
+  * @Fecha: 18/04/2026
+  * @Funcionalidad: Capa de autorización del lado del servidor. Verifica la identidad 
+  *                 del usuario actual (ya sea mediante JWT por correo o sesión de Google) 
+  *                 y la compara con el propietario original del inmueble. Evita vulnerabilidades 
+  *                 tipo IDOR redirigiendo a intrusos a la vista pública.
+  * @param {string | undefined} token - Token de sesión JWT extraído directamente de las cookies.
+  * @param {Session | null} session - Sesión de NextAuth generada a través del proveedor de Google.
+  * @param {Object} objPerfil.Usuario - Datos del dueño de la propiedad consultados previamente en la BD.
+  * @return {void | never} Lanza un 'redirect' (Next.js) hacia la ruta pública si falla la validación, 
+  *                        o permite continuar con el renderizado si el usuario es el dueño legítimo.
+*/
+import { notFound, redirect }     from "next/navigation";
+import { cookies }           from "next/headers";
+import { verify }            from "jsonwebtoken";
+import { getServerSession }  from "next-auth";
 import { Tag, Ruler }        from "lucide-react";
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
@@ -28,6 +45,38 @@ export default async function PerfilInmueblePage({
   if (isNaN(intId)) return notFound();
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
+ if (!objPerfil) return notFound();
+  // --- VALIDACIÓN DE SEGURIDAD MULTI-MÉTODO ---
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  const session = await getServerSession();
+  let idUsuarioActual: string | null = null;
+  let emailUsuarioActual: string | null = null;
+  // 1. Intento por tu JWT manual (Correo)
+  if (token) {
+    try {
+      const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string; };
+      idUsuarioActual = decoded.userId || decoded.id || decoded.sub || null; 
+    } catch (error) {
+      console.error(">>>> ERROR JWT:", error);
+    }
+  }
+  // 2. Intento por Google / NextAuth
+  if (!idUsuarioActual && session?.user) {
+    idUsuarioActual = (session.user as { id?: string }).id || null;
+    emailUsuarioActual = session.user.email || null;
+  }
+  // Obtenemos los datos del dueño desde la DB
+  const idPropietarioInmueble = objPerfil.Usuario?.id_usuario;
+  const emailPropietarioInmueble = objPerfil.Usuario?.email;
+  // 3. Comparamos que coincida el ID o el Email (súper útil si entró con Google)
+  const bolEsDueño = 
+    (idUsuarioActual && String(idUsuarioActual) === String(idPropietarioInmueble)) || 
+    (emailUsuarioActual && emailUsuarioActual === emailPropietarioInmueble);
+  if (!bolEsDueño) {
+    console.log("ACCESO DENEGADO - Redirigiendo a vista pública...");
+    redirect(`/publicacion/Vista_del_Inmueble/${intId}`); 
+  }
   // Task 4.5: Extraer video ID según plataforma
   const strVideoUrl    = objPerfil.Video?.[0]?.url_video ?? null;
   const bolEsYoutube   = strVideoUrl
