@@ -44,6 +44,15 @@ export default function PrivacyPolicyPage() {
                 necesarios para la seguridad, estabilidad y análisis básico del
                 funcionamiento de la plataforma.
               </p>
+              <p className="mt-4 text-base leading-8 text-[#4E4E4E]">
+                Cuando el usuario inicia sesión en la plataforma, también puede
+                registrarse automáticamente telemetría técnica asociada a ese
+                acceso, incluyendo la dirección IP de la solicitud y, cuando el
+                navegador o dispositivo lo permita, coordenadas geográficas
+                obtenidas en ese momento. Si dichos datos de ubicación no se
+                encuentran disponibles o no pueden obtenerse, el inicio de
+                sesión podrá completarse igualmente.
+              </p>
             </section>
 
             <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">

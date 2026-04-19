@@ -11,6 +11,11 @@ interface LoginFormProps {
   onClose?: () => void;
 }
 
+interface LoginTelemetry {
+  latitud: number | null;
+  longitud: number | null;
+}
+
 export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
   const router = useRouter();
   const { login } = useAuth();
@@ -66,6 +71,31 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     return email.trim() !== "" && password !== "" && Object.keys(errors).length === 0;
   }
 
+  function getLoginTelemetry(): Promise<LoginTelemetry> {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      return Promise.resolve({ latitud: null, longitud: null });
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitud: position.coords.latitude,
+            longitud: position.coords.longitude,
+          });
+        },
+        () => {
+          resolve({ latitud: null, longitud: null });
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 60000,
+        }
+      );
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -78,7 +108,8 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     setGeneralError("");
     setLoading(true);
     try {
-      await login(email, password);
+      const telemetry = await getLoginTelemetry();
+      await login(email, password, telemetry);
       const resMe = await fetch("/api/auth/me");
     if (resMe.ok) {
       const dataMe = await resMe.json();
