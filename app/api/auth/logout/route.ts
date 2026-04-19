@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Limpiar cookie
     response.cookies.delete("auth_token");
 
     return response;
