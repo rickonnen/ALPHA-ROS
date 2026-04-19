@@ -282,12 +282,12 @@ const guardarSnapshot = () => {
   const handleChange = (index: number, value: string) => {
     if (slotEnEdicion !== index) return;
 
-    const limpio = value
-      .replace(/[^\d\s]/g, "")
-      .replace(/^\s+/, "")
-      .replace(/\s{2,}/g, " ");
+    // const limpio = value
+    //   .replace(/[^\d\s]/g, "")
+    //   .replace(/^\s+/, "")
+    //   .replace(/\s{2,}/g, " ");
 
-    const nuevo = limpio.slice(0, 15);
+    const nuevo = value.replace(/[^\d]/g, "").slice(0, 15);
 
     const nuevosValues = [...telefonosValues];
     nuevosValues[index] = nuevo;
@@ -584,13 +584,13 @@ const handleGuardar = async () => {
       </div>
 
       <Card className="bg-white/10 border border-white/20 backdrop-blur-md">
-        <CardHeader>
+        <CardHeader className="px-3 sm:px-6">
           <CardTitle className="text-base text-white">
             Teléfonos registrados
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-5 pb-14">
+        <CardContent className="space-y-5 pb-14 px-3 sm:px-6">
           {[0, 1, 2].map((i) =>
             telefonosActivos[i] ? (
               
@@ -602,7 +602,7 @@ const handleGuardar = async () => {
                 <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
                     <div className="flex gap-2 w-full">
                       
-                    <div className="relative w-40">
+                    <div className="relative w-28 sm:w-40">
 
                     {/* SELECT VISIBLE */}
                     <div
@@ -610,7 +610,7 @@ const handleGuardar = async () => {
                         if (slotEnEdicion !== i) return;
                         setOpenSelect(openSelect === i ? null : i);
                       }}
-                    className={`flex items-center gap-2 h-10 px-2 rounded-md border-2 cursor-pointer text-white transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-2 h-[42px] px-1 sm:px-2 rounded-md border-2 cursor-pointer text-white transition-colors ${
                         "border-white/20 bg-[#1F3A4D]"
                     }`}
                     >
@@ -624,7 +624,7 @@ const handleGuardar = async () => {
 
                       {/* DROPDOWN */}
                       {openSelect === i && (
-                        <div className="absolute top-full mt-1 left-0 w-60 max-h-[144px] overflow-y-auto bg-[#1e1e2e] border border-white/20 rounded-md z-[10000] text-white scrollbar-thin scrollbar-thumb-white/20">
+                        <div className="absolute top-full mt-1 left-0 w-44 sm:w-60 max-h-[144px] overflow-y-auto bg-[#1e1e2e] border border-white/20 rounded-md z-[10000] text-white scrollbar-thin scrollbar-thumb-white/20">
                           {PAISES.map((p) => (
                             <div
                               key={p.iso}
@@ -648,7 +648,7 @@ const handleGuardar = async () => {
                                 src={`https://flagcdn.com/24x18/${p.iso}.png`}
                                 className="w-5 h-4"
                               />
-                              <span>{p.nombre}</span>
+                             <span className="whitespace-normal break-words leading-tight">{p.nombre}</span>
                               <span className="ml-auto text-white/60">{p.codigo}</span>
                             </div>
                           ))}
@@ -668,13 +668,9 @@ const handleGuardar = async () => {
                             e.preventDefault();
                             const pegado = e.clipboardData.getData("text");
                             
-                            const limpio = pegado
-                              .replace(/[^\d\s]/g, "")
-                              .replace(/^\s+/, "")
-                              .replace(/\s{2,}/g, " ")
-                              .slice(0, 15);
+                            const limpio = pegado.replace(/[^\d]/g, "");
 
-                            if (!limpio) return;
+                            if (!limpio || limpio.length > 15) return;
 
                             const nuevosValues = [...telefonosValues];
                             nuevosValues[i] = limpio;       // ← era index, ahora i
@@ -699,9 +695,9 @@ const handleGuardar = async () => {
                         />
                       </div>
 
-                    {editando[i] && (
-                      <div className="relative h-0">
-                        <div className="absolute right-0 top-0.5 flex justify-end">
+                      {editando[i] && (
+                        <div className="sm:relative sm:h-0">
+                          <div className="sm:absolute sm:right-0 sm:top-0.5 flex justify-end mt-1 sm:mt-0">
                           {validaciones[i].estado === "empty" && (
                             <span className="text-xs text-red-400">El número no puede estar vacio</span>
                           )}
@@ -754,7 +750,7 @@ const handleGuardar = async () => {
           )}
         </CardContent>
 
-        <div className="flex justify-start px-4 pt-2 pb-4 relative z-0">
+        <div className="flex justify-start px-3 sm:px-4 pt-2 pb-4 relative z-0">
           <button
             type="button"
             onClick={handleAgregarTelefono}
