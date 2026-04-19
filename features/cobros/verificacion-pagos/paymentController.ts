@@ -65,7 +65,7 @@ export const getPaymentsByStatus = async (
  * @param {string} strNewStatusName - El nuevo nombre de estado.
  * @return {object} objUpdatedPayment - El registro actualizado de la base de datos de pagos.
  */
-export const updatePaymentStatus = async (intId: number, strNewStatusName: string) => {
+export const updatePaymentStatus = async (intId: number, strNewStatusName: string, strReason?: string) => {
   const objStatusMap: Record<string, number> = {
     'Aceptado': objStatuses.intAccepted,
     'Rechazado': objStatuses.intRejected
@@ -85,6 +85,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
       where: { id_detalle: intId },
       data: {
         estado: intNewStatus,
+        razon_rechazo: strNewStatusName === 'Rechazado' ? strReason : null,
       },
     });
 
