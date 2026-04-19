@@ -13,6 +13,7 @@ import { ImagenesForm } from '@/features/publicacion/FormularioDinamicoCaracteri
 import { VideoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Video/Videoform'
 import { DescripcionForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Descripcion/Descripcionform'
 import { publicarInmueble } from '@/features/publicacion/BackendFormulario/actions'
+import { StepsSidebar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
 import { SumarioModal } from '@/features/publicacion/sumario/components/SumarioModal'
 
 // ─────────────────────────────────────────────────────────────
@@ -53,6 +54,7 @@ const SESSION_KEYS_TO_CLEAN = [
 
 // ─────────────────────────────────────────────────────────────
 // Mapeo estadoPropiedad (string) → id_estado_construccion (número)
+// Debe estar sincronizado con la tabla EstadoConstruccion en BD
 // ─────────────────────────────────────────────────────────────
 const ESTADO_IDS: Record<string, number> = {
   'En Planos': 1,
@@ -274,7 +276,7 @@ export default function CrearPublicacionPage() {
   }, [isLastStep, currentStep])
 
   // ─────────────────────────────────────────────────────────
-  // handlePublicar — llamado desde el SumarioModal
+  // handlePublicar — llamado desde el SumarioModal al confirmar
   // ─────────────────────────────────────────────────────────
   const handlePublicar = useCallback(async () => {
     setPublishError(null)
@@ -356,14 +358,14 @@ export default function CrearPublicacionPage() {
   }, [router])
 
   // ─────────────────────────────────────────────────────────
-  // handleNext — en el último paso abre el SumarioModal
+  // handleNext — en el último paso valida y abre el SumarioModal
   // ─────────────────────────────────────────────────────────
   const handleNext = useCallback(() => {
     setBlockMsg(null)
     setPublishError(null)
 
     if (isLastStep) {
-      // Validar el último paso y luego abrir el sumario
+      // Valida el paso 6; si pasa, advanceDirect abre el sumario
       triggerRefs[currentStep]?.current?.()
       return
     }
@@ -414,18 +416,13 @@ export default function CrearPublicacionPage() {
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
         }}
       >
-        {/* Panel izquierdo */}
-        <div
-          style={{
-            width: DISENO.panelIzquierdo.width, flexShrink: 0,
-            backgroundColor: DISENO.panelIzquierdo.backgroundColor,
-            padding: DISENO.panelIzquierdo.padding, display: 'flex', flexDirection: 'column',
-          }}
-        >
-          <p style={{ color: '#fff', fontSize: '11px', opacity: 0.5, marginTop: 'auto', textAlign: 'center' }}>
-            Stepper — otro equipo
-          </p>
-        </div>
+        {/* Panel izquierdo — StepsSidebar */}
+        <StepsSidebar
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          steps={STEPS}
+          onStepClick={handleSidebarClick}
+        />
 
         {/* Panel derecho */}
         <div
@@ -444,6 +441,7 @@ export default function CrearPublicacionPage() {
             )}
           </h2>
 
+          {/* Mensaje de bloqueo de navegación */}
           {blockMsg && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
@@ -453,6 +451,7 @@ export default function CrearPublicacionPage() {
             </div>
           )}
 
+          {/* Error de publicación */}
           {publishError && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px',
@@ -465,6 +464,7 @@ export default function CrearPublicacionPage() {
           <div style={{ ...DISENO.cuadroForm, flex: 1, overflowY: 'auto' }}>
             <StepContent
               step={currentStep}
+              // En el paso 6, al pasar validación abre el SumarioModal en vez de avanzar
               advanceDirect={currentStep === 6 ? () => setBolShowSumario(true) : advanceDirect}
               onBack={handleBack}
               triggerRefs={triggerRefs}
@@ -498,13 +498,13 @@ export default function CrearPublicacionPage() {
                 opacity: isPublishing ? 0.6 : 1,
               }}
             >
-              {isPublishing ? 'Publicando...' : isLastStep ? 'Siguiente' : 'Siguiente'}
+              {isPublishing ? 'Publicando...' : 'Siguiente'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* SumarioModal — se abre al completar el paso 6 */}
+      {/* SumarioModal — se abre al completar y validar el paso 6 */}
       {bolShowSumario && (
         <SumarioModal
           onClose={() => setBolShowSumario(false)}
