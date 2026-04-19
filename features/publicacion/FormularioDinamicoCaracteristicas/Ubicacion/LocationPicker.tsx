@@ -46,16 +46,36 @@ const getCenter = (depto?: string): [number, number] => {
   return entry ? entry[1] : DEPTO_COORDS["Cochabamba"]
 }
 
-interface FlyConfig { center: [number, number]; zoom: number; trigger: number }
+// ── Dos tipos de comando al mapa ───────────────────────────────────────────
+// flyTo: para click manual en el mapa (el que ya funcionaba bien)
+// fitBounds: para sugerencia del buscador (usa el boundingbox real de Nominatim)
+type MapCommand =
+  | { type: "flyTo";    center: [number, number]; zoom: number;   trigger: number }
+  | { type: "fitBounds"; bounds: [[number,number],[number,number]]; trigger: number }
+  | { type: "setCenter"; center: [number, number]; zoom: number;  trigger: number }
 
-function FlyToCenter({ config }: { config: FlyConfig }) {
+function MapController({ cmd }: { cmd: MapCommand }) {
   const map  = useMap()
-  const prev = useRef(config.trigger)
+  const prev = useRef<number>(-1)
+
   useEffect(() => {
-    if (config.trigger === prev.current) return
-    prev.current = config.trigger
-    map.flyTo(config.center, config.zoom, { duration: 1.2 })
-  }, [config, map])
+    if (cmd.trigger === prev.current) return
+    prev.current = cmd.trigger
+
+    if (cmd.type === "flyTo") {
+      // Paso 1: teletransporte inmediato sin animación (evita el bug de distancia larga)
+      map.setView(cmd.center, cmd.zoom, { animate: false })
+    } else if (cmd.type === "fitBounds") {
+      // Paso 1: ir sin animación, luego fitBounds
+      map.setView(cmd.bounds[0], 10, { animate: false })
+      setTimeout(() => {
+        map.fitBounds(cmd.bounds, { animate: true, duration: 0.6, maxZoom: 15, padding: [30, 30] })
+      }, 50)
+    } else if (cmd.type === "setCenter") {
+      map.setView(cmd.center, cmd.zoom, { animate: false })
+    }
+  }, [cmd, map])
+
   return null
 }
 
@@ -77,6 +97,7 @@ interface Suggestion {
   display_name: string
   lat:          string
   lon:          string
+  boundingbox:  [string, string, string, string] // [minLat, maxLat, minLng, maxLng]
   address: {
     road?:         string
     house_number?: string
@@ -101,7 +122,8 @@ interface LocationPickerProps {
 
 export default function LocationPicker({ deptoActual, onChange }: LocationPickerProps) {
   const [markerPos,       setMarkerPos]       = useState<[number, number] | null>(null)
-  const [flyConfig,       setFlyConfig]       = useState<FlyConfig>({
+  const [mapCmd,          setMapCmd]          = useState<MapCommand>({
+    type:    "setCenter",
     center:  getCenter(deptoActual),
     zoom:    13,
     trigger: 0,
@@ -117,6 +139,10 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const prevDepto    = useRef(deptoActual)
   const seleccionado = useRef(false)
 
+  // Centro inicial del mapa (solo para MapContainer)
+  const initialCenter = useRef<[number, number]>(getCenter(deptoActual))
+  const initialZoom   = useRef(13)
+
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 400)
     return () => clearTimeout(t)
@@ -125,7 +151,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   useEffect(() => {
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
-    setFlyConfig(prev => ({
+    setMapCmd(prev => ({
+      type:    "setCenter",
       center:  getCenter(deptoActual),
       zoom:    12,
       trigger: prev.trigger + 1,
@@ -150,16 +177,17 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }, 400)
   }, [query])
 
+  // Click manual en el mapa → flyTo (funciona bien, no se toca)
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
     setMarkerPos([lat, lng])
-    // Zoom al punto clickeado
-    setFlyConfig(prev => ({ center: [lat, lng], zoom: 16, trigger: prev.trigger + 1 }))
-    // Cerrar sugerencias al hacer click en el mapa
     setShowSuggestions(false)
     setSuggestions([])
     seleccionado.current = true
+
+    setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
+
     setIsGeocoding(true)
     try {
       const res  = await fetch(
@@ -183,6 +211,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }
   }, [onChange])
 
+  // Selección del buscador → fitBounds con el boundingbox real de Nominatim
   const handleSuggestionClick = useCallback((s: Suggestion) => {
     const lat = parseFloat(parseFloat(s.lat).toFixed(6))
     const lng = parseFloat(parseFloat(s.lon).toFixed(6))
@@ -196,9 +225,31 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     seleccionado.current = true
     setShowSuggestions(false)
     setSuggestions([])
-
     setMarkerPos([lat, lng])
-    setFlyConfig(prev => ({ center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
+
+    // Decidir entre fitBounds y flyTo según el tamaño del boundingbox
+    // Si el bbox es muy grande (ej. cubre toda una ciudad), ignorarlo y hacer flyTo directo
+    const bb      = s.boundingbox
+    const minLat  = parseFloat(bb[0])
+    const maxLat  = parseFloat(bb[1])
+    const minLng  = parseFloat(bb[2])
+    const maxLng  = parseFloat(bb[3])
+    const latSpan = Math.abs(maxLat - minLat)
+    const lngSpan = Math.abs(maxLng - minLng)
+
+    // Si el bbox abarca más de ~0.02 grados (~2 km) en cualquier eje → flyTo con zoom de calle
+    const bboxIsTooBig = latSpan > 0.02 || lngSpan > 0.02
+
+    if (bboxIsTooBig) {
+      setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
+    } else {
+      const bounds: [[number, number], [number, number]] = [
+        [minLat, minLng], // SW
+        [maxLat, maxLng], // NE
+      ]
+      setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
+    }
+
     setQuery(displayStr)
     setDireccion(direccionStr)
     setCiudad(ciudadStr)
@@ -257,18 +308,18 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
-            position:  "absolute",
-            top:       "100%",
-            left:      0,
-            right:     0,
-            background:"#ffffff",
-            border:    `1px solid ${C.borde}`,
+            position:     "absolute",
+            top:          "100%",
+            left:         0,
+            right:        0,
+            background:   "#ffffff",
+            border:       `1px solid ${C.borde}`,
             borderRadius: 6,
-            zIndex:    99999,
-            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            marginTop: 3,
-            maxHeight: 200,
-            overflowY: "auto",
+            zIndex:       99999,
+            boxShadow:    "0 6px 20px rgba(0,0,0,0.15)",
+            marginTop:    3,
+            maxHeight:    200,
+            overflowY:    "auto",
           }}>
             {suggestions.map((s, i) => (
               <div
@@ -300,14 +351,16 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
       {/* Mapa */}
       <div style={{
-        height: 270, borderRadius: 8, overflow: "hidden",
-        border: `1.5px solid ${C.borde}`,
-        position: "relative",
-        zIndex: 1,
+        height:       270,
+        borderRadius: 8,
+        overflow:     "hidden",
+        border:       `1.5px solid ${C.borde}`,
+        position:     "relative",
+        zIndex:       1,
       }}>
         <MapContainer
-          center={flyConfig.center}
-          zoom={flyConfig.zoom}
+          center={initialCenter.current}
+          zoom={initialZoom.current}
           style={{ height: "100%", width: "100%", cursor: "crosshair" }}
           zoomControl={true}
         >
@@ -316,7 +369,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
             attribution='&copy; OpenStreetMap contributors'
           />
           <ClickHandler onLocationSelect={handleMapClick} />
-          <FlyToCenter config={flyConfig} />
+          <MapController cmd={mapCmd} />
           {markerPos && <Marker position={markerPos} />}
         </MapContainer>
       </div>

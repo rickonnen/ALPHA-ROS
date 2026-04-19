@@ -44,14 +44,26 @@ const ESTADO_IDS: Record<string, number> = {
   'En Planos': 1, 'En Construccion': 2, 'Entrega Inmediata': 3,
 }
 
+// Títulos largos — usados en el encabezado derecho
 const STEPS = [
-  { title: 'Datos del Aviso',    opcional: false },
-  { title: 'Categoría y Estado', opcional: false },
-  { title: 'Ubicación de la Propiedad',          opcional: false },
-  { title: 'Características de la Propiedad',    opcional: false },
-  { title: 'Imágenes de la Propiedad',           opcional: false },
-  { title: 'Video de la Propiedad',              opcional: true  },
-  { title: 'Descripción de la Propiedad',        opcional: false },
+  { title: 'Datos del Aviso',                 opcional: false },
+  { title: 'Categoría y Estado',              opcional: false },
+  { title: 'Ubicación de la Propiedad',       opcional: false },
+  { title: 'Características de la Propiedad', opcional: false },
+  { title: 'Imágenes de la Propiedad',        opcional: false },
+  { title: 'Video de la Propiedad',           opcional: true  },
+  { title: 'Descripción de la Propiedad',     opcional: false },
+]
+
+// Títulos cortos — usados únicamente en el sidebar izquierdo
+const SIDEBAR_STEPS = [
+  { title: 'Datos del Aviso *',    opcional: false },
+  { title: 'Categoria y Estado *', opcional: false },
+  { title: 'Ubicación *',          opcional: false },
+  { title: 'Caracteristícas *',    opcional: false },
+  { title: 'Imagenes *',           opcional: false },
+  { title: 'Video',              opcional: true  },
+  { title: 'Descripción *',        opcional: false },
 ]
 
 // ─── Colores del proyecto ─────────────────────────────────────
@@ -128,66 +140,6 @@ function StepContent({
   }
 }
 
-// ─── Mobile: barra de progreso + numeritos ────────────────────
-function MobileStepBar({ currentStep, completedSteps, onStepClick }: {
-  currentStep: number
-  completedSteps: Set<number>
-  onStepClick: (i: number) => void
-}) {
-  const progress = Math.round(((completedSteps.size) / STEPS.length) * 100)
-
-  return (
-    <div style={{ backgroundColor: C.crema, padding: '12px 16px 0' }}>
-      {/* Barra de progreso */}
-      <p style={{ margin: '0 0 4px', fontSize: 11, color: C.marino, fontWeight: 500, textAlign: 'center' }}>
-        Completa el proceso para publicar tu propiedad
-      </p>
-      <div style={{ height: 6, borderRadius: 99, backgroundColor: C.borde, marginBottom: 4 }}>
-        <div style={{
-          height: '100%', borderRadius: 99, backgroundColor: C.terracota,
-          width: `${progress}%`, transition: 'width 0.4s ease',
-        }} />
-      </div>
-      <p style={{ margin: '0 0 10px', fontSize: 11, color: C.marino, textAlign: 'center' }}>
-        {completedSteps.size}/{STEPS.length} pasos completados
-      </p>
-
-      {/* Numeritos */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingBottom: 10 }}>
-        {STEPS.map((step, i) => {
-          const isActive    = i === currentStep
-          const isCompleted = completedSteps.has(i)
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onStepClick(i)}
-              style={{
-                width:           28,
-                height:          28,
-                borderRadius:    '50%',
-                border:          isActive ? `2px solid ${C.terracota}` : isCompleted ? 'none' : `1.5px solid ${C.borde}`,
-                backgroundColor: isCompleted ? C.terracota : isActive ? '#fff' : C.crema,
-                color:           isCompleted ? '#fff' : isActive ? C.terracota : C.marino,
-                fontSize:        12,
-                fontWeight:      isActive || isCompleted ? 700 : 400,
-                cursor:          'pointer',
-                display:         'flex',
-                alignItems:      'center',
-                justifyContent:  'center',
-                flexShrink:      0,
-                transition:      'all 0.2s',
-              }}
-            >
-              {isCompleted ? '✓' : i + 1}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 // ─── Página principal ─────────────────────────────────────────
 export default function CrearPublicacionPage() {
   const router = useRouter()
@@ -206,7 +158,6 @@ export default function CrearPublicacionPage() {
   const imagenesRef    = useRef<File[]>([])
   const pendingStepRef = useRef<number | null>(null)
 
-  // Actualizar isMobile al cambiar tamaño de ventana
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
@@ -243,30 +194,30 @@ export default function CrearPublicacionPage() {
     setPublishError(null)
     setIsPublishing(true)
     try {
-      const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')           ?? '{}')
-      const categoria       = JSON.parse(sessionStorage.getItem('categoriaYEstado')     ?? '{}')
-      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')            ?? '{}')
+      const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')             ?? '{}')
+      const categoria       = JSON.parse(sessionStorage.getItem('categoriaYEstado')       ?? '{}')
+      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')              ?? '{}')
       const caracteristicas = JSON.parse(sessionStorage.getItem('caracteristicasDetalle') ?? '{}')
-      const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')       ?? '{}')
-      const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad') ?? '{}')
+      const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')         ?? '{}')
+      const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad')   ?? '{}')
 
       const formData = new FormData()
-      formData.append('titulo',           datosAviso.titulo        ?? '')
-      formData.append('tipoOperacion',    datosAviso.tipoOperacion ?? '')
-      formData.append('precio',           String(datosAviso.precio ?? '0'))
-      formData.append('tipoMoneda',       datosAviso.tipoMoneda    ?? 'USD')
-      formData.append('tipoInmueble',     categoria.tipoPropiedad  ?? '')
-      formData.append('estadoConstruccion', String(ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1))
-      formData.append('direccion',        ubicacion.direccion       ?? '')
-      formData.append('departamento',     ubicacion.departamento    ?? '')
-      formData.append('zona',             ubicacion.zona            ?? '')
+      formData.append('titulo',              datosAviso.titulo        ?? '')
+      formData.append('tipoOperacion',       datosAviso.tipoOperacion ?? '')
+      formData.append('precio',              String(datosAviso.precio ?? '0'))
+      formData.append('tipoMoneda',          datosAviso.tipoMoneda    ?? 'USD')
+      formData.append('tipoInmueble',        categoria.tipoPropiedad  ?? '')
+      formData.append('estadoConstruccion',  String(ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1))
+      formData.append('direccion',           ubicacion.direccion      ?? '')
+      formData.append('departamento',        ubicacion.departamento   ?? '')
+      formData.append('zona',                ubicacion.zona           ?? '')
       if (ubicacion.lat) formData.append('lat', String(ubicacion.lat))
       if (ubicacion.lng) formData.append('lng', String(ubicacion.lng))
-      formData.append('habitaciones',     String(caracteristicas.habitaciones ?? 0))
-      formData.append('banios',           String(caracteristicas.banios       ?? 0))
-      formData.append('garajes',          String(caracteristicas.garajes      ?? 0))
-      formData.append('plantas',          String(caracteristicas.plantas      ?? 0))
-      formData.append('superficie',       String(caracteristicas.superficie   ?? '0'))
+      formData.append('habitaciones',        String(caracteristicas.habitaciones ?? 0))
+      formData.append('banios',              String(caracteristicas.banios       ?? 0))
+      formData.append('garajes',             String(caracteristicas.garajes      ?? 0))
+      formData.append('plantas',             String(caracteristicas.plantas      ?? 0))
+      formData.append('superficie',          String(caracteristicas.superficie   ?? '0'))
 
       if (imagenesRef.current.length === 0) {
         setPublishError('Debes subir al menos 1 imagen.')
@@ -274,7 +225,7 @@ export default function CrearPublicacionPage() {
         return
       }
       imagenesRef.current.forEach(f => formData.append('imagenes', f))
-      formData.append('videoUrl',    video.url             ?? '')
+      formData.append('videoUrl',    video.url              ?? '')
       formData.append('descripcion', descripcion.descripcion ?? '')
       formData.append('id_usuario',  '')
 
@@ -330,7 +281,7 @@ export default function CrearPublicacionPage() {
 
   if (!hydrated) return null
 
-  // ── MOBILE ────────────────────────────────────────────────────────────────
+  //MOBILE
   if (isMobile) {
     return (
       <main style={{
@@ -342,12 +293,10 @@ export default function CrearPublicacionPage() {
         gap: 0,
       }}>
 
-        {/* Título */}
         <h1 style={{ fontSize: 26, fontWeight: 700, color: C.marino, margin: '0 0 12px' }}>
           Crear publicación
         </h1>
 
-        {/* Panel marino — contiene barra de progreso + título + form + numeritos */}
         <div style={{
           backgroundColor: C.marino,
           borderRadius: 12,
@@ -357,7 +306,7 @@ export default function CrearPublicacionPage() {
           gap: 14,
         }}>
 
-          {/* Barra de progreso — DENTRO del panel azul */}
+          {/* Barra de progreso */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
               Completa el proceso para publicar tu propiedad
@@ -374,18 +323,17 @@ export default function CrearPublicacionPage() {
             </p>
           </div>
 
-          {/* Título del paso */}
+          {/* Título del paso — usa STEPS (nombres largos) */}
           <h2 style={{
             fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
             textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
             {STEPS[currentStep].title}
             {STEPS[currentStep].opcional && (
-              <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, opacity: 0.6 }}>(opcional)</span>
+              <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: C.terracota }}>-Opcional</span>
             )}
           </h2>
 
-          {/* Mensajes de error */}
           {(blockMsg || publishError) && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
@@ -395,7 +343,6 @@ export default function CrearPublicacionPage() {
             </div>
           )}
 
-          {/* Cuadro del form */}
           <div style={{ backgroundColor: C.crema, borderRadius: 10, padding: 14 }}>
             <StepContent
               step={currentStep}
@@ -406,7 +353,7 @@ export default function CrearPublicacionPage() {
             />
           </div>
 
-          {/* Numeritos — dentro del panel azul */}
+          {/* Numeritos */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
             {STEPS.map((_, i) => {
               const isActive    = i === currentStep
@@ -440,7 +387,7 @@ export default function CrearPublicacionPage() {
           </div>
         </div>
 
-        {/* Botones — FUERA del panel, mismos colores que desktop */}
+        {/* Botones */}
         <div style={{ display: 'flex', gap: 10, padding: '12px 0 0' }}>
           <button
             type="button"
@@ -492,7 +439,7 @@ export default function CrearPublicacionPage() {
     )
   }
 
-    // ── DESKTOP ───────────────────────────────────────────────────────────────
+  //DESKTOP
   return (
     <main
       style={{
@@ -515,10 +462,11 @@ export default function CrearPublicacionPage() {
         display: 'flex', borderRadius: 12, overflow: 'hidden',
         boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
       }}>
+        {/* Sidebar izquierdo — usa SIDEBAR_STEPS (nombres cortos) */}
         <StepsSidebar
           currentStep={currentStep}
           completedSteps={completedSteps}
-          steps={STEPS}
+          steps={SIDEBAR_STEPS}
           onStepClick={handleSidebarClick}
         />
 
@@ -526,13 +474,14 @@ export default function CrearPublicacionPage() {
           flex: 1, backgroundColor: C.marino,
           padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
         }}>
+          {/* Encabezado derecho — usa STEPS (nombres largos) */}
           <h2 style={{
             fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
             textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
           }}>
             {STEPS[currentStep].title}
             {STEPS[currentStep].opcional && (
-              <span style={{ fontSize: 12, fontWeight: 400, marginLeft: 8, opacity: 0.6 }}>(opcional)</span>
+              <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
             )}
           </h2>
 
