@@ -1,94 +1,166 @@
-'use client'
+"use client";
+
 import { X } from "lucide-react";
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
-import { Geist } from 'next/font/google'
+import { useEffect, useRef, useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { Geist } from "next/font/google";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
 
 export type TipoInmueble = {
-  id_tipo_inmueble: number
-  nombre_inmueble: string | null
-}
+  id_tipo_inmueble: number;
+  nombre_inmueble: string | null;
+};
 
 type Props = {
-  tipos: TipoInmueble[]
-  selected: number[]
-  onChange: (selected: number[]) => void
-}
+  tipos: TipoInmueble[];
+  selected: number[];
+  onChange: (selected: number[]) => void;
+};
 
 const geist = Geist({
-  subsets: ['latin']
-})
+  subsets: ["latin"],
+});
 
 export function FilterTypeProperty({ tipos, selected, onChange }: Props) {
+  const [accordionValue, setAccordionValue] = useState<string>("");
+
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const optionRefs = useRef<Array<HTMLLabelElement | null>>([]);
+
   const toggle = (id: number) => {
     onChange(
       selected.includes(id)
         ? selected.filter((s) => s !== id)
         : [...selected, id]
-    )
-  }
+    );
+  };
 
   const label =
     selected.length === 0
-      ? 'Tipo Inmueble'
+      ? "Tipo Inmueble"
       : tipos
           .filter((t) => selected.includes(t.id_tipo_inmueble))
           .map((t) => t.nombre_inmueble)
-          .join(', ')
+          .join(", ");
 
   const labelTruncated =
-    label.length > 30 ? label.slice(0, 20) + '..' : label
+    label.length > 30 ? label.slice(0, 20) + ".." : label;
+
+  const isOpen = accordionValue === "tipo-inmueble";
+
+  useEffect(() => {
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        optionRefs.current[0]?.focus();
+      });
+    }
+  }, [isOpen]);
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLLabelElement>,
+    index: number,
+    optionId: number
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = (index + 1) % tipos.length;
+      optionRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex = (index - 1 + tipos.length) % tipos.length;
+      optionRefs.current[prevIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      toggle(optionId);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAccordionValue("");
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+    }
+  };
 
   return (
-    <div className="w-full mt-3">
-      <Accordion type="single" collapsible className="w-full">
+    <div className="mt-3 w-full">
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full"
+        value={accordionValue}
+        onValueChange={setAccordionValue}
+      >
         <AccordionItem value="tipo-inmueble" className="border-none">
           <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
+              ref={triggerButtonRef}
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-          <div className={`${geist.className} flex w-full items-center justify-between pr-2`}>
-            <span className="flex-1 truncate text-left">
-              {labelTruncated}
-            </span>
-            {/* Solo añadimos esto: la X que limpia el filtro */}
-            {selected.length > 0 && (
-              <X 
-                size={16} 
-                className="text-[#4B4B4B] hover:text-red-500 transition-colors ml-2" 
-                onClick={(e) => {
-                  e.stopPropagation(); // Para que NO se cierre el menú al borrar
-                  onChange([]);        // Esto borra todo lo que marcaron
-                }} 
-              />
-            )}
-          </div>
+              <div
+                className={`${geist.className} flex w-full items-center justify-between pr-2`}
+              >
+                <span className="flex-1 truncate text-left">
+                  {labelTruncated}
+                </span>
+
+                {selected.length > 0 && (
+                  <X
+                    size={16}
+                    className="ml-2 text-[#4B4B4B] transition-colors hover:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange([]);
+                    }}
+                  />
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className={`${geist.className} pt-3 pb-0`}>
+          <AccordionContent className={`${geist.className} pb-0 pt-3`}>
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
               <div className="space-y-2">
-                {tipos.map((tipo) => {
-                  const id = `tipo-inmueble-${tipo.id_tipo_inmueble}`
-                  const isChecked = selected.includes(tipo.id_tipo_inmueble)
+                {tipos.map((tipo, index) => {
+                  const id = `tipo-inmueble-${tipo.id_tipo_inmueble}`;
+                  const isChecked = selected.includes(tipo.id_tipo_inmueble);
 
                   return (
                     <Label
                       key={tipo.id_tipo_inmueble}
+                      ref={(element) => {
+                        optionRefs.current[index] = element;
+                      }}
+                      tabIndex={0}
                       htmlFor={id}
+                      onKeyDown={(event) =>
+                        handleOptionKeyDown(
+                          event,
+                          index,
+                          tipo.id_tipo_inmueble
+                        )
+                      }
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm text-[#2E2E2E] transition cursor-pointer font-normal",
+                        "flex w-full cursor-pointer items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] transition outline-none",
+                        "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                         isChecked
                           ? "bg-[#E7E3DD]"
                           : "bg-transparent hover:bg-[#F4EFE6]"
@@ -107,7 +179,7 @@ export function FilterTypeProperty({ tipos, selected, onChange }: Props) {
                         {tipo.nombre_inmueble}
                       </span>
                     </Label>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -115,5 +187,5 @@ export function FilterTypeProperty({ tipos, selected, onChange }: Props) {
         </AccordionItem>
       </Accordion>
     </div>
-  )
+  );
 }

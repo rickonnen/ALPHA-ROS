@@ -42,6 +42,8 @@ function SubDropdown({
 }: SubDropdownProps) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -54,43 +56,103 @@ function SubDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    if (abierto && !children && opciones.length > 0) {
+      requestAnimationFrame(() => {
+        optionRefs.current[0]?.focus();
+      });
+    }
+  }, [abierto, children, opciones.length]);
+
   const hasCustomContent = Boolean(children);
+
+  const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      setAbierto((prev) => !prev);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAbierto(false);
+    }
+  };
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    optionValue: string
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = (index + 1) % opciones.length;
+      optionRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex = (index - 1 + opciones.length) % opciones.length;
+      optionRefs.current[prevIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onChange?.(optionValue);
+      setAbierto(false);
+
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAbierto(false);
+
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+    }
+  };
 
   return (
     <div ref={ref} className="w-full">
       <button
+        ref={triggerButtonRef}
         type="button"
         onClick={() => setAbierto((prev) => !prev)}
+        onKeyDown={handleTriggerKeyDown}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        
-        {/* 1. El texto se queda solo a la izquierda */}
-      <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-        {valor || label}
-      </span>
-
-      {/* 2. La X y la Flecha se juntan para irse a la derecha cambio 3*/}
-      <div className="flex items-center gap-2">
-        {valor && (
-          <X 
-            size={16} 
-            className="text-[#4B4B4B] hover:text-red-500 transition-colors" 
-            onClick={(e) => {
-              e.stopPropagation();
-              onChange?.("");
-            }} 
-          />
-        )}
-        <span
-          className="text-[#4B4B4B] transition-transform duration-200"
-          style={{
-            display: "inline-block",
-            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        >
-          ▾
+        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
+          {valor || label}
         </span>
-      </div>
+
+        <div className="flex items-center gap-2">
+          {valor && (
+            <X
+              size={16}
+              className="text-[#4B4B4B] transition-colors hover:text-red-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange?.("");
+              }}
+            />
+          )}
+          <span
+            className="text-[#4B4B4B] transition-transform duration-200"
+            style={{
+              display: "inline-block",
+              transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▾
+          </span>
+        </div>
       </button>
 
       {abierto && (
@@ -105,13 +167,18 @@ function SubDropdown({
                 return (
                   <button
                     key={i}
+                    ref={(element) => {
+                      optionRefs.current[i] = element;
+                    }}
                     type="button"
                     onMouseDown={() => {
                       onChange?.(op);
                       setAbierto(false);
                     }}
+                    onKeyDown={(event) => handleOptionKeyDown(event, i, op)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
+                      "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition outline-none",
+                      "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                       checked
                         ? "bg-[#E7E3DD] text-[#2E2E2E]"
                         : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
@@ -169,6 +236,9 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const surfaceTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const minSurfaceRef = useRef<HTMLInputElement | null>(null);
+  const maxSurfaceRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setHabitaciones(value?.habitaciones ?? "");
@@ -233,6 +303,28 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       }
     };
 
+  const handleMinSurfaceKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      requestAnimationFrame(() => {
+        maxSurfaceRef.current?.focus();
+      });
+    }
+  };
+
+  const handleMaxSurfaceKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      requestAnimationFrame(() => {
+        surfaceTriggerRef.current?.focus();
+      });
+    }
+  };
+
   const surfaceLabel =
     minSurface && maxSurface
       ? `${minSurface}m² - ${maxSurface}m²`
@@ -263,7 +355,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="overflow-visible pt-3 pb-0">
+          <AccordionContent className="overflow-visible pb-0 pt-3">
             <div className="flex flex-col gap-3 overflow-visible">
               <SubDropdown
                 label="Número total de habitaciones"
@@ -297,13 +389,23 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
               <SubDropdown label="Superficie m²" valor={surfaceLabel}>
                 <div className="space-y-2">
+                  <button
+                    ref={surfaceTriggerRef}
+                    type="button"
+                    className="sr-only"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                  />
+
                   <div className="grid grid-cols-2 gap-2">
                     <input
+                      ref={minSurfaceRef}
                       type="text"
                       inputMode="numeric"
                       placeholder="Min m²"
                       value={minSurface}
                       onChange={handleSurfaceInputChange("minSurface")}
+                      onKeyDown={handleMinSurfaceKeyDown}
                       className={cn(
                         "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
                         surfaceError === "Solo se permiten números"
@@ -313,11 +415,13 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                     />
 
                     <input
+                      ref={maxSurfaceRef}
                       type="text"
                       inputMode="numeric"
                       placeholder="Max m²"
                       value={maxSurface}
                       onChange={handleSurfaceInputChange("maxSurface")}
+                      onKeyDown={handleMaxSurfaceKeyDown}
                       className={cn(
                         "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
                         surfaceError === "Solo se permiten números"
@@ -340,4 +444,4 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       </Accordion>
     </div>
   );
-} 
+}

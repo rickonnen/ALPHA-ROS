@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -225,6 +225,31 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+
+  const searchInputDesktopRef = useRef<HTMLInputElement>(null);
+
+  const focusSearchInput = () => {
+    searchInputDesktopRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const handleGlobalShortcuts = (event: KeyboardEvent) => {
+      if (!event.altKey) return;
+
+      const key = event.key.toLowerCase();
+
+      if (key === 'u') {
+        event.preventDefault();
+        focusSearchInput();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalShortcuts);
+
+    return () => {
+      window.removeEventListener('keydown', handleGlobalShortcuts);
+    };
+  }, []);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -699,7 +724,15 @@ function SearchPageContent() {
 
               <div className="my-4 h-px bg-[#F4EFE6]" />
 
-              <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+              <SearchAutocomplete
+                ref={searchInputDesktopRef}
+                value={searchLocation}
+                onChange={setSearchLocation}
+                onSelectSuggestion={() => {
+                  saveFiltersToUrl();
+                  void runSearch();
+                }}
+              />
 
               <div className="my-4 h-px bg-[#F4EFE6]" />
 

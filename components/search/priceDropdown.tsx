@@ -1,9 +1,9 @@
 "use client";
+
 import { X } from "lucide-react";
 import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { convertUsdToBs, convertBsToUsd } from "@/features/filter_search_page/currencyConverter";
 import CurrencySwitch from "./currencySwitch";
-import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -39,6 +39,10 @@ export default function PriceDropdown({
   const previousCurrencyRef = useRef<Currency>(selectedCurrency);
   const previousAppliedFilterRef = useRef<AppliedPriceFilter | null>(appliedPriceFilter);
 
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const minInputRef = useRef<HTMLInputElement | null>(null);
+  const maxInputRef = useRef<HTMLInputElement | null>(null);
+
   const maxAllowedPrice = 999999999;
 
   const handlePriceInputChange =
@@ -72,7 +76,7 @@ export default function PriceDropdown({
       }
     };
 
-  const handleApplyRange = () => {
+  const applyRange = () => {
     const parsedMinPrice =
       minPriceInput.trim() === "" ? undefined : Number(minPriceInput);
 
@@ -81,37 +85,37 @@ export default function PriceDropdown({
 
     if (selectedCurrency !== "USD" && selectedCurrency !== "BS") {
       setPriceError("Moneda inválida");
-      return;
+      return false;
     }
 
     if (parsedMinPrice !== undefined && Number.isNaN(parsedMinPrice)) {
       setPriceError("Precio mínimo debe ser un número");
-      return;
+      return false;
     }
 
     if (parsedMaxPrice !== undefined && Number.isNaN(parsedMaxPrice)) {
       setPriceError("Precio máximo debe ser un número");
-      return;
+      return false;
     }
 
     if (parsedMinPrice !== undefined && parsedMinPrice < 0) {
       setPriceError("Precio mínimo no puede ser negativo");
-      return;
+      return false;
     }
 
     if (parsedMaxPrice !== undefined && parsedMaxPrice < 0) {
       setPriceError("Precio máximo no puede ser negativo");
-      return;
+      return false;
     }
 
     if (parsedMinPrice !== undefined && parsedMinPrice > maxAllowedPrice) {
       setPriceError("Precio mínimo excede el valor máximo permitido");
-      return;
+      return false;
     }
 
     if (parsedMaxPrice !== undefined && parsedMaxPrice > maxAllowedPrice) {
       setPriceError("Precio máximo excede el valor máximo permitido");
-      return;
+      return false;
     }
 
     if (
@@ -120,7 +124,7 @@ export default function PriceDropdown({
       parsedMinPrice > parsedMaxPrice
     ) {
       setPriceError("Precio mínimo no puede ser mayor a precio máximo");
-      return;
+      return false;
     }
 
     const normalizedMinPrice =
@@ -144,7 +148,51 @@ export default function PriceDropdown({
       maxPrice: normalizedMaxPrice,
     });
 
-    setAccordionValue("");
+    return true;
+  };
+
+  const handleApplyRange = () => {
+    const success = applyRange();
+
+    if (success) {
+      setAccordionValue("");
+    }
+  };
+
+  const handleInputBlur = () => {
+    applyRange();
+  };
+
+  const handleMinInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const success = applyRange();
+
+      if (success) {
+        requestAnimationFrame(() => {
+          maxInputRef.current?.focus();
+        });
+      }
+    }
+  };
+
+  const handleMaxInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const success = applyRange();
+
+      if (success) {
+        setAccordionValue("");
+
+        requestAnimationFrame(() => {
+          triggerButtonRef.current?.focus();
+        });
+      }
+    }
   };
 
   const formatPriceValue = (value: number) => {
@@ -266,13 +314,14 @@ export default function PriceDropdown({
   }, [appliedPriceFilter, selectedCurrency]);
 
   return (
-    <div className="w-full mt-3">
+    <div className="mt-3 w-full">
       <div className="mb-4">
-       <CurrencySwitch
-        currentCurrency={selectedCurrency}
-        setCurrentCurrency={onCurrencyChange}
-       />
+        <CurrencySwitch
+          currentCurrency={selectedCurrency}
+          setCurrentCurrency={onCurrencyChange}
+        />
       </div>
+
       <Accordion
         type="single"
         collapsible
@@ -283,37 +332,37 @@ export default function PriceDropdown({
         <AccordionItem value="price" className="border-none">
           <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
+              ref={triggerButtonRef}
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
               <div className="flex w-full items-center justify-between pr-2">
-            <span>{getTriggerLabel()}</span>
-            
-            {/* Solo mostramos la X si el usuario ya aplicó algún precio */}
-            {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
-              <X
-                size={18}
-                className="ml-2 text-[#4B4B4B] hover:text-red-500 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation(); // Evita que el menú se abra o cierre
-                  setMinPriceInput(""); // Borra el texto del cuadrito mínimo
-                  setMaxPriceInput(""); // Borra el texto del cuadrito máximo
-                  onApplyRange({ minPrice: undefined, maxPrice: undefined }); // Limpia el filtro
-                }}
-              />
-            )}
-          </div>
+                <span>{getTriggerLabel()}</span>
+
+                {(appliedPriceFilter?.minPrice !== undefined ||
+                  appliedPriceFilter?.maxPrice !== undefined) && (
+                  <X
+                    size={18}
+                    className="ml-2 text-[#4B4B4B] transition-colors hover:text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMinPriceInput("");
+                      setMaxPriceInput("");
+                      onApplyRange({ minPrice: undefined, maxPrice: undefined });
+                    }}
+                  />
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="pt-3 pb-0">
+          <AccordionContent className="pb-0 pt-3">
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-4 shadow-sm">
-              
-
               <div className="mt-3 flex justify-center gap-2">
                 <input
+                  ref={minInputRef}
                   type="text"
                   inputMode="numeric"
                   placeholder={`Min ${selectedCurrency}`}
@@ -327,10 +376,12 @@ export default function PriceDropdown({
                   )}
                   value={minPriceInput}
                   onChange={handlePriceInputChange("min")}
-                  onBlur={handleApplyRange}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleMinInputKeyDown}
                 />
 
                 <input
+                  ref={maxInputRef}
                   type="text"
                   inputMode="numeric"
                   placeholder={`Max ${selectedCurrency}`}
@@ -344,15 +395,14 @@ export default function PriceDropdown({
                   )}
                   value={maxPriceInput}
                   onChange={handlePriceInputChange("max")}
-                  onBlur={handleApplyRange}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleMaxInputKeyDown}
                 />
               </div>
 
               <div className={priceError ? "mt-2 block" : "hidden"}>
                 <p className="text-center text-sm text-red-600">{priceError}</p>
               </div>
-
-              
             </div>
           </AccordionContent>
         </AccordionItem>
