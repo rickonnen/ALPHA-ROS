@@ -349,7 +349,8 @@ function FormularioDinamicoInner() {
         const result = await actualizarPublicacion(idPublicacion, formData)
         if (result.success) {
           SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
-          router.push(`/publicacion/${result.idPublicacion}`)
+          window.open(`/publicacion/Mi_inmueble/${result.idPublicacion}`, '_blank')
+          router.push('/') 
         } else {
           const firstError = Object.values(result.errors ?? {}).flat()[0] as string | undefined
           setPublishError(firstError ?? 'Error al guardar. Intenta de nuevo.')
@@ -365,7 +366,8 @@ function FormularioDinamicoInner() {
         const result = await publicarInmueble(formData)
         if (result.success) {
           SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
-          router.push(`/publicacion/${result.idPublicacion}`)
+          window.open(`/publicacion/Mi_inmueble/${result.idPublicacion}`, '_blank')
+          router.push('/') 
         } else if (result.reason === 'LIMITE_ALCANZADO') {
           setPublishError('Has alcanzado el límite de publicaciones gratuitas.')
         } else {
