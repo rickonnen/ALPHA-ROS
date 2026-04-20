@@ -23,9 +23,10 @@ import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { X, List, LayoutGrid } from 'lucide-react';
+import { X, List, LayoutGrid, Map } from 'lucide-react';
 import SearchMapClient from './SearchMapClient';
 import { convertPublicacionesToLocations } from '@/lib/locations';
+import CurrencySwitch from '@/components/search/currencySwitch';
 
 type Currency = 'USD' | 'BS';
 
@@ -451,11 +452,11 @@ function SearchPageContent() {
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-10">
-      <div className="relative z-[60] mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4 md:hidden">
+      <div className="relative z-[60] mb-6 flex items-center justify-between gap-4 border-b pb-4 md:hidden">
         <Button
           variant="secondary"
           onClick={openMobileFilters}
-          className="h-10 w-42 px-3 flex items-center gap-1 text-sm"
+          className="h-10 px-3 flex items-center gap-1 text-sm"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -463,13 +464,21 @@ function SearchPageContent() {
           Mostrar Filtros
         </Button>
 
+        <div>
+          <CurrencySwitch
+            currentCurrency={selectedCurrency} 
+            setCurrentCurrency={handleCurrencyChange}
+          />
+        </div>
+        
         {/*boton mapa */}
         <div className="flex items-center gap-2">
           <label className="relative inline-flex cursor-pointer items-center">
             <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
             <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
           </label>
-          <span className="text-sm font-medium text-gray-700">Mapa</span>
+          {/* <span className="text-sm font-medium text-gray-700">Mapa</span> */}
+          <Map className="h-5 w-5 text-gray-500"/>
         </div>
       </div>
 
@@ -605,7 +614,6 @@ function SearchPageContent() {
                   <LayoutGrid className="h-5 w-5" />
                   </button>
                   {/* Botón de vista de lista */}
-                  
                   <button
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
