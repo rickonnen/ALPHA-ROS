@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         Publicacion: {
           include: {
             Imagen: { take: 1 },
-            Zona: true,
+            //Zona: true,
             TipoInmueble: true,
             TipoOperacion: true,
           },
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     const data = favoritos.map((fav) => ({
       id: String(fav.Publicacion.id_publicacion),
       titulo: fav.Publicacion.titulo ?? "Sin título",
-      zona: fav.Publicacion.Zona?.nombre_zona ?? "Sin zona",
+      //zona: fav.Publicacion.Zona?.nombre_zona ?? "Sin zona",
       tipo: fav.Publicacion.TipoInmueble?.nombre_inmueble ?? "Sin tipo",
       tipo_operacion: fav.Publicacion.TipoOperacion?.nombre_operacion ?? "Sin operación",
       imagen: fav.Publicacion.Imagen[0]?.url_imagen ?? null,

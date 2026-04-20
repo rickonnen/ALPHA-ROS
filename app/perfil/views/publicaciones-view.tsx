@@ -155,15 +155,15 @@ export default function PublicacionesView({
       setError(null);
       // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
       const url = `/api/perfil/updateEstadoPublicacion?id_publicacion=${id_pub}&id_estado=${nuevoEstado}&id_usuario=${id_usuario}`;
-      
+
       const res = await fetch(url, { method: "PATCH" });
 
       if (res.ok) {
         // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
         setPublicaciones((prev) =>
           prev.map((p) =>
-            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p
-          )
+            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
+          ),
         );
       } else {
         const errorData = await res.json();
@@ -175,7 +175,7 @@ export default function PublicacionesView({
       setError("Error de conexión al intentar cambiar el estado.");
     }
   };
-  const handleAgregar = async () => { 
+  const handleAgregar = async () => {
     if (!user) {
       router.push("/login");
       return;
@@ -358,7 +358,7 @@ export default function PublicacionesView({
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}
-        strPlansHref="/cobros/planes" 
+        strPlansHref="/cobros/planes"
       />
     </>
   );

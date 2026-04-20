@@ -29,7 +29,7 @@ type HistorialItem = {
   Publicacion: {
     titulo: string | null;
     precio: number | null;
-    zona: string | null;
+   //zona: string | null;
     Moneda: { simbolo: string } | null;
     TipoOperacion: { nombre_operacion: string | null } | null;
     Imagen: { url_imagen: string | null }[];
@@ -146,7 +146,6 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
                   </div>
                   <div>
                     <p className="font-bold text-sm">{item.Publicacion.titulo ?? "Sin título"}</p>
-                    <p className="text-xs text-white/50">{item.Publicacion.zona ?? ""}</p>
                     <p className="text-sm text-white/70">
                       {item.Publicacion.Moneda?.simbolo} {item.Publicacion.precio ?? "Sin precio"}
                     </p>

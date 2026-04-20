@@ -27,7 +27,7 @@ import { Switch } from "@/components/ui/switch";
 export interface Publicacion {
   id: string;
   titulo: string;
-  zona: string;
+  //zona: string;
   direccion?: string;
   tipo: string;
   tipoOperacion?: string;
@@ -61,7 +61,9 @@ export default function PublicacionCard({
     .toUpperCase();
 
   return (
-    <Card className={`relative border border-black/10 bg-white text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden ${!activo ? 'bg-slate-100 brightness-[0.85]' : 'bg-white'}`}>
+    <Card
+      className={`relative border border-black/10 text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden ${!activo ? "bg-slate-100 brightness-[0.85]" : "bg-white"}`}
+    >
       <CardContent className="flex flex-col min-[480px]:flex-row items-stretch gap-0 p-0">
         {/* Miniatura */}
         <div className="w-full h-40 min-[480px]:w-40 min-[480px]:h-auto min-[480px]:min-w-[10rem] flex-shrink-0 overflow-hidden">
@@ -93,10 +95,12 @@ export default function PublicacionCard({
                   {strEtiqueta}
                 </p>
               ) : (
-                <span /> 
+                <span />
               )}
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold uppercase ${activo ? 'text-green-600' : 'text-red-500'}`}>
+                <span
+                  className={`text-[10px] font-bold uppercase ${activo ? "text-green-600" : "text-red-500"}`}
+                >
                   {activo ? "Activa" : "Suspendida"}
                 </span>
                 <Switch
@@ -112,7 +116,6 @@ export default function PublicacionCard({
                 />
               </div>
             </div>
-            
             <h3
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
@@ -123,13 +126,11 @@ export default function PublicacionCard({
             >
               {publicacion.titulo}
             </h3>
-            {(publicacion.direccion) && (
+            {publicacion.direccion && (
               <div className="flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
                 <p className="text-xs text-gray-500 truncate">
-                  {[publicacion.direccion]
-                    .filter(Boolean)
-                    .join(", ")}
+                  {[publicacion.direccion].filter(Boolean).join(", ")}
                 </p>
               </div>
             )}

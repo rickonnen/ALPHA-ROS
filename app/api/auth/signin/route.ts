@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from "next/server";
 import { sign } from "jsonwebtoken";
+import { registrarSesionTelemetry } from "@/lib/auth/sessionTelemetry";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -12,7 +13,7 @@ const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, latitud, longitud } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -65,6 +66,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await registrarSesionTelemetry({
+      request,
+      idUsuario: userData.id_usuario,
+      latitud,
+      longitud,
+    });
 
     const jwtToken = sign(
       { userId: userData.id_usuario },  

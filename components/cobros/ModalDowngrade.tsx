@@ -19,12 +19,7 @@ interface Props {
   nombrePlan: string;
 }
 
-export function ModalDowngrade({
-  isOpen,
-  onClose,
-  onConfirm,
-  nombrePlan,
-}: Props) {
+export function ModalDowngrade({ isOpen, onClose, onConfirm }: Props) {
   const [paso, setPaso] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -51,8 +46,10 @@ export function ModalDowngrade({
                 AVISO DE CAMBIO
               </DialogTitle>
               <DialogDescription className="text-lg leading-relaxed text-muted-foreground pt-3 text-left">
-                Al realizar esta acción se le bajará a un nivel de plan
-                inferior. ¿Está seguro de que desea continuar?
+                Al realizar esta acción se le bajara de plan a uno inferior si
+                tiene mas publicaciones de las limitadas por el plan las ultimas
+                publicaciones creadas serán suspendidas. ¿Está seguro de que
+                desea continuar?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="pt-8 flex-col-reverse sm:flex-row gap-3 sm:gap-2">
