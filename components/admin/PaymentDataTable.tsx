@@ -263,7 +263,7 @@ export function PaymentDataTable({
                             onClick={() => handleOpenModal(objPayment, 'accept')}
                             variant="default" 
                             size="sm" 
-                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95 hover:bg-gray-400+- text-white transition-colors cursor-pointer mt-1"
+                            className="h-8 px-3 font-semibold text-xs transition-transform active:scale-95 hover:bg-gray-400 text-white transition-colors cursor-pointer mt-1"
                             disabled={bolIsProcessing}
                           >
                             Aceptar

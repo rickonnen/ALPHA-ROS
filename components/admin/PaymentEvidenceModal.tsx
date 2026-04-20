@@ -56,7 +56,7 @@ export function PaymentEvidenceModal({
             <Button
               onClick={() => onOpenChange(false)}
               variant="default"
-              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-8 sm:px-12 rounded-xl py-5 sm:py-6 transition-all active:scale-95 text-sm cursor-pointer mt-1">
+              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-4 sm:px-6 rounded-xl py-5 sm:py-4 transition-all active:scale-95 text-sm cursor-pointer mt-1">
               Volver
             </Button>
           </div> 
