@@ -1,6 +1,6 @@
 'use client'
 
-import DropdownSelect from '@/features/publicacion/informacion-comercial-2/Components/Dropdown.Select'
+import DropdownSelect from '@/features/publicacion/componentDrop/Components/Dropdown.Select'
 import { TIPOS_PROPIEDAD_VALIDOS, ESTADOS_PROPIEDAD_VALIDOS, CategoriaFormValues, CategoriaFormErrors } from './useCategoriaTypes'
 
 interface CategoriaYEstadoFormProps {

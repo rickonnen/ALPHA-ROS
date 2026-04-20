@@ -50,14 +50,14 @@ export const usePublicarAccion = ({
           onShowLimit();
         }
       } else {
-        objRouter.push("/publicacion/formularioDinamico");
+        objRouter.push("/publicacion/formularioPublicacion");
       }
     } catch (error) {
       console.error("Error en validación:", error);
       if (!objUser?.id) {
         onShowProtected();
       } else {
-        objRouter.push("/publicacion/formularioDinamico");
+        objRouter.push("/publicacion/formularioPublicacion");
       }
     } finally {
       setBolIsChecking(false);
