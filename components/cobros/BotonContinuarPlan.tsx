@@ -5,15 +5,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import AuthModal from "@/app/auth/AuthModal";
+import { ModalDowngrade } from "@/components/cobros/ModalDowngrade";
 import { useAuth } from "@/app/auth/AuthContext";
 
 interface Props {
   planId: number | string;
-  isAnnual: boolean; // Estado del switch (true=anual, false=mensual)
+  isAnnual: boolean;
 }
 
 export function BotonContinuarPlan({ planId, isAnnual }: Props) {
   const { user, isLoading: authLoading } = useAuth();
+
   const [planActualId, setPlanActualId] = useState<number>(7);
   const [modalidadActual, setModalidadActual] = useState<string>("mensual");
   const [loadingPlan, setLoadingPlan] = useState(false);
@@ -21,6 +23,7 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
   const [showProtected, setShowProtected] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [showDowngradeModal, setShowDowngradeModal] = useState(false);
 
   const checkoutUrl = `/cobros/sector-pagos?planId=${planId}&modalidad=${isAnnual ? "anual" : "mensual"}`;
 
@@ -42,40 +45,53 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
         } finally {
           setLoadingPlan(false);
         }
-      } else {
-        setPlanActualId(7);
-        setModalidadActual("mensual");
       }
     }
     obtenerSuscripcion();
   }, [user]);
 
   const idPlanTarjeta = Number(planId);
-  const viendoAnual = isAnnual;
-
-  // Lógica de estados
   const esMismoPlan = idPlanTarjeta === planActualId;
   const esMismaModalidad =
-    (viendoAnual && modalidadActual === "anual") ||
-    (!viendoAnual && modalidadActual === "mensual");
+    (isAnnual && modalidadActual === "anual") ||
+    (!isAnnual && modalidadActual === "mensual");
 
-  // Determinar texto
+  const esDowngrade = user && idPlanTarjeta < planActualId;
+  const isCurrentSelection = user && esMismoPlan && esMismaModalidad;
+
   const getButtonText = () => {
     if (!user || planActualId === 7) return "Continuar";
-
     if (esMismoPlan) {
       if (esMismaModalidad) return "Plan actual";
-      if (viendoAnual && modalidadActual === "mensual")
-        return "Pasar a Anual (-10%)";
-      if (!viendoAnual && modalidadActual === "anual")
-        return "Cambiar a Mensual";
+      return isAnnual ? "Pasar a Anual (-10%)" : "Cambiar a Mensual";
     }
-
-    if (idPlanTarjeta > planActualId) return "Mejorar plan";
-    return "Cambiar plan";
+    return idPlanTarjeta > planActualId ? "Mejorar plan" : "Cambiar plan";
   };
 
-  const isCurrentSelection = user && esMismoPlan && esMismaModalidad;
+  // --- FUNCIÓN ACTUALIZADA CON RELOAD ---
+  const ejecutarDowngrade = async () => {
+    try {
+      const res = await fetch("/api/cobros/downgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_usuario: user?.id,
+          nuevo_plan_id: idPlanTarjeta,
+          modalidad: isAnnual ? "anual" : "mensual",
+        }),
+      });
+
+      if (res.ok) {
+        // Forzamos la recarga completa de la página para ver los cambios
+        window.location.reload();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || "Error al procesar el cambio");
+      }
+    } catch (e) {
+      console.error("Error en downgrade:", e);
+    }
+  };
 
   if (authLoading || (user && loadingPlan)) {
     return (
@@ -87,13 +103,31 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
 
   if (user) {
     return (
-      <Button
-        asChild
-        className="w-full font-bold"
-        variant={isCurrentSelection ? "outline" : "default"}
-      >
-        <Link href={checkoutUrl}>{getButtonText()}</Link>
-      </Button>
+      <>
+        {esDowngrade && !esMismoPlan ? (
+          <Button
+            className="w-full font-bold"
+            onClick={() => setShowDowngradeModal(true)}
+          >
+            {getButtonText()}
+          </Button>
+        ) : (
+          <Button
+            asChild
+            className="w-full font-bold"
+            variant={isCurrentSelection ? "outline" : "default"}
+          >
+            <Link href={checkoutUrl}>{getButtonText()}</Link>
+          </Button>
+        )}
+
+        <ModalDowngrade
+          isOpen={showDowngradeModal}
+          onClose={() => setShowDowngradeModal(false)}
+          onConfirm={ejecutarDowngrade}
+          nombrePlan={String(planId)}
+        />
+      </>
     );
   }
 
@@ -105,7 +139,6 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
       >
         Continuar
       </Button>
-
       <ProtectedFeatureModal
         isOpen={showProtected}
         featureName="comprar planes"
