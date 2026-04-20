@@ -67,7 +67,7 @@ export default function PublicacionCard({
             size="sm"
             className="text-black border-white/60 hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)]"
             onClick={() =>
-              router.push(`/publicacion/perfil_del_inmueble/${publicacion.id}`)
+               window.open(`/publicacion/Mi_inmueble/${publicacion.id}`, `tab_inmueble_${publicacion.id}`)
             }
           >
             Info.

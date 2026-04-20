@@ -155,7 +155,10 @@ export default function PropertyCard({
             <Button 
               size="sm" 
               className="h-8 text-[11px]"
-              onClick={() => setIsDetailOpen(true)}
+              onClick={(e) => {
+              e.stopPropagation();
+              window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, `tab_mi_inmueble_${property.id}`);
+            }}
             >
               Ver Detalle
             </Button>
