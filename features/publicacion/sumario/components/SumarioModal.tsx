@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
+//import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 // ─────────────────────────────────────────────────────────────
@@ -153,7 +153,6 @@ function getInitialStorageData(): SumarioStorageData {
     const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
-    // Fallback para modo edición: usar URLs de Cloudinary si no hay previews locales
     const arrPreviewFinal = arrPreview.length > 0
         ? arrPreview
         : parseJSON<string[]>(sessionStorage.getItem('imagenesIniciales'), [])
@@ -185,13 +184,25 @@ function getInitialStorageData(): SumarioStorageData {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Subcomponente campo
+// Subcomponente: campo desktop (caja con label + valor)
 // ─────────────────────────────────────────────────────────────
-function SummaryField({ label, value }: { label: string; value: string }) {
+function FieldDesktop({ label, value }: { label: string; value: string }) {
     return (
-        <div className="bg-[#E8E2D8] rounded-md px-3 py-2 min-h-[60px]">
-            <p className="text-[0.72rem] uppercase tracking-wide text-[#7B7771] font-bold">{label}</p>
-            <p className="text-sm text-[#2E2E2E] mt-1 break-words">{value}</p>
+        <div className="bg-[#EDE8DF] rounded-md px-3 py-2">
+            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">{label}</p>
+            <p className="text-sm text-[#2E2E2E] mt-0.5 break-words">{value}</p>
+        </div>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Subcomponente: campo mobile (fila label + valor con separador)
+// ─────────────────────────────────────────────────────────────
+function FieldMobile({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="py-2.5 border-b border-[#DDD6CB] last:border-0">
+            <p className="text-[0.7rem] uppercase tracking-wide text-[#9B9791] font-semibold">{label}</p>
+            <p className="text-sm text-[#2E2E2E] mt-0.5">{value}</p>
         </div>
     )
 }
@@ -234,177 +245,262 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
         setArrImagenesError((prev) => (prev.includes(index) ? prev : [...prev, index]))
     }
 
+    // Campos comunes a ambos layouts
+    const camposCol1 = [
+        { label: 'Tipo de Propiedad',  value: toText(data.tipoPropiedad) },
+        { label: 'Dirección',          value: toText(data.direccion) },
+        { label: 'Superficie',         value: formatSurface(data.superficie) },
+        ...(!bolEsTerreno ? [{ label: 'Habitaciones', value: toText(data.habitaciones) }] : []),
+        ...(!bolEsTerreno ? [{ label: 'Plantas',      value: toText(data.plantas) }] : []),
+    ]
+    const camposCol2 = [
+        { label: 'Tipo de Operación', value: toTitleCase(data.tipoOperacion) },
+        { label: 'Ciudad',            value: strCiudad },
+        { label: 'Zona',              value: toText(data.zona) },
+        ...(!bolEsTerreno ? [{ label: 'Garajes', value: toText(data.garajes) }] : []),
+        ...(!bolEsTerreno ? [{ label: 'Baños',   value: toText(data.banios) }] : []),
+    ]
+
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/45 p-3 sm:p-6 flex items-start justify-center pt-20 sm:pt-24"
+            className="fixed inset-0 z-50 bg-black/45 flex items-start justify-center overflow-y-auto p-3 md:p-6 pt-8 md:pt-16"
             onClick={onClose}
         >
             <div
-                className="w-full max-w-5xl max-h-[82vh] overflow-y-auto rounded-2xl border border-[#DDD6CB] bg-[#F4EFE6] shadow-xl"
+                className="w-full max-w-5xl rounded-2xl bg-[#F4EFE6] shadow-xl border border-[#DDD6CB] mb-8"
                 onClick={e => e.stopPropagation()}
             >
 
-                {/* Cabecera */}
-                <div className="px-5 sm:px-6 pt-8 sm:pt-10 pb-3 border-b border-[#ECE7DD]">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
-                        <div className="flex items-center gap-2">
-                            {data.estadoPropiedad && (
-                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">
-                                    {toTitleCase(data.estadoPropiedad)}
-                                </Badge>
-                            )}
+                {/* ── Cabecera ────────────────────────────────────── */}
+                <div className="px-5 md:px-8 pt-6 md:pt-8 pb-4 border-b border-[#ECE7DD]">
+                    {/* Desktop: título izq, badge der */}
+                    <div className="hidden md:flex items-start justify-between gap-3">
+                        <div>
+                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+                            <p className="text-sm text-[#6C6761] mt-0.5">
+                                {modoEdicion
+                                    ? 'Revisa la información de tu inmueble antes de guardarlo.'
+                                    : 'Revisa la informacion de tu inmueble antes de publicarlo'}
+                            </p>
                         </div>
+                        {data.estadoPropiedad && (
+                            <span
+                                className="bg-[#C26E5A] text-white text-sm font-semibold rounded-lg shrink-0 whitespace-nowrap inline-flex items-center justify-center"
+                                style={{ padding: '2px 10px', minWidth: '132px', height: '39px' }}
+                            >
+                                {toTitleCase(data.estadoPropiedad)}
+                            </span>
+                        )}
                     </div>
-                    <p className="text-sm text-[#6C6761]">
-                        {modoEdicion
-                            ? 'Revisa la información de tu inmueble antes de guardarlo.'
-                            : 'Revisa la información de tu inmueble antes de publicarlo.'}
-                    </p>
+                    {/* Mobile: centrado */}
+                    <div className="md:hidden text-center">
+                        <h2 className="text-lg font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+                        <p className="text-xs text-[#6C6761] mt-0.5">
+                            {modoEdicion
+                                ? 'Revisa la información antes de guardar.'
+                                : 'Revisa la informacion de tu inmueble antes de publicarlo'}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="px-5 sm:px-6 pb-6 pt-4 space-y-5">
+                <div className="px-5 md:px-8 py-5 space-y-5">
 
-                    {/* Galería + video */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="md:col-span-2 rounded-lg overflow-hidden bg-[#F6F2EA] relative min-h-[210px]">
-                            {bolTieneImagenes ? (
-                                <>
-                                    {!arrImagenesError.includes(intImagenSafe) ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                            src={data.imagenesPreview[intImagenSafe]}
-                                            alt={data.imagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
-                                            className="w-full h-full object-cover min-h-[210px]"
-                                            onError={() => onImageError(intImagenSafe)}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full min-h-[210px] grid place-items-center text-sm text-[#7B7771]">
-                                            No se pudo cargar la imagen
-                                        </div>
-                                    )}
+                    {/* ── Galería ────────────────────────────────────────
+                        Desktop: 2/3 imagen + 1/3 video y thumbnail
+                        Mobile:  imagen full width apilada
+                    ─────────────────────────────────────────────────── */}
 
-                                    {intTotalImagenes > 1 && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={onPrevImagen}
-                                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-2 shadow"
-                                                aria-label="Imagen anterior"
-                                            >
-                                                <ChevronLeft className="w-4 h-4 text-[#4A4A4A]" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={onNextImagen}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-2 shadow"
-                                                aria-label="Imagen siguiente"
-                                            >
-                                                <ChevronRight className="w-4 h-4 text-[#4A4A4A]" />
-                                            </button>
-                                        </>
-                                    )}
-
-                                    <Badge className="absolute bottom-3 left-3 bg-[#C26E5A] text-white text-sm px-3 py-1">
-                                        {formatPrice(data.precio, data.tipoMoneda)}
-                                    </Badge>
-                                </>
+                    {/* DESKTOP galería */}
+                    <div className="hidden md:grid grid-cols-3 gap-3 rounded-xl overflow-hidden">
+                        {/* Imagen principal — 2/3 */}
+                        <div className="col-span-2 relative bg-[#EDE8DF] min-h-[240px]">
+                            {bolTieneImagenes && !arrImagenesError.includes(intImagenSafe) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={data.imagenesPreview[intImagenSafe]}
+                                    alt={data.imagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
+                                    className="w-full h-full object-cover min-h-[240px]"
+                                    onError={() => onImageError(intImagenSafe)}
+                                />
                             ) : (
-                                <div className="w-full h-full min-h-[210px] grid place-items-center text-sm text-[#7B7771]">
+                                <div className="w-full min-h-[240px] grid place-items-center text-sm text-[#7B7771]">
                                     Sin imágenes
                                 </div>
                             )}
+
+                            {intTotalImagenes > 1 && (
+                                <>
+                                    <button type="button" onClick={onPrevImagen}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-2 shadow"
+                                        aria-label="Imagen anterior">
+                                        <ChevronLeft className="w-4 h-4 text-[#4A4A4A]" />
+                                    </button>
+                                    <button type="button" onClick={onNextImagen}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/85 hover:bg-white rounded-full p-2 shadow"
+                                        aria-label="Imagen siguiente">
+                                        <ChevronRight className="w-4 h-4 text-[#4A4A4A]" />
+                                    </button>
+                                </>
+                            )}
+
+                            <span
+                                className="absolute bottom-3 left-3 bg-[#C26E5A] text-white text-sm font-semibold rounded-lg whitespace-nowrap"
+                                style={{ padding: '8px 16px' }}
+                            >
+                                {formatPrice(data.precio, data.tipoMoneda)}
+                            </span>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="bg-[#F6F2EA] rounded-lg overflow-hidden min-h-[100px]">
+                        {/* 1/3 derecha: video arriba + thumbnail abajo */}
+                        <div className="flex flex-col gap-3">
+                            <div className="bg-[#EDE8DF] rounded-lg overflow-hidden flex-1 min-h-[120px]">
                                 {strVideoEmbed ? (
-                                    <div className="aspect-video">
-                                        <iframe
-                                            src={strVideoEmbed}
-                                            title="Vista previa video"
-                                            className="w-full h-full border-0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                            allowFullScreen
-                                            loading="lazy"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="min-h-[100px] grid place-items-center text-sm text-[#7B7771]">Sin video</div>
-                                )}
-                            </div>
-
-                            <div className="bg-[#F6F2EA] rounded-lg overflow-hidden min-h-[90px]">
-                                {bolTieneImagenes && !arrImagenesError.includes(0) ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                        src={data.imagenesPreview[0]}
-                                        alt={data.imagenesNombres[0] ?? 'Primera imagen'}
-                                        className="w-full h-full object-cover min-h-[90px]"
-                                        onError={() => onImageError(0)}
+                                    <iframe
+                                        src={strVideoEmbed}
+                                        title="Vista previa video"
+                                        className="w-full h-full border-0 min-h-[120px]"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen loading="lazy"
                                     />
                                 ) : (
-                                    <div className="min-h-[90px] grid place-items-center text-sm text-[#7B7771]">Sin vista previa</div>
+                                    <div className="min-h-[120px] grid place-items-center text-sm text-[#7B7771]">
+                                        Sin video
+                                    </div>
+                                )}
+                            </div>
+                            {/* Thumbnail: solo si hay 2+ imágenes, muestra la siguiente a la actual */}
+                            <div className="bg-[#EDE8DF] rounded-lg overflow-hidden flex-1 min-h-[100px]">
+                                {intTotalImagenes > 1 ? (() => {
+                                    const indexSiguiente = (intImagenSafe + 1) % intTotalImagenes
+                                    return !arrImagenesError.includes(indexSiguiente) ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={data.imagenesPreview[indexSiguiente]}
+                                            alt={data.imagenesNombres[indexSiguiente] ?? `Imagen ${indexSiguiente + 1}`}
+                                            className="w-full h-full object-cover min-h-[100px]"
+                                            onError={() => onImageError(indexSiguiente)}
+                                        />
+                                    ) : (
+                                        <div className="min-h-[100px] grid place-items-center text-sm text-[#7B7771]">
+                                            No se pudo cargar
+                                        </div>
+                                    )
+                                })() : (
+                                    // 1 imagen o ninguna → cuadro vacío
+                                    <div className="min-h-[100px]" />
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Datos */}
-                    <div className="space-y-3">
-                        <h3 className="text-2xl sm:text-4xl font-bold text-[#2E2E2E]">{toText(data.titulo)}</h3>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                            {/* Columna 1 */}
-                            <div className="space-y-2">
-                                <SummaryField label="Tipo de propiedad" value={toText(data.tipoPropiedad)} />
-                                <SummaryField label="Dirección"         value={toText(data.direccion)} />
-                                <SummaryField label="Superficie"        value={formatSurface(data.superficie)} />
-                                {!bolEsTerreno && <SummaryField label="Habitaciones" value={toText(data.habitaciones)} />}
-                            </div>
-
-                            {/* Columna 2 */}
-                            <div className="space-y-2">
-                                <SummaryField label="Tipo de operación" value={toTitleCase(data.tipoOperacion)} />
-                                <SummaryField label="Ciudad"            value={strCiudad} />
-                                <SummaryField label="Zona"              value={toText(data.zona)} />
-                                {!bolEsTerreno && <SummaryField label="Garajes" value={toText(data.garajes)} />}
-                                {!bolEsTerreno && <SummaryField label="Baños"   value={toText(data.banios)} />}
-                                {!bolEsTerreno && <SummaryField label="Plantas" value={toText(data.plantas)} />}
-                            </div>
-
-                            {/* Columna 3 — descripción */}
-                            <div className="bg-[#E8E2D8] rounded-md px-3 py-2 min-h-[364px]">
-                                <p className="text-[0.72rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripción</p>
-                                <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(data.descripcion)}</p>
-                            </div>
+                    {/* MOBILE galería */}
+                    <div className="md:hidden">
+                        <div className="relative bg-[#EDE8DF] rounded-xl overflow-hidden min-h-[200px]">
+                            {bolTieneImagenes && !arrImagenesError.includes(intImagenSafe) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={data.imagenesPreview[intImagenSafe]}
+                                    alt={data.imagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
+                                    className="w-full object-cover min-h-[200px]"
+                                    onError={() => onImageError(intImagenSafe)}
+                                />
+                            ) : (
+                                <div className="min-h-[200px] grid place-items-center text-sm text-[#7B7771]">
+                                    Sin imágenes
+                                </div>
+                            )}
+                            {intTotalImagenes > 1 && (
+                                <>
+                                    <button type="button" onClick={onPrevImagen}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 rounded-full p-1.5 shadow">
+                                        <ChevronLeft className="w-4 h-4 text-[#4A4A4A]" />
+                                    </button>
+                                    <button type="button" onClick={onNextImagen}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 rounded-full p-1.5 shadow">
+                                        <ChevronRight className="w-4 h-4 text-[#4A4A4A]" />
+                                    </button>
+                                </>
+                            )}
                         </div>
+                    </div>
 
-                        {/* Características extras — tarjetas */}
-                        {data.caracteristicas.length > 0 && (
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-                                {data.caracteristicas.map((c) => (
-                                    <div key={c.titulo} className="rounded-lg overflow-hidden border border-[#DDD6CB]">
-                                        <div className="bg-[#C26E5A] px-3 py-2">
-                                            <p className="text-white text-sm font-bold">{c.titulo}</p>
-                                        </div>
-                                        <div className="bg-[#EDE8DF] px-3 py-2 min-h-[64px]">
-                                            <p className="text-[0.72rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripcion</p>
-                                            <p className="text-sm text-[#2E2E2E]">{c.detalle || 'No especificado'}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* ── Título ───────────────────────────────────────── */}
+                    <h3 className="text-2xl md:text-3xl font-bold text-[#2E2E2E]">{toText(data.titulo)}</h3>
+
+                    {/* Precio + badge — MOBILE: debajo del título / DESKTOP: en la imagen */}
+                    <div className="md:hidden flex items-center justify-between gap-3">
+                        <span className="bg-[#C26E5A] text-white text-sm font-semibold px-5 py-2.5 rounded-full whitespace-nowrap">
+                            {formatPrice(data.precio, data.tipoMoneda)}
+                        </span>
+                        {data.estadoPropiedad && (
+                            <span className="bg-[#C26E5A] text-white text-sm font-semibold px-5 py-2.5 rounded-full whitespace-nowrap">
+                                {toTitleCase(data.estadoPropiedad)}
+                            </span>
                         )}
                     </div>
 
-                    {/* Botones de acción */}
-                    <div className="flex flex-wrap justify-between gap-3 pt-1">
+                    {/* ── Campos de datos ───────────────────────────────
+                        Desktop: 3 columnas (col1 + col2 + descripción)
+                        Mobile:  2 columnas de cajas + descripción debajo
+                    ─────────────────────────────────────────────────── */}
+
+                    {/* DESKTOP campos */}
+                    <div className="hidden md:grid grid-cols-3 gap-3">
+                        <div className="space-y-2">
+                            {camposCol1.map(f => <FieldDesktop key={f.label} label={f.label} value={f.value} />)}
+                        </div>
+                        <div className="space-y-2">
+                            {camposCol2.map(f => <FieldDesktop key={f.label} label={f.label} value={f.value} />)}
+                        </div>
+                        {/* Columna 3: descripción con overflow controlado */}
+                        <div className="bg-[#EDE8DF] rounded-md px-3 py-2 min-h-[200px] overflow-hidden">
+                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripcion</p>
+                            <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere">{toText(data.descripcion)}</p>
+                        </div>
+                    </div>
+
+                    {/* MOBILE campos: una columna, cuadros uno debajo del otro */}
+                    <div className="md:hidden space-y-2">
+                        {[...camposCol1, ...camposCol2].map(f => (
+                            <FieldDesktop key={f.label} label={f.label} value={f.value} />
+                        ))}
+                        {/* Descripción full width */}
+                        <div className="bg-[#EDE8DF] rounded-md px-3 py-2 overflow-hidden">
+                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripcion</p>
+                            <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere">{toText(data.descripcion)}</p>
+                        </div>
+                    </div>
+
+                    {/* ── Características extras ────────────────────────
+                        Desktop: 4 columnas
+                        Mobile:  2 columnas
+                    ─────────────────────────────────────────────────── */}
+                    {data.caracteristicas.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {data.caracteristicas.map((c) => (
+                                <div key={c.titulo} className="rounded-lg overflow-hidden border border-[#DDD6CB]">
+                                    <div className="bg-[#C26E5A] px-3 py-2">
+                                        <p className="text-white text-sm font-bold">{c.titulo}</p>
+                                    </div>
+                                    <div className="bg-[#EDE8DF] px-3 py-2 min-h-[56px]">
+                                        <p className="text-[0.65rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripcion</p>
+                                        <p className="text-sm text-[#2E2E2E]">{c.detalle || 'No especificado'}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* ── Botones ───────────────────────────────────────
+                        Desktop: Regresar izq + Publicar/Guardar der
+                        Mobile:  misma fila pero más compactos
+                    ─────────────────────────────────────────────────── */}
+                    <div className="flex justify-between gap-3 pt-1">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={onClose}
-                            className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-6 sm:px-8 py-5 text-sm sm:text-base font-semibold"
+                            className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold"
                         >
                             Regresar
                         </Button>
@@ -412,7 +508,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                         <Button
                             type="button"
                             onClick={() => onConfirmarPublicar?.()}
-                            className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-5 text-sm sm:text-base font-semibold"
+                            className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold"
                         >
                             {modoEdicion ? 'Guardar' : 'Publicar'}
                         </Button>
