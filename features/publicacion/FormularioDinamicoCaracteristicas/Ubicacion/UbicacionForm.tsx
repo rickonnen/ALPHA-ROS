@@ -31,16 +31,15 @@ interface UbicacionFormProps {
   submitRef?: React.MutableRefObject<(() => void) | null>
 }
 
-// Paleta del proyecto
 const C = {
   crema:          '#F4EFE6',
   terracota:      '#C26E5A',
   terracotaClaro: '#D4B8AE',
   marino:         '#1F3A4D',
   borde:          '#D4CFC6',
-  texto:          '#2E2E2E',
+  texto:          '#1A1714',
   gris:           '#2E2E2E',
-  grisClaro:      '#2E2E2E',
+  grisClaro:      '#E5E7EB',
 }
 
 export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps) {
@@ -122,8 +121,8 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
       {/* ─── Modal del mapa ─────────────────────────────────────── */}
       {mapaAbierto && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(31,58,77,0.55)', overflow: 'visible' }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
+          style={{ backgroundColor: 'rgba(31,58,77,0.55)', overflow: 'auto' }}
           onClick={handleCerrar}
         >
           <div
@@ -133,38 +132,38 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               borderRadius:  16,
               boxShadow:     '0 8px 40px rgba(31,58,77,0.25)',
               width:         '100%',
-              maxWidth:      680,
-              margin:        '0 16px',
+              maxWidth:      620,
               overflow:      'visible',
               display:       'flex',
               flexDirection: 'column',
             }}
           >
-            {/* Header del modal */}
+            {/* Header del modal — compacto */}
             <div style={{
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'space-between',
-              padding:        '16px 24px',
+              padding:        '12px 16px',
               background:     C.marino,
               borderRadius:   '16px 16px 0 0',
+              gap:            8,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  backgroundColor: C.terracota,
+                  width: 28, height: 28, borderRadius: '50%',
+                  backgroundColor: C.terracota, flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
                 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                   </svg>
                 </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#ffffff' }}>
+                {/* Título y subtítulo en una sola línea en móvil */}
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap' }}>
                     Selecciona la ubicación
                   </p>
-                  <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     Busca una calle o haz clic en el mapa
                   </p>
                 </div>
@@ -173,31 +172,31 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                 type="button"
                 onClick={handleCerrar}
                 style={{
-                  width: 28, height: 28, borderRadius: '50%', border: 'none',
+                  width: 26, height: 26, borderRadius: '50%', border: 'none',
                   background: 'rgba(255,255,255,0.15)', color: '#ffffff', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 600, flexShrink: 0,
+                  fontSize: 13, fontWeight: 600, flexShrink: 0,
                 }}
               >
                 ✕
               </button>
             </div>
 
-            {/* Body del modal */}
-            <div style={{ padding: '16px 24px', overflow: 'visible' }}>
+            {/* Body del modal — padding más chico en móvil */}
+            <div style={{ padding: '12px 14px', overflow: 'visible' }}>
               <LocationPicker
                 deptoActual={deptoEnMapa}
                 onChange={handleLocationChange}
               />
             </div>
 
-            {/* Footer — solo botones, sin texto de dirección */}
+            {/* Footer */}
             <div style={{
               display:        'flex',
               justifyContent: 'flex-end',
               alignItems:     'center',
-              gap:            10,
-              padding:        '12px 24px 18px',
+              gap:            8,
+              padding:        '10px 14px 14px',
               borderTop:      `1.5px solid ${C.borde}`,
             }}>
               <button
@@ -208,7 +207,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                   border:          `1.5px solid ${C.terracota}`,
                   color:           C.terracota,
                   borderRadius:    6,
-                  padding:         '6px 20px',
+                  padding:         '6px 18px',
                   fontSize:        14,
                   fontWeight:      600,
                   cursor:          'pointer',
@@ -225,7 +224,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                   border:          `1.5px solid ${pendingLocation ? C.terracota : C.terracotaClaro}`,
                   color:           '#ffffff',
                   borderRadius:    6,
-                  padding:         '6px 20px',
+                  padding:         '6px 18px',
                   fontSize:        14,
                   fontWeight:      600,
                   cursor:          pendingLocation ? 'pointer' : 'not-allowed',
@@ -242,7 +241,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
       {/* ─── Formulario principal ────────────────────────────────── */}
       <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px' }}>
 
-        {/* 1 — Departamento (primero) */}
+        {/* 1 — Departamento */}
         <div className="flex flex-col gap-1.5" ref={dropdownRef}>
           <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
             ¿Cual es el departamento en el que se encuentra la propiedad?
@@ -305,7 +304,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           </span>
         </div>
 
-        {/* 2 — Dirección (segundo) */}
+        {/* 2 — Dirección */}
         <div className="flex flex-col gap-1.5">
           <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
             ¿Cual es la dirección de la propiedad?
@@ -321,21 +320,13 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             <span className="truncate">
               {values.direccion || 'Haz click para seleccionar en el mapa'}
             </span>
-
-            {/* Icono pin a la derecha con gradiente */}
             <div style={{
-              width:          26,
-              height:         26,
-              borderRadius:   6,
-              background:     values.direccion
+              width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
+              background: values.direccion
                 ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
                 : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              flexShrink:     0,
-              marginLeft:     8,
-              transition:     'background 0.2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.2s',
             }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>

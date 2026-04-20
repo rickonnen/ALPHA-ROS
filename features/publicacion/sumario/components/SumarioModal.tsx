@@ -9,6 +9,11 @@ import { Button } from '@/components/ui/button'
 // ─────────────────────────────────────────────────────────────
 // Tipos
 // ─────────────────────────────────────────────────────────────
+type CaracteristicaExtra = {
+    titulo: string
+    detalle: string
+}
+
 type SumarioStorageData = {
     titulo: string
     tipoOperacion: string
@@ -28,11 +33,13 @@ type SumarioStorageData = {
     imagenesNombres: string[]
     videoUrl: string
     descripcion: string
+    caracteristicas: CaracteristicaExtra[]
 }
 
 interface SumarioModalProps {
     onClose: () => void
     onConfirmarPublicar?: () => void
+    modoEdicion?: boolean
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -127,7 +134,7 @@ function getInitialStorageData(): SumarioStorageData {
         direccion: '', departamento: '', zona: '',
         habitaciones: '', banios: '', garajes: '', plantas: '', superficie: '',
         imagenesPreview: [], imagenesNombres: [],
-        videoUrl: '', descripcion: '',
+        videoUrl: '', descripcion: '', caracteristicas: [],
     }
 
     if (typeof window === 'undefined') return empty
@@ -137,12 +144,20 @@ function getInitialStorageData(): SumarioStorageData {
     const ubicacion       = parseJSON<Record<string, string>>(sessionStorage.getItem('ubicacion'),              {})
     const caracteristicas = parseJSON<Record<string, string>>(sessionStorage.getItem('caracteristicasDetalle'), {})
     const video           = parseJSON<Record<string, string>>(sessionStorage.getItem('videoPropiedad'),         {})
-    const descripcion     = parseJSON<Record<string, string>>(sessionStorage.getItem('descripcionPropiedad'),   {})
+    const descripcionRaw  = parseJSON<{ descripcion?: string; caracteristicas?: CaracteristicaExtra[] }>(
+        sessionStorage.getItem('descripcionPropiedad'), {}
+    )
 
     const arrPreview = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesPreview'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
     const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
+
+    // Fallback para modo edición: usar URLs de Cloudinary si no hay previews locales
+    const arrPreviewFinal = arrPreview.length > 0
+        ? arrPreview
+        : parseJSON<string[]>(sessionStorage.getItem('imagenesIniciales'), [])
+            .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
     return {
         titulo:          datosAviso.titulo           ?? '',
@@ -159,10 +174,13 @@ function getInitialStorageData(): SumarioStorageData {
         garajes:         String(caracteristicas.garajes      ?? ''),
         plantas:         String(caracteristicas.plantas      ?? ''),
         superficie:      String(caracteristicas.superficie   ?? ''),
-        imagenesPreview: arrPreview,
+        imagenesPreview: arrPreviewFinal,
         imagenesNombres: arrNombres,
-        videoUrl:        video.url                   ?? '',
-        descripcion:     descripcion.descripcion     ?? '',
+        videoUrl:        video.url                              ?? '',
+        descripcion:     descripcionRaw.descripcion             ?? '',
+        caracteristicas: Array.isArray(descripcionRaw.caracteristicas)
+            ? descripcionRaw.caracteristicas
+            : [],
     }
 }
 
@@ -181,7 +199,7 @@ function SummaryField({ label, value }: { label: string; value: string }) {
 // ─────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────
-export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps) {
+export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: SumarioModalProps) {
     const data = useMemo<SumarioStorageData>(() => getInitialStorageData(), [])
 
     const [arrImagenesError, setArrImagenesError] = useState<number[]>([])
@@ -232,11 +250,17 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                         <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                         <div className="flex items-center gap-2">
                             {data.estadoPropiedad && (
-                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">{toTitleCase(data.estadoPropiedad)}</Badge>
+                                <Badge className="bg-[#C26E5A] text-white text-sm px-3 py-1">
+                                    {toTitleCase(data.estadoPropiedad)}
+                                </Badge>
                             )}
                         </div>
                     </div>
-                    <p className="text-sm text-[#6C6761]">Revisa la información de tu inmueble antes de publicarlo.</p>
+                    <p className="text-sm text-[#6C6761]">
+                        {modoEdicion
+                            ? 'Revisa la información de tu inmueble antes de guardarlo.'
+                            : 'Revisa la información de tu inmueble antes de publicarlo.'}
+                    </p>
                 </div>
 
                 <div className="px-5 sm:px-6 pb-6 pt-4 space-y-5">
@@ -355,6 +379,23 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                                 <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-line">{toText(data.descripcion)}</p>
                             </div>
                         </div>
+
+                        {/* Características extras — tarjetas */}
+                        {data.caracteristicas.length > 0 && (
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                                {data.caracteristicas.map((c) => (
+                                    <div key={c.titulo} className="rounded-lg overflow-hidden border border-[#DDD6CB]">
+                                        <div className="bg-[#C26E5A] px-3 py-2">
+                                            <p className="text-white text-sm font-bold">{c.titulo}</p>
+                                        </div>
+                                        <div className="bg-[#EDE8DF] px-3 py-2 min-h-[64px]">
+                                            <p className="text-[0.72rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripcion</p>
+                                            <p className="text-sm text-[#2E2E2E]">{c.detalle || 'No especificado'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Botones de acción */}
@@ -373,7 +414,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar }: SumarioModalProps
                             onClick={() => onConfirmarPublicar?.()}
                             className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-6 sm:px-8 py-5 text-sm sm:text-base font-semibold"
                         >
-                            Publicar
+                            {modoEdicion ? 'Guardar' : 'Publicar'}
                         </Button>
                     </div>
 

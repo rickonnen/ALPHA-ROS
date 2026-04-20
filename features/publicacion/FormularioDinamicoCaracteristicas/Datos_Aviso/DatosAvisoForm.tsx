@@ -174,8 +174,10 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
       </div>
 
       {/* Precio + Tipo de moneda */}
-      <div className="flex items-start gap-4">
-        <div className="flex flex-col gap-1.5" style={{ width: '112px', flexShrink: 0 }}>
+      <div className="flex flex-row items-start gap-3">
+
+        {/* Campo Precio — crece para ocupar el espacio disponible */}
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
           <Label htmlFor="precio" className="text-sm font-medium text-[#1A1714]">
             Precio <span className="font-normal text-muted-foreground">*</span>
           </Label>
@@ -194,10 +196,11 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5" style={{ flexShrink: 0 }}>
+        {/* Selector USD / Bs — ancho fijo compacto */}
+        <div className="flex flex-col gap-1.5 flex-shrink-0">
           <Label className="text-sm font-medium text-[#1A1714]">Tipo de moneda</Label>
           <div className="relative flex items-center rounded-md"
-            style={{ height: '38px', width: '140px', backgroundColor: '#ffffff' }}
+            style={{ height: '38px', width: '110px', backgroundColor: '#ffffff' }}
           >
             <div style={{
               position: 'absolute', top: '0px', bottom: '0px', width: '50%',
@@ -218,6 +221,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           </div>
           <span className="h-4 block" />
         </div>
+
       </div>
 
     </div>

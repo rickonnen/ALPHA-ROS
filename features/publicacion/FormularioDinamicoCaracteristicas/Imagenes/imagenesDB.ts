@@ -2,20 +2,23 @@
 //  imagenesDB.ts
 //  Helper para guardar/leer/limpiar imágenes
 //  en IndexedDB del navegador.
-//  No necesita instalación, viene en todos los browsers.
 // ─────────────────────────────────────────────
 
 const DB_NAME    = 'propbol_formulario'
 const DB_VERSION = 1
 const STORE_NAME = 'imagenes'
-const SESSION_KEY = 'formularioActivo'
+
+// ── La key que identifica a qué sesión pertenecen las imágenes guardadas ──
+// Ya NO se usa un booleano 'true'/'false'.
+// Se guarda la sessionKey única del formulario actual.
+// Si al montar la key no coincide → las imágenes son de otra sesión → limpiar.
+const IDB_SESSION_KEY = 'imagenesForm_sessionKey'
 
 // ── Abre (o crea) la base de datos ───────────
 function abrirDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
 
-    // Se ejecuta solo la primera vez o al cambiar DB_VERSION
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
       if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -29,14 +32,12 @@ function abrirDB(): Promise<IDBDatabase> {
 }
 
 // ── Guarda la lista de archivos ───────────────
-// Llama esto cada vez que el usuario agrega o elimina una imagen
 export async function guardarImagenes(archivos: File[]): Promise<void> {
   try {
     const db          = await abrirDB()
     const transaction = db.transaction(STORE_NAME, 'readwrite')
     const store       = transaction.objectStore(STORE_NAME)
 
-    // Limpia lo anterior y guarda los archivos actuales
     store.clear()
     archivos.forEach((archivo, index) => {
       store.put({ id: index, archivo })
@@ -47,13 +48,11 @@ export async function guardarImagenes(archivos: File[]): Promise<void> {
       transaction.onerror    = () => reject(new Error('Error al guardar imágenes'))
     })
   } catch {
-    // Si IndexedDB falla silenciosamente, el formulario sigue funcionando
     console.warn('IndexedDB no disponible, las imágenes no persistirán al recargar')
   }
 }
 
 // ── Lee los archivos guardados ────────────────
-// Llama esto al montar el componente
 export async function leerImagenes(): Promise<File[]> {
   try {
     const db          = await abrirDB()
@@ -64,8 +63,7 @@ export async function leerImagenes(): Promise<File[]> {
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
         const registros = request.result as { id: number; archivo: File }[]
-        // Ordena por id para mantener el orden original
-        const archivos = registros
+        const archivos  = registros
           .sort((a, b) => a.id - b.id)
           .map(r => r.archivo)
         resolve(archivos)
@@ -77,8 +75,7 @@ export async function leerImagenes(): Promise<File[]> {
   }
 }
 
-// ── Limpia IndexedDB ──────────────────────────
-// Llama esto al publicar, cancelar o salir del formulario
+// Limpia IndexedDB
 export async function limpiarImagenes(): Promise<void> {
   try {
     const db          = await abrirDB()
@@ -88,24 +85,24 @@ export async function limpiarImagenes(): Promise<void> {
 
     return new Promise((resolve) => {
       transaction.oncomplete = () => resolve()
-      transaction.onerror    = () => resolve() // falla silenciosamente
+      transaction.onerror    = () => resolve()
     })
-  } catch {
-    // silencioso
-  }
+  } catch { }
 }
 
-// ── Manejo de sesión activa ───────────────────
-// sessionStorage se borra solo cuando el usuario cierra la pestaña
+// ── Manejo de sessionKey ──────────────────────
+// En lugar de un booleano, guardamos la key exacta de la sesión actual.
+// Así podemos detectar si las imágenes en IndexedDB son de ESTA sesión
+// o de una anterior (publicación distinta, edición distinta, etc.).
 
-export function marcarSesionActiva(): void {
-  try { sessionStorage.setItem(SESSION_KEY, 'true') } catch {}
+export function guardarSessionKey(key: string): void {
+  try { sessionStorage.setItem(IDB_SESSION_KEY, key) } catch {}
 }
 
-export function haySecionActiva(): boolean {
-  try { return sessionStorage.getItem(SESSION_KEY) === 'true' } catch { return false }
+export function leerSessionKey(): string | null {
+  try { return sessionStorage.getItem(IDB_SESSION_KEY) } catch { return null }
 }
 
-export function limpiarSesion(): void {
-  try { sessionStorage.removeItem(SESSION_KEY) } catch {}
+export function limpiarSessionKey(): void {
+  try { sessionStorage.removeItem(IDB_SESSION_KEY) } catch {}
 }
