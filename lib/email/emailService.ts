@@ -1,29 +1,123 @@
 import { transporter, getFormattedSender } from "./config";
-import { validateRecipient } from "./validate";
+import { validateRecipient, validateContentSafety } from "./validate";
 
 interface SendEmailResult {
   success: boolean;
   messageId?: string;
   timeTakenMs: number;
   error?: string;
+  attempts?: number;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<SendEmailResult> {
+
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  maxRetries: number = 3
+): Promise<SendEmailResult> {
   const startTime = Date.now();
-  const validation = validateRecipient(to);
-  if (!validation.valid) {
-    return { success: false, timeTakenMs: 0, error: validation.error };
+  let lastError: string | undefined;
+  let attempts = 0;
+
+  // Validación 1: Email válido y destinatario presente
+  const recipientValidation = validateRecipient(to);
+  if (!recipientValidation.valid) {
+    logEmailError(to, recipientValidation.error || "Email inválido", 0);
+    return { success: false, timeTakenMs: 0, error: recipientValidation.error, attempts: 0 };
   }
-  try {
-    const info = await transporter.sendMail({ from: getFormattedSender(), to, subject, html });
-    const timeTakenMs = Date.now() - startTime;
-    console.log(`✅ [EMAIL] Enviado a ${to} en ${timeTakenMs}ms`);
-    return { success: true, messageId: info.messageId, timeTakenMs };
-  } catch (error) {
-    const timeTakenMs = Date.now() - startTime;
-    console.error(`❌ [EMAIL] Error enviando a ${to}:`, error);
-    return { success: false, timeTakenMs, error: error instanceof Error ? error.message : "Error desconocido" };
+
+  // Validación 2: Contenido seguro (sin contraseñas ni datos sensibles)
+  const contentValidation = validateContentSafety(html);
+  if (!contentValidation.valid) {
+    logEmailError(to, contentValidation.error || "Contenido no seguro", 0);
+    return { success: false, timeTakenMs: 0, error: contentValidation.error, attempts: 0 };
   }
+
+  // Reintentos automáticos
+  for (attempts = 1; attempts <= maxRetries; attempts++) {
+    try {
+      const info = await transporter.sendMail({
+        from: getFormattedSender(),
+        to,
+        subject,
+        html,
+        headers: {
+          "X-Mailer": "PROBOL Email Service",
+          "X-Priority": "3",
+          "Importance": "Normal",
+          "X-MSMail-Priority": "Normal",
+        },
+      });
+
+      const timeTakenMs = Date.now() - startTime;
+
+      console.log(
+        `✅ [EMAIL] Enviado a ${to} en ${timeTakenMs}ms (intento ${attempts}/${maxRetries})`
+      );
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        timeTakenMs,
+        attempts,
+      };
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error.message : "Error desconocido";
+
+      // Si es el último intento, registrar el error
+      if (attempts === maxRetries) {
+        const timeTakenMs = Date.now() - startTime;
+        logEmailError(to, lastError, timeTakenMs);
+        console.error(
+          `❌ [EMAIL] Fallo definitivo después de ${maxRetries} intentos a ${to}:`,
+          lastError
+        );
+
+        return {
+          success: false,
+          timeTakenMs,
+          error: lastError,
+          attempts,
+        };
+      }
+
+      // Esperar antes de reintentar (backoff exponencial)
+      const delayMs = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
+      console.warn(
+        `⚠️ [EMAIL] Error en intento ${attempts}/${maxRetries}. Reintentando en ${delayMs}ms...`,
+        lastError
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  return {
+    success: false,
+    timeTakenMs: Date.now() - startTime,
+    error: lastError || "Error desconocido",
+    attempts,
+  };
+}
+
+/**
+ * TAREA 12: Registra errores de email en logs
+ * TAREA 19: Mensaje de error cuando falla el envío
+ */
+function logEmailError(
+  recipient: string,
+  error: string | undefined,
+  timeTakenMs: number
+): void {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] EMAIL_ERROR | To: ${recipient} | Error: ${error} | Time: ${timeTakenMs}ms`;
+
+  console.error(`❌ [EMAIL LOG] ${logMessage}`);
+
+  // TODO: Guardar en base de datos (tabla EmailLog) para auditoría
+  // await logEmailErrorToDatabase({ recipient, error, timeTakenMs, timestamp });
 }
 
 export async function enviarCodigoVerificacion(email: string, code: string, nombre: string): Promise<SendEmailResult> {
@@ -39,12 +133,7 @@ export async function enviarBienvenidaGoogle(email: string, nombre: string): Pro
 }
 
 export async function enviarCambioContrasena(email: string, nombre: string): Promise<SendEmailResult> {
-  // MINI TAREA 1: Enviar automáticamente un correo cuando cambia la contraseña ✅
-  // MINI TAREA 2: Verificar que se envíe en menos de 10 segundos ✅
-  // TAREA 4: Formato profesional ✅
-  // TAREA 8: Botón "Ver Detalle" con enlace ✅
-  // TAREA 14: Incluir fecha del evento ✅
-  // TAREA 16: Caracteres especiales UTF-8 ✅
+  
   
   const ahora = new Date();
   const fecha = ahora.toLocaleDateString('es-BO', {
@@ -147,3 +236,34 @@ export async function enviarCambioContrasena(email: string, nombre: string): Pro
 }
 
 export const sendPasswordChangeEmail = enviarCambioContrasena;
+
+/**
+ * TAREA 6: Exportar sendEmail como función genérica reutilizable
+ * Permite que otros módulos envíen correos personalizados
+ * 
+ * Ejemplo de uso:
+ * ```
+ * const result = await sendGenericEmail(
+ *   'usuario@email.com',
+ *   'Asunto del correo',
+ *   '<p>HTML del correo</p>',
+ *   3 // número de reintentos
+ * );
+ * 
+ * if (result.success) {
+ *   console.log('Email enviado:', result.messageId);
+ * } else {
+ *   console.error('Error:', result.error);
+ * }
+ * ```
+ */
+export async function sendGenericEmail(
+  to: string,
+  subject: string,
+  html: string,
+  maxRetries: number = 3
+): Promise<SendEmailResult> {
+  return sendEmail(to, subject, html, maxRetries);
+}
+
+export type { SendEmailResult };
