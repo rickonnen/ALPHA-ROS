@@ -39,7 +39,54 @@ export async function enviarBienvenidaGoogle(email: string, nombre: string): Pro
 }
 
 export async function enviarCambioContrasena(email: string, nombre: string): Promise<SendEmailResult> {
-  return sendEmail(email, "Tu contraseña ha sido actualizada - PROBOL", `<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#1a1a1a;border-radius:12px;overflow:hidden"><div style="background:#C85A4F;padding:24px;text-align:center"><h1 style="color:white;margin:0;font-size:24px">Cambio de Contraseña</h1></div><div style="background:#1a1a1a;padding:32px"><p style="color:#ffffff;font-size:16px">Hola, ${nombre} 👋</p><p style="color:#cccccc;font-size:15px">Tu contraseña ha sido actualizada exitosamente.</p><p style="color:#aaaaaa;font-size:13px">Si no realizaste este cambio, contacta a soporte inmediatamente.</p></div></div>`);
+  // MINI TAREA 1: Enviar automáticamente un correo cuando cambia la contraseña
+  // MINI TAREA 2: Verificar que se envíe en menos de 10 segundos
+  
+  const fecha = new Date().toLocaleDateString('es-BO', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#1a1a1a;border-radius:12px;overflow:hidden">
+      <div style="background:#C85A4F;padding:24px;text-align:center">
+        <h1 style="color:white;margin:0;font-size:24px">🔒 Cambio de Contraseña</h1>
+      </div>
+      <div style="background:#1a1a1a;padding:32px">
+        <p style="color:#888888;font-size:12px;margin:0 0 20px 0;padding:10px;background:#111111;border-left:3px solid #C85A4F;border-radius:4px">
+          <strong>Fecha:</strong> ${fecha}
+        </p>
+        
+        <p style="color:#ffffff;font-size:16px">Hola, ${nombre} 👋</p>
+        
+        <p style="color:#cccccc;font-size:15px">
+          <strong>Tu contraseña ha sido actualizada exitosamente.</strong>
+        </p>
+        
+        <div style="background:#111111;border-left:3px solid #FF6B6B;padding:15px;margin:20px 0;border-radius:4px">
+          <p style="color:#FF6B6B;font-size:13px;margin:0;font-weight:bold">⚠️ SEGURIDAD</p>
+          <p style="color:#aaaaaa;font-size:13px;margin:8px 0 0 0">
+            Si no realizaste este cambio, contacta a soporte inmediatamente.
+          </p>
+        </div>
+
+        <div style="text-align:center;margin-top:30px">
+          <a href="https://www.propbol.com/perfil/seguridad" 
+             style="display:inline-block;background:#C85A4F;color:white;padding:12px 30px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px">
+            📱 Ver Mi Perfil
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const asunto = `[SEGURIDAD] Tu contraseña fue actualizada - ${new Date().getFullYear()}`;
+  
+  return sendEmail(email, asunto, html);
 }
 
 export const sendPasswordChangeEmail = enviarCambioContrasena;

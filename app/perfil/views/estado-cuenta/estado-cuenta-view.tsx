@@ -8,7 +8,6 @@
 */
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import ModalDesactivar from "./modal-desactivar";
 
@@ -23,7 +22,6 @@ export default function EstadoCuentaView({
   estadoCuenta,
   onBack,
 }: EstadoCuentaViewProps) {
-  const router = useRouter();
   const [modalAbierto, setModalAbierto] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mensajeError, setMensajeError] = useState("");
@@ -68,10 +66,11 @@ export default function EstadoCuentaView({
       setIsLoading(false);
       setExitosa(true); // CA-24
 
-      // CA-4 / CA-17: logout y redirigir a ofertas
+      // CA-4 / CA-17: logout, limpiar sesión completamente y redirigir
       setTimeout(async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/home");
+        // window.location.href fuerza recarga completa — limpia todo el estado de auth
+        window.location.href = "/";
       }, 2500);
     } catch {
       // CA-8: error de red
@@ -85,7 +84,7 @@ export default function EstadoCuentaView({
     return (
       <div className="p-8 text-white">
         <div className="flex flex-col items-center gap-4 py-10 text-center animate-in fade-in zoom-in-95 duration-500">
-          {/* Check verde sobre fondo azul petróleo translúcido */}
+          {/* Check sobre fondo azul petróleo translúcido */}
           <div
             className="rounded-full p-4"
             style={{ backgroundColor: "#1F3A4D44" }}
@@ -100,7 +99,7 @@ export default function EstadoCuentaView({
           <p className="text-white/70 text-sm max-w-xs">
             Tu perfil ha sido desactivado y ya no es visible para otros usuarios.
           </p>
-          {/* CA-24: cómo reactivar — fondo secundario claro sobre panel oscuro */}
+          {/* CA-24: mensaje de reactivación */}
           <div
             className="rounded-xl p-4 text-sm max-w-xs border"
             style={{
@@ -124,7 +123,7 @@ export default function EstadoCuentaView({
   return (
     <div className="p-8 text-white space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-      {/* Encabezado — igual patrón que contrasena-view y cambiar-correo */}
+      {/* Encabezado */}
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onBack}
@@ -137,7 +136,6 @@ export default function EstadoCuentaView({
       </div>
 
       <div className="flex items-center gap-3 pb-5 border-b border-white/15 mb-6">
-        {/* Ícono — azul petróleo translúcido como en los otros formularios */}
         <div
           className="flex h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: "#ffffff15" }}
@@ -163,7 +161,7 @@ export default function EstadoCuentaView({
         que contactes a soporte para reactivarla.
       </p>
 
-      {/* CA-8: banner de error — terracota */}
+      {/* CA-8: banner de error */}
       {mensajeError && (
         <div
           className="rounded-xl p-4 text-sm border"
@@ -185,7 +183,6 @@ export default function EstadoCuentaView({
           style={{
             backgroundColor: "#C26E5A18",
             borderColor: "#C26E5A44",
-            // foco en terracota
           }}
         >
           <div className="text-left">

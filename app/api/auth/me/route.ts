@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const { data: userData, error } = await supabaseAdmin
       .from("Usuario")
-      .select("id_usuario, nombres, email, rol")
+      .select("id_usuario, nombres, email, rol, estado")
       .eq("id_usuario", decoded.userId) 
       .maybeSingle();
 
@@ -40,6 +40,19 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // HU-04 CA-3: si la cuenta está desactivada, rechazar la sesión
+if (userData.estado === 0) {
+  const response = NextResponse.json(
+    { error: "Cuenta desactivada" },
+    { status: 403 }
+  );
+  response.cookies.delete("auth_token");
+  return response;
+}
+    
+
+
 
     const user = {
       id: userData.id_usuario,
