@@ -23,7 +23,7 @@ export const ContactCardDesktop = ({ objPropietario, strTituloInmueble }: Contac
   return (
     <section className="hidden lg:block bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5 mb-12 font-sans">      
       {/* Título Exacto */}
-      <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
+      <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
         Contacto
       </h2>
       <div className="flex flex-row items-center justify-between w-full">      

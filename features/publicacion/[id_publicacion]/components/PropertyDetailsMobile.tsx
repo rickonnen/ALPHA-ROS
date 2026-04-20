@@ -19,7 +19,9 @@ export const PropertyDetailsMobile = ({ objInfo }: PerfilDetallesProps) => {
 
       {/* ── DATOS GENERALES ── */}
       <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm">
-        <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">Datos Generales</h2>
+        <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
+          Datos Generales
+        </h2>
         <div className="flex flex-col gap-y-2">
           <DetalleItem strLabel="Estado Construcción" strValor={objInfo.strEstadoConstruccion} />
           <DetalleItem strLabel="Departamento"        strValor={objInfo.strDepartamento} />
@@ -32,8 +34,9 @@ export const PropertyDetailsMobile = ({ objInfo }: PerfilDetallesProps) => {
       {/* ── DATOS ESPECÍFICOS — condicional por tipo ── */}
       {(!bolEsTerreno || bolTieneCaracteristicas) && (
         <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm">
-          <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">Datos Específicos</h2>
-
+          <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
+            Datos Específicos
+          </h2>
           {/* Métricas base — solo para construidos */}
           {!bolEsTerreno && (
             <div className="flex flex-col gap-y-2 mb-4">
