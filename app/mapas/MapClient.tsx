@@ -60,7 +60,7 @@ export default function MapClient() {
       </main>
 
       {/* MAPA (HU2) */}
-      <div className="w-[45%] shrink-0 relative">
+      <div className="flex-1 shrink-0 relative min-w-0">
         <PropertyMap
           locations={locations}
           hoveredId={hoveredId}
