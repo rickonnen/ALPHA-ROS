@@ -5,21 +5,9 @@ import {
   guardarImagenes,
   leerImagenes,
   limpiarImagenes,
-  guardarSessionKey,
-  leerSessionKey,
+  marcarSesionActiva,
+  haySecionActiva,
 } from './imagenesDB'
-
-// ── CAMBIO CLAVE ──────────────────────────────────────────────────────────
-// El hook recibe `sessionKey` del padre (FormularioDinamico).
-// El padre genera una key única con Date.now() al montar.
-//
-// Lógica al inicializar:
-//   - keyGuardada === sessionKey  →  F5/recarga  →  restaurar de IndexedDB
-//   - keyGuardada !== sessionKey  →  sesión nueva →  limpiar IndexedDB
-//
-// Esto reemplaza el bug de haySecionActiva() que siempre devolvía true
-// durante la navegación interna de Next.js (soft navigation).
-// ─────────────────────────────────────────────────────────────────────────
 
 export function useImagenesForm(sessionKey: string) {
   const [values,     setValues]     = useState<ImagenesValues>(INITIAL_VALUES)
@@ -30,16 +18,10 @@ export function useImagenesForm(sessionKey: string) {
 
   const valuesRef = useRef(values)
 
+  // ── Al montar: decide si restaurar o limpiar ──
   useEffect(() => {
-    if (!sessionKey) return
-
     async function inicializar() {
-      setCargando(true)
-
-      const keyGuardada = leerSessionKey()
-
-      if (keyGuardada === sessionKey) {
-        // Misma sesión (F5 / recarga) → restaurar de IndexedDB
+      if (haySecionActiva()) {
         const archivosGuardados = await leerImagenes()
         if (archivosGuardados.length > 0) {
           const restored = { imagenes: archivosGuardados }
@@ -47,20 +29,14 @@ export function useImagenesForm(sessionKey: string) {
           setValues(restored)
         }
       } else {
-        // Sesión nueva (otra publicación, otro editar, click en header)
-        // → limpiar IndexedDB y registrar la nueva key
         await limpiarImagenes()
-        guardarSessionKey(sessionKey)
-        valuesRef.current = INITIAL_VALUES
-        setValues(INITIAL_VALUES)
+        marcarSesionActiva()
       }
-
       setCargando(false)
     }
 
     inicializar()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey])
+  }, [sessionKey]) // sessionKey como dependencia para re-inicializar si cambia
 
   // ── Previews estables ─────────────────────────
   const previews = useMemo(
@@ -115,7 +91,7 @@ export function useImagenesForm(sessionKey: string) {
     if (touched) setErrors(validate(updated))
   }, [touched])
 
-  //Envío
+  // ── Envío ─────────────────────────────────────
   const handleSubmit = useCallback((onSuccess: (values: ImagenesValues) => void) => {
     setTouched(true)
     const validationErrors = validate(valuesRef.current)
@@ -125,7 +101,7 @@ export function useImagenesForm(sessionKey: string) {
     }
   }, [])
 
-  //Reset
+  // ── Reset ─────────────────────────────────────
   const handleReset = useCallback(async () => {
     await limpiarImagenes()
     valuesRef.current = INITIAL_VALUES
