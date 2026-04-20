@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
+import { useNotificationUpdates } from "./useNotificationUpdates";
 
 export function useUnreadCount(user: any) {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -7,41 +7,43 @@ export function useUnreadCount(user: any) {
   const fetchUnreadCount = useCallback(async () => {
     if (!user) {
       setUnreadCount(0);
-      return;
+      return 0;
     }
-    
+
     try {
       const response = await fetch("/api/notifications");
       const data = await response.json();
-      const userId = user?.id ?? "guest";
-      const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-      const deletedIds: number[] = stored ? JSON.parse(stored) : [];
-      const filtered = data.filter((n: any) => !deletedIds.includes(n.id));
-      setUnreadCount(filtered.filter((n: any) => !n.read).length);
+      
+      const notifications = Array.isArray(data) ? data : data.notifications;
+      
+      if (Array.isArray(notifications)) {
+        const count = notifications.filter((n: any) => !n.read).length;
+        setUnreadCount(count);
+        return count;
+      } else {
+        setUnreadCount(0);
+        return 0;
+      }
     } catch (error) {
-      console.error(error);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) {
+      console.error("Error fetching unread count:", error);
       setUnreadCount(0);
+      return 0;
     }
   }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
+  useNotificationUpdates(() => {
     fetchUnreadCount();
-  }, [fetchUnreadCount, user]);
-  
-  useEffect(() => {
-    if (!user) return;
-    
-    const handleRefresh = () => fetchUnreadCount();
-    window.addEventListener("refresh-notification-badge", handleRefresh);
-    
-    return () => window.removeEventListener("refresh-notification-badge", handleRefresh);
-  }, [fetchUnreadCount, user]);
+  });
 
-  return unreadCount;
+  useEffect(() => {
+    fetchUnreadCount();
+    
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  return { 
+    unreadCount, 
+    refreshCount: fetchUnreadCount 
+  };
 }
