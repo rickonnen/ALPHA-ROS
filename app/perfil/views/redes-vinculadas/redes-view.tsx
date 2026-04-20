@@ -63,6 +63,8 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
   const vinculadas = redes.filter((r) => r.vinculada);
   const disponibles = redes.filter((r) => !r.vinculada);
   
+   const [showVincularConfirm, setShowVincularConfirm] = useState(false);
+
    const [showDesvincularConfirm, setShowDesvincularConfirm] = useState(false);
     const [redSeleccionada, setRedSeleccionada] = useState<string | null>(null);
        
@@ -76,7 +78,6 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
 
-      {/* Header con flecha y texto clickeable */}
       <div className="flex items-center gap-2 mb-1">
         <button
           onClick={onBack}
@@ -95,7 +96,6 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
         </div>
       </div>
 
-      {/* Vinculadas */}
       {vinculadas.length > 0 && (
         <div className="mb-6">
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Vinculadas</p>
@@ -109,33 +109,47 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
                     <p className="text-xs text-gray-300">{red.cuenta}</p>
                   </div>
                 </div>
-                  <button
-                    //onClick={() => handleDesvincular(red.nombre)}
-                    /*Cambio Mayte */
-                    onClick={() => {
-                      setRedSeleccionada(red.nombre);
-                      setShowDesvincularConfirm(true);
-                    }}                  
-                    className="text-xs text-red-400 hover:text-red-300 border border-red-400/40 hover:border-red-300 px-3 py-1.5 rounded-lg transition-all duration-200"
-                  >
-                    Desvincular
-                  </button>
+                  {red.nombre !== "Google" && (
+                    <button
+                      onClick={() => {
+                        setRedSeleccionada(red.nombre);
+                        setShowDesvincularConfirm(true);
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 border border-red-400/40 hover:border-red-300 px-3 py-1.5 rounded-lg transition-all duration-200"
+                    >
+                      Desvincular
+                    </button>
+                  )}
               </div>
             ))}
           </div>
         </div>
       )}
-          {showDesvincularConfirm && (
-            <ConfirmModal
-              title="¿Desvincular?"
-              description="Estás a punto de desvincular tu cuenta. ¿Deseas continuar?"
-              confirmText="Sí, Desvincular"
-              onCancel={() => setShowDesvincularConfirm(false)}
-              onConfirm={handleConfirmDesvincular}
-            />
-          )}
 
-      {/* Disponibles para vincular */}
+      {showDesvincularConfirm && (
+        <ConfirmModal
+          title="¿Desvincular?"
+          description="Estás a punto de desvincular tu cuenta. ¿Deseas continuar?"
+          confirmText="Sí, Desvincular"
+          onCancel={() => setShowDesvincularConfirm(false)}
+          onConfirm={handleConfirmDesvincular}
+        />
+      )}
+
+      {showVincularConfirm && redSeleccionada && (
+        <ConfirmModal
+          title={`PROBOL quiere utilizar ${redSeleccionada} para iniciar sesión`}
+          description="Esto le permite a la app y al sitio compartir información acerca de ti."
+          confirmText="Continuar"
+          onCancel={() => setShowVincularConfirm(false)}
+          onConfirm={() => {
+            handleVincular(redSeleccionada);
+            setShowVincularConfirm(false);
+          }}
+        />
+      )}
+      
+
       {disponibles.length > 0 && (
         <div>
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Disponibles para vincular</p>
@@ -149,12 +163,17 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
                     <p className="text-xs text-gray-300">{red.cuenta}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleVincular(red.nombre)}
-                  className="text-xs text-white bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg transition-all duration-200 font-medium"
-                >
-                  Vincular
-                </button>
+                {red.nombre !== "Google" && (
+                  <button
+                    onClick={() => {
+                        setRedSeleccionada(red.nombre);
+                        setShowVincularConfirm(true);
+                      }}
+                    className="text-xs text-white bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg transition-all duration-200 font-medium"
+                  >
+                    Vincular
+                  </button>
+                )}
               </div>
             ))}
           </div>
