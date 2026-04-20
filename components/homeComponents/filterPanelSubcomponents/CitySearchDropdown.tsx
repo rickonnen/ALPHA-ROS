@@ -1,3 +1,9 @@
+/**
+ * Autor: Jose Daniel Condarco Flores
+ * Componente: CitySearchDropdown
+ * fecha: 19/4/2026
+ * Función: Muestra sugerencias, historial y controla la selección de ciudades.
+ */
 import { RefObject } from "react";
 import { useCitySearch } from "../../hooks/useCitySearch";
 import CityListItem from "./CityListItem";

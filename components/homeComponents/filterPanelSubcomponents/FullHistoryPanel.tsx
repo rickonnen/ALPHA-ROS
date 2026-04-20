@@ -1,6 +1,15 @@
+/**
+ * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 19/04/2026
+ * Panel lateral para visualizar y gestionar el historial completo de búsqueda de ciudades.
+ * Implementa un trap de foco para accesibilidad y navegación fluida por teclado
+ * @param hookData Datos y funciones expuestas por el hook useCitySearch para la gestión del estado
+ * @param strSuggestionHover Clases de estilo para el efecto hover de los elementos de la lista
+ * @return Elemento JSX que renderiza el panel lateral con overlay
+ */
 import { useEffect, useRef } from "react";
 import { useCitySearch } from "../../hooks/useCitySearch";
 import CityListItem from "./CityListItem";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 interface FullHistoryPanelProps {
   hookData: ReturnType<typeof useCitySearch>;
@@ -9,12 +18,15 @@ interface FullHistoryPanelProps {
 
 export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullHistoryPanelProps) {
   const objFullPanelRef = useRef<HTMLDivElement>(null);
-  const objActiveItemRef = useRef<HTMLLIElement>(null);
+  const objActiveItemRef = useRef<HTMLElement>(null);
 
   const {
     arrHistory, intSelectedIndex, setIntSelectedIndex,
     setBolShowFullHistoryPanel, handleFillFromHistory, handleDeleteHistoryItem
   } = hookData;
+
+  // cerrar al hacer clic fuera
+  useClickOutside([objFullPanelRef], () => setBolShowFullHistoryPanel(false));
 
   const intSelectedIndexRef = useRef(intSelectedIndex);
   useEffect(() => {
@@ -25,12 +37,10 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
     const strOriginalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     
-    // Reiniciar el índice al abrir el panel
     setIntSelectedIndex(0);
 
     const handleFocusTrap = (objEvent: KeyboardEvent) => {
       if (!objFullPanelRef.current) return;
-      objEvent.stopPropagation();
 
       if (objEvent.key === 'Escape') {
         setBolShowFullHistoryPanel(false);
@@ -40,7 +50,6 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
       if (["ArrowDown", "ArrowUp"].includes(objEvent.key)) {
         objEvent.preventDefault();
         const intMaxIndex = arrHistory.length - 1;
-        
         if (objEvent.key === "ArrowDown") {
           setIntSelectedIndex((intPrev) => (intPrev < intMaxIndex ? intPrev + 1 : 0));
         } else {
@@ -64,7 +73,6 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
         if (arrFocusableElements.length === 0) return;
-
         const objFirstElement = arrFocusableElements[0];
         const objLastElement = arrFocusableElements[arrFocusableElements.length - 1];
 
@@ -83,7 +91,6 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
     };
 
     document.addEventListener('keydown', handleFocusTrap, true);
-
     setTimeout(() => {
        if (objFullPanelRef.current) objFullPanelRef.current.focus(); 
     }, 50);
@@ -94,7 +101,6 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
     };
   }, [setBolShowFullHistoryPanel, arrHistory, handleFillFromHistory, setIntSelectedIndex]);
 
-  // Auto-scroll dentro del panel completo
   useEffect(() => {
     if (objActiveItemRef.current) {
       objActiveItemRef.current.scrollIntoView({ behavior: "auto", block: "nearest" });
@@ -103,6 +109,11 @@ export default function FullHistoryPanel({ hookData, strSuggestionHover }: FullH
 
   return (
     <>
+      <div 
+        className="fixed inset-0 bg-black/20 z-[95] animate-in fade-in duration-300"
+        aria-hidden="true"
+      />
+
       <div 
         ref={objFullPanelRef}
         tabIndex={-1} 

@@ -1,3 +1,11 @@
+/**
+ * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 20/04/2026
+ * Componente de entrada de búsqueda para ciudades con soporte de autocompletado e historial.
+ * Gestiona la navegación por teclado y coordina la visualización de paneles desplegables.
+ * @param hookData Datos y métodos provenientes del hook centralizado useCitySearch
+ * @param fnOnSearch Función callback para ejecutar la navegación o búsqueda activa
+ * @return Elemento JSX con input, botón de búsqueda y orquestación de menús
+ */
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
@@ -15,7 +23,7 @@ interface CitySearchInputProps {
 
 export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInputProps) {
   const objContainerRef = useRef<HTMLDivElement>(null);
-  const objActiveItemRef = useRef<HTMLElement>(null); // Corrección TypeScript
+  const objActiveItemRef = useRef<HTMLElement>(null);
 
   const {
     strCity, arrSuggestions, bolShowSuggestions, 

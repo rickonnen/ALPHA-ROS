@@ -1,11 +1,16 @@
 "use client";
-
+/**
+ * Autor: Jose Daniel Condarco Flores
+ * Componente: CityListItem
+ * fecha: 19/4/2026
+ * Función: Muestra una ciudad, permite seleccionarla y eliminarla del historial.
+ */
 import type { CitySuggestion } from "../../hooks/mapboxService";
 
 interface CityListItemProps {
   objItem: CitySuggestion;
   bolIsSelected: boolean;
-  objItemRef?: React.RefObject<HTMLLIElement> | null;
+  objItemRef?: React.RefObject<HTMLElement | null> | null;
   strSuggestionHover: string;
   fnOnMouseEnter: () => void;
   fnOnSelect: () => void;
@@ -26,7 +31,7 @@ export default function CityListItem({
 
   return (
     <li
-      ref={objItemRef}
+      ref={objItemRef as React.RefObject<HTMLLIElement>}
       data-active={bolIsSelected}
       onMouseEnter={fnOnMouseEnter}
       onMouseDown={(objEvent) => {
