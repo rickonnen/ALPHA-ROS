@@ -36,7 +36,10 @@
     Fix: Actualización del título de la sección principal a "Publicaciones".
     Feat: Implementación de estados focus-visible para navegación por teclado en el botón "+ Agregar".
 */
-
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 18/04/2026
+    Feat: Integración del modal de límite de publicaciones (Criterio 11).
+*/
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,8 +150,32 @@ export default function PublicacionesView({
       setEliminando(false);
     }
   };
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number) => {
+    try {
+      setError(null);
+      // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
+      const url = `/api/perfil/updateEstadoPublicacion?id_publicacion=${id_pub}&id_estado=${nuevoEstado}&id_usuario=${id_usuario}`;
+      
+      const res = await fetch(url, { method: "PATCH" });
 
-  const handleAgregar = async () => {
+      if (res.ok) {
+        // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
+        setPublicaciones((prev) =>
+          prev.map((p) =>
+            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p
+          )
+        );
+      } else {
+        const errorData = await res.json();
+        console.error("Error desde el servidor:", errorData.error);
+        setError("No se pudo actualizar el estado de la publicación.");
+      }
+    } catch (err) {
+      console.error("Error de red:", err);
+      setError("Error de conexión al intentar cambiar el estado.");
+    }
+  };
+  const handleAgregar = async () => { 
     if (!user) {
       router.push("/login");
       return;
@@ -188,7 +215,6 @@ export default function PublicacionesView({
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
-
             </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
@@ -221,12 +247,13 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando && publicaciones.length > 0 && (
-            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1">
               {publicaciones.map((pub) => (
                 <PublicacionCard
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
+                  onCambiarEstado={handleCambiarEstado}
                 />
               ))}
             </div>
@@ -328,10 +355,10 @@ export default function PublicacionesView({
         </div>
       )}
 
-      {/* Modal límite de publicaciones gratuitas */}
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}
+        strPlansHref="/cobros/planes" 
       />
     </>
   );
