@@ -95,6 +95,59 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
               </ul>
             </div>
           </section>
+
+          <section className="mt-8 space-y-6">
+            <h2 className="text-xl font-bold text-foreground border-b border-border pb-2">
+              PASOS
+            </h2>
+
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    1
+                  </div>
+                  <div className="w-px flex-grow bg-border mt-2"></div>
+                </div>
+                <div className="pb-4">
+                  <h3 className="font-bold text-foreground">Escanea el código QR</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Abre la aplicación de tu banco y escanea el código QR que aparece a la derecha. Asegúrate de ingresar el monto exacto: 
+                    <span className="font-semibold text-foreground"> ${Number(plan.precio_plan).toLocaleString("es-ES")}</span>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    2
+                  </div>
+                  <div className="w-px flex-grow bg-border mt-2"></div>
+                </div>
+                <div className="pb-4">
+                  <h3 className="font-bold text-foreground">Guarda el comprobante</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Una vez realizada la transferencia, guarda la imagen o captura de pantalla del comprobante en tu dispositivo.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                    3
+                  </div>
+                </div>
+                <div className="">
+                  <h3 className="font-bold text-foreground">Sube y verifica</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Haz clic en <span className="italic">"Adjuntar comprobante"</span>, selecciona tu imagen y luego presiona <span className="italic">"Verificar Pago"</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* ESPACIADOR FLEXIBLE: Esto empuja todo lo que sigue hacia abajo */}
