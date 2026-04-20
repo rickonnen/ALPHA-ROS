@@ -24,34 +24,80 @@ const handler = NextAuth({
 
       try {
         if (account?.provider === "google") {
+          if (!user?.email) return false
 
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
 
-          const { data: existingById } = await supabase
+          const providerAccountId = account.providerAccountId as string | undefined
+          if (!providerAccountId) return false
+
+          const { data: existingByGoogle } = await supabase
             .from("Usuario")
             .select("id_usuario")
-            .eq("id_usuario", account.providerAccountId)
+            .eq("google_id", providerAccountId)
             .maybeSingle()
 
-          if (!existingById) {
-            await supabase.from("Usuario").insert({
-              id_usuario: account.providerAccountId,
+          if (existingByGoogle?.id_usuario) {
+            return true
+          }
+
+          const { data: existingByEmail } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("email", user.email)
+            .maybeSingle()
+
+          const nombre = user.name?.split(" ")[0] ?? ""
+          const apellido = user.name?.split(" ").slice(1).join(" ") ?? ""
+
+          if (existingByEmail?.id_usuario) {
+            await supabase
+              .from("Usuario")
+              .update({
+                google_id: providerAccountId,
+                url_foto_perfil: user.image ?? null,
+                nombres: nombre,
+                apellidos: apellido,
+              })
+              .eq("id_usuario", existingByEmail.id_usuario)
+            return true
+          }
+
+          const { data: authData, error: authError } =
+            await supabase.auth.admin.createUser({
               email: user.email,
-              nombres: user.name?.split(" ")[0] ?? "",
-              apellidos:
-                user.name?.split(" ").slice(1).join(" ") ?? "",
-              google_id: account.providerAccountId,
-              url_foto_perfil: user.image ?? null,
-              rol: 2,
-              estado: 1,
+              password: crypto.randomUUID() + crypto.randomUUID(),
+              email_confirm: true,
+              user_metadata: { nombre, apellido },
             })
 
-            console.log("Usuario creado en tabla Usuario")
+          if (authError || !authData.user) {
+            console.error("Error creando usuario en Supabase Auth:", authError)
+            return false
           }
+
+          const { error: dbError } = await supabase.from("Usuario").insert({
+            id_usuario: authData.user.id,
+            email: user.email,
+            nombres: nombre,
+            apellidos: apellido,
+            google_id: providerAccountId,
+            url_foto_perfil: user.image ?? null,
+            rol: 2,
+            estado: 1,
+          })
+
+          if (dbError) {
+            console.error("Error creando usuario en tabla Usuario:", dbError)
+            await supabase.auth.admin.deleteUser(authData.user.id)
+            return false
+          }
+
+          console.log("Usuario creado en Supabase Auth + tabla Usuario")
         }
 
         return true
@@ -64,8 +110,23 @@ const handler = NextAuth({
 
     async jwt({ token, account }: any) {
 
-      if (account) {
-        token.id = account.providerAccountId
+      if (account?.provider === "google") {
+        const { createClient } = await import("@supabase/supabase-js")
+        const supabase = createClient(
+          process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
+        const providerAccountId = account.providerAccountId as string | undefined
+        if (providerAccountId) {
+          const { data: userRow } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("google_id", providerAccountId)
+            .maybeSingle()
+
+          if (userRow?.id_usuario) token.id = userRow.id_usuario
+        }
       }
       return token
     },
