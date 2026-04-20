@@ -22,7 +22,7 @@ export const ContactCardMobile = ({ objPropietario, strTituloInmueble }: Contact
   return (
     <section className="block lg:hidden bg-white/40 backdrop-blur-sm p-6 sm:p-8 rounded-3xl shadow-sm border border-black/5 mb-8 font-sans">
       {/* Título Alineado a la Izquierda para coincidir con "Descripción" */}
-      <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D]">
+      <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
         Contacto
       </h2>
       {/* Foto, Nombre y Usuario */}
