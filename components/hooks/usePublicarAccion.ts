@@ -11,8 +11,8 @@ import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action"
 interface UsePublicarAccionProps {
   objUser: any;
   onShowProtected: () => void;
-  onShowLimit: () => void;      // HU5 — gratuito
-  onShowLimitPlan: () => void;  // HU7 — plan activo excedido
+  onShowLimit: () => void;
+  onShowLimitPlan: () => void;
   onCloseMobileMenu: () => void;
   bolIsAuthLoading?: boolean;
 }
@@ -44,11 +44,10 @@ export const usePublicarAccion = ({
       const objEstado = await verificarEstadoPublicacion(objUser.id);
 
       if (objEstado?.bolLimiteAlcanzado) {
-        // HU7: distinguir qué modal mostrar
         if (objEstado.strTipoLimite === "plan") {
-          onShowLimitPlan();  // plan activo excedido
+          onShowLimitPlan(); 
         } else {
-          onShowLimit();      // gratuito excedido
+          onShowLimit();
         }
       } else {
         objRouter.push("/publicacion/formularioDinamico");

@@ -263,7 +263,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/45 flex items-start justify-center overflow-y-auto p-3 md:p-6 pt-8 md:pt-16"
+            className="fixed inset-0 z-50 bg-black/45 flex items-start justify-center overflow-y-auto p-3 md:p-6 pt-20 md:pt-24"
             onClick={onClose}
         >
             <div
@@ -276,7 +276,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                     {/* Desktop: título izq, badge der */}
                     <div className="hidden md:flex items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Resumen de Publicacion</h2>
                             <p className="text-sm text-[#6C6761] mt-0.5">
                                 {modoEdicion
                                     ? 'Revisa la información de tu inmueble antes de guardarlo.'
