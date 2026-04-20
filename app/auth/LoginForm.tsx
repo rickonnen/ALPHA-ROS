@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import SuccessModal from "./SuccessModal";
+import OTP2FAModal from "./OTP2FAModal";
 import { useAuth } from "./AuthContext";
 
   import { SignInFacebook } from "./FacebookSignIn";
@@ -21,7 +22,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, fetchUserFromServer } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,6 +43,10 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
   const [reactivating, setReactivating] = useState(false);
   const [reactivateError, setReactivateError] = useState("");
   const [reactivateSuccess, setReactivateSuccess] = useState(false);
+
+  // Estados para 2FA Modal
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [pending2FAUserId, setPending2FAUserId] = useState("");
 
   function validateField(field: string, value: string) {
     const newErrors = { ...errors };
@@ -100,6 +105,14 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       }
       setShowSuccess(true);
     } catch (err: any) {
+      // ✅ NUEVO: Detectar error de 2FA requerido
+      if (err.requiresOTP && err.userId) {
+        setPending2FAUserId(err.userId);
+        setShow2FAModal(true);
+        setLoading(false);
+        return;
+      }
+      // Manejo de cuenta desactivada
       if (err.code === "ACCOUNT_DISABLED") {
         setCuentaDesactivada(true);
         setGeneralError("");
@@ -211,6 +224,30 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     } finally {
       setReactivating(false);
     }
+  }
+
+  // ✅ NUEVO: Manejo de 2FA exitoso
+  async function handle2FASuccess() {
+    setShow2FAModal(false);
+    setPending2FAUserId("");
+    // Refrescar el usuario desde el servidor
+    const success = await fetchUserFromServer();
+    if (success) {
+      const resMe = await fetch("/api/auth/me");
+      if (resMe.ok) {
+        const dataMe = await resMe.json();
+        setUserRol(dataMe.user.rol);
+      }
+      setShowSuccess(true);
+    } else {
+      setGeneralError("Error al cargar tu usuario después de 2FA");
+    }
+  }
+
+  // ✅ NUEVO: Cancelar modal 2FA
+  function handle2FACancel() {
+    setShow2FAModal(false);
+    setPending2FAUserId("");
   }
 
   return (
@@ -653,6 +690,15 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         onClose={handleSuccessClose}
         autoCloseDuration={2000}
       />
+
+      {/* ✅ NUEVO: Modal 2FA */}
+      {show2FAModal && (
+        <OTP2FAModal
+          userId={pending2FAUserId}
+          onSuccess={handle2FASuccess}
+          onCancel={handle2FACancel}
+        />
+      )}
     </div>
   );
 }
