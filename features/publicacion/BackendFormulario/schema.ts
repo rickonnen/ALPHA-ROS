@@ -77,6 +77,14 @@ export const publicacionSchema = z.object({
   descripcion: z.string().min(10,  'La descripción debe tener al menos 10 caracteres.')
                          .max(500, 'La descripción no puede superar 500 caracteres.'),
 
+  // Paso 6 — Características Extras (opcional, máx 4, IDs de tabla Caracteristica)
+  caracteristicasExtras: z.array(
+    z.object({
+      id_caracteristica: z.number().int().min(1),
+      detalle:           z.string().max(100).optional().nullable(),
+    })
+  ).max(4, 'Máximo 4 características extras.').optional().default([]),
+
   // ID del usuario autenticado
   id_usuario: z.string().uuid().optional().nullable(),
 })

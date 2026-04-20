@@ -39,8 +39,8 @@ export async function actualizarPublicacion(
   formData: FormData,
 ): Promise<ActionResult> {
 
-  const files          = formData.getAll('imagenes')        as File[]
-  const imagenesViejas = formData.getAll('imagenesViejas')  as string[]
+  const files           = formData.getAll('imagenes')        as File[]
+  const imagenesViejas  = formData.getAll('imagenesViejas')  as string[]
   const imagenesABorrar = formData.getAll('imagenesABorrar') as string[]
 
   // Subir imágenes nuevas si las hay
@@ -61,6 +61,17 @@ export async function actualizarPublicacion(
     return { success: false, errors: { imagenes: ['Debes tener al menos 1 imagen.'] } }
   }
 
+  // Parsear características extras desde FormData
+  let caracteristicasExtras: { id_caracteristica: number; detalle?: string | null }[] = []
+  try {
+    const rawCaract = formData.get('caracteristicasExtras') as string
+    if (rawCaract) {
+      caracteristicasExtras = JSON.parse(rawCaract)
+    }
+  } catch {
+    caracteristicasExtras = []
+  }
+
   const payload = {
     titulo:             formData.get('titulo')             as string,
     tipoOperacion:      formData.get('tipoOperacion')      as string,
@@ -68,9 +79,9 @@ export async function actualizarPublicacion(
     tipoMoneda:         (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
     tipoInmueble:       formData.get('tipoInmueble')       as string,
     estadoConstruccion: parseInt(formData.get('estadoConstruccion') as string, 10),
-    direccion:    formData.get('direccion')    as string,
-    departamento: formData.get('departamento') as string,
-    zona:         formData.get('zona')         as string,
+    direccion:          formData.get('direccion')          as string,
+    departamento:       formData.get('departamento')       as string,
+    zona:               formData.get('zona')               as string,
     lat:  formData.get('lat')  ? parseFloat(formData.get('lat')  as string) : undefined,
     lng:  formData.get('lng')  ? parseFloat(formData.get('lng')  as string) : undefined,
     habitaciones: parseInt(formData.get('habitaciones') as string, 10),
@@ -81,7 +92,8 @@ export async function actualizarPublicacion(
     imagenesUrl,
     videoUrl:    (formData.get('videoUrl')    as string) || null,
     descripcion:  formData.get('descripcion') as string,
-    id_usuario:   (formData.get('id_usuario') as string) || null,
+    caracteristicasExtras,
+    id_usuario:  (formData.get('id_usuario')  as string) || null,
   }
 
   const parsed = publicacionSchema.safeParse(payload)
@@ -101,6 +113,8 @@ export async function actualizarPublicacion(
     const idTipoOp  = TIPO_OPERACION_IDS[d.tipoOperacion]
 
     await prisma.$transaction(async (tx) => {
+
+      // Actualizar ubicación
       const pub = await tx.publicacion.findUnique({
         where:  { id_publicacion: idPublicacion },
         select: { id_ubicacion: true },
@@ -119,6 +133,7 @@ export async function actualizarPublicacion(
         })
       }
 
+      // Actualizar publicación principal
       await tx.$executeRaw`
         UPDATE "Publicacion" SET
           titulo                 = ${d.titulo},
@@ -136,6 +151,7 @@ export async function actualizarPublicacion(
         WHERE id_publicacion = ${idPublicacion}
       `
 
+      // Actualizar imágenes (borrar todas y reinsertar)
       await tx.$executeRaw`DELETE FROM "Imagen" WHERE id_publicacion = ${idPublicacion}`
       for (const url of d.imagenesUrl) {
         await tx.$executeRaw`
@@ -144,12 +160,26 @@ export async function actualizarPublicacion(
         `
       }
 
+      // Actualizar video
       await tx.$executeRaw`DELETE FROM "Video" WHERE id_publicacion = ${idPublicacion}`
       if (d.videoUrl) {
         await tx.$executeRaw`
           INSERT INTO "Video" (id_publicacion, url_video)
           VALUES (${idPublicacion}, ${d.videoUrl})
         `
+      }
+
+      // Actualizar características extras (borrar todas y reinsertar)
+      await tx.$executeRaw`
+        DELETE FROM "PublicacionCaracteristica" WHERE id_publicacion = ${idPublicacion}
+      `
+      if (d.caracteristicasExtras && d.caracteristicasExtras.length > 0) {
+        for (const caract of d.caracteristicasExtras) {
+          await tx.$executeRaw`
+            INSERT INTO "PublicacionCaracteristica" (id_publicacion, id_caracteristica, detalle_caracteristica)
+            VALUES (${idPublicacion}, ${caract.id_caracteristica}, ${caract.detalle ?? null})
+          `
+        }
       }
     })
 
