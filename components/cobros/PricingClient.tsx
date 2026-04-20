@@ -98,7 +98,11 @@ export function PricingClient({ planes }: { planes: PlanFormateado[] }) {
               </CardContent>
 
               <div className="border-t border-border p-6 bg-card mt-auto">
-                <BotonContinuarPlan planId={plan.id_plan} isAnnual={isAnnual} />
+                <BotonContinuarPlan
+                  planId={plan.id_plan}
+                  isAnnual={isAnnual}
+                  cantPublicacionesTarjeta={plan.cant_publicaciones}
+                />{" "}
               </div>
             </Card>
           );

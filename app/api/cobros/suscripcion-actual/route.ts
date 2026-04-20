@@ -14,19 +14,21 @@ export async function POST(req: NextRequest) {
 
     const suscripcion = await prisma.suscripcion.findUnique({
       where: { id_usuario: id_usuario },
-      select: { 
-        id_plan: true,
-        modalidad: true 
+      // Cambiamos 'select' por 'include' para traer los datos del plan relacionado
+      include: { 
+        PlanPublicacion: true 
       }
     });
 
-    return NextResponse.json(
-      { 
-        id_plan: suscripcion?.id_plan ?? 7, 
-        modalidad: suscripcion?.modalidad ?? "mensual" 
-      },
-      { status: 200 }
-    );
+    // Si no existe suscripción, devolvemos los valores por defecto
+    if (!suscripcion) {
+      return NextResponse.json(
+        { id_plan: 7, modalidad: "mensual", planPublicacion: { cant_publicaciones: 0 } },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json(suscripcion, { status: 200 });
 
   } catch (error) {
     console.error("Error API Suscripción:", error);

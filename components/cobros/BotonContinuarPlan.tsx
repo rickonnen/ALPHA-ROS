@@ -11,15 +11,23 @@ import { useAuth } from "@/app/auth/AuthContext";
 interface Props {
   planId: number | string;
   isAnnual: boolean;
+  cantPublicacionesTarjeta: number; // Cupos de este plan
 }
 
-export function BotonContinuarPlan({ planId, isAnnual }: Props) {
+export function BotonContinuarPlan({
+  planId,
+  isAnnual,
+  cantPublicacionesTarjeta,
+}: Props) {
   const { user, isLoading: authLoading } = useAuth();
 
+  // Estados del plan actual del usuario
   const [planActualId, setPlanActualId] = useState<number>(7);
   const [modalidadActual, setModalidadActual] = useState<string>("mensual");
+  const [capacidadActual, setCapacidadActual] = useState<number>(0);
   const [loadingPlan, setLoadingPlan] = useState(false);
 
+  // Estados de modales
   const [showProtected, setShowProtected] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -38,10 +46,13 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
             body: JSON.stringify({ id_usuario: user.id }),
           });
           const data = await res.json();
+
           setPlanActualId(data.id_plan ?? 7);
           setModalidadActual(data.modalidad ?? "mensual");
+          // Es fundamental que tu API devuelva el objeto planPublicacion con cant_publicaciones
+          setCapacidadActual(data.PlanPublicacion?.cant_publicaciones ?? 0);
         } catch (e) {
-          console.error("Error al obtener plan actual:", e);
+          console.error("Error al obtener suscripción:", e);
         } finally {
           setLoadingPlan(false);
         }
@@ -56,19 +67,25 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
     (isAnnual && modalidadActual === "anual") ||
     (!isAnnual && modalidadActual === "mensual");
 
-  const esDowngrade = user && idPlanTarjeta < planActualId;
+  // Lógica de Downgrade: ¿El plan de la tarjeta tiene menos cupos que el que ya tiene el usuario?
+  const esDowngrade = user && cantPublicacionesTarjeta < capacidadActual;
   const isCurrentSelection = user && esMismoPlan && esMismaModalidad;
 
   const getButtonText = () => {
     if (!user || planActualId === 7) return "Continuar";
+
     if (esMismoPlan) {
       if (esMismaModalidad) return "Plan actual";
       return isAnnual ? "Pasar a Anual (-10%)" : "Cambiar a Mensual";
     }
-    return idPlanTarjeta > planActualId ? "Mejorar plan" : "Cambiar plan";
+
+    // Texto dinámico basado en la comparación de cupos
+    if (cantPublicacionesTarjeta > capacidadActual) {
+      return "Cambiar a plan superior";
+    }
+    return "Cambiar a plan inferior";
   };
 
-  // --- FUNCIÓN ACTUALIZADA CON RELOAD ---
   const ejecutarDowngrade = async () => {
     try {
       const res = await fetch("/api/cobros/downgrade", {
@@ -82,7 +99,7 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
       });
 
       if (res.ok) {
-        // Forzamos la recarga completa de la página para ver los cambios
+        // Refresco total para limpiar estados y ver el "Plan actual"
         window.location.reload();
       } else {
         const errorData = await res.json();
@@ -101,10 +118,12 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
     );
   }
 
+  // Flujo para usuario Logueado
   if (user) {
     return (
       <>
         {esDowngrade && !esMismoPlan ? (
+          // Si es inferior, el botón abre el modal de advertencia
           <Button
             className="w-full font-bold"
             onClick={() => setShowDowngradeModal(true)}
@@ -112,6 +131,7 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
             {getButtonText()}
           </Button>
         ) : (
+          // Si es igual o superior, el botón es un Link (o maneja el cambio de modalidad)
           <Button
             asChild
             className="w-full font-bold"
@@ -125,12 +145,13 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
           isOpen={showDowngradeModal}
           onClose={() => setShowDowngradeModal(false)}
           onConfirm={ejecutarDowngrade}
-          nombrePlan={String(planId)}
+          nombrePlan={String(planId)} // Puedes pasar el nombre si lo tienes
         />
       </>
     );
   }
 
+  // Flujo para usuario Invitado
   return (
     <>
       <Button
@@ -139,6 +160,7 @@ export function BotonContinuarPlan({ planId, isAnnual }: Props) {
       >
         Continuar
       </Button>
+
       <ProtectedFeatureModal
         isOpen={showProtected}
         featureName="comprar planes"
