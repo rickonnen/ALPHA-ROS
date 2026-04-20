@@ -92,6 +92,9 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
           <SelectItem value="m2-menor" className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]">
             Superficie m² (menor a mayor)
           </SelectItem>
+          <SelectItem value="m2-menor" className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]">
+            Más Recomendado
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
