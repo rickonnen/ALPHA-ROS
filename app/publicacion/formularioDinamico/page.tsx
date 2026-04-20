@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-
+import { useAuth } from '@/app/auth/AuthContext'
 import { DatosAvisoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Datos_Aviso/DatosAvisoForm'
 import { CategoriaYEstadoForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/CategoriaEstado'
 import { useCategoriaForm } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Categoria_Estado/useCategoriaForm'
@@ -46,13 +46,13 @@ const ESTADO_IDS: Record<string, number> = {
 }
 
 const STEPS = [
-  { title: 'Datos del Aviso',              opcional: false },
-  { title: 'Categoría y Estado',           opcional: false },
-  { title: 'Ubicación de la Propiedad',    opcional: false },
+  { title: 'Datos del Aviso',                 opcional: false },
+  { title: 'Categoría y Estado',              opcional: false },
+  { title: 'Ubicación de la Propiedad',       opcional: false },
   { title: 'Características de la Propiedad', opcional: false },
-  { title: 'Imágenes de la Propiedad',     opcional: false },
-  { title: 'Video de la Propiedad',        opcional: true  },
-  { title: 'Descripción de la Propiedad',  opcional: false },
+  { title: 'Imágenes de la Propiedad',        opcional: false },
+  { title: 'Video de la Propiedad',           opcional: true  },
+  { title: 'Descripción de la Propiedad',     opcional: false },
 ]
 
 const SIDEBAR_STEPS = [
@@ -66,10 +66,10 @@ const SIDEBAR_STEPS = [
 ]
 
 const C = {
-  crema:    '#F4EFE6',
-  terracota:'#C26E5A',
-  marino:   '#1F3A4D',
-  borde:    '#D4CFC6',
+  crema:     '#F4EFE6',
+  terracota: '#C26E5A',
+  marino:    '#1F3A4D',
+  borde:     '#D4CFC6',
 }
 
 type TriggerRef = React.MutableRefObject<(() => void) | null>
@@ -109,14 +109,14 @@ function StepContent({
   step, advanceDirect, onBack, triggerRefs, imagenesRef,
   imagenesIniciales, onUrlsChange, sessionKey,
 }: {
-  step:             number
-  advanceDirect:    () => void
-  onBack:           () => void
-  triggerRefs:      Record<number, TriggerRef>
-  imagenesRef:      React.MutableRefObject<File[]>
+  step:              number
+  advanceDirect:     () => void
+  onBack:            () => void
+  triggerRefs:       Record<number, TriggerRef>
+  imagenesRef:       React.MutableRefObject<File[]>
   imagenesIniciales: string[]
-  onUrlsChange:     (quedan: string[], aBorrar: string[]) => void
-  sessionKey:       string
+  onUrlsChange:      (quedan: string[], aBorrar: string[]) => void
+  sessionKey:        string
 }) {
   switch (step) {
     case 0: return <DatosAvisoForm onNext={advanceDirect} onBack={onBack} submitRef={triggerRefs[0]} />
@@ -156,6 +156,7 @@ function parseIntNullableClient(val: string | undefined | null): number | null {
 function FormularioDinamicoInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
+  const { user }     = useAuth() // ← CORRECTO: dentro del componente
 
   const idEditar      = searchParams.get('editar')
   const modoEdicion   = idEditar !== null
@@ -166,22 +167,18 @@ function FormularioDinamicoInner() {
   const urlsABorrarRef    = useRef<string[]>([])
   const pendingStepRef    = useRef<number | null>(null)
 
-  const [currentStep,      setCurrentStep]      = useState<number>(0)
-  const [completedSteps,   setCompletedSteps]   = useState<Set<number>>(new Set())
-  const [hydrated,         setHydrated]         = useState(false)
-  const [blockMsg,         setBlockMsg]         = useState<string | null>(null)
-  const [isPublishing,     setIsPublishing]     = useState(false)
-  const [publishError,     setPublishError]     = useState<string | null>(null)
-  const [bolShowSumario,   setBolShowSumario]   = useState(false)
-  const [isMobile,         setIsMobile]         = useState(false)
-  const [datosListos,      setDatosListos]      = useState(!modoEdicion)
+  const [currentStep,       setCurrentStep]       = useState<number>(0)
+  const [completedSteps,    setCompletedSteps]    = useState<Set<number>>(new Set())
+  const [hydrated,          setHydrated]          = useState(false)
+  const [blockMsg,          setBlockMsg]          = useState<string | null>(null)
+  const [isPublishing,      setIsPublishing]      = useState(false)
+  const [publishError,      setPublishError]      = useState<string | null>(null)
+  const [bolShowSumario,    setBolShowSumario]    = useState(false)
+  const [isMobile,          setIsMobile]          = useState(false)
+  const [datosListos,       setDatosListos]       = useState(!modoEdicion)
   const [imagenesIniciales, setImagenesIniciales] = useState<string[]>([])
 
   // KEY ÚNICA DE SESIÓN
-  // Generada una sola vez al montar. Se pasa a ImagenesForm → useImagenesForm.
-  // El hook la compara con la guardada en sessionStorage:
-  //  Misma key  → F5/recarga → restaurar IndexedDB
-  // Key distinta → sesión nueva → limpiar IndexedDB
   const [sessionKey, setSessionKey] = useState<string>('')
 
   useEffect(() => {
@@ -193,17 +190,13 @@ function FormularioDinamicoInner() {
   }, [])
 
   useEffect(() => {
-    // Limpiar siempre los refs de imágenes al montar
     imagenesRef.current      = []
     urlsQueQuedanRef.current = []
     urlsABorrarRef.current   = []
 
-    // Generar la key única de esta sesión
     setSessionKey(`session-${Date.now()}`)
 
     if (!modoEdicion || !idPublicacion) {
-      // Limpiar sessionStorage para que datos de ediciones previas
-      // no contaminen una publicación nueva
       SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
       setCurrentStep(leerPaso())
       setCompletedSteps(leerCompletados())
@@ -212,7 +205,6 @@ function FormularioDinamicoInner() {
       return
     }
 
-    // Modo edición: limpiar sesión anterior antes de cargar la publicación
     SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
 
     getPublicacionById(idPublicacion).then(pub => {
@@ -224,26 +216,25 @@ function FormularioDinamicoInner() {
       urlsQueQuedanRef.current = pub.imagenesUrl
       urlsABorrarRef.current   = []
       setImagenesIniciales(pub.imagenesUrl)
-      // Guardar URLs de Cloudinary para que el SumarioModal las muestre
       try { sessionStorage.setItem('imagenesIniciales', JSON.stringify(pub.imagenesUrl)) } catch { }
 
       try {
         sessionStorage.setItem('datosAviso', JSON.stringify({
-          titulo:         pub.titulo,
-          tipoOperacion:  pub.tipoOperacion,
-          precio:         pub.precio,
-          tipoMoneda:     pub.tipoMoneda,
+          titulo:        pub.titulo,
+          tipoOperacion: pub.tipoOperacion,
+          precio:        pub.precio,
+          tipoMoneda:    pub.tipoMoneda,
         }))
         sessionStorage.setItem('categoriaYEstado', JSON.stringify({
           tipoPropiedad:   pub.tipoPropiedad,
           estadoPropiedad: pub.estadoPropiedad,
         }))
         sessionStorage.setItem('ubicacion', JSON.stringify({
-          direccion:   pub.direccion,
+          direccion:    pub.direccion,
           departamento: pub.departamento,
-          zona:        pub.zona,
-          lat:         pub.lat,
-          lng:         pub.lng,
+          zona:         pub.zona,
+          lat:          pub.lat,
+          lng:          pub.lng,
         }))
         sessionStorage.setItem('caracteristicasDetalle', JSON.stringify({
           habitaciones: pub.habitaciones,
@@ -255,7 +246,6 @@ function FormularioDinamicoInner() {
         sessionStorage.setItem('videoPropiedad', JSON.stringify({
           url: pub.videoUrl,
         }))
-        // ← CAMBIO: incluir caracteristicas extras al pre-poblar la sesión de descripción
         sessionStorage.setItem('descripcionPropiedad', JSON.stringify({
           descripcion:     pub.descripcion,
           caracteristicas: pub.caracteristicasExtras ?? [],
@@ -282,7 +272,7 @@ function FormularioDinamicoInner() {
     6: useRef<(() => void) | null>(null),
   }
 
-  useEffect(() => { if (hydrated && !modoEdicion) guardarPaso(currentStep) },      [currentStep,    hydrated, modoEdicion])
+  useEffect(() => { if (hydrated && !modoEdicion) guardarPaso(currentStep)           }, [currentStep,    hydrated, modoEdicion])
   useEffect(() => { if (hydrated && !modoEdicion) guardarCompletados(completedSteps) }, [completedSteps, hydrated, modoEdicion])
 
   const isFirstStep = currentStep === 0
@@ -306,25 +296,25 @@ function FormularioDinamicoInner() {
     setPublishError(null)
     setIsPublishing(true)
     try {
-      const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')           ?? '{}')
-      const categoria       = JSON.parse(sessionStorage.getItem('categoriaYEstado')     ?? '{}')
-      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')            ?? '{}')
+      const datosAviso      = JSON.parse(sessionStorage.getItem('datosAviso')             ?? '{}')
+      const categoria       = JSON.parse(sessionStorage.getItem('categoriaYEstado')       ?? '{}')
+      const ubicacion       = JSON.parse(sessionStorage.getItem('ubicacion')              ?? '{}')
       const caracteristicas = JSON.parse(sessionStorage.getItem('caracteristicasDetalle') ?? '{}')
-      const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')       ?? '{}')
-      const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad') ?? '{}')
+      const video           = JSON.parse(sessionStorage.getItem('videoPropiedad')         ?? '{}')
+      const descripcion     = JSON.parse(sessionStorage.getItem('descripcionPropiedad')   ?? '{}')
 
       const esTerreno = categoria.tipoPropiedad === 'Terreno'
 
       const formData = new FormData()
-      formData.append('titulo',              datosAviso.titulo              ?? '')
-      formData.append('tipoOperacion',       datosAviso.tipoOperacion       ?? '')
-      formData.append('precio',              String(datosAviso.precio       ?? '0'))
-      formData.append('tipoMoneda',          datosAviso.tipoMoneda          ?? 'USD')
-      formData.append('tipoInmueble',        categoria.tipoPropiedad        ?? '')
-      formData.append('estadoConstruccion',  String(ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1))
-      formData.append('direccion',           ubicacion.direccion            ?? '')
-      formData.append('departamento',        ubicacion.departamento         ?? '')
-      formData.append('zona',                ubicacion.zona                 ?? '')
+      formData.append('titulo',             datosAviso.titulo             ?? '')
+      formData.append('tipoOperacion',      datosAviso.tipoOperacion      ?? '')
+      formData.append('precio',             String(datosAviso.precio      ?? '0'))
+      formData.append('tipoMoneda',         datosAviso.tipoMoneda         ?? 'USD')
+      formData.append('tipoInmueble',       categoria.tipoPropiedad       ?? '')
+      formData.append('estadoConstruccion', String(ESTADO_IDS[categoria.estadoPropiedad as string] ?? 1))
+      formData.append('direccion',          ubicacion.direccion           ?? '')
+      formData.append('departamento',       ubicacion.departamento        ?? '')
+      formData.append('zona',               ubicacion.zona                ?? '')
       if (ubicacion.lat) formData.append('lat', String(ubicacion.lat))
       if (ubicacion.lng) formData.append('lng', String(ubicacion.lng))
 
@@ -339,11 +329,12 @@ function FormularioDinamicoInner() {
       formData.append('garajes',      toNullableStr(caracteristicas.garajes))
       formData.append('plantas',      toNullableStr(caracteristicas.plantas))
       formData.append('superficie',   String(caracteristicas.superficie ?? '0'))
-      formData.append('videoUrl',     video.url       ?? '')
+      formData.append('videoUrl',     video.url              ?? '')
       formData.append('descripcion',  descripcion.descripcion ?? '')
-      formData.append('id_usuario',   '')
+      // ← CORRECTO: usar el id del usuario autenticado
+      formData.append('id_usuario',   user?.id ?? '')
 
-      // ← NUEVO: serializar características extras para enviar al servidor
+      // Características extras
       const caracteristicasExtras = (descripcion.caracteristicas ?? []).map(
         (c: { id_caracteristica: number; titulo: string; detalle: string }) => ({
           id_caracteristica: c.id_caracteristica,
@@ -357,7 +348,7 @@ function FormularioDinamicoInner() {
           imagenesRef.current.forEach(f => formData.append('imagenes', f))
         }
         urlsQueQuedanRef.current.forEach(url => formData.append('imagenesViejas',  url))
-        urlsABorrarRef.current.forEach(url  => formData.append('imagenesABorrar', url))
+        urlsABorrarRef.current.forEach(url   => formData.append('imagenesABorrar', url))
 
         const result = await actualizarPublicacion(idPublicacion, formData)
         if (result.success) {
@@ -393,7 +384,7 @@ function FormularioDinamicoInner() {
     } finally {
       setIsPublishing(false)
     }
-  }, [router, modoEdicion, idPublicacion])
+  }, [router, modoEdicion, idPublicacion, user])
 
   const handleNext = useCallback(() => {
     pendingStepRef.current = null
@@ -428,11 +419,10 @@ function FormularioDinamicoInner() {
     triggerRefs[currentStep]?.current?.()
   }, [currentStep, completedSteps, triggerRefs])
 
-  const tituloPagina  = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
-  const textoPublicar = modoEdicion ? 'Guardar'             : 'Publicar'
+  const tituloPagina   = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
+  const textoPublicar  = modoEdicion ? 'Guardar'             : 'Publicar'
   const textoGuardando = modoEdicion ? 'Guardando...'        : 'Publicando...'
 
-  // No renderizar hasta que sessionKey esté lista
   if (!hydrated || !datosListos || !sessionKey) return null
 
   const stepContentProps = {

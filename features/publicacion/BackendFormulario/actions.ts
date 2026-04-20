@@ -1,13 +1,13 @@
 'use server'
 
-import { prisma }        from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
-import { subirImagen }   from './cloudinary'
-import { SK }            from './sessionKeys'
+import { subirImagen } from './cloudinary'
+import { SK } from './sessionKeys'
 
 // Tipo de respuesta
 type ActionResult =
-  | { success: true;  idPublicacion: number }
+  | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
 
 // Helper: convierte 'null' | '' | undefined | número en number | null
@@ -50,28 +50,28 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   const payload = {
     // Paso 0
-    titulo:        formData.get('titulo')        as string,
+    titulo: formData.get('titulo') as string,
     tipoOperacion: formData.get('tipoOperacion') as string,
-    precio:        parseFloat(formData.get('precio') as string),
-    tipoMoneda:    (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
+    precio: parseFloat(formData.get('precio') as string),
+    tipoMoneda: (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
 
     // Paso 1
-    tipoInmueble:       formData.get('tipoInmueble')                        as string,
+    tipoInmueble: formData.get('tipoInmueble') as string,
     estadoConstruccion: parseInt(formData.get('estadoConstruccion') as string, 10),
 
     // Paso 2
-    direccion:    formData.get('direccion')    as string,
+    direccion: formData.get('direccion') as string,
     departamento: formData.get('departamento') as string,
-    zona:         formData.get('zona')         as string,
+    zona: formData.get('zona') as string,
     lat: formData.get('lat') ? parseFloat(formData.get('lat') as string) : undefined,
     lng: formData.get('lng') ? parseFloat(formData.get('lng') as string) : undefined,
 
     // Paso 3 — nullable: Terreno → null, campo vacío → null, número → number
     habitaciones: parseIntNullable(formData.get('habitaciones')),
-    banios:       parseIntNullable(formData.get('banios')),
-    garajes:      parseIntNullable(formData.get('garajes')),
-    plantas:      parseIntNullable(formData.get('plantas')),
-    superficie:   parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
+    banios: parseIntNullable(formData.get('banios')),
+    garajes: parseIntNullable(formData.get('garajes')),
+    plantas: parseIntNullable(formData.get('plantas')),
+    superficie: parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
 
     // Paso 4
     imagenesUrl,
@@ -94,7 +94,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
   if (!parsed.success) {
     return {
       success: false,
-      errors:  parsed.error.flatten().fieldErrors as Record<string, string[]>,
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
     }
   }
 
@@ -103,20 +103,20 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
   // 5. Verificación de límite — desactivada mientras no hay login
   // Descomentar cuando el login esté integrado:
   //
-  // const usuario = await prisma.usuario.findUnique({
-  //   where:  { id_usuario: d.id_usuario! },
-  //   select: { cant_publicaciones_restantes: true },
-  // })
-  // if (!usuario || (usuario.cant_publicaciones_restantes ?? 0) <= 0) {
-  //   return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
-  // }
+  const usuario = await prisma.usuario.findUnique({
+    where: { id_usuario: d.id_usuario! },
+    select: { cant_publicaciones_restantes: true },
+  })
+  if (!usuario || (usuario.cant_publicaciones_restantes ?? 0) <= 0) {
+    return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
+  }
 
   // 6. Insertar en BD (transacción atómica)
   try {
-    const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
-    const idMoneda  = MONEDA_IDS[d.tipoMoneda]
+    const idCiudad = DEPARTAMENTO_CIUDAD[d.departamento]
+    const idMoneda = MONEDA_IDS[d.tipoMoneda]
     const idTipoInm = TIPO_INMUEBLE_IDS[d.tipoInmueble]
-    const idTipoOp  = TIPO_OPERACION_IDS[d.tipoOperacion]
+    const idTipoOp = TIPO_OPERACION_IDS[d.tipoOperacion]
 
     const resultado = await prisma.$transaction(async (tx) => {
 
@@ -124,11 +124,11 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
       const ubicacion = await tx.ubicacion.create({
         data: {
           direccion: d.direccion,
-          zona:      d.zona,
-          latitud:   d.lat  ?? null,
-          longitud:  d.lng  ?? null,
+          zona: d.zona,
+          latitud: d.lat ?? null,
+          longitud: d.lng ?? null,
           id_ciudad: idCiudad,
-          id_pais:   1,
+          id_pais: 1,
         },
       })
 
@@ -213,12 +213,12 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
       // 6f. Descontar publicación al usuario — desactivado mientras no hay login
       // Descomentar cuando el login esté integrado:
       //
-      // await tx.$executeRaw`
-      //   UPDATE "Usuario"
-      //   SET cant_publicaciones_restantes = cant_publicaciones_restantes - 1,
-      //       publicaciones_hechas         = publicaciones_hechas + 1
-      //   WHERE id_usuario = ${d.id_usuario}::uuid
-      // `
+      //await tx.$executeRaw`
+        // UPDATE "Usuario"
+        //SET cant_publicaciones_restantes = cant_publicaciones_restantes - 1,
+          //   publicaciones_hechas         = publicaciones_hechas + 1
+        //WHERE id_usuario = ${d.id_usuario}::uuid
+       //`
 
       return pub
     })
