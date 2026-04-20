@@ -34,7 +34,18 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: { imagenes: ['Error al subir imágenes. Intenta de nuevo.'] } }
   }
 
-  // 2. Armar payload
+  // 2. Parsear características extras desde FormData
+  let caracteristicasExtras: { id_caracteristica: number; detalle?: string | null }[] = []
+  try {
+    const rawCaract = formData.get('caracteristicasExtras') as string
+    if (rawCaract) {
+      caracteristicasExtras = JSON.parse(rawCaract)
+    }
+  } catch {
+    caracteristicasExtras = []
+  }
+
+  // 3. Armar payload
   const rawIdUsuario = (formData.get('id_usuario') as string) || null
 
   const payload = {
@@ -71,11 +82,14 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     // Paso 6
     descripcion: formData.get('descripcion') as string,
 
+    // Paso 6 — Características Extras
+    caracteristicasExtras,
+
     // Usuario — null mientras no haya login
     id_usuario: rawIdUsuario,
   }
 
-  // 3. Validar con Zod
+  // 4. Validar con Zod
   const parsed = publicacionSchema.safeParse(payload)
   if (!parsed.success) {
     return {
@@ -86,7 +100,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   const d = parsed.data
 
-  // 4. Verificación de límite — desactivada mientras no hay login
+  // 5. Verificación de límite — desactivada mientras no hay login
   // Descomentar cuando el login esté integrado:
   //
   // const usuario = await prisma.usuario.findUnique({
@@ -97,7 +111,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
   //   return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
   // }
 
-  // 5. Insertar en BD (transacción atómica)
+  // 6. Insertar en BD (transacción atómica)
   try {
     const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
     const idMoneda  = MONEDA_IDS[d.tipoMoneda]
@@ -106,7 +120,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
     const resultado = await prisma.$transaction(async (tx) => {
 
-      // 5a. Ubicacion
+      // 6a. Ubicacion
       const ubicacion = await tx.ubicacion.create({
         data: {
           direccion: d.direccion,
@@ -118,8 +132,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         },
       })
 
-      // 5b. Publicacion — con o sin id_usuario
-      // habitaciones/banios/garajes/plantas pueden ser null (Terreno u otros casos)
+      // 6b. Publicacion — con o sin id_usuario
       const [pub] = d.id_usuario
         ? await tx.$queryRaw<{ id_publicacion: number }[]>`
             INSERT INTO "Publicacion" (
@@ -171,7 +184,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
             RETURNING id_publicacion
           `
 
-      // 5c. Imagenes
+      // 6c. Imagenes
       for (const url of d.imagenesUrl) {
         await tx.$executeRaw`
           INSERT INTO "Imagen" (id_publicacion, url_imagen)
@@ -179,7 +192,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 5d. Video (opcional)
+      // 6d. Video (opcional)
       if (d.videoUrl) {
         await tx.$executeRaw`
           INSERT INTO "Video" (id_publicacion, url_video)
@@ -187,7 +200,17 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 5e. Descontar publicación al usuario — desactivado mientras no hay login
+      // 6e. Características Extras (PublicacionCaracteristica)
+      if (d.caracteristicasExtras && d.caracteristicasExtras.length > 0) {
+        for (const caract of d.caracteristicasExtras) {
+          await tx.$executeRaw`
+            INSERT INTO "PublicacionCaracteristica" (id_publicacion, id_caracteristica, detalle_caracteristica)
+            VALUES (${pub.id_publicacion}, ${caract.id_caracteristica}, ${caract.detalle ?? null})
+          `
+        }
+      }
+
+      // 6f. Descontar publicación al usuario — desactivado mientras no hay login
       // Descomentar cuando el login esté integrado:
       //
       // await tx.$executeRaw`
