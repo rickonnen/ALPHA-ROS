@@ -223,7 +223,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                     })
                   ) : (
                     <li className="px-4 py-2 text-sm text-gray-400 select-none">
-                      No hay sugerencias para "{searchTerm.trim()}"
+                      No hay sugerencias para {searchTerm.trim()}
                     </li>
                   )}
                 </ul>
