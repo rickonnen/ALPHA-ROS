@@ -1,5 +1,7 @@
 'use server'
 
+import { cookies } from 'next/headers'
+import { verify }  from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
 import { subirImagen } from './cloudinary'
@@ -9,6 +11,19 @@ import { SK } from './sessionKeys'
 type ActionResult =
   | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
+
+// Helper: lee el id_usuario desde la cookie auth_token (JWT)
+async function getUserIdFromCookie(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+    if (!token) return null
+    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
+    return decoded.userId ?? null
+  } catch {
+    return null
+  }
+}
 
 // Helper: convierte 'null' | '' | undefined | número en number | null
 function parseIntNullable(raw: FormDataEntryValue | null): number | null {
@@ -45,8 +60,8 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     caracteristicasExtras = []
   }
 
-  // 3. Armar payload
-  const rawIdUsuario = (formData.get('id_usuario') as string) || null
+  // 3. Armar payload — id_usuario se lee desde la cookie JWT, no del FormData
+  const rawIdUsuario = await getUserIdFromCookie()
 
   const payload = {
     // Paso 0
@@ -85,7 +100,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     // Paso 6 — Características Extras
     caracteristicasExtras,
 
-    // Usuario — null mientras no haya login
+    // Usuario — leído desde cookie JWT
     id_usuario: rawIdUsuario,
   }
 
@@ -100,9 +115,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   const d = parsed.data
 
-  // 5. Verificación de límite — desactivada mientras no hay login
-  // Descomentar cuando el login esté integrado:
-  //
+  // 5. Verificación de límite de publicaciones
   const usuario = await prisma.usuario.findUnique({
     where: { id_usuario: d.id_usuario! },
     select: { cant_publicaciones_restantes: true },
@@ -113,10 +126,10 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   // 6. Insertar en BD (transacción atómica)
   try {
-    const idCiudad = DEPARTAMENTO_CIUDAD[d.departamento]
-    const idMoneda = MONEDA_IDS[d.tipoMoneda]
+    const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
+    const idMoneda  = MONEDA_IDS[d.tipoMoneda]
     const idTipoInm = TIPO_INMUEBLE_IDS[d.tipoInmueble]
-    const idTipoOp = TIPO_OPERACION_IDS[d.tipoOperacion]
+    const idTipoOp  = TIPO_OPERACION_IDS[d.tipoOperacion]
 
     const resultado = await prisma.$transaction(async (tx) => {
 
@@ -210,15 +223,8 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         }
       }
 
-      // 6f. Descontar publicación al usuario — desactivado mientras no hay login
-      // Descomentar cuando el login esté integrado:
-      //
-      //await tx.$executeRaw`
-        // UPDATE "Usuario"
-        //SET cant_publicaciones_restantes = cant_publicaciones_restantes - 1,
-          //   publicaciones_hechas         = publicaciones_hechas + 1
-        //WHERE id_usuario = ${d.id_usuario}::uuid
-       //`
+      // 6f. El descuento de publicaciones restantes y el incremento de
+      //     publicaciones_hechas lo maneja un trigger en la base de datos.
 
       return pub
     })

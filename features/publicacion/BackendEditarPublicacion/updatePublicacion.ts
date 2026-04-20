@@ -1,5 +1,7 @@
 'use server'
 
+import { cookies } from 'next/headers'
+import { verify }  from 'jsonwebtoken'
 import { prisma }      from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from '../BackendFormulario/schema'
@@ -10,6 +12,19 @@ cloudinary.config({
   api_key:    process.env.CLOUDINARY_API_KEY?.trim(),
   api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
 })
+
+// Helper: lee el id_usuario desde la cookie auth_token (JWT)
+async function getUserIdFromCookie(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+    if (!token) return null
+    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
+    return decoded.userId ?? null
+  } catch {
+    return null
+  }
+}
 
 // Extrae el public_id de una URL de Cloudinary
 // Ej: https://res.cloudinary.com/demo/image/upload/v123/publicaciones/abc.jpg → publicaciones/abc
@@ -72,6 +87,9 @@ export async function actualizarPublicacion(
     caracteristicasExtras = []
   }
 
+  // id_usuario se lee desde la cookie JWT, no del FormData
+  const rawIdUsuario = await getUserIdFromCookie()
+
   const payload = {
     titulo:             formData.get('titulo')             as string,
     tipoOperacion:      formData.get('tipoOperacion')      as string,
@@ -93,7 +111,7 @@ export async function actualizarPublicacion(
     videoUrl:    (formData.get('videoUrl')    as string) || null,
     descripcion:  formData.get('descripcion') as string,
     caracteristicasExtras,
-    id_usuario:  (formData.get('id_usuario')  as string) || null,
+    id_usuario:  rawIdUsuario,
   }
 
   const parsed = publicacionSchema.safeParse(payload)

@@ -176,8 +176,7 @@ function FormularioDinamicoInner() {
   const [isMobile,         setIsMobile]         = useState(false)
   const [datosListos,      setDatosListos]      = useState(!modoEdicion)
   const [imagenesIniciales, setImagenesIniciales] = useState<string[]>([])
-
-  const [sessionKey, setSessionKey] = useState<string>('')
+  const [sessionKey,       setSessionKey]       = useState<string>('')
 
   useEffect(() => {
     const mq      = window.matchMedia('(max-width: 767px)')
@@ -329,7 +328,7 @@ function FormularioDinamicoInner() {
       formData.append('superficie',   String(caracteristicas.superficie ?? '0'))
       formData.append('videoUrl',     video.url       ?? '')
       formData.append('descripcion',  descripcion.descripcion ?? '')
-      formData.append('id_usuario',   '')
+      // NOTA: id_usuario ya NO se envía desde el cliente — el server action lo lee de la cookie JWT
 
       const caracteristicasExtras = (descripcion.caracteristicas ?? []).map(
         (c: { id_caracteristica: number; titulo: string; detalle: string }) => ({
@@ -349,8 +348,8 @@ function FormularioDinamicoInner() {
         const result = await actualizarPublicacion(idPublicacion, formData)
         if (result.success) {
           SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
-          window.open(`/publicacion/Mi_inmueble/${result.idPublicacion}`, '_blank')
-          router.push('/')
+          // ✅ FIX: solo router.push — sin window.open que rompe la sesión
+          router.push(`/publicacion/Mi_inmueble/${result.idPublicacion}`)
         } else {
           const firstError = Object.values(result.errors ?? {}).flat()[0] as string | undefined
           setPublishError(firstError ?? 'Error al guardar. Intenta de nuevo.')
@@ -366,8 +365,8 @@ function FormularioDinamicoInner() {
         const result = await publicarInmueble(formData)
         if (result.success) {
           SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
-          window.open(`/publicacion/Mi_inmueble/${result.idPublicacion}`, '_blank')
-          router.push('/')
+          // ✅ FIX: solo router.push — sin window.open que rompe la sesión
+          router.push(`/publicacion/Mi_inmueble/${result.idPublicacion}`)
         } else if (result.reason === 'LIMITE_ALCANZADO') {
           setPublishError('Has alcanzado el límite de publicaciones gratuitas.')
         } else {
@@ -415,8 +414,8 @@ function FormularioDinamicoInner() {
     triggerRefs[currentStep]?.current?.()
   }, [currentStep, completedSteps, triggerRefs])
 
-  const tituloPagina  = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
-  const textoPublicar = modoEdicion ? 'Guardar'             : 'Publicar'
+  const tituloPagina   = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
+  const textoPublicar  = modoEdicion ? 'Guardar'             : 'Publicar'
   const textoGuardando = modoEdicion ? 'Guardando...'        : 'Publicando...'
 
   if (!hydrated || !datosListos || !sessionKey) return null
@@ -553,111 +552,102 @@ function FormularioDinamicoInner() {
       flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
       padding: '8px 16px', fontFamily: 'var(--font-geist-sans)',
     }}>
-      <>
-        {/*
-          zoom: 1.25 se aplica SOLO cuando el viewport es suficientemente ancho
-          (navegador en pantalla completa). En las vistas del DevTools (F12),
-          el viewport se reduce y el zoom se desactiva automáticamente.
-          El breakpoint de 1100px cubre la mayoría de monitores con DevTools abierto.
-        */}
-        <style>{`
-          @media (min-width: 1100px) {
-            .desktop-zoom-container {
-              zoom: 1.25;
-            }
+      <style>{`
+        @media (min-width: 1100px) {
+          .desktop-zoom-container { zoom: 1.15; }
+        }
+        @media (max-width: 1440px) {
+          .titulo-publicacion {
+            margin-left: 0 !important;
+            font-size: clamp(32px, 4.5vw, 60px) !important;
           }
-          @media (max-width: 1440px) {
-            .titulo-publicacion {
-              margin-left: 0 !important;
-              font-size: clamp(32px, 4.5vw, 60px) !important;
-            }
-          }
-        `}</style>
-        <div className="desktop-zoom-container" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ width: '100%', maxWidth: 1000 }}>
-            <h1
-              className="titulo-publicacion"
-              style={{
-                fontSize: 60, fontWeight: 700, color: C.marino,
-                marginBottom: 20, marginTop: 10, marginLeft: -120,
-              }}
-            >
-              {tituloPagina}
-            </h1>
-          </div>
+        }
+      `}</style>
+
+      <div className="desktop-zoom-container" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1000 }}>
+          <h1
+            className="titulo-publicacion"
+            style={{
+              fontSize: 60, fontWeight: 700, color: C.marino,
+              marginBottom: 20, marginTop: 10, marginLeft: -9,
+            }}
+          >
+            {tituloPagina}
+          </h1>
+        </div>
+
+        <div style={{
+          width: '100%', maxWidth: 1000, height: 560,
+          display: 'flex', borderRadius: 12, overflow: 'hidden',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+        }}>
+          <StepsSidebar
+            currentStep={currentStep}
+            completedSteps={completedSteps}
+            steps={SIDEBAR_STEPS}
+            onStepClick={handleSidebarClick}
+          />
 
           <div style={{
-            width: '100%', maxWidth: 1000, height: 560,
-            display: 'flex', borderRadius: 12, overflow: 'hidden',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+            flex: 1, backgroundColor: C.marino,
+            padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
           }}>
-            <StepsSidebar
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              steps={SIDEBAR_STEPS}
-              onStepClick={handleSidebarClick}
-            />
+            <h2 style={{
+              fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
+              textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
+            }}>
+              {STEPS[currentStep].title}
+              {STEPS[currentStep].opcional && (
+                <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
+              )}
+            </h2>
+
+            {(blockMsg || publishError) && (
+              <div style={{
+                backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
+                padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#991b1b', flexShrink: 0,
+              }}>
+                {blockMsg ?? publishError}
+              </div>
+            )}
 
             <div style={{
-              flex: 1, backgroundColor: C.marino,
-              padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
+              backgroundColor: C.crema, borderRadius: 12, padding: 15,
+              flex: 1, overflowY: 'auto',
             }}>
-              <h2 style={{
-                fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
-                textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
-              }}>
-                {STEPS[currentStep].title}
-                {STEPS[currentStep].opcional && (
-                  <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
-                )}
-              </h2>
+              <StepContent step={currentStep} {...stepContentProps} />
+            </div>
 
-              {(blockMsg || publishError) && (
-                <div style={{
-                  backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-                  padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#991b1b', flexShrink: 0,
-                }}>
-                  {blockMsg ?? publishError}
-                </div>
-              )}
-
-              <div style={{
-                backgroundColor: C.crema, borderRadius: 12, padding: 15,
-                flex: 1, overflowY: 'auto',
-              }}>
-                <StepContent step={currentStep} {...stepContentProps} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
-                <button
-                  type="button" onClick={handleBack} disabled={isPublishing}
-                  style={{
-                    backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
-                    color: C.terracota, borderRadius: 6, padding: '5px 20px',
-                    fontSize: 16, fontWeight: 600,
-                    cursor: isPublishing ? 'not-allowed' : 'pointer',
-                    opacity: isPublishing ? 0.6 : 1,
-                  }}
-                >
-                  Regresar
-                </button>
-                <button
-                  type="button" onClick={handleNext} disabled={isPublishing}
-                  style={{
-                    backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-                    color: '#ffffff', borderRadius: 6, padding: '5px 20px',
-                    fontSize: 16, fontWeight: 600,
-                    cursor: isPublishing ? 'not-allowed' : 'pointer',
-                    opacity: isPublishing ? 0.6 : 1,
-                  }}
-                >
-                  {isPublishing ? textoGuardando : isLastStep ? textoPublicar : 'Siguiente'}
-                </button>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
+              <button
+                type="button" onClick={handleBack} disabled={isPublishing}
+                style={{
+                  backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
+                  color: C.terracota, borderRadius: 6, padding: '5px 20px',
+                  fontSize: 16, fontWeight: 600,
+                  cursor: isPublishing ? 'not-allowed' : 'pointer',
+                  opacity: isPublishing ? 0.6 : 1,
+                }}
+              >
+                Regresar
+              </button>
+              <button
+                type="button" onClick={handleNext} disabled={isPublishing}
+                style={{
+                  backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
+                  color: '#ffffff', borderRadius: 6, padding: '5px 20px',
+                  fontSize: 16, fontWeight: 600,
+                  cursor: isPublishing ? 'not-allowed' : 'pointer',
+                  opacity: isPublishing ? 0.6 : 1,
+                }}
+              >
+                {isPublishing ? textoGuardando : isLastStep ? textoPublicar : 'Siguiente'}
+              </button>
             </div>
           </div>
         </div>
-      </>
+      </div>
 
       {bolShowSumario && (
         <SumarioModal
