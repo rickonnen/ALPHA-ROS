@@ -3,6 +3,7 @@
 */
 "use client";
 import { useState } from "react";
+  import ConfirmModal from "@/app/perfil/views/redes-vinculadas/confirmModal";
 
 interface RedesViewProps {
   id_usuario: string;
@@ -61,7 +62,17 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
 
   const vinculadas = redes.filter((r) => r.vinculada);
   const disponibles = redes.filter((r) => !r.vinculada);
-
+  
+   const [showDesvincularConfirm, setShowDesvincularConfirm] = useState(false);
+    const [redSeleccionada, setRedSeleccionada] = useState<string | null>(null);
+       
+        const handleConfirmDesvincular = () => {
+            if (redSeleccionada) {
+              handleDesvincular(redSeleccionada);
+            }
+            setShowDesvincularConfirm(false);
+          };
+  
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
 
@@ -98,17 +109,31 @@ export default function RedesView({ id_usuario, onBack }: RedesViewProps) {
                     <p className="text-xs text-gray-300">{red.cuenta}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDesvincular(red.nombre)}
-                  className="text-xs text-red-400 hover:text-red-300 border border-red-400/40 hover:border-red-300 px-3 py-1.5 rounded-lg transition-all duration-200"
-                >
-                  Desvincular
-                </button>
+                  <button
+                    //onClick={() => handleDesvincular(red.nombre)}
+                    /*Cambio Mayte */
+                    onClick={() => {
+                      setRedSeleccionada(red.nombre);
+                      setShowDesvincularConfirm(true);
+                    }}                  
+                    className="text-xs text-red-400 hover:text-red-300 border border-red-400/40 hover:border-red-300 px-3 py-1.5 rounded-lg transition-all duration-200"
+                  >
+                    Desvincular
+                  </button>
               </div>
             ))}
           </div>
         </div>
       )}
+          {showDesvincularConfirm && (
+            <ConfirmModal
+              title="¿Desvincular?"
+              description="Estás a punto de desvincular tu cuenta. ¿Deseas continuar?"
+              confirmText="Sí, Desvincular"
+              onCancel={() => setShowDesvincularConfirm(false)}
+              onConfirm={handleConfirmDesvincular}
+            />
+          )}
 
       {/* Disponibles para vincular */}
       {disponibles.length > 0 && (
