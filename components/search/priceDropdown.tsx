@@ -267,8 +267,7 @@ export default function PriceDropdown({
 
   return (
     <div className="w-full mt-3">
-     
-      <div className="mb-4 hidden md:block">
+      <div className="mb-4">
        <CurrencySwitch
         currentCurrency={selectedCurrency}
         setCurrentCurrency={onCurrencyChange}
@@ -290,29 +289,29 @@ export default function PriceDropdown({
               )}
             >
               <div className="flex w-full items-center justify-between pr-2">
-            <span>{getTriggerLabel()}</span>
-            
-            {/* Solo mostramos la X si el usuario ya aplicó algún precio */}
-            {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
-              <X
-                size={18}
-                className="ml-2 text-[#4B4B4B] hover:text-red-500 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation(); // Evita que el menú se abra o cierre
-                  setMinPriceInput(""); // Borra el texto del cuadrito mínimo
-                  setMaxPriceInput(""); // Borra el texto del cuadrito máximo
-                  onApplyRange({ minPrice: undefined, maxPrice: undefined }); // Limpia el filtro
-                }}
-              />
-            )}
-          </div>
+                <span>{getTriggerLabel()}</span>
+                
+                {/* CAMBIO: button por span para evitar error de hidratación */}
+                {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
+                  <span
+                    role="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setMinPriceInput("");
+                        setMaxPriceInput("");
+                        onApplyRange({ minPrice: undefined, maxPrice: undefined });
+                    }}
+                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 text-[#5E5A55]" />
+                  </span>
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 
           <AccordionContent className="pt-3 pb-0">
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-4 shadow-sm">
-              
-
               <div className="mt-3 flex justify-center gap-2">
                 <input
                   type="text"
@@ -352,8 +351,6 @@ export default function PriceDropdown({
               <div className={priceError ? "mt-2 block" : "hidden"}>
                 <p className="text-center text-sm text-red-600">{priceError}</p>
               </div>
-
-              
             </div>
           </AccordionContent>
         </AccordionItem>

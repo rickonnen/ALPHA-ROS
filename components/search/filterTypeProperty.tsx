@@ -54,25 +54,28 @@ export function FilterTypeProperty({ tipos, selected, onChange }: Props) {
             <AccordionTrigger
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
-                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+                "[&>svg]:ml-2 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-          <div className={`${geist.className} flex w-full items-center justify-between pr-2`}>
-            <span className="flex-1 truncate text-left">
-              {labelTruncated}
-            </span>
-            {/* Solo añadimos esto: la X que limpia el filtro */}
-            {selected.length > 0 && (
-              <X 
-                size={16} 
-                className="text-[#4B4B4B] hover:text-red-500 transition-colors ml-2" 
-                onClick={(e) => {
-                  e.stopPropagation(); // Para que NO se cierre el menú al borrar
-                  onChange([]);        // Esto borra todo lo que marcaron
-                }} 
-              />
-            )}
-          </div>
+              <div className={`${geist.className} flex w-full items-center justify-between pr-1`}>
+                <span className="flex-1 truncate text-left">
+                  {labelTruncated}
+                </span>
+                
+                {/* CAMBIO: button por span con role="button" para evitar el error de hidratación */}
+                {selected.length > 0 && (
+                  <span
+                    role="button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Evita que el acordeón se abra/cierre
+                      onChange([]);        // Limpia la selección
+                    }}
+                    className="flex items-center justify-center p-1 rounded-full hover:bg-[#DEDAD3] transition-colors mr-1 cursor-pointer"
+                  >
+                    <X size={16} className="text-[#5E5A55]" />
+                  </span>
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 

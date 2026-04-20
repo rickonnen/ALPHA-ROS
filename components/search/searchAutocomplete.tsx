@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
 
 interface MapboxFeature {
   id: string;
@@ -100,15 +101,35 @@ export default function SearchAutocomplete({
     setAbierto(false);
   };
 
+  const handleClear = () => {
+    onChange("");
+    setSugerencias([]);
+    setAbierto(false);
+    setBuscado(false);
+  };
+
   return (
     <div ref={wrapperRef} className="relative w-full mt-3">
-      <input
-        type="text"
-        placeholder="Buscar por ubicación"
-        value={value}
-        onChange={handleChange}
-        className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55] shadow-sm"
-      />
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          placeholder="Buscar por ubicación"
+          value={value}
+          onChange={handleChange}
+          className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] pl-4 pr-10 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55] shadow-sm"
+        />
+
+        {/* CAMBIO: <button> por <span> con role="button" para consistencia */}
+        {value && (
+          <span
+            role="button"
+            onClick={handleClear}
+            className="absolute right-3 p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+          >
+            <X className="h-4 w-4 text-[#5E5A55]" />
+          </span>
+        )}
+      </div>
 
       {abierto && (
         <ul className="absolute top-full z-50 mt-2 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-2 shadow-sm">
