@@ -9,10 +9,8 @@ interface ImagenesFormProps {
   onBack:           () => void
   submitRef:        React.MutableRefObject<(() => void) | null>
   onImagesChange:   (files: File[]) => void
-  // Modo edición:
   imagenesIniciales?: string[]
   onUrlsChange?:      (urlsQueQuedan: string[], urlsABorrar: string[]) => void
-  // ── key única de sesión generada por el padre ──
   sessionKey: string
 }
 
@@ -31,10 +29,6 @@ export function ImagenesForm({
   const [urlsABorrar,    setUrlsABorrar]    = useState<string[]>([])
   const [selectedIdx,    setSelectedIdx]    = useState(0)
 
-  // ── CORRECCIÓN: en lugar de useEffect con setState, usamos el patrón
-  // "derived state during render" recomendado por React.
-  // Guardamos la referencia anterior de imagenesIniciales; si cambia,
-  // actualizamos el estado en el mismo ciclo de render (sin cascada).
   const [prevImagenes, setPrevImagenes] = useState<string[]>(imagenesIniciales)
 
   if (prevImagenes !== imagenesIniciales) {
@@ -44,10 +38,9 @@ export function ImagenesForm({
     setSelectedIdx(0)
   }
 
-  const inputRef              = useRef<HTMLInputElement>(null)
+  const inputRef                = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
 
-  // Registrar trigger de validación
   useEffect(() => {
     submitRef.current = () => {
       if (urlsExistentes.length > 0 || values.imagenes.length > 0) {
@@ -59,12 +52,10 @@ export function ImagenesForm({
     return () => { submitRef.current = null }
   }, [handleSubmit, onNext, submitRef, urlsExistentes, values.imagenes])
 
-  // Notificar files nuevos al padre
   useEffect(() => {
     onImagesChange(values.imagenes)
   }, [values.imagenes, onImagesChange])
 
-  // Notificar URLs al padre
   useEffect(() => {
     onUrlsChange?.(urlsExistentes, urlsABorrar)
   }, [urlsExistentes, urlsABorrar, onUrlsChange])
@@ -93,6 +84,16 @@ export function ImagenesForm({
 
   const hasFiles  = totalCount > 0
   const showError = (touched && !!errors.imagenes) || !!fieldError
+
+  // Clases responsivas para miniaturas:
+  // mobile  → w-16 h-12  (64×48px)  — wrap en 3+2
+  // desktop → w-28 h-20  (112×80px) — fila única
+  const thumbClass = `
+    relative rounded-lg overflow-hidden flex-shrink-0 transition-all
+    w-16 h-12
+    sm:w-24 sm:h-16
+    md:w-28 md:h-20
+  `
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -148,8 +149,8 @@ export function ImagenesForm({
 
           {/* Imagen principal */}
           <div
-            className="relative rounded-xl overflow-hidden flex-1"
-            style={{ minHeight: '180px', backgroundColor: '#F4EFE6' }}
+            className="relative rounded-xl overflow-hidden"
+            style={{ backgroundColor: '#F4EFE6' }}
           >
             <img
               src={previewsCombinados[selectedIdx]}
@@ -181,17 +182,16 @@ export function ImagenesForm({
             </button>
           </div>
 
-          {/* Miniaturas */}
-          <div className="flex gap-2">
+          {/* Miniaturas responsivas */}
+          <div className="flex flex-wrap md:flex-nowrap gap-2">
+
             {previewsCombinados.map((src, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setSelectedIdx(idx)}
-                className="relative rounded-lg overflow-hidden flex-shrink-0 transition-all"
+                className={thumbClass}
                 style={{
-                  width:           '64px',
-                  height:          '48px',
                   border:          idx === selectedIdx ? '2px solid #C26E5A' : '2px solid transparent',
                   backgroundColor: '#EDE8E0',
                 }}
@@ -204,10 +204,10 @@ export function ImagenesForm({
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-dashed gap-0.5"
+                className={`${thumbClass} flex flex-col items-center justify-center border-2 border-dashed gap-0.5`}
                 style={{
-                  width: '64px', height: '48px',
-                  borderColor: '#D4B8AE', backgroundColor: '#EDE8E0',
+                  borderColor:     '#D4B8AE',
+                  backgroundColor: '#EDE8E0',
                 }}
               >
                 <span className="text-lg leading-none text-[#C26E5A] font-light">+</span>
