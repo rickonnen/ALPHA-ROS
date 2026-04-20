@@ -84,13 +84,13 @@ export function CaracteristicasDetalleForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
 
       <p className="text-sm font-medium text-[#1A1714]">
         Detalle las Características de su propiedad
       </p>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-1">
 
         {/* Habitaciones */}
         <div className="flex flex-col gap-1">

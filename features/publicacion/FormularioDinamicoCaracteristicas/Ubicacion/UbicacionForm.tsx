@@ -318,40 +318,51 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           </span>
         </div>
 
-        {/* 2 — Dirección */}
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-            ¿Cual es la dirección de la propiedad?
-          </Label>
-          <button
-            type="button"
-            onClick={handleAbrirMapa}
-            onBlur={() => handleBlur('direccion')}
-            className={`w-full h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
-              touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
-            } ${values.direccion ? 'text-[#1A1714]' : 'text-gray-400'}`}
-          >
-            <span className="truncate">
-              {values.direccion || 'Seleccione en el mapa'}
-            </span>
-            <div style={{
-              width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
-              background: values.direccion
-                ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
-                : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.2s',
-            }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-            </div>
-          </button>
-          <span className="text-red-500 text-xs h-4 block">
-            {touched.direccion && errors.direccion ? errors.direccion : ''}
-          </span>
-        </div>
+   {/* 2 — Dirección */}
+<div className="flex flex-col gap-1.5" style={{ width: '100%', maxWidth: '100%' }}>
+  <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+    ¿Cual es la dirección de la propiedad?
+  </Label>
+  <button
+    type="button"
+    onClick={handleAbrirMapa}
+    onBlur={() => handleBlur('direccion')}
+    className={`h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
+      touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
+    }`}
+    style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}
+  >
+    <span style={{
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      color: values.direccion ? '#1A1714' : '#9CA3AF',
+      textAlign: 'left',
+    }}>
+      {values.direccion || 'Seleccione en el mapa'}
+    </span>
 
+    {/* Ícono mapa */}
+    <div style={{
+      width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
+      background: values.direccion
+        ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
+        : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'background 0.2s',
+    }}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      </svg>
+    </div>
+  </button>
+
+  <span className="text-red-500 text-xs h-4 block">
+    {touched.direccion && errors.direccion ? errors.direccion : ''}
+  </span>
+</div>
         {/* 3 — Zona */}
         <div className="flex flex-col gap-1.5">
           <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
