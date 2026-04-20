@@ -30,7 +30,6 @@ const DEPTO_COORDS: Record<string, [number, number]> = {
   "Pando":      [-11.0289, -68.7692],
 }
 
-// Bounding boxes por departamento para restringir búsqueda [minLng, minLat, maxLng, maxLat]
 const DEPTO_BBOX: Record<string, [number, number, number, number]> = {
   "Cochabamba": [-67.0, -18.2, -64.5, -16.2],
   "La Paz":     [-69.6, -17.5, -67.5, -14.5],
@@ -62,7 +61,6 @@ const getCenter = (depto?: string): [number, number] => {
   return entry ? entry[1] : DEPTO_COORDS["Cochabamba"]
 }
 
-// ─── MapController con animaciones suaves ────────────────────────────────────
 type MapCommand =
   | { type: "flyTo";     center: [number, number]; zoom: number; trigger: number }
   | { type: "fitBounds"; bounds: [[number,number],[number,number]]; trigger: number }
@@ -81,7 +79,7 @@ function MapController({ cmd }: { cmd: MapCommand }) {
       map.flyToBounds(cmd.bounds, {
         animate:  true,
         duration: 0.8,
-        maxZoom:  17,
+        maxZoom:  15,
         padding:  [30, 30],
       })
     }
@@ -104,7 +102,6 @@ export interface LocationData {
   departamento: string
 }
 
-// ─── Tipos de respuesta Mapbox ────────────────────────────────────────────────
 interface MapboxContext {
   id:   string
   text: string
@@ -114,8 +111,8 @@ interface MapboxFeature {
   id:         string
   place_name: string
   text:       string
-  center:     [number, number] // [lng, lat]
-  bbox?:      [number, number, number, number] // [minLng, minLat, maxLng, maxLat]
+  center:     [number, number]
+  bbox?:      [number, number, number, number]
   context?:   MapboxContext[]
   properties: Record<string, unknown>
 }
@@ -135,6 +132,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     type: "flyTo", center: getCenter(deptoActual), zoom: 13, trigger: 0,
   })
   const [isLoading,       setIsLoading]       = useState(true)
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isGeocoding,     setIsGeocoding]     = useState(false)
   const [isSearching,     setIsSearching]     = useState(false)
   const [direccion,       setDireccion]       = useState("")
@@ -145,18 +143,27 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const searchTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevDepto    = useRef(deptoActual)
   const seleccionado = useRef(false)
+  const markerPosRef = useRef<[number, number] | null>(null)
 
   const initialCenter = useRef<[number, number]>(getCenter(deptoActual))
   const initialZoom   = useRef(13)
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 400)
-    return () => clearTimeout(t)
+    loadingTimerRef.current = setTimeout(() => setIsLoading(false), 800)
+    return () => {
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current)
+    }
+  }, [])
+
+  const handleMapReady = useCallback(() => {
+    if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current)
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
+    if (markerPosRef.current) return
     setMapCmd(prev => ({
       type: "flyTo", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1,
     }))
@@ -174,8 +181,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         const bbox    = deptoActual && DEPTO_BBOX[deptoActual]
           ? DEPTO_BBOX[deptoActual].join(",")
           : "-69.6,-22.9,-57.5,-9.7"
-        // proximity sesga los resultados hacia el centro del departamento
-        const proximity = `${center[1]},${center[0]}` // lng,lat
+        const proximity = `${center[1]},${center[0]}`
 
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
           `${encodeURIComponent(query)}.json` +
@@ -202,11 +208,13 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
+
+    markerPosRef.current = [lat, lng]
     setMarkerPos([lat, lng])
     setShowSuggestions(false)
     setSuggestions([])
     seleccionado.current = true
-    setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
+    setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     setIsGeocoding(true)
     try {
       const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
@@ -217,18 +225,20 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
       const feature      = data.features?.[0]
       const direccionStr = feature?.text ?? ""
       const ciudadStr    = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-      const depto        = deptoActual || detectarDepartamento(lat, lng)
+
+      // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+      const deptoDetectado = detectarDepartamento(lat, lng)
 
       setDireccion(direccionStr)
       setCiudad(ciudadStr)
       setQuery(feature?.place_name?.split(",")[0] ?? direccionStr)
-      onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: depto })
+      onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: deptoDetectado })
     } catch (e) {
       console.error("Mapbox reverse:", e)
     } finally {
       setIsGeocoding(false)
     }
-  }, [onChange, deptoActual])
+  }, [onChange])
 
   // ─── Seleccionar sugerencia ────────────────────────────────────────────────
   const handleSuggestionClick = useCallback((f: MapboxFeature) => {
@@ -237,9 +247,12 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
     const direccionStr = f.text ?? f.place_name.split(",")[0]
     const ciudadStr    = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-    const depto        = deptoActual || detectarDepartamento(lat, lng)
+
+    // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+    const deptoDetectado = detectarDepartamento(lat, lng)
 
     seleccionado.current = true
+    markerPosRef.current = [lat, lng]
     setShowSuggestions(false)
     setSuggestions([])
     setMarkerPos([lat, lng])
@@ -252,17 +265,17 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]]
         setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
       } else {
-        setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
+        setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
       }
     } else {
-      setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
+      setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     }
 
     setQuery(f.place_name.split(",")[0])
     setDireccion(direccionStr)
     setCiudad(ciudadStr)
-    onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: depto })
-  }, [onChange, deptoActual])
+    onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: deptoDetectado })
+  }, [onChange])
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     seleccionado.current = false
@@ -287,13 +300,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     fontSize: 12, fontWeight: 500, color: C.subtexto, marginBottom: 2, display: "block",
   }
 
-  if (isLoading) return (
-    <div style={{ height: 260, background: C.crema, display: "flex", alignItems: "center",
-      justifyContent: "center", color: C.subtexto, borderRadius: 8, fontSize: 13 }}>
-      Cargando mapa...
-    </div>
-  )
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
@@ -315,7 +321,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           style={inputStyle}
         />
 
-        {/* Resultados Mapbox */}
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
             position: "absolute", top: "100%", left: 0, right: 0,
@@ -353,7 +358,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           </div>
         )}
 
-        {/* Sin resultados */}
         {showSuggestions && suggestions.length === 0 && query.length >= 2 && !isSearching && (
           <div style={{
             position: "absolute", top: "100%", left: 0, right: 0,
@@ -371,6 +375,16 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         height: 230, borderRadius: 8, overflow: "hidden",
         border: `1.5px solid ${C.borde}`, position: "relative", zIndex: 1,
       }}>
+        {isLoading && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 999,
+            background: C.crema, display: "flex",
+            alignItems: "center", justifyContent: "center",
+            fontSize: 13, color: C.subtexto, borderRadius: 8,
+          }}>
+            Cargando mapa...
+          </div>
+        )}
         <MapContainer
           center={initialCenter.current}
           zoom={initialZoom.current}
@@ -382,6 +396,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           zoomAnimation={true}
           fadeAnimation={true}
           markerZoomAnimation={true}
+          whenReady={handleMapReady}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

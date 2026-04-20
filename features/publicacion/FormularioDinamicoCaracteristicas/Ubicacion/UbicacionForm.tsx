@@ -10,6 +10,7 @@ import dynamic                         from 'next/dynamic'
 import { Label }                       from '@/components/ui/label'
 import { useUbicacionForm }            from './useUbicacionForm'
 import { DEPARTAMENTOS, MAX_ZONA }     from './useUbicacionTypes'
+import { MIN_ZONA }                    from './useUbicacionValidacion'
 import type { LocationData }           from './LocationPicker'
 
 const LocationPicker = dynamic(
@@ -82,7 +83,16 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownTouched, handleBlur])
 
+  // ── Selección de departamento desde el dropdown ──────────────────────────
+  // Si ya hay una dirección confirmada del mapa y el usuario elige un depto
+  // distinto → la dirección/coordenadas se resetean para evitar inconsistencia.
   const handleSelectDepto = (opcion: string) => {
+    if (values.direccion && opcion !== values.departamento) {
+      handleChange('direccion', '')
+      handleChange('lat', '')
+      handleChange('lng', '')
+      handleBlur('direccion')
+    }
     handleChange('departamento', opcion)
     handleBlur('departamento')
     setDropdownOpen(false)
@@ -102,19 +112,24 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   }
 
   const handleConfirmar = () => {
-    if (pendingLocation) {
-      handleUbicacion(pendingLocation)
-      if (pendingLocation.departamento && pendingLocation.departamento !== values.departamento) {
-        handleChange('departamento', pendingLocation.departamento)
-      }
+  if (pendingLocation) {
+    handleUbicacion(pendingLocation)
+    // Si el depto detectado por coordenadas difiere del dropdown → sincronizar
+    if (pendingLocation.departamento && pendingLocation.departamento !== values.departamento) {
+      handleChange('departamento', pendingLocation.departamento)
+      handleBlur('departamento')
     }
-    setMapaAbierto(false)
   }
+  setMapaAbierto(false)
+}
 
   const handleCerrar = () => {
     setPendingLocation(null)
     setMapaAbierto(false)
   }
+
+  const zonaLen     = values.zona.length
+  const zonaInvalid = touched.zona && !!errors.zona
 
   return (
     <>
@@ -138,7 +153,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               flexDirection: 'column',
             }}
           >
-            {/* Header del modal — compacto */}
+            {/* Header del modal */}
             <div style={{
               display:        'flex',
               alignItems:     'center',
@@ -158,7 +173,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                   </svg>
                 </div>
-                {/* Título y subtítulo en una sola línea en móvil */}
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap' }}>
                     Selecciona la ubicación
@@ -182,7 +196,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               </button>
             </div>
 
-            {/* Body del modal — padding más chico en móvil */}
+            {/* Body del modal */}
             <div style={{ padding: '12px 14px', overflow: 'visible' }}>
               <LocationPicker
                 deptoActual={deptoEnMapa}
@@ -347,16 +361,27 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             type="text"
             value={values.zona}
             maxLength={MAX_ZONA}
-            onChange={e => handleChange('zona', e.target.value)}
+            onChange={e => {
+              handleChange('zona', e.target.value)
+              // Activar validación en tiempo real una vez que empieza a escribir
+              if (!touched.zona && e.target.value.length > 0) handleBlur('zona')
+            }}
             onBlur={() => handleBlur('zona')}
-            placeholder=""
+            placeholder="Ej: Zona Norte, Miraflores, Sarco..."
             className={`w-full border rounded-md px-3 py-2 text-sm outline-none bg-white focus:border-gray-500 ${
-              touched.zona && errors.zona ? 'border-red-400' : 'border-[#D4CFC6]'
+              zonaInvalid ? 'border-red-400' : 'border-[#D4CFC6]'
             }`}
           />
-          <span className="text-red-500 text-xs h-4 block">
-            {touched.zona && errors.zona ? errors.zona : ''}
-          </span>
+
+          {/* Fila: error a la izquierda, contador simple a la derecha */}
+          <div className="flex items-center justify-between">
+            <span className="text-red-500 text-xs">
+              {zonaInvalid ? errors.zona : ''}
+            </span>
+            <span style={{ fontSize: 11, color: '#9CA3AF', flexShrink: 0, marginLeft: 8 }}>
+              {zonaLen}/{MAX_ZONA}
+            </span>
+          </div>
         </div>
 
       </div>

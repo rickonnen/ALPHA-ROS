@@ -3,11 +3,13 @@
  * Date: 19/04/2026
  * Funcionalidad: Descripción de la propiedad e integración de Características Extras
  *
- * FIXES v4:
- *  1. Dropdown usa createPortal — escapa de overflow:hidden del contenedor padre.
- *  2. Posición del dropdown via ref DOM directo (sin setState en useEffect).
- *  3. Contador del detalle DEBAJO del input.
- *  4. Sin ícono lápiz en modo lectura del título.
+ * FIXES v5:
+ *  1. Auto-selecciona la primera etiqueta al montar (modo edición con características ya cargadas).
+ *  2. Sin autoFocus en el input de detalle — seleccionar etiqueta no entra al campo de texto.
+ *  3. Dropdown usa createPortal — escapa de overflow:hidden del contenedor padre.
+ *  4. Posición del dropdown via ref DOM directo (sin setState en useEffect).
+ *  5. Contador del detalle ENCIMA del input.
+ *  6. Sin ícono lápiz en modo lectura del título.
  */
 'use client'
 
@@ -25,8 +27,6 @@ import {
 const MAX_DETALLE = 100
 
 // ── PortalDropdown ─────────────────────────────────────────────
-// Posiciona la lista via manipulación directa del DOM (ref) para
-// evitar setState dentro de useEffect (que causa cascading renders).
 interface PortalDropdownProps {
   anchorRef: React.RefObject<HTMLElement | null>
   open:      boolean
@@ -36,8 +36,6 @@ interface PortalDropdownProps {
 function PortalDropdown({ anchorRef, open, children }: PortalDropdownProps) {
   const listRef = useRef<HTMLUListElement>(null)
 
-  // Actualiza la posición del elemento del portal leyendo el anchor
-  // y escribiendo directamente en el style del ul — sin setState.
   const reposition = useCallback(() => {
     if (!listRef.current || !anchorRef.current) return
     const r = anchorRef.current.getBoundingClientRect()
@@ -48,7 +46,6 @@ function PortalDropdown({ anchorRef, open, children }: PortalDropdownProps) {
 
   useEffect(() => {
     if (!open) return
-    // Posicionar en cuanto el portal se monta
     reposition()
     window.addEventListener('scroll', reposition, true)
     window.addEventListener('resize', reposition)
@@ -65,7 +62,7 @@ function PortalDropdown({ anchorRef, open, children }: PortalDropdownProps) {
       ref={listRef}
       style={{
         position:        'fixed',
-        top:             0,   // corregido por reposition()
+        top:             0,
         left:            0,
         width:           0,
         maxHeight:       200,
@@ -110,10 +107,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   const [isAdding,  setIsAdding]  = useState(false)
   const [activeTag, setActiveTag] = useState<string | null>(null)
 
-  const [editingTitle,     setEditingTitle]     = useState(false)
-  const [titleSearchTerm,  setTitleSearchTerm]  = useState('')
-  const [titleSugerencias, setTitleSugerencias] = useState<string[]>([])
-  const [detalleError,     setDetalleError]     = useState<string | null>(null)
+  const [editingTitle,    setEditingTitle]    = useState(false)
+  const [titleSearchTerm, setTitleSearchTerm] = useState('')
+  const [detalleError,    setDetalleError]    = useState<string | null>(null)
 
   // Refs de anchors para los portales
   const addInputRef   = useRef<HTMLInputElement | null>(null)
@@ -130,17 +126,21 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitRef])
 
-  // Auto-seleccionar cuando hay 1 sola etiqueta
+  // ── FIX 1: Auto-seleccionar la primera etiqueta al montar o cuando cambia la lista ──
+  // Si no hay ninguna activa (o la activa ya no existe), selecciona la primera disponible.
+  // Cuando se está en modo "añadir" no interfiere.
   useEffect(() => {
     const lista = values.caracteristicas || []
     if (lista.length === 0) {
       setActiveTag(null)
-    } else if (lista.length === 1 && !isAdding) {
-      setActiveTag(lista[0].titulo)
+    } else if (!isAdding) {
+      setActiveTag(prev =>
+        prev && lista.some(c => c.titulo === prev) ? prev : lista[0].titulo
+      )
     }
   }, [values.caracteristicas, isAdding])
 
-  // Sugerencias para edición de título (derivado puro, sin efectos)
+  // Sugerencias para edición de título (derivado puro)
   const titleSugs = (() => {
     if (!titleSearchTerm.trim()) return []
     const term        = titleSearchTerm.toLowerCase()
@@ -370,7 +370,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
         {caracteristicas.length > 0 && activeTag && activeCaracteristica && !isAdding && (
           <div className="flex flex-col gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
 
-            {/* Título: buscador controlado por Portal */}
+            {/* Título */}
             <div>
               <Label className="block text-xs font-bold text-gray-700 mb-1">
                 Título de la característica
@@ -440,7 +440,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
               )}
             </div>
 
-            {/* Detalle: 0–100 caracteres, contador ARRIBA junto al label */}
+            {/* Detalle — FIX 2: sin autoFocus para no entrar al campo al seleccionar etiqueta */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <Label className="text-xs font-bold text-gray-700">
@@ -460,7 +460,6 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                 className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-gray-400 border-gray-300 text-sm w-full ${
                   detalleError ? 'border-red-400' : ''
                 }`}
-                autoFocus={!editingTitle}
               />
               {detalleError && (
                 <p className="text-red-500 text-xs mt-1">{detalleError}</p>
