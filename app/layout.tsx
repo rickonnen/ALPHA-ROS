@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/app/auth/AuthContext";
 import { Header } from "@/components/homeComponents/header";
 import Footer from "@/components/homeComponents/footer";
+import ExchangeRateBubble from "@/components/homeComponents/exchangeRateBubble";
 import { GlobalShortcut } from "@/components/GlobalShortcut";
 
 const geistSans = Geist({
@@ -42,7 +43,8 @@ export default function RootLayout({
           </main>
           
           {/* el Footer ahora está dentro de AuthProvider */}
-          <Footer /> 
+           <Footer /> 
+          <ExchangeRateBubble />
         </AuthProvider>
       </body>
     </html>
