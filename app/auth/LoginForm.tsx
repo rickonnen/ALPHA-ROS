@@ -16,9 +16,10 @@ import { useAuth } from "./AuthContext";
 interface LoginFormProps {
   onSwitchToRegister: () => void;
   onClose?: () => void;
+  onForgotPassword?: () => void;
 }
 
-export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
+export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -104,6 +105,7 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
         setGeneralError("");
       } else {
         setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
+        setErrors(prev => ({ ...prev, password: "incorrect" }));
       }
     } finally {
       setLoading(false);
@@ -542,10 +544,6 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-        {generalError && (
-          <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
-        )}
-
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
             Correo electrónico
@@ -602,15 +600,19 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.password}</p>}
+         {errors.password && errors.password !== "incorrect" && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.password}</p>}
+         {generalError && (
+           <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "left" }}>{generalError}</p>
+         )}
         </div>
 
         <div style={{ textAlign: "right" }}>
           <button
             type="button"
+             onClick={onForgotPassword}
             style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline" }}
           >
-            ¿Olvidé tu contraseña?
+            ¿Olvidaste tu contraseña?
           </button>
         </div>
 
