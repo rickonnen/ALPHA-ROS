@@ -15,6 +15,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 })
 
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ?? ""
+
 const DEPTO_COORDS: Record<string, [number, number]> = {
   "Cochabamba": [-17.3943, -66.1569],
   "La Paz":     [-16.5000, -68.1193],
@@ -26,6 +28,20 @@ const DEPTO_COORDS: Record<string, [number, number]> = {
   "Tarija":     [-21.5355, -64.7296],
   "Beni":       [-14.8333, -64.9000],
   "Pando":      [-11.0289, -68.7692],
+}
+
+// Bounding boxes por departamento para restringir búsqueda [minLng, minLat, maxLng, maxLat]
+const DEPTO_BBOX: Record<string, [number, number, number, number]> = {
+  "Cochabamba": [-67.0, -18.2, -64.5, -16.2],
+  "La Paz":     [-69.6, -17.5, -67.5, -14.5],
+  "Santa Cruz": [-63.5, -20.5, -57.5, -13.5],
+  "Oruro":      [-68.5, -19.5, -66.5, -17.0],
+  "Potosí":     [-67.5, -22.9, -64.5, -18.5],
+  "Sucre":      [-66.0, -20.5, -64.5, -18.5],
+  "Chuquisaca": [-66.0, -20.5, -64.5, -18.5],
+  "Tarija":     [-65.5, -22.9, -63.5, -21.0],
+  "Beni":       [-67.0, -15.0, -63.0,  -9.7],
+  "Pando":      [-69.6, -12.5, -65.5,  -9.7],
 }
 
 function detectarDepartamento(lat: number, lng: number): string {
@@ -46,10 +62,10 @@ const getCenter = (depto?: string): [number, number] => {
   return entry ? entry[1] : DEPTO_COORDS["Cochabamba"]
 }
 
+// ─── MapController con animaciones suaves ────────────────────────────────────
 type MapCommand =
-  | { type: "flyTo";     center: [number, number]; zoom: number;                        trigger: number }
-  | { type: "fitBounds"; bounds: [[number,number],[number,number]];                     trigger: number }
-  | { type: "setCenter"; center: [number, number]; zoom: number;                        trigger: number }
+  | { type: "flyTo";     center: [number, number]; zoom: number; trigger: number }
+  | { type: "fitBounds"; bounds: [[number,number],[number,number]]; trigger: number }
 
 function MapController({ cmd }: { cmd: MapCommand }) {
   const map  = useMap()
@@ -60,14 +76,14 @@ function MapController({ cmd }: { cmd: MapCommand }) {
     prev.current = cmd.trigger
 
     if (cmd.type === "flyTo") {
-      map.setView(cmd.center, cmd.zoom, { animate: false })
+      map.flyTo(cmd.center, cmd.zoom, { animate: true, duration: 0.8 })
     } else if (cmd.type === "fitBounds") {
-      map.setView(cmd.bounds[0], 10, { animate: false })
-      setTimeout(() => {
-        map.fitBounds(cmd.bounds, { animate: true, duration: 0.6, maxZoom: 15, padding: [30, 30] })
-      }, 50)
-    } else if (cmd.type === "setCenter") {
-      map.setView(cmd.center, cmd.zoom, { animate: false })
+      map.flyToBounds(cmd.bounds, {
+        animate:  true,
+        duration: 0.8,
+        maxZoom:  17,
+        padding:  [30, 30],
+      })
     }
   }, [cmd, map])
 
@@ -88,26 +104,24 @@ export interface LocationData {
   departamento: string
 }
 
-interface Suggestion {
-  display_name: string
-  lat:          string
-  lon:          string
-  boundingbox:  [string, string, string, string]
-  address: {
-    road?:         string
-    house_number?: string
-    city?:         string
-    town?:         string
-    village?:      string
-    county?:       string
-    country?:      string
-    state?:        string
-  }
+// ─── Tipos de respuesta Mapbox ────────────────────────────────────────────────
+interface MapboxContext {
+  id:   string
+  text: string
 }
 
-interface NominatimReverse {
-  display_name: string
-  address: Suggestion["address"]
+interface MapboxFeature {
+  id:         string
+  place_name: string
+  text:       string
+  center:     [number, number] // [lng, lat]
+  bbox?:      [number, number, number, number] // [minLng, minLat, maxLng, maxLat]
+  context?:   MapboxContext[]
+  properties: Record<string, unknown>
+}
+
+interface MapboxResponse {
+  features: MapboxFeature[]
 }
 
 interface LocationPickerProps {
@@ -118,14 +132,15 @@ interface LocationPickerProps {
 export default function LocationPicker({ deptoActual, onChange }: LocationPickerProps) {
   const [markerPos,       setMarkerPos]       = useState<[number, number] | null>(null)
   const [mapCmd,          setMapCmd]          = useState<MapCommand>({
-    type: "setCenter", center: getCenter(deptoActual), zoom: 13, trigger: 0,
+    type: "flyTo", center: getCenter(deptoActual), zoom: 13, trigger: 0,
   })
   const [isLoading,       setIsLoading]       = useState(true)
   const [isGeocoding,     setIsGeocoding]     = useState(false)
+  const [isSearching,     setIsSearching]     = useState(false)
   const [direccion,       setDireccion]       = useState("")
   const [ciudad,          setCiudad]          = useState("")
   const [query,           setQuery]           = useState("")
-  const [suggestions,     setSuggestions]     = useState<Suggestion[]>([])
+  const [suggestions,     setSuggestions]     = useState<MapboxFeature[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevDepto    = useRef(deptoActual)
@@ -143,28 +158,47 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
     setMapCmd(prev => ({
-      type: "setCenter", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1,
+      type: "flyTo", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1,
     }))
   }, [deptoActual])
 
+  // ─── Autocompletado con Mapbox ──────────────────────────────────────────────
   useEffect(() => {
     if (seleccionado.current) return
-    if (query.length < 3) { setSuggestions([]); setShowSuggestions(false); return }
+    if (query.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(async () => {
+      setIsSearching(true)
       try {
-        const res  = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=bo&accept-language=es`
-        )
-        const data = await res.json() as Suggestion[]
-        setSuggestions(Array.isArray(data) ? data : [])
+        const center  = getCenter(deptoActual)
+        const bbox    = deptoActual && DEPTO_BBOX[deptoActual]
+          ? DEPTO_BBOX[deptoActual].join(",")
+          : "-69.6,-22.9,-57.5,-9.7"
+        // proximity sesga los resultados hacia el centro del departamento
+        const proximity = `${center[1]},${center[0]}` // lng,lat
+
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
+          `${encodeURIComponent(query)}.json` +
+          `?access_token=${MAPBOX_TOKEN}` +
+          `&country=bo` +
+          `&language=es` +
+          `&limit=6` +
+          `&proximity=${proximity}` +
+          `&bbox=${bbox}`
+
+        const res  = await fetch(url)
+        const data = await res.json() as MapboxResponse
+        setSuggestions(Array.isArray(data.features) ? data.features : [])
         setShowSuggestions(true)
       } catch (e) {
-        console.error("Autocompletado:", e)
+        console.error("Mapbox autocompletado:", e)
+      } finally {
+        setIsSearching(false)
       }
-    }, 400)
-  }, [query])
+    }, 350)
+  }, [query, deptoActual])
 
+  // ─── Click en el mapa → reverse geocoding con Mapbox ──────────────────────
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
@@ -172,66 +206,63 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     setShowSuggestions(false)
     setSuggestions([])
     seleccionado.current = true
-    setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
+    setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
     setIsGeocoding(true)
     try {
-      const res  = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-        { headers: { "Accept-Language": "es" } }
-      )
-      const data         = await res.json() as NominatimReverse
-      const addr         = data.address
-      const direccionStr = [addr?.road, addr?.house_number].filter(Boolean).join(" ") || data.display_name.split(",")[0]
-      const ciudadStr    = addr?.city || addr?.town || addr?.village || addr?.county || ""
-      const paisStr      = addr?.country || ""
-      const depto        = detectarDepartamento(lat, lng)
+      const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
+        `?access_token=${MAPBOX_TOKEN}&language=es`
+      const res  = await fetch(url)
+      const data = await res.json() as MapboxResponse
+
+      const feature      = data.features?.[0]
+      const direccionStr = feature?.text ?? ""
+      const ciudadStr    = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
+      const depto        = deptoActual || detectarDepartamento(lat, lng)
+
       setDireccion(direccionStr)
       setCiudad(ciudadStr)
-      setQuery(direccionStr)
-      onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: paisStr, departamento: depto })
+      setQuery(feature?.place_name?.split(",")[0] ?? direccionStr)
+      onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: depto })
     } catch (e) {
-      console.error("Geocodificación inversa:", e)
+      console.error("Mapbox reverse:", e)
     } finally {
       setIsGeocoding(false)
     }
-  }, [onChange])
+  }, [onChange, deptoActual])
 
-  const handleSuggestionClick = useCallback((s: Suggestion) => {
-    const lat = parseFloat(parseFloat(s.lat).toFixed(6))
-    const lng = parseFloat(parseFloat(s.lon).toFixed(6))
-    const addr         = s.address
-    const direccionStr = [addr?.road, addr?.house_number].filter(Boolean).join(" ") || s.display_name.split(",")[0]
-    const ciudadStr    = addr?.city || addr?.town || addr?.village || addr?.county || ""
-    const paisStr      = addr?.country || ""
-    const displayStr   = [direccionStr, ciudadStr].filter(Boolean).join(", ")
-    const depto        = detectarDepartamento(lat, lng)
+  // ─── Seleccionar sugerencia ────────────────────────────────────────────────
+  const handleSuggestionClick = useCallback((f: MapboxFeature) => {
+    const lng = f.center[0]
+    const lat = f.center[1]
+
+    const direccionStr = f.text ?? f.place_name.split(",")[0]
+    const ciudadStr    = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
+    const depto        = deptoActual || detectarDepartamento(lat, lng)
 
     seleccionado.current = true
     setShowSuggestions(false)
     setSuggestions([])
     setMarkerPos([lat, lng])
 
-    const bb      = s.boundingbox
-    const minLat  = parseFloat(bb[0])
-    const maxLat  = parseFloat(bb[1])
-    const minLng  = parseFloat(bb[2])
-    const maxLng  = parseFloat(bb[3])
-    const latSpan = Math.abs(maxLat - minLat)
-    const lngSpan = Math.abs(maxLng - minLng)
-    const bboxIsTooBig = latSpan > 0.02 || lngSpan > 0.02
-
-    if (bboxIsTooBig) {
-      setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
+    if (f.bbox) {
+      const [minLng, minLat, maxLng, maxLat] = f.bbox
+      const latSpan = Math.abs(maxLat - minLat)
+      const lngSpan = Math.abs(maxLng - minLng)
+      if (latSpan > 0.02 || lngSpan > 0.02) {
+        const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]]
+        setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
+      } else {
+        setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
+      }
     } else {
-      const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]]
-      setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
+      setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 17, trigger: prev.trigger + 1 }))
     }
 
-    setQuery(displayStr)
+    setQuery(f.place_name.split(",")[0])
     setDireccion(direccionStr)
     setCiudad(ciudadStr)
-    onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: paisStr, departamento: depto })
-  }, [onChange])
+    onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: depto })
+  }, [onChange, deptoActual])
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     seleccionado.current = false
@@ -270,7 +301,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
       <div style={{ position: "relative", zIndex: 10000 }}>
         <label style={labelStyle}>
           Buscar dirección
-          {isGeocoding && <span style={{ color: C.subtexto, fontWeight: 400 }}> — buscando...</span>}
+          {isGeocoding  && <span style={{ color: "#888", fontWeight: 400 }}> — obteniendo dirección...</span>}
+          {isSearching && !isGeocoding && <span style={{ color: "#888", fontWeight: 400 }}> — buscando...</span>}
         </label>
         <input
           value={query}
@@ -283,33 +315,53 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           style={inputStyle}
         />
 
+        {/* Resultados Mapbox */}
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
             position: "absolute", top: "100%", left: 0, right: 0,
             background: "#ffffff", border: `1px solid ${C.borde}`,
             borderRadius: 6, zIndex: 99999,
             boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            marginTop: 3, maxHeight: 200, overflowY: "auto",
+            marginTop: 3, maxHeight: 220, overflowY: "auto",
           }}>
-            {suggestions.map((s, i) => (
+            {suggestions.map((f, i) => (
               <div
-                key={i}
-                onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(s) }}
+                key={f.id}
+                onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(f) }}
                 style={{
-                  padding: "9px 12px", fontSize: 13, color: C.texto, cursor: "pointer",
+                  padding: "10px 12px", fontSize: 13, color: C.texto, cursor: "pointer",
                   borderBottom: i < suggestions.length - 1 ? `1px solid ${C.crema}` : "none",
                   display: "flex", alignItems: "flex-start", gap: 8,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.crema }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#ffffff" }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill={C.terracota}
+                <svg width="12" height="14" viewBox="0 0 24 24" fill={C.terracota}
                   style={{ flexShrink: 0, marginTop: 2 }}>
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <span style={{ lineHeight: 1.4 }}>{s.display_name}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {f.text}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {f.place_name}
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Sin resultados */}
+        {showSuggestions && suggestions.length === 0 && query.length >= 2 && !isSearching && (
+          <div style={{
+            position: "absolute", top: "100%", left: 0, right: 0,
+            background: "#ffffff", border: `1px solid ${C.borde}`,
+            borderRadius: 6, zIndex: 99999, marginTop: 3,
+            padding: "12px", fontSize: 13, color: "#888", textAlign: "center",
+          }}>
+            Sin resultados. Intenta hacer clic directamente en el mapa.
           </div>
         )}
       </div>
@@ -322,8 +374,14 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         <MapContainer
           center={initialCenter.current}
           zoom={initialZoom.current}
+          zoomSnap={0.25}
+          zoomDelta={0.5}
+          wheelPxPerZoomLevel={60}
           style={{ height: "100%", width: "100%", cursor: "crosshair" }}
           zoomControl={true}
+          zoomAnimation={true}
+          fadeAnimation={true}
+          markerZoomAnimation={true}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -339,12 +397,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         Busca una dirección arriba o haz clic directamente en el mapa
       </p>
 
-      {/* Dirección y ciudad — en columna en móvil, lado a lado en desktop */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr",
-        gap: 8,
-      }}
+      {/* Dirección y ciudad */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}
         className="sm:grid-cols-2"
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
