@@ -1,4 +1,4 @@
-"use client";  // Componente de cliente (React)
+"use client";
 import React, { createContext, useState, useContext, useEffect } from "react";
 
 interface User {
@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof document === "undefined") return;
 
     const cookieName = "session_id";
+
     const existing = document.cookie
       .split("; ")
       .find((row) => row.startsWith(`${cookieName}=`))
@@ -50,11 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserFromServer = async () => {
     try {
       const res = await fetch("/api/auth/me", {
-        credentials: "include", 
+        credentials: "include",
       });
+
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user); 
+        setUser(data.user);
         return true;
       }
     } catch (error) {
@@ -67,23 +69,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkSession = async () => {
       try {
         const sessionRes = await fetch("/api/auth/session");
+
         if (sessionRes.ok) {
           const session = await sessionRes.json();
+
           if (session?.user) {
-            // Google user encontrado
             const googleUser: User = {
               id: session.user.id ?? session.user.email ?? "",
               name: session.user.name ?? "",
               email: session.user.email ?? "",
             };
+
             setUser(googleUser);
             setIsLoading(false);
-            return;  
+            return;
           }
         }
 
         await fetchUserFromServer();
-        
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
@@ -92,13 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkSession();
-  }, []);  
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", 
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -110,7 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchUserFromServer();
   };
 
-  const signup = async (nombre: string, apellido: string, email: string, password: string) => {
+  const signup = async (
+    nombre: string,
+    apellido: string,
+    email: string,
+    password: string
+  ) => {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
