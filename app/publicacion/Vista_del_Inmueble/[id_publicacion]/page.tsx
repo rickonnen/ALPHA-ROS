@@ -123,7 +123,7 @@ export default async function VistaInmueblePage({
             strTipoInmueble:       objPerfil.TipoInmueble?.nombre_inmueble         ?? "—",
             strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion       ?? "—",
             strDepartamento:       objPerfil.Ubicacion?.Ciudad?.nombre_ciudad      ?? "—",
-            strZona:               objPerfil.Zona?.nombre_zona                     ?? "—",
+            strZona:               objPerfil.Ubicacion?.zona                       ?? "—",
             strEstadoConstruccion: objPerfil.EstadoConstruccion?.nombre_estado_construccion  ?? "—",
             intHabitaciones:       objPerfil.habitaciones                          ?? 0,
             intBanos:              objPerfil.banos                                 ?? 0,
