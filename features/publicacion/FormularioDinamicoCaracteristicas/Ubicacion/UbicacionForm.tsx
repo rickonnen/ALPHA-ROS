@@ -253,11 +253,11 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
       )}
 
       {/* ─── Formulario principal ────────────────────────────────── */}
-      <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px' }}>
+      <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px', minWidth: 0, width: '100%' }}>
 
         {/* 1 — Departamento */}
         <div className="flex flex-col gap-1.5" ref={dropdownRef}>
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
+          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             ¿Cual es el departamento en el que se encuentra la propiedad?
           </Label>
           <button
@@ -320,7 +320,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
         {/* 2 — Dirección */}
         <div className="flex flex-col gap-1.5">
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
+          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             ¿Cual es la dirección de la propiedad?
           </Label>
           <button
@@ -332,7 +332,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             } ${values.direccion ? 'text-[#1A1714]' : 'text-gray-400'}`}
           >
             <span className="truncate">
-              {values.direccion || 'Haz click para seleccionar en el mapa'}
+              {values.direccion || 'Seleccione en el mapa'}
             </span>
             <div style={{
               width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
@@ -367,7 +367,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               if (!touched.zona && e.target.value.length > 0) handleBlur('zona')
             }}
             onBlur={() => handleBlur('zona')}
-            placeholder="Ej: Zona Norte, Miraflores, Sarco..."
+            placeholder="Escriba una zona"
             className={`w-full border rounded-md px-3 py-2 text-sm outline-none bg-white focus:border-gray-500 ${
               zonaInvalid ? 'border-red-400' : 'border-[#D4CFC6]'
             }`}
