@@ -67,14 +67,14 @@ export async function PUT(req: NextRequest) {
     // Obtener datos del usuario para enviar email
     const usuario = await prisma.usuario.findUnique({
       where: { id_usuario },
-      select: { email: true, nombre: true },
+      select: { email: true, nombres: true },
     });
 
     // Enviar email de cambio de contraseña con medición de tiempo
     if (usuario?.email) {
       const emailResult = await sendPasswordChangeEmail(
         usuario.email,
-        usuario.nombre || "Usuario"
+        usuario.nombres || "Usuario"
       );
 
       // Verificar que el email se envió en menos de 10 segundos

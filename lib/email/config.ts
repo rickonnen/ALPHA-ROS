@@ -1,52 +1,78 @@
 import nodemailer from "nodemailer";
 
 /**
- * CRITERIO 19: Conectar Gmail con credenciales correctas
- * CRITERIO 21: Email remitente válido y coherente  
- * CRITERIO 23: Nombre plataforma como remitente
+ * TAREA 6: Crear método único para enviar correos reutilizable
+ * Configuración de Nodemailer con Gmail SMTP
  */
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.error("❌ ERROR: Faltan credenciales de Gmail en .env");
-  console.error("   Variables requeridas: EMAIL_USER, EMAIL_PASS");
+// Validar variables de entorno requeridas
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "PROBOL Notificaciones";
+
+if (!GMAIL_USER || !GMAIL_PASSWORD) {
+  console.warn(
+    "⚠️ [EMAIL CONFIG] Variables GMAIL_USER o GMAIL_PASSWORD no configuradas. Los emails no se enviarán."
+  );
 }
 
-export const emailConfig = {
+export const transporter = nodemailer.createTransport({
   service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // true para 465, false para 587
+  requireTls: true,
   auth: {
-    user: process.env.EMAIL_USER || "",
-    pass: process.env.EMAIL_PASS || "",
+    user: GMAIL_USER,
+    pass: GMAIL_PASSWORD, // Debe ser App Password, no contraseña regular
   },
-};
+  // Configuración para evitar spam
+  connectionUrl: undefined,
+  connectionTimeout: 10000,
+  socketTimeout: 15000,
+  maxConnections: 5,
+  maxMessages: 100,
+  rateDelta: 1000,
+  rateLimit: 10,
+});
 
-export const transporter = nodemailer.createTransport(emailConfig);
 
-export async function verifyEmailConnection(): Promise<boolean> {
+export function getFormattedSender(): string {
+  return `"${EMAIL_FROM_NAME}" <${GMAIL_USER}>`;
+}
+
+
+export async function verifyEmailConnection(): Promise<{
+  connected: boolean;
+  error?: string;
+}> {
   try {
-    console.log("Verificando conexión con Gmail...");
+    if (!GMAIL_USER || !GMAIL_PASSWORD) {
+      return {
+        connected: false,
+        error: "Credenciales de email no configuradas",
+      };
+    }
+
     await transporter.verify();
-    console.log(" Conexión con Gmail verificada correctamente");
-    return true;
+    console.log("✅ [EMAIL] Conexión SMTP verificada correctamente");
+    return { connected: true };
   } catch (error) {
-    console.error(
-      " Error verificando conexión con Gmail:",
-      error instanceof Error ? error.message : error
-    );
-    return false;
+    const errorMsg =
+      error instanceof Error ? error.message : "Error desconocido";
+    console.error("❌ [EMAIL] Error verificando conexión SMTP:", errorMsg);
+    return { connected: false, error: errorMsg };
   }
 }
 
-export const emailSenderInfo = {
-  address: process.env.EMAIL_FROM_ADDRESS || "",
-  name: process.env.EMAIL_FROM_NAME || "PROPBOL Notificaciones",
-};
-
-export function getFormattedSender(): string {
-  return `${emailSenderInfo.name} <${emailSenderInfo.address}>`;
-}
-
-if (process.env.NODE_ENV === "development") {
-  console.log(" Configuración de email Alpha ROS:");
-  console.log(`   Remitente: ${getFormattedSender()}`);
-  console.log(`   Servicio: Gmail SMTP`);
+/**
+ * Cierra el transporter cuando no se necesite más
+ */
+export async function closeEmailConnection(): Promise<void> {
+  try {
+    await transporter.close();
+    console.log("✅ [EMAIL] Conexión SMTP cerrada");
+  } catch (error) {
+    console.error("❌ [EMAIL] Error cerrando conexión SMTP:", error);
+  }
 }

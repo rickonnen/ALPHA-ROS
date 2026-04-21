@@ -876,6 +876,8 @@ model Usuario {
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?
   id_plan                      Int?                    @db.SmallInt
+  dos_fa_habilitado            Boolean?                @default(false)
+  dos_fa_secreto               String?                 @db.VarChar(64)
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]

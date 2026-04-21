@@ -107,16 +107,27 @@ export async function POST(request: NextRequest) {
 
     //  Si no tiene 2FA, proceder normalmente
     const userData = await prisma.usuario.findUnique({
-      where: { id_usuario: authData.user.id }, 
-      select: { id_usuario: true, nombres: true, email: true, rol: true }
-    });
+  where: { id_usuario: authData.user.id }, 
+  select: { id_usuario: true, nombres: true, email: true, rol: true, estado: true }
+});
 
-    if (!userData) {
-      return NextResponse.json(
-        { error: "Error al obtener datos del usuario" },
-        { status: 400 }
-      );
-    }
+if (!userData) {
+  return NextResponse.json(
+    { error: "Error al obtener datos del usuario" },
+    { status: 400 }
+  );
+}
+
+// HU-04 CA-3: bloquear login si cuenta desactivada
+if (userData.estado === 0) {
+  return NextResponse.json(
+    {
+      error: "Tu cuenta está desactivada. Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.",
+      code: "ACCOUNT_DISABLED",
+    },
+    { status: 403 }
+  );
+}
 
     const jwtToken = sign(
       { userId: userData.id_usuario },  

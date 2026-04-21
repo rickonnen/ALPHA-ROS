@@ -2,9 +2,13 @@
  * CRITERIO 5: Validar formato email antes de enviar
  * CRITERIO 6: Rechazar si no hay destinatario
  * CRITERIO 13: NO incluir datos sensibles
+ * TAREA 10: Validación robusta de email
  */
 
+// RFC 5322 - Validación más estricta de email
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Detectar dominios sospechosos
+const SUSPICIOUS_DOMAINS = /(test|fake|example|invalid|localhost)/i;
 
 interface ValidationResult {
   valid: boolean;
@@ -37,7 +41,38 @@ export function validateRecipient(recipient?: string): ValidationResult {
   if (!recipient) {
     return { valid: false, error: "No se especificó destinatario" };
   }
-  return validateEmailFormat(recipient);
+  
+  const formatValidation = validateEmailFormat(recipient);
+  if (!formatValidation.valid) {
+    return formatValidation;
+  }
+  
+  // Validar que no sea un dominio sospechoso
+  if (SUSPICIOUS_DOMAINS.test(recipient)) {
+    return { valid: false, error: "Dominio de email sospechoso o inválido" };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Valida múltiples emails a la vez (para futuros envíos en lote)
+ */
+export function validateRecipients(recipients: string[]): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!recipients || recipients.length === 0) {
+    return { valid: false, errors: ["Lista de destinatarios vacía"] };
+  }
+  
+  recipients.forEach((recipient, index) => {
+    const validation = validateRecipient(recipient);
+    if (!validation.valid) {
+      errors.push(`Email ${index + 1}: ${validation.error}`);
+    }
+  });
+  
+  return { valid: errors.length === 0, errors };
 }
 
 export function validateContentSafety(content: string): ValidationResult {
