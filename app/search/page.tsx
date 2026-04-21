@@ -799,6 +799,54 @@ function SearchPageContent() {
               )}
             </button>
 
+            {/* Controles de dibujo para móvil */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 md:hidden z-[998]">
+              {!drawnPolygon ? (
+                <button 
+                  onClick={() => {
+                    setIsDrawingMode(!isDrawingMode);
+                    if (!isMapOpen) setIsMapOpen(true);
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+                    isDrawingMode ? 'bg-slate-800 hover:bg-slate-900' : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                  }`}
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                  </svg>
+                  {isDrawingMode ? 'Cancelar dibujo' : 'Dibujar zona'}
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
+                  <span className="text-sm font-medium text-slate-900 text-center">
+                    Zona aplicada: {displayedProperties.length} inmuebles
+                  </span>
+                  <button 
+                    onClick={async () => {
+                      if (!objUser) {
+                        setBolShowProtected(true);
+                        return;
+                      }
+                      console.log("Para enviar al POST de MisZonas:", drawnPolygon);
+                      alert("Zona lista para guardar en Base de Datos");
+                    }}
+                    className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                  >
+                    Guardar en mi Perfil
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setDrawnPolygon(null);
+                      setIsDrawingMode(false);
+                    }}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
+                  >
+                    Limpiar mapa
+                  </button>
+                </div>
+              )}
+            </div>
+
             <SearchMapClient
               key={isMapFullscreen ? 'fullscreen' : 'normal'}
               locations={isDrawingMode ? [] : convertPublicacionesToLocations(filteredSearchResults, selectedCurrency)}
