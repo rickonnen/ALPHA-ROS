@@ -84,56 +84,82 @@ export const authOptions: NextAuthOptions = {
       }
       try {
         if (account?.provider === "google") {
+          if (!user?.email) return false
+
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
-          const { data: existingUser } = await supabase
+
+          const providerAccountId = account.providerAccountId as string | undefined
+          if (!providerAccountId) return false
+
+          const { data: existingByGoogle } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("google_id", providerAccountId)
+            .maybeSingle()
+
+          if (existingByGoogle?.id_usuario) {
+            return true
+          }
+
+          const { data: existingByEmail } = await supabase
             .from("Usuario")
             .select("id_usuario")
             .eq("email", user.email)
             .maybeSingle()
-          if (existingUser) {
+
+          const nombre = user.name?.split(" ")[0] ?? ""
+          const apellido = user.name?.split(" ").slice(1).join(" ") ?? ""
+
+          if (existingByEmail?.id_usuario) {
+            await supabase
+              .from("Usuario")
+              .update({
+                google_id: providerAccountId,
+                url_foto_perfil: user.image ?? null,
+                nombres: nombre,
+                apellidos: apellido,
+              })
+              .eq("id_usuario", existingByEmail.id_usuario)
             return true
           }
-          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-            email: user.email!,
-            email_confirm: true,
-            user_metadata: {
-              nombre: user.name?.split(" ")[0] ?? "",
-              apellido: user.name?.split(" ").slice(1).join(" ") ?? "",
-            }
-          })
-          if (authError) {
-            console.error("Error creando en auth.users:", authError)
-            return "/api/google-cancelado"
+
+          const { data: authData, error: authError } =
+            await supabase.auth.admin.createUser({
+              email: user.email,
+              password: crypto.randomUUID() + crypto.randomUUID(),
+              email_confirm: true,
+              user_metadata: { nombre, apellido },
+            })
+
+          if (authError || !authData.user) {
+            console.error("Error creando usuario en Supabase Auth:", authError)
+            return false
           }
-          const supabaseUserId = authData.user.id
-          const { error: dbError } = await supabase.from("Usuario").upsert({
-            id_usuario: supabaseUserId,
+
+          const { error: dbError } = await supabase.from("Usuario").insert({
+            id_usuario: authData.user.id,
             email: user.email,
-            nombres: user.name?.split(" ")[0] ?? "",
-            apellidos: user.name?.split(" ").slice(1).join(" ") ?? "",
-            google_id: account.providerAccountId,
+            nombres: nombre,
+            apellidos: apellido,
+            google_id: providerAccountId,
             url_foto_perfil: user.image ?? null,
             rol: 2,
             estado: 1,
-          }, { onConflict: "id_usuario" })
+          })
+
           if (dbError) {
-            console.error("Error insertando en tabla Usuario:", dbError)
-            await supabase.auth.admin.deleteUser(supabaseUserId)
-            return "/api/google-cancelado"
+            console.error("Error creando usuario en tabla Usuario:", dbError)
+            await supabase.auth.admin.deleteUser(authData.user.id)
+            return false
           }
+
+          console.log("Usuario creado en Supabase Auth + tabla Usuario")
         }
-        if (account.provider === "discord") {
-          const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
-          return await handleDiscordSignIn(user, account)
-        }
-        if (account.provider === "facebook") {
-          const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
-          return await handleFacebookSignIn(user, account)
-        }
+
         return true
       } catch (error) {
         console.error("Error signIn:", error)
@@ -141,23 +167,24 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async jwt({ token, account, user }: any) {
-      if (user?.id) {
-        token.id = user.id;
-      }
-      if (account?.provider && user?.email) {
+    async jwt({ token, account }: any) {
+
+      if (account?.provider === "google") {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
-          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
-        const { data } = await supabase
-          .from("Usuario")
-          .select("id_usuario")
-          .eq("email", user.email)
-          .maybeSingle()
-        if (data?.id_usuario) {
-          token.id = data.id_usuario
+
+        const providerAccountId = account.providerAccountId as string | undefined
+        if (providerAccountId) {
+          const { data: userRow } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("google_id", providerAccountId)
+            .maybeSingle()
+
+          if (userRow?.id_usuario) token.id = userRow.id_usuario
         }
       }
       return token

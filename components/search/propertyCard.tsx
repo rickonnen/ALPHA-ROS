@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import SearchDetailModal from './SearchDetailModal';
+import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
 
 
 type Currency = "USD" | "BS";
@@ -52,6 +53,8 @@ function PropertyCard({
   onClick
 }: PropertyCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const { trackEvent } = useTracking();
+  const viewRef = useCardViewTracking(property.id, 0);
   
     const exchangeRate = 6.96;
 
@@ -178,9 +181,13 @@ function PropertyCard({
         
   return (
     <div 
+      ref={viewRef}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onClick={onClick}
+      onClick={() => {
+        trackEvent(property.id, 'click');
+        onClick?.();
+      }}
       className={`group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none cursor-pointer ${
         isHovered 
           ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 

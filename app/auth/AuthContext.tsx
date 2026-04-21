@@ -1,6 +1,5 @@
-"use client";  // Componente de cliente (React)
-import React, { createContext, useState, useContext, useEffect, useRef } from "react";
-import { signOut } from "next-auth/react"; 
+"use client";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
 interface User {
   id: string;
@@ -33,32 +32,33 @@ const GOOGLE_TELEMETRY_MAX_AGE_MS = 10 * 60 * 1000;
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [sessionExpiredMessage, setSessionExpiredMessage] = useState("");
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const ensureSessionIdCookie = () => {
+    if (typeof document === "undefined") return;
 
-  // Resetear tiempo de inactividad
-  const resetInactivityTimer = () => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
+    const cookieName = "session_id";
 
-    const timer = setTimeout(() => {
-      handleSessionTimeout();
-    }, INACTIVITY_TIMEOUT);
+    const existing = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${cookieName}=`))
+      ?.split("=")[1];
 
-    inactivityTimerRef.current = timer;
+    if (existing) return;
+
+    const sessionId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    document.cookie = `${cookieName}=${encodeURIComponent(sessionId)}; Path=/; Max-Age=${
+      60 * 60 * 24 * 365
+    }; SameSite=Lax${isHttps ? "; Secure" : ""}`;
   };
 
-  // Manejar expiration de sesión por inactividad
-  const handleSessionTimeout = async () => {
-    setSessionExpiredMessage("Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.");
-    await logoutInternal();
-    // Mantener el mensaje visible por 5 segundos antes de recargar la página
-    setTimeout(() => {
-      window.location.reload();
-    }, 5000);
-  };
+  useEffect(() => {
+    ensureSessionIdCookie();
+  }, []);
 
   const fetchUserFromServer = async () => {
     interface AuthContextType {
@@ -71,12 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const res = await fetch("/api/auth/me", {
-        credentials: "include", 
+        credentials: "include",
       });
+
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user); 
-        resetInactivityTimer();
+        setUser(data.user);
         return true;
       }
     } catch (error) {
@@ -136,24 +136,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkSession = async () => {
       try {
         const sessionRes = await fetch("/api/auth/session");
+
         if (sessionRes.ok) {
           const session = await sessionRes.json();
+
           if (session?.user) {
-            // Google user encontrado
             const googleUser: User = {
               id: session.user.id ?? session.user.email ?? "",
               name: session.user.name ?? "",
               email: session.user.email ?? "",
             };
+
             setUser(googleUser);
             await flushPendingGoogleTelemetry();
             setIsLoading(false);
-            return;  
+            return;
           }
         }
 
         await fetchUserFromServer();
-        
       } catch (error) {
         console.error("Error checking session:", error);
       } finally {
@@ -164,51 +165,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
-  // Efecto separado para manejar tiempo de inactividad cuando hay usuario
-  useEffect(() => {
-    if (user) {
-      resetInactivityTimer();
-    }
-  }, [user]);
-
-  // Efecto separado para agregar listeners de actividad
-  useEffect(() => {
-    if (!user) return;
-
-    const handleUserActivity = () => {
-      resetInactivityTimer();
-    };
-
-    window.addEventListener("mousedown", handleUserActivity);
-    window.addEventListener("keydown", handleUserActivity);
-    window.addEventListener("touchstart", handleUserActivity);
-    window.addEventListener("click", handleUserActivity);
-
-    return () => {
-      window.removeEventListener("mousedown", handleUserActivity);
-      window.removeEventListener("keydown", handleUserActivity);
-      window.removeEventListener("touchstart", handleUserActivity);
-      window.removeEventListener("click", handleUserActivity);
-    };
-  }, [user]);  
-
-  const login = async (
-    email: string,
-    password: string,
-    telemetry?: LoginTelemetry
-  ) => {
-    try {
-      const res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", 
-        body: JSON.stringify({
-          email,
-          password,
-          latitud: telemetry?.latitud ?? null,
-          longitud: telemetry?.longitud ?? null,
-        }),
-      });
+  const login = async (email: string, password: string) => {
+    const res = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
       if (!res.ok) {
         const data = await res.json();
@@ -229,14 +192,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (nombre: string, apellido: string, email: string, password: string) => {
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ nombre, apellido, email, password }),
-      });
+  const signup = async (
+    nombre: string,
+    apellido: string,
+    email: string,
+    password: string
+  ) => {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ nombre, apellido, email, password }),
+    });
 
       if (!res.ok) {
         const data = await res.json();

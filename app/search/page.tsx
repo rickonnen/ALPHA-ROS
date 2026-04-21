@@ -8,6 +8,7 @@ import {
   type FiltrosPublicacion,
   type PublicacionBusqueda,
 } from '@/features/search/search-services';
+import { useTracking } from '@/components/hooks/useTracking';
 import AdvancedFilters from '@/components/search/advancedFilters';
 import { ApplyFiltersButton } from '@/components/search/applyFiltersButton';
 import { ClearFiltersButton } from '@/components/search/clearFiltersButton';
@@ -366,6 +367,18 @@ function SearchPageContent() {
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
       setHasSearched(true);
+
+      // Mapear filtros a TrackSearchPayload
+      const trackPayload = {
+        texto_busqueda: searchLocation,
+        habitaciones: advancedFilterValues.habitaciones ? parseInt(advancedFilterValues.habitaciones) : undefined,
+        banos: advancedFilterValues.banos ? parseInt(advancedFilterValues.banos) : undefined,
+        precio_min: appliedPriceFilter?.minPrice,
+        precio_max: appliedPriceFilter?.maxPrice,
+        cant_resultados: resultados.length,
+      };
+
+      trackSearch(trackPayload);
     } catch (error) {
       console.error(error);
       setSearchResults([]);
