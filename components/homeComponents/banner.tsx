@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCarousel } from "../hooks/useCarousel";
 import { useIsMobile } from "../hooks/useIsMobile";
+import HelpButton from "./BotonAyuda";
 
 interface BannerImage {
   id: number;
@@ -96,6 +97,9 @@ export default function Banner() {
         className="relative h-[63svh] sm:h-[66svh] md:h-[68svh] lg:h-[70svh] xl:h-[73svh] overflow-hidden"
         {...touchHandlers}
       >
+        <div className="absolute left-4 top-4 z-50 sm:left-6 sm:top-6">
+          <HelpButton />
+        </div>
         <div
           className="absolute inset-0 flex h-full transition-transform duration-700 ease-in-out"
           style={{ transform: `translateX(-${intCurrentIndex * 100}%)` }}
