@@ -1,13 +1,15 @@
 "use client";
  
-import { useCallback, useEffect, useState, Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useCarousel } from "../hooks/useCarousel";
  
 /**
  * @Dev: Rodrigo Chalco
  * Funcionalidad: Sección "¿Dónde quieres vivir?" en el Home.
  * Cumple todos los criterios de aceptación del user story.
+ * Usa variables de globals.css y fuente Geist (font-sans).
  */
  
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -33,39 +35,11 @@ interface OperationTab {
  
 // ─── Constantes ───────────────────────────────────────────────────────────────
  
-const INT_CITY_IMAGE_DELAY = 7000;
- 
 const ARR_TABS: OperationTab[] = [
   { strType: "venta", strLabel: "En Venta" },
   { strType: "alquiler", strLabel: "Alquiler" },
   { strType: "anticretico", strLabel: "Anticrético" },
 ];
- 
-// ─── Hook: carrusel automático por ciudad ─────────────────────────────────────
- 
-function useCityImageCarousel(
-  intTotalImages: number,
-  strDepartamento: string,
-  strOperation: OperationType,
-): [number, Dispatch<SetStateAction<number>>] {
-  const [intImageIndex, setIntImageIndex] = useState<number>(0);
- 
-  useEffect(() => {
-    setIntImageIndex(0);
-  }, [strDepartamento, strOperation]);
- 
-  useEffect(() => {
-    if (intTotalImages <= 1) return;
-    const objTimer = setInterval(() => {
-      setIntImageIndex((intPrev) =>
-        intPrev === intTotalImages - 1 ? 0 : intPrev + 1,
-      );
-    }, INT_CITY_IMAGE_DELAY);
-    return () => clearInterval(objTimer);
-  }, [intTotalImages, strDepartamento, strOperation]);
- 
-  return [intImageIndex, setIntImageIndex];
-}
  
 // ─── Subcomponente: tarjeta de ciudad ─────────────────────────────────────────
  
@@ -85,11 +59,16 @@ function CityCard({
   intRank,
 }: CityCardProps): React.ReactNode {
   const objRouter = useRouter();
-  const [intImageIndex, setIntImageIndex] = useCityImageCarousel(
-    objCity.arrImagenes.length,
-    objCity.strDepartamento,
-    strOperation,
-  );
+  const {
+    intCurrentIndex: intImageIndex,
+    goToNextImage,
+    goToPreviousImage,
+    goToSelectedImage,
+    touchHandlers,
+  } = useCarousel({
+    intTotalItems: objCity.arrImagenes.length,
+    intAutoPlayDelay: 7000,
+  });
  
   const handleCardClick = (): void => {
     if (objCity.intContador === 0) return;
@@ -105,17 +84,13 @@ function CityCard({
     strDirection: "prev" | "next",
   ): void => {
     e.stopPropagation();
-    setIntImageIndex((intPrev: number) => {
-      if (strDirection === "next") {
-        return intPrev === objCity.arrImagenes.length - 1 ? 0 : intPrev + 1;
-      }
-      return intPrev === 0 ? objCity.arrImagenes.length - 1 : intPrev - 1;
-    });
+    if (strDirection === "next") goToNextImage();
+    else goToPreviousImage();
   };
  
   const handleDotClick = (e: React.MouseEvent, intIndex: number): void => {
     e.stopPropagation();
-    setIntImageIndex(intIndex);
+    goToSelectedImage(intIndex);
   };
  
   const bolSinDisponibles = objCity.intContador === 0;
@@ -127,7 +102,8 @@ function CityCard({
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
       aria-label={`Ver propiedades en ${objCity.strDepartamento} - ${strOperationLabel}`}
-      className="group relative h-full w-full overflow-hidden rounded-2xl select-none"
+      {...touchHandlers}
+      className="group relative h-full w-full overflow-hidden rounded-2xl select-none font-sans"
       style={{
         cursor: bolSinDisponibles ? "default" : "pointer",
         transition: "transform 0.3s ease, box-shadow 0.3s ease",
@@ -149,16 +125,17 @@ function CityCard({
       <div className="absolute inset-0 bg-gray-800">
         {objCity.arrImagenes.map((objImage: CityImageData, intIndex: number) => (
           <img
+            key={objImage.strPublicId}
             src={objImage.strUrl}
-            alt={`Vista aérea de  ${objCity.strDepartamento} - ${objImage.strAlt}`}
-            title={`Vista aérea de ${objCity.strDepartamento}`}
+            alt={`${objCity.strDepartamento} - ${objImage.strAlt}`}
+            title={`${objCity.strDepartamento}`}
             className="absolute inset-0 h-full w-full object-cover object-center"
             style={{
-            opacity: intIndex === intImageIndex ? 1 : 0,
-            transition: "opacity 1.4s ease",
-        } }
-        draggable={false}
-/>
+              opacity: intIndex === intImageIndex ? 1 : 0,
+              transition: "opacity 1.4s ease",
+            }}
+            draggable={false}
+          />
         ))}
       </div>
  
@@ -174,7 +151,7 @@ function CityCard({
       {/* Badge operación arriba izquierda */}
       <div className="absolute top-4 left-4 z-10">
         <span
-          className="text-[10px] font-bold uppercase tracking-[0.14em] text-white"
+          className="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-white"
           style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
         >
           {strOperationLabel}
@@ -187,7 +164,7 @@ function CityCard({
           <button
             type="button"
             onClick={(e) => handleArrowClick(e, "prev")}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none"
+            className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none font-sans"
             style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
             aria-label={`Imagen anterior de ${objCity.strDepartamento}`}
           >
@@ -196,7 +173,7 @@ function CityCard({
           <button
             type="button"
             onClick={(e) => handleArrowClick(e, "next")}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none"
+            className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none font-sans"
             style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
             aria-label={`Siguiente imagen de ${objCity.strDepartamento}`}
           >
@@ -207,8 +184,9 @@ function CityCard({
  
       {/* Contenido inferior */}
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-10">
+        {/* Nombre ciudad */}
         <h3
-          className="font-bold leading-none text-white"
+          className="font-sans font-bold leading-none text-white"
           style={{
             fontSize: bolIsLarge
               ? "clamp(1.6rem, 2.5vw, 2.2rem)"
@@ -219,8 +197,9 @@ function CityCard({
           {objCity.strDepartamento}
         </h3>
  
+        {/* Descripción */}
         <p
-          className="mt-1 leading-snug"
+          className="font-sans mt-1 leading-snug"
           style={{
             fontSize: bolIsLarge ? "0.875rem" : "0.72rem",
             color: "rgba(255,255,255,0.72)",
@@ -230,6 +209,7 @@ function CityCard({
           {strOperationLabel} · #{intRank} más buscado
         </p>
  
+        {/* Fila: dots + botón */}
         <div className="mt-3 flex items-center justify-between">
           {/* Dots */}
           <div
@@ -260,9 +240,10 @@ function CityCard({
             ))}
           </div>
  
+          {/* Botón o badge sin disponibles */}
           {bolSinDisponibles ? (
             <span
-              className="text-[10px] font-semibold rounded-full px-2 py-1"
+              className="font-sans text-[10px] font-semibold rounded-full px-2 py-1"
               style={{
                 background: "rgba(255,255,255,0.15)",
                 color: "rgba(255,255,255,0.6)",
@@ -310,10 +291,7 @@ function CityCard({
  
 function CityCardSkeleton(): React.ReactNode {
   return (
-    <div
-      className="relative h-full w-full overflow-hidden rounded-2xl animate-pulse"
-      style={{ background: "var(--muted)" }}
-    />
+    <div className="relative h-full w-full overflow-hidden rounded-2xl animate-pulse bg-muted" />
   );
 }
  
@@ -321,14 +299,8 @@ function CityCardSkeleton(): React.ReactNode {
  
 function EmptyCard(): React.ReactNode {
   return (
-    <div
-      className="relative h-full w-full overflow-hidden rounded-2xl flex items-center justify-center"
-      style={{ background: "var(--muted)" }}
-    >
-      <p
-        className="text-sm font-medium text-center px-4"
-        style={{ color: "var(--muted-foreground)" }}
-      >
+    <div className="relative h-full w-full overflow-hidden rounded-2xl flex items-center justify-center bg-muted">
+      <p className="font-sans text-sm font-medium text-center px-4 text-muted-foreground">
         Aún no existentes
       </p>
     </div>
@@ -380,28 +352,23 @@ export default function TopCities(): React.ReactNode {
  
   return (
     <section
-      className="w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10"
+      className="w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10 font-sans"
       aria-label="Ciudades más buscadas"
     >
-      {/* Encabezado + tabs */}
+      {/* ── Encabezado + tabs ── */}
       <div className="mb-6">
-        <p
-          className="text-[11px] font-semibold uppercase tracking-widest mb-0.5"
-          style={{ color: "var(--muted-foreground)" }}
-        >
+        <p className="font-sans text-[11px] font-semibold uppercase tracking-widest mb-0.5 text-muted-foreground">
           Más buscados
         </p>
+ 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <h2
-            className="text-2xl font-bold sm:text-3xl"
-            style={{ color: "var(--foreground)" }}
-          >
+          <h2 className="font-sans text-2xl font-bold sm:text-3xl text-foreground">
             ¿Dónde quieres vivir?
           </h2>
  
+          {/* Tabs de operación */}
           <div
-            className="flex items-center rounded-xl p-1 gap-1 self-start sm:self-auto"
-            style={{ background: "var(--muted)" }}
+            className="flex items-center rounded-xl p-1 gap-1 self-start sm:self-auto bg-muted"
             role="tablist"
             aria-label="Tipo de oferta"
           >
@@ -415,11 +382,10 @@ export default function TopCities(): React.ReactNode {
                   aria-selected={bolActive}
                   onClick={() => changeOperation(objTab.strType)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
+                    if (e.key === "Enter" || e.key === " ")
                       changeOperation(objTab.strType);
-                    }
                   }}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                  className="font-sans rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   style={{
                     background: bolActive ? "var(--primary)" : "transparent",
                     color: bolActive
@@ -437,19 +403,16 @@ export default function TopCities(): React.ReactNode {
         </div>
       </div>
  
-      {/* Error */}
+      {/* ── Error ── */}
       {bolError && (
-        <div
-          className="flex items-center justify-center rounded-2xl p-8 text-center"
-          style={{ background: "var(--muted)" }}
-        >
-          <p style={{ color: "var(--muted-foreground)" }}>
+        <div className="flex items-center justify-center rounded-2xl p-8 text-center bg-muted">
+          <p className="font-sans text-sm text-muted-foreground">
             No se pudieron cargar las ciudades. Intenta de nuevo más tarde.
           </p>
         </div>
       )}
  
-      {/* Grid */}
+      {/* ── Grid de ciudades ── */}
       {!bolError && (
         <div
           style={{
@@ -457,7 +420,7 @@ export default function TopCities(): React.ReactNode {
             transition: "opacity 0.26s ease",
           }}
         >
-          {/* Mobile */}
+          {/* Mobile: las 3 tarjetas iguales apiladas */}
           <div className="flex flex-col gap-3 md:hidden">
             {[0, 1, 2].map((intI) => (
               <div key={intI} style={{ height: "200px" }}>
@@ -478,7 +441,7 @@ export default function TopCities(): React.ReactNode {
             ))}
           </div>
  
-          {/* Desktop */}
+          {/* Desktop: grande izquierda + dos pequeñas derecha */}
           <div className="hidden md:flex gap-3" style={{ height: "480px" }}>
             <div className="flex-1">
               {bolLoading ? (
