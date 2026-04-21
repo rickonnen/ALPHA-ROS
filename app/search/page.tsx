@@ -27,6 +27,11 @@ import { X } from 'lucide-react';
 import SearchMapClient from './SearchMapClient';
 import { convertPublicacionesToLocations } from '@/lib/locations';
 
+/* hooks y ui para autenticación */
+import { useAuth } from "@/app/auth/AuthContext";
+import AuthModal from "@/app/auth/AuthModal";
+import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
+
 type Currency = 'USD' | 'BS';
 
 type AppliedPriceFilter = {
@@ -223,6 +228,14 @@ function SearchPageContent() {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawnPolygon, setDrawnPolygon] = useState<[number, number][] | null>(null);
 
+  // datos de usuario y autenticación
+  const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
+
+  // modales y estados de autenticación
+  const [bolShowAuth, setBolShowAuth] = useState(false);
+  const [bolShowProtected, setBolShowProtected] = useState(false);
+  const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
+
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
@@ -272,6 +285,23 @@ function SearchPageContent() {
     );
     return sortProperties(properties, selectedSort);
   }, [filteredSearchResults, selectedOperation, selectedSort]);
+
+  // maneja eventos de autenticación
+  const handleOpenLogin = () => {
+    setStrAuthMode("login");
+    setBolShowAuth(true);
+    setBolShowProtected(false);
+  };
+
+  const handleOpenRegister = () => {
+    setStrAuthMode("register");
+    setBolShowAuth(true);
+    setBolShowProtected(false);
+  };
+
+  const handleCloseAuth = () => {
+    setBolShowAuth(false);
+  };
 
   const breadcrumbPropertyLabel =
     getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(', ') ||
@@ -568,6 +598,10 @@ function SearchPageContent() {
                 </span>
                 <button 
                   onClick={async () => {
+                    if (!objUser) {
+                      setBolShowProtected(true);
+                      return;
+                    }
                     console.log("Para enviar al POST de MisZonas:", drawnPolygon);
                     alert("Zona lista para guardar en Base de Datos");
                   }}
@@ -782,6 +816,25 @@ function SearchPageContent() {
           </div>
         )}
       </div>
+
+      {/* Modales de autenticación */}
+      {bolShowProtected && (
+        <ProtectedFeatureModal
+          isOpen={bolShowProtected}
+          featureName="guardar zonas en tu perfil"
+          onClose={() => setBolShowProtected(false)}
+          onLoginClick={handleOpenLogin}
+          onRegisterClick={handleOpenRegister}
+        />
+      )}
+
+      {bolShowAuth && (
+        <AuthModal
+          isOpen={bolShowAuth}
+          initialMode={strAuthMode}
+          onClose={handleCloseAuth}
+        />
+      )}
     </div>
   );
 }

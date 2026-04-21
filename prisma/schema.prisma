@@ -715,7 +715,6 @@ model Publicacion {
   id_moneda                 Int?
   id_etiqueta               Int?                        @db.SmallInt
   id_estado                 Int?                        @db.SmallInt
-  id_zona                   Int?                        @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   Favorito                  Favorito[]
@@ -724,7 +723,6 @@ model Publicacion {
   Notificacion              Notificacion[]
   EstadoPublicacion         EstadoPublicacion?          @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_estado(Publicacion)-id_estado(EP)")
   EstadoConstruccion        EstadoConstruccion?         @relation(fields: [id_estado_construccion], references: [id_estado_construccion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_estado_construccion(P)-id_est_constr(EC)")
-  Zona                      Zona?                       @relation(fields: [id_zona], references: [id_zona], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_zona(Publicacion)-id_zona(Zona)")
   Etiquetas                 Etiquetas?                  @relation(fields: [id_etiqueta], references: [id_etiqueta], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacion_etiqueta")
   Moneda                    Moneda?                     @relation(fields: [id_moneda], references: [id_moneda], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacion_moneda")
   TipoInmueble              TipoInmueble?               @relation(fields: [id_tipo_inmueble], references: [id_tipo_inmueble], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacion_tipoinmueble")
@@ -881,6 +879,7 @@ model Usuario {
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
   HistorialVistos              HistorialVistos[]
+  MisZonas                     MisZonas[]
   Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
   Recuperacion_password        Recuperacion_password[]
@@ -917,12 +916,11 @@ model Video {
 }
 
 model Zona {
-  id_zona     Int           @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
-  nombre_zona String?       @db.VarChar(128)
-  id_ciudad   Int?          @db.SmallInt
+  id_zona     Int     @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
+  nombre_zona String? @db.VarChar(128)
+  id_ciudad   Int     @db.SmallInt
   coordenadas String?
-  Publicacion Publicacion[]
-  Ciudad      Ciudad?       @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
+  Ciudad      Ciudad  @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
 
   @@schema("public")
 }
@@ -952,6 +950,18 @@ model verification_codes {
   code       String
   expires_at DateTime  @db.Timestamp(6)
   created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model MisZonas {
+  id_mi_zona     Int       @id @default(autoincrement())
+  id_usuario     String    @db.Uuid
+  nombre_zona    String?   @db.VarChar(100)
+  coordenadas    Json
+  fecha_creacion DateTime? @default(now()) @db.Timestamptz(6)
+  Usuario        Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_miszonas_usuario")
 
   @@schema("public")
 }
