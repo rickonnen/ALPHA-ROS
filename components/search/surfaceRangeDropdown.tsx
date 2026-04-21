@@ -20,19 +20,99 @@ export default function SurfaceRangeDropdown({
   onClear,
 }: SurfaceRangeDropdownProps) {
   const [open, setOpen] = React.useState(false);
+  const [surfaceError, setSurfaceError] = React.useState<string | null>(null);
+
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+  const maxInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const hasValue = Boolean(minValue || maxValue);
 
+  const sanitizeZeroLikeValue = (value: string) => {
+    if (value.trim() === "") return "";
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed) && parsed <= 0) return "";
+    return value;
+  };
+
+  const normalizedMinValue = sanitizeZeroLikeValue(minValue);
+  const normalizedMaxValue = sanitizeZeroLikeValue(maxValue);
+
   const label = React.useMemo(() => {
-    if (minValue && maxValue) return `${minValue}m² - ${maxValue}m²`;
-    if (minValue) return `Desde ${minValue}m²`;
-    if (maxValue) return `Hasta ${maxValue}m²`;
+    if (normalizedMinValue && normalizedMaxValue) {
+      return `${normalizedMinValue}m² - ${normalizedMaxValue}m²`;
+    }
+    if (normalizedMinValue) return `Desde ${normalizedMinValue}m²`;
+    if (normalizedMaxValue) return `Hasta ${normalizedMaxValue}m²`;
     return "Superficie m²";
-  }, [minValue, maxValue]);
+  }, [normalizedMinValue, normalizedMaxValue]);
+
+  const handleSurfaceChange =
+    (field: "min" | "max") =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value.trim();
+
+      if (value === "") {
+        setSurfaceError(null);
+        if (field === "min") onMinChange("");
+        else onMaxChange("");
+        return;
+      }
+
+      const validSurface = /^\d*\.?\d*$/.test(value);
+
+      if (!validSurface) {
+        setSurfaceError("Solo se permiten números");
+        return;
+      }
+
+      setSurfaceError(null);
+
+      if (field === "min") onMinChange(value);
+      else onMaxChange(value);
+    };
+
+  const normalizeCurrentInput = (
+    value: string,
+    setter: (value: string) => void
+  ) => {
+    const sanitized = sanitizeZeroLikeValue(value);
+    if (sanitized !== value) {
+      setter(sanitized);
+    }
+    return sanitized;
+  };
+
+  const handleMinKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      normalizeCurrentInput(minValue, onMinChange);
+      maxInputRef.current?.focus();
+    }
+  };
+
+  const handleMaxKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+
+      normalizeCurrentInput(maxValue, onMaxChange);
+
+      setOpen(false);
+
+      setTimeout(() => {
+        triggerRef.current?.focus();
+      }, 30);
+    }
+  };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-hidden">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
@@ -46,6 +126,7 @@ export default function SurfaceRangeDropdown({
             <span
               onClick={(e) => {
                 e.stopPropagation();
+                setSurfaceError(null);
                 onClear();
               }}
               className="inline-flex h-4 w-4 items-center justify-center text-[#4A4A4A] hover:text-black"
@@ -63,29 +144,47 @@ export default function SurfaceRangeDropdown({
         />
       </button>
 
-      {open && (
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-150",
+          open ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
         <div className="rounded-xl border border-[#B9B1A5] bg-[#E7E3DD] p-3 shadow-sm">
           <div className="grid grid-cols-2 gap-2">
             <input
-              type="number"
-              min="0"
+              type="text"
+              inputMode="decimal"
               placeholder="Min m²"
               value={minValue}
-              onChange={(e) => onMinChange(e.target.value)}
-              className="w-full rounded-lg border border-[#8F8679] bg-[#F3F1EC] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]"
+              onChange={handleSurfaceChange("min")}
+              onKeyDown={handleMinKeyDown}
+              className={cn(
+                "w-full rounded-lg border bg-[#F3F1EC] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
+                surfaceError ? "border-red-500" : "border-[#8F8679]"
+              )}
             />
 
             <input
-              type="number"
-              min="0"
+              ref={maxInputRef}
+              type="text"
+              inputMode="decimal"
               placeholder="Max m²"
               value={maxValue}
-              onChange={(e) => onMaxChange(e.target.value)}
-              className="w-full rounded-lg border border-[#8F8679] bg-[#F3F1EC] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]"
+              onChange={handleSurfaceChange("max")}
+              onKeyDown={handleMaxKeyDown}
+              className={cn(
+                "w-full rounded-lg border bg-[#F3F1EC] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
+                surfaceError ? "border-red-500" : "border-[#8F8679]"
+              )}
             />
           </div>
+
+          <div className={surfaceError ? "mt-2 block" : "hidden"}>
+            <p className="text-center text-sm text-red-600">{surfaceError}</p>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

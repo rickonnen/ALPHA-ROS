@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import SurfaceRangeDropdown from "./surfaceRangeDropdown";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -30,7 +31,6 @@ interface SubDropdownProps {
   opciones?: string[];
   valor?: string;
   onChange?: (v: string) => void;
-  children?: React.ReactNode;
 }
 
 function SubDropdown({
@@ -38,7 +38,6 @@ function SubDropdown({
   opciones = [],
   valor = "",
   onChange,
-  children,
 }: SubDropdownProps) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -57,16 +56,16 @@ function SubDropdown({
   }, []);
 
   useEffect(() => {
-    if (abierto && !children && opciones.length > 0) {
+    if (abierto && opciones.length > 0) {
       requestAnimationFrame(() => {
         optionRefs.current[0]?.focus();
       });
     }
-  }, [abierto, children, opciones.length]);
+  }, [abierto, opciones.length]);
 
-  const hasCustomContent = Boolean(children);
-
-  const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleTriggerKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>
+  ) => {
     if (event.key === "Enter") {
       event.preventDefault();
       setAbierto((prev) => !prev);
@@ -119,6 +118,8 @@ function SubDropdown({
     }
   };
 
+  
+
   return (
     <div ref={ref} className="w-full">
       <button
@@ -157,55 +158,51 @@ function SubDropdown({
 
       {abierto && (
         <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
-          {hasCustomContent ? (
-            children
-          ) : (
-            <div className="space-y-2">
-              {opciones.map((op, i) => {
-                const checked = valor === op;
+          <div className="space-y-2">
+            {opciones.map((op, i) => {
+              const checked = valor === op;
 
-                return (
-                  <button
-                    key={i}
-                    ref={(element) => {
-                      optionRefs.current[i] = element;
-                    }}
-                    type="button"
-                    onMouseDown={() => {
-                      onChange?.(op);
-                      setAbierto(false);
-                    }}
-                    onKeyDown={(event) => handleOptionKeyDown(event, i, op)}
+              return (
+                <button
+                  key={i}
+                  ref={(element) => {
+                    optionRefs.current[i] = element;
+                  }}
+                  type="button"
+                  onMouseDown={() => {
+                    onChange?.(op);
+                    setAbierto(false);
+                  }}
+                  onKeyDown={(event) => handleOptionKeyDown(event, i, op)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition outline-none",
+                    "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
+                    checked
+                      ? "bg-[#E7E3DD] text-[#2E2E2E]"
+                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                  )}
+                >
+                  <span
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition outline-none",
-                      "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
+                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
                       checked
-                        ? "bg-[#E7E3DD] text-[#2E2E2E]"
-                        : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                        ? "border-[#6B6B6B] bg-white"
+                        : "border-[#8A847C] bg-white"
                     )}
                   >
                     <span
                       className={cn(
-                        "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
-                        checked
-                          ? "border-[#6B6B6B] bg-white"
-                          : "border-[#8A847C] bg-white"
+                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
                       )}
-                    >
-                      <span
-                        className={cn(
-                          "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
-                          checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
-                        )}
-                      />
-                    </span>
+                    />
+                  </span>
 
-                    <span className="text-sm text-[#2E2E2E]">{op}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  <span className="text-sm text-[#2E2E2E]">{op}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -236,9 +233,6 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const surfaceTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const minSurfaceRef = useRef<HTMLInputElement | null>(null);
-  const maxSurfaceRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setHabitaciones(value?.habitaciones ?? "");
@@ -269,8 +263,8 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
   const handleSurfaceInputChange =
     (field: "minSurface" | "maxSurface") =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.trim();
+    (rawValue: string) => {
+      const value = rawValue.trim();
 
       if (value === "") {
         setSurfaceError(null);
@@ -303,28 +297,6 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       }
     };
 
-  const handleMinSurfaceKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      requestAnimationFrame(() => {
-        maxSurfaceRef.current?.focus();
-      });
-    }
-  };
-
-  const handleMaxSurfaceKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      requestAnimationFrame(() => {
-        surfaceTriggerRef.current?.focus();
-      });
-    }
-  };
-
   const surfaceLabel =
     minSurface && maxSurface
       ? `${minSurface}m² - ${maxSurface}m²`
@@ -355,8 +327,8 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="overflow-visible pb-0 pt-3">
-            <div className="flex flex-col gap-3 overflow-visible">
+          <AccordionContent className="pb-0 pt-3">
+            <div className="flex flex-col gap-3">
               <SubDropdown
                 label="Número total de habitaciones"
                 opciones={HABITACIONES}
@@ -387,57 +359,25 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                 }}
               />
 
-              <SubDropdown label="Superficie m²" valor={surfaceLabel}>
-                <div className="space-y-2">
-                  <button
-                    ref={surfaceTriggerRef}
-                    type="button"
-                    className="sr-only"
-                    aria-hidden="true"
-                    tabIndex={-1}
-                  />
+              <SurfaceRangeDropdown
+                minValue={minSurface}
+                maxValue={maxSurface}
+                onMinChange={handleSurfaceInputChange("minSurface")}
+                onMaxChange={handleSurfaceInputChange("maxSurface")}
+                onClear={() => {
+                  setSurfaceError(null);
+                  setMinSurface("");
+                  setMaxSurface("");
+                  actualizar("minSurface", "");
+                  actualizar("maxSurface", "");
+                }}
+              />
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      ref={minSurfaceRef}
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Min m²"
-                      value={minSurface}
-                      onChange={handleSurfaceInputChange("minSurface")}
-                      onKeyDown={handleMinSurfaceKeyDown}
-                      className={cn(
-                        "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
-                        surfaceError === "Solo se permiten números"
-                          ? "border-red-500"
-                          : "border-[#B9B1A5]"
-                      )}
-                    />
-
-                    <input
-                      ref={maxSurfaceRef}
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Max m²"
-                      value={maxSurface}
-                      onChange={handleSurfaceInputChange("maxSurface")}
-                      onKeyDown={handleMaxSurfaceKeyDown}
-                      className={cn(
-                        "w-full rounded-[12px] border bg-[#F7F4EF] px-3 py-2 text-sm text-[#2E2E2E] outline-none placeholder:text-[#6B6B6B]",
-                        surfaceError === "Solo se permiten números"
-                          ? "border-red-500"
-                          : "border-[#B9B1A5]"
-                      )}
-                    />
-                  </div>
-
-                  <div className={surfaceError ? "block" : "hidden"}>
-                    <p className="text-center text-sm text-red-600">
-                      {surfaceError}
-                    </p>
-                  </div>
-                </div>
-              </SubDropdown>
+              <div className={surfaceError ? "block" : "hidden"}>
+                <p className="text-center text-sm text-red-600">
+                  {surfaceError}
+                </p>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
