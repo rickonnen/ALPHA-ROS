@@ -16,6 +16,11 @@ interface LoginTelemetry {
   longitud: number | null;
 }
 
+const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
+const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
+const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
+const GOOGLE_TELEMETRY_CREATED_AT_KEY = "google_telemetry_created_at";
+
 export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProps) {
   const router = useRouter();
   const { login } = useAuth();
@@ -94,6 +99,29 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
         }
       );
     });
+  }
+
+  function savePendingGoogleTelemetry(telemetry: LoginTelemetry) {
+    sessionStorage.setItem(GOOGLE_TELEMETRY_PENDING_KEY, "1");
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LAT_KEY,
+      telemetry.latitud === null ? "null" : String(telemetry.latitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LNG_KEY,
+      telemetry.longitud === null ? "null" : String(telemetry.longitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_CREATED_AT_KEY,
+      String(Date.now())
+    );
+  }
+
+  function clearPendingGoogleTelemetry() {
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_PENDING_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LAT_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LNG_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_CREATED_AT_KEY);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -187,8 +215,11 @@ export default function LoginForm({ onSwitchToRegister, onClose }: LoginFormProp
     setGoogleLoading(true);
 
     try {
+      const telemetry = await getLoginTelemetry();
+      savePendingGoogleTelemetry(telemetry);
       await signIn("google", { callbackUrl: "/" });
     } catch (error) {
+      clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
       setGoogleLoading(false);
     }
