@@ -1,6 +1,9 @@
 'use server'
-
 import { prisma } from '@/lib/prisma'
+import { cookies } from 'next/headers'
+import { verify }  from 'jsonwebtoken'
+import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
 
 const TIPO_INMUEBLE: Record<number, string> = {
   1: 'Casa', 2: 'Departamento', 3: 'Terreno', 4: 'Local Comercial', 5: 'Oficina',
@@ -18,7 +21,37 @@ const CIUDAD_DEPARTAMENTO: Record<number, string> = {
   1: 'Cochabamba', 2: 'La Paz', 3: 'Santa Cruz', 4: 'Oruro',
   5: 'Potosí', 6: 'Chuquisaca', 7: 'Beni', 8: 'Pando', 9: 'Tarija',
 }
+// Helper: lee el id_usuario desde JWT manual o desde Google (NextAuth)
+async function getUserIdSeguro(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+    if (token) {
+      const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string }
+      const id = decoded.userId || decoded.id || decoded.sub;
+      if (id) return id;
+    }
+  } catch (error) {
+    // Ignoramos el error si no hay token manual
+  }
 
+  const session = await getServerSession();
+  const correoUsuario = session?.user?.email;
+
+  if (correoUsuario) {
+    try {
+      const usuarioBd = await prisma.usuario.findFirst({
+        where: { email: correoUsuario as string },
+        select: { id_usuario: true }
+      });
+      if (usuarioBd) return usuarioBd.id_usuario;
+    } catch (error) {
+      console.error("Error buscando usuario por email:", error);
+    }
+  }
+
+  return null;
+}
 // Tipo de característica extra tal como viene de BD y se guarda en sessionStorage
 export interface CaracteristicaExtraEdit {
   id_caracteristica: number
@@ -51,6 +84,24 @@ export type PublicacionEditData = {
 }
 
 export async function getPublicacionById(id: number): Promise<PublicacionEditData | null> {
+  // --- 1. CAPA DE SEGURIDAD ---
+  const rawIdUsuario = await getUserIdSeguro();
+
+  // Consulta súper rápida solo para verificar el dueño antes de cargar todo lo demás
+  const pubCheck = await prisma.publicacion.findUnique({
+    where: { id_publicacion: id },
+    select: { id_usuario: true }
+  });
+
+  if (!pubCheck) return null; // Si no existe el inmueble, devolvemos null normal
+
+  // Si no hay sesión o el usuario actual NO es el dueño: Redirigir de inmediato
+  if (!rawIdUsuario || String(pubCheck.id_usuario) !== String(rawIdUsuario)) {
+    redirect('/perfil');
+  }
+  // ----------------------------
+
+  // --- 2. CARGA DE DATOS (Solo entra si pasó la seguridad) ---
   try {
     const pub = await prisma.publicacion.findUnique({
       where:   { id_publicacion: id },
@@ -59,7 +110,6 @@ export async function getPublicacionById(id: number): Promise<PublicacionEditDat
         Imagen:                   true,
         Video:                    true,
         Moneda:                   true,
-        // Incluir la tabla pivote con la característica para obtener nombre
         PublicacionCaracteristica: {
           include: { Caracteristica: true },
         },

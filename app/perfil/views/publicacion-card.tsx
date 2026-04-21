@@ -75,7 +75,7 @@ export default function PublicacionCard({
           <Button
             size="sm"
             className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
-            onClick={() => onEliminar(publicacion.id)}
+            onClick={() => router.push(`/publicacion/formularioPublicacion?editar=${publicacion.id}`)}
           >
           Editar
           </Button>

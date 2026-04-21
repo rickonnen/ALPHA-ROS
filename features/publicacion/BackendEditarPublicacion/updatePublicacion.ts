@@ -109,6 +109,26 @@ export async function actualizarPublicacion(
 
   const rawIdUsuario = await getUserIdSeguro()
 
+  // 1. Validamos que el usuario esté logueado
+  if (!rawIdUsuario) {
+    return { success: false, errors: { general: ['Debes iniciar sesión para editar esta publicación.'] } }
+  }
+
+  // 2. Buscamos al dueño original de la publicación en la Base de Datos
+  const publicacionOriginal = await prisma.publicacion.findUnique({
+    where: { id_publicacion: idPublicacion },
+    select: { id_usuario: true }
+  });
+
+  if (!publicacionOriginal) {
+    return { success: false, errors: { general: ['La publicación que intentas editar no existe.'] } }
+  }
+
+  // 3. CAPA DE SEGURIDAD (IDOR): Comparamos si el que edita es el dueño
+  if (String(publicacionOriginal.id_usuario) !== String(rawIdUsuario)) {
+    return { success: false, errors: { general: ['ACCESO DENEGADO: No tienes permiso para editar un inmueble que no es tuyo.'] } }
+  }
+
   const payload = {
     titulo:             formData.get('titulo')             as string,
     tipoOperacion:      formData.get('tipoOperacion')      as string,
