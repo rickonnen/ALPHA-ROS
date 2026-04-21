@@ -1,10 +1,11 @@
+import DiscordProvider from "next-auth/providers/discord"
+import FacebookProvider from "next-auth/providers/facebook"
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { enviarBienvenidaGoogle } from "@/lib/email/emailService";
-import { crearNotificacion } from "@/lib/notifications/notificationService";
+import { NextAuthOptions } from "next-auth"
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
@@ -16,11 +17,19 @@ const handler = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
-        params: {
+        params: { 
           prompt: "select_account consent",
           access_type: "offline",
         },
       },
+    }),
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -51,7 +60,9 @@ const handler = NextAuth({
             .select("*")
             .eq("id_usuario", data.user.id)
             .maybeSingle()
-          if (!userData) return null
+          if (!userData) {
+            return null
+          }
           return {
             id: data.user.id,
             email: data.user.email,
@@ -68,12 +79,9 @@ const handler = NextAuth({
   callbacks: {
 
     async signIn({ user, account }: any) {
-      console.log("🔵 signIn Google iniciado:", user?.email)
-
       if (!account) {
         return true
       }
-
       try {
         if (account?.provider === "google") {
           const { createClient } = await import("@supabase/supabase-js")
@@ -81,62 +89,27 @@ const handler = NextAuth({
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
-
           const { data: existingUser } = await supabase
             .from("Usuario")
-            .select("id_usuario, google_id")
+            .select("id_usuario")
             .eq("email", user.email)
             .maybeSingle()
-
-          console.log("👤 existingUser:", existingUser)
-
-          // Caso 1: Ya se registró con Google antes → solo dejar pasar
-          if (existingUser?.google_id) {
+          if (existingUser) {
             return true
           }
-
-          const nombre = user.name?.split(" ")[0] ?? "";
-
-          // Caso 2: Existe pero sin google_id → primera vez con Google
-          if (existingUser && !existingUser.google_id) {
-            await supabase
-              .from("Usuario")
-              .update({
-                google_id: account.providerAccountId,
-                url_foto_perfil: user.image ?? null,
-              })
-              .eq("id_usuario", existingUser.id_usuario)
-
-            console.log("📧 Primera vez con Google, enviando bienvenida a:", user.email)
-            await enviarBienvenidaGoogle(user.email!, nombre);
-            await crearNotificacion({
-              id_usuario: existingUser.id_usuario,
-              titulo: "Bienvenido a PROBOL",
-              mensaje: `¡Hola ${nombre}! Te registraste exitosamente usando Google. Bienvenido a la plataforma.`,
-              id_categoria: 1,
-            });
-            return true
-          }
-
-          // Caso 3: Usuario completamente nuevo
           const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: user.email!,
             email_confirm: true,
             user_metadata: {
-              nombre: nombre,
+              nombre: user.name?.split(" ")[0] ?? "",
               apellido: user.name?.split(" ").slice(1).join(" ") ?? "",
             }
           })
-
-          console.log("🆔 supabaseUserId:", authData?.user?.id)
-
           if (authError) {
             console.error("Error creando en auth.users:", authError)
-            return false
+            return "/api/google-cancelado"
           }
-
           const supabaseUserId = authData.user.id
-
           const { error: dbError } = await supabase.from("Usuario").upsert({
             id_usuario: supabaseUserId,
             email: user.email,
@@ -147,25 +120,23 @@ const handler = NextAuth({
             rol: 2,
             estado: 1,
           }, { onConflict: "id_usuario" })
-
           if (dbError) {
             console.error("Error insertando en tabla Usuario:", dbError)
             await supabase.auth.admin.deleteUser(supabaseUserId)
-            return false
+            return "/api/google-cancelado"
           }
-
-          console.log("📧 Enviando bienvenida Google a:", user.email)
-          await enviarBienvenidaGoogle(user.email!, nombre);
-          await crearNotificacion({
-            id_usuario: supabaseUserId,
-            titulo: "Bienvenido a PROBOL",
-            mensaje: `¡Hola ${nombre}! Te registraste exitosamente usando Google. Bienvenido a la plataforma.`,
-            id_categoria: 1,
-          });
+        }
+        if (account.provider === "discord") {
+          const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
+          return await handleDiscordSignIn(user, account)
+        }
+        if (account.provider === "facebook") {
+          const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
+          return await handleFacebookSignIn(user, account)
         }
         return true
       } catch (error) {
-        console.error("Error signIn Google:", error)
+        console.error("Error signIn:", error)
         return false
       }
     },
@@ -174,7 +145,7 @@ const handler = NextAuth({
       if (user?.id) {
         token.id = user.id;
       }
-      if (account?.provider === "google" && user?.email) {
+      if (account?.provider && user?.email) {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
           process.env.SUPABASE_URL!,
@@ -214,10 +185,10 @@ const handler = NextAuth({
   },
 
   pages: {
-    signIn: "/",
-    error: "/",
+    signIn: "/api/google-cancelado",
+    error: "/api/google-cancelado",
   },
+}
 
-})
-
+const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }
