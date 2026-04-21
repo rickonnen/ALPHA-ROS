@@ -1,86 +1,65 @@
 "use client";
-
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthContext";
-<<<<<<< HEAD
 import { createClient } from "@supabase/supabase-js";
-=======
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
 
 type Notification = {
-  id: string; // ← ahora es string porque es UUID
+  id: string;
   title: string;
   description: string;
   read: boolean;
   time?: string;
-  created_at?: string | null;
-  type: 1 | 2 | 3;
-};
-
-// Tipo para la respuesta de la API
-type ApiNotification = {
-  id: number;
-  title: string;
-  message: string;
-  read: boolean;
-  type: string;
-  created_at: string | null;
+  createdAt?: string | null;
 };
 
 function formatRelativeTime(isoString: string): string {
-  try {
-    const diff = Date.now() - new Date(isoString).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    
-    if (minutes < 1) return "ahora";
-    if (minutes < 60) return `hace ${minutes} min`;
-    if (hours < 24) return `hace ${hours} h`;
-    return `hace ${days} d`;
-  } catch (error) {
-    return "fecha desconocida";
-  }
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (hours < 24) return `hace ${hours} h`;
+  return `hace ${days} d`;
 }
 
-<<<<<<< HEAD
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Faltan variables de entorno de Supabase");
+    return null;
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 export function NotificationPanel() {
-=======
-interface NotificationPanelProps {
-  total?: number;
-  onClose?: () => void;
-}
-
-export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  
-  const [gmailEnabled, setGmailEnabled] = useState(true);
-  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   useEffect(() => {
-<<<<<<< HEAD
-      console.log("👤 user en panel:", user?.id) // ← agrega esto
-    if (!user?.id) return;
-    
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
 
-    // Cargar notificaciones iniciales desde Supabase
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchNotifications = async () => {
       try {
         const { data, error } = await supabase
@@ -101,124 +80,17 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
         }));
 
         setNotifications(mapped);
+        setHasError(false);
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
         setHasError(true);
       } finally {
         setIsLoading(false);
-=======
-    const userId = user?.id ?? "guest";
-    const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
-    const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
-    
-    if (savedGmail !== null) setGmailEnabled(savedGmail === "true");
-    if (savedWhatsapp !== null) setWhatsappEnabled(savedWhatsapp === "true");
-  }, [user]);
+      }
+    };
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user) {
-      console.log("👤 Usuario no autenticado, omitiendo fetch");
-      setIsLoading(false);
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      setHasError(false);
-      console.log("🔄 Fetching notifications from API...");
-      
-      const res = await fetch("/api/notifications");
-      console.log("📡 Response status:", res.status, res.statusText);
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error("❌ Error response from API:", errorData);
-        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
-      }
-      
-      const data = await res.json();
-      console.log("📦 Datos recibidos de la API:", data);
-      
-      // Verificar la estructura de datos - la API puede devolver directamente el array o {notifications: []}
-      let notificationsData: ApiNotification[] = [];
-      
-      if (Array.isArray(data)) {
-        // Si la respuesta es directamente un array
-        notificationsData = data;
-        console.log("📊 La respuesta es un array directo");
-      } else if (data.notifications && Array.isArray(data.notifications)) {
-        // Si la respuesta tiene un campo notifications
-        notificationsData = data.notifications;
-        console.log("📊 La respuesta tiene campo notifications");
-      } else {
-        console.error("❌ Estructura de datos no reconocida:", data);
-        setHasError(true);
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log(`📊 Notificaciones encontradas: ${notificationsData.length}`);
-      
-      if (notificationsData.length === 0) {
-        console.log("⚠️ No hay notificaciones en la base de datos");
-        setNotifications([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log("📝 Primera notificación raw:", notificationsData[0]);
-      
-      const mapped: Notification[] = notificationsData.map((n: ApiNotification) => {
-        // Determinar el tipo numérico
-        let typeNum: 1 | 2 | 3 = 3;
-        if (n.type === "gmail") typeNum = 1;
-        else if (n.type === "whatsapp") typeNum = 2;
-        
-        // Formatear la fecha
-        let timeStr = "fecha desconocida";
-        if (n.created_at) {
-          timeStr = formatRelativeTime(n.created_at);
-        }
-        
-        return {
-          id: n.id,
-          title: n.title || "Sin título",
-          description: n.message || "Sin contenido",
-          read: n.read || false,
-          created_at: n.created_at,
-          type: typeNum,
-          time: timeStr,
-        };
-      });
-      
-      console.log(`✅ Notificaciones mapeadas: ${mapped.length}`);
-      
-      // Ordenar por fecha (más reciente primero)
-      const sorted: Notification[] = mapped.sort((a, b) => {
-        if (!a.created_at && !b.created_at) return 0;
-        if (!a.created_at) return 1;
-        if (!b.created_at) return -1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      
-      console.log("📋 Notificaciones finales:", sorted);
-      setNotifications(sorted);
-      
-    } catch (error) {
-      console.error("❌ Error detallado al cargar notificaciones:", error);
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  // Cargar notificaciones al montar el componente y cuando cambie el usuario
-  useEffect(() => {
     fetchNotifications();
-<<<<<<< HEAD
 
-    // WebSocket — escucha notificaciones nuevas en tiempo real
     const channel = supabase
       .channel("notificaciones-realtime")
       .on(
@@ -244,217 +116,81 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
       )
       .subscribe();
 
-    // Limpia la conexión cuando el usuario cierra o cambia
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
-=======
-  }, [fetchNotifications]);
-
-  // Escuchar eventos de actualización
-  useEffect(() => {
-    const handleUpdate = () => {
-      console.log("🔄 Evento: notificaciones actualizadas");
-      fetchNotifications();
-    };
-    
-    window.addEventListener("notifications-updated", handleUpdate);
-    window.addEventListener("refresh-notification-badge", handleUpdate);
-    
-    return () => {
-      window.removeEventListener("notifications-updated", handleUpdate);
-      window.removeEventListener("refresh-notification-badge", handleUpdate);
-    };
-  }, [fetchNotifications]);
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
     [notifications]
   );
 
-  const totalCount = useMemo(
-    () => notifications.length,
-    [notifications]
-  );
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    setActiveFilter("all");
-  };
-
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter);
-    setActiveTab("all");
-  };
-
   const visibleNotifications = useMemo(() => {
-    let filtered = notifications;
-    
-    // Filtrar por tipo específico (Gmail/WhatsApp)
-    if (activeFilter === "gmail") {
-      filtered = filtered.filter((n) => n.type === 1);
-    } else if (activeFilter === "whatsapp") {
-      filtered = filtered.filter((n) => n.type === 2);
-    } else if (activeTab === "unread") {
-      filtered = filtered.filter((n) => !n.read);
-    } else {
-      // Filtrar por configuración de canales
-      filtered = filtered.filter((n) => {
-        if (n.type === 1 && !gmailEnabled) return false;
-        if (n.type === 2 && !whatsappEnabled) return false;
-        return true;
-      });
-    }
-    
-    return filtered;
-  }, [notifications, activeTab, activeFilter, gmailEnabled, whatsappEnabled]);
+    if (activeTab === "unread") return notifications.filter((n) => !n.read);
+    return notifications;
+  }, [notifications, activeTab]);
 
-<<<<<<< HEAD
   const handleDelete = async (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    await supabase.from("Notificacion").delete().eq("id_notificacion", id);
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    try {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      await supabase.from("Notificacion").delete().eq("id_notificacion", id);
+    } catch (error) {
+      console.error("Error al eliminar notificación:", error);
+    }
   };
 
   const handleRead = async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-    await supabase
-      .from("Notificacion")
-      .update({ leido: true })
-      .eq("id_notificacion", id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    try {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+      await supabase
+        .from("Notificacion")
+        .update({ leido: true })
+        .eq("id_notificacion", id);
+      window.dispatchEvent(new Event("refresh-notification-badge"));
+    } catch (error) {
+      console.error("Error al marcar como leída:", error);
+    }
   };
 
   const handleMarkAll = async () => {
     if (!user?.id) return;
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    await supabase
-      .from("Notificacion")
-      .update({ leido: true })
-      .eq("id_usuario", user.id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
-=======
-  const handleDelete = async (id: number) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
     try {
-      console.log(`🗑️ Eliminando notificación ${id}...`);
-      const response = await fetch(`/api/notifications?id=${id}`, {
-        method: "DELETE",
-      });
-      
-      if (response.ok) {
-        console.log(`✅ Notificación ${id} eliminada`);
-        await fetchNotifications();
-        window.dispatchEvent(new Event("refresh-notification-badge"));
-        window.dispatchEvent(new Event("notifications-updated"));
-      } else {
-        const error = await response.text();
-        console.error("❌ Error al eliminar:", error);
-      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      await supabase
+        .from("Notificacion")
+        .update({ leido: true })
+        .eq("id_usuario", user.id);
+      window.dispatchEvent(new Event("refresh-notification-badge"));
     } catch (error) {
-      console.error("❌ Error al eliminar notificación:", error);
+      console.error("Error al marcar todas como leídas:", error);
     }
-  };
-
-  const handleRead = async (id: number) => {
-    try {
-      console.log(`📖 Marcando notificación ${id} como leída...`);
-      const response = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAsRead", notificationId: id }),
-      });
-      
-      if (response.ok) {
-        console.log(`✅ Notificación ${id} marcada como leída`);
-        await fetchNotifications();
-        window.dispatchEvent(new Event("refresh-notification-badge"));
-        window.dispatchEvent(new Event("notifications-updated"));
-      }
-    } catch (error) {
-      console.error("❌ Error al marcar como leída:", error);
-    }
-  };
-
-  const handleMarkAll = async () => {
-    try {
-      console.log("📖 Marcando todas las notificaciones como leídas...");
-      const response = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAllAsRead" }),
-      });
-      
-      if (response.ok) {
-        console.log("✅ Todas las notificaciones marcadas como leídas");
-        await fetchNotifications();
-        window.dispatchEvent(new Event("refresh-notification-badge"));
-        window.dispatchEvent(new Event("notifications-updated"));
-      }
-    } catch (error) {
-      console.error("❌ Error al marcar todas como leídas:", error);
-    }
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
-  };
-
-  const getFilterDisplayName = (filter: string): string => {
-    switch(filter) {
-      case "gmail": return "Gmail";
-      case "whatsapp": return "WhatsApp";
-      default: return "";
-    }
-  };
-
-  const handleOpenSettings = () => {
-    setShowSettings(true);
-  };
-
-  const handleCloseSettings = () => {
-    setShowSettings(false);
-  };
-
-  const handleGmailToggle = (enabled: boolean) => {
-    setGmailEnabled(enabled);
-    const userId = user?.id ?? "guest";
-    localStorage.setItem(`gmail_enabled_${userId}`, enabled.toString());
-  };
-
-  const handleWhatsappToggle = (enabled: boolean) => {
-    setWhatsappEnabled(enabled);
-    const userId = user?.id ?? "guest";
-    localStorage.setItem(`whatsapp_enabled_${userId}`, enabled.toString());
   };
 
   return (
-<<<<<<< HEAD
     <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
       <NotificationHeader total={notifications.length} />
-=======
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">     
-      <NotificationHeader total={total ?? totalCount} />
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
 
       <div className="p-2">
         <NotificationTabs
           activeTab={activeTab}
-          onTabChange={handleTabChange}
+          onTabChange={setActiveTab}
           unreadCount={unreadCount}
           onMarkAll={handleMarkAll}
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-          onOpenSettings={handleOpenSettings}
-          showSettings={showSettings}
-          onCloseSettings={handleCloseSettings}
-          gmailEnabled={gmailEnabled}
-          whatsappEnabled={whatsappEnabled}
-          onGmailToggle={handleGmailToggle}
-          onWhatsappToggle={handleWhatsappToggle}
         />
       </div>
 
-<<<<<<< HEAD
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
           Cargando notificaciones...
@@ -497,63 +233,6 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
           </div>
           <ScrollBar orientation="vertical" />
         </ScrollArea>
-=======
-      {!showSettings && (
-        <>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-              Cargando notificaciones...
-            </div>
-          ) : hasError ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                <BellOff size={22} />
-              </div>
-              <p className="text-gray-500 text-sm font-medium">
-                No fue posible cargar las notificaciones.
-              </p>
-              <button 
-                onClick={fetchNotifications}
-                className="text-blue-500 text-sm underline hover:text-blue-700"
-              >
-                Reintentar
-              </button>
-            </div>
-          ) : visibleNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                <BellOff size={22} />
-              </div>
-              <p className="text-gray-500 text-sm font-medium">
-                {activeFilter !== "all"
-                  ? `No tienes notificaciones de ${getFilterDisplayName(activeFilter)}.`
-                  : activeTab === "unread"
-                  ? "No tienes notificaciones no leídas."
-                  : "No tienes notificaciones por el momento."}
-              </p>
-            </div>
-          ) : (
-            <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="p-2 space-y-2">
-                {visibleNotifications.map((n) => (
-                  <NotificationItem
-                    key={n.id}
-                    id={n.id}
-                    title={n.title}
-                    description={n.description}
-                    read={n.read}
-                    time={n.time}
-                    type={n.type} 
-                    onDelete={handleDelete}
-                    onRead={handleRead}
-                  />
-                ))}
-              </div>
-              <ScrollBar orientation="vertical" />
-            </ScrollArea>
-          )}
-        </>
->>>>>>> a03ccd4787350d0ce6fc89ac09ce5a20580ac3c8
       )}
     </div>
   );
