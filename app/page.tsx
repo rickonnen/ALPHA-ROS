@@ -1,5 +1,6 @@
 import Banner from "@/components/homeComponents/banner";
 import FilterPanel from "@/components/homeComponents/filterPanel";
+import TopCities from "@/components/homeComponents/TopCities";
 import ExploreBy from "@/components/homeComponents/exploreBy";
 
 export default function HomePage() {
@@ -15,6 +16,9 @@ export default function HomePage() {
           <FilterPanel />
         </div>
       </section>
+      
+      <TopCities />
+
       {/* ── Explorar por ciudades/tipo ── */}
       <section className="w-full max-w-6xl mx-auto px-4 pb-20 mt-16">
         <ExploreBy />
