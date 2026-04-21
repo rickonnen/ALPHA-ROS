@@ -265,5 +265,24 @@ export async function sendGenericEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subject, html, maxRetries);
 }
-
+export async function enviarRecuperacionContrasena(email: string, code: string, nombre: string): Promise<SendEmailResult> {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#C85A4F 0%,#B47B65 100%);padding:20px;text-align:center;border-radius:8px 8px 0 0">
+        <h1 style="color:white;margin:0">Recuperación de contraseña</h1>
+      </div>
+      <div style="padding:30px;background-color:#f9fafb;border:1px solid #e5e7eb;border-top:none">
+        <p style="color:#374151;font-size:16px">Hola ${nombre},</p>
+        <p style="color:#374151;font-size:14px">Solicitaste recuperar tu contraseña en PropBol.</p>
+        <div style="background-color:white;border:2px solid #C85A4F;padding:20px;text-align:center;border-radius:8px;margin:20px 0">
+          <p style="color:#6b7280;font-size:12px;margin:0 0 10px 0;text-transform:uppercase">Código de verificación</p>
+          <p style="color:#C85A4F;font-size:36px;font-weight:bold;margin:0;letter-spacing:8px">${code}</p>
+        </div>
+        <p style="color:#6b7280;font-size:13px;text-align:center">Este código expira en <strong>8 minutos</strong></p>
+        <p style="color:#6b7280;font-size:13px;text-align:center">Si no solicitaste esto, ignora este mensaje.</p>
+      </div>
+    </div>
+  `;
+  return sendEmail(email, "Recuperación de contraseña - PropBol", html);
+}
 export type { SendEmailResult };

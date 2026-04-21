@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         // Usuario no encontrado
         return NextResponse.json(
           { 
-            error: "El correo electrónico no está registrado",
+            error: "Contraseña incorrecta",
             code: "USER_NOT_FOUND"
           },
           { status: 401 }

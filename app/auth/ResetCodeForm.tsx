@@ -14,9 +14,10 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
-  const [timeLeft, setTimeLeft] = useState(600);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(480);
   const [expired, setExpired] = useState(false);
+  const [emptyCells, setEmptyCells] = useState<number[]>([]);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -56,9 +57,11 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
   }
 
   async function handleVerify() {
-    if (code.some(c => c === "")) { setError("Completa todos los dígitos del código"); return; }
+    const empty = code.map((c, i) => c === "" ? i : -1).filter(i => i !== -1);
+    if (empty.length > 0) { setEmptyCells(empty); setError("Completa todos los dígitos del código"); return; }
+       setEmptyCells([]);
     if (expired) { setError("El código ha expirado. Solicita uno nuevo."); return; }
-    setLoading(true); setError("");
+       setLoading(true); setError("");
     try {
       const res = await fetch("/api/auth/verify-reset-code", {
         method: "POST",
@@ -111,9 +114,15 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
         <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>Verificar código</h2>
       </div>
 
-      <p style={{ fontSize: "13px", color: "#6b7280", textAlign: "center", margin: 0 }}>
-        Ingresa el código de 6 dígitos que enviamos a <strong>{mask(email)}</strong>
-      </p>
+      {/* Correo enmascarado en dos líneas */}
+      <div style={{ textAlign: "center" }}>
+        <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 4px 0" }}>
+          Ingresa el código de 6 dígitos que enviamos a
+        </p>
+        <p style={{ fontSize: "14px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>
+          {mask(email)}
+        </p>
+      </div>
 
       <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase", margin: 0 }}>
         Código de verificación
@@ -133,10 +142,10 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
             style={{
               width: "48px", height: "56px", fontSize: "24px", fontWeight: "bold",
               textAlign: "center",
-              border: `2px solid ${error ? "#ef4444" : digit ? "#C85A4F" : "#d1d5db"}`,
-              borderRadius: "8px", outline: "none",
-              backgroundColor: error ? "#fee2e2" : expired ? "#f3f4f6" : "white",
-              color: "#1f2937", transition: "all 0.2s",
+              border: `2px solid ${emptyCells.includes(index) ? "#ef4444" : digit ? "#C85A4F" : "#d1d5db"}`,
+             borderRadius: "8px", outline: "none",
+             backgroundColor: emptyCells.includes(index) ? "#fee2e2" : expired ? "#f3f4f6" : "white",
+             color: "#1f2937", transition: "all 0.2s",
             }}
           />
         ))}

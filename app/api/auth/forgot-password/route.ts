@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { enviarCodigoVerificacion } from "@/lib/email/emailService";
+import { enviarRecuperacionContrasena } from "@/lib/email/emailService";
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -11,11 +11,11 @@ export async function POST(req: NextRequest) {
   const normalizedEmail = email.toLowerCase().trim();
   const { data: user } = await supabase.from("Usuario").select("id_usuario, nombres").eq("email", normalizedEmail).maybeSingle();
 
-  if (!user) return NextResponse.json({ success: true });
+  if (!user) return NextResponse.json({ error: "No encontramos una cuenta con este correo electrónico" }, { status: 404 });
 
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   const ahora = new Date();
-  const expiracion = new Date(ahora.getTime() + 10 * 60 * 1000);
+  const expiracion = new Date(ahora.getTime() + 8 * 60 * 1000);
 
   const { error: insertError } = await supabase.from("Recuperacion_password").insert({
     id_usuario: user.id_usuario,
@@ -31,6 +31,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  await enviarCodigoVerificacion(normalizedEmail, codigo, user.nombres || "Usuario");
+  await enviarRecuperacionContrasena(normalizedEmail, codigo, user.nombres || "Usuario");
   return NextResponse.json({ success: true });
 }

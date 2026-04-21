@@ -14,6 +14,19 @@ export async function POST(req: NextRequest) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
+  // Verificar si la nueva contraseña es igual a la anterior
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password: password,
+  });
+
+  if (!signInError) {
+    return NextResponse.json(
+      { error: "La nueva contraseña no puede ser igual a la anterior." },
+      { status: 400 }
+    );
+  }
+
   const { data: users } = await supabase.auth.admin.listUsers();
   const user = users?.users.find(u => u.email === normalizedEmail);
   if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
