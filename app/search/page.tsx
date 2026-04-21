@@ -47,11 +47,9 @@ const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
 const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
 
 // ── Pagination config ──
-// Grid: 2 cols × 4 rows = 8 | List (with or without map): 5 rows
-const ITEMS_PER_PAGE_GRID = 6; // 2 cols × 4 rows
-const ITEMS_PER_PAGE_LIST = 5; // 5 rows always
-// With map open: 1 col × 4 rows = 4, list = 4 rows
-const ITEMS_PER_PAGE_MAP_GRID = 3; // 1 col × 4 rows (when map is open)
+const ITEMS_PER_PAGE_GRID = 6;
+const ITEMS_PER_PAGE_LIST = 5;
+const ITEMS_PER_PAGE_MAP_GRID = 3;
 const ITEMS_PER_PAGE_MAP_LIST = 5;
 
 function isValidLatLng(lat: unknown, lng: unknown): lat is number {
@@ -111,13 +109,13 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
   const sorted = [...properties];
   sorted.sort((first, second) => {
     switch (sortBy) {
-      case 'precio-asc':   return first.price - second.price;
-      case 'precio-des':   return second.price - first.price;
-      case 'm2-menor':     return first.terrainArea - second.terrainArea;
-      case 'm2-mayor':     return second.terrainArea - first.terrainArea;
-      case 'fecha-antigua':return first.id - second.id;
+      case 'precio-asc':    return first.price - second.price;
+      case 'precio-des':    return second.price - first.price;
+      case 'm2-menor':      return first.terrainArea - second.terrainArea;
+      case 'm2-mayor':      return second.terrainArea - first.terrainArea;
+      case 'fecha-antigua': return first.id - second.id;
       case 'fecha-reciente':
-      default:             return second.id - first.id;
+      default:              return second.id - first.id;
     }
   });
   return sorted;
@@ -243,6 +241,7 @@ function Pagination({
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
+  const { trackSearch } = useTracking();
 
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [currentPage, setCurrentPage] = useState(1);
@@ -264,6 +263,7 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
 
   // Reset page when filters/sort/view change
   useEffect(() => { setCurrentPage(1); }, [selectedSort, viewMode, isMapOpen, searchResults]);
@@ -292,16 +292,26 @@ function SearchPageContent() {
     selectedSort,
   ]);
 
-  const allProperties = useMemo(
-    () =>
-      sortProperties(
-        searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
-        selectedSort,
-      ),
-    [searchResults, selectedOperation, selectedSort],
-  );
+  const allProperties = useMemo(() => {
+    const mapped = searchResults.map((publication) =>
+      mapPublicationToProperty(publication, selectedOperation),
+    );
 
-  // Pagination logic (desktop only — mobile keeps scroll)
+    if (selectedSort === 'mas-recomendados' && recommendedIds.length > 0) {
+      return mapped.sort((a, b) => {
+        const indexA = recommendedIds.indexOf(a.id);
+        const indexB = recommendedIds.indexOf(b.id);
+        if (indexA !== -1 && indexB === -1) return -1;
+        if (indexA === -1 && indexB !== -1) return 1;
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        return 0;
+      });
+    }
+
+    return sortProperties(mapped, selectedSort);
+  }, [searchResults, selectedOperation, selectedSort, recommendedIds]);
+
+  // Pagination logic
   const itemsPerPage = isMapOpen
     ? (viewMode === 'grid' ? ITEMS_PER_PAGE_MAP_GRID : ITEMS_PER_PAGE_MAP_LIST)
     : (viewMode === 'grid' ? ITEMS_PER_PAGE_GRID : ITEMS_PER_PAGE_LIST);
@@ -368,7 +378,6 @@ function SearchPageContent() {
       setSearchResults(resultados);
       setHasSearched(true);
 
-      // Mapear filtros a TrackSearchPayload
       const trackPayload = {
         texto_busqueda: searchLocation,
         habitaciones: advancedFilterValues.habitaciones ? parseInt(advancedFilterValues.habitaciones) : undefined,
@@ -377,7 +386,6 @@ function SearchPageContent() {
         precio_max: appliedPriceFilter?.maxPrice,
         cant_resultados: resultados.length,
       };
-
       trackSearch(trackPayload);
     } catch (error) {
       console.error(error);
@@ -388,6 +396,7 @@ function SearchPageContent() {
     }
   };
 
+  // Load map state from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMapState = localStorage.getItem('searchMapOpen');
@@ -395,12 +404,14 @@ function SearchPageContent() {
     }
   }, []);
 
+  // Persist map state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('searchMapOpen', JSON.stringify(isMapOpen));
     }
   }, [isMapOpen]);
 
+  // Run search on URL query change
   useEffect(() => {
     const nextLocation = searchParams.get('ciudad')?.trim() ?? '';
     const nextOperation = mapQueryOperationToValue(searchParams.get('operaciones'));
@@ -435,6 +446,7 @@ function SearchPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
+  // Lock body scroll when mobile filters open
   useEffect(() => {
     if (isMobileFiltersOpen) {
       document.body.style.overflow = 'hidden';
@@ -448,6 +460,26 @@ function SearchPageContent() {
       document.documentElement.style.overflow = '';
     };
   }, [isMobileFiltersOpen]);
+
+  // Fetch recommendations when "mas-recomendados" sort is selected
+  useEffect(() => {
+    if (selectedSort === 'mas-recomendados') {
+      const fetchRecommendations = async () => {
+        try {
+          const response = await fetch('/api/recommendations/personal');
+          if (response.ok) {
+            const data = (await response.json()) as { id_publicacion: number }[];
+            setRecommendedIds(data.map((item) => item.id_publicacion));
+          }
+        } catch (error) {
+          console.error('Error fetching recommendations:', error);
+        }
+      };
+      void fetchRecommendations();
+    } else {
+      setRecommendedIds([]);
+    }
+  }, [selectedSort]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);
@@ -599,7 +631,7 @@ function SearchPageContent() {
                 No se encontraron inmuebles con los filtros aplicados.
               </div>
             ) : (
-              <div className={`grid gap-2 grid-cols-1`}>
+              <div className="grid gap-2 grid-cols-1">
                 {allProperties.map((property) => (
                   <PropertyCard
                     key={property.id}
@@ -634,7 +666,7 @@ function SearchPageContent() {
       {/* ══════════════════ DESKTOP LAYOUT ══════════════════ */}
       <div className="hidden md:flex items-stretch min-h-screen">
 
-        {/* ── Sidebar filtros — ancho fijo ── */}
+        {/* ── Sidebar filtros ── */}
         <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
           <div className="sticky top-6">
             <div className="flex h-[calc(95vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -702,7 +734,7 @@ function SearchPageContent() {
           </div>
         </aside>
 
-        {/* ── Results area — flex-1 fills all space between sidebar and map ── */}
+        {/* ── Results area ── */}
         <main className="flex flex-col pt-6 px-4 flex-1 min-w-0">
           {/* Header row */}
           <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
@@ -715,7 +747,7 @@ function SearchPageContent() {
             </div>
           </div>
 
-          {/* Property grid/list — NO scroll, paginado */}
+          {/* Property grid/list — paginated */}
           <div className="flex-1">
             {!hasSearched && isApplyingFilters ? (
               <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
@@ -766,7 +798,6 @@ function SearchPageContent() {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -780,7 +811,7 @@ function SearchPageContent() {
           </div>
         </main>
 
-        {/* ── Map — sticky, fixed width slightly reduced ── */}
+        {/* ── Map panel ── */}
         {isMapOpen && (
           <div className="shrink-0 sticky top-0 self-start" style={{ width: 'calc(50% - 40px)', height: '90vh' }}>
             <SearchMapClient

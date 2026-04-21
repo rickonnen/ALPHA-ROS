@@ -1,5 +1,7 @@
 "use client";
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useRef } from "react";
+// Se asume que signOut viene de next-auth según el comentario en la función logoutInternal
+import { signOut } from "next-auth/react"; 
 
 interface User {
   id: string;
@@ -15,14 +17,15 @@ interface LoginTelemetry {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string, telemetry?: LoginTelemetry ) => Promise<void>;
+  login: (email: string, password: string, telemetry?: LoginTelemetry) => Promise<void>;
   signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   fetchUserFromServer: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const INACTIVITY_TIMEOUT = 15*60*1000; 
+
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; 
 const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
 const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
 const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
@@ -32,6 +35,10 @@ const GOOGLE_TELEMETRY_MAX_AGE_MS = 10 * 60 * 1000;
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // SOLUCIÓN: Declaración de estado y ref que faltaban
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState("");
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ensureSessionIdCookie = () => {
     if (typeof document === "undefined") return;
@@ -61,14 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchUserFromServer = async () => {
-    interface AuthContextType {
-      user: User | null;
-      isLoading: boolean;
-      login: (email: string, password: string) => Promise<void>;
-      signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
-      logout: () => void;
-      fetchUserFromServer: () => Promise<boolean>;  // ← agregar esto
-    }
+    // SOLUCIÓN: Se eliminó la re-declaración local de AuthContextType que causaba ruido
     try {
       const res = await fetch("/api/auth/me", {
         credentials: "include",
@@ -165,13 +165,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/signin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
+  // SOLUCIÓN: Agregar parámetro telemetry y el bloque `try {` faltante
+  const login = async (email: string, password: string, telemetry?: LoginTelemetry) => {
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password, telemetry }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -180,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
 
-      await fetchUserFromServer();                                                                                                                                                                                                                                                                                              
+      await fetchUserFromServer();
     } catch (err: any) {
       // Detectar error de conexión a internet
       if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
@@ -192,18 +194,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // SOLUCIÓN: Agregar el bloque `try {` faltante
   const signup = async (
     nombre: string,
     apellido: string,
     email: string,
     password: string
   ) => {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ nombre, apellido, email, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nombre, apellido, email, password }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -240,7 +244,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
       });
     } catch (_) {}
- //  NUEVO — cierra también la sesión de Google/NextAuth
+    
+    // NUEVO — cierra también la sesión de Google/NextAuth
     try {
       await signOut({ redirect: false });
     } catch (_) {}
@@ -258,8 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = logoutInternal;
 
-  
-    return (
+  return (
     <>
       {sessionExpiredMessage && (
         <div style={{
