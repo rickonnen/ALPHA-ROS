@@ -16,17 +16,14 @@ interface LoginTelemetry {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (
-    email: string,
-    password: string,
-    telemetry?: LoginTelemetry
-  ) => Promise<void>;
+  login: (email: string, password: string, telemetry?: LoginTelemetry ) => Promise<void>;
   signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  fetchUserFromServer: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const INACTIVITY_TIMEOUT = 15*60*1000; 
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const fetchUserFromServer = async () => {
+    interface AuthContextType {
+      user: User | null;
+      isLoading: boolean;
+      login: (email: string, password: string) => Promise<void>;
+      signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
+      logout: () => void;
+      fetchUserFromServer: () => Promise<boolean>;  // ← agregar esto
+    }
     try {
       const res = await fetch("/api/auth/me", {
         credentials: "include", 
@@ -159,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
 
-      await fetchUserFromServer();
+      await fetchUserFromServer();                                                                                                                                                                                                                                                                                              
     } catch (err: any) {
       // Detectar error de conexión a internet
       if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
@@ -219,12 +224,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut({ redirect: false });
     } catch (_) {}
-
-    sessionStorage.removeItem("caracteristicasInmueble");
-    sessionStorage.removeItem("informacionComercial");
-    sessionStorage.removeItem("informacionComercialDraft");
-    sessionStorage.removeItem("videoUrl");
-    sessionStorage.removeItem("imageUploader_userInteracted");
 
     setUser(null);
   };
@@ -329,7 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+      <AuthContext.Provider value={{ user, isLoading, login, signup, logout, fetchUserFromServer }}>
         {children}
       </AuthContext.Provider>
     </>
