@@ -1,48 +1,49 @@
 "use client";
- 
+
 import { useCallback, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCarousel } from "../hooks/useCarousel";
- 
+
 /**
  * @Dev: Rodrigo Chalco
+ * @Dev: Maicol Ismael Nina Zarate
  * Funcionalidad: Sección "¿Dónde quieres vivir?" en el Home.
  * Cumple todos los criterios de aceptación del user story.
  * Usa variables de globals.css y fuente Geist (font-sans).
  */
- 
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
- 
+
 type OperationType = "venta" | "alquiler" | "anticretico";
- 
+
 interface CityImageData {
   strUrl: string;
   strAlt: string;
   strPublicId: string;
 }
- 
+
 interface CityData {
   strDepartamento: string;
   intContador: number;
   arrImagenes: CityImageData[];
 }
- 
+
 interface OperationTab {
   strType: OperationType;
   strLabel: string;
 }
- 
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
- 
+
 const ARR_TABS: OperationTab[] = [
   { strType: "venta", strLabel: "En Venta" },
   { strType: "alquiler", strLabel: "Alquiler" },
   { strType: "anticretico", strLabel: "Anticrético" },
 ];
- 
+
 // ─── Subcomponente: tarjeta de ciudad ─────────────────────────────────────────
- 
+
 interface CityCardProps {
   objCity: CityData;
   strOperation: OperationType;
@@ -50,7 +51,7 @@ interface CityCardProps {
   bolIsLarge: boolean;
   intRank: number;
 }
- 
+
 function CityCard({
   objCity,
   strOperation,
@@ -69,16 +70,17 @@ function CityCard({
     intTotalItems: objCity.arrImagenes.length,
     intAutoPlayDelay: 7000,
   });
- 
+
   const handleCardClick = (): void => {
     if (objCity.intContador === 0) return;
-    const strParams = new URLSearchParams({
-      departamento: objCity.strDepartamento.toLowerCase(),
-      operacion: strOperation,
-    }).toString();
-    objRouter.push(`/search?${strParams}`);
+
+    const objParams = new URLSearchParams();
+    objParams.set("ciudad", objCity.strDepartamento.trim());
+    objParams.set("operaciones", strOperation);
+
+    objRouter.push(`/busqueda?${objParams.toString()}`);
   };
- 
+
   const handleArrowClick = (
     e: React.MouseEvent,
     strDirection: "prev" | "next",
@@ -87,20 +89,25 @@ function CityCard({
     if (strDirection === "next") goToNextImage();
     else goToPreviousImage();
   };
- 
+
   const handleDotClick = (e: React.MouseEvent, intIndex: number): void => {
     e.stopPropagation();
     goToSelectedImage(intIndex);
   };
- 
+
   const bolSinDisponibles = objCity.intContador === 0;
- 
+
   return (
     <div
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && handleCardClick()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
       aria-label={`Ver propiedades en ${objCity.strDepartamento} - ${strOperationLabel}`}
       {...touchHandlers}
       className="group relative h-full w-full overflow-hidden rounded-2xl select-none font-sans"
@@ -138,7 +145,7 @@ function CityCard({
           />
         ))}
       </div>
- 
+
       {/* Gradiente */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -147,7 +154,7 @@ function CityCard({
             "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.82) 100%)",
         }}
       />
- 
+
       {/* Badge operación arriba izquierda */}
       <div className="absolute top-4 left-4 z-10">
         <span
@@ -157,7 +164,7 @@ function CityCard({
           {strOperationLabel}
         </span>
       </div>
- 
+
       {/* Flechas del carrusel arriba derecha */}
       {objCity.arrImagenes.length > 1 && (
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
@@ -165,7 +172,10 @@ function CityCard({
             type="button"
             onClick={(e) => handleArrowClick(e, "prev")}
             className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none font-sans"
-            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+            style={{
+              background: "rgba(0,0,0,0.35)",
+              backdropFilter: "blur(4px)",
+            }}
             aria-label={`Imagen anterior de ${objCity.strDepartamento}`}
           >
             ‹
@@ -174,14 +184,17 @@ function CityCard({
             type="button"
             onClick={(e) => handleArrowClick(e, "next")}
             className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none font-sans"
-            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+            style={{
+              background: "rgba(0,0,0,0.35)",
+              backdropFilter: "blur(4px)",
+            }}
             aria-label={`Siguiente imagen de ${objCity.strDepartamento}`}
           >
             ›
           </button>
         </div>
       )}
- 
+
       {/* Contenido inferior */}
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-10">
         {/* Nombre ciudad */}
@@ -196,7 +209,7 @@ function CityCard({
         >
           {objCity.strDepartamento}
         </h3>
- 
+
         {/* Descripción */}
         <p
           className="font-sans mt-1 leading-snug"
@@ -208,7 +221,7 @@ function CityCard({
         >
           {strOperationLabel} · #{intRank} más buscado
         </p>
- 
+
         {/* Fila: dots + botón */}
         <div className="mt-3 flex items-center justify-between">
           {/* Dots */}
@@ -239,7 +252,7 @@ function CityCard({
               />
             ))}
           </div>
- 
+
           {/* Botón o badge sin disponibles */}
           {bolSinDisponibles ? (
             <span
@@ -286,17 +299,17 @@ function CityCard({
     </div>
   );
 }
- 
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
- 
+
 function CityCardSkeleton(): React.ReactNode {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl animate-pulse bg-muted" />
   );
 }
- 
+
 // ─── Empty ────────────────────────────────────────────────────────────────────
- 
+
 function EmptyCard(): React.ReactNode {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl flex items-center justify-center bg-muted">
@@ -306,16 +319,16 @@ function EmptyCard(): React.ReactNode {
     </div>
   );
 }
- 
+
 // ─── Componente principal ─────────────────────────────────────────────────────
- 
+
 export default function TopCities(): React.ReactNode {
   const [strOperation, setStrOperation] = useState<OperationType>("venta");
   const [bolIsAnimating, setBolIsAnimating] = useState<boolean>(false);
   const [bolLoading, setBolLoading] = useState<boolean>(true);
   const [bolError, setBolError] = useState<boolean>(false);
   const [arrCities, setArrCities] = useState<CityData[]>([]);
- 
+
   const fetchCities = useCallback(async (strOp: OperationType) => {
     setBolLoading(true);
     setBolError(false);
@@ -330,11 +343,11 @@ export default function TopCities(): React.ReactNode {
       setBolLoading(false);
     }
   }, []);
- 
+
   useEffect(() => {
     fetchCities(strOperation);
   }, [strOperation, fetchCities]);
- 
+
   const changeOperation = useCallback(
     (strNewOp: OperationType): void => {
       if (bolIsAnimating || strNewOp === strOperation) return;
@@ -346,10 +359,10 @@ export default function TopCities(): React.ReactNode {
     },
     [bolIsAnimating, strOperation],
   );
- 
+
   const strCurrentLabel =
     ARR_TABS.find((t) => t.strType === strOperation)?.strLabel ?? "";
- 
+
   return (
     <section
       className="w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10 font-sans"
@@ -360,12 +373,12 @@ export default function TopCities(): React.ReactNode {
         <p className="font-sans text-[11px] font-semibold uppercase tracking-widest mb-0.5 text-muted-foreground">
           Más buscados
         </p>
- 
+
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <h2 className="font-sans text-2xl font-bold sm:text-3xl text-foreground">
             ¿Dónde quieres vivir?
           </h2>
- 
+
           {/* Tabs de operación */}
           <div
             className="flex items-center rounded-xl p-1 gap-1 self-start sm:self-auto bg-muted"
@@ -402,7 +415,7 @@ export default function TopCities(): React.ReactNode {
           </div>
         </div>
       </div>
- 
+
       {/* ── Error ── */}
       {bolError && (
         <div className="flex items-center justify-center rounded-2xl p-8 text-center bg-muted">
@@ -411,7 +424,7 @@ export default function TopCities(): React.ReactNode {
           </p>
         </div>
       )}
- 
+
       {/* ── Grid de ciudades ── */}
       {!bolError && (
         <div
@@ -440,7 +453,7 @@ export default function TopCities(): React.ReactNode {
               </div>
             ))}
           </div>
- 
+
           {/* Desktop: grande izquierda + dos pequeñas derecha */}
           <div className="hidden md:flex gap-3" style={{ height: "480px" }}>
             <div className="flex-1">
@@ -458,7 +471,7 @@ export default function TopCities(): React.ReactNode {
                 <EmptyCard />
               )}
             </div>
- 
+
             <div className="flex flex-col gap-3" style={{ width: "48%" }}>
               <div className="flex-1">
                 {bolLoading ? (
