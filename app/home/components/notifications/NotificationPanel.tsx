@@ -14,7 +14,7 @@ type Notification = {
   description: string;
   read: boolean;
   time?: string;
-  createdAt?: string | null;
+  created_at?: string | null;
   type: 1 | 2 | 3;
 };
 
@@ -25,26 +25,22 @@ type ApiNotification = {
   message: string;
   read: boolean;
   type: string;
-  createdAt: string | null;
+  created_at: string | null;
 };
 
 function formatRelativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes} min`;
-  if (hours < 24) return `hace ${hours} h`;
-  return `hace ${days} d`;
-}
-
-function getTypeFilter(type: 1 | 2 | 3): string {
-  switch(type) {
-    case 1: return "gmail";
-    case 2: return "whatsapp";
-    case 3: return "general";
-    default: return "general";
+  try {
+    const diff = Date.now() - new Date(isoString).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return "ahora";
+    if (minutes < 60) return `hace ${minutes} min`;
+    if (hours < 24) return `hace ${hours} h`;
+    return `hace ${days} d`;
+  } catch (error) {
+    return "fecha desconocida";
   }
 }
 
@@ -76,54 +72,119 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
 
   const fetchNotifications = useCallback(async () => {
     if (!user) {
+      console.log("👤 Usuario no autenticado, omitiendo fetch");
       setIsLoading(false);
       return;
     }
     
     try {
       setIsLoading(true);
-      const res = await fetch("/api/notifications");
-      const data = await res.json();
-      
-      const notificationsData: ApiNotification[] = Array.isArray(data) ? data : data.notifications;
-      
-      const mapped: Notification[] = notificationsData.map((n: ApiNotification) => ({
-        id: n.id,
-        title: n.title,
-        description: n.message,
-        read: n.read,
-        createdAt: n.createdAt ?? null,
-        type: n.type === "gmail" ? 1 : n.type === "whatsapp" ? 2 : 3,
-        time: n.createdAt ? formatRelativeTime(n.createdAt) : "ahora",
-      }));
-      
-      const sorted: Notification[] = mapped.sort((a: Notification, b: Notification) =>
-        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-      );
-      
-      setNotifications(sorted);
       setHasError(false);
-      window.dispatchEvent(new Event("refresh-notification-badge"));
+      console.log("🔄 Fetching notifications from API...");
+      
+      const res = await fetch("/api/notifications");
+      console.log("📡 Response status:", res.status, res.statusText);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("❌ Error response from API:", errorData);
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      console.log("📦 Datos recibidos de la API:", data);
+      
+      // Verificar la estructura de datos - la API puede devolver directamente el array o {notifications: []}
+      let notificationsData: ApiNotification[] = [];
+      
+      if (Array.isArray(data)) {
+        // Si la respuesta es directamente un array
+        notificationsData = data;
+        console.log("📊 La respuesta es un array directo");
+      } else if (data.notifications && Array.isArray(data.notifications)) {
+        // Si la respuesta tiene un campo notifications
+        notificationsData = data.notifications;
+        console.log("📊 La respuesta tiene campo notifications");
+      } else {
+        console.error("❌ Estructura de datos no reconocida:", data);
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log(`📊 Notificaciones encontradas: ${notificationsData.length}`);
+      
+      if (notificationsData.length === 0) {
+        console.log("⚠️ No hay notificaciones en la base de datos");
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("📝 Primera notificación raw:", notificationsData[0]);
+      
+      const mapped: Notification[] = notificationsData.map((n: ApiNotification) => {
+        // Determinar el tipo numérico
+        let typeNum: 1 | 2 | 3 = 3;
+        if (n.type === "gmail") typeNum = 1;
+        else if (n.type === "whatsapp") typeNum = 2;
+        
+        // Formatear la fecha
+        let timeStr = "fecha desconocida";
+        if (n.created_at) {
+          timeStr = formatRelativeTime(n.created_at);
+        }
+        
+        return {
+          id: n.id,
+          title: n.title || "Sin título",
+          description: n.message || "Sin contenido",
+          read: n.read || false,
+          created_at: n.created_at,
+          type: typeNum,
+          time: timeStr,
+        };
+      });
+      
+      console.log(`✅ Notificaciones mapeadas: ${mapped.length}`);
+      
+      // Ordenar por fecha (más reciente primero)
+      const sorted: Notification[] = mapped.sort((a, b) => {
+        if (!a.created_at && !b.created_at) return 0;
+        if (!a.created_at) return 1;
+        if (!b.created_at) return -1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      console.log("📋 Notificaciones finales:", sorted);
+      setNotifications(sorted);
+      
     } catch (error) {
-      console.error("Error al cargar notificaciones:", error);
+      console.error("❌ Error detallado al cargar notificaciones:", error);
       setHasError(true);
     } finally {
       setIsLoading(false);
     }
   }, [user]);
 
+  // Cargar notificaciones al montar el componente y cuando cambie el usuario
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications, gmailEnabled, whatsappEnabled]);
+  }, [fetchNotifications]);
 
+  // Escuchar eventos de actualización
   useEffect(() => {
-    const handleNotificationUpdate = () => {
+    const handleUpdate = () => {
+      console.log("🔄 Evento: notificaciones actualizadas");
       fetchNotifications();
     };
     
-    window.addEventListener("notifications-updated", handleNotificationUpdate);
+    window.addEventListener("notifications-updated", handleUpdate);
+    window.addEventListener("refresh-notification-badge", handleUpdate);
+    
     return () => {
-      window.removeEventListener("notifications-updated", handleNotificationUpdate);
+      window.removeEventListener("notifications-updated", handleUpdate);
+      window.removeEventListener("refresh-notification-badge", handleUpdate);
     };
   }, [fetchNotifications]);
 
@@ -148,70 +209,85 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
   };
 
   const visibleNotifications = useMemo(() => {
+    let filtered = notifications;
+    
+    // Filtrar por tipo específico (Gmail/WhatsApp)
     if (activeFilter === "gmail") {
-      return notifications.filter((n) => n.type === 1);
+      filtered = filtered.filter((n) => n.type === 1);
+    } else if (activeFilter === "whatsapp") {
+      filtered = filtered.filter((n) => n.type === 2);
+    } else if (activeTab === "unread") {
+      filtered = filtered.filter((n) => !n.read);
+    } else {
+      // Filtrar por configuración de canales
+      filtered = filtered.filter((n) => {
+        if (n.type === 1 && !gmailEnabled) return false;
+        if (n.type === 2 && !whatsappEnabled) return false;
+        return true;
+      });
     }
     
-    if (activeFilter === "whatsapp") {
-      return notifications.filter((n) => n.type === 2);
-    }
-    
-    if (activeTab === "unread") {
-      return notifications.filter((n) => !n.read);
-    }
-    
-    return notifications.filter((n) => {
-      if (n.type === 1 && !gmailEnabled) return false;
-      if (n.type === 2 && !whatsappEnabled) return false;
-      return true;
-    });
+    return filtered;
   }, [notifications, activeTab, activeFilter, gmailEnabled, whatsappEnabled]);
 
   const handleDelete = async (id: number) => {
     try {
+      console.log(`🗑️ Eliminando notificación ${id}...`);
       const response = await fetch(`/api/notifications?id=${id}`, {
         method: "DELETE",
       });
       
       if (response.ok) {
+        console.log(`✅ Notificación ${id} eliminada`);
         await fetchNotifications();
         window.dispatchEvent(new Event("refresh-notification-badge"));
         window.dispatchEvent(new Event("notifications-updated"));
+      } else {
+        const error = await response.text();
+        console.error("❌ Error al eliminar:", error);
       }
     } catch (error) {
-      console.error("Error al eliminar notificación:", error);
+      console.error("❌ Error al eliminar notificación:", error);
     }
   };
 
   const handleRead = async (id: number) => {
     try {
-      await fetch("/api/notifications", {
+      console.log(`📖 Marcando notificación ${id} como leída...`);
+      const response = await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAsRead", notificationId: id }),
       });
       
-      await fetchNotifications();
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-      window.dispatchEvent(new Event("notifications-updated"));
+      if (response.ok) {
+        console.log(`✅ Notificación ${id} marcada como leída`);
+        await fetchNotifications();
+        window.dispatchEvent(new Event("refresh-notification-badge"));
+        window.dispatchEvent(new Event("notifications-updated"));
+      }
     } catch (error) {
-      console.error("Error al marcar como leída:", error);
+      console.error("❌ Error al marcar como leída:", error);
     }
   };
 
   const handleMarkAll = async () => {
     try {
-      await fetch("/api/notifications", {
+      console.log("📖 Marcando todas las notificaciones como leídas...");
+      const response = await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markAllAsRead" }),
       });
       
-      await fetchNotifications();
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-      window.dispatchEvent(new Event("notifications-updated"));
+      if (response.ok) {
+        console.log("✅ Todas las notificaciones marcadas como leídas");
+        await fetchNotifications();
+        window.dispatchEvent(new Event("refresh-notification-badge"));
+        window.dispatchEvent(new Event("notifications-updated"));
+      }
     } catch (error) {
-      console.error("Error al marcar todas como leídas:", error);
+      console.error("❌ Error al marcar todas como leídas:", error);
     }
   };
 
@@ -248,8 +324,6 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
       <NotificationHeader total={total ?? totalCount} />
 
       <div className="p-2">
-        {/* Componente de configuración de número de teléfono */}
-        
         <NotificationTabs
           activeTab={activeTab}
           onTabChange={handleTabChange}
@@ -281,6 +355,12 @@ export function NotificationPanel({ total, onClose }: NotificationPanelProps) {
               <p className="text-gray-500 text-sm font-medium">
                 No fue posible cargar las notificaciones.
               </p>
+              <button 
+                onClick={fetchNotifications}
+                className="text-blue-500 text-sm underline hover:text-blue-700"
+              >
+                Reintentar
+              </button>
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
