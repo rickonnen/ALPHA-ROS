@@ -219,6 +219,7 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -245,12 +246,30 @@ function SearchPageContent() {
   ]);
 
   const displayedProperties = useMemo(
-    () =>
-      sortProperties(
-        searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation)),
-        selectedSort,
-      ),
-    [searchResults, selectedOperation, selectedSort],
+    () => {
+      const mapped = searchResults.map((publication) => mapPublicationToProperty(publication, selectedOperation));
+      
+      if (selectedSort === 'mas-recomendados' && recommendedIds.length > 0) {
+        // Ordenar según las recomendaciones
+        return mapped.sort((a, b) => {
+          const indexA = recommendedIds.indexOf(a.id);
+          const indexB = recommendedIds.indexOf(b.id);
+          
+          // Si está en recomendadas, viene primero
+          if (indexA !== -1 && indexB === -1) return -1;
+          if (indexA === -1 && indexB !== -1) return 1;
+          
+          // Si ambas están en recomendadas, ordenar por posición en el array
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          
+          // Si ninguna está en recomendadas, mantener orden original
+          return 0;
+        });
+      }
+      
+      return sortProperties(mapped, selectedSort);
+    },
+    [searchResults, selectedOperation, selectedSort, recommendedIds],
   );
 
   const breadcrumbPropertyLabel =
@@ -460,6 +479,27 @@ function SearchPageContent() {
   const handleSort = (sortOption: string) => {
     setSelectedSort(sortOption);
   };
+
+  // Cargar recomendaciones cuando se selecciona "mas-recomendados"
+  useEffect(() => {
+    if (selectedSort === 'mas-recomendados') {
+      const fetchRecommendations = async () => {
+        try {
+          const response = await fetch('/api/recommendations/personal');
+          if (response.ok) {
+            const data = (await response.json()) as { id_publicacion: number }[];
+            setRecommendedIds(data.map(item => item.id_publicacion));
+          }
+        } catch (error) {
+          console.error('Error fetching recommendations:', error);
+        }
+      };
+
+      void fetchRecommendations();
+    } else {
+      setRecommendedIds([]);
+    }
+  }, [selectedSort]);
 
   return (
     <div className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-10">
