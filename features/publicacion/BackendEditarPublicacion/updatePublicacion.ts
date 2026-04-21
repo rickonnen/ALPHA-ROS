@@ -13,7 +13,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
 })
 
-// Helper: lee el id_usuario desde la cookie auth_token (JWT)
+// Helper: lee el id_usuario desde la cookie auth_token (JWT).
 async function getUserIdFromCookie(): Promise<string | null> {
   try {
     const cookieStore = await cookies()

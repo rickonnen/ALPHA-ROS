@@ -12,7 +12,7 @@ type ActionResult =
   | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
 
-// Helper: lee el id_usuario desde la cookie auth_token (JWT)
+// Helper: lee el id_usuario desde la cookie auth_token (JWT).
 async function getUserIdFromCookie(): Promise<string | null> {
   try {
     const cookieStore = await cookies()

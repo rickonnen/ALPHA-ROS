@@ -152,7 +152,7 @@ function parseIntNullableClient(val: string | undefined | null): number | null {
   return isNaN(n) ? null : n
 }
 
-// ─── Componente interno ───────────────────────────────────────
+//Componente interno 
 function FormularioDinamicoInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
