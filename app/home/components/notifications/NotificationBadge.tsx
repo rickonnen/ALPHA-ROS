@@ -1,33 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useUnreadCount } from "@/components/hooks/useUnreadCount";
-import { useAuth } from "@/app/auth/AuthContext";
+interface NotificationBadgeProps {
+  count: number;
+}
 
-export function NotificationBadge() {
-  const { user } = useAuth();
-  const [count, setCount] = useState(0);
-  const { unreadCount, refreshCount } = useUnreadCount(user);
-
-  useEffect(() => {
-    setCount(unreadCount);
-  }, [unreadCount]);
-
-  // Escuchar eventos de refresco
-  useEffect(() => {
-    const handleRefresh = () => {
-      refreshCount();
-    };
-    
-    window.addEventListener("refresh-notification-badge", handleRefresh);
-    window.addEventListener("notifications-updated", handleRefresh);
-    
-    return () => {
-      window.removeEventListener("refresh-notification-badge", handleRefresh);
-      window.removeEventListener("notifications-updated", handleRefresh);
-    };
-  }, [refreshCount]);
-
+export function NotificationBadge({ count }: NotificationBadgeProps) {
   if (count === 0) return null;
   
   return (

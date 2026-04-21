@@ -6,7 +6,6 @@ interface User {
   id: string;
   name: string;
   email: string;
-  rol?: number; // ✅ Agregar rol para la redirección
 }
 
 interface AuthContextType {
@@ -15,11 +14,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  fetchUserFromServer: () => Promise<boolean>; // ✅ Agregar para refrescar después de 2FA
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const INACTIVITY_TIMEOUT = 15*60*1000; 
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -136,23 +134,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-
-      // ✅ NUEVO: Verificar si requiere 2FA (incluso con status 200)
-      if (data.requiresOTP && data.userId) {
-        const err: any = new Error(data.message || "Se requiere verificación 2FA");
-        err.requiresOTP = true;
-        err.userId = data.userId;
-        throw err;
-      }
-
       if (!res.ok) {
+        const data = await res.json();
         const err: any = new Error(data.error || "Error al iniciar sesión");
         err.code = data.code;
         throw err;
       }
 
-      await fetchUserFromServer();
+      await fetchUserFromServer();                                                                                                                                                                                                                                                                                              
     } catch (err: any) {
       // Detectar error de conexión a internet
       if (err instanceof TypeError && err.message.includes("Failed to fetch")) {
@@ -212,12 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut({ redirect: false });
     } catch (_) {}
-
-    sessionStorage.removeItem("caracteristicasInmueble");
-    sessionStorage.removeItem("informacionComercial");
-    sessionStorage.removeItem("informacionComercialDraft");
-    sessionStorage.removeItem("videoUrl");
-    sessionStorage.removeItem("imageUploader_userInteracted");
 
     setUser(null);
   };
@@ -322,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      <AuthContext.Provider value={{ user, isLoading, login, signup, logout, fetchUserFromServer }}>
+      <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
         {children}
       </AuthContext.Provider>
     </>

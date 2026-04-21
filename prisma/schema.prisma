@@ -656,20 +656,20 @@ model Moneda {
 }
 
 model Notificacion {
-  id_notificacion       String                 @id(map: "Notificacion_pk") @db.Uuid
+  id_notificacion       String                 @id(map: "Notificacion_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   titulo                String?                @db.VarChar(256)
   mensaje               String?
   id_categoria          Int?
-  leido                 Boolean?
-  creado_en             DateTime?              @db.Timestamptz(6)
+  leido                 Boolean?               @default(false)
+  creado_en             DateTime?              @default(now()) @db.Timestamptz(6)
   id_publicacion        Int?
   id_usuario            String?                @db.Uuid
-  email_enviado         Boolean?
+  email_enviado         Boolean?               @default(false)
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
   Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
-  Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacion_usuario")
+  Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_notificacion_usuario")
 
   @@schema("public")
 }
@@ -878,6 +878,7 @@ model Usuario {
   id_plan                      Int?                    @db.SmallInt
   dos_fa_habilitado            Boolean?                @default(false)
   dos_fa_secreto               String?                 @db.VarChar(64)
+  primary_provider             String?                 @db.VarChar(20)
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
@@ -926,6 +927,19 @@ model Zona {
   coordenadas String?
   Publicacion Publicacion[]
   Ciudad      Ciudad?       @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notificacion_whatsapp {
+  id         BigInt    @id @default(autoincrement())
+  title      String
+  message    String
+  read       Boolean?  @default(false)
+  type       String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
 
   @@schema("public")
 }
