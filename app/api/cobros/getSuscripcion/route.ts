@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
+      id_plan: suscripcion?.id_plan ?? null,
       nombre_plan: suscripcion?.PlanPublicacion?.nombre_plan ?? null,
       cant_publicaciones: suscripcion?.PlanPublicacion?.cant_publicaciones ?? null,
       modalidad: suscripcion?.modalidad ?? null,
