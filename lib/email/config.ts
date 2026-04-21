@@ -23,13 +23,13 @@ export const transporter = nodemailer.createTransport(emailConfig);
 
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
-    console.log("🔍 Verificando conexión con Gmail...");
+    console.log("Verificando conexión con Gmail...");
     await transporter.verify();
-    console.log("✅ Conexión con Gmail verificada correctamente");
+    console.log(" Conexión con Gmail verificada correctamente");
     return true;
   } catch (error) {
     console.error(
-      "❌ Error verificando conexión con Gmail:",
+      " Error verificando conexión con Gmail:",
       error instanceof Error ? error.message : error
     );
     return false;
@@ -46,7 +46,7 @@ export function getFormattedSender(): string {
 }
 
 if (process.env.NODE_ENV === "development") {
-  console.log("📧 Configuración de email Alpha ROS:");
+  console.log(" Configuración de email Alpha ROS:");
   console.log(`   Remitente: ${getFormattedSender()}`);
   console.log(`   Servicio: Gmail SMTP`);
 }

@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // ✅ Si no tiene 2FA, proceder normalmente
+    //  Si no tiene 2FA, proceder normalmente
     const userData = await prisma.usuario.findUnique({
       where: { id_usuario: authData.user.id }, 
       select: { id_usuario: true, nombres: true, email: true, rol: true }

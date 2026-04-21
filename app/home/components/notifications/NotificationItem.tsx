@@ -3,13 +3,13 @@ import { Mail, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 type Props = {
-  id: number;
+  id: string;  // ← ahora
   title: string;
   description: string;
   read: boolean;
   time?: string;
-  onDelete: (id: number) => void;
-  onRead: (id: number) => void;
+  onDelete: (id: string) => void;
+  onRead: (id: string) => void;
 };
 
 export function NotificationItem({

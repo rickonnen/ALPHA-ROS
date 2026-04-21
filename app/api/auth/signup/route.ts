@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
 import { sign } from "jsonwebtoken";
 import { enviarBienvenida } from "@/lib/email/emailService";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 
 
 const supabaseAdmin = createClient(
@@ -86,6 +87,12 @@ export async function POST(request: NextRequest) {
     });
 
     await enviarBienvenida(normalizedEmail, nombre);
+      await crearNotificacion({
+        id_usuario: authData.user.id,
+        titulo: "Bienvenido a PROBOL",
+        mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente. Bienvenido a la plataforma.`,
+        id_categoria: 1,
+      });
 
     return response;
 

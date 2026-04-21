@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendPasswordChangeEmail } from '@/lib/email/emailService';
+import { sendPasswordChangeEmail} from '@/lib/email/emailService';
 
 export async function POST(request: NextRequest) {
   try {
