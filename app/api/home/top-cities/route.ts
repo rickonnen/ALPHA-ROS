@@ -6,6 +6,7 @@ import { supabaseHome } from "@/lib/supabaseHome";
  * @Dev: Rodrigo Chalco
  * GET /api/home/top-cities?operacion=venta|alquiler|anticretico
  */
+export const dynamic = 'force-dynamic';
 export const revalidate = 86400;
 
 type OperationType = "venta" | "alquiler" | "anticretico";
