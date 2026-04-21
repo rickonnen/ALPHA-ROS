@@ -236,6 +236,11 @@ function SearchPageContent() {
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
 
+  // modales para zonas
+  const [showZoneNameModal, setShowZoneNameModal] = useState(false);
+  const [zoneName, setZoneName] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
@@ -301,6 +306,43 @@ function SearchPageContent() {
 
   const handleCloseAuth = () => {
     setBolShowAuth(false);
+  };
+
+  const handleSaveZone = async () => {
+    if (!zoneName.trim() || !drawnPolygon) return;
+
+    try {
+      const response = await fetch("/api/perfil/mis-zonas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          nombre_zona: zoneName.trim(),
+          coordenadas: drawnPolygon,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowZoneNameModal(false);
+        setZoneName("");
+        setShowSuccessModal(true);
+      } else {
+        console.error("Error from API:", data);
+        alert(`Error al guardar la zona: ${data.error || "Error desconocido"}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert(`Error al guardar la zona: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  };
+
+  const handleCloseZoneNameModal = () => {
+    setShowZoneNameModal(false);
+    setZoneName("");
   };
 
   const breadcrumbPropertyLabel =
@@ -373,6 +415,18 @@ function SearchPageContent() {
       const savedMapState = localStorage.getItem('searchMapOpen');
       if (savedMapState !== null) {
         setIsMapOpen(JSON.parse(savedMapState));
+      }
+      const loadedZona = localStorage.getItem('loadedZona');
+      if (loadedZona) {
+        try {
+          const coordenadas = JSON.parse(loadedZona);
+          setDrawnPolygon(coordenadas);
+          setIsDrawingMode(false);
+          setIsMapOpen(true);
+          localStorage.removeItem('loadedZona');
+        } catch (error) {
+          console.error("Error al cargar zona:", error);
+        }
       }
     }
   }, []);
@@ -597,13 +651,12 @@ function SearchPageContent() {
                   Zona aplicada: {displayedProperties.length} inmuebles
                 </span>
                 <button 
-                  onClick={async () => {
+                  onClick={() => {
                     if (!objUser) {
                       setBolShowProtected(true);
                       return;
                     }
-                    console.log("Para enviar al POST de MisZonas:", drawnPolygon);
-                    alert("Zona lista para guardar en Base de Datos");
+                    setShowZoneNameModal(true);
                   }}
                   className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
                 >
@@ -822,13 +875,12 @@ function SearchPageContent() {
                     Zona aplicada: {displayedProperties.length} inmuebles
                   </span>
                   <button 
-                    onClick={async () => {
+                    onClick={() => {
                       if (!objUser) {
                         setBolShowProtected(true);
                         return;
                       }
-                      console.log("Para enviar al POST de MisZonas:", drawnPolygon);
-                      alert("Zona lista para guardar en Base de Datos");
+                      setShowZoneNameModal(true);
                     }}
                     className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
                   >
@@ -882,6 +934,64 @@ function SearchPageContent() {
           initialMode={strAuthMode}
           onClose={handleCloseAuth}
         />
+      )}
+
+      {/* Modal para nombre de zona */}
+      {showZoneNameModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold mb-4 text-slate-800 uppercase tracking-tight">
+              Nombre de la zona
+            </h3>
+            <input
+              type="text"
+              value={zoneName}
+              onChange={(e) => setZoneName(e.target.value)}
+              placeholder="Ingresa el nombre de la zona"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseZoneNameModal}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveZone}
+                className="flex-1 px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary)]/90 transition-colors"
+                disabled={!zoneName.trim()}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
+            <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-slate-800 uppercase tracking-tight">
+              Zona guardada
+            </h3>
+            <p className="text-slate-500 text-sm mb-6">
+              Se guardó la zona correctamente en tu perfil.
+            </p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="px-6 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary)]/90 transition-colors"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

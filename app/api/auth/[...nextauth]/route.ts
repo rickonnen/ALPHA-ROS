@@ -1,12 +1,12 @@
-import NextAuth from "next-auth"
+import NextAuth, { AuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 
-const handler = NextAuth({
+export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const, // 👈 fix error 1
   },
 
   providers: [
@@ -16,7 +16,6 @@ const handler = NextAuth({
       authorization: {
         params: { 
           prompt: "select_account consent",
-
           access_type: "offline",
         },
       },
@@ -39,7 +38,6 @@ const handler = NextAuth({
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
 
-          // Autenticar contra Supabase
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
@@ -50,7 +48,6 @@ const handler = NextAuth({
             return null
           }
 
-          // Obtener datos del usuario
           const { data: userData } = await supabase
             .from("Usuario")
             .select("*")
@@ -75,9 +72,7 @@ const handler = NextAuth({
   ],
 
   callbacks: {
-
     async signIn({ user, account }: any) {
-      // Permitir credenciales sin account
       if (!account) {
         return true
       }
@@ -167,23 +162,9 @@ const handler = NextAuth({
         session.user.id = token.id as string
       }
       return session
-
     },
 
-    async redirect({ url, baseUrl }: any) {
-      if (
-        url.includes("error=Callback") ||
-        url.includes("error=OAuthCallback") ||
-        url.includes("access_denied")
-      ) {
-        return baseUrl
-      }
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      if (url.startsWith(baseUrl)) return url
-      return baseUrl
-
-    },
-
+    // 👇 fix error 2: solo un redirect
     async redirect({ url, baseUrl }: any) {
       if (
         url.includes("error=Callback") ||
@@ -196,14 +177,14 @@ const handler = NextAuth({
       if (url.startsWith(baseUrl)) return url
       return baseUrl
     },
-
   },
 
   pages: {
     signIn: "/api/google-cancelado",
     error: "/api/google-cancelado",
   },
+}
 
-})
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }
