@@ -157,6 +157,14 @@ export default function PublicacionCard({
                 Ver Detalle
               </Button>
               <Button
+                variant="azul"
+                size="sm"
+                className="flex-1 min-[480px]:flex-none"
+                /*onClick={() => router.push(`/publicacion/editar/${publicacion.id}`,)}*/
+              >
+                Editar
+              </Button>
+              <Button
                 size="sm"
                 className="flex-1 min-[480px]:flex-none bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--secondary)]/80 border-none"
                 onClick={() => onEliminar(publicacion.id)}

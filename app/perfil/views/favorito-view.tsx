@@ -93,7 +93,7 @@ export default function FavoritoView({ id_usuario }: FavoritoViewProps) {
 
         {!cargando && favoritosPaginados.length > 0 && (
           <div
-            className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]"
+            className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[400px]"
           >
             {favoritosPaginados.map((fav) => (
               <FavCard
