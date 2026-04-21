@@ -16,9 +16,17 @@ interface BannerImage {
   public_id: string;
 }
 
-function getImageUrl(objImage: BannerImage, bolIsMobile: boolean): string {
+function getImageUrl(
+  objImage: BannerImage,
+  bolIsMobile: boolean,
+  bolIsLandscape: boolean,
+): string {
   if (objImage.image_url) return objImage.image_url;
-  if (bolIsMobile && objImage.image_url_mobile) return objImage.image_url_mobile;
+  // Si es móvil y está en vertical (!bolIsLandscape), mostramos la imagen móvil
+  if (bolIsMobile && !bolIsLandscape && objImage.image_url_mobile) {
+    return objImage.image_url_mobile;
+  }
+  // En cualquier otro caso (Desktop, o Móvil en Horizontal), mostramos la de desktop
   return objImage.image_url_desktop ?? "";
 }
 
@@ -27,7 +35,24 @@ const INT_AUTOPLAY_DELAY = 5000;
 export default function Banner() {
   const [arrImages, setArrImages] = useState<BannerImage[]>([]);
   const [bolLoading, setBolLoading] = useState<boolean>(true);
+  const [bolIsLandscape, setBolIsLandscape] = useState<boolean>(false);
   const bolIsMobile = useIsMobile();
+
+  // Detecta cambios en la orientación del dispositivo
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(orientation: landscape)");
+      setBolIsLandscape(mediaQuery.matches);
+
+      const handleOrientationChange = (e: MediaQueryListEvent) => {
+        setBolIsLandscape(e.matches);
+      };
+
+      mediaQuery.addEventListener("change", handleOrientationChange);
+      return () =>
+        mediaQuery.removeEventListener("change", handleOrientationChange);
+    }
+  }, []);
 
   // Carga las imágenes desde la API
   useEffect(() => {
@@ -69,16 +94,16 @@ export default function Banner() {
 
   if (bolLoading) {
     return (
-      <section className="w-full overflow-hidden font-sans">
-        <div className="flex h-[63svh] items-center justify-center bg-muted animate-pulse" />
+      <section className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans">
+        <div className="flex w-full animate-pulse items-center justify-center bg-muted aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]" />
       </section>
     );
   }
 
   if (arrActiveImages.length === 0) {
     return (
-      <section className="w-full overflow-hidden font-sans">
-        <div className="flex h-[56svh] items-center justify-center bg-muted px-6 text-center">
+      <section className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans">
+        <div className="flex w-full items-center justify-center bg-muted px-6 text-center aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]">
           <p className="text-sm text-muted-foreground sm:text-base">
             No hay imágenes activas para mostrar en el banner.
           </p>
@@ -90,11 +115,11 @@ export default function Banner() {
   return (
     <section
       ref={objBannerRef}
-      className="w-full overflow-hidden font-sans"
+      className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans"
       aria-label="Main home banner"
     >
       <div
-        className="relative h-[63svh] sm:h-[66svh] md:h-[68svh] lg:h-[70svh] xl:h-[73svh] overflow-hidden"
+        className="relative w-full overflow-hidden aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]"
         {...touchHandlers}
       >
         <div className="absolute left-4 top-4 z-50 sm:left-6 sm:top-6">
@@ -110,7 +135,7 @@ export default function Banner() {
               className="relative h-full min-w-full flex-shrink-0"
             >
               <img
-                src={getImageUrl(objImage, bolIsMobile)}
+                src={getImageUrl(objImage, bolIsMobile, bolIsLandscape)}
                 alt={`Banner ${intIndex + 1}`}
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
@@ -120,7 +145,7 @@ export default function Banner() {
                 <>
                   <div className="absolute inset-0 bg-black/35" />
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center sm:px-6 md:px-8 lg:px-10">
-                    <div className="max-w-[320px] sm:max-w-2xl lg:max-w-4xl select-none">
+                    <div className="max-w-[320px] select-none sm:max-w-2xl lg:max-w-4xl">
                       <h1 className="text-4xl font-bold leading-[0.98] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem]">
                         Encuentra el lugar donde
                         <br />
@@ -158,19 +183,21 @@ export default function Banner() {
             </button>
 
             <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 sm:bottom-5">
-              {arrActiveImages.map((objImage: BannerImage, intIndex: number) => (
-                <button
-                  key={objImage.public_id}
-                  type="button"
-                  onClick={() => goToSelectedImage(intIndex)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    intIndex === intCurrentIndex
-                      ? "w-6 bg-white"
-                      : "w-2 bg-white/50 hover:bg-white/80"
-                  }`}
-                  aria-label={`Ir a la imagen ${intIndex + 1}`}
-                />
-              ))}
+              {arrActiveImages.map(
+                (objImage: BannerImage, intIndex: number) => (
+                  <button
+                    key={objImage.public_id}
+                    type="button"
+                    onClick={() => goToSelectedImage(intIndex)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      intIndex === intCurrentIndex
+                        ? "w-6 bg-white"
+                        : "w-2 bg-white/50 hover:bg-white/80"
+                    }`}
+                    aria-label={`Ir a la imagen ${intIndex + 1}`}
+                  />
+                ),
+              )}
             </div>
           </>
         )}
