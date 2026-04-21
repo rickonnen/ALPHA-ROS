@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { verify }  from 'jsonwebtoken'
+import { getServerSession } from 'next-auth'
 import { prisma }      from '@/lib/prisma'
 import { v2 as cloudinary } from 'cloudinary'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from '../BackendFormulario/schema'
@@ -13,21 +14,43 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
 })
 
-// Helper: lee el id_usuario desde la cookie auth_token (JWT).
-async function getUserIdFromCookie(): Promise<string | null> {
+async function getUserIdSeguro(): Promise<string | null> {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
-    if (!token) return null
-    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
-    return decoded.userId ?? null
-  } catch {
-    return null
+    if (token) {
+      const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string }
+      const id = decoded.userId || decoded.id || decoded.sub;
+      if (id) return id;
+    }
+  } catch (error) {
+    console.error("Error JWT:", error);
   }
+
+  const session = await getServerSession();
+  
+  if (session?.user?.email) {
+    try {
+      const usuarioBd = await prisma.usuario.findFirst({
+        where: { email: session.user.email as string },
+        select: { id_usuario: true }
+      });
+      if (usuarioBd) return usuarioBd.id_usuario;
+    } catch (error) {
+      console.error("Error buscando usuario por email:", error);
+    }
+  }
+
+  return null;
 }
 
-// Extrae el public_id de una URL de Cloudinary
-// Ej: https://res.cloudinary.com/demo/image/upload/v123/publicaciones/abc.jpg → publicaciones/abc
+// ✅ NUEVO: helper que convierte 'null' | '' | undefined | número en number | null
+function parseIntNullable(raw: FormDataEntryValue | null): number | null {
+  if (!raw || raw === 'null' || raw === '') return null
+  const n = parseInt(raw as string, 10)
+  return isNaN(n) ? null : n
+}
+
 function extraerPublicId(url: string): string | null {
   try {
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/)
@@ -58,7 +81,6 @@ export async function actualizarPublicacion(
   const imagenesViejas  = formData.getAll('imagenesViejas')  as string[]
   const imagenesABorrar = formData.getAll('imagenesABorrar') as string[]
 
-  // Subir imágenes nuevas si las hay
   let imagenesNuevasUrl: string[] = []
   if (files.length > 0 && files[0].size > 0) {
     try {
@@ -69,14 +91,12 @@ export async function actualizarPublicacion(
     }
   }
 
-  // URLs finales = las viejas que quedan + las nuevas subidas
   const imagenesUrl = [...imagenesViejas, ...imagenesNuevasUrl]
 
   if (!imagenesUrl.length) {
     return { success: false, errors: { imagenes: ['Debes tener al menos 1 imagen.'] } }
   }
 
-  // Parsear características extras desde FormData
   let caracteristicasExtras: { id_caracteristica: number; detalle?: string | null }[] = []
   try {
     const rawCaract = formData.get('caracteristicasExtras') as string
@@ -87,8 +107,7 @@ export async function actualizarPublicacion(
     caracteristicasExtras = []
   }
 
-  // id_usuario se lee desde la cookie JWT, no del FormData
-  const rawIdUsuario = await getUserIdFromCookie()
+  const rawIdUsuario = await getUserIdSeguro()
 
   const payload = {
     titulo:             formData.get('titulo')             as string,
@@ -102,10 +121,11 @@ export async function actualizarPublicacion(
     zona:               formData.get('zona')               as string,
     lat:  formData.get('lat')  ? parseFloat(formData.get('lat')  as string) : undefined,
     lng:  formData.get('lng')  ? parseFloat(formData.get('lng')  as string) : undefined,
-    habitaciones: parseInt(formData.get('habitaciones') as string, 10),
-    banios:       parseInt(formData.get('banios')       as string, 10),
-    garajes:      parseInt(formData.get('garajes')      as string, 10),
-    plantas:      parseInt(formData.get('plantas')      as string, 10),
+    // ✅ Cambiado: parseInt → parseIntNullable para soportar Terrenos (valores null)
+    habitaciones: parseIntNullable(formData.get('habitaciones')),
+    banios:       parseIntNullable(formData.get('banios')),
+    garajes:      parseIntNullable(formData.get('garajes')),
+    plantas:      parseIntNullable(formData.get('plantas')),
     superficie:   parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
     imagenesUrl,
     videoUrl:    (formData.get('videoUrl')    as string) || null,
@@ -132,7 +152,6 @@ export async function actualizarPublicacion(
 
     await prisma.$transaction(async (tx) => {
 
-      // Actualizar ubicación
       const pub = await tx.publicacion.findUnique({
         where:  { id_publicacion: idPublicacion },
         select: { id_ubicacion: true },
@@ -151,7 +170,6 @@ export async function actualizarPublicacion(
         })
       }
 
-      // Actualizar publicación principal
       await tx.$executeRaw`
         UPDATE "Publicacion" SET
           titulo                 = ${d.titulo},
@@ -169,7 +187,6 @@ export async function actualizarPublicacion(
         WHERE id_publicacion = ${idPublicacion}
       `
 
-      // Actualizar imágenes (borrar todas y reinsertar)
       await tx.$executeRaw`DELETE FROM "Imagen" WHERE id_publicacion = ${idPublicacion}`
       for (const url of d.imagenesUrl) {
         await tx.$executeRaw`
@@ -178,7 +195,6 @@ export async function actualizarPublicacion(
         `
       }
 
-      // Actualizar video
       await tx.$executeRaw`DELETE FROM "Video" WHERE id_publicacion = ${idPublicacion}`
       if (d.videoUrl) {
         await tx.$executeRaw`
@@ -187,7 +203,6 @@ export async function actualizarPublicacion(
         `
       }
 
-      // Actualizar características extras (borrar todas y reinsertar)
       await tx.$executeRaw`
         DELETE FROM "PublicacionCaracteristica" WHERE id_publicacion = ${idPublicacion}
       `
@@ -201,7 +216,6 @@ export async function actualizarPublicacion(
       }
     })
 
-    // Borrar de Cloudinary DESPUÉS de confirmar la transacción en BD
     if (imagenesABorrar.length > 0) {
       await borrarDeCloudinary(imagenesABorrar)
     }

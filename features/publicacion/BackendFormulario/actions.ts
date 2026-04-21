@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { getServerSession } from 'next-auth'
 import { verify }  from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
@@ -13,18 +14,40 @@ type ActionResult =
   | { success: false; errors: Record<string, string[]>; reason?: string }
 
 // Helper: lee el id_usuario desde la cookie auth_token (JWT).
-async function getUserIdFromCookie(): Promise<string | null> {
+// Helper: lee el id_usuario desde JWT manual o desde Google (NextAuth)
+// Helper: lee el id_usuario desde JWT manual o desde Google (NextAuth)
+async function getUserIdSeguro(): Promise<string | null> {
+  // 1. Intentamos sacar el ID por JWT manual
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
-    if (!token) return null
-    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
-    return decoded.userId ?? null
-  } catch {
-    return null
+    if (token) {
+      const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string }
+      const id = decoded.userId || decoded.id || decoded.sub;
+      if (id) return id;
+    }
+  } catch (error) {
+    console.error("Error JWT:", error);
   }
-}
 
+  // 2. Si no hay JWT, intentamos sacar el ID por NextAuth (Google)
+  const session = await getServerSession();
+  
+  if (session?.user?.email) {
+    // Usamos findFirst que es más flexible y le decimos a TS que es un string seguro
+    try {
+      const usuarioBd = await prisma.usuario.findFirst({
+        where: { email: session.user.email as string }, 
+        select: { id_usuario: true }
+      });
+      if (usuarioBd) return usuarioBd.id_usuario;
+    } catch (error) {
+      console.error("Error buscando usuario por email:", error);
+    }
+  }
+
+  return null;
+}
 // Helper: convierte 'null' | '' | undefined | número en number | null
 function parseIntNullable(raw: FormDataEntryValue | null): number | null {
   if (!raw || raw === 'null' || raw === '') return null
@@ -60,8 +83,8 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     caracteristicasExtras = []
   }
 
-  // 3. Armar payload — id_usuario se lee desde la cookie JWT, no del FormData
-  const rawIdUsuario = await getUserIdFromCookie()
+// 3. Armar payload — lee tanto Google como JWT
+  const rawIdUsuario = await getUserIdSeguro()
 
   const payload = {
     // Paso 0
@@ -112,14 +135,18 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
       errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
     }
   }
-
   const d = parsed.data
+  // --- EL GUARDIA DE SEGURIDAD ---
+  if (!d.id_usuario) {
+    return { success: false, errors: { general: ['Debes iniciar sesión para publicar.'] } }
+  }
 
   // 5. Verificación de límite de publicaciones
   const usuario = await prisma.usuario.findUnique({
-    where: { id_usuario: d.id_usuario! },
+    where: { id_usuario: d.id_usuario }, // Ya no necesitamos el "!" porque ya validamos que no es null
     select: { cant_publicaciones_restantes: true },
   })
+  
   if (!usuario || (usuario.cant_publicaciones_restantes ?? 0) <= 0) {
     return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
   }
@@ -224,7 +251,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
       }
 
       // 6f. El descuento de publicaciones restantes y el incremento de
-      //     publicaciones_hechas lo maneja un trigger en la base de datos.
+      //     publicaciones_hechas lo maneja un trigger en la base de datos..
 
       return pub
     })
