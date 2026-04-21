@@ -1,29 +1,123 @@
 import { transporter, getFormattedSender } from "./config";
-import { validateRecipient } from "./validate";
+import { validateRecipient, validateContentSafety } from "./validate";
 
 interface SendEmailResult {
   success: boolean;
   messageId?: string;
   timeTakenMs: number;
   error?: string;
+  attempts?: number;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<SendEmailResult> {
+
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  maxRetries: number = 3
+): Promise<SendEmailResult> {
   const startTime = Date.now();
-  const validation = validateRecipient(to);
-  if (!validation.valid) {
-    return { success: false, timeTakenMs: 0, error: validation.error };
+  let lastError: string | undefined;
+  let attempts = 0;
+
+  // Validación 1: Email válido y destinatario presente
+  const recipientValidation = validateRecipient(to);
+  if (!recipientValidation.valid) {
+    logEmailError(to, recipientValidation.error || "Email inválido", 0);
+    return { success: false, timeTakenMs: 0, error: recipientValidation.error, attempts: 0 };
   }
-  try {
-    const info = await transporter.sendMail({ from: getFormattedSender(), to, subject, html });
-    const timeTakenMs = Date.now() - startTime;
-    console.log(`✅ [EMAIL] Enviado a ${to} en ${timeTakenMs}ms`);
-    return { success: true, messageId: info.messageId, timeTakenMs };
-  } catch (error) {
-    const timeTakenMs = Date.now() - startTime;
-    console.error(`❌ [EMAIL] Error enviando a ${to}:`, error);
-    return { success: false, timeTakenMs, error: error instanceof Error ? error.message : "Error desconocido" };
+
+  // Validación 2: Contenido seguro (sin contraseñas ni datos sensibles)
+  const contentValidation = validateContentSafety(html);
+  if (!contentValidation.valid) {
+    logEmailError(to, contentValidation.error || "Contenido no seguro", 0);
+    return { success: false, timeTakenMs: 0, error: contentValidation.error, attempts: 0 };
   }
+
+  // Reintentos automáticos
+  for (attempts = 1; attempts <= maxRetries; attempts++) {
+    try {
+      const info = await transporter.sendMail({
+        from: getFormattedSender(),
+        to,
+        subject,
+        html,
+        headers: {
+          "X-Mailer": "PROBOL Email Service",
+          "X-Priority": "3",
+          "Importance": "Normal",
+          "X-MSMail-Priority": "Normal",
+        },
+      });
+
+      const timeTakenMs = Date.now() - startTime;
+
+      console.log(
+        `✅ [EMAIL] Enviado a ${to} en ${timeTakenMs}ms (intento ${attempts}/${maxRetries})`
+      );
+
+      return {
+        success: true,
+        messageId: info.messageId,
+        timeTakenMs,
+        attempts,
+      };
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error.message : "Error desconocido";
+
+      // Si es el último intento, registrar el error
+      if (attempts === maxRetries) {
+        const timeTakenMs = Date.now() - startTime;
+        logEmailError(to, lastError, timeTakenMs);
+        console.error(
+          `❌ [EMAIL] Fallo definitivo después de ${maxRetries} intentos a ${to}:`,
+          lastError
+        );
+
+        return {
+          success: false,
+          timeTakenMs,
+          error: lastError,
+          attempts,
+        };
+      }
+
+      // Esperar antes de reintentar (backoff exponencial)
+      const delayMs = Math.min(1000 * Math.pow(2, attempts - 1), 5000);
+      console.warn(
+        `⚠️ [EMAIL] Error en intento ${attempts}/${maxRetries}. Reintentando en ${delayMs}ms...`,
+        lastError
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  return {
+    success: false,
+    timeTakenMs: Date.now() - startTime,
+    error: lastError || "Error desconocido",
+    attempts,
+  };
+}
+
+/**
+ * TAREA 12: Registra errores de email en logs
+ * TAREA 19: Mensaje de error cuando falla el envío
+ */
+function logEmailError(
+  recipient: string,
+  error: string | undefined,
+  timeTakenMs: number
+): void {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] EMAIL_ERROR | To: ${recipient} | Error: ${error} | Time: ${timeTakenMs}ms`;
+
+  console.error(`❌ [EMAIL LOG] ${logMessage}`);
+
+  // TODO: Guardar en base de datos (tabla EmailLog) para auditoría
+  // await logEmailErrorToDatabase({ recipient, error, timeTakenMs, timestamp });
 }
 
 export async function enviarCodigoVerificacion(email: string, code: string, nombre: string): Promise<SendEmailResult> {
@@ -39,54 +133,137 @@ export async function enviarBienvenidaGoogle(email: string, nombre: string): Pro
 }
 
 export async function enviarCambioContrasena(email: string, nombre: string): Promise<SendEmailResult> {
-  // MINI TAREA 1: Enviar automáticamente un correo cuando cambia la contraseña
-  // MINI TAREA 2: Verificar que se envíe en menos de 10 segundos
   
-  const fecha = new Date().toLocaleDateString('es-BO', {
+  
+  const ahora = new Date();
+  const fecha = ahora.toLocaleDateString('es-BO', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    second: '2-digit'
   });
 
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#1a1a1a;border-radius:12px;overflow:hidden">
-      <div style="background:#C85A4F;padding:24px;text-align:center">
-        <h1 style="color:white;margin:0;font-size:24px">🔒 Cambio de Contraseña</h1>
-      </div>
-      <div style="background:#1a1a1a;padding:32px">
-        <p style="color:#888888;font-size:12px;margin:0 0 20px 0;padding:10px;background:#111111;border-left:3px solid #C85A4F;border-radius:4px">
-          <strong>Fecha:</strong> ${fecha}
-        </p>
-        
-        <p style="color:#ffffff;font-size:16px">Hola, ${nombre} 👋</p>
-        
-        <p style="color:#cccccc;font-size:15px">
-          <strong>Tu contraseña ha sido actualizada exitosamente.</strong>
-        </p>
-        
-        <div style="background:#111111;border-left:3px solid #FF6B6B;padding:15px;margin:20px 0;border-radius:4px">
-          <p style="color:#FF6B6B;font-size:13px;margin:0;font-weight:bold">⚠️ SEGURIDAD</p>
-          <p style="color:#aaaaaa;font-size:13px;margin:8px 0 0 0">
-            Si no realizaste este cambio, contacta a soporte inmediatamente.
-          </p>
+    <!DOCTYPE html>
+    <html lang="es" style="margin:0;padding:0">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Cambio de Contraseña - PROBOL</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif">
+      <div style="background-color:#f5f5f5;padding:20px;min-height:100vh;display:flex;align-items:center;justify-content:center">
+        <div style="max-width:600px;width:100%;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden">
+          <!-- Header -->
+          <div style="background:linear-gradient(135deg,#C85A4F 0%,#B47B65 100%);padding:40px 24px;text-align:center;color:white">
+            <h1 style="margin:0;font-size:28px;font-weight:600;letter-spacing:-0.5px">🔒 Seguridad Actualizada</h1>
+            <p style="margin:8px 0 0 0;font-size:14px;opacity:0.9">Tu contraseña ha sido modificada</p>
+          </div>
+          
+          <!-- Contenido -->
+          <div style="padding:32px 24px;color:#333">
+            <!-- Saludo -->
+            <p style="margin:0 0 20px 0;font-size:16px;color:#1a1a1a">
+              Hola, <strong>${nombre}</strong> 👋
+            </p>
+            
+            <!-- Mensaje principal -->
+            <div style="background:#f8f9fa;border-left:4px solid #C85A4F;padding:16px;margin:20px 0;border-radius:4px">
+              <p style="margin:0;font-size:15px;color:#222;line-height:1.6">
+                Tu contraseña ha sido <strong>actualizada exitosamente</strong> en tu cuenta de PROBOL.
+              </p>
+            </div>
+            
+            <!-- Fecha del evento -->
+            <div style="background:#fff8f7;border:1px solid #FFE5E1;padding:12px 16px;margin:20px 0;border-radius:6px">
+              <p style="margin:0;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:0.5px">
+                📅 Fecha del evento
+              </p>
+              <p style="margin:8px 0 0 0;font-size:14px;color:#C85A4F;font-weight:600">
+                ${fecha}
+              </p>
+            </div>
+            
+            <!-- Alerta de seguridad -->
+            <div style="background:#fff3cd;border-left:4px solid #FF6B6B;padding:16px;margin:20px 0;border-radius:4px">
+              <p style="margin:0;font-size:13px;color:#721c24;font-weight:600">
+                ⚠️ ALERTA DE SEGURIDAD
+              </p>
+              <p style="margin:8px 0 0 0;font-size:13px;color:#721c24;line-height:1.5">
+                Si <strong>no realizaste este cambio</strong>, contacta a nuestro equipo de soporte inmediatamente en: <strong>soporte@propbol.com</strong>
+              </p>
+            </div>
+            
+            <!-- CTA Botón "Ver Detalle" -->
+            <div style="text-align:center;margin:30px 0">
+              <a href="https://propbol.com/perfil/seguridad" 
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 style="display:inline-block;background:linear-gradient(135deg,#C85A4F 0%,#B47B65 100%);color:white;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;font-size:15px;transition:transform 0.2s;box-shadow:0 2px 4px rgba(200,90,79,0.2)">
+                👁️ Ver Detalles de Seguridad
+              </a>
+            </div>
+            
+            <!-- Información adicional -->
+            <div style="background:#f5f5f5;padding:16px;margin:20px 0;border-radius:6px;border:1px solid #e0e0e0">
+              <p style="margin:0;font-size:12px;color:#666;line-height:1.6">
+                <strong>¿Qué cambió?</strong> Tu nueva contraseña está protegida con encriptación de nivel empresarial. Nunca compartas tu contraseña con nadie.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background:#f9f9f9;padding:20px 24px;border-top:1px solid #e0e0e0;text-align:center;color:#666;font-size:12px">
+            <p style="margin:0 0 8px 0">
+              © 2026 PROBOL • La plataforma de bolivarenses
+            </p>
+            <p style="margin:0;color:#999;font-size:11px">
+              Este es un email automático, no respondas a este mensaje.
+            </p>
+          </div>
         </div>
-
-        <div style="text-align:center;margin-top:30px">
-          <a href="https://www.propbol.com/perfil/seguridad" 
-             style="display:inline-block;background:#C85A4F;color:white;padding:12px 30px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px">
-            📱 Ver Mi Perfil
-          </a>
-        </div>
       </div>
-    </div>
+    </body>
+    </html>
   `;
 
-  const asunto = `[SEGURIDAD] Tu contraseña fue actualizada - ${new Date().getFullYear()}`;
+  const asunto = `🔒 Tu contraseña fue actualizada en PROBOL - ${ahora.toLocaleDateString('es-BO')}`;
   
   return sendEmail(email, asunto, html);
 }
 
 export const sendPasswordChangeEmail = enviarCambioContrasena;
+
+/**
+ * TAREA 6: Exportar sendEmail como función genérica reutilizable
+ * Permite que otros módulos envíen correos personalizados
+ * 
+ * Ejemplo de uso:
+ * ```
+ * const result = await sendGenericEmail(
+ *   'usuario@email.com',
+ *   'Asunto del correo',
+ *   '<p>HTML del correo</p>',
+ *   3 // número de reintentos
+ * );
+ * 
+ * if (result.success) {
+ *   console.log('Email enviado:', result.messageId);
+ * } else {
+ *   console.error('Error:', result.error);
+ * }
+ * ```
+ */
+export async function sendGenericEmail(
+  to: string,
+  subject: string,
+  html: string,
+  maxRetries: number = 3
+): Promise<SendEmailResult> {
+  return sendEmail(to, subject, html, maxRetries);
+}
+
+export type { SendEmailResult };
