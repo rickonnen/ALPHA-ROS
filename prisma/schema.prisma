@@ -508,48 +508,6 @@ model Blogs {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model BusquedaLog {
-  id_busqueda       BigInt              @id(map: "BusquedaLog_pk") @default(autoincrement())
-  id_usuario        String?             @db.Uuid
-  session_id        String              @db.VarChar(64)
-  id_ciudad         Int?                @db.SmallInt
-  id_zona           Int?                @db.SmallInt
-  texto_calle       String?             @db.VarChar(150)
-  lat_centro        Decimal?            @db.Decimal(9, 6)
-  lng_centro        Decimal?            @db.Decimal(9, 6)
-  radio_km          Decimal?            @db.Decimal(5, 2)
-  id_tipo_operacion Int?                @db.SmallInt
-  id_tipo_inmueble  Int?                @db.SmallInt
-  precio_min        Decimal?            @db.Decimal(25, 2)
-  precio_max        Decimal?            @db.Decimal(25, 2)
-  id_moneda         Int?
-  superficie_min    Decimal?            @db.Decimal(10, 2)
-  superficie_max    Decimal?            @db.Decimal(10, 2)
-  habitaciones      Int?                @db.SmallInt
-  banos             Int?                @db.SmallInt
-  garajes           Int?                @db.SmallInt
-  cant_resultados   Int?
-  cant_clicks       Int?                @default(0)
-  texto_busqueda    String?             @db.VarChar(255)
-  creado_en         DateTime?           @default(now()) @db.Timestamptz(6)
-  Ciudad            Ciudad?             @relation(fields: [id_ciudad], references: [id_ciudad], onUpdate: NoAction, map: "fk_bl_ciudad")
-  Moneda            Moneda?             @relation(fields: [id_moneda], references: [id_moneda], onUpdate: NoAction, map: "fk_bl_moneda")
-  TipoInmueble      TipoInmueble?       @relation(fields: [id_tipo_inmueble], references: [id_tipo_inmueble], onUpdate: NoAction, map: "fk_bl_tipo_inmueble")
-  TipoOperacion     TipoOperacion?      @relation(fields: [id_tipo_operacion], references: [id_tipo_operacion], onUpdate: NoAction, map: "fk_bl_tipo_operacion")
-  Usuario           Usuario?            @relation(fields: [id_usuario], references: [id_usuario], onUpdate: NoAction, map: "fk_bl_usuario")
-  Zona              Zona?               @relation(fields: [id_zona], references: [id_zona], onUpdate: NoAction, map: "fk_bl_zona")
-  HistorialBusqueda HistorialBusqueda[]
-
-  @@index([texto_calle], map: "idx_bl_calle")
-  @@index([id_ciudad], map: "idx_bl_ciudad")
-  @@index([creado_en(sort: Desc)], map: "idx_bl_fecha")
-  @@index([session_id], map: "idx_bl_session")
-  @@index([id_usuario], map: "idx_bl_usuario")
-  @@index([id_zona], map: "idx_bl_zona")
-  @@schema("public")
-}
-
 model Caracteristica {
   id_caracteristica         Int                         @id(map: "Caracteristica_pk") @default(autoincrement())
   nombre_caracteristica     String?                     @db.VarChar(128)
@@ -567,13 +525,12 @@ model CategoriaNotificacion {
 }
 
 model Ciudad {
-  id_ciudad         Int                 @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
-  nombre_ciudad     String?             @db.VarChar(128)
-  descripcion_corta String?             @map("descripcion-corta")
+  id_ciudad         Int            @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
+  nombre_ciudad     String?        @db.VarChar(128)
+  descripcion_corta String?        @map("descripcion-corta")
   url_banner        String?
   BusquedaLog       BusquedaLog[]
   CiudadImagen      CiudadImagen[]
-  HistorialBusqueda HistorialBusqueda[]
   Ubicacion         Ubicacion[]
   Zona              Zona[]
 
@@ -656,25 +613,15 @@ model Favorito {
 }
 
 model HistorialBusqueda {
-  id_hb                   Int          @id @default(autoincrement())
-  id_usuario              String       @db.Uuid
-  mapbox_id               String?      @db.VarChar(50)
-  name                    String?      @db.VarChar(50)
-  full_name               String?      @db.VarChar(100)
-  icon_url                String?
-  place_type              String?      @db.VarChar(50)
-  created_at              DateTime?    @default(now()) @db.Timestamptz(6)
-  session_id              String?      @db.VarChar
-  id_ciudad               Int?         @db.SmallInt
-  id_zona                 Int?         @db.SmallInt
-  id_busqueda_log         BigInt?
-  hubo_click              BigInt?
-  cant_resultados         Int?
-  tiempo_en_resultados_ms Int?
-  BusquedaLog             BusquedaLog? @relation(fields: [id_busqueda_log], references: [id_busqueda], onDelete: NoAction, onUpdate: NoAction)
-  Ciudad                  Ciudad?      @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction)
-  Zona                    Zona?        @relation(fields: [id_zona], references: [id_zona], onDelete: NoAction, onUpdate: NoAction)
-  Usuario                 Usuario      @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
+  id_hb      Int       @id @default(autoincrement())
+  id_usuario String    @db.Uuid
+  mapbox_id  String?   @db.VarChar(50)
+  name       String?   @db.VarChar(50)
+  full_name  String?   @db.VarChar(100)
+  icon_url   String?
+  place_type String?   @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  Usuario    Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
   @@schema("public")
 }
@@ -756,7 +703,7 @@ model Notificacion {
   creado_en             DateTime?              @default(now()) @db.Timestamptz(6)
   id_publicacion        Int                    @default(autoincrement())
   id_usuario            String?                @db.Uuid
-  email_enviado         Boolean?               @default(false)
+  email_enviado         Boolean?
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
   Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
@@ -897,17 +844,6 @@ model RedesVinculadas {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model ReporteInmuebles {
-  id           Int    @id @default(autoincrement())
-  departamento String @db.VarChar(50)
-  alquiler     Int?   @default(0)
-  venta        Int?   @default(0)
-  anticretico  Int?   @default(0)
-
-  @@schema("public")
-}
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
@@ -926,32 +862,6 @@ model Sesion {
   ip                String?   @db.VarChar(128)
   Usuario           Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_sesion_usuario")
 
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model SnapshotInteraccion {
-  id_snapshot       BigInt            @id(map: "SnapshotInteraccion_pk") @default(autoincrement())
-  id_interaccion    BigInt
-  id_publicacion    Int
-  id_tipo_operacion Int?              @db.SmallInt
-  id_tipo_inmueble  Int?              @db.SmallInt
-  precio            Decimal?          @db.Decimal(25, 2)
-  id_moneda         Int?
-  superficie        Decimal?          @db.Decimal(10, 2)
-  habitaciones      Int?              @db.SmallInt
-  banos             Int?              @db.SmallInt
-  garajes           Int?              @db.SmallInt
-  plantas           Int?              @db.SmallInt
-  id_zona           Int?              @db.SmallInt
-  id_ciudad         Int?              @db.SmallInt
-  id_estado_constr  Int?              @db.SmallInt
-  caracteristicas   Json?
-  InteraccionEvento InteraccionEvento @relation(fields: [id_interaccion], references: [id_interaccion], onDelete: Cascade, onUpdate: NoAction, map: "fk_si_interaccion")
-  Publicacion       Publicacion       @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: Cascade, onUpdate: NoAction, map: "fk_si_publicacion")
-
-  @@index([id_interaccion], map: "idx_si_interaccion")
-  @@index([id_publicacion], map: "idx_si_publicacion")
   @@schema("public")
 }
 
@@ -991,7 +901,6 @@ model TipoInmueble {
 model TipoOperacion {
   id_tipo_operacion Int           @id(map: "TipoOperacion_pk") @default(autoincrement()) @db.SmallInt
   nombre_operacion  String?       @db.VarChar(128)
-  BusquedaLog       BusquedaLog[]
   Publicacion       Publicacion[]
 
   @@schema("public")
@@ -1031,11 +940,7 @@ model Usuario {
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?                    @default(0)
-  dos_fa_habilitado            Boolean?                @default(false)
-  dos_fa_secreto               String?                 @db.VarChar
-  primary_provider             String?                 @db.VarChar(20)
   Blogs                        Blogs[]
-  BusquedaLog                  BusquedaLog[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
   Favorito                     Favorito[]

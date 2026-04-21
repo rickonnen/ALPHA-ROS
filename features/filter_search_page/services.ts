@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client';
 
-import { convertBsToUsd } from './currencyConverter';
 import { prisma } from './prismaClient';
 
 export type SearchCurrency = 'USD' | 'BS';
@@ -84,6 +83,8 @@ const TIPO_INMUEBLE_ID: Record<string, number> = {
   terreno: 3,
 };
 
+const BS_EXCHANGE_RATE = 6.96;
+
 function normalizeText(value: string): string {
   return value
     .trim()
@@ -105,6 +106,14 @@ function parseMinimum(value: string): number | null {
   return match ? Number.parseInt(match[1], 10) : null;
 }
 
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function convertBsToUsd(amount: number): number {
+  return roundToTwo(amount / BS_EXCHANGE_RATE);
+}
+
 function getPropertyTypeNames(value: string | undefined): string[] {
   if (!value) {
     return [];
@@ -116,16 +125,30 @@ function getPropertyTypeNames(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function getOperationIds(value: string | undefined): number[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => OPERACION_ID[normalizeText(item)])
+    .filter((id): id is number => Boolean(id))
+    .filter((id, index, array) => array.indexOf(id) === index);
+}
+
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   const where: Prisma.PublicacionWhereInput = {
     id_estado: 1,
   };
 
-  if (filters.operacion) {
-    const operationId = OPERACION_ID[normalizeText(filters.operacion)];
-    if (operationId) {
-      where.id_tipo_operacion = operationId;
-    }
+  const operationIds = getOperationIds(filters.operacion);
+  if (operationIds.length === 1) {
+    where.id_tipo_operacion = operationIds[0];
+  } else if (operationIds.length > 1) {
+    where.id_tipo_operacion = {
+      in: operationIds,
+    };
   }
 
   const propertyTypeNames = getPropertyTypeNames(filters.tipoInmueble);
