@@ -150,8 +150,32 @@ export default function PublicacionesView({
       setEliminando(false);
     }
   };
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number) => {
+    try {
+      setError(null);
+      // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
+      const url = `/api/perfil/updateEstadoPublicacion?id_publicacion=${id_pub}&id_estado=${nuevoEstado}&id_usuario=${id_usuario}`;
 
-  const handleAgregar = async () => { 
+      const res = await fetch(url, { method: "PATCH" });
+
+      if (res.ok) {
+        // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
+        setPublicaciones((prev) =>
+          prev.map((p) =>
+            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
+          ),
+        );
+      } else {
+        const errorData = await res.json();
+        console.error("Error desde el servidor:", errorData.error);
+        setError("No se pudo actualizar el estado de la publicación.");
+      }
+    } catch (err) {
+      console.error("Error de red:", err);
+      setError("Error de conexión al intentar cambiar el estado.");
+    }
+  };
+  const handleAgregar = async () => {
     if (!user) {
       router.push("/login");
       return;
@@ -229,6 +253,7 @@ export default function PublicacionesView({
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
+                  onCambiarEstado={handleCambiarEstado}
                 />
               ))}
             </div>
@@ -333,7 +358,7 @@ export default function PublicacionesView({
       <FreePublicationLimitModal
         bolOpen={bolShowModal}
         onBack={() => setBolShowModal(false)}
-        strPlansHref="/cobros/planes" 
+        strPlansHref="/cobros/planes"
       />
     </>
   );

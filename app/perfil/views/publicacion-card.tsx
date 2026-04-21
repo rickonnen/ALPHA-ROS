@@ -1,3 +1,4 @@
+"use client";
 /*  Dev: Candy Camila Ordoñez Pinto
     Fecha: 25/03/2026
     Funcionalidad: Card individual de publicación dentro de Mis Publicaciones
@@ -16,10 +17,12 @@
     Fecha: 17/04/2026
     Fix: Actualización del texto del botón secundario a "Ver detalle".
 */
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Square, BedDouble, Bath } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 export interface Publicacion {
   id: string;
@@ -34,18 +37,23 @@ export interface Publicacion {
   habitaciones?: number;
   banos?: number;
   fechaPublicacion?: string;
+  id_estado: number;
 }
 
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
+  onCambiarEstado: (id: string, nuevoEstado: number) => Promise<void>;
 }
 
 export default function PublicacionCard({
   publicacion,
   onEliminar,
+  onCambiarEstado,
 }: PublicacionCardProps) {
   const router = useRouter();
+  const [activo, setActivo] = useState(publicacion.id_estado === 1);
+  const [bloqueado, setBloqueado] = useState(false);
 
   const strEtiqueta = [publicacion.tipo, publicacion.tipoOperacion]
     .filter(Boolean)
@@ -53,7 +61,9 @@ export default function PublicacionCard({
     .toUpperCase();
 
   return (
-    <Card className="border border-black/10 bg-white text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden">
+    <Card
+      className={`relative border border-black/10 text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden ${!activo ? "bg-slate-100 brightness-[0.85]" : "bg-white"}`}
+    >
       <CardContent className="flex flex-col min-[480px]:flex-row items-stretch gap-0 p-0">
         {/* Miniatura */}
         <div className="w-full h-40 min-[480px]:w-40 min-[480px]:h-auto min-[480px]:min-w-[10rem] flex-shrink-0 overflow-hidden">
@@ -79,11 +89,33 @@ export default function PublicacionCard({
         <div className="flex flex-col justify-between flex-1 min-w-0 p-4 gap-2">
           {/* Encabezado */}
           <div>
-            {strEtiqueta && (
-              <p className="text-[11px] font-bold text-[#E05A2B] uppercase tracking-wide mb-1">
-                {strEtiqueta}
-              </p>
-            )}
+            <div className="flex items-center justify-between mb-1">
+              {strEtiqueta ? (
+                <p className="text-[11px] font-bold text-[#E05A2B] uppercase tracking-wide">
+                  {strEtiqueta}
+                </p>
+              ) : (
+                <span />
+              )}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] font-bold uppercase ${activo ? "text-green-600" : "text-red-500"}`}
+                >
+                  {activo ? "Activa" : "Suspendida"}
+                </span>
+                <Switch
+                  checked={activo}
+                  disabled={bloqueado}
+                  className="h-5 w-9"
+                  onCheckedChange={async (checked) => {
+                    setBloqueado(true);
+                    setActivo(checked);
+                    await onCambiarEstado(publicacion.id, checked ? 1 : 4);
+                    setBloqueado(false);
+                  }}
+                />
+              </div>
+            </div>
             <h3
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
@@ -94,13 +126,11 @@ export default function PublicacionCard({
             >
               {publicacion.titulo}
             </h3>
-            {(publicacion.direccion) && (
+            {publicacion.direccion && (
               <div className="flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
                 <p className="text-xs text-gray-500 truncate">
-                  {[publicacion.direccion]
-                    .filter(Boolean)
-                    .join(", ")}
+                  {[publicacion.direccion].filter(Boolean).join(", ")}
                 </p>
               </div>
             )}
