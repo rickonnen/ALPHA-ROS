@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation"
 export interface Favorito {
   id: string;
   titulo: string;
-  zona: string;
+  //zona: string;
   tipo: string;
   tipo_operacion: string;
   imagen?: string | null;
@@ -26,7 +26,7 @@ interface FavCardProps {
   id_usuario: string;
   onRemoved: (id: string) => void;
 }
-
+//<p className="text-xs text-white/50">{favorito.zona}</p>
 export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProps) {
   const router = useRouter()
 
@@ -51,7 +51,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{favorito.titulo}</p>
-          <p className="text-xs text-white/50">{favorito.zona}</p>
+          
           <p className="text-xs text-white/50">{favorito.tipo} - {favorito.tipo_operacion}</p>
         </div>
 

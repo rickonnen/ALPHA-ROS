@@ -111,11 +111,10 @@ function PerfilContent() {
       };
       fetchUsuario();
     } else {
-      // userId vacío incluso después del tiempo de gracia → sesión inválida
       const timer = setTimeout(() => {
         setError("Sesión no válida. Redirigiendo...");
         router.push("/");
-      }, 8000); // ← más tiempo para el deploy (era 5000)
+      }, 8000);
     
       return () => clearTimeout(timer);
     }
@@ -132,6 +131,7 @@ function PerfilContent() {
     { id: "historial", name: "HISTORIAL" },
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
     { id: "zonas", name: "ZONAS" },
+    { id: "planes", name: "PLAN ACTUAL" },
   ];
 
   //miguel actualizacion telefonos
@@ -159,6 +159,7 @@ function PerfilContent() {
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
     zonas: <div className="p-6 text-center text-slate-500">En proceso de Team-Bug Hunters/Mapas</div>,
+    planes: <div className="p-6 text-center text-slate-500">En proceso de Team-ADA/Cobros</div>,
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);

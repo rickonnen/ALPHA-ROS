@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       superficie: pub.superficie ?? null,
       habitaciones: pub.habitaciones ?? null,
       banos: pub.banos ?? null,
-      zona: pub.Ubicacion?.zona ?? null,
+      //zona: pub.Ubicacion?.zona ?? null,
       direccion: pub.Ubicacion?.direccion ?? null,
       fechaPublicacion: pub.fecha_creacion
         ? new Date(pub.fecha_creacion).toLocaleDateString("es-BO", {
