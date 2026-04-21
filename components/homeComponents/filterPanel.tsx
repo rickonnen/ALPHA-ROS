@@ -64,6 +64,20 @@ export default function FilterPanel() {
     if (strPropertyType) objParams.set("tipo", strPropertyType);
     if (ciudadSeleccionada.trim()) objParams.set("ciudad", ciudadSeleccionada.trim());
     if (bolAvanzado) objParams.set("avanzado", "true");
+    if (ciudadSeleccionada.trim() && arrOperations.length > 0) {
+      for (const strOp of arrOperations) {
+        fetch("/api/home/reporte", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lugar: ciudadSeleccionada.trim(),
+            operacion: strOp.toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, ""),
+          }),
+        }).catch(() => {});
+      }
+    }
 
     const strQuery = objParams.toString();
     objRouter.push(strQuery ? `/busqueda?${strQuery}` : "/busqueda");
