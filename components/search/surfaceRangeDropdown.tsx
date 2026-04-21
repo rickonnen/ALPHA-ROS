@@ -25,8 +25,6 @@ export default function SurfaceRangeDropdown({
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const maxInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const hasValue = Boolean(minValue || maxValue);
-
   const sanitizeZeroLikeValue = (value: string) => {
     if (value.trim() === "") return "";
     const parsed = Number(value);
@@ -37,6 +35,8 @@ export default function SurfaceRangeDropdown({
   const normalizedMinValue = sanitizeZeroLikeValue(minValue);
   const normalizedMaxValue = sanitizeZeroLikeValue(maxValue);
 
+  const hasValue = Boolean(normalizedMinValue || normalizedMaxValue);
+
   const label = React.useMemo(() => {
     if (normalizedMinValue && normalizedMaxValue) {
       return `${normalizedMinValue}m² - ${normalizedMaxValue}m²`;
@@ -46,15 +46,49 @@ export default function SurfaceRangeDropdown({
     return "Superficie m²";
   }, [normalizedMinValue, normalizedMaxValue]);
 
+  const applySurfaceRange = (nextMin: string, nextMax: string) => {
+    const safeMin = sanitizeZeroLikeValue(nextMin);
+    const safeMax = sanitizeZeroLikeValue(nextMax);
+
+    if (safeMin !== nextMin) onMinChange(safeMin);
+    if (safeMax !== nextMax) onMaxChange(safeMax);
+
+    const parsedMin = safeMin === "" ? undefined : Number(safeMin);
+    const parsedMax = safeMax === "" ? undefined : Number(safeMax);
+
+    if (parsedMin !== undefined && Number.isNaN(parsedMin)) {
+      setSurfaceError("Solo se permiten números");
+      return false;
+    }
+
+    if (parsedMax !== undefined && Number.isNaN(parsedMax)) {
+      setSurfaceError("Solo se permiten números");
+      return false;
+    }
+
+    if (
+      parsedMin !== undefined &&
+      parsedMax !== undefined &&
+      parsedMin > parsedMax
+    ) {
+      setSurfaceError("Superficie mínima no puede ser mayor a superficie máxima");
+      return false;
+    }
+
+    setSurfaceError(null);
+    return true;
+  };
+
   const handleSurfaceChange =
     (field: "min" | "max") =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value.trim();
 
       if (value === "") {
-        setSurfaceError(null);
         if (field === "min") onMinChange("");
         else onMaxChange("");
+
+        setSurfaceError(null);
         return;
       }
 
@@ -71,25 +105,17 @@ export default function SurfaceRangeDropdown({
       else onMaxChange(value);
     };
 
-  const normalizeCurrentInput = (
-    value: string,
-    setter: (value: string) => void
-  ) => {
-    const sanitized = sanitizeZeroLikeValue(value);
-    if (sanitized !== value) {
-      setter(sanitized);
-    }
-    return sanitized;
-  };
-
   const handleMinKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
       event.preventDefault();
 
-      normalizeCurrentInput(minValue, onMinChange);
-      maxInputRef.current?.focus();
+      const success = applySurfaceRange(minValue, maxValue);
+
+      if (success) {
+        maxInputRef.current?.focus();
+      }
     }
   };
 
@@ -99,13 +125,15 @@ export default function SurfaceRangeDropdown({
     if (event.key === "Enter") {
       event.preventDefault();
 
-      normalizeCurrentInput(maxValue, onMaxChange);
+      const success = applySurfaceRange(minValue, maxValue);
 
-      setOpen(false);
+      if (success) {
+        setOpen(false);
 
-      setTimeout(() => {
-        triggerRef.current?.focus();
-      }, 30);
+        setTimeout(() => {
+          triggerRef.current?.focus();
+        }, 30);
+      }
     }
   };
 
