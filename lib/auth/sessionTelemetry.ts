@@ -10,16 +10,48 @@ interface RegistrarSesionTelemetryParams {
   longitud?: unknown;
 }
 
-function getClientIp(request: NextRequest): string | null {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const realIp = request.headers.get("x-real-ip");
-
-  if (forwardedFor) {
-    const firstIp = forwardedFor.split(",")[0]?.trim();
-    return firstIp || null;
+function normalizeIpCandidate(value: string | null): string | null {
+  if (!value) {
+    return null;
   }
 
-  return realIp?.trim() || null;
+  const trimmedValue = value.trim();
+  if (!trimmedValue || trimmedValue.toLowerCase() === "unknown") {
+    return null;
+  }
+
+  return trimmedValue;
+}
+
+function getIpFromForwardedHeader(value: string | null): string | null {
+  const normalizedValue = normalizeIpCandidate(value);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const forwardedForMatch = normalizedValue.match(/for=(?:"?\[?)([^\];",]+)(?:\]?"?)/i);
+  return normalizeIpCandidate(forwardedForMatch?.[1] ?? null);
+}
+
+function getClientIp(request: NextRequest): string | null {
+  const headerCandidates = [
+    request.headers.get("x-forwarded-for")?.split(",")[0] ?? null,
+    request.headers.get("x-real-ip"),
+    request.headers.get("x-vercel-forwarded-for")?.split(",")[0] ?? null,
+    request.headers.get("cf-connecting-ip"),
+    request.headers.get("true-client-ip"),
+    request.headers.get("x-client-ip"),
+    getIpFromForwardedHeader(request.headers.get("forwarded")),
+  ];
+
+  for (const candidate of headerCandidates) {
+    const normalizedCandidate = normalizeIpCandidate(candidate);
+    if (normalizedCandidate) {
+      return normalizedCandidate;
+    }
+  }
+
+  return null;
 }
 
 function toNullableCoordinate(value: unknown): Prisma.Decimal | null {
