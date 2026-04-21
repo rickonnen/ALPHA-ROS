@@ -143,10 +143,10 @@ export default function PublicacionesView({
       if (objEstado.bolLimiteAlcanzado) {
         setBolShowModal(true);
       } else {
-        router.push("/publicacion/informacion-comercial");
+        router.push("/publicacion/formularioPublicacion");
       }
     } catch {
-      router.push("/publicacion/informacion-comercial");
+      router.push("/publicacion/formularioPublicacion");
     } finally {
       setBolChecking(false);
     }
