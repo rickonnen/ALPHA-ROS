@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PaymentDataTable } from "@/components/admin/PaymentDataTable"
 import { PaymentRecord } from "@/components/admin/paymentTypes"
 import { AccessDenied } from "@/components/admin/AccessDenied"
+import { PaymentEvidenceModal } from "@/components/admin/PaymentEvidenceModal"
 
 /**
  * Dev: René Gabriel Vera Portanda
@@ -22,6 +23,8 @@ export default function PaymentVerificationPage() {
   const [bolIsAuthorized, setBolIsAuthorized] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [bolShowReceiptModal, setBolShowReceiptModal] = useState<boolean>(false);
+  const [strSelectedReceipt, setStrSelectedReceipt] = useState<string | null>(null);
   const formatData = useCallback((arrDatabaseData: any[]): PaymentRecord[] => {
 
     if (!arrDatabaseData || !Array.isArray(arrDatabaseData)) return [];
@@ -42,6 +45,8 @@ export default function PaymentVerificationPage() {
     }) 
   : 'Sin fecha',
       strPaymentMethod: objPayment.metodo_pago || 'No especificado',
+      strReceiptUrl: objPayment.comprobante_url || null,
+      strReason: objPayment.razon_rechazo || null,
       intStatus: objPayment.estado
     }));
   }, []);
@@ -103,6 +108,11 @@ export default function PaymentVerificationPage() {
       fetchStatus('Aceptado', paymentsData.accepted.page),
       fetchStatus('Rechazado', paymentsData.rejected.page)
     ]).finally(() => setBolIsLoading(false));
+  };
+
+  const handleViewReceipt = (strUrl: string) => {
+    setStrSelectedReceipt(strUrl);
+    setBolShowReceiptModal(true);
   };
 
   return (
@@ -178,37 +188,49 @@ export default function PaymentVerificationPage() {
             <TabsContent value="pending" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.pending.data} 
+                strStatus="Pendiente"
                 bolShowActions={true} 
                 onPaymentUpdated={handlePaymentUpdated} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.pending.page}
                 intTotalPages={paymentsData.pending.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Pendiente', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
             <TabsContent value="accepted" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.accepted.data} 
+                strStatus="Aceptado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.accepted.page}
                 intTotalPages={paymentsData.accepted.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Aceptado', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
             <TabsContent value="rejected" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.rejected.data} 
+                strStatus="Rechazado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.rejected.page}
                 intTotalPages={paymentsData.rejected.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Rechazado', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
           </div>
         </Tabs>
       )}
+      {/* esto va aquí o en datatable? por ahora se queda aquí */}
+      <PaymentEvidenceModal 
+        bolIsOpen={bolShowReceiptModal} 
+        onOpenChange={setBolShowReceiptModal} 
+        strUrl={strSelectedReceipt} 
+      />
     </div>
   )
 }
