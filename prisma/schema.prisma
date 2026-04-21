@@ -530,6 +530,7 @@ model Ciudad {
   descripcion_corta String?        @map("descripcion-corta")
   url_banner        String?
   BusquedaLog       BusquedaLog[]
+  BusquedaLog       BusquedaLog[]
   CiudadImagen      CiudadImagen[]
   Ubicacion         Ubicacion[]
   Zona              Zona[]
@@ -570,6 +571,10 @@ model DetallePago {
   razon_rechazo   String?          @db.VarChar(128)
   mes_pago        String?          @db.VarChar
   tiempo_pago     String?          @db.VarChar
+  comprobante_url String?
+  razon_rechazo   String?          @db.VarChar(128)
+  mes_pago        String?          @db.VarChar
+  tiempo_pago     String?          @db.VarChar
   PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_planpublicacion")
   Usuario         Usuario?         @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_usuario")
 
@@ -604,6 +609,7 @@ model Etiquetas {
 model Favorito {
   id_publicacion Int
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
@@ -629,6 +635,7 @@ model HistorialBusqueda {
 model HistorialVistos {
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
@@ -689,6 +696,7 @@ model Moneda {
   simbolo     String?       @db.Char(1)
   tasa_cambio Decimal?      @db.Decimal(10, 2)
   BusquedaLog BusquedaLog[]
+  BusquedaLog BusquedaLog[]
   Publicacion Publicacion[]
 
   @@schema("public")
@@ -703,6 +711,10 @@ model Notificacion {
   creado_en             DateTime?              @default(now()) @db.Timestamptz(6)
   id_publicacion        Int                    @default(autoincrement())
   id_usuario            String?                @db.Uuid
+  email_enviado         Boolean?
+  fecha_envio_email     DateTime?              @db.Timestamptz(6)
+  estado_envio          String?                @db.VarChar(50)
+  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   email_enviado         Boolean?
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
@@ -758,6 +770,8 @@ model PlanPublicacion {
   DetallePago        DetallePago[]
   QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
   Suscripcion        Suscripcion[]
+  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
+  Suscripcion        Suscripcion[]
 
   @@schema("public")
 }
@@ -781,9 +795,11 @@ model Publicacion {
   id_estado                 Int?                        @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
+  fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   Favorito                  Favorito[]
   HistorialVistos           HistorialVistos[]
   Imagen                    Imagen[]
+  InteraccionEvento         InteraccionEvento[]
   InteraccionEvento         InteraccionEvento[]
   Notificacion              Notificacion[]
   EstadoPublicacion         EstadoPublicacion?          @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_estado(Publicacion)-id_estado(EP)")
@@ -796,12 +812,18 @@ model Publicacion {
   Usuario                   Usuario?                    @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacion_usuario")
   PublicacionCaracteristica PublicacionCaracteristica[]
   SnapshotInteraccion       SnapshotInteraccion[]
+  SnapshotInteraccion       SnapshotInteraccion[]
   Video                     Video[]
 
   @@schema("public")
 }
 
 model PublicacionCaracteristica {
+  id_publicacion         Int
+  id_caracteristica      Int
+  detalle_caracteristica String?        @db.VarChar(300)
+  Caracteristica         Caracteristica @relation(fields: [id_caracteristica], references: [id_caracteristica], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacioncaracteristica_caracteristica")
+  Publicacion            Publicacion    @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_publicacioncaracteristica_publicacion")
   id_publicacion         Int
   id_caracteristica      Int
   detalle_caracteristica String?        @db.VarChar(300)
@@ -893,6 +915,7 @@ model TipoInmueble {
   id_tipo_inmueble Int           @id(map: "TipoInmueble_pk") @default(autoincrement()) @db.SmallInt
   nombre_inmueble  String?       @db.VarChar(128)
   BusquedaLog      BusquedaLog[]
+  BusquedaLog      BusquedaLog[]
   Publicacion      Publicacion[]
 
   @@schema("public")
@@ -927,7 +950,14 @@ model Usuario {
   nombres                      String?                 @db.VarChar(100)
   apellidos                    String?                 @db.VarChar(100)
   ci                           String?                 @db.VarChar(20)
+  email                        String?                 @db.VarChar(320)
+  nombres                      String?                 @db.VarChar(100)
+  apellidos                    String?                 @db.VarChar(100)
+  ci                           String?                 @db.VarChar(20)
   rol                          Int?
+  estado                       Int?                    @db.SmallInt
+  direccion                    String?                 @db.VarChar(200)
+  google_id                    String?                 @db.VarChar(404)
   estado                       Int?                    @db.SmallInt
   direccion                    String?                 @db.VarChar(200)
   google_id                    String?                 @db.VarChar(404)
@@ -948,9 +978,19 @@ model Usuario {
   HistorialVistos              HistorialVistos[]
   InteraccionEvento            InteraccionEvento[]
   MisZonas                     MisZonas[]
+  InteraccionEvento            InteraccionEvento[]
+  MisZonas                     MisZonas[]
   Notificacion                 Notificacion[]
   PerfilPreferencias           PerfilPreferencias?
+  PerfilPreferencias           PerfilPreferencias?
   Publicacion                  Publicacion[]
+  Recuperacion_password        Recuperacion_password[]
+  RedesVinculadas              RedesVinculadas[]
+  Sesion                       Sesion[]
+  Suscripcion                  Suscripcion?
+  users                        users                   @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
+  Pais                         Pais?                   @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
+  Rol                          Rol?                    @relation(fields: [rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
   Sesion                       Sesion[]
@@ -1011,6 +1051,7 @@ model notificacion_whatsapp {
 }
 
 model otp_cambio_correo {
+  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
   nuevo_email    String   @db.VarChar(320)

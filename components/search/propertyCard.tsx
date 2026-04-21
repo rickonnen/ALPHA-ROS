@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square } from 'lucide-react';
+import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import SearchDetailModal from './SearchDetailModal';
+
 
 type Currency = "USD" | "BS";
 // defini esta interfaz para los datos pero esto no se si deberia ir aqui, pero por ahora aqui
@@ -34,15 +35,17 @@ export interface Property {
 interface PropertyCardProps {
   property: Property;
   selectedCurrency: Currency;
+  viewMode?: 'grid' | 'list';
   isHovered?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   onClick?: () => void;
 }
 
-export default function PropertyCard({ 
+function PropertyCard({ 
   property, 
   selectedCurrency,
+  viewMode = 'grid',
   isHovered = false,
   onMouseEnter,
   onMouseLeave,
@@ -67,6 +70,112 @@ export default function PropertyCard({
   // Usar teléfono del usuario si está disponible, sino usar el whatsappContact
   const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
 
+
+  if(viewMode === 'list') {
+    return (
+      <>
+        <div 
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          onClick={()=>{
+            setIsDetailOpen(true);
+            if (onClick) onClick();
+          }}
+          className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 
+            bg-white rounded-xl shadow-sm hover:shadow-md transition-all border-2 
+            cursor-pointer w-full overflow-hidden ${
+            isHovered 
+              ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
+              : 'border-transparent'
+          }`}
+        >
+          {/* izqquierda */}
+          <div className="relative w-[90px] sm:w-[130px] h-[75px] sm:h-[85px] shrink-0 overflow-hidden rounded-lg bg-gray-100">
+            <img
+              src={property.images[0]}
+              alt={`Imagen de ${property.title}`}
+              className="object-cover transition-transform group-hover:scale-105 w-full h-full"
+            />
+          </div>
+
+
+          {/*Layout movil*/}
+          <div className="flex-1 flex flex-col justify-center min-w-0 sm:hidden p-1 border-gray-200 rounded-lg
+          overflow-hidden">
+            <div className="flex justify-between items-start">
+              <span className="text-[17px] font-bold text-gray-950 leading-tight truncate">
+                {displayPrice}
+              </span>
+              <ArrowRight className="w-5 h-5 text-gray-400 shrink-0" strokeWidth={1.5} />
+            </div>
+            <span className="text-[13px] text-gray-500 font-medium truncate block">
+              {property.type}
+            </span>
+            <h3 className="text-[11px] font-semibold text-[#a67c52] truncate mb-0.5">
+              {property.title}
+            </h3>
+
+            <p className="text-[10px] text-gray-500 truncate mb-0.5 flex items-center gap-1">
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span className="truncate">{property.location}</span>
+            </p>
+            <p className="text-[10px] text-gray-400 font-medium truncate">
+              {property.terrainArea.toLocaleString('es-BO')} m² Terreno / {property.bathrooms} Baños
+            </p>
+          </div>
+
+          
+          {/* LAYOUT DESKTOP (Se oculta en móvil)          */}
+          <div className="hidden sm:flex flex-1 items-center min-w-0 overflow-hidden">
+            {/* Columna 1: Precio y Tipo */}
+            <div className="w-[200px] shrink-0 flex flex-col justify-center pr-4 overflow-hidden">
+              <span className="text-[18px] font-bold text-gray-950 leading-tight ">
+                {displayPrice}
+              </span>
+              <span className="text-[12px] text-gray-500 font-medium mt-1">
+                {property.type}
+              </span>
+            </div>
+
+            {/* Columna 2: Detalles (Título, Ubicación, Características) */}
+            <div className="flex-1 flex flex-col justify-center min-w-0 border-l border-gray-200 pl-4">
+              <h3 className="text-[14px] font-semibold text-[#a67c52] truncate mb-1 transition-colors group-hover:text-[#C26E5A]">
+                {property.title}
+              </h3>
+              <p className="text-[12px] text-gray-500 truncate mb-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3 shrink-0" />
+                {property.location}
+              </p>
+              <p className="text-[12px] text-gray-400 font-medium truncate flex items-center gap-1">
+                <Square className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                {property.terrainArea.toLocaleString('es-BO')} m² Terreno /
+                <Bath className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                {property.bathrooms} Baños / 
+                <BedDouble className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                {property.bedrooms} Rec.
+              </p>
+            </div>
+
+            {/* Flecha derecha */}
+            <div className="flex items-center justify-end pl-4 shrink-0">
+              <ArrowRight className="w-6 h-6 text-[#a67c52] transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
+            </div>
+          </div>
+        </div>
+        {/* Modal de detalle */}
+        {isDetailOpen && (
+          <SearchDetailModal
+            isOpen={isDetailOpen}
+            onClose={() => setIsDetailOpen(false)}
+            publicacionId={property.id}
+            selectedCurrency={selectedCurrency}
+          />
+        )}
+      </>
+    );
+  }
+        
+        
   return (
     <div 
       onMouseEnter={onMouseEnter}
@@ -77,6 +186,7 @@ export default function PropertyCard({
           ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
           : 'border-gray-100'
       }`}
+      
     >
       
       {/*  lado izquierdo (carrusel) */}
@@ -181,12 +291,24 @@ export default function PropertyCard({
       </div>
 
       {/* Modal de detalle */}
-      <SearchDetailModal
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        publicacionId={property.id}
-        selectedCurrency={selectedCurrency}
-      />
+      {isDetailOpen && (
+        <SearchDetailModal
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          publicacionId={property.id}
+          selectedCurrency={selectedCurrency}
+        />
+      )}
     </div>
   );
 }
+
+
+export default memo(PropertyCard, (prevProps, nextProps) => {
+  return (
+    prevProps.property.id === nextProps.property.id &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.selectedCurrency === nextProps.selectedCurrency
+  );
+});

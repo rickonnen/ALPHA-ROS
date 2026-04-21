@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -30,6 +32,13 @@ export function OperationTypeFilter({
   onChange,
   defaultOpen = false,
 }: OperationTypeFilterProps) {
+  const [accordionValue, setAccordionValue] = useState<string>(
+    defaultOpen ? "operation-type" : "",
+  );
+
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const optionRefs = useRef<Array<HTMLLabelElement | null>>([]);
+
   const toggle = (operation: OperationType) => {
     onChange(
       value.includes(operation)
@@ -51,39 +60,108 @@ export function OperationTypeFilter({
       ? `${selectedLabel.slice(0, 20)}..`
       : selectedLabel;
 
+  const isOpen = accordionValue === "operation-type";
+
+  useEffect(() => {
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        optionRefs.current[0]?.focus();
+      });
+    }
+  }, [isOpen]);
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLLabelElement>,
+    index: number,
+    optionValue: OperationType,
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = (index + 1) % operationTypeOptions.length;
+      optionRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex =
+        (index - 1 + operationTypeOptions.length) % operationTypeOptions.length;
+      optionRefs.current[prevIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      toggle(optionValue);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAccordionValue("");
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+    }
+  };
+
   return (
     <div className="mt-3 w-full">
       <Accordion
         type="single"
         collapsible
-        defaultValue={defaultOpen ? "operation-type" : undefined}
+        value={accordionValue}
+        onValueChange={setAccordionValue}
         className="w-full"
       >
         <AccordionItem value="operation-type" className="border-none">
           <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
+              ref={triggerButtonRef}
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]",
               )}
             >
-              <span className="flex-1 truncate text-left">{labelTruncated}</span>
+              <div className="flex w-full items-center justify-between pr-2">
+                <span className="truncate">{labelTruncated}</span>
+                {value.length > 0 && (
+                  <span
+                    role="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange([]);
+                    }}
+                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 text-[#5E5A55]" />
+                  </span>
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 
           <AccordionContent className="pb-0 pt-3">
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
               <div className="space-y-2">
-                {operationTypeOptions.map((option) => {
+                {operationTypeOptions.map((option, index) => {
                   const id = `operation-type-${option.value}`;
                   const isChecked = value.includes(option.value);
 
                   return (
                     <Label
                       key={option.value}
+                      ref={(element) => {
+                        optionRefs.current[index] = element;
+                      }}
+                      tabIndex={0}
                       htmlFor={id}
+                      onKeyDown={(event) =>
+                        handleOptionKeyDown(event, index, option.value)
+                      }
                       className={cn(
-                        "flex w-full cursor-pointer items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] transition",
+                        "flex w-full cursor-pointer items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] transition outline-none",
+                        "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                         isChecked
                           ? "bg-[#E7E3DD]"
                           : "bg-transparent hover:bg-[#F4EFE6]",
