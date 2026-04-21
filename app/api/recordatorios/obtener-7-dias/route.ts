@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-/**
- * Obtiene suscripciones que vencen en exactamente 7 días
- * y no han sido notificadas (notificado_7d = false)
- */
 export async function POST(req: NextRequest) {
   try {
     const hoy = new Date();
-    
-    // Calcular fecha de vencimiento en 7 días
     const fechaDestino = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    // Rango del día: 00:00 a 23:59 del día 7
     const inicio = new Date(
       fechaDestino.getFullYear(),
       fechaDestino.getMonth(),
@@ -30,7 +22,7 @@ export async function POST(req: NextRequest) {
           gte: inicio,
           lt: fin,
         },
-        notificado_7d: false, // Evitar duplicados
+        notificado_7d: false,
       },
       include: {
         Usuario: {
@@ -50,9 +42,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(
-      `[RECORDATORIOS] Suscripciones a recordar (7 días): ${suscripciones.length}`
-    );
+    console.log(`[RECORDATORIOS] Encontradas ${suscripciones.length} suscripciones (7 días)`);
 
     return NextResponse.json(
       {

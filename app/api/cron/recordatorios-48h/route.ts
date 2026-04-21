@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-/**
- * CRON JOB: Procesador de recordatorios 48 horas
- * Obtiene suscripciones vencidas hace 48h y las marca como notificadas
- * 
- * Ejecutar: Cada 6 horas
- * Seguridad: Requiere header x-cron-secret
- */
 export async function POST(req: NextRequest) {
   try {
-    // Validar header de seguridad
     const cronSecret = req.headers.get("x-cron-secret");
     const expectedSecret = process.env.CRON_SECRET;
 
@@ -23,8 +15,6 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("[CRON] Iniciando: Recordatorios 48h");
-
-    // Obtener suscripciones a recordar
     const respObtener = await fetch(
       `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/recordatorios/obtener-48h`,
       {
@@ -57,10 +47,6 @@ export async function POST(req: NextRequest) {
       resultados.procesadas++;
 
       try {
-        // PLACEHOLDER: Aquí irá la integración con las funciones de correo
-        // del equipo Binary Brain cuando estén disponibles
-        
-        // Por ahora, solo marca como notificada
         await prisma.suscripcion.update({
           where: { id_suscripcion: suscripcion.id_suscripcion },
           data: { notificado_48h: true },

@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-/**
- * Obtiene suscripciones que vencieron hace 48 horas
- * (entre 48h y 24h atrás) y no han sido notificadas
- */
 export async function POST(req: NextRequest) {
   try {
     const ahora = new Date();
-    
-    // 48 horas atrás
     const hace48h = new Date(ahora.getTime() - 48 * 60 * 60 * 1000);
-    
-    // 24 horas atrás
     const hace24h = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
 
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
         fecha_fin: {
-          gte: hace48h, // >= 48h atrás
-          lt: hace24h,  // < 24h atrás
+          gte: hace48h,
+          lt: hace24h,
         },
-        notificado_48h: false, // Evitar duplicados
+        notificado_48h: false,
       },
       include: {
         Usuario: {
@@ -41,9 +33,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(
-      `[RECORDATORIOS] Suscripciones a recordar (48h): ${suscripciones.length}`
-    );
+    console.log(`[RECORDATORIOS] Encontradas ${suscripciones.length} suscripciones (48h)`);
 
     return NextResponse.json(
       {
