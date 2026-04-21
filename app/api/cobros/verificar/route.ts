@@ -3,9 +3,9 @@ import { PrismaClient } from '@prisma/client';
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME_P,
+  api_key: process.env.CLOUDINARY_API_KEY_P,
+  api_secret: process.env.CLOUDINARY_API_SECRET_P,
   secure: true 
 });
 
@@ -15,9 +15,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME_P,
+    api_key: process.env.CLOUDINARY_API_KEY_P,
+    api_secret: process.env.CLOUDINARY_API_SECRET_P,
     secure: true
   });
 
@@ -25,7 +25,8 @@ export async function POST(request: Request) {
     const data = await request.formData();
     const file = data.get("file") as File;
     
-    if (!process.env.CLOUDINARY_API_KEY) {
+    if (!process.env.CLOUDINARY_API_KEY_P) {
+      console.log("VARIABLES DISPONIBLES:", Object.keys(process.env).filter(k => k.includes("CLOUDINARY")));
       throw new Error("La API KEY no llegó al servidor. Revisa tu archivo .env");
     }
 
