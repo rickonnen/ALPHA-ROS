@@ -123,37 +123,39 @@ function SubDropdown({
   return (
     <div ref={ref} className="w-full">
       <button
-        ref={triggerButtonRef}
         type="button"
-        onClick={() => setAbierto((prev) => !prev)}
-        onKeyDown={handleTriggerKeyDown}
+        onClick={() => setAbierto((p) => !p)}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-          {valor || label}
-        </span>
+        
+      <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
+        {valor || label}
+      </span>
 
-        <div className="flex items-center gap-2">
-          {valor && (
-            <X
-              size={16}
-              className="text-[#4B4B4B] transition-colors hover:text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange?.("");
-              }}
-            />
-          )}
+      <div className="flex items-center gap-2">
+        {valor && (
+          /* CAMBIO: button por span para evitar error de botones anidados */
           <span
-            className="text-[#4B4B4B] transition-transform duration-200"
-            style={{
-              display: "inline-block",
-              transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
-            }}
+             role="button"
+             onClick={(e) => {
+               e.stopPropagation();
+               onChange?.("");
+             }}
+             className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
           >
-            ▾
+             <X className="h-4 w-4 text-[#5E5A55]" />
           </span>
-        </div>
+        )}
+        <span
+          className="text-[#4B4B4B] transition-transform duration-200"
+          style={{
+            display: "inline-block",
+            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        >
+          ▾
+        </span>
+      </div>
       </button>
 
       {abierto && (

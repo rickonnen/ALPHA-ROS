@@ -342,20 +342,21 @@ export default function PriceDropdown({
             >
               <div className="flex w-full items-center justify-between pr-2">
                 <span>{getTriggerLabel()}</span>
-
-                {(appliedPriceFilter?.minPrice !== undefined ||
-                  appliedPriceFilter?.maxPrice !== undefined) && (
-                  <X
-                    size={18}
-                    className="ml-2 text-[#4B4B4B] transition-colors hover:text-red-500"
+                
+                {/* CAMBIO: button por span para evitar error de hidratación */}
+                {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
+                  <span
+                    role="button"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      setMinPriceInput("");
-                      setMaxPriceInput("");
-                      setPriceError(null);
-                      onApplyRange({ minPrice: undefined, maxPrice: undefined });
+                        e.stopPropagation();
+                        setMinPriceInput("");
+                        setMaxPriceInput("");
+                        onApplyRange({ minPrice: undefined, maxPrice: undefined });
                     }}
-                  />
+                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 text-[#5E5A55]" />
+                  </span>
                 )}
               </div>
             </AccordionTrigger>

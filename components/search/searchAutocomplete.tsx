@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { X } from "lucide-react";
 
 interface MapboxFeature {
   id: string;
@@ -126,6 +127,18 @@ const SearchAutocomplete = forwardRef<HTMLInputElement, SearchAutocompleteProps>
       onSelectSuggestion?.(feature.place_name);
     };
 
+    const handleClear = () => {
+      onChange("");
+      setSugerencias([]);
+      setAbierto(false);
+      setBuscado(false);
+      setHighlightedIndex(-1);
+      setError(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (!abierto && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
         if (sugerencias.length > 0 || value.trim()) {
@@ -163,28 +176,37 @@ const SearchAutocomplete = forwardRef<HTMLInputElement, SearchAutocompleteProps>
 
       if (event.key === "Escape") {
         event.preventDefault();
-        onChange("");
-        setSugerencias([]);
-        setAbierto(false);
-        setBuscado(false);
-        setHighlightedIndex(-1);
+        handleClear();
       }
     };
 
     return (
       <div ref={wrapperRef} className="relative mt-3 w-full">
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="Buscar por ubicación"
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          aria-expanded={abierto}
-          aria-autocomplete="list"
-          aria-controls="search-autocomplete-list"
-          className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm outline-none placeholder:text-[#5E5A55]"
-        />
+        <div className="relative flex items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Buscar por ubicación"
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            aria-expanded={abierto}
+            aria-autocomplete="list"
+            aria-controls="search-autocomplete-list"
+            className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 pr-10 text-sm text-[#2E2E2E] shadow-sm outline-none placeholder:text-[#5E5A55]"
+          />
+
+          {value && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-3 flex items-center justify-center rounded-full p-1 transition-colors hover:bg-[#DEDAD3]"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="h-4 w-4 text-[#5E5A55]" />
+            </button>
+          )}
+        </div>
 
         {abierto && (
           <ul

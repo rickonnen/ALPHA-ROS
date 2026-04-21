@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -23,9 +23,10 @@ import SearchAutocomplete from '@/components/search/searchAutocomplete';
 import { SortSelect } from '@/components/search/SortSelect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { X, List, LayoutGrid } from 'lucide-react';
+import { X, List, LayoutGrid, Map } from 'lucide-react';
 import SearchMapClient from './SearchMapClient';
 import { convertPublicacionesToLocations } from '@/lib/locations';
+import CurrencySwitch from '@/components/search/currencySwitch';
 
 type Currency = 'USD' | 'BS';
 
@@ -207,13 +208,7 @@ function SearchPageContent() {
   const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [appliedPriceFilter, setAppliedPriceFilter] = useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('USD');
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({
-    habitaciones: '',
-    banos: '',
-    piscina: '',
-    minSurface: '',
-    maxSurface: '',
-  });
+  const [advancedFilterValues, setAdvancedFilterValues] = useState({ habitaciones: '', banos: '', piscina: '' });
   const [selectedOperation, setSelectedOperation] = useState<OperationTypeValue>([]);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>([]);
   const [selectedSort, setSelectedSort] = useState('fecha-reciente');
@@ -226,31 +221,6 @@ function SearchPageContent() {
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
 
-  const searchInputDesktopRef = useRef<HTMLInputElement>(null);
-
-  const focusSearchInput = () => {
-    searchInputDesktopRef.current?.focus();
-  };
-
-  useEffect(() => {
-    const handleGlobalShortcuts = (event: KeyboardEvent) => {
-      if (!event.altKey) return;
-
-      const key = event.key.toLowerCase();
-
-      if (key === 'u') {
-        event.preventDefault();
-        focusSearchInput();
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalShortcuts);
-
-    return () => {
-      window.removeEventListener('keydown', handleGlobalShortcuts);
-    };
-  }, []);
-
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchLocation.trim() ||
@@ -259,8 +229,6 @@ function SearchPageContent() {
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
-        advancedFilterValues.minSurface ||
-        advancedFilterValues.maxSurface ||
         appliedPriceFilter?.minPrice !== undefined ||
         appliedPriceFilter?.maxPrice !== undefined ||
         selectedSort !== 'fecha-reciente',
@@ -269,8 +237,6 @@ function SearchPageContent() {
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
-    advancedFilterValues.minSurface,
-    advancedFilterValues.maxSurface,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
     searchLocation,
@@ -319,18 +285,8 @@ function SearchPageContent() {
       const labels = getPropertyTypeLabelsFromIds(selectedPropertyTypes, PROPERTY_TYPE_OPTIONS).join(',');
       urlParams.set('tipo', labels);
     }
-    if (appliedPriceFilter?.minPrice !== undefined) {
-      urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
-    }
-    if (appliedPriceFilter?.maxPrice !== undefined) {
-      urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
-    }
-    if (advancedFilterValues.minSurface.trim()) {
-      urlParams.set('minSurface', advancedFilterValues.minSurface);
-    }
-    if (advancedFilterValues.maxSurface.trim()) {
-      urlParams.set('maxSurface', advancedFilterValues.maxSurface);
-    }
+    if (appliedPriceFilter?.minPrice !== undefined) urlParams.set('minPrice', appliedPriceFilter.minPrice.toString());
+    if (appliedPriceFilter?.maxPrice !== undefined) urlParams.set('maxPrice', appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== 'USD') urlParams.set('currency', selectedCurrency);
     if (selectedSort !== 'fecha-reciente') urlParams.set('sort', selectedSort);
 
@@ -355,27 +311,6 @@ function SearchPageContent() {
         PROPERTY_TYPE_OPTIONS,
       );
 
-      const minSurface =
-        advancedFilterValues.minSurface.trim() !== ''
-          ? Number(advancedFilterValues.minSurface)
-          : undefined;
-
-      const maxSurface =
-        advancedFilterValues.maxSurface.trim() !== ''
-          ? Number(advancedFilterValues.maxSurface)
-          : undefined;
-
-      if (
-        minSurface !== undefined &&
-        maxSurface !== undefined &&
-        minSurface > maxSurface
-      ) {
-        setSearchResults([]);
-        setHasSearched(true);
-        setIsApplyingFilters(false);
-        return;
-      }
-
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion: selectedOperation.length > 0 ? selectedOperation.join(',') : undefined,
@@ -383,8 +318,6 @@ function SearchPageContent() {
         habitaciones: advancedFilterValues.habitaciones,
         banos: advancedFilterValues.banos,
         piscina: advancedFilterValues.piscina,
-        minSurface,
-        maxSurface,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
         ...overrides,
@@ -401,8 +334,8 @@ function SearchPageContent() {
       setIsApplyingFilters(false);
     }
   };
-
-  // Cargar estado del mapa desde localStorage al montar componente
+  
+// Cargar estado del mapa desde localStorage al montar componente
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMapState = localStorage.getItem('searchMapOpen');
@@ -427,8 +360,6 @@ function SearchPageContent() {
     const rawPropertyType = searchParams.get('tipo')?.trim() ?? '';
     const minPriceParam = searchParams.get('minPrice');
     const maxPriceParam = searchParams.get('maxPrice');
-    const minSurfaceParam = searchParams.get('minSurface');
-    const maxSurfaceParam = searchParams.get('maxSurface');
     const currencyParam = searchParams.get('currency');
 
     const nextMinPrice =
@@ -441,16 +372,6 @@ function SearchPageContent() {
         ? Number(maxPriceParam)
         : undefined;
 
-    const nextMinSurface =
-      minSurfaceParam !== null && minSurfaceParam.trim() !== ''
-        ? minSurfaceParam.trim()
-        : '';
-
-    const nextMaxSurface =
-      maxSurfaceParam !== null && maxSurfaceParam.trim() !== ''
-        ? maxSurfaceParam.trim()
-        : '';
-
     const nextCurrency: Currency = currencyParam === 'BS' ? 'BS' : 'USD';
 
     setAppliedPriceFilter(
@@ -459,17 +380,10 @@ function SearchPageContent() {
         : null,
     );
 
-    setAdvancedFilterValues((prev) => ({
-      ...prev,
-      minSurface: nextMinSurface,
-      maxSurface: nextMaxSurface,
-    }));
-
     setSelectedCurrency(nextCurrency);
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
-    setAdvancedFiltersKey((prev) => prev + 1);
 
     void runSearch({
       ubicacion: nextLocation,
@@ -477,8 +391,6 @@ function SearchPageContent() {
       tipoInmueble: nextPropertyLabels.join(',') || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
-      minSurface: nextMinSurface !== '' ? Number(nextMinSurface) : undefined,
-      maxSurface: nextMaxSurface !== '' ? Number(nextMaxSurface) : undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -516,13 +428,7 @@ function SearchPageContent() {
     setSearchLocation('');
     setSelectedOperation([]);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({
-      habitaciones: '',
-      banos: '',
-      piscina: '',
-      minSurface: '',
-      maxSurface: '',
-    });
+    setAdvancedFilterValues({ habitaciones: '', banos: '', piscina: '' });
     setAppliedPriceFilter(null);
     setSelectedCurrency('USD');
     setSelectedSort('fecha-reciente');
@@ -535,8 +441,6 @@ function SearchPageContent() {
       habitaciones: '',
       banos: '',
       piscina: '',
-      minSurface: undefined,
-      maxSurface: undefined,
       minPrice: undefined,
       maxPrice: undefined,
     });
@@ -547,335 +451,216 @@ function SearchPageContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-10">
-      <div className="relative z-[60] mb-6 flex flex-wrap items-center justify-between gap-4 border-b pb-4 md:hidden">
-        <Button
-          variant="secondary"
-          onClick={openMobileFilters}
-          className="h-10 w-42 px-3 flex items-center gap-1 text-sm"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          Mostrar Filtros
-        </Button>
-
-        {/*boton mapa */}
-        <div className="flex items-center gap-2">
-          <label className="relative inline-flex cursor-pointer items-center">
-            <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
-            <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
-          </label>
-          <span className="text-sm font-medium text-gray-700">Mapa</span>
-        </div>
+  <div className={`w-full ${isMapOpen ? 'pr-0' : 'mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-10'}`}>
+    
+    {/* ── Barra mobile ── */}
+    <div className="relative z-[60] mb-6 flex items-center justify-between gap-4 border-b pb-4 md:hidden">
+      <Button
+        variant="secondary"
+        onClick={openMobileFilters}
+        className="h-10 px-3 flex items-center gap-1 text-sm"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        Mostrar Filtros
+      </Button>
+      <div>
+        <CurrencySwitch currentCurrency={selectedCurrency} setCurrentCurrency={handleCurrencyChange} />
       </div>
-
-      <div className="block md:hidden items-center justify-between gap-4 mb-4">
-        <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
-        <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
-
-        <div className="flex items-center gap-2 justify-between bg-transparent rounded-[10px]">
-          <div className="flex-1 max-w-[250px]">
-            <SortSelect onSortChange={handleSort} />
-          </div>
-        
-          {/* Botones de vista de grid/list*/}
-          <div className="flex items-center gap-2 shrink-0 bg-transparent rounded-[10px] mt-3">
-            {/* Botón de vista de grilla */}
-            <button
-              onClick={()=> setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
-              aria-label="vista grilla"
-            >
-            <LayoutGrid className="h-5 w-5" />
-            </button>
-            {/* Botón de vista de lista */}
-            
-            <button
-              onClick={()=> setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
-              aria-label="vista lista"
-            >
-            <List className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
-          <div
-            className={`absolute inset-0 bg-black/45 transition-opacity duration-250 ease-out ${
-              isMobileFiltersVisible ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-
-          <div
-            className={`absolute inset-x-0 bottom-0 top-[92px] overflow-hidden rounded-t-[28px] bg-[#F6F4EF] transition-all duration-250 ease-out ${
-              isMobileFiltersVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
-            }`}
-          >
-            <div className="h-full overflow-y-auto px-4 py-6">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-[32px] font-semibold text-[#2E2E2E]">Filtros</h2>
-                <button
-                  type="button"
-                  onClick={closeMobileFilters}
-                  className="flex h-10 w-10 items-center justify-center text-[#2E2E2E]"
-                  aria-label="Cerrar filtros"
-                >
-                  <X className="h-7 w-7" />
-                </button>
-              </div>
-
-              <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                  closeMobileFilters();
-                }}
-              />
-
-              <div className="my-4 h-px bg-[#D8D2C8]"></div>
-              <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros Básicos</p>
-
-              <div className="space-y-3">
-                <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
-                <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
-                <FilterTypeProperty
-                  tipos={PROPERTY_TYPE_OPTIONS}
-                  selected={selectedPropertyTypes}
-                  onChange={setSelectedPropertyTypes}
-                />
-                <PriceDropdown
-                  selectedCurrency={selectedCurrency}
-                  appliedPriceFilter={appliedPriceFilter}
-                  onCurrencyChange={handleCurrencyChange}
-                  onApplyRange={handleApplyRange}
-                />
-                <AdvancedFilters
-                  key={advancedFiltersKey}
-                  value={advancedFilterValues}
-                  onChange={setAdvancedFilterValues}
-                />
-              </div>
-
-              <div className="my-4 h-px bg-[#D8D2C8]"></div>
-
-              <div className="mt-4 pb-6">
-                <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:min-h-[calc(100vh-200px)]">
-        <aside className="hidden md:col-span-3 md:block">
-          <div className="sticky top-8">
-            <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
-              <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
-              
-              <div className="flex mb-6 items-center justify-between ">
-
-                <div className="mb-4 flex items-center gap-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isMapOpen}
-                      onChange={() => setIsMapOpen(!isMapOpen)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
-                  </label>
-                  <span className="text-sm font-medium text-gray-700">Mapa</span>
-                </div>
-
-                {/* Botones de vista de grid/list - solo para desktop */}
-                <div className="mb-4 flex items-center gap-2">
-                  {/* Botón de vista de grilla */}
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
-                    aria-label="vista grilla"
-                  >
-                  <LayoutGrid className="h-5 w-5" />
-                  </button>
-                  {/* Botón de vista de lista */}
-                  
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`}
-                    aria-label="vista lista"
-                  >
-                  <List className="h-5 w-5" />
-                  </button>
-                </div>
-
-              </div>
-              <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                }}
-              />
-
-              <div className="my-4 h-px bg-[#F4EFE6]" />
-
-              <SearchAutocomplete
-                ref={searchInputDesktopRef}
-                value={searchLocation}
-                onChange={setSearchLocation}
-                onSelectSuggestion={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                }}
-              />
-
-              <div className="my-4 h-px bg-[#F4EFE6]" />
-
-              <div className="min-h-0 flex-1">
-                <ScrollArea className="h-full pr-4">
-                  <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
-                  <FilterTypeProperty
-                    tipos={PROPERTY_TYPE_OPTIONS}
-                    selected={selectedPropertyTypes}
-                    onChange={setSelectedPropertyTypes}
-                  />
-
-                  <div className="my-4 h-px bg-[#F4EFE6]" />
-
-                  <PriceDropdown
-                    selectedCurrency={selectedCurrency}
-                    appliedPriceFilter={appliedPriceFilter}
-                    onCurrencyChange={handleCurrencyChange}
-                    onApplyRange={handleApplyRange}
-                  />
-
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    value={advancedFilterValues}
-                    onChange={setAdvancedFilterValues}
-                  />
-
-                  <div className="my-4 h-px bg-[#F4EFE6]" />
-
-                  <div className="pb-2">
-                    <ClearFiltersButton
-                      hasActiveFilters={hasActiveFilters}
-                      onClear={handleClearFilters}
-                    />
-                  </div>
-                </ScrollArea>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        <main className={`${isMapOpen ? 'md:col-span-5' : 'md:col-span-9'}`}>
-          <div className="mb-3 hidden flex-col items-start justify-between gap-4 md:flex md:flex-row md:items-center">
-            <div>
-              <nav className="mb-1 text-sm text-gray-500">{breadcrumb}</nav>
-              <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <SortSelect onSortChange={handleSort} />
-            </div>
-          </div>
-
-          {/* <div className="mb-2 block md:hidden">
-            <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
-            <h1 className="mb-2 text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
-            <SortSelect onSortChange={handleSort} />
-          </div> */}
-
-          {!hasSearched && isApplyingFilters ? (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-              Cargando inmuebles...
-            </div>
-          ) : displayedProperties.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-              No se encontraron inmuebles con los filtros aplicados.
-            </div>
-          ) : (
-            <>
-              <div className={`md:hidden ${isMapOpen ? 'hidden' : ''}`}>
-                <div className={`grid grid-cols-1 gap-2 ${isMapOpen ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
-                  {displayedProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      selectedCurrency={selectedCurrency}
-                      viewMode={viewMode}
-                      isHovered={hoveredId === property.id}
-                      onMouseEnter={() => {
-                        setHoveredId(property.id);
-                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
-                        if (location?.latitud && location?.longitud) {
-                          setHoveredPos([Number(location.latitud), Number(location.longitud)]);
-                        }
-                      }}
-                      onMouseLeave={() => setHoveredPos(null)}
-                      onClick={() => {
-                        const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
-                        if (location?.latitud && location?.longitud) {
-                          setSelectedPos([Number(location.latitud), Number(location.longitud)]);
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-              {/* Vista de escritorio - se oculta en mobile si el mapa está abierto */}
-              <div className="hidden md:block">
-                <ScrollArea className="h-[605px] pr-4">
-                  <div className={`grid grid-cols-1 pb-2 gap-3 ${isMapOpen || viewMode == 'list' ? 'lg:grid-cols-1' : 'lg:grid-cols-2'}`}>
-                    {displayedProperties.map((property) => (
-                      <PropertyCard
-                        key={property.id}
-                        property={property}
-                        selectedCurrency={selectedCurrency}
-                        viewMode={viewMode}
-                        isHovered={hoveredId === property.id}
-                        onMouseEnter={() => {
-                          setHoveredId(property.id);
-                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
-                          if (location?.latitud && location?.longitud) {
-                            setHoveredPos([Number(location.latitud), Number(location.longitud)]);
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredPos(null)}
-                        onClick={() => {
-                          const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
-                          if (location?.latitud && location?.longitud) {
-                            setSelectedPos([Number(location.latitud), Number(location.longitud)]);
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            </>
-          )}
-        </main>
-
-        {isMapOpen && (
-          <div className="fixed inset-x-0 bottom-0 top-[160px] z-40 md:relative md:inset-auto md:z-0 md:col-span-4 md:h-full md:sticky md:top-4 md:rounded-lg md:overflow-hidden">
-            <SearchMapClient 
-              locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
-              hoveredId={hoveredId}
-              selectedPos={selectedPos}
-              hoveredPos={hoveredPos}
-              setSelectedPos={setSelectedPos}
-            />
-          </div>
-        )}
+      <div className="flex items-center gap-2">
+        <label className="relative inline-flex cursor-pointer items-center">
+          <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="peer sr-only" />
+          <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-checked:bg-[#C26E5A] peer-checked:after:translate-x-full peer-checked:after:border-white after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']"></div>
+        </label>
+        <Map className="h-5 w-5 text-gray-500" />
       </div>
     </div>
-  );
+
+    {/* ── Info mobile ── */}
+    <div className="block md:hidden items-center justify-between gap-4 mb-4">
+      <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
+      <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
+      <div className="flex items-center gap-2 justify-between bg-transparent rounded-[10px]">
+        <div className="flex-1 max-w-[250px]">
+          <SortSelect onSortChange={handleSort} />
+        </div>
+        <div className="flex items-center gap-2 shrink-0 mt-3">
+          <button onClick={() => setViewMode('grid')} className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`} aria-label="vista grilla">
+            <LayoutGrid className="h-5 w-5" />
+          </button>
+          <button onClick={() => setViewMode('list')} className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`} aria-label="vista lista">
+            <List className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* ── Drawer mobile filtros ── */}
+    {isMobileFiltersOpen && (
+      <div className="fixed inset-0 z-[100] md:hidden">
+        <div className={`absolute inset-0 bg-black/45 transition-opacity duration-250 ease-out ${isMobileFiltersVisible ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute inset-x-0 bottom-0 top-[92px] overflow-hidden rounded-t-[28px] bg-[#F6F4EF] transition-all duration-250 ease-out ${isMobileFiltersVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}`}>
+          <div className="h-full overflow-y-auto px-4 py-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-[32px] font-semibold text-[#2E2E2E]">Filtros</h2>
+              <button type="button" onClick={closeMobileFilters} className="flex h-10 w-10 items-center justify-center text-[#2E2E2E]" aria-label="Cerrar filtros">
+                <X className="h-7 w-7" />
+              </button>
+            </div>
+            <ApplyFiltersButton isLoading={isApplyingFilters} onClick={() => { saveFiltersToUrl(); void runSearch(); closeMobileFilters(); }} />
+            <div className="my-4 h-px bg-[#D8D2C8]"></div>
+            <p className="mb-3 text-sm font-medium text-[#2E2E2E]">Filtros Básicos</p>
+            <div className="space-y-3">
+              <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+              <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+              <FilterTypeProperty tipos={PROPERTY_TYPE_OPTIONS} selected={selectedPropertyTypes} onChange={setSelectedPropertyTypes} />
+              <PriceDropdown selectedCurrency={selectedCurrency} appliedPriceFilter={appliedPriceFilter} onCurrencyChange={handleCurrencyChange} onApplyRange={handleApplyRange} />
+              <AdvancedFilters key={advancedFiltersKey} onChange={setAdvancedFilterValues} />
+            </div>
+            <div className="my-4 h-px bg-[#D8D2C8]"></div>
+            <div className="mt-4 pb-6">
+              <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Layout desktop ── */}
+    <div className="hidden md:flex items-start">
+      
+      {/* Sidebar filtros — ancho fijo, con su propio padding */}
+      <aside className="shrink-0 w-[380px] px-4 pt-6">
+        <div className="sticky top-8">
+          <div className="flex h-[660px] flex-col overflow-hidden rounded-4xl border border-gray-300 bg-white p-6">
+            <h2 className="mb-4 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+
+            <div className="flex mb-6 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={isMapOpen} onChange={() => setIsMapOpen(!isMapOpen)} className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]"></div>
+                </label>
+                <span className="text-sm font-medium text-gray-700">Mapa</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setViewMode('grid')} className={`p-2 rounded ${viewMode === 'grid' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`} aria-label="vista grilla"> 
+                  <LayoutGrid className="h-5 w-5" />
+                </button>
+                <button onClick={() => setViewMode('list')} className={`p-2 rounded ${viewMode === 'list' ? 'bg-[#C26E5A] text-white' : 'bg-gray-200 text-gray-700'}`} aria-label="vista lista">
+                  <List className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <ApplyFiltersButton isLoading={isApplyingFilters} onClick={() => { saveFiltersToUrl(); void runSearch(); }} />
+            <div className="my-4 h-px bg-[#F4EFE6]" />
+            <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+            <div className="my-4 h-px bg-[#F4EFE6]" />
+
+            <div className="min-h-0 flex-1">
+              <ScrollArea className="h-full pr-4">
+                <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+                <FilterTypeProperty tipos={PROPERTY_TYPE_OPTIONS} selected={selectedPropertyTypes} onChange={setSelectedPropertyTypes} />
+                <div className="my-4 h-px bg-[#F4EFE6]" />
+                <PriceDropdown selectedCurrency={selectedCurrency} appliedPriceFilter={appliedPriceFilter} onCurrencyChange={handleCurrencyChange} onApplyRange={handleApplyRange} />
+                <AdvancedFilters key={advancedFiltersKey} onChange={setAdvancedFilterValues} />
+                <div className="my-4 h-px bg-[#F4EFE6]" />
+                <div className="pb-2">
+                  <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Resultados — crece para llenar el espacio disponible */}
+      <main className={`min-w-0 pt-6 ${isMapOpen ? 'w-[420px] shrink-0 px-3' : 'flex-1 px-4'}`}>
+        <div className="mb-3 flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
+          <div>
+            <nav className="mb-1 text-sm text-gray-500">{breadcrumb}</nav>
+            <h1 className="text-base font-semibold">{displayedProperties.length} inmuebles disponibles</h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <SortSelect onSortChange={handleSort} />
+          </div>
+        </div>
+
+        {!hasSearched && isApplyingFilters ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+            Cargando inmuebles...
+          </div>
+        ) : displayedProperties.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+            No se encontraron inmuebles con los filtros aplicados.
+          </div>
+        ) : (
+          <ScrollArea className="h-[calc(100vh-160px)] pr-2">
+            <div className={`grid pb-2 gap-2 ${isMapOpen || viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {displayedProperties.map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  selectedCurrency={selectedCurrency}
+                  viewMode={viewMode}
+                  isHovered={hoveredId === property.id}
+                  onMouseEnter={() => {
+                    setHoveredId(property.id);
+                    const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                    if (location?.latitud && location?.longitud) {
+                      setHoveredPos([Number(location.latitud), Number(location.longitud)]);
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredPos(null)}
+                  onClick={() => {
+                    const location = searchResults.find(p => p.id_publicacion === property.id)?.ubicacion;
+                    if (location?.latitud && location?.longitud) {
+                      setSelectedPos([Number(location.latitud), Number(location.longitud)]);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </main>
+
+      {/* Mapa — sticky, sin márgenes, llega a los bordes */}
+      {isMapOpen && (
+        <div
+          className="sticky top-0 shrink-0 flex-1"
+          style={{
+            height: '90vh',
+            marginTop: 'calc(-1 * var(--navbar-height, 0px))',
+          }}
+        >
+          <SearchMapClient
+            locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
+            hoveredId={hoveredId}
+            selectedPos={selectedPos}
+            hoveredPos={hoveredPos}
+            setSelectedPos={setSelectedPos}
+          />
+        </div>
+      )}
+    </div>
+
+    {/* Mapa mobile */}
+    {isMapOpen && (
+      <div className="fixed inset-x-0 bottom-0 top-[160px] z-40 md:hidden">
+        <SearchMapClient
+          locations={convertPublicacionesToLocations(searchResults, selectedCurrency)}
+          hoveredId={hoveredId}
+          selectedPos={selectedPos}
+          hoveredPos={hoveredPos}
+          setSelectedPos={setSelectedPos}
+        />
+      </div>
+    )}
+  </div>
+);
 }
 
 export default function SearchPage() {

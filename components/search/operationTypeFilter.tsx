@@ -126,14 +126,16 @@ export function OperationTypeFilter({
               <div className="flex w-full items-center justify-between pr-2">
                 <span className="truncate">{labelTruncated}</span>
                 {value.length > 0 && (
-                  <X
-                    size={16}
-                    className="ml-2 text-[#4B4B4B] transition-colors hover:text-red-500"
+                  <span
+                    role="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onChange([]);
                     }}
-                  />
+                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 text-[#5E5A55]" />
+                  </span>
                 )}
               </div>
             </AccordionTrigger>

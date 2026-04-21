@@ -81,7 +81,9 @@ function PropertyCard({
             setIsDetailOpen(true);
             if (onClick) onClick();
           }}
-          className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-all border-2 cursor-pointer ${
+          className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 
+            bg-white rounded-xl shadow-sm hover:shadow-md transition-all border-2 
+            cursor-pointer w-full overflow-hidden ${
             isHovered 
               ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
               : 'border-transparent'
@@ -98,35 +100,36 @@ function PropertyCard({
 
 
           {/*Layout movil*/}
-          <div className="flex-1 flex flex-col justify-center min-w-0 sm:hidden p-1 border border-gray-200 rounded-lg">
+          <div className="flex-1 flex flex-col justify-center min-w-0 sm:hidden p-1 border-gray-200 rounded-lg
+          overflow-hidden">
             <div className="flex justify-between items-start">
-              <span className="text-[19px] font-bold text-gray-950 leading-tight">
+              <span className="text-[17px] font-bold text-gray-950 leading-tight truncate">
                 {displayPrice}
               </span>
               <ArrowRight className="w-5 h-5 text-gray-400 shrink-0" strokeWidth={1.5} />
             </div>
-            <span className="text-[13px] text-gray-500 font-medium">
+            <span className="text-[13px] text-gray-500 font-medium truncate block">
               {property.type}
             </span>
             <h3 className="text-[11px] font-semibold text-[#a67c52] truncate mb-0.5">
               {property.title}
             </h3>
+
             <p className="text-[10px] text-gray-500 truncate mb-0.5 flex items-center gap-1">
               <MapPin className="w-3 h-3 shrink-0" />
-              {property.location}
+              <span className="truncate">{property.location}</span>
             </p>
             <p className="text-[10px] text-gray-400 font-medium truncate">
               {property.terrainArea.toLocaleString('es-BO')} m² Terreno / {property.bathrooms} Baños
             </p>
           </div>
 
-           {/* ========================================== */}
+          
           {/* LAYOUT DESKTOP (Se oculta en móvil)          */}
-          {/* ========================================== */}
-          <div className="hidden sm:flex flex-1 items-center min-w-0">
+          <div className="hidden sm:flex flex-1 items-center min-w-0 overflow-hidden">
             {/* Columna 1: Precio y Tipo */}
-            <div className="w-[140px] shrink-0 flex flex-col justify-center pr-4">
-              <span className="text-[18px] font-bold text-gray-950 leading-tight">
+            <div className="w-[200px] shrink-0 flex flex-col justify-center pr-4 overflow-hidden">
+              <span className="text-[18px] font-bold text-gray-950 leading-tight ">
                 {displayPrice}
               </span>
               <span className="text-[12px] text-gray-500 font-medium mt-1">
