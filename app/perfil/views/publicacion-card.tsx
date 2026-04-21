@@ -77,6 +77,13 @@ export default function PublicacionCard({
             className="bg-[var(--secondary)] text-white border-none hover:bg-[var(--secondary)]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
             onClick={() => onEliminar(publicacion.id)}
           >
+          Editar
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 min-[480px]:flex-none bg-[var(--secondary)] text-[var(--secondary-foreground)] border-none hover:bg-[var(--secondary)]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
+            onClick={() => onEliminar(publicacion.id)}
+          >
             Eliminar
           </Button>
         </div>
