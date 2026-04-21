@@ -119,6 +119,29 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     });
   }
 
+  function savePendingGoogleTelemetry(telemetry: LoginTelemetry) {
+    sessionStorage.setItem(GOOGLE_TELEMETRY_PENDING_KEY, "1");
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LAT_KEY,
+      telemetry.latitud === null ? "null" : String(telemetry.latitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LNG_KEY,
+      telemetry.longitud === null ? "null" : String(telemetry.longitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_CREATED_AT_KEY,
+      String(Date.now())
+    );
+  }
+
+  function clearPendingGoogleTelemetry() {
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_PENDING_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LAT_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LNG_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_CREATED_AT_KEY);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -208,8 +231,11 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     googleClickedRef.current = true;
     setGoogleLoading(true);
     try {
+      const telemetry = await getLoginTelemetry();
+      savePendingGoogleTelemetry(telemetry);
       await signIn("google", { callbackUrl: "/" });
     } catch (error) {
+      clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
       setGoogleLoading(false);
     }

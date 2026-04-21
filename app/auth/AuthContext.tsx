@@ -23,7 +23,12 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const INACTIVITY_TIMEOUT = 15 * 60 * 1000; 
+const INACTIVITY_TIMEOUT = 15*60*1000; 
+const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
+const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
+const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
+const GOOGLE_TELEMETRY_CREATED_AT_KEY = "google_telemetry_created_at";
+const GOOGLE_TELEMETRY_MAX_AGE_MS = 10 * 60 * 1000;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -80,6 +85,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
+  const clearPendingGoogleTelemetry = () => {
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_PENDING_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LAT_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LNG_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_CREATED_AT_KEY);
+  };
+
+  const flushPendingGoogleTelemetry = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (sessionStorage.getItem(GOOGLE_TELEMETRY_PENDING_KEY) !== "1") {
+      return;
+    }
+
+    const createdAt = Number(sessionStorage.getItem(GOOGLE_TELEMETRY_CREATED_AT_KEY));
+    if (!Number.isFinite(createdAt) || Date.now() - createdAt > GOOGLE_TELEMETRY_MAX_AGE_MS) {
+      clearPendingGoogleTelemetry();
+      return;
+    }
+
+    const rawLatitud = sessionStorage.getItem(GOOGLE_TELEMETRY_LAT_KEY);
+    const rawLongitud = sessionStorage.getItem(GOOGLE_TELEMETRY_LNG_KEY);
+
+    const latitud =
+      rawLatitud && rawLatitud !== "null" ? Number.parseFloat(rawLatitud) : null;
+    const longitud =
+      rawLongitud && rawLongitud !== "null" ? Number.parseFloat(rawLongitud) : null;
+
+    const response = await fetch("/api/auth/session-telemetry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        latitud: Number.isFinite(latitud) ? latitud : null,
+        longitud: Number.isFinite(longitud) ? longitud : null,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("No se pudo registrar la telemetria de Google");
+    }
+
+    clearPendingGoogleTelemetry();
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -94,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: session.user.email ?? "",
             };
             setUser(googleUser);
+            await flushPendingGoogleTelemetry();
             setIsLoading(false);
             return;  
           }
@@ -224,6 +277,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signOut({ redirect: false });
     } catch (_) {}
+
+    clearPendingGoogleTelemetry();
+
+    sessionStorage.removeItem("caracteristicasInmueble");
+    sessionStorage.removeItem("informacionComercial");
+    sessionStorage.removeItem("informacionComercialDraft");
+    sessionStorage.removeItem("videoUrl");
+    sessionStorage.removeItem("imageUploader_userInteracted");
 
     setUser(null);
   };
