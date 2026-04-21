@@ -29,9 +29,9 @@ interface NavLink {
 }
 
 const arrNavLinks: NavLink[] = [
-  { strHref: "/busqueda?strOperacion=compra", strLabel: "COMPRA" },
-  { strHref: "/busqueda?strOperacion=alquiler", strLabel: "ALQUILER" },
-  { strHref: "/busqueda?strOperacion=anticretico", strLabel: "ANTICRÉTICO" },
+  { strHref: "/search?operaciones=compra", strLabel: "COMPRA" },
+  { strHref: "/search?operaciones=alquiler", strLabel: "ALQUILER" },
+  { strHref: "/search?operaciones=anticretico", strLabel: "ANTICRÉTICO" },
 ];
 
 export const Header = () => {
