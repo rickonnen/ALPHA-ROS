@@ -1,177 +1,194 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { KeyboardEvent } from "react";
+import { fetchMapboxCities, intMaxCityLength, type CitySuggestion } from "./mapboxService";
+import { historyService } from "./historyService";
 
-const strMapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-const strBoliviaBbox = "-69.64,-22.90,-57.45,-9.66";
-const strFlagUrl = "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774580367/flag-for-flag-bolivia-svgrepo-com_xemt7m.svg";
+export interface UseCitySearchProps {
+  objUser?: any | null;
+  bolIsAuthLoading?: boolean;
+}
 
-const intMaxCityLength = 30;
-
-export function useCitySearch() {
+export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseCitySearchProps = {}) {
   const [strCity, setStrCity] = useState("");
-  const [arrSuggestions, setArrSuggestions] = useState<any[]>([]);
+  const [arrSuggestions, setArrSuggestions] = useState<CitySuggestion[]>([]);
   const [bolShowSuggestions, setBolShowSuggestions] = useState(false);
   const [bolNoResults, setBolNoResults] = useState(false);
   const [intSelectedIndex, setIntSelectedIndex] = useState(-1);
   const objSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const objActiveQueryRef = useRef<string>("");
 
-  const normalizeText = (strVal: string) =>
-    strVal.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const [bolShowHistory, setBolShowHistory] = useState(false);
+  const [arrHistory, setArrHistory] = useState<CitySuggestion[]>([]);
+  
+  const [bolShowFullHistoryPanel, setBolShowFullHistoryPanel] = useState(false);
+  const bolIsAuthenticated = !!objUser?.id;
 
-  const clearSuggestions = () => {
+  useEffect(() => {
+    let bolIsMounted = true;
+    if (bolIsAuthLoading) return;
+
+    historyService.getHistory(bolIsAuthenticated).then((arrData) => {
+      if (bolIsMounted) setArrHistory(arrData);
+    });
+    
+    return () => {
+      bolIsMounted = false;
+      if (objSearchTimeoutRef.current) clearTimeout(objSearchTimeoutRef.current);
+    };
+  }, [objUser, bolIsAuthLoading]);
+
+  const clearSuggestions = useCallback(() => {
+    objActiveQueryRef.current = "";
     setArrSuggestions([]);
     setBolShowSuggestions(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
-  };
+  }, []);
 
-  const fetchSuggestions = async (strQuery: string) => {
+  const handleInputFocus = useCallback(() => {
+    if (strCity.trim().length < 2) {
+      if (arrHistory.length > 0) {
+        setBolShowHistory(true);
+        setBolShowSuggestions(false);
+        setIntSelectedIndex(-1);
+      }
+    } else if (arrSuggestions.length > 0) {
+      setBolShowSuggestions(true);
+      setIntSelectedIndex(-1);
+    }
+  }, [strCity, arrHistory.length, arrSuggestions.length]);
+
+  const fetchSuggestions = useCallback(async (strQuery: string) => {
     const strCleanQuery = strQuery.trim();
-
-    if (strCleanQuery.length < 2 || !strMapboxToken) {
+    if (strCleanQuery.length < 2) {
       clearSuggestions();
       return;
     }
 
-    const strUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-      strCleanQuery
-    )}.json?bbox=${strBoliviaBbox}&types=region,district,place,locality,neighborhood&limit=20&language=es&autocomplete=true&fuzzyMatch=false&proximity=-66.1568,-17.3936&access_token=${strMapboxToken}`;
+    objActiveQueryRef.current = strCleanQuery;
 
     try {
-      const objResponse = await fetch(strUrl);
-      const objData = await objResponse.json();
-
-      const strNormalizedSearch = normalizeText(strCleanQuery);
-
-      const objTypeDictionary: Record<string, string> = {
-        region: "Departamento",
-        district: "Provincia",
-        place: "Ciudad",
-        locality: "Localidad",
-        neighborhood: "Barrio",
-        poi: "Lugar",
-        address: "Dirección"
-      };
-
-      const arrBoliviaResults = (objData.features || []).filter((objFeature: any) => {
-        const bolIsBolivia = (objFeature.place_name || "").toLowerCase().includes("bolivia");
-        const bolIsExactMatch =
-          normalizeText(objFeature.text || "").includes(strNormalizedSearch) ||
-          normalizeText(objFeature.place_name || "").includes(strNormalizedSearch);
-
-        return bolIsBolivia && bolIsExactMatch;
-      });
-
-      const arrUniqueSuggestions = Array.from(
-        new Map(
-          arrBoliviaResults.map((objFeature: any) => {
-            const strRawType = objFeature.place_type && objFeature.place_type.length > 0 ? objFeature.place_type[0] : "place";
-            const strPlaceType = objTypeDictionary[strRawType] || "Ubicación";
-
-            return [
-              normalizeText(objFeature.text || ""),
-              {
-                strId: objFeature.id,
-                strName: (objFeature.text || "").replace(
-                  /Departamento de |Provincia de |Provincia /gi,
-                  ""
-                ),
-                strFullName: objFeature.place_name,
-                strIcon: strFlagUrl,
-                strTypePlace: strPlaceType,
-              },
-            ];
-          })
-        ).values()
-      ) as any[];
-
-      const arrFinalResults = arrUniqueSuggestions.slice(0, 5);
+      const arrFinalResults = await fetchMapboxCities(strCleanQuery);
+      if (objActiveQueryRef.current !== strCleanQuery) return;
 
       setArrSuggestions(arrFinalResults);
       setBolShowSuggestions(arrFinalResults.length > 0);
       setBolNoResults(arrFinalResults.length === 0);
       setIntSelectedIndex(-1);
     } catch (objError) {
-      console.error("Search Error:", objError);
+      if (objActiveQueryRef.current !== strCleanQuery) return;
+
+      console.error("search error:", objError);
       setBolNoResults(true);
       setBolShowSuggestions(false);
       setArrSuggestions([]);
       setIntSelectedIndex(-1);
     }
-  };
+  }, [clearSuggestions]);
 
-  const handleCityChange = (strVal: string) => {
+  const handleCityChange = useCallback((strVal: string) => {
     const strLimitedValue = strVal.slice(0, intMaxCityLength);
     setStrCity(strLimitedValue);
     setIntSelectedIndex(-1);
-
     if (objSearchTimeoutRef.current) {
       clearTimeout(objSearchTimeoutRef.current);
     }
-
     const strCleanValue = strLimitedValue.trim();
-
     if (strCleanValue.length < 2) {
       clearSuggestions();
+      if (arrHistory.length > 0) setBolShowHistory(true);
       return;
     }
-
+    setBolShowHistory(false);
     objSearchTimeoutRef.current = setTimeout(() => {
       fetchSuggestions(strCleanValue);
     }, 300);
-  };
+  }, [arrHistory.length, clearSuggestions, fetchSuggestions]);
 
-  const handleSelectSuggestion = (objSuggestion: any) => {
-    setStrCity(objSuggestion.strName);
+  const handleFillFromHistory = useCallback((strName: string) => {
+    objActiveQueryRef.current = "";
+    setStrCity(strName);
+    setBolShowHistory(false);
     setBolShowSuggestions(false);
+    setBolShowFullHistoryPanel(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
-  };
+    
+    if (objSearchTimeoutRef.current) {
+      clearTimeout(objSearchTimeoutRef.current);
+    }
+  }, []);
 
-  const handleKeyDown = (objEvent: KeyboardEvent<HTMLInputElement>) => {
-    if (!bolShowSuggestions || arrSuggestions.length === 0) return;
+  const handleSelectSuggestion = useCallback(async (objSuggestion: CitySuggestion) => {
+    if (bolIsAuthLoading) return;
+
+    objActiveQueryRef.current = "";
+    setStrCity(objSuggestion.strName);
+    setBolShowSuggestions(false);
+    setBolShowHistory(false);
+    setBolNoResults(false);
+    setIntSelectedIndex(-1);
+
+    const arrUpdated = await historyService.save(objSuggestion, bolIsAuthenticated);
+    if (arrUpdated.length > 0) {
+      setArrHistory(arrUpdated);
+    }
+  }, [bolIsAuthenticated, bolIsAuthLoading]);
+
+  const handleDeleteHistoryItem = useCallback(async (strId: string) => {
+    const arrUpdated = await historyService.deleteHistoryItem(strId, bolIsAuthenticated);
+    setArrHistory(arrUpdated);
+    if (arrUpdated.length === 0) {
+      setBolShowHistory(false);
+      setBolShowFullHistoryPanel(false);
+    }
+  }, [bolIsAuthenticated]);
+
+  const handleKeyDown = useCallback((objEvent: KeyboardEvent<HTMLInputElement>) => {
+    const bolIsSuggestionsActive = bolShowSuggestions && arrSuggestions.length > 0;
+    const bolIsHistoryActive = bolShowHistory && arrHistory.length > 0 && !bolShowSuggestions && strCity.trim().length < 2;
+    const bolIsFullPanelActive = bolShowFullHistoryPanel && arrHistory.length > 0;
+
+    if (!bolIsSuggestionsActive && !bolIsHistoryActive && !bolIsFullPanelActive) return;
+
+    let arrCurrentList: CitySuggestion[] = [];
+    if (bolIsSuggestionsActive) arrCurrentList = arrSuggestions;
+    else if (bolIsHistoryActive) arrCurrentList = arrHistory.slice(0, 5);
+    else if (bolIsFullPanelActive) arrCurrentList = arrHistory;
 
     if (objEvent.key === "ArrowDown") {
       objEvent.preventDefault();
-      setIntSelectedIndex((intPrev) =>
-        intPrev < arrSuggestions.length - 1 ? intPrev + 1 : 0
-      );
-    }
-
-    if (objEvent.key === "ArrowUp") {
+      setIntSelectedIndex((intPrev) => intPrev < arrCurrentList.length - 1 ? intPrev + 1 : 0);
+    } else if (objEvent.key === "ArrowUp") {
       objEvent.preventDefault();
-      setIntSelectedIndex((intPrev) =>
-        intPrev > 0 ? intPrev - 1 : arrSuggestions.length - 1
-      );
-    }
-
-    if (objEvent.key === "Enter") {
-      objEvent.preventDefault();
-      if (intSelectedIndex >= 0) {
-        handleSelectSuggestion(arrSuggestions[intSelectedIndex]);
-      }
-    }
-
-    if (objEvent.key === "Escape") {
+      setIntSelectedIndex((intPrev) => intPrev > 0 ? intPrev - 1 : arrCurrentList.length - 1);
+    } else if (objEvent.key === "Enter") {
+       objEvent.preventDefault();
+       if (intSelectedIndex >= 0 && arrCurrentList[intSelectedIndex]) {
+          handleFillFromHistory(arrCurrentList[intSelectedIndex].strName);
+       }
+    } else if (objEvent.key === "Escape") {
       setBolShowSuggestions(false);
+      setBolShowHistory(false);
+      setBolShowFullHistoryPanel(false);
       setIntSelectedIndex(-1);
     }
-  };
+  }, [bolShowSuggestions, arrSuggestions, bolShowHistory, arrHistory, strCity, bolShowFullHistoryPanel, intSelectedIndex, handleFillFromHistory]);
 
   return {
-    strCity,
-    setStrCity,
-    arrSuggestions,
-    setArrSuggestions,
-    bolShowSuggestions,
-    setBolShowSuggestions,
-    bolNoResults,
-    setBolNoResults,
-    intSelectedIndex,
-    setIntSelectedIndex,
+    strCity, setStrCity,
+    arrSuggestions, setArrSuggestions,
+    bolShowSuggestions, setBolShowSuggestions,
+    bolNoResults, setBolNoResults,
+    intSelectedIndex, setIntSelectedIndex,
     intMaxCityLength,
-    handleCityChange,
-    handleSelectSuggestion,
-    handleKeyDown,
+    arrHistory,
+    bolShowHistory, setBolShowHistory,
+    handleInputFocus, handleCityChange,
+    handleFillFromHistory,
+    handleSelectSuggestion, handleKeyDown,
+    bolIsAuthenticated,
+    bolShowFullHistoryPanel, setBolShowFullHistoryPanel,
+    handleDeleteHistoryItem
   };
 }

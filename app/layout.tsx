@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/app/frontend/auth/AuthContext";
-import { Header } from "@/components/home-comps/Header";
-import Footer from "@/components/home-comps/footer";
+import { AuthProvider } from "@/app/auth/AuthContext";
+import { Header } from "@/components/homeComponents/header";
+import Footer from "@/components/homeComponents/footer";
+import ExchangeRateBubble from "@/components/homeComponents/exchangeRateBubble";
+import { GlobalShortcut } from "@/components/GlobalShortcut";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,26 +27,32 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Eliminamos la variable bolPruebaSesion ya que causaba conflicto de tipos
-
   return (
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <AuthProvider>
-          {/* ✅ CORRECCIÓN: Llamamos al Header sin la prop */}
+          {/* El Header es fixed (z-50), por lo tanto no ocupa espacio físico */}
           <Header />
-
-          <main className="flex-1 pt-16 flex flex-col">{children}</main>
+              <GlobalShortcut />
+          {/* CORRECCIÓN: pt-18 (72px) para compensar la altura h-18 del Header */}
+          <main className="flex-1 pt-18 flex flex-col">
+            {children}
+          </main>
+          
+          {/* el Footer ahora está dentro de AuthProvider */}
+           <Footer /> 
+          <ExchangeRateBubble />
         </AuthProvider>
-        <Footer />
       </body>
     </html>
   );
 }
+
 /* Dev: Rodrigo Almaraz - team-ada
-    Fecha: 30/03/2026
-    Funcionalidad: FIX movi el AuthProvider 3 lineas mas para abajo y limpié props de prueba
+    Fecha: 02/04/2026
+    Funcionalidad: Ajuste de padding superior (pt-20) para evitar que el Header fixed cubra el contenido.
+    Sincronización de colores base (bg-background) en el body.
 */

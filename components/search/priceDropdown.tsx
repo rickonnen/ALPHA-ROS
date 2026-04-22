@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { X } from "lucide-react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { convertUsdToBs, convertBsToUsd } from "@/features/filter_search_page/currencyConverter";
 import CurrencySwitch from "./currencySwitch";
-import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -35,50 +36,90 @@ export default function PriceDropdown({
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [accordionValue, setAccordionValue] = useState("");
-  const [hasAppliedRange, setHasAppliedRange] = useState(false);
+  const previousCurrencyRef = useRef<Currency>(selectedCurrency);
+  const previousAppliedFilterRef = useRef<AppliedPriceFilter | null>(appliedPriceFilter);
+
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const maxInputRef = useRef<HTMLInputElement | null>(null);
 
   const maxAllowedPrice = 999999999;
 
-  const handleApplyRange = () => {
+  const sanitizeZeroLikeValue = (value: string) => {
+    if (value.trim() === "") return "";
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed) && parsed <= 0) return "";
+    return value;
+  };
+
+  const normalizedMinInput = sanitizeZeroLikeValue(minPriceInput);
+  const normalizedMaxInput = sanitizeZeroLikeValue(maxPriceInput);
+
+  const handlePriceInputChange =
+    (field: "min" | "max") => (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.trim();
+
+      if (value === "") {
+        setPriceError(null);
+
+        if (field === "min") setMinPriceInput("");
+        else setMaxPriceInput("");
+        return;
+      }
+
+      const onlyDigits = /^\d+$/.test(value);
+
+      if (!onlyDigits) {
+        setPriceError("Solo se permiten números");
+        return;
+      }
+
+      setPriceError(null);
+
+      if (field === "min") setMinPriceInput(value);
+      else setMaxPriceInput(value);
+    };
+
+  const applyRange = () => {
+    const safeMinValue = sanitizeZeroLikeValue(minPriceInput);
+    const safeMaxValue = sanitizeZeroLikeValue(maxPriceInput);
+
+    if (safeMinValue !== minPriceInput) {
+      setMinPriceInput(safeMinValue);
+    }
+
+    if (safeMaxValue !== maxPriceInput) {
+      setMaxPriceInput(safeMaxValue);
+    }
+
     const parsedMinPrice =
-      minPriceInput.trim() === "" ? undefined : Number(minPriceInput);
+      safeMinValue.trim() === "" ? undefined : Number(safeMinValue);
 
     const parsedMaxPrice =
-      maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput);
+      safeMaxValue.trim() === "" ? undefined : Number(safeMaxValue);
 
     if (selectedCurrency !== "USD" && selectedCurrency !== "BS") {
-      setPriceError("Moneda invalida");
-      return;
+      setPriceError("Moneda inválida");
+      return false;
     }
 
     if (parsedMinPrice !== undefined && Number.isNaN(parsedMinPrice)) {
-      setPriceError("Precio minimo debe ser un numero");
-      return;
+      setPriceError("Precio mínimo debe ser un número");
+      return false;
     }
 
     if (parsedMaxPrice !== undefined && Number.isNaN(parsedMaxPrice)) {
-      setPriceError("Precio máximo debe ser un numero");
-      return;
-    }
-
-    if (parsedMinPrice !== undefined && parsedMinPrice < 0) {
-      setPriceError("Precio mínimo no puede ser negativo");
-      return;
-    }
-
-    if (parsedMaxPrice !== undefined && parsedMaxPrice < 0) {
-      setPriceError("Precio máximo no puede ser negativo");
-      return;
+      setPriceError("Precio máximo debe ser un número");
+      return false;
     }
 
     if (parsedMinPrice !== undefined && parsedMinPrice > maxAllowedPrice) {
-      setPriceError("Precio mínimo excede el valor maximo permitido");
-      return;
+      setPriceError("Precio mínimo excede el valor máximo permitido");
+      return false;
     }
 
     if (parsedMaxPrice !== undefined && parsedMaxPrice > maxAllowedPrice) {
-      setPriceError("Precio máximo excede el valor maximo permitido");
-      return;
+      setPriceError("Precio máximo excede el valor máximo permitido");
+      return false;
     }
 
     if (
@@ -86,38 +127,112 @@ export default function PriceDropdown({
       parsedMaxPrice !== undefined &&
       parsedMinPrice > parsedMaxPrice
     ) {
-      setPriceError("Precio mínimo no puede ser mayor a precio maximo");
-      return;
+      setPriceError("Precio mínimo no puede ser mayor a precio máximo");
+      return false;
     }
+
+    const normalizedMinPrice =
+      parsedMinPrice === undefined
+        ? undefined
+        : selectedCurrency === "BS"
+          ? convertBsToUsd(parsedMinPrice)
+          : parsedMinPrice;
+
+    const normalizedMaxPrice =
+      parsedMaxPrice === undefined
+        ? undefined
+        : selectedCurrency === "BS"
+          ? convertBsToUsd(parsedMaxPrice)
+          : parsedMaxPrice;
 
     setPriceError(null);
 
     onApplyRange({
-      minPrice: parsedMinPrice,
-      maxPrice: parsedMaxPrice,
+      minPrice: normalizedMinPrice,
+      maxPrice: normalizedMaxPrice,
     });
 
-    setAccordionValue("");
-    setHasAppliedRange(true);
+    return true;
+  };
+
+  const handleApplyRange = () => {
+    const success = applyRange();
+
+    if (success) {
+      setAccordionValue("");
+    }
+  };
+
+  const handleInputBlur = () => {
+    applyRange();
+  };
+
+  const handleMinInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyRange();
+
+      requestAnimationFrame(() => {
+        maxInputRef.current?.focus();
+      });
+    }
+  };
+
+  const handleMaxInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const success = applyRange();
+
+      if (success) {
+        setAccordionValue("");
+
+        requestAnimationFrame(() => {
+          triggerButtonRef.current?.focus();
+        });
+      }
+    }
   };
 
   const formatPriceValue = (value: number) => {
-    return value.toLocaleString("es-BO");
+    const displayValue =
+      selectedCurrency === "BS" ? Math.round(value) : value;
+
+    return displayValue.toLocaleString("es-BO", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: selectedCurrency === "BS" ? 0 : 2,
+    });
   };
 
   const getTriggerLabel = () => {
-    if (!hasAppliedRange) {
-      return "Precio";
-    }
+    const parsedMinInput =
+      normalizedMinInput.trim() === "" ? undefined : Number(normalizedMinInput);
+    const parsedMaxInput =
+      normalizedMaxInput.trim() === "" ? undefined : Number(normalizedMaxInput);
 
-    const minPrice = appliedPriceFilter?.minPrice;
-    const maxPrice = appliedPriceFilter?.maxPrice;
+    const formatFilterValue = (value?: number) => {
+      if (value === undefined) return undefined;
+      return selectedCurrency === "BS" ? convertUsdToBs(value) : value;
+    };
+
+    const minPrice =
+      parsedMinInput !== undefined && !Number.isNaN(parsedMinInput)
+        ? parsedMinInput
+        : formatFilterValue(appliedPriceFilter?.minPrice);
+
+    const maxPrice =
+      parsedMaxInput !== undefined && !Number.isNaN(parsedMaxInput)
+        ? parsedMaxInput
+        : formatFilterValue(appliedPriceFilter?.maxPrice);
 
     const hasMinPrice = minPrice !== undefined;
     const hasMaxPrice = maxPrice !== undefined;
 
     if (!hasMinPrice && !hasMaxPrice) {
-      return selectedCurrency;
+      return "Precio";
     }
 
     if (hasMinPrice && hasMaxPrice) {
@@ -131,8 +246,84 @@ export default function PriceDropdown({
     return `${selectedCurrency} hasta ${formatPriceValue(maxPrice!)}`;
   };
 
+  useEffect(() => {
+    const previousCurrency = previousCurrencyRef.current;
+
+    if (previousCurrency === selectedCurrency) return;
+
+    const convertValue = (value: string) => {
+      if (value.trim() === "") return "";
+
+      const parsedValue = Number(value);
+
+      if (Number.isNaN(parsedValue)) return "";
+
+      if (previousCurrency === "USD" && selectedCurrency === "BS") {
+        return String(Math.round(convertUsdToBs(parsedValue)));
+      }
+
+      if (previousCurrency === "BS" && selectedCurrency === "USD") {
+        return String(convertBsToUsd(parsedValue));
+      }
+
+      return value;
+    };
+
+    setMinPriceInput((prev) => convertValue(prev));
+    setMaxPriceInput((prev) => convertValue(prev));
+
+    previousCurrencyRef.current = selectedCurrency;
+    setPriceError(null);
+  }, [selectedCurrency]);
+
+  useEffect(() => {
+    const minFromFilter = appliedPriceFilter?.minPrice;
+    const maxFromFilter = appliedPriceFilter?.maxPrice;
+
+    const hasFilterValues =
+      minFromFilter !== undefined || maxFromFilter !== undefined;
+
+    const previousMin = previousAppliedFilterRef.current?.minPrice;
+    const previousMax = previousAppliedFilterRef.current?.maxPrice;
+
+    const previousHadFilterValues =
+      previousMin !== undefined || previousMax !== undefined;
+
+    if (!hasFilterValues) {
+      if (previousHadFilterValues) {
+        setMinPriceInput("");
+        setMaxPriceInput("");
+      }
+
+      previousAppliedFilterRef.current = appliedPriceFilter;
+      return;
+    }
+
+    const formatValueForInput = (value?: number) => {
+      if (value === undefined) return "";
+
+      if (selectedCurrency === "BS") {
+        return String(Math.round(convertUsdToBs(value)));
+      }
+
+      return String(value);
+    };
+
+    setMinPriceInput(formatValueForInput(minFromFilter));
+    setMaxPriceInput(formatValueForInput(maxFromFilter));
+
+    previousAppliedFilterRef.current = appliedPriceFilter;
+  }, [appliedPriceFilter, selectedCurrency]);
+
   return (
-    <div className="w-full mt-3">
+    <div className="mt-3 w-full">
+      <div className="mb-4">
+        <CurrencySwitch
+          currentCurrency={selectedCurrency}
+          setCurrentCurrency={onCurrencyChange}
+        />
+      </div>
+
       <Accordion
         type="single"
         collapsible
@@ -143,72 +334,70 @@ export default function PriceDropdown({
         <AccordionItem value="price" className="border-none">
           <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
+              ref={triggerButtonRef}
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-              {getTriggerLabel()}
+              <div className="flex w-full items-center justify-between pr-2">
+                <span>{getTriggerLabel()}</span>
+                
+                {/* CAMBIO: button por span para evitar error de hidratación */}
+                {(appliedPriceFilter?.minPrice !== undefined || appliedPriceFilter?.maxPrice !== undefined) && (
+                  <span
+                    role="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setMinPriceInput("");
+                        setMaxPriceInput("");
+                        onApplyRange({ minPrice: undefined, maxPrice: undefined });
+                    }}
+                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4 text-[#5E5A55]" />
+                  </span>
+                )}
+              </div>
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="pt-3 pb-0">
+          <AccordionContent className="pb-0 pt-3">
             <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-4 shadow-sm">
-              <CurrencySwitch
-                currentCurrency={selectedCurrency}
-                setCurrentCurrency={onCurrencyChange}
-              />
-
               <div className="mt-3 flex justify-center gap-2">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder={`Min ${selectedCurrency}`}
                   className={cn(
                     "h-10 w-full rounded-[12px] border bg-white px-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#7A756D]",
-                    priceError?.toLowerCase().includes("mínimo") ||
-                      priceError?.toLowerCase().includes("minimo")
-                      ? "border-red-500"
-                      : "border-[#C8C0B5]"
+                    priceError ? "border-red-500" : "border-[#C8C0B5]"
                   )}
                   value={minPriceInput}
-                  onChange={(e) => {
-                    setMinPriceInput(e.target.value);
-                    setPriceError(null);
-                  }}
+                  onChange={handlePriceInputChange("min")}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleMinInputKeyDown}
                 />
 
                 <input
-                  type="number"
+                  ref={maxInputRef}
+                  type="text"
+                  inputMode="numeric"
                   placeholder={`Max ${selectedCurrency}`}
                   className={cn(
                     "h-10 w-full rounded-[12px] border bg-white px-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#7A756D]",
-                    priceError?.toLowerCase().includes("máximo") ||
-                      priceError?.toLowerCase().includes("maximo")
-                      ? "border-red-500"
-                      : "border-[#C8C0B5]"
+                    priceError ? "border-red-500" : "border-[#C8C0B5]"
                   )}
                   value={maxPriceInput}
-                  onChange={(e) => {
-                    setMaxPriceInput(e.target.value);
-                    setPriceError(null);
-                  }}
+                  onChange={handlePriceInputChange("max")}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleMaxInputKeyDown}
                 />
               </div>
 
               <div className={priceError ? "mt-2 block" : "hidden"}>
                 <p className="text-center text-sm text-red-600">{priceError}</p>
               </div>
-
-              <Button
-                className={cn(
-                  "mt-4 w-full h-10 rounded-[12px] bg-[#1F3A4D] text-base text-white hover:bg-[#C26E5A]",
-                  priceError && "mt-3"
-                )}
-                type="button"
-                onClick={handleApplyRange}
-              >
-                Aplicar rango
-              </Button>
             </div>
           </AccordionContent>
         </AccordionItem>

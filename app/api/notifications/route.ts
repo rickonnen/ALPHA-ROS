@@ -1,77 +1,203 @@
 import { NextResponse } from "next/server";
-import notifications from "@/app/backend/notifications/notifications.json";
-import fs from "fs";
-import path from "path";
+import { supabase } from "@/lib/supabaseClient";
 
-// Ruta al archivo JSON
-const notificationsPath = path.join(process.cwd(), "app/backend/notifications/notifications.json");
+type NotificationType = "gmail" | "whatsapp" | "general";
 
-// Función para leer notificaciones actualizadas
-const readNotifications = () => {
-  const data = fs.readFileSync(notificationsPath, "utf-8");
-  return JSON.parse(data);
+interface UserSettings {
+  gmailEnabled: boolean;
+  whatsappEnabled: boolean;
+  gmailEmail: string;
+  whatsappNumber: string;
+}
+
+let userSettings: UserSettings = {
+  gmailEnabled: true,
+  whatsappEnabled: true,
+  gmailEmail: "usuario@gmail.com",
+  whatsappNumber: "+591 73678412"
 };
 
-// Función para escribir notificaciones
-const writeNotifications = (data: any) => {
-  fs.writeFileSync(notificationsPath, JSON.stringify(data, null, 2));
-};
+export async function GET(request: Request) {
+  console.log("📡 API GET /api/notifications - Iniciando...");
+  
+  const { searchParams } = new URL(request.url);
+  const includeSettings = searchParams.get("settings") === "true";
+  
+  try {
+    // Verificar que supabase esté inicializado
+    if (!supabase) {
+      console.error("❌ Supabase no está inicializado");
+      return NextResponse.json({ error: "Supabase no configurado" }, { status: 500 });
+    }
 
-export async function GET() {
-  const notifications = readNotifications();
-  return NextResponse.json(notifications);
+    console.log("🔄 Consultando tabla: notificacion_campana");
+    
+    // Obtener notificaciones de Supabase
+    const { data: notifications, error } = await supabase
+      .from('notificacion_campana')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("❌ Error de Supabase:", error);
+      console.error("Detalles del error:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return NextResponse.json({ 
+        error: "Error al cargar notificaciones",
+        details: error.message 
+      }, { status: 500 });
+    }
+
+    console.log(`✅ Notificaciones obtenidas: ${notifications?.length || 0}`);
+    console.log("📝 Primera notificación (si existe):", notifications?.[0]);
+
+    const response: any = { notifications: notifications || [] };
+    
+    if (includeSettings) {
+      response.settings = userSettings;
+    }
+    
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("❌ Error inesperado en GET:", error);
+    return NextResponse.json({ 
+      error: "Error interno del servidor",
+      details: error instanceof Error ? error.message : "Error desconocido"
+    }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: Request) {
+  console.log("📡 API PATCH /api/notifications - Iniciando...");
+  
   try {
     const body = await request.json();
-    const { action, notificationId } = body;
+    console.log("📦 Body recibido:", body);
     
-    let currentNotifications = readNotifications();
+    const { action, notificationId, settings } = body;
+    
+    if (action === "updateSettings" && settings) {
+      userSettings = {
+        ...userSettings,
+        ...settings
+      };
+      console.log("✅ Settings actualizados:", userSettings);
+      return NextResponse.json({ success: true, settings: userSettings });
+    }
     
     if (action === "markAllAsRead") {
-      // Marcar todas como leídas
-      currentNotifications = currentNotifications.map((notif: any) => ({
-        ...notif,
-        read: true
-      }));
+      console.log("🔄 Marcando todas como leídas...");
       
-      writeNotifications(currentNotifications);
+      const { data, error } = await supabase
+        .from('notificacion_campana')
+        .update({ read: true })
+        .eq('read', false)
+        .select();
+
+      if (error) {
+        console.error("❌ Error marcando todas como leídas:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
       
-      return NextResponse.json({ 
-        success: true, 
-        notifications: currentNotifications,
-        message: "Todas las notificaciones marcadas como leídas"
-      });
+      console.log(`✅ Marcadas como leídas: ${data?.length || 0} notificaciones`);
+      return NextResponse.json({ success: true });
     }
     
     if (action === "markAsRead" && notificationId) {
-      // Marcar una específica como leída
-      currentNotifications = currentNotifications.map((notif: any) =>
-        notif.id === notificationId
-          ? { ...notif, read: true }
-          : notif
-      );
+      console.log(`🔄 Marcando notificación ${notificationId} como leída...`);
       
-      writeNotifications(currentNotifications);
+      const { data, error } = await supabase
+        .from('notificacion_campana')
+        .update({ read: true })
+        .eq('id', notificationId)
+        .select();
+
+      if (error) {
+        console.error(`❌ Error marcando notificación ${notificationId}:`, error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
       
-      return NextResponse.json({ 
-        success: true, 
-        notifications: currentNotifications,
-        message: "Notificación marcada como leída"
-      });
+      console.log(`✅ Notificación ${notificationId} marcada como leída`);
+      return NextResponse.json({ success: true });
     }
     
-    return NextResponse.json(
-      { error: "Acción no válida" },
-      { status: 400 }
-    );
-    
+    console.log("⚠️ Acción no válida:", action);
+    return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
   } catch (error) {
-    console.error("Error en PATCH /api/notifications:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    console.error("❌ Error en PATCH:", error);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  console.log("📡 API DELETE /api/notifications - Iniciando...");
+  
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    
+    if (!id) {
+      console.log("⚠️ ID no proporcionado");
+      return NextResponse.json({ error: "ID no proporcionado" }, { status: 400 });
+    }
+    
+    const notificationId = parseInt(id);
+    console.log(`🗑️ Eliminando notificación ${notificationId}...`);
+    
+    const { data, error } = await supabase
+      .from('notificacion_campana')
+      .delete()
+      .eq('id', notificationId)
+      .select();
+
+    if (error) {
+      console.error(`❌ Error eliminando notificación ${notificationId}:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    
+    console.log(`✅ Notificación ${notificationId} eliminada`);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("❌ Error en DELETE:", error);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  console.log("📡 API POST /api/notifications - Iniciando...");
+  
+  try {
+    const body = await request.json();
+    console.log("📦 Body recibido:", body);
+    
+    const { title, message, type } = body;
+    
+    const { data, error } = await supabase
+      .from('notificacion_campana')
+      .insert([
+        {
+          title,
+          message,
+          read: false,
+          type,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error("❌ Error creando notificación:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    
+    console.log("✅ Notificación creada:", data?.[0]);
+    return NextResponse.json({ success: true, notification: data?.[0] }, { status: 201 });
+  } catch (error) {
+    console.error("❌ Error en POST:", error);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

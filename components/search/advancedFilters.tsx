@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import { X } from "lucide-react";
 import { Geist } from "next/font/google";
 import {
   Accordion,
@@ -9,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import SurfaceRangeDropdown from "./surfaceRangeDropdown";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -21,51 +23,26 @@ const HABITACIONES = [
 ];
 
 const BANOS = ["+1 baños", "+2 baños", "+3 baños", "+4 baños"];
-const GENERAL = ["Sí", "No"];
 
-export interface FiltrosAvanzadoValores {
-  habitaciones: string;
-  banos: string;
-  piscina: string;
-  patio: string;
-  garaje: string;
-  amueblada: string;
-  lavanderia: string;
-  balcon: string;
-}
-
-const CAMPOS: { key: keyof FiltrosAvanzadoValores; label: string; opciones: string[] }[] = [
-  { key: "habitaciones", label: "Número total de habitaciones", opciones: HABITACIONES },
-  { key: "banos",        label: "Baños",                        opciones: BANOS },
-  { key: "piscina",      label: "Piscina",                      opciones: GENERAL },
-  { key: "patio",        label: "Patio/Jardín",                 opciones: GENERAL },
-  { key: "garaje",       label: "Garaje",                       opciones: GENERAL },
-  { key: "amueblada",    label: "Amueblada",                    opciones: GENERAL },
-  { key: "lavanderia",   label: "Lavandería",                   opciones: GENERAL },
-  { key: "balcon",       label: "Balcón/Terraza",               opciones: GENERAL },
-];
-
-const VALORES_INICIALES: FiltrosAvanzadoValores = {
-  habitaciones: "",
-  banos: "",
-  piscina: "",
-  patio: "",
-  garaje: "",
-  amueblada: "",
-  lavanderia: "",
-  balcon: "",
-};
+const PISCINA = ["Sí", "No"];
 
 interface SubDropdownProps {
   label: string;
-  opciones: string[];
-  valor: string;
-  onChange: (v: string) => void;
+  opciones?: string[];
+  valor?: string;
+  onChange?: (v: string) => void;
 }
 
-function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
+function SubDropdown({
+  label,
+  opciones = [],
+  valor = "",
+  onChange,
+}: SubDropdownProps) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -73,9 +50,75 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         setAbierto(false);
       }
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (abierto && opciones.length > 0) {
+      requestAnimationFrame(() => {
+        optionRefs.current[0]?.focus();
+      });
+    }
+  }, [abierto, opciones.length]);
+
+  const handleTriggerKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>
+  ) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      setAbierto((prev) => !prev);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAbierto(false);
+    }
+  };
+
+  const handleOptionKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+    optionValue: string
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = (index + 1) % opciones.length;
+      optionRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex = (index - 1 + opciones.length) % opciones.length;
+      optionRefs.current[prevIndex]?.focus();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onChange?.(optionValue);
+      setAbierto(false);
+
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setAbierto(false);
+
+      requestAnimationFrame(() => {
+        triggerButtonRef.current?.focus();
+      });
+    }
+  };
+
+  
 
   return (
     <div ref={ref} className="w-full">
@@ -84,39 +127,79 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
         onClick={() => setAbierto((p) => !p)}
         className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
       >
-        <span>{valor || label}</span>
+        
+      <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
+        {valor || label}
+      </span>
+
+      <div className="flex items-center gap-2">
+        {valor && (
+          /* CAMBIO: button por span para evitar error de botones anidados */
+          <span
+             role="button"
+             onClick={(e) => {
+               e.stopPropagation();
+               onChange?.("");
+             }}
+             className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+          >
+             <X className="h-4 w-4 text-[#5E5A55]" />
+          </span>
+        )}
         <span
           className="text-[#4B4B4B] transition-transform duration-200"
-          style={{ display: "inline-block", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
+          style={{
+            display: "inline-block",
+            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+          }}
         >
           ▾
         </span>
+      </div>
       </button>
 
       {abierto && (
         <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
           <div className="space-y-2">
-            {opciones.map((op) => {
+            {opciones.map((op, i) => {
               const checked = valor === op;
+
               return (
                 <button
-                  key={op}
+                  key={i}
+                  ref={(element) => {
+                    optionRefs.current[i] = element;
+                  }}
                   type="button"
-                  onMouseDown={() => { onChange(op); setAbierto(false); }}
+                  onMouseDown={() => {
+                    onChange?.(op);
+                    setAbierto(false);
+                  }}
+                  onKeyDown={(event) => handleOptionKeyDown(event, i, op)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition",
-                    checked ? "bg-[#E7E3DD]" : "bg-transparent hover:bg-[#F4EFE6]"
+                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition outline-none",
+                    "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
+                    checked
+                      ? "bg-[#E7E3DD] text-[#2E2E2E]"
+                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
                   )}
                 >
-                  <span className={cn(
-                    "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
-                    checked ? "border-[#6B6B6B] bg-white" : "border-[#8A847C] bg-white"
-                  )}>
-                    <span className={cn(
-                      "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
-                      checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
-                    )} />
+                  <span
+                    className={cn(
+                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                      checked
+                        ? "border-[#6B6B6B] bg-white"
+                        : "border-[#8A847C] bg-white"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                      )}
+                    />
                   </span>
+
                   <span className="text-sm text-[#2E2E2E]">{op}</span>
                 </button>
               );
@@ -128,22 +211,105 @@ function SubDropdown({ label, opciones, valor, onChange }: SubDropdownProps) {
   );
 }
 
-interface Props {
-  onChange: (valores: FiltrosAvanzadoValores) => void;
+interface AdvancedFiltersValues {
+  habitaciones: string;
+  banos: string;
+  piscina: string;
+  minSurface: string;
+  maxSurface: string;
 }
 
-export default function FiltrosAvanzado({ onChange }: Props) {
-  const [abierto, setAbierto] = useState(false);
-  const [valores, setValores] = useState<FiltrosAvanzadoValores>(VALORES_INICIALES);
+interface Props {
+  onChange: (valores: AdvancedFiltersValues) => void;
+  value?: AdvancedFiltersValues;
+}
 
-  const handleChange = (campo: keyof FiltrosAvanzadoValores, valor: string) => {
-    const nuevo = { ...valores, [campo]: valor };
-    setValores(nuevo);
-    onChange(nuevo);
+export default function FiltrosAvanzado({ onChange, value }: Props) {
+  const [abierto, setAbierto] = useState(false);
+
+  const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
+  const [banos, setBanos] = useState(value?.banos ?? "");
+  const [piscina, setPiscina] = useState(value?.piscina ?? "");
+  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
+  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
+  const [surfaceError, setSurfaceError] = useState<string | null>(null);
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setHabitaciones(value?.habitaciones ?? "");
+    setBanos(value?.banos ?? "");
+    setPiscina(value?.piscina ?? "");
+    setMinSurface(value?.minSurface ?? "");
+    setMaxSurface(value?.maxSurface ?? "");
+  }, [
+    value?.habitaciones,
+    value?.banos,
+    value?.piscina,
+    value?.minSurface,
+    value?.maxSurface,
+  ]);
+
+  const actualizar = (
+    campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
+    valor: string
+  ) => {
+    onChange({
+      habitaciones: campo === "habitaciones" ? valor : habitaciones,
+      banos: campo === "banos" ? valor : banos,
+      piscina: campo === "piscina" ? valor : piscina,
+      minSurface: campo === "minSurface" ? valor : minSurface,
+      maxSurface: campo === "maxSurface" ? valor : maxSurface,
+    });
   };
 
+  const handleSurfaceInputChange =
+    (field: "minSurface" | "maxSurface") =>
+    (rawValue: string) => {
+      const value = rawValue.trim();
+
+      if (value === "") {
+        setSurfaceError(null);
+
+        if (field === "minSurface") {
+          setMinSurface("");
+          actualizar("minSurface", "");
+        } else {
+          setMaxSurface("");
+          actualizar("maxSurface", "");
+        }
+        return;
+      }
+
+      const validSurface = /^\d*\.?\d*$/.test(value);
+
+      if (!validSurface) {
+        setSurfaceError("Solo se permiten números");
+        return;
+      }
+
+      setSurfaceError(null);
+
+      if (field === "minSurface") {
+        setMinSurface(value);
+        actualizar("minSurface", value);
+      } else {
+        setMaxSurface(value);
+        actualizar("maxSurface", value);
+      }
+    };
+
+  const surfaceLabel =
+    minSurface && maxSurface
+      ? `${minSurface}m² - ${maxSurface}m²`
+      : minSurface
+      ? `Desde ${minSurface}m²`
+      : maxSurface
+      ? `Hasta ${maxSurface}m²`
+      : "";
+
   return (
-    <div className={`${geist.className} w-full mt-3`}>
+    <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
       <Accordion
         type="single"
         collapsible
@@ -159,21 +325,61 @@ export default function FiltrosAvanzado({ onChange }: Props) {
                 "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-              avanzado
+              Avanzado
             </AccordionTrigger>
           </div>
 
-          <AccordionContent className="pt-3 pb-0 overflow-visible">
-            <div className="flex flex-col gap-3 overflow-visible">
-              {CAMPOS.map(({ key, label, opciones }) => (
-                <SubDropdown
-                  key={key}
-                  label={label}
-                  opciones={opciones}
-                  valor={valores[key]}
-                  onChange={(v) => handleChange(key, v)}
-                />
-              ))}
+          <AccordionContent className="pb-0 pt-3">
+            <div className="flex flex-col gap-3">
+              <SubDropdown
+                label="Número total de habitaciones"
+                opciones={HABITACIONES}
+                valor={habitaciones}
+                onChange={(v) => {
+                  setHabitaciones(v);
+                  actualizar("habitaciones", v);
+                }}
+              />
+
+              <SubDropdown
+                label="Baños"
+                opciones={BANOS}
+                valor={banos}
+                onChange={(v) => {
+                  setBanos(v);
+                  actualizar("banos", v);
+                }}
+              />
+
+              <SubDropdown
+                label="Piscina"
+                opciones={PISCINA}
+                valor={piscina}
+                onChange={(v) => {
+                  setPiscina(v);
+                  actualizar("piscina", v);
+                }}
+              />
+
+              <SurfaceRangeDropdown
+                minValue={minSurface}
+                maxValue={maxSurface}
+                onMinChange={handleSurfaceInputChange("minSurface")}
+                onMaxChange={handleSurfaceInputChange("maxSurface")}
+                onClear={() => {
+                  setSurfaceError(null);
+                  setMinSurface("");
+                  setMaxSurface("");
+                  actualizar("minSurface", "");
+                  actualizar("maxSurface", "");
+                }}
+              />
+
+              <div className={surfaceError ? "block" : "hidden"}>
+                <p className="text-center text-sm text-red-600">
+                  {surfaceError}
+                </p>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
