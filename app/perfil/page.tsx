@@ -43,6 +43,7 @@ import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
 import ZonasView from "./views/zonas-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
+import SuscripcionView from "@/app/cobros/suscripcion/page";
 import { useAuth } from "../auth/AuthContext";
 /*  Dev: David Chavez Totora - sow-davidc 
     Fecha: 05/04/2026
@@ -160,7 +161,7 @@ function PerfilContent() {
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
     zonas: usuario ? <ZonasView id_usuario={userId} /> : null,
-    planes: <div className="p-6 text-center text-slate-500">En proceso de Team-ADA/Cobros</div>,
+    planes: <SuscripcionView />,
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);

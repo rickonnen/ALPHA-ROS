@@ -192,3 +192,28 @@
     @apply antialiased;
   }
 }
+
+@layer utilities {
+  /* Scrollbar personalizado moderno */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent; 
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+}

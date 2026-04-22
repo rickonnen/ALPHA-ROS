@@ -1,8 +1,11 @@
-import NextAuth, { AuthOptions } from "next-auth"
+import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import DiscordProvider from "next-auth/providers/discord"
+import FacebookProvider from "next-auth/providers/facebook"
 import CredentialsProvider from "next-auth/providers/credentials"
+import type { NextAuthOptions } from "next-auth"
 
-export const authOptions: AuthOptions = {
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
@@ -20,6 +23,14 @@ export const authOptions: AuthOptions = {
         },
       },
     }),
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -30,34 +41,28 @@ export const authOptions: AuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-
         try {
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
-
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           })
-
           if (error || !data?.user) {
             console.error("Error autenticando:", error?.message)
             return null
           }
-
           const { data: userData } = await supabase
             .from("Usuario")
             .select("*")
             .eq("id_usuario", data.user.id)
             .maybeSingle()
-
           if (!userData) {
             return null
           }
-
           return {
             id: data.user.id,
             email: data.user.email,
@@ -83,17 +88,14 @@ export const authOptions: AuthOptions = {
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
-
           const { data: existingUser } = await supabase
             .from("Usuario")
             .select("id_usuario")
             .eq("email", user.email)
             .maybeSingle()
-
           if (existingUser) {
             return true
           }
-
           const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: user.email!,
             email_confirm: true,
@@ -106,9 +108,7 @@ export const authOptions: AuthOptions = {
             console.error("Error creando en auth.users:", authError)
             return "/api/google-cancelado"
           }
-
           const supabaseUserId = authData.user.id
-
           const { error: dbError } = await supabase.from("Usuario").upsert({
             id_usuario: supabaseUserId,
             email: user.email,
@@ -119,12 +119,19 @@ export const authOptions: AuthOptions = {
             rol: 2,
             estado: 1,
           }, { onConflict: "id_usuario" })
-
           if (dbError) {
             console.error("Error insertando en tabla Usuario:", dbError)
             await supabase.auth.admin.deleteUser(supabaseUserId)
             return "/api/google-cancelado"
           }
+        }
+        if (account.provider === "discord") {
+          const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
+          return await handleDiscordSignIn(user, account)
+        }
+        if (account.provider === "facebook") {
+          const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
+          return await handleFacebookSignIn(user, account)
         }
         return true
       } catch (error) {
@@ -137,8 +144,7 @@ export const authOptions: AuthOptions = {
       if (user?.id) {
         token.id = user.id;
       }
-      
-      if (account?.provider === "google" && user?.email) {
+      if (account?.provider && user?.email) {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
           process.env.SUPABASE_URL!,
@@ -149,7 +155,6 @@ export const authOptions: AuthOptions = {
           .select("id_usuario")
           .eq("email", user.email)
           .maybeSingle()
-
         if (data?.id_usuario) {
           token.id = data.id_usuario
         }
@@ -186,5 +191,4 @@ export const authOptions: AuthOptions = {
 }
 
 const handler = NextAuth(authOptions)
-
 export { handler as GET, handler as POST }
