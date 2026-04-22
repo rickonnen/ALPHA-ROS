@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { Trash2, Map, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import MiniMap from "@/components/MiniMap";
 
 interface Zona {
   id_mi_zona: number;
@@ -19,6 +17,7 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; zona: Zona | null }>({ show: false, zona: null });
   const router = useRouter();
 
   useEffect(() => {
@@ -44,16 +43,16 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
     fetchZonas();
   }, []);
 
-  const handleDeleteZona = async (id_mi_zona: number, nombreZona: string) => {
-    if (!confirm(`¿Eliminar la zona "${nombreZona}"?`)) return;
-
+  const handleDeleteZona = async () => {
+    if (!deleteModal.zona) return;
     try {
-      const res = await fetch(`/api/perfil/mis-zonas?id_mi_zona=${id_mi_zona}`, {
+      const res = await fetch(`/api/perfil/mis-zonas?id_mi_zona=${deleteModal.zona.id_mi_zona}`, {
         method: "DELETE",
         credentials: 'include',
       });
       if (res.ok) {
-        setZonas(zonas.filter(z => z.id_mi_zona !== id_mi_zona));
+        setZonas(zonas.filter(z => z.id_mi_zona !== deleteModal.zona!.id_mi_zona));
+        setDeleteModal({ show: false, zona: null });
       } else {
         alert("Error al eliminar la zona");
       }
@@ -103,21 +102,20 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
         )}
 
         {!loading && zonas.length > 0 && (
-          <ScrollArea className="h-auto max-h-[800px]">
-            <div className="space-y-4 pr-4">
+          <div className="block overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="space-y-3">
               {zonas.map((zona) => (
                 <div
                   key={zona.id_mi_zona}
-                  className="group rounded-lg border border-slate-600/40 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur-sm p-4 transition-all duration-200 cursor-pointer hover:border-[#C26E5A]/60"
-                  onClick={() => handleLoadZona(zona.coordenadas)}
+                  className="group flex gap-4 rounded-lg border border-slate-600/40 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur-sm p-4 transition-all duration-200 items-stretch hover:border-[#C26E5A]/60"
                 >
-                  {/* Header con nombre y botón eliminar */}
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base text-white group-hover:text-[#C26E5A] transition-colors truncate">
+                  {/* Información a la izquierda */}
+                  <div className="flex-1 flex flex-col justify-between min-w-0">
+                    <div>
+                      <h3 className="font-semibold text-sm text-white group-hover:text-[#C26E5A] transition-colors truncate">
                         {zona.nombre_zona}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-1">
                         {new Date(zona.fecha_creacion).toLocaleDateString('es-ES', {
                           year: 'numeric',
                           month: 'short',
@@ -125,32 +123,72 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
                         })}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteZona(zona.id_mi_zona, zona.nombre_zona);
+                        handleLoadZona(zona.coordenadas);
                       }}
-                      className="ml-2 text-slate-500 hover:text-red-400 hover:bg-red-500/20 flex-shrink-0"
+                      className="mt-3 w-fit px-3 py-1.5 rounded-lg bg-[var(--secondary)] text-white text-xs font-semibold hover:bg-[var(--secondary)]/80 transition-colors border-none"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      Cargar zona
+                    </button>
                   </div>
 
-                  {/* Minimapa */}
-                  <MiniMap coordenadas={zona.coordenadas} nombre={zona.nombre_zona} />
-
-                  {/* Hint de interacción */}
-                  <p className="text-xs text-slate-500 mt-3 group-hover:text-slate-400 transition-colors text-center">
-                    Haz clic para cargar esta zona en búsqueda
-                  </p>
+                  {/* Botón eliminar */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteModal({ show: true, zona });
+                    }}
+                    className="flex-shrink-0 text-slate-500 hover:text-red-400 hover:bg-red-500/20 self-start"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </CardContent>
+
+      {/* Modal de confirmación de eliminación */}
+      {deleteModal.show && deleteModal.zona && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
+            <div className="w-14 h-14 rounded-full border-2 border-red-400 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-red-500"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">¿Eliminar zona?</h2>
+            <p className="text-sm text-gray-500 text-center">
+              ¿Estás seguro de eliminar la zona{" "}
+              <span className="font-semibold text-red-500">"{deleteModal.zona.nombre_zona}"</span>?
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setDeleteModal({ show: false, zona: null })}
+                className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteZona}
+                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

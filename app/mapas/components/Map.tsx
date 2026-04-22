@@ -142,14 +142,14 @@ export default function PropertyMap({
       />
 
       {drawnPolygon && (
-        <Polygon 
-          positions={drawnPolygon} 
-          color="#2563eb" 
-          fillColor="#3b82f6" 
-          fillOpacity={0.25} 
-          weight={2} 
-        />
-      )}
+  <Polygon 
+    positions={drawnPolygon} 
+    color="#8B4423" 
+    fillColor="#C26E5A" 
+    fillOpacity={0.25} 
+    weight={2} 
+  />
+)}
 
       <MarkerClusterGroup
         disableClusteringAtZoom={17}

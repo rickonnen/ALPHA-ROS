@@ -41,7 +41,7 @@ export default function MiniMap({ coordenadas, nombre }: MiniMapProps) {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: "mapbox://styles/mapbox/dark-v11",
       center: center,
       zoom: zoom,
       interactive: false,
@@ -119,9 +119,9 @@ export default function MiniMap({ coordenadas, nombre }: MiniMapProps) {
   }, [coordenadas]);
 
   return (
-    <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-      <div ref={mapContainer} className="h-64 w-full" />
-      <div className="absolute top-3 left-3 bg-white shadow-sm px-3 py-1.5 rounded-md text-xs font-semibold text-slate-800">
+    <div className="relative w-full h-full">
+  <div ref={mapContainer} className="w-full h-full" />
+      <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold text-white border border-slate-700/50">
         {nombre}
       </div>
     </div>
