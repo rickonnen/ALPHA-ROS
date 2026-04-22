@@ -40,6 +40,10 @@
     Fecha: 18/04/2026
     Feat: Integración del modal de límite de publicaciones (Criterio 11).
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 22/04/2026
+    Fix: Se aplicó estado visual "disabled" (grisáceo y cursor bloqueado) en el botón "+ Agregar" cuando el límite de publicaciones llega a 0.
+*/
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,22 +75,32 @@ export default function PublicacionesView({
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const [bolShowModal, setBolShowModal] = useState(false);
-  const [bolChecking,  setBolChecking]  = useState(false);
+  const [bolChecking, setBolChecking] = useState(false);
 
   useEffect(() => {
     let activo = true;
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
-        const res = await fetch(
-          `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
-        );
-        if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
-        const json = await res.json();
+        const [resPubs, resRestantes] = await Promise.all([
+          fetch(
+            `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
+          ),
+          fetch(`/api/perfil/publicaciones-restantes?id_usuario=${id_usuario}`),
+        ]);
+
+        if (!resPubs.ok)
+          throw new Error("No se pudieron cargar las publicaciones");
+
+        const jsonPubs = await resPubs.json();
+        const jsonRestantes = await resRestantes.json();
+
         if (activo) {
-          setPublicaciones(json.data);
-          setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
-          setPublicacionesRestantes(json.cant_publicaciones_restantes ?? 0);
+          setPublicaciones(jsonPubs.data);
+          setTotalPaginas(Math.ceil(jsonPubs.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(
+            jsonRestantes.cant_publicaciones_restantes ?? 0,
+          );
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -123,6 +137,7 @@ export default function PublicacionesView({
 
       const nuevas = publicaciones.filter((p) => p.id !== idAEliminar);
       setPublicaciones(nuevas);
+      setPublicacionesRestantes((prev) => prev + 1);
       setIdAEliminar(null);
 
       const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
@@ -166,21 +181,25 @@ export default function PublicacionesView({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
-              Publicaciones
-            </CardTitle> 
+              PUBLICACIONES
+            </CardTitle>
             <div className="flex items-center justify-center gap-2">
               <span className="text-white/60 text-sm whitespace-nowrap">
-                {publicacionesRestantes} publicaciones restantes
+                {publicacionesRestantes} publicaciones disponibles
               </span>
+  
               <Button
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
+                className={`flex-shrink-0 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)] ${
+                  publicacionesRestantes <= 0
+                    ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80" 
+                    : "bg-[var(--secondary)] hover:bg-[var(--secondary)]/80"
+                }`}
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
-
             </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
