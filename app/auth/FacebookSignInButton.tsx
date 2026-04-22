@@ -1,8 +1,13 @@
+/**Archivo FacebookSignInButton.tsx 
+ * * Direccion         app/auth/FacebookSignInButton.tsx
+*/
+"use client"
+import { signIn } from "next-auth/react"
 import { facebookStyles, facebookIcon } from "./stylesButton"
 
 export function SignInFacebook() {
   const handleClick = () => {
-    console.log("")
+    signIn("facebook", { callbackUrl: "/" })
   }
 
   return (
@@ -11,4 +16,3 @@ export function SignInFacebook() {
     </button>
   )
 }
-

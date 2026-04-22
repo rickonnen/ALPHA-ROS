@@ -11,8 +11,8 @@ import SuccessModal from "./SuccessModal";
 import OTP2FAModal from "./OTP2FAModal";
 import { useAuth } from "./AuthContext";
 
-  import { SignInFacebook } from "./FacebookSignIn";
-  import { SignInDiscord } from "./DiscordSignIn";
+  import { SignInFacebook } from "./FacebookSignInButton";
+  import { SignInDiscord } from "./DiscordSignInButton";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -672,7 +672,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           {loading ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
 
-                  <div style={{ textAlign: "center", marginTop: "16px" }}>
+           <div style={{ textAlign: "center", marginTop: "16px" }}>
               <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "12px" }}>
                   Acceso rápido con
               </p>

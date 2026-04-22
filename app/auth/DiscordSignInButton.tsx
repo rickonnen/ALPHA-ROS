@@ -1,8 +1,13 @@
+/**Archivo DiscordSignInButton.tsx 
+ * Direccion         app/auth/DiscordSignInButton.tsx
+*/
+"use client"
+import { signIn } from "next-auth/react"
 import { discordStyles, discordIcon } from "./stylesButton"
 
 export function SignInDiscord() {
   const handleClick = () => {
-    console.log("")
+    signIn("discord", { callbackUrl: "/" })
   }
 
   return (
@@ -11,4 +16,3 @@ export function SignInDiscord() {
     </button>
   )
 }
-

@@ -1,3 +1,6 @@
+/**Archivo: confirmModal.tsx
+ * Direccion: alpha-ros-deploy1\app\perfil\views\redes-vinculadas>
+ */
 type ConfirmModalProps = {
   title: string;
   description: string;
