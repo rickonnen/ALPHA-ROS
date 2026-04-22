@@ -18,6 +18,10 @@ interface SearchMapClientProps {
   selectedPos: [number, number] | null;
   hoveredPos: [number, number] | null;
   setSelectedPos: (pos: [number, number]) => void;
+  // --- PROPS PARA LA HU2 ---
+  isDrawingMode?: boolean;
+  drawnPolygon?: [number, number][] | null;
+  onPolygonComplete?: (points: [number, number][]) => void;
 }
 
 export default function SearchMapClient({
@@ -26,15 +30,21 @@ export default function SearchMapClient({
   selectedPos,
   hoveredPos,
   setSelectedPos,
+  isDrawingMode,         // <-- 1. Lo extraemos
+  drawnPolygon,          // <-- 1. Lo extraemos
+  onPolygonComplete,     // <-- 1. Lo extraemos
 }: SearchMapClientProps) {
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full z-0 relative">
       <PropertyMap
         locations={locations}
         hoveredId={hoveredId}
         selectedPos={selectedPos}
         hoveredPos={hoveredPos}
         setSelectedPos={setSelectedPos}
+        isDrawingMode={isDrawingMode}         // <-- 2. Lo pasamos al mapa real
+        drawnPolygon={drawnPolygon}           // <-- 2. Lo pasamos al mapa real
+        onPolygonComplete={onPolygonComplete} // <-- 2. Lo pasamos al mapa real
       />
     </div>
   );

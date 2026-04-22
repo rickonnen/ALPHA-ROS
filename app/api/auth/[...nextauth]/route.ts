@@ -1,15 +1,15 @@
-import DiscordProvider from "next-auth/providers/discord"
-import FacebookProvider from "next-auth/providers/facebook"
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import DiscordProvider from "next-auth/providers/discord"
+import FacebookProvider from "next-auth/providers/facebook"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions } from "next-auth"
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const, // 👈 fix error 1
   },
 
   providers: [
@@ -77,7 +77,6 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-
     async signIn({ user, account }: any) {
       if (!account) {
         return true
@@ -170,6 +169,7 @@ export const authOptions: NextAuthOptions = {
       return session
     },
 
+    // 👇 fix error 2: solo un redirect
     async redirect({ url, baseUrl }: any) {
       if (
         url.includes("error=Callback") ||

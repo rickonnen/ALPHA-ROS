@@ -11,6 +11,7 @@
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
     "@supabase/supabase-js": "^2.104.0",
+    "@turf/turf": "^7.3.4",
     "@types/nodemailer": "^8.0.0",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.9.0",
@@ -23,6 +24,7 @@
     "leaflet": "^1.9.4",
     "libphonenumber-js": "^1.12.41",
     "lucide-react": "^1.0.1",
+    "mapbox-gl": "^3.22.0",
     "next": "^15.5.14",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.13",

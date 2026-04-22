@@ -41,6 +41,7 @@ import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
+import ZonasView from "./views/zonas-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
 import SuscripcionView from "@/app/cobros/suscripcion/page";
 import { useAuth } from "../auth/AuthContext";
@@ -159,7 +160,7 @@ function PerfilContent() {
     favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
-    zonas: <div className="p-6 text-center text-slate-500">En proceso de Team-Bug Hunters/Mapas</div>,
+    zonas: usuario ? <ZonasView id_usuario={userId} /> : null,
     planes: <SuscripcionView />,
   };
 
