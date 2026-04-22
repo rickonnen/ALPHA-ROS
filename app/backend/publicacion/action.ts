@@ -12,7 +12,7 @@ import prisma from "@/lib/prisma";
 const strUserId = "8cb1d337-7122-4b22-8f46-31c8af92b5a6"; 
 
 // ==========================================
-// HERRAMIENTA 1: El Flujo Definitivo (Crear de cero)
+// HERRAMIENTA 1: El Flujo Definitivo (Crear de cero).
 // ==========================================
 
 /**
@@ -66,7 +66,7 @@ export async function verificarYCrearPublicacion(objDatosFormulario: any) {
 
 
 // ==========================================
-// HERRAMIENTA 2: (Asociar)
+// HERRAMIENTA 2: (Asociar).
 // ==========================================
 
 /**
@@ -88,7 +88,7 @@ export async function asociarPublicacionExistente(intIdPublicacionCreada: number
 
       if (intRestantes <= 0) throw new Error("LIMITE_ALCANZADO"); 
 
-      // Actualizamos la publicación existente
+      // Actualizamos la publicación existente.
       const objPublicacionActualizada = await tx.publicacion.update({
          where: { id_publicacion: intIdPublicacionCreada },
          data: { id_usuario: strUserId } 
