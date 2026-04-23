@@ -33,8 +33,18 @@ export default function OTP2FAModal({
       setError("Ingresa un código de 6 dígitos");
       return;
     }
+    
+    if (!userId || userId.trim() === "") {
+      setError("ID de usuario inválido");
+      console.error("[2FA Modal] userId vacío:", userId);
+      return;
+    }
+
     setCargando(true);
     setError("");
+    
+    console.log(`[2FA Modal] Verificando 2FA para usuario: ${userId}, código: ${codigo.substring(0, 3)}...`);
+    
     try {
       const response = await fetch("/api/auth/verify-2fa-login", {
         method: "POST",
@@ -42,14 +52,23 @@ export default function OTP2FAModal({
         credentials: "include",
         body: JSON.stringify({ userId, codigo }),
       });
+      
+      console.log(`[2FA Modal] Response status: ${response.status}`);
+      
       const data = await response.json();
+      
+      console.log(`[2FA Modal] Response data:`, data);
+      
       if (response.ok) {
+        console.log(`[2FA Modal] ✓ Verificación exitosa`);
         onSuccess();
       } else {
+        console.error(`[2FA Modal] Error en respuesta:`, data);
         setError(data.error || "Código inválido");
         setCodigo("");
       }
-    } catch {
+    } catch (error) {
+      console.error("[2FA Modal] Error en fetch:", error);
       setError("Error al verificar código");
     } finally {
       setCargando(false);

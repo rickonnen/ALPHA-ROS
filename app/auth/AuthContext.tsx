@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (nombre: string, apellido: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  fetchUserFromServer: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,8 +135,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await res.json();
+
+      // ✅ Detectar si se requiere 2FA
+      if (data.requiresOTP && data.userId) {
+        const err: any = new Error("Requiere verificación 2FA");
+        err.requiresOTP = true;
+        err.userId = data.userId;
+        throw err;
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         const err: any = new Error(data.error || "Error al iniciar sesión");
         err.code = data.code;
         throw err;
@@ -305,7 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-      <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+      <AuthContext.Provider value={{ user, isLoading, login, signup, logout, fetchUserFromServer }}>
         {children}
       </AuthContext.Provider>
     </>

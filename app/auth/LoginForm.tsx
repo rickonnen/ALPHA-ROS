@@ -228,18 +228,29 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
 
   // ✅ NUEVO: Manejo de 2FA exitoso
   async function handle2FASuccess() {
+    console.log("[LoginForm] 2FA verificado exitosamente, refrescando usuario...");
     setShow2FAModal(false);
     setPending2FAUserId("");
+    
     // Refrescar el usuario desde el servidor
     const success = await fetchUserFromServer();
+    console.log("[LoginForm] fetchUserFromServer resultado:", success);
+    
     if (success) {
-      const resMe = await fetch("/api/auth/me");
+      const resMe = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
+      console.log("[LoginForm] /api/auth/me status:", resMe.status);
+      
       if (resMe.ok) {
         const dataMe = await resMe.json();
+        console.log("[LoginForm] User data:", dataMe);
         setUserRol(dataMe.user.rol);
       }
+      console.log("[LoginForm] Mostrando modal de éxito");
       setShowSuccess(true);
     } else {
+      console.error("[LoginForm] Error fetching user");
       setGeneralError("Error al cargar tu usuario después de 2FA");
     }
   }

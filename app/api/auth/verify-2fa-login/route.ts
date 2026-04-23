@@ -12,9 +12,19 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, codigo } = await request.json();
 
-    if (!userId || !codigo) {
+    // ✅ Validación estricta de parámetros
+    if (!userId || typeof userId !== "string" || userId.trim() === "") {
+      console.error("[2FA LOGIN] userId inválido o vacío:", userId);
       return NextResponse.json(
-        { error: "Parámetros incompletos" },
+        { error: "ID de usuario inválido" },
+        { status: 400 }
+      );
+    }
+
+    if (!codigo || typeof codigo !== "string") {
+      console.error("[2FA LOGIN] codigo inválido");
+      return NextResponse.json(
+        { error: "Código inválido" },
         { status: 400 }
       );
     }
@@ -27,6 +37,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`[2FA LOGIN] Verificando 2FA para usuario: ${userId}, código: ${codigo.substring(0, 3)}...`);
+
     // Obtener secreto 2FA del usuario
     const usuario = await (prisma.usuario.findUnique as any)({
       where: { id_usuario: userId },
@@ -38,11 +50,41 @@ export async function POST(request: NextRequest) {
         email: true,
         rol: true
       }
-    }).catch((e: any) => null);
+    }).catch((e: any) => {
+      console.error("[2FA LOGIN] Error en findUnique:", e.message);
+      return null;
+    });
 
-    if (!usuario || !usuario.dos_fa_secreto || !usuario.dos_fa_habilitado) {
+    if (!usuario) {
+      console.error(`[2FA LOGIN] Usuario no encontrado: ${userId}`);
       return NextResponse.json(
-        { error: "2FA no está configurado para este usuario" },
+        { error: "Usuario no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (!usuario.dos_fa_habilitado) {
+      console.error(`[2FA LOGIN] 2FA no habilitado para usuario: ${userId}`);
+      return NextResponse.json(
+        { error: "2FA no está habilitado para este usuario" },
+        { status: 400 }
+      );
+    }
+
+    if (!usuario.dos_fa_secreto) {
+      console.error(`[2FA LOGIN] Secret 2FA no encontrado para usuario: ${userId}`);
+      return NextResponse.json(
+        { error: "Configuración de 2FA incompleta" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Validar que el secret sea válido y no vacío
+    const secret = usuario.dos_fa_secreto.trim();
+    if (!secret || secret.length === 0) {
+      console.error(`[2FA LOGIN] Secret 2FA vacío para usuario: ${userId}`);
+      return NextResponse.json(
+        { error: "Configuración de 2FA incompleta" },
         { status: 400 }
       );
     }
@@ -53,15 +95,20 @@ export async function POST(request: NextRequest) {
 
     for (let i = -6; i <= 6; i++) {
       const tiempoVentana = ahora + (i * 30);
-      const codigoVentana = speakeasy.totp({
-        secret: usuario.dos_fa_secreto,
-        encoding: "base32",
-        time: tiempoVentana,
-      });
+      try {
+        const codigoVentana = speakeasy.totp({
+          secret: secret,
+          encoding: "base32",
+          time: tiempoVentana,
+        });
 
-      if (codigoVentana === codigo) {
-        esValido = true;
-        break;
+        if (codigoVentana === codigo) {
+          esValido = true;
+          break;
+        }
+      } catch (err: any) {
+        console.error(`[2FA LOGIN] Error generando TOTP en ventana ${i}:`, err.message);
+        // Continuar con la siguiente ventana si hay error
       }
     }
 
