@@ -172,7 +172,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     googleClickedRef.current = true;
     setGoogleLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      // ✅ NUEVO: Usar ruta especial de callback que verifica 2FA
+      await signIn("google", { callbackUrl: "/google-auth-check" });
     } catch (error) {
       googleClickedRef.current = false;
       setGoogleLoading(false);
