@@ -12,12 +12,12 @@ export async function POST(req: Request) {
 
     switch (accion) {
       case "validar_pago":
-        // Ejecuta Upgrade, Suspensión/Reactivación y Notificación de una vez
+    
         await servicios.procesarCambioPlan(id_usuario, id_plan);
         return NextResponse.json({ success: true, message: "Plan actualizado correctamente" });
 
       case "check_expirados":
-        // Ejecuta la verificación masiva diaria
+        
         await servicios.verificarSuscripcionesMasivas();
         return NextResponse.json({ success: true, message: "Proceso de expiración finalizado" });
 
