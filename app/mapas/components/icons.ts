@@ -69,3 +69,58 @@ export const createClusterIcon = (cluster: any) => {
     iconSize: L.point(44, 44, true),
   });
 };
+
+// Agregar al final de icons.ts
+export const createClusterPopupHTML = (locations: { direccion: string; precio: string }[]) => {
+  const items = locations.slice(0, 4).map(loc => `
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 12px;
+    ">
+      <span style="
+        font-size: 12px;
+        color: #475569;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+      ">${loc.direccion}</span>
+      <span style="
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+        white-space: nowrap;
+      ">${loc.precio}</span>
+    </div>
+  `).join('');
+
+  const extra = locations.length > 4
+    ? `<p style="font-size:11px; color:#94a3b8; text-align:center; margin-top:6px;">
+        +${locations.length - 4} propiedades más
+       </p>`
+    : '';
+
+  return `
+    <div style="
+      font-family: sans-serif;
+      min-width: 220px;
+      max-width: 260px;
+      padding: 4px 0;
+    ">
+      <p style="
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+      ">${locations.length} propiedades en grupo</p>
+      ${items}
+      ${extra}
+    </div>
+  `;
+};
