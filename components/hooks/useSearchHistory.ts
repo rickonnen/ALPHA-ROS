@@ -3,11 +3,10 @@ import type { KeyboardEvent } from "react";
 
 const strMapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const strBoliviaBbox = "-69.64,-22.90,-57.45,-9.66";
-const strFlagUrl = "https://res.cloudinary.com/dj1mlj3vz/image/upload/v1774580367/flag-for-flag-bolivia-svgrepo-com_xemt7m.svg";
+const strFlagUrl = "/banderaBolivia.svg";
 
 const intMaxCityLength = 30;
 
-// Hook de historial respetando tu nomenclatura
 export function useSearchHistory() {
   const [arrHistory, setArrHistory] = useState<any[]>([]);
   const strStorageKey = "recentCitySearches";
@@ -184,7 +183,7 @@ export function useCitySearch() {
     setBolShowSuggestions(false);
     setBolNoResults(false);
     setIntSelectedIndex(-1);
-    saveToHistory(objSuggestion); // Guardado en el historial
+    saveToHistory(objSuggestion);
   };
 
   const handleKeyDown = (objEvent: KeyboardEvent<HTMLInputElement>) => {

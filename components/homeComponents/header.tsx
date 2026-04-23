@@ -123,7 +123,7 @@ export const Header = () => {
     bolIsAuthLoading,
   });
 
-  useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, bolIsMobileMenuOpen);
+  useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, { enabled: bolIsMobileMenuOpen });
 
   // renderizado optimizado del logo
   const objLogoElement = useMemo(() => (
