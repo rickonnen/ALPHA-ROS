@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         { ok: false, error: "Unauthorized" },
         { status: 401 }
       );
-    
+    }
 
     console.log("[CRON] Iniciando: Recordatorios 48h");
     const respObtener = await fetch(
