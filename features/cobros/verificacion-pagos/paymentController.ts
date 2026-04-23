@@ -84,10 +84,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     const objUpdatedPayment = await prisma.$transaction(async (tx) => {
       const objCurrentPayment = await tx.detallePago.findUnique({
         where: { id_detalle: intId },
-        include: { 
-          PlanPublicacion: true, 
-          Usuario: { select: { cant_publicaciones_restantes: true } } 
-        }
+        include: { PlanPublicacion: true }
       });
 
       if (!objCurrentPayment) {
@@ -106,22 +103,56 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         
         const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
         const strUserId = objCurrentPayment.id_usuario;
+        const intPlanId = objCurrentPayment.id_plan;
 
-        if (strUserId) {
-          //Se asigna la cantidad del nuevo plan
+        if (strUserId && intPlanId) {
+
           await tx.usuario.update({
             where: { id_usuario: strUserId },
             data: {
               cant_publicaciones_restantes: intNewQuota
             }
           });
+
+          const objFechaInicio = new Date();
+          const objFechaFin = new Date(objFechaInicio);
+          // Extrae el valor de tiempo_pago donde está si es "mensual" o "anual"
+          // el "||" "o" por si está vacío, próximo a ver/cambiar porque ahora siempre saldrá si es mensual o anual algún plan
+          const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
+          // Si es anual se suma 1 año exacto, sino ps, se suma 30 días
+          if (strModalidad.toLowerCase().includes('anual')) {
+            objFechaFin.setFullYear(objFechaFin.getFullYear() + 1);
+          } else {
+            objFechaFin.setDate(objFechaFin.getDate() + 30);
+          }
+          // Actualiza/crea
+          await tx.suscripcion.upsert({
+            where: { id_usuario: strUserId },
+            update: {
+              id_plan: intPlanId,
+              fecha_inicio: objFechaInicio,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            },
+            create: {
+              id_usuario: strUserId,
+              id_plan: intPlanId,
+              fecha_inicio: objFechaInicio,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            }
+          });
         }
       }
 
       return objPaymentResult;
-      
+
     });
-    
+
     console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
@@ -133,5 +164,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
-  
+
 };
