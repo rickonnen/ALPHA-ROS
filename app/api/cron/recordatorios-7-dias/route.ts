@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { enviarNotificacionDeGrupo } from "@/lib/email/emailService";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,22 +49,69 @@ export async function POST(req: NextRequest) {
       resultados.procesadas++;
 
       try {
-        await prisma.suscripcion.update({
-          where: { id_suscripcion: suscripcion.id_suscripcion },
-          data: { notificado_7d: true },
-        });
+        const id_notificacion = uuidv4();
+        const titulo = "Plan por vencer";
+        const mensaje = "Su plan actual expira en 7 días por favor pagar antes de que expire";
 
-        resultados.actualizadas++;
-        resultados.detalles.push({
-          id_suscripcion: suscripcion.id_suscripcion,
-          email: suscripcion.Usuario.email,
-          estado: "OK",
-          mensaje: "Suscripción marcada como notificada",
+        // Crear registro en tabla Notificacion
+        await prisma.notificacion.create({
+          data: {
+            id_notificacion,
+            titulo,
+            mensaje,
+            id_usuario: suscripcion.id_usuario,
+            id_publicacion: 1,
+            id_categoria: 2, // ID fijo para notificaciones de pagos
+            email_enviado: false,
+            estado_envio: "pendiente",
+          },
         });
 
         console.log(
-          `[CRON] ✓ Suscripción ${suscripcion.id_suscripcion} procesada`
+          `[CRON] Notificación creada: ${id_notificacion}`
         );
+
+        // Enviar correo
+        const resultadoEmail = await enviarNotificacionDeGrupo(
+          suscripcion.Usuario.email,
+          suscripcion.Usuario.nombre,
+          titulo,
+          mensaje,
+          "Cobros",
+          id_notificacion
+        );
+
+        // Actualizar suscripción solo si el email se envió exitosamente
+        if (resultadoEmail.success) {
+          await prisma.suscripcion.update({
+            where: { id_suscripcion: suscripcion.id_suscripcion },
+            data: { notificado_7d: true },
+          });
+
+          resultados.actualizadas++;
+          resultados.detalles.push({
+            id_suscripcion: suscripcion.id_suscripcion,
+            email: suscripcion.Usuario.email,
+            estado: "OK",
+            mensaje: "Correo enviado y suscripción marcada",
+          });
+
+          console.log(
+            `[CRON] ✓ Suscripción ${suscripcion.id_suscripcion} procesada correctamente`
+          );
+        } else {
+          resultados.errores++;
+          resultados.detalles.push({
+            id_suscripcion: suscripcion.id_suscripcion,
+            email: suscripcion.Usuario.email,
+            estado: "ERROR",
+            mensaje: "Error al enviar correo",
+          });
+
+          console.error(
+            `[CRON] ✗ Error enviando email para ${suscripcion.id_suscripcion}`
+          );
+        }
       } catch (error) {
         resultados.errores++;
         resultados.detalles.push({
