@@ -47,7 +47,7 @@ const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     setArchivoSeleccionado(e.target.files[0]);
   }
 };
-
+const [loading, setLoading] = useState(false);
 
   return (
       <AlertDialog
@@ -97,16 +97,24 @@ const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                <AlertDialogCancel 
+                  disabled={loading}
+                  onClick={() => setEstadoModal("cerrado")}>
                   Rechazar
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={(e) => {
+                  disabled={loading}
+                  onClick={async (e) => {
                     e.preventDefault();
-                    manejarAceptarPago();
+                    setLoading(true);
+
+                    await manejarAceptarPago(); // importante que sea async
+
+                    setEstadoModal("verificando_pago");
+                    setLoading(false);
                   }}
                 >
-                  Aceptar
+                  {loading ? "Procesando..." : "Aceptar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>
