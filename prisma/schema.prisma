@@ -498,7 +498,7 @@ model Blogs {
   descripcion       String?           @db.VarChar(128)
   contenido         String?
   imagen_url        String?           @db.VarChar(128)
-  estado            Boolean?          @default(true)
+  estado            String?           @default("NOPUBLICADO") @db.VarChar(50)
   fecha_creacion    DateTime?         @default(now()) @db.Timestamptz(6)
   fecha_publicacion DateTime?         @db.Timestamptz(6)
   deleted_at        DateTime?         @db.Timestamptz(6)

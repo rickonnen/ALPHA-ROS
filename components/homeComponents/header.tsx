@@ -174,13 +174,11 @@ export const Header = () => {
             
             <Link href={APP_PATHS.plans} className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase whitespace-nowrap`}>planes de<br />publicacion</Link>
             
-            {/* mejora: botón publicar sin borde gris y texto en mayúsculas para mejor alineación */}
             <button onClick={handlePublicar} disabled={bolIsCheckingLimit}
               className={`text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] px-6 h-10 font-bold rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 whitespace-nowrap ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
               {bolIsCheckingLimit ? "VERIFICANDO..." : "PUBLICAR"}
             </button>
 
-            {/* solo muestra skeletons mientras auth carga */}
             {bolIsAuthLoading ? (
               <div className="flex items-center gap-3">
                 <Skeleton className="w-10 h-10 rounded-full" />
