@@ -122,18 +122,22 @@ export default function PropertyMap({
     </div>
   );
 
-  return (
-    <MapContainer
-      center={DEFAULT_CENTER}
-      zoom={DEFAULT_ZOOM}
-      className="h-full w-full"
-      >
-  <MapEventHandler onReady={(map) => {
-    map.on('zoomstart', closePopup);
-    map.on('dragstart', closePopup);
-  }} />
+  // Validar que hoveredPos y selectedPos tengan coordenadas válidas
+  const isValidPos = (pos: [number, number] | null) => {
+    if (!pos) return false;
+    const [lat, lng] = pos;
+    return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng);
+  };
 
-      {(hoveredPos ?? selectedPos) && <ChangeView center={hoveredPos ?? selectedPos} />}
+  const validHoveredPos = isValidPos(hoveredPos) ? hoveredPos : null;
+  const validSelectedPos = isValidPos(selectedPos) ? selectedPos : null;
+
+  return (
+
+    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
+      {validHoveredPos && <ChangeView center={validHoveredPos} />}
+      {!validHoveredPos && validSelectedPos && <ChangeView center={validSelectedPos} />}
+      
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       <MapDrawingLogic 
