@@ -25,7 +25,7 @@ export async function GET() {
   // 3. Construir URL de autorización de Discord
   const params = new URLSearchParams({
     client_id: process.env.DISCORD_CLIENT_ID!,
-    redirect_uri: `${process.env.NEXTAUTH_URL}/api/vincular/discord/oauth-respuesta`,
+    redirect_uri: `${process.env.NEXTAUTH_URL}/api/vincular/discord/callback`,
     response_type: "code",
     scope: "identify email",
     state,
