@@ -106,6 +106,45 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         const intPlanId = objCurrentPayment.id_plan;
 
         if (strUserId && intPlanId) {
+          // --- INICIO LÓGICA HU6 (Upgrade / Downgrade) ---
+          const estadoActivo = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Activo' } });
+          const estadoSuspendido = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Suspendido' } });
+
+          if (estadoActivo && estadoSuspendido) {
+            // Obtener publicaciones del usuario ordenadas por las más recientes primero
+            const publicaciones = await tx.publicacion.findMany({
+              where: { id_usuario: strUserId },
+              orderBy: { fecha_creacion: 'desc' }
+            });
+
+            const activas = publicaciones.filter(p => p.id_estado === estadoActivo.id_estado);
+            const suspendidas = publicaciones.filter(p => p.id_estado === estadoSuspendido.id_estado);
+
+            if (activas.length > intNewQuota) {
+              // Downgrade: Si excede el cupo, ssuspender las MÁS RECIENTES
+              const exceso = activas.length - intNewQuota;
+              const paraSuspender = activas.slice(0, exceso); 
+              
+              if (paraSuspender.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraSuspender.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoSuspendido.id_estado }
+                });
+              }
+            } else if (activas.length < intNewQuota && suspendidas.length > 0) {
+              // Upgrade/Renovación: Reactivar las suspendidas hasta alcanzar el nuevo límite
+              const cupoDisponible = intNewQuota - activas.length;
+              const paraReactivar = suspendidas.slice(0, cupoDisponible);
+
+              if (paraReactivar.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraReactivar.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoActivo.id_estado }
+                });
+              }
+            }
+          }
+          // --- FIN LÓGICA HU6 ---
 
           await tx.usuario.update({
             where: { id_usuario: strUserId },
@@ -116,16 +155,14 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
 
           const objFechaInicio = new Date();
           const objFechaFin = new Date(objFechaInicio);
-          // Extrae el valor de tiempo_pago donde está si es "mensual" o "anual"
-          // el "||" "o" por si está vacío, próximo a ver/cambiar porque ahora siempre saldrá si es mensual o anual algún plan
           const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
-          // Si es anual se suma 1 año exacto, sino ps, se suma 30 días
+          
           if (strModalidad.toLowerCase().includes('anual')) {
             objFechaFin.setFullYear(objFechaFin.getFullYear() + 1);
           } else {
             objFechaFin.setDate(objFechaFin.getDate() + 30);
           }
-          // Actualiza/crea
+          
           await tx.suscripcion.upsert({
             where: { id_usuario: strUserId },
             update: {
