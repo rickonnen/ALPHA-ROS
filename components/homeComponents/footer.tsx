@@ -19,9 +19,9 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import { Skeleton } from "@/components/ui/skeleton";
 
 const arrExploreLinks = [
-  { strHref: "/busqueda", strLabel: "En venta", strValue: "Venta" },
-  { strHref: "/busqueda", strLabel: "Alquiler", strValue: "Alquiler" },
-  { strHref: "/busqueda", strLabel: "Anticrético", strValue: "Anticrético" },
+  { strHref: "/search?operaciones=compra", strLabel: "Compra" },
+  { strHref: "/search?operaciones=alquiler", strLabel: "Alquiler" },
+  { strHref: "/search?operaciones=anticretico", strLabel: "Anticrético" },
 ];
 
 const arrInfoLinks = [

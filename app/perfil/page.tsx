@@ -175,6 +175,16 @@ function PerfilContent() {
     router.push("/");
   };
 
+  const truncate = (str: string, limit: number): string => {
+    if (!str) return "";
+    return str.length > limit ? str.substring(0, limit) + "." : str;
+  };
+
+  const nombresCortos = truncate(usuario?.nombres, 15);
+  const apellidosCortos = truncate(usuario?.apellidos, 15);
+
+  const nombreCompleto = `${nombresCortos} ${apellidosCortos}`.trim();
+
   return (
     <>
       {loading && (
@@ -211,7 +221,7 @@ function PerfilContent() {
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
-                  {usuario.nombres} {usuario.apellidos}
+                  {nombreCompleto}
                 </h1>
                 <h2 className="text-slate-500 text-sm md:text-2xl font-medium">
                   {usuario.email}
