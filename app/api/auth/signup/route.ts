@@ -6,12 +6,13 @@ import { crearNotificacion } from "@/lib/notifications/notificationService";
 
 
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionId = request.cookies.get("session_id")?.value ?? crypto.randomUUID();
     const { nombre, apellido, email, password } = await request.json();
 
     if (!nombre || !apellido || !email || !password) {
@@ -75,8 +76,16 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       { message: "¡Registro exitoso!" },
-      { status: 201 }  
+      { status: 201 }  // 201 = Created
     );
+
+    const { error: migrateError } = await supabaseAdmin.rpc("migrar_eventos_sesion", {
+      p_session_id: sessionId,
+      p_id_usuario: authData.user.id,
+    });
+    if (migrateError) {
+      console.error("Error migrando eventos de sesión:", migrateError);
+    }
 
     response.cookies.set("auth_token", jwtToken, {
       httpOnly: true,
@@ -86,13 +95,13 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    await enviarBienvenida(normalizedEmail, nombre);
-      await crearNotificacion({
-        id_usuario: authData.user.id,
-        titulo: "Bienvenido a PROBOL",
-        mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente. Bienvenido a la plataforma.`,
-        id_categoria: 1,
-      });
+    response.cookies.set("session_id", sessionId, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+    });
 
     return response;
 
@@ -113,4 +122,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

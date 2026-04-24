@@ -11,6 +11,8 @@ export interface FiltrosPublicacion {
   currency?: SearchCurrency;
   minPrice?: number;
   maxPrice?: number;
+  minSurface?: number;
+  maxSurface?: number;
 }
 
 export interface PublicacionBusqueda {
