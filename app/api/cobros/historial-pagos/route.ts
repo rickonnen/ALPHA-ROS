@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       orderBy: {
         fecha_detalle: "desc",
       },
+      take: 5,
     });
 
     return NextResponse.json(pagos);
