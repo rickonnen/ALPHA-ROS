@@ -28,6 +28,10 @@
          cambios en editar perfil el header (foto, nombre) se actualice
          inmediatamente sin necesidad de hacer refresh manual de la pagina
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 23/04/2026
+    Fix: Reubicación de la pestaña 'ZONAS' a la penúltima posición y corrección de nomenclatura según Mockup.
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -132,8 +136,8 @@ function PerfilContent() {
     { id: "favoritos", name: "FAVORITOS" },
     { id: "historial", name: "HISTORIAL" },
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
-    { id: "zonas", name: "ZONAS" },
     { id: "planes", name: "PLAN ACTUAL" },
+    { id: "zonas", name: "ZONAS" },
   ];
 
   //miguel actualizacion telefonos
