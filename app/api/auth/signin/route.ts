@@ -15,7 +15,14 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const sessionId = request.cookies.get("session_id")?.value ?? crypto.randomUUID();
-    const { email, password } = await request.json();
+    const requestBody = await request.json();
+    const { email, password, latitud: flatLatitud, longitud: flatLongitud } = requestBody;
+    const telemetry =
+      requestBody && typeof requestBody === "object" && "telemetry" in requestBody
+        ? requestBody.telemetry
+        : null;
+    const latitud = telemetry?.latitud ?? flatLatitud ?? null;
+    const longitud = telemetry?.longitud ?? flatLongitud ?? null;
 
     if (!email || !password) {
       return NextResponse.json(

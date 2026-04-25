@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
         try {
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
           const { data, error } = await supabase.auth.signInWithPassword({
@@ -159,6 +159,16 @@ export const authOptions: NextAuthOptions = {
           console.log("Usuario creado en Supabase Auth + tabla Usuario")
         }
 
+        if (account.provider === "discord") {
+          const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
+          return await handleDiscordSignIn(user, account)
+        }
+
+        if (account.provider === "facebook") {
+          const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
+          return await handleFacebookSignIn(user, account)
+        }
+
         return true
       } catch (error) {
         console.error("Error signIn:", error)
@@ -166,24 +176,41 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async jwt({ token, account }: any) {
+    async jwt({ token, account, user }: any) {
+      if (user?.id) {
+        token.id = user.id;
+      }
 
-      if (account?.provider === "google") {
+      if (account?.provider && user?.email) {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
           process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        const providerAccountId = account.providerAccountId as string | undefined
-        if (providerAccountId) {
-          const { data: userRow } = await supabase
-            .from("Usuario")
-            .select("id_usuario")
-            .eq("google_id", providerAccountId)
-            .maybeSingle()
+        const { data } = await supabase
+          .from("Usuario")
+          .select("id_usuario")
+          .eq("email", user.email)
+          .maybeSingle()
 
-          if (userRow?.id_usuario) token.id = userRow.id_usuario
+        if (data?.id_usuario) {
+          token.id = data.id_usuario
+          return token
+        }
+
+        if (account.provider === "google") {
+          const providerAccountId = account.providerAccountId as string | undefined
+
+          if (providerAccountId) {
+            const { data: userRow } = await supabase
+              .from("Usuario")
+              .select("id_usuario")
+              .eq("google_id", providerAccountId)
+              .maybeSingle()
+
+            if (userRow?.id_usuario) token.id = userRow.id_usuario
+          }
         }
       }
       return token

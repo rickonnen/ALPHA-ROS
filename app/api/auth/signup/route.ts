@@ -103,6 +103,14 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    await enviarBienvenida(normalizedEmail, nombre);
+    await crearNotificacion({
+      id_usuario: authData.user.id,
+      titulo: "Bienvenido a PROBOL",
+      mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente. Bienvenido a la plataforma.`,
+      id_categoria: 1,
+    });
+
     return response;
 
   } catch (error: any) {

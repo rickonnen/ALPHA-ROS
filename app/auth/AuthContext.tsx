@@ -172,7 +172,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password, telemetry }),
+        body: JSON.stringify({
+          email,
+          password,
+          latitud: telemetry?.latitud ?? null,
+          longitud: telemetry?.longitud ?? null,
+        }),
       });
 
       if (!res.ok) {
