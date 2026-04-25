@@ -158,7 +158,7 @@ export function ImagenesForm({
               alt={`Imagen principal ${selectedIdx + 1}`}
               style={{
                 width:     '100%',
-                height:    '220px',
+                height:    '180px',
                 objectFit: 'contain',
               }}
             />
@@ -197,8 +197,8 @@ export function ImagenesForm({
                 style={{
                   flex:            '1 1 0',
                   minWidth:        0,
-                  maxWidth:        '120px',
-                  height:          '90px',
+                  maxWidth:        '100px',
+                  height:          '70px',
                   border:          idx === selectedIdx ? '2px solid #C26E5A' : '2px solid transparent',
                   backgroundColor: '#EDE8E0',
                 }}
@@ -220,8 +220,8 @@ export function ImagenesForm({
                 style={{
                   flex:            '1 1 0',
                   minWidth:        0,
-                  maxWidth:        '120px',
-                  height:          '90px',
+                  maxWidth:        '100px',
+                  height:          '70px',
                   borderColor:     '#D4B8AE',
                   backgroundColor: '#EDE8E0',
                 }}
@@ -249,11 +249,9 @@ export function ImagenesForm({
       />
 
       {/* Error — visible siempre que haya, con o sin imágenes */}
-      {showError && (
-        <span className="text-red-500 text-xs">
-          {fieldError ?? errors.imagenes}
-        </span>
-      )}
+      <span className="text-red-500 text-xs min-h-[16px] block">
+  {showError ? (fieldError ?? errors.imagenes) : ''}
+</span>
     </div>
   )
 }

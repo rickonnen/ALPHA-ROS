@@ -2,7 +2,8 @@ export const SK_STEP      = 'publicacion_currentStep'
 export const SK_COMPLETED = 'publicacion_completedSteps'
 
 export const SESSION_KEYS_TO_CLEAN = [
-  SK_STEP, SK_COMPLETED, 'datosAviso', 'categoriaYEstado', 'ubicacion',
+  SK_STEP, SK_COMPLETED, 'publicacion_sessionKey',
+  'datosAviso', 'categoriaYEstado', 'ubicacion',
   'caracteristicasDetalle', 'imagenesPropiedad_interacted',
   'caracteristicasImagenesPreview', 'caracteristicasImagenesNombres',
   'videoPropiedad', 'descripcionPropiedad', 'imagenesIniciales',
