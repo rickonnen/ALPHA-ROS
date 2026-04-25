@@ -10,7 +10,7 @@ export const historyService = {
   async getHistory(blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
     if (blnIsAuthenticated) {
       try {
-        const objResponse = await fetch('/api/searchHistory');
+        const objResponse = await fetch('/api/home/searchHistory');
         if (objResponse.ok) return await objResponse.json();
       } catch (error) {
         console.error("Error obteniendo historial de la BD:", error);
@@ -26,7 +26,7 @@ export const historyService = {
   async save(objData: CitySuggestion, blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
     if (blnIsAuthenticated) {
       try {
-        const objResponse = await fetch('/api/searchHistory', {
+        const objResponse = await fetch('/api/home/searchHistory', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(objData)
@@ -49,7 +49,7 @@ export const historyService = {
   async deleteHistoryItem(strId: string, blnIsAuthenticated: boolean = false): Promise<CitySuggestion[]> {
     if (blnIsAuthenticated) {
       try {
-        const objResponse = await fetch(`/api/searchHistory?strId=${strId}`, { method: 'DELETE' });
+        const objResponse = await fetch(`/api/home/searchHistory?strId=${strId}`, { method: 'DELETE' });
         if (objResponse.ok) return await objResponse.json();
       } catch (error) {
         console.error("Error eliminando historial en la BD:", error);

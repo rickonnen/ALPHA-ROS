@@ -1,8 +1,8 @@
 /**
  * Dev: Gonzales Hetor     Fecha: 25/03/2026
- * Dev: Jose Alvarez      Fecha: 25/03/2026
+ * Dev: Jose Alvarez       Fecha: 25/03/2026
  * Funcionalidad: Panel del Filtro en la pagina del home.
- * Funcionalidad: Panel del Filtro en la pagina del home con cierre al clic externo.
+ * Funcionalidad: Panel del Filtro en la pagina del home con cierre al clic externo y multiseleccion extendida.
  */
 "use client";
 
@@ -24,7 +24,8 @@ export default function FilterPanel() {
   const objPanelRef = useRef<HTMLDivElement>(null); 
 
   const [arrOperations, setArrOperations] = useState<string[]>([]);
-  const [strPropertyType, setStrPropertyType] = useState<string | null>(null);
+  // Cambiamos el estado para que soporte un arreglo de selecciones
+  const [arrSelectedPropertyTypes, setArrSelectedPropertyTypes] = useState<string[]>([]);
   const [strOpenDropdown, setStrOpenDropdown] = useState<"operation" | "type" | null>(null);
 
   // 1. Obtenemos el usuario autenticado y su estado de carga
@@ -58,10 +59,18 @@ export default function FilterPanel() {
     );
   }, []);
 
+  // Nueva función toggle para los tipos de inmueble
+  const togglePropertyType = useCallback((strVal: string) => {
+    setArrSelectedPropertyTypes((arrPrev) =>
+      arrPrev.includes(strVal) ? arrPrev.filter((strItem) => strItem !== strVal) : [...arrPrev, strVal]
+    );
+  }, []);
+
   const handleSearch = useCallback((bolAvanzado = false, ciudadSeleccionada = citySearchHook.strCity) => {
     const objParams = new URLSearchParams();
     if (arrOperations.length > 0) objParams.set("operaciones", arrOperations.join(","));
-    if (strPropertyType) objParams.set("tipo", strPropertyType);
+    // Actualizamos la URL para que envíe los tipos separados por coma
+    if (arrSelectedPropertyTypes.length > 0) objParams.set("tipo", arrSelectedPropertyTypes.join(","));
     if (ciudadSeleccionada.trim()) objParams.set("ciudad", ciudadSeleccionada.trim());
     if (bolAvanzado) objParams.set("avanzado", "true");
     if (ciudadSeleccionada.trim() && arrOperations.length > 0) {
@@ -85,7 +94,7 @@ export default function FilterPanel() {
     setStrOpenDropdown(null);
     citySearchHook.setBolShowSuggestions(false);
     citySearchHook.setBolShowHistory(false);
-  }, [arrOperations, strPropertyType, citySearchHook, objRouter]);
+  }, [arrOperations, arrSelectedPropertyTypes, citySearchHook, objRouter]);
 
   const strChipClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-background border border-border text-foreground animate-in fade-in duration-200 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-secondary-fund";
 
@@ -106,18 +115,15 @@ export default function FilterPanel() {
 
         <div className="h-px w-full md:w-px md:h-5 bg-border flex-shrink-0" />
 
-        {/* dropdown tipo de inmueble */}
+        {/* dropdown tipo de inmueble actualizado a multiselección */}
         <GenericDropdown
-          strDisplayText={strPropertyType ?? "Seleccionar Inmueble"}
+          strDisplayText={arrSelectedPropertyTypes.length > 0 ? `Inmueble (${arrSelectedPropertyTypes.length})` : "Seleccionar Inmueble"}
           arrOptions={arrPropertyTypes}
-          arrSelectedValues={strPropertyType ? [strPropertyType] : []}
+          arrSelectedValues={arrSelectedPropertyTypes}
           bolIsOpen={strOpenDropdown === "type"}
           fnToggleOpen={() => setStrOpenDropdown(strOpenDropdown === "type" ? null : "type")}
-          fnOnSelect={(strVal) => { 
-            setStrPropertyType(strVal); 
-            setStrOpenDropdown(null); 
-          }}
-          bolIsMultiple={false}
+          fnOnSelect={togglePropertyType}
+          bolIsMultiple={true}
         />
 
         <div className="h-px w-full md:w-px md:h-5 bg-border flex-shrink-0" />
@@ -133,17 +139,18 @@ export default function FilterPanel() {
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex flex-wrap gap-2">
           {arrOperations.map((strOperationOption) => (
-            <span key={strOperationOption} className={strChipClass}>
+            <span key={`op-${strOperationOption}`} className={strChipClass}>
               {strOperationOption}
               <button type="button" onClick={() => toggleOperation(strOperationOption)} className={`hover:text-destructive font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded-full px-1 ${chipBtnHover}`}>✕</button>
             </span>
           ))}
-          {strPropertyType && (
-            <span key={strPropertyType} className={strChipClass}>
-              {strPropertyType}
-              <button type="button" onClick={() => setStrPropertyType(null)} className={`hover:text-destructive font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded-full px-1 ${chipBtnHover}`}>✕</button>
+          {/* Mapeo dinámico para los chips de inmuebles */}
+          {arrSelectedPropertyTypes.map((strTypeOption) => (
+            <span key={`type-${strTypeOption}`} className={strChipClass}>
+              {strTypeOption}
+              <button type="button" onClick={() => togglePropertyType(strTypeOption)} className={`hover:text-destructive font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded-full px-1 ${chipBtnHover}`}>✕</button>
             </span>
-          )}
+          ))}
         </div>
 
         {/* botones limpiar / avanzado */}
@@ -152,7 +159,7 @@ export default function FilterPanel() {
             size="sm"
             onClick={() => {
               setArrOperations([]);
-              setStrPropertyType(null);
+              setArrSelectedPropertyTypes([]); // Limpiamos el nuevo arreglo
               citySearchHook.setStrCity("");
             }}
             className={`rounded-lg text-xs bg-secondary text-secondary-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${actionBtnHover}`}

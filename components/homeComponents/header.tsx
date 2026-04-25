@@ -128,7 +128,8 @@ export const Header = () => {
   // renderizado optimizado del logo
   const objLogoElement = useMemo(() => (
     <Link href={APP_PATHS.home} aria-label="ir a inicio" className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
+      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} priority
+      style={{ width: 'auto' }} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
         <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>
@@ -174,13 +175,11 @@ export const Header = () => {
             
             <Link href={APP_PATHS.plans} className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase whitespace-nowrap`}>planes de<br />publicacion</Link>
             
-            {/* mejora: botón publicar sin borde gris y texto en mayúsculas para mejor alineación */}
             <button onClick={handlePublicar} disabled={bolIsCheckingLimit}
               className={`text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] px-6 h-10 font-bold rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 whitespace-nowrap ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
               {bolIsCheckingLimit ? "VERIFICANDO..." : "PUBLICAR"}
             </button>
 
-            {/* solo muestra skeletons mientras auth carga */}
             {bolIsAuthLoading ? (
               <div className="flex items-center gap-3">
                 <Skeleton className="w-10 h-10 rounded-full" />
