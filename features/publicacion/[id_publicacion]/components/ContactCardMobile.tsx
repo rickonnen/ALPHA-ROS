@@ -9,6 +9,14 @@
  *                y el título del inmueble.
  * @return JSX.Element visible en resoluciones de pantalla pequeñas y medianas (hasta lg).
  */
+/**
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix Implementación exclusiva de 'mailto:' para forzar apertura de la app de Gmail en móviles.
+ * Funcionalidad: Vista móvil de la tarjeta de contacto con botones apilados (WhatsApp y Correo).
+ * @param {ContactoProps} props - Datos del propietario y título del inmueble.
+ * @return {JSX.Element} Vista de contacto adaptada a pantallas pequeñas.
+ */
 "use client";
 
 import React from "react";
@@ -18,7 +26,7 @@ import { ContactoProps } from "./ContactCard";
 export const ContactCardMobile = ({ objPropietario, strTituloInmueble }: ContactoProps) => {
   const strNombreCompleto = `${objPropietario.strNombres} ${objPropietario.strApellidos}`.trim();
   const strMensajeWs = `Hola, estoy interesado en tu propiedad "${strTituloInmueble}" publicada en PropBol.`;
-  const strUrlCorreo = `https://mail.google.com/mail/?view=cm&fs=1&to=${objPropietario.strEmail}&su=Consulta sobre propiedad: ${encodeURIComponent(strTituloInmueble)}`;
+  const strUrlCorreo = `mailto:${objPropietario.strEmail}?subject=Consulta sobre propiedad: ${encodeURIComponent(strTituloInmueble)}`;
   return (
     <section className="block lg:hidden bg-white/40 backdrop-blur-sm p-6 sm:p-8 rounded-3xl shadow-sm border border-black/5 mb-8 font-sans">
       {/* Título Alineado a la Izquierda para coincidir con "Descripción" */}
