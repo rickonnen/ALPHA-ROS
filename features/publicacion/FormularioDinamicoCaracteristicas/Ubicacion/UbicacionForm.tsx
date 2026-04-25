@@ -6,6 +6,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal }                from 'react-dom'
 import dynamic                         from 'next/dynamic'
 import { Label }                       from '@/components/ui/label'
 import { useUbicacionForm }            from './useUbicacionForm'
@@ -72,6 +73,8 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   const [pendingLocation, setPendingLocation] = useState<LocationData | null>(null)
   const [deptoEnMapa,     setDeptoEnMapa]     = useState<string>(values.departamento)
 
+
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -83,9 +86,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownTouched, handleBlur])
 
-  // ── Selección de departamento desde el dropdown ──────────────────────────
-  // Si ya hay una dirección confirmada del mapa y el usuario elige un depto
-  // distinto → la dirección/coordenadas se resetean para evitar inconsistencia.
   const handleSelectDepto = (opcion: string) => {
     if (values.direccion && opcion !== values.departamento) {
       handleChange('direccion', '')
@@ -112,16 +112,15 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   }
 
   const handleConfirmar = () => {
-  if (pendingLocation) {
-    handleUbicacion(pendingLocation)
-    // Si el depto detectado por coordenadas difiere del dropdown → sincronizar
-    if (pendingLocation.departamento && pendingLocation.departamento !== values.departamento) {
-      handleChange('departamento', pendingLocation.departamento)
-      handleBlur('departamento')
+    if (pendingLocation) {
+      handleUbicacion(pendingLocation)
+      if (pendingLocation.departamento && pendingLocation.departamento !== values.departamento) {
+        handleChange('departamento', pendingLocation.departamento)
+        handleBlur('departamento')
+      }
     }
+    setMapaAbierto(false)
   }
-  setMapaAbierto(false)
-}
 
   const handleCerrar = () => {
     setPendingLocation(null)
@@ -131,126 +130,139 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   const zonaLen     = values.zona.length
   const zonaInvalid = touched.zona && !!errors.zona
 
-  return (
-    <>
-      {/* ─── Modal del mapa ─────────────────────────────────────── */}
-      {mapaAbierto && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
-          style={{ backgroundColor: 'rgba(31,58,77,0.55)', overflow: 'auto' }}
-          onClick={handleCerrar}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background:    C.crema,
-              borderRadius:  16,
-              boxShadow:     '0 8px 40px rgba(31,58,77,0.25)',
-              width:         '100%',
-              maxWidth:      620,
-              overflow:      'visible',
-              display:       'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Header del modal */}
+  // ─── Modal del mapa (via Portal para evitar que overflow:hidden / transform lo rompa) ───
+  const modalContent = mapaAbierto ? (
+    <div
+      style={{
+        position:        'fixed',
+        inset:           0,
+        zIndex:          99999,
+        display:         'flex',
+        alignItems:      'center',
+        justifyContent:  'center',
+        padding:         '12px 16px',
+        backgroundColor: 'rgba(31,58,77,0.55)',
+        overflow:        'auto',
+      }}
+      onClick={handleCerrar}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background:    C.crema,
+          borderRadius:  16,
+          boxShadow:     '0 8px 40px rgba(31,58,77,0.25)',
+          width:         '100%',
+          maxWidth:      620,
+          overflow:      'visible',
+          display:       'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'space-between',
+          padding:        '12px 16px',
+          background:     C.marino,
+          borderRadius:   '16px 16px 0 0',
+          gap:            8,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <div style={{
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'space-between',
-              padding:        '12px 16px',
-              background:     C.marino,
-              borderRadius:   '16px 16px 0 0',
-              gap:            8,
+              width: 28, height: 28, borderRadius: '50%',
+              backgroundColor: C.terracota, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  backgroundColor: C.terracota, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap' }}>
-                    Selecciona la ubicación
-                  </p>
-                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    Busca una calle o haz clic en el mapa
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleCerrar}
-                style={{
-                  width: 26, height: 26, borderRadius: '50%', border: 'none',
-                  background: 'rgba(255,255,255,0.15)', color: '#ffffff', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 600, flexShrink: 0,
-                }}
-              >
-                ✕
-              </button>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
             </div>
-
-            {/* Body del modal */}
-            <div style={{ padding: '12px 14px', overflow: 'visible' }}>
-              <LocationPicker
-                deptoActual={deptoEnMapa}
-                onChange={handleLocationChange}
-              />
-            </div>
-
-            {/* Footer */}
-            <div style={{
-              display:        'flex',
-              justifyContent: 'flex-end',
-              alignItems:     'center',
-              gap:            8,
-              padding:        '10px 14px 14px',
-              borderTop:      `1.5px solid ${C.borde}`,
-            }}>
-              <button
-                type="button"
-                onClick={handleCerrar}
-                style={{
-                  backgroundColor: C.crema,
-                  border:          `1.5px solid ${C.terracota}`,
-                  color:           C.terracota,
-                  borderRadius:    6,
-                  padding:         '6px 18px',
-                  fontSize:        14,
-                  fontWeight:      600,
-                  cursor:          'pointer',
-                }}
-              >
-                Regresar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmar}
-                disabled={!pendingLocation}
-                style={{
-                  backgroundColor: pendingLocation ? C.terracota : C.terracotaClaro,
-                  border:          `1.5px solid ${pendingLocation ? C.terracota : C.terracotaClaro}`,
-                  color:           '#ffffff',
-                  borderRadius:    6,
-                  padding:         '6px 18px',
-                  fontSize:        14,
-                  fontWeight:      600,
-                  cursor:          pendingLocation ? 'pointer' : 'not-allowed',
-                  transition:      'background-color 0.2s',
-                }}
-              >
-                Confirmar
-              </button>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                Selecciona la ubicación
+              </p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Busca una calle o haz clic en el mapa
+              </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={handleCerrar}
+            style={{
+              width: 26, height: 26, borderRadius: '50%', border: 'none',
+              background: 'rgba(255,255,255,0.15)', color: '#ffffff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 600, flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
         </div>
-      )}
+
+        {/* Body */}
+        <div style={{ padding: '12px 14px', overflow: 'visible' }}>
+          <LocationPicker
+            deptoActual={deptoEnMapa}
+            onChange={handleLocationChange}
+          />
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display:        'flex',
+          justifyContent: 'flex-end',
+          alignItems:     'center',
+          gap:            8,
+          padding:        '10px 14px 14px',
+          borderTop:      `1.5px solid ${C.borde}`,
+        }}>
+          <button
+            type="button"
+            onClick={handleCerrar}
+            style={{
+              backgroundColor: C.crema,
+              border:          `1.5px solid ${C.terracota}`,
+              color:           C.terracota,
+              borderRadius:    6,
+              padding:         '6px 18px',
+              fontSize:        14,
+              fontWeight:      600,
+              cursor:          'pointer',
+            }}
+          >
+            Regresar
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmar}
+            disabled={!pendingLocation}
+            style={{
+              backgroundColor: pendingLocation ? C.terracota : C.terracotaClaro,
+              border:          `1.5px solid ${pendingLocation ? C.terracota : C.terracotaClaro}`,
+              color:           '#ffffff',
+              borderRadius:    6,
+              padding:         '6px 18px',
+              fontSize:        14,
+              fontWeight:      600,
+              cursor:          pendingLocation ? 'pointer' : 'not-allowed',
+              transition:      'background-color 0.2s',
+            }}
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <>
+      {/* Portal: el modal se monta en document.body, fuera de cualquier contenedor
+          con overflow:hidden o transform, así position:fixed funciona correctamente */}
+      {typeof window !== 'undefined' && createPortal(modalContent, document.body)}
 
       {/* ─── Formulario principal ────────────────────────────────── */}
       <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px', minWidth: 0, width: '100%' }}>
@@ -318,51 +330,51 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           </span>
         </div>
 
-   {/* 2 — Dirección */}
-<div className="flex flex-col gap-1.5" style={{ width: '100%', maxWidth: '100%' }}>
-  <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-    ¿Cual es la dirección de la propiedad?
-  </Label>
-  <button
-    type="button"
-    onClick={handleAbrirMapa}
-    onBlur={() => handleBlur('direccion')}
-    className={`h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
-      touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
-    }`}
-    style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}
-  >
-    <span style={{
-      flex: 1,
-      minWidth: 0,
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      textOverflow: 'ellipsis',
-      color: values.direccion ? '#1A1714' : '#9CA3AF',
-      textAlign: 'left',
-    }}>
-      {values.direccion || 'Seleccione en el mapa'}
-    </span>
+        {/* 2 — Dirección */}
+        <div className="flex flex-col gap-1.5" style={{ width: '100%', maxWidth: '100%' }}>
+          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+            ¿Cual es la dirección de la propiedad?
+          </Label>
+          <button
+            type="button"
+            onClick={handleAbrirMapa}
+            onBlur={() => handleBlur('direccion')}
+            className={`h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
+              touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
+            }`}
+            style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}
+          >
+            <span style={{
+              flex: 1,
+              minWidth: 0,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              color: values.direccion ? '#1A1714' : '#9CA3AF',
+              textAlign: 'left',
+            }}>
+              {values.direccion || 'Seleccione en el mapa'}
+            </span>
 
-    {/* Ícono mapa */}
-    <div style={{
-      width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
-      background: values.direccion
-        ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
-        : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transition: 'background 0.2s',
-    }}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-      </svg>
-    </div>
-  </button>
+            <div style={{
+              width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
+              background: values.direccion
+                ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
+                : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.2s',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+            </div>
+          </button>
 
-  <span className="text-red-500 text-xs h-4 block">
-    {touched.direccion && errors.direccion ? errors.direccion : ''}
-  </span>
-</div>
+          <span className="text-red-500 text-xs h-4 block">
+            {touched.direccion && errors.direccion ? errors.direccion : ''}
+          </span>
+        </div>
+
         {/* 3 — Zona */}
         <div className="flex flex-col gap-1.5">
           <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
@@ -374,7 +386,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             maxLength={MAX_ZONA}
             onChange={e => {
               handleChange('zona', e.target.value)
-              // Activar validación en tiempo real una vez que empieza a escribir
               if (!touched.zona && e.target.value.length > 0) handleBlur('zona')
             }}
             onBlur={() => handleBlur('zona')}
@@ -384,7 +395,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             }`}
           />
 
-          {/* Fila: error a la izquierda, contador simple a la derecha */}
           <div className="flex items-center justify-between">
             <span className="text-red-500 text-xs">
               {zonaInvalid ? errors.zona : ''}
