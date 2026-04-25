@@ -1,29 +1,45 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-import { MapContainer, Marker, Popup, TileLayer, Polyline, Polygon, useMap, useMapEvents } from "react-leaflet"
-import MarkerClusterGroup from "react-leaflet-cluster"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
-import type { Location } from "@/lib/locations"
-import ChangeView from "./ChangeView"
-import { createPriceIcon, createClusterIcon, createClusterPopupHTML } from "./icons"
+"use client";
+import { useState, useEffect, useRef } from "react";
+import {
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  Polyline,
+  Polygon,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import type { Location } from "@/lib/locations";
+import ChangeView from "./ChangeView";
+import {
+  createPriceIcon,
+  createClusterIcon,
+  createClusterPopupHTML,
+} from "./icons";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 const DEFAULT_CENTER: [number, number] = [-17.3943, -66.1569];
 const DEFAULT_ZOOM = 15;
 
 interface MapProps {
-  locations: Location[]
-  hoveredId: number | null
-  selectedPos: [number, number] | null
-  hoveredPos: [number, number] | null
-  setSelectedPos: (pos: [number, number]) => void
+  locations: Location[];
+  hoveredId: number | null;
+  selectedPos: [number, number] | null;
+  hoveredPos: [number, number] | null;
+  setSelectedPos: (pos: [number, number]) => void;
   isDrawingMode?: boolean;
   drawnPolygon?: [number, number][] | null;
   onPolygonComplete?: (points: [number, number][]) => void;
@@ -38,12 +54,12 @@ function MapEventHandler({ onReady }: { onReady: (map: L.Map) => void }) {
   return null;
 }
 
-function MapDrawingLogic({ 
-  isDrawingMode, 
-  onPolygonComplete 
-}: { 
-  isDrawingMode?: boolean, 
-  onPolygonComplete?: (pts: [number, number][]) => void 
+function MapDrawingLogic({
+  isDrawingMode,
+  onPolygonComplete,
+}: {
+  isDrawingMode?: boolean;
+  onPolygonComplete?: (pts: [number, number][]) => void;
 }) {
   const [points, setPoints] = useState<[number, number][]>([]);
   const map = useMap();
@@ -51,10 +67,10 @@ function MapDrawingLogic({
   useEffect(() => {
     if (isDrawingMode) {
       map.dragging.disable();
-      map.getContainer().style.cursor = 'crosshair';
+      map.getContainer().style.cursor = "crosshair";
     } else {
       map.dragging.enable();
-      map.getContainer().style.cursor = '';
+      map.getContainer().style.cursor = "";
       setPoints([]);
     }
   }, [isDrawingMode, map]);
@@ -62,7 +78,10 @@ function MapDrawingLogic({
   useMapEvents({
     click(e) {
       if (!isDrawingMode || !onPolygonComplete) return;
-      const newPoints: [number, number][] = [...points, [e.latlng.lat, e.latlng.lng]];
+      const newPoints: [number, number][] = [
+        ...points,
+        [e.latlng.lat, e.latlng.lng],
+      ];
       setPoints(newPoints);
       if (newPoints.length === 4) {
         onPolygonComplete(newPoints);
@@ -71,35 +90,52 @@ function MapDrawingLogic({
     },
   });
 
-  const dotIcon = L.divIcon({ 
-    className: 'bg-red-500 w-3 h-3 rounded-full border-2 border-white shadow-md', 
-    iconSize: [12, 12] 
+  const dotIcon = L.divIcon({
+    className:
+      "bg-red-500 w-3 h-3 rounded-full border-2 border-white shadow-md",
+    iconSize: [12, 12],
   });
 
   return (
     <>
       {points.map((pt, idx) => (
-        <Marker key={`pt-${idx}`} position={pt} icon={dotIcon} interactive={false} />
+        <Marker
+          key={`pt-${idx}`}
+          position={pt}
+          icon={dotIcon}
+          interactive={false}
+        />
       ))}
       {points.length > 1 && points.length < 4 && (
-        <Polyline positions={points} color="#C26E5A" weight={3} dashArray="5, 10" interactive={false} />
+        <Polyline
+          positions={points}
+          color="#C26E5A"
+          weight={3}
+          dashArray="5, 10"
+          interactive={false}
+        />
       )}
       {points.length === 4 && (
-        <Polygon positions={points} color="#C26E5A" fillOpacity={0.4} interactive={false} />
+        <Polygon
+          positions={points}
+          color="#C26E5A"
+          fillOpacity={0.4}
+          interactive={false}
+        />
       )}
     </>
   );
 }
 
-export default function PropertyMap({ 
-  locations, 
-  hoveredId, 
-  selectedPos, 
-  hoveredPos, 
+export default function PropertyMap({
+  locations,
+  hoveredId,
+  selectedPos,
+  hoveredPos,
   setSelectedPos,
   isDrawingMode,
   drawnPolygon,
-  onPolygonComplete
+  onPolygonComplete,
 }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const popupRef = useRef<L.Popup | null>(null);
@@ -116,44 +152,55 @@ export default function PropertyMap({
     return () => clearTimeout(timer);
   }, []);
 
-  if (isLoading) return (
-    <div className="h-full bg-slate-50 flex items-center justify-center animate-pulse text-slate-400">
-      Cargando Mapa...
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="h-full bg-slate-50 flex items-center justify-center animate-pulse text-slate-400">
+        Cargando Mapa...
+      </div>
+    );
 
   // Validar que hoveredPos y selectedPos tengan coordenadas válidas
   const isValidPos = (pos: [number, number] | null) => {
     if (!pos) return false;
     const [lat, lng] = pos;
-    return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng);
+    return (
+      typeof lat === "number" &&
+      typeof lng === "number" &&
+      !isNaN(lat) &&
+      !isNaN(lng)
+    );
   };
 
   const validHoveredPos = isValidPos(hoveredPos) ? hoveredPos : null;
   const validSelectedPos = isValidPos(selectedPos) ? selectedPos : null;
 
   return (
-
-    <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} className="h-full w-full">
+    <MapContainer
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
+      className="h-full w-full"
+    >
       {validHoveredPos && <ChangeView center={validHoveredPos} />}
-      {!validHoveredPos && validSelectedPos && <ChangeView center={validSelectedPos} />}
-      
+      {!validHoveredPos && validSelectedPos && (
+        <ChangeView center={validSelectedPos} />
+      )}
+
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      <MapDrawingLogic 
-        isDrawingMode={isDrawingMode} 
-        onPolygonComplete={onPolygonComplete} 
+      <MapDrawingLogic
+        isDrawingMode={isDrawingMode}
+        onPolygonComplete={onPolygonComplete}
       />
 
       {drawnPolygon && (
-  <Polygon 
-    positions={drawnPolygon} 
-    color="#8B4423" 
-    fillColor="#C26E5A" 
-    fillOpacity={0.25} 
-    weight={2} 
-  />
-)}
+        <Polygon
+          positions={drawnPolygon}
+          color="#8B4423"
+          fillColor="#C26E5A"
+          fillOpacity={0.25}
+          weight={2}
+        />
+      )}
 
       <MarkerClusterGroup
         disableClusteringAtZoom={17}
@@ -169,9 +216,9 @@ export default function PropertyMap({
               .map((marker: L.Marker) => {
                 const pos = marker.getLatLng();
                 return locations.find(
-                  loc =>
+                  (loc) =>
                     Math.abs(loc.lat - pos.lat) < 0.000001 &&
-                    Math.abs(loc.lng - pos.lng) < 0.000001
+                    Math.abs(loc.lng - pos.lng) < 0.000001,
                 );
               })
               .filter(Boolean) as Location[];
@@ -203,13 +250,17 @@ export default function PropertyMap({
             icon={createPriceIcon(location.precio, hoveredId === location.id)}
             zIndexOffset={hoveredId === location.id ? 1000 : 0}
             eventHandlers={{
-              click: () => setSelectedPos([location.lat, location.lng])
+              click: () => setSelectedPos([location.lat, location.lng]),
             }}
           >
             <Popup>
               <div className="p-1">
-                <p className="text-sm font-bold text-slate-900">{location.direccion}</p>
-                <p className="text-sm font-bold text-blue-600">{location.precio}</p>
+                <p className="text-sm font-bold text-slate-900">
+                  {location.direccion}
+                </p>
+                <p className="text-sm font-bold text-blue-600">
+                  {location.precio}
+                </p>
               </div>
             </Popup>
           </Marker>

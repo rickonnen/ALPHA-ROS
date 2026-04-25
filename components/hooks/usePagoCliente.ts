@@ -97,7 +97,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
   const manejarAceptarPago = async () => {
     if (!user?.id || !archivoSeleccionado) return;
 
-    setEstadoModal("verificando_pago");
+    
 
     const formData = new FormData();
     formData.append("file", archivoSeleccionado);
@@ -126,6 +126,8 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
       console.error("Error en el envío");
       setEstadoModal("cerrado");
     }
+
+    setEstadoModal("verificando_pago");
   };
 
   // --- Helpers Adicionales ---
