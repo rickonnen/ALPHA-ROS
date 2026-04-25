@@ -80,7 +80,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
   }
 
   return (
-    <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '40px' }}>
+    <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px' }}>
 
       {/* Título del aviso */}
       <div className="flex flex-col gap-1.5">
