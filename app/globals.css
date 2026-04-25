@@ -130,9 +130,9 @@
   --secondary-foreground: oklch(0.952 0.01 84.8);
 
   /* Título Principal (Hero/Propiedad) */
-  --text-3xl: 1.875rem; 
+  --text-3xl: 1.80rem; 
   /* Subtítulos (Secciones destacadas) */
-  --text-xl: 1.25rem;
+  --text-xl: 1.30rem;
   /* Cuerpo e Información general */
   --text-base: 1rem;
 }

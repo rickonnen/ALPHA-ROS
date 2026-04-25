@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { ImagenesValues, ImagenesErrors, INITIAL_VALUES, MAX_FILES } from './useImagenesTypes'
-import { validate }                                                    from './useImagenesValidacion'
+import { validate, validateDimensions } from './useImagenesValidacion'                                               
 import {
   guardarImagenes,
   leerImagenes,
@@ -75,31 +75,46 @@ export function useImagenesForm(sessionKey: string) {
 
   // ── Agregar imágenes ──────────────────────────
   const handleAgregar = useCallback(async (files: FileList | File[]) => {
-    setFieldError(null)
+  setFieldError(null)
 
-    const arrFiles = Array.from(files)
+  const arrFiles = Array.from(files)
 
-    for (const file of arrFiles) {
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        setFieldError('Solo se aceptan imágenes JPG y PNG.')
-        return
-      }
-      if (valuesRef.current.imagenes.length >= MAX_FILES) {
-        setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
-        return
-      }
+  // Validar peso total incluyendo los ya cargados
+  const pesoActual = valuesRef.current.imagenes.reduce((acc, f) => acc + f.size, 0)
+  const pesoNuevo  = arrFiles.reduce((acc, f) => acc + f.size, 0)
+  if (pesoActual + pesoNuevo > 10 * 1024 * 1024) {
+    setFieldError('El peso total de las imágenes no debe superar 10 MB.')
+    return
+  }
 
-      const updated = {
-        imagenes: [...valuesRef.current.imagenes, file].slice(0, MAX_FILES),
-      }
-      valuesRef.current = updated
-      setValues(updated)
-
-      await guardarImagenes(updated.imagenes)
-
-      if (touched) setErrors(validate(updated))
+  for (const file of arrFiles) {
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setFieldError('Solo se aceptan imágenes JPG y PNG.')
+      return
     }
-  }, [touched])
+    if (valuesRef.current.imagenes.length >= MAX_FILES) {
+      setFieldError(`No puedes agregar más de ${MAX_FILES} imágenes.`)
+      return
+    }
+
+    // Validar resolución mínima
+    const dimError = await validateDimensions(file)
+    if (dimError) {
+      setFieldError(dimError)
+      return
+    }
+
+    const updated = {
+      imagenes: [...valuesRef.current.imagenes, file].slice(0, MAX_FILES),
+    }
+    valuesRef.current = updated
+    setValues(updated)
+
+    await guardarImagenes(updated.imagenes)
+
+    if (touched) setErrors(validate(updated))
+  }
+}, [touched])
 
   // ── Eliminar imagen ───────────────────────────
   const handleEliminar = useCallback(async (indice: number) => {

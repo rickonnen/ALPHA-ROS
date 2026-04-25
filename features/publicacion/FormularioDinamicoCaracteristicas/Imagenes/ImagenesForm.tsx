@@ -31,10 +31,6 @@ export function ImagenesForm({
   const [urlsABorrar,    setUrlsABorrar]    = useState<string[]>([])
   const [selectedIdx,    setSelectedIdx]    = useState(0)
 
-  // ── CORRECCIÓN: en lugar de useEffect con setState, usamos el patrón
-  // "derived state during render" recomendado por React.
-  // Guardamos la referencia anterior de imagenesIniciales; si cambia,
-  // actualizamos el estado en el mismo ciclo de render (sin cascada).
   const [prevImagenes, setPrevImagenes] = useState<string[]>(imagenesIniciales)
 
   if (prevImagenes !== imagenesIniciales) {
@@ -44,7 +40,7 @@ export function ImagenesForm({
     setSelectedIdx(0)
   }
 
-  const inputRef              = useRef<HTMLInputElement>(null)
+  const inputRef                = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
 
   // Registrar trigger de validación
@@ -146,16 +142,25 @@ export function ImagenesForm({
       {hasFiles && (
         <div className="flex flex-col gap-3 flex-1">
 
-          {/* Imagen principal */}
+          {/* Imagen principal — centrada, sin cortes */}
           <div
             className="relative rounded-xl overflow-hidden flex-1"
-            style={{ minHeight: '180px', backgroundColor: '#F4EFE6' }}
+            style={{
+              minHeight:       '180px',
+              backgroundColor: '#F4EFE6',
+              display:         'flex',
+              alignItems:      'center',
+              justifyContent:  'center',
+            }}
           >
             <img
               src={previewsCombinados[selectedIdx]}
               alt={`Imagen principal ${selectedIdx + 1}`}
-              className="w-full object-contain"
-              style={{ maxHeight: '220px', width: '100%' }}
+              style={{
+                width:     '100%',
+                height:    '220px',
+                objectFit: 'contain',
+              }}
             />
             <button
               type="button"
@@ -181,22 +186,29 @@ export function ImagenesForm({
             </button>
           </div>
 
-          {/* Miniaturas */}
+          {/* Miniaturas — altura fija, imagen completa sin cortes */}
           <div className="flex gap-2">
             {previewsCombinados.map((src, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setSelectedIdx(idx)}
-                className="relative rounded-lg overflow-hidden flex-shrink-0 transition-all"
+                className="relative rounded-lg overflow-hidden transition-all"
                 style={{
-                  width:           '64px',
-                  height:          '48px',
+                  flex:            '1 1 0',
+                  minWidth:        0,
+                  maxWidth:        '120px',
+                  height:          '90px',
                   border:          idx === selectedIdx ? '2px solid #C26E5A' : '2px solid transparent',
                   backgroundColor: '#EDE8E0',
                 }}
               >
-                <img src={src} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+                <img
+                  src={src}
+                  alt={`Miniatura ${idx + 1}`}
+                  className="w-full h-full"
+                  style={{ objectFit: 'contain' }}
+                />
               </button>
             ))}
 
@@ -204,15 +216,19 @@ export function ImagenesForm({
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex-shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-dashed gap-0.5"
+                className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed gap-0.5 transition-colors hover:border-[#C26E5A]"
                 style={{
-                  width: '64px', height: '48px',
-                  borderColor: '#D4B8AE', backgroundColor: '#EDE8E0',
+                  flex:            '1 1 0',
+                  minWidth:        0,
+                  maxWidth:        '120px',
+                  height:          '90px',
+                  borderColor:     '#D4B8AE',
+                  backgroundColor: '#EDE8E0',
                 }}
               >
-                <span className="text-lg leading-none text-[#C26E5A] font-light">+</span>
-                <span className="text-[9px] text-[#C26E5A] font-medium leading-none">Insertar</span>
-                <span className="text-[9px] text-[#C26E5A] font-medium leading-none">Imagen</span>
+                <span className="text-xl leading-none text-[#C26E5A] font-light">+</span>
+                <span className="text-[11px] text-[#C26E5A] font-medium leading-tight">Insertar</span>
+                <span className="text-[11px] text-[#C26E5A] font-medium leading-tight">Imagen</span>
               </button>
             )}
           </div>
@@ -232,7 +248,8 @@ export function ImagenesForm({
         }}
       />
 
-      {showError && !hasFiles && (
+      {/* Error — visible siempre que haya, con o sin imágenes */}
+      {showError && (
         <span className="text-red-500 text-xs">
           {fieldError ?? errors.imagenes}
         </span>

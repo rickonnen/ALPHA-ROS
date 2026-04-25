@@ -84,9 +84,9 @@ export function CaracteristicasDetalleForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5" style={{ paddingTop: '12px' }}>
 
-      <p className="text-sm font-medium text-[#1A1714]">
+      <p className="text-sm font-semibold text-[#1A1714]">
         Detalle las Características de su propiedad
       </p>
 
