@@ -78,7 +78,8 @@ export default function Footer() {
             <Skeleton className="h-10 w-32" />
           ) : (
             <Link href="/" className={`inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverIconAnim}`}>
-              <img src="/logo-principal.svg" alt="Logo" className="h-10 w-auto" />
+              <img src="/logo-principal.svg" alt="Logo" width={40} height={40} style={{ width: 'auto' }}
+              className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
               <span className="text-[0.83rem] lg:text-[0.95rem] xl:text-[1.30rem] 2xl:text-[1.5rem] font-heading font-black tracking-tighter leading-none">
                 <span className="text-primary">PROP</span>
                 <span className="text-secondary">BOL</span>

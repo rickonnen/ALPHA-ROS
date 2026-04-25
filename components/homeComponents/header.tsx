@@ -128,7 +128,8 @@ export const Header = () => {
   // renderizado optimizado del logo
   const objLogoElement = useMemo(() => (
     <Link href={APP_PATHS.home} aria-label="ir a inicio" className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
+      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} priority
+      style={{ width: 'auto' }} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
         <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>

@@ -3,8 +3,9 @@
 import { useEffect, useState, use } from "react"; 
 import Image from "next/image";
 import Link from "next/link"; 
-import { X as ObjXIcon } from "lucide-react";
+import { X as ObjXIcon } from "lucide-react"; // Se removió ArrowLeft
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 24/04/2026
  * funcionalidad: renderiza la vista completa de un blog especifico
@@ -25,7 +26,7 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
   const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
   const [bolHasError, setBolHasError] = useState<boolean>(false);
 
-  const strBtnHoverClasses = useHoverAnimation(false, false, 'pointer', true, true);
+  const strBtnHoverClasses = useHoverAnimation(false, true, 'pointer', true, true);
 
   useEffect(() => {
     const fnFetchSingleBlog = async () => {
@@ -61,7 +62,7 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
         <p className="text-muted-foreground">No se pudo encontrar este artículo.</p>
         <Link 
           href="/home/blogs"
-          className={`px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium ${strBtnHoverClasses} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0`}
+          className={`px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium ${strBtnHoverClasses}`}
         >
           Volver a los blogs
         </Link>
@@ -89,6 +90,7 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
             src={objBlog.strImageUrl}
             alt={objBlog.strTitle}
             fill
+            sizes="1800px"
             className="object-cover"
             priority 
           />
@@ -104,7 +106,7 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
       <div className="w-full flex justify-center mt-12 pt-8 border-t border-border/50">
         <Link 
           href="/home/blogs"
-          className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${strBtnHoverClasses} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0`}
+          className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${strBtnHoverClasses}`}
         >
           <Image 
             src="/leftArrow.svg" 

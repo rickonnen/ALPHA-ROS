@@ -37,8 +37,9 @@ export default function articleCard(objProps: objArticleCardProps) {
                 src={strImageUrl}
                 alt={strTitle}
                 fill
+                priority
+                sizes="1000px"
                 className="object-cover"
-                sizes="(max-width: 768px) 50vw, 33vw"
               />
             ) : (
               <ObjXIcon className="w-10 h-10 opacity-30" strokeWidth={1} />

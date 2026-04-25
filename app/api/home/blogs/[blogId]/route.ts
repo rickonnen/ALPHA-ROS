@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
- * funcionalidad: recupera un blog especifico por su id, verifica su estado y formatea sus datos detallados
- * @param {Request} request peticion entrante
- * @param {{ params: Promise<{ blogId: string }> }} params parametros de la ruta con el id del blog
- * @return {NextResponse} json con los datos del blog, o estado de error (400, 404, 500) segun corresponda
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
+ * funcionalidad: renderiza la vista completa de un blog especifico
  */
 export async function GET(
   request: Request,
@@ -32,9 +29,8 @@ export async function GET(
       return NextResponse.json({ error: "blog no encontrado" }, { status: 404 });
     }
 
-    // formateo estricto utilizando la fecha de creacion segun requerimiento
-    const strFormattedDate = objDbBlog.fecha_creacion
-      ? new Date(objDbBlog.fecha_creacion).toLocaleDateString("es-ES", {
+    const strFormattedDate = objDbBlog.fecha_publicacion
+      ? new Date(objDbBlog.fecha_publicacion).toLocaleDateString("es-ES", {
           day: "numeric",
           month: "long",
           year: "numeric",
