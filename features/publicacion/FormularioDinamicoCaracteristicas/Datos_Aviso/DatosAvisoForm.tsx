@@ -85,8 +85,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
       {/* Título del aviso */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="titulo" className="text-sm font-medium text-[#1A1714]">
-          ¿Qué título de aviso desea colocar?{' '}
-          <span className="font-normal text-muted-foreground">*</span>
+          ¿Qué título de aviso desea colocar?
         </Label>
         <input
           id="titulo"
@@ -114,8 +113,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
       {/* Tipo de operación */}
       <div className="flex flex-col gap-1.5" ref={dropdownRef}>
         <Label htmlFor="tipoOperacion" className="text-sm font-medium text-[#1A1714]">
-          ¿Qué tipo de operación desea realizar?{' '}
-          <span className="font-normal text-muted-foreground">*</span>
+          ¿Qué tipo de operación desea realizar?
         </Label>
         <button
           type="button"
@@ -179,7 +177,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
         {/* Campo Precio — crece para ocupar el espacio disponible */}
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
           <Label htmlFor="precio" className="text-sm font-medium text-[#1A1714]">
-            Precio <span className="font-normal text-muted-foreground">*</span>
+            Precio 
           </Label>
           <input
             id="precio" type="text" inputMode="decimal"
