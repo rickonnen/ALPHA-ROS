@@ -177,7 +177,9 @@ export default function SuscripcionPage() {
                         Descripción
                     </h2>
                     <p className="text-1xl text-gray-700 mt-3 leading-relaxed">
-                        El {!isFree ? nombre_plan : "PLAN GRATUITO"} te permite realizar {!isFree ? `${cupos} publicaciones adicionales` : "hasta 2 publicaciones"}.
+                        {!isFree
+                        ? `El ${nombre_plan} te permite realizar ${cupos} publicaciones`
+                        : "El plan gratuito te permite realizar 2 publicaciones de prueba"}
                     </p>
                 </div>
             </div>

@@ -19,6 +19,7 @@ export default function ListaPagos({ estado, id_usuario, fechaFiltro }: { estado
   const [pagos, setPagos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pagosPrevios, setPagosPrevios] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id_usuario) {
@@ -35,6 +36,30 @@ export default function ListaPagos({ estado, id_usuario, fechaFiltro }: { estado
       const data = await res.json();
       const nuevosPagos = Array.isArray(data) ? data : data.data || [];
       setPagos(nuevosPagos);
+      const cambios = nuevosPagos.filter((p: any) => {
+        const anterior = pagosPrevios.find(x => x.id_detalle === p.id_detalle);
+
+        return (
+          anterior &&
+          anterior.estado !== p.estado &&
+          (p.estado === 2 || p.estado === 3)
+        );
+      });
+
+      for (const pago of cambios) {
+        await fetch("/api/notificaciones", {
+          method: "POST",
+          body: JSON.stringify({
+            tipo: "pago",
+            pago: {
+              estado: pago.estado,
+              monto: pago.PlanPublicacion?.precio_plan || 0,
+            },
+          }),
+        });
+      }
+
+      setPagosPrevios(nuevosPagos);
       setError("");
       const nuevoTotal = Math.ceil(nuevosPagos.length / ITEMS);
       setPagina((prev) => (prev > nuevoTotal ? nuevoTotal || 1 : prev));
@@ -46,10 +71,10 @@ export default function ListaPagos({ estado, id_usuario, fechaFiltro }: { estado
 
   const pagosAdaptados: Pago[] = Array.isArray(pagos) ? pagos.map((p: any) => ({
     id: p.id_detalle,
-    fecha: p.fecha_detalle 
+    fecha: p.fecha_detalle
       ? new Date(p.fecha_detalle).toLocaleString("es-BO", {
-          year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
-        }) 
+        year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
+      })
       : "S/F",
     detalle: `${p.metodo_pago} - ${p.PlanPublicacion?.nombre_plan || "Plan"} (${p.PlanPublicacion?.cant_publicaciones || 0} publicaciones)`,
     monto: Number(p.PlanPublicacion?.precio_plan || 0),
@@ -58,15 +83,15 @@ export default function ListaPagos({ estado, id_usuario, fechaFiltro }: { estado
 
   const pagosFiltrados = fechaFiltro
     ? pagosAdaptados.filter((p: any, i: number) => {
-        const original = pagos[i]?.fecha_detalle;
-        if (!original) return false;
-        const fechaPago = new Date(original);
-        return (
-          fechaPago.getFullYear() === fechaFiltro.getFullYear() &&
-          fechaPago.getMonth() === fechaFiltro.getMonth() &&
-          fechaPago.getDate() === fechaFiltro.getDate()
-        );
-      })
+      const original = pagos[i]?.fecha_detalle;
+      if (!original) return false;
+      const fechaPago = new Date(original);
+      return (
+        fechaPago.getFullYear() === fechaFiltro.getFullYear() &&
+        fechaPago.getMonth() === fechaFiltro.getMonth() &&
+        fechaPago.getDate() === fechaFiltro.getDate()
+      );
+    })
     : pagosAdaptados;
 
   if (loading) return <p className="text-sm text-gray-500">Cargando...</p>;

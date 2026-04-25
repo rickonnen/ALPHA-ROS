@@ -70,11 +70,11 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
-        <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full flex items-center gap-2">
-          <Map className="h-5 w-5" />
+        <CardTitle className="text-xl font-bold border-b border-white/20 pb-2 tracking-tight w-full block">
           ZONAS
         </CardTitle>
       </CardHeader>
+      
 
       <CardContent className="flex flex-col">
         {error && (

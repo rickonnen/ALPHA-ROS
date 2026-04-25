@@ -28,6 +28,10 @@
          cambios en editar perfil el header (foto, nombre) se actualice
          inmediatamente sin necesidad de hacer refresh manual de la pagina
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 23/04/2026
+    Fix: Reubicación de la pestaña 'ZONAS' a la penúltima posición y corrección de nomenclatura según Mockup.
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -132,8 +136,8 @@ function PerfilContent() {
     { id: "favoritos", name: "FAVORITOS" },
     { id: "historial", name: "HISTORIAL" },
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
-    { id: "zonas", name: "ZONAS" },
     { id: "planes", name: "PLAN ACTUAL" },
+    { id: "zonas", name: "ZONAS" },
   ];
 
   //miguel actualizacion telefonos
@@ -175,6 +179,16 @@ function PerfilContent() {
     router.push("/");
   };
 
+  const truncate = (str: string, limit: number): string => {
+    if (!str) return "";
+    return str.length > limit ? str.substring(0, limit) + "." : str;
+  };
+
+  const nombresCortos = truncate(usuario?.nombres, 15);
+  const apellidosCortos = truncate(usuario?.apellidos, 15);
+
+  const nombreCompleto = `${nombresCortos} ${apellidosCortos}`.trim();
+
   return (
     <>
       {loading && (
@@ -211,7 +225,7 @@ function PerfilContent() {
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
-                  {usuario.nombres} {usuario.apellidos}
+                  {nombreCompleto}
                 </h1>
                 <h2 className="text-slate-500 text-sm md:text-2xl font-medium">
                   {usuario.email}

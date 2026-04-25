@@ -285,4 +285,44 @@ export async function enviarRecuperacionContrasena(email: string, code: string, 
   `;
   return sendEmail(email, "Recuperación de contraseña - PropBol", html);
 }
+
+export async function enviarNotificacionDeGrupo(
+  email: string,
+  nombre: string,
+  titulo: string,
+  mensaje: string,
+  grupo: string,
+  id_notificacion: string
+): Promise<SendEmailResult> {
+  
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#C85A4F 0%,#B47B65 100%);padding:20px;text-align:center;border-radius:8px 8px 0 0">
+        <h1 style="color:white;margin:0">Notificación de ${grupo}</h1>
+      </div>
+      <div style="padding:30px;background:#f9fafb;border:1px solid #e5e7eb">
+        <p style="color:#374151;font-size:16px">Hola ${nombre},</p>
+        <h2 style="color:#C85A4F">${titulo}</h2>
+        <p style="color:#374151;font-size:15px">${mensaje}</p>
+        <p style="color:#999;font-size:12px;margin-top:30px">
+          Mensaje enviado por el grupo de <strong>${grupo}</strong> en PROBOL.
+        </p>
+      </div>
+      <div style="background:#f9f9f9;padding:20px;border-top:1px solid #e0e0e0;text-align:center">
+        <p style="color:#999;font-size:11px;margin:0">
+          © 2026 PROBOL • Este es un mensaje automático, no respondas este correo.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const resultado = await sendEmail(
+    email,
+    `[${grupo.toUpperCase()}] ${titulo}`,
+    html
+  );
+
+  return resultado;
+}
+
 export type { SendEmailResult };

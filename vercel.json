@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/update-profiles",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/suspend-expired",
+      "schedule": "10 0 * * *"
     }
   ]
 }
