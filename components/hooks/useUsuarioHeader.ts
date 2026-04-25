@@ -23,15 +23,25 @@ export const useUsuarioHeader = (objUser: any) => {
         const json = await res.json();
         const strNombreCompleto = `${json?.data?.nombres?.trim() ?? ""} ${json?.data?.apellidos?.trim() ?? ""}`.trim();
         
+         const truncate = (str: string, limit: number): string => {
+          if (!str) return "";
+          return str.length > limit ? str.substring(0, limit) + "." : str;
+        };
+      
+        const nombresCortos = truncate(json?.data?.nombres?.trim(), 7);
+        const apellidosCortos = truncate(json?.data?.apellidos?.trim(), 7);
+      
+        const nombreCompleto = `${nombresCortos} ${apellidosCortos}`.trim();
+
         setObjNombreHeader({
           idUsuario: objUser.id,
-          nombre: strNombreCompleto || json?.data?.username?.trim() || objUser.name || "",
+          nombre: nombreCompleto || json?.data?.username?.trim() || objUser.name || "",
         });
       } catch (error) {
         console.error("Error obteniendo usuario:", error);
       }
     };
-
+    fetchNombreActualizado();
     const handlePerfilActualizado = () => void fetchNombreActualizado();
     window.addEventListener("perfil:foto-actualizada", handlePerfilActualizado);
     // limpiamos el listener cuando el componente se desmonta

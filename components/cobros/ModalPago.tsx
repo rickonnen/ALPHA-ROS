@@ -10,19 +10,24 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useState, useRef } from "react";
+
 
 type EstadoModal =
   | "cerrado"
-  | "confirmacion"
-  | "verificando"
-  | "procesando"
-  | "ya_pendiente";
+  | "confirmacion_pago" 
+  | "verificando_pago" 
+  | "pendiente_pago"; 
 
 interface Props {
   estadoModal: EstadoModal;
   setEstadoModal: (estado: EstadoModal) => void;
   manejarAceptarPago: () => void;
   irAlPerfil: () => void;
+  manejarDescarga: () => void;
+  nombrePlan: string;
+  archivoSeleccionado: File | null;
+  setArchivoSeleccionado: (file: File | null) => void;
 }
 
 export default function PagoModal({
@@ -30,7 +35,20 @@ export default function PagoModal({
   setEstadoModal,
   manejarAceptarPago,
   irAlPerfil,
+  manejarDescarga,
+  nombrePlan,
+  archivoSeleccionado,
+  setArchivoSeleccionado,
 }: Props) {
+
+const fileInputRef = useRef<HTMLInputElement>(null);
+const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setArchivoSeleccionado(e.target.files[0]);
+  }
+};
+const [loading, setLoading] = useState(false);
+
   return (
       <AlertDialog
         open={estadoModal !== "cerrado"}
@@ -39,21 +57,35 @@ export default function PagoModal({
         }}
       >
         <AlertDialogContent>
-          {/* 3. FIX DE ACCESIBILIDAD PARA RADIX UI */}
           {estadoModal === "cerrado" && (
             <AlertDialogTitle className="sr-only">
               Cerrando diálogo...
             </AlertDialogTitle>
           )}
 
-          {estadoModal === "verificando" && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <AlertDialogTitle>Verificando</AlertDialogTitle>
-            </div>
+          {estadoModal === "verificando_pago" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Verificando pago
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Este proceso puede durar algunas horas. 
+                  Puedes revisar el estado de tu pago en tu perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}> 
+                  ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
           )}
 
-          {estadoModal === "confirmacion" && (
+          {estadoModal === "confirmacion_pago" && (
             <>
               <AlertDialogHeader>
                 <AlertDialogTitle>
@@ -65,28 +97,38 @@ export default function PagoModal({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                <AlertDialogCancel 
+                  disabled={loading}
+                  onClick={() => setEstadoModal("cerrado")}>
                   Rechazar
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={(e) => {
+                  disabled={loading}
+                  onClick={async (e) => {
                     e.preventDefault();
-                    manejarAceptarPago();
+                    setLoading(true);
+
+                    await manejarAceptarPago(); // importante que sea async
+
+                    setEstadoModal("verificando_pago");
+                    setLoading(false);
                   }}
                 >
-                  Aceptar
+                  {loading ? "Procesando..." : "Aceptar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>
           )}
 
-          {estadoModal === "procesando" && (
+          {estadoModal === "pendiente_pago" && (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Verificando pago</AlertDialogTitle>
+                <AlertDialogTitle>Ya tienes una solicitud pendiente</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Este proceso puede durar algunas horas. Puedes revisar el
-                  estado de tu pago en tu perfil.
+                  Estamos verificando un comprobante para este plan. 
+                  No es necesario realizar otro pago. Te 
+                  notificaremos en cuanto el administrador valide 
+                  la transacción.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -100,25 +142,6 @@ export default function PagoModal({
             </>
           )}
 
-          {estadoModal === "ya_pendiente" && (
-            <>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Pago en proceso</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Ya tienes un pago pendiente de verificación. Por favor, espera
-                  a que se complete o revisa el estado en tu perfil.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  Cerrar
-                </AlertDialogCancel>
-                <AlertDialogAction onClick={irAlPerfil}>
-                  Ir a mi perfil
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </>
-          )}
         </AlertDialogContent>
       </AlertDialog>
   );

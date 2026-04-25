@@ -65,7 +65,7 @@ export const getPaymentsByStatus = async (
  * @param {string} strNewStatusName - El nuevo nombre de estado.
  * @return {object} objUpdatedPayment - El registro actualizado de la base de datos de pagos.
  */
-export const updatePaymentStatus = async (intId: number, strNewStatusName: string) => {
+export const updatePaymentStatus = async (intId: number, strNewStatusName: string, strReason?: string) => {
   const objStatusMap: Record<string, number> = {
     'Aceptado': objStatuses.intAccepted,
     'Rechazado': objStatuses.intRejected
@@ -79,16 +79,118 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
 
   try {
     // Prisma actualizará el estado. 
-    // Si cambia de 1 (Pendiente) a 2 (Aceptado), el Trigger trg_pago_aprobado_update 
-    // en Supabase se disparará de forma invisible y sumará las publicaciones al usuario.
-    const objUpdatedPayment = await prisma.detallePago.update({
-      where: { id_detalle: intId },
-      data: {
-        estado: intNewStatus,
-      },
+    // Se cambia la razón del rachazo 
+    // actualiza la cantidad de publicaciones de acuerdo al plan
+    const objUpdatedPayment = await prisma.$transaction(async (tx) => {
+      const objCurrentPayment = await tx.detallePago.findUnique({
+        where: { id_detalle: intId },
+        include: { PlanPublicacion: true }
+      });
+
+      if (!objCurrentPayment) {
+        throw new Error(`No se encontró el pago con id ${intId}`);
+      }
+
+      const objPaymentResult = await tx.detallePago.update({
+        where: { id_detalle: intId },
+        data: {
+          estado: intNewStatus,
+          razon_rechazo: strNewStatusName === 'Rechazado' ? strReason : null,
+        },
+      });
+
+      if (strNewStatusName === 'Aceptado' && objCurrentPayment.estado === objStatuses.intPending) {
+        
+        const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
+        const strUserId = objCurrentPayment.id_usuario;
+        const intPlanId = objCurrentPayment.id_plan;
+
+        if (strUserId && intPlanId) {
+          // --- INICIO LÓGICA HU6 (Upgrade / Downgrade) ---
+          const estadoActivo = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Activo' } });
+          const estadoSuspendido = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Suspendido' } });
+
+          if (estadoActivo && estadoSuspendido) {
+            // Obtener publicaciones del usuario ordenadas por las más recientes primero
+            const publicaciones = await tx.publicacion.findMany({
+              where: { id_usuario: strUserId },
+              orderBy: { fecha_creacion: 'desc' }
+            });
+
+            const activas = publicaciones.filter(p => p.id_estado === estadoActivo.id_estado);
+            const suspendidas = publicaciones.filter(p => p.id_estado === estadoSuspendido.id_estado);
+
+            if (activas.length > intNewQuota) {
+              // Downgrade: Si excede el cupo, ssuspender las MÁS RECIENTES
+              const exceso = activas.length - intNewQuota;
+              const paraSuspender = activas.slice(0, exceso); 
+              
+              if (paraSuspender.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraSuspender.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoSuspendido.id_estado }
+                });
+              }
+            } else if (activas.length < intNewQuota && suspendidas.length > 0) {
+              // Upgrade/Renovación: Reactivar las suspendidas hasta alcanzar el nuevo límite
+              const cupoDisponible = intNewQuota - activas.length;
+              const paraReactivar = suspendidas.slice(0, cupoDisponible);
+
+              if (paraReactivar.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraReactivar.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoActivo.id_estado }
+                });
+              }
+            }
+          }
+          // --- FIN LÓGICA HU6 ---
+
+          await tx.usuario.update({
+            where: { id_usuario: strUserId },
+            data: {
+              cant_publicaciones_restantes: intNewQuota
+            }
+          });
+
+          const objFechaInicio = new Date();
+          const objFechaFin = new Date(objFechaInicio);
+          const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
+          
+          if (strModalidad.toLowerCase().includes('anual')) {
+            objFechaFin.setFullYear(objFechaFin.getFullYear() + 1);
+          } else {
+            objFechaFin.setDate(objFechaFin.getDate() + 30);
+          }
+          
+          await tx.suscripcion.upsert({
+            where: { id_usuario: strUserId },
+            update: {
+              id_plan: intPlanId,
+              fecha_inicio: objFechaInicio,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            },
+            create: {
+              id_usuario: strUserId,
+              id_plan: intPlanId,
+              fecha_inicio: objFechaInicio,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            }
+          });
+        }
+      }
+
+      return objPaymentResult;
+
     });
 
-    console.log(`Estado del pago ${intId} actualizado a ${strNewStatusName}.`);
+    console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
   } catch (error: any) {
@@ -99,5 +201,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
-  
+
 };

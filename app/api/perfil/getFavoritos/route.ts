@@ -1,10 +1,3 @@
-/*  Dev: David Chavez Totora - xdev/davidc
-    Fecha: 28/03/2026
-    Funcionalidad: GET /backend/perfil/getFavoritos?id_usuario=...
-      - Retorna las publicaciones marcadas como favoritas por el usuario
-      - Incluye: título, zona, tipo de inmueble, primera imagen
-*/
-
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -29,9 +22,9 @@ export async function GET(req: NextRequest) {
         Publicacion: {
           include: {
             Imagen: { take: 1 },
-            Zona: true,
             TipoInmueble: true,
             TipoOperacion: true,
+            Ubicacion: true,
           },
         },
       },
@@ -40,11 +33,21 @@ export async function GET(req: NextRequest) {
     const data = favoritos.map((fav) => ({
       id: String(fav.Publicacion.id_publicacion),
       titulo: fav.Publicacion.titulo ?? "Sin título",
-      zona: fav.Publicacion.Zona?.nombre_zona ?? "Sin zona",
       tipo: fav.Publicacion.TipoInmueble?.nombre_inmueble ?? "Sin tipo",
       tipo_operacion: fav.Publicacion.TipoOperacion?.nombre_operacion ?? "Sin operación",
       imagen: fav.Publicacion.Imagen[0]?.url_imagen ?? null,
-      fecha_add: fav.fecha_add,
+      precio: fav.Publicacion.precio ?? null,
+      superficie: fav.Publicacion.superficie ?? null,
+      habitaciones: fav.Publicacion.habitaciones ?? null,
+      banos: fav.Publicacion.banos ?? null,
+      direccion: fav.Publicacion.Ubicacion?.direccion ?? null,   // ← fix
+      fechaPublicacion: fav.Publicacion.fecha_creacion           // ← añadido
+        ? new Date(fav.Publicacion.fecha_creacion).toLocaleDateString("es-BO", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+        : "Reciente",
     }));
 
     return NextResponse.json({ data }, { status: 200 });

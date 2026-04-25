@@ -5,10 +5,11 @@ import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
-import { useAuth } from "@/app/auth/AuthContext"; //NUEVO
+import { useAuth } from "@/app/auth/AuthContext";
+import { createClient } from "@supabase/supabase-js";
 
 type Notification = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   read: boolean;
@@ -27,37 +28,59 @@ function formatRelativeTime(isoString: string): string {
   return `hace ${days} d`;
 }
 
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Faltan variables de entorno de Supabase");
+    return null;
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
+
 export function NotificationPanel() {
-  const { user } = useAuth(); //NUEVO - obtiene el usuario logueado
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchNotifications = async () => {
       try {
-        //NUEVO - clave única por usuario
-        const userId = user?.id ?? "guest";
-        const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-        const localDeletedIds: number[] = stored ? JSON.parse(stored) : [];
+        const { data, error } = await supabase
+          .from("Notificacion")
+          .select("*")
+          .eq("id_usuario", user.id)
+          .order("creado_en", { ascending: false });
 
-        const res = await fetch("/api/notifications");
-        const data = await res.json();
-        const mapped = data.map((n: any) => ({
-          id: n.id,
-          title: n.title,
-          description: n.message,
-          read: n.read,
-          createdAt: n.createdAt ?? null,   // ← agrega esta línea
-          time: n.createdAt ? formatRelativeTime(n.createdAt) : "ahora",
+        if (error) throw error;
+
+        const mapped = (data ?? []).map((n: any) => ({
+          id: n.id_notificacion,
+          title: n.titulo,
+          description: n.mensaje,
+          read: n.leido,
+          createdAt: n.creado_en ?? null,
+          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
         }));
-        
-        const sorted = mapped.sort((a: any, b: any) =>
-          new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()  // ← cambia esta línea
-        );
-        
-        setNotifications(sorted.filter((n: any) => !localDeletedIds.includes(n.id)));
+
+        setNotifications(mapped);
+        setHasError(false);
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
         setHasError(true);
@@ -67,7 +90,36 @@ export function NotificationPanel() {
     };
 
     fetchNotifications();
-  }, [user]); //NUEVO - se ejecuta cuando el usuario está disponible
+
+    const channel = supabase
+      .channel("notificaciones-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "Notificacion",
+          filter: `id_usuario=eq.${user.id}`,
+        },
+        (payload) => {
+          const n = payload.new as any;
+          const nueva: Notification = {
+            id: n.id_notificacion,
+            title: n.titulo,
+            description: n.mensaje,
+            read: n.leido,
+            createdAt: n.creado_en ?? null,
+            time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
+          };
+          setNotifications((prev) => [nueva, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
@@ -79,26 +131,30 @@ export function NotificationPanel() {
     return notifications;
   }, [notifications, activeTab]);
 
-  const handleDelete = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-
-    //NUEVO - guarda con clave única por usuario
-    const userId = user?.id ?? "guest";
-    const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-    const current: number[] = stored ? JSON.parse(stored) : [];
-    localStorage.setItem(`deletedNotificationIds_${userId}`, JSON.stringify([...current, id]));
+  const handleDelete = async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    try {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      await supabase.from("Notificacion").delete().eq("id_notificacion", id);
+    } catch (error) {
+      console.error("Error al eliminar notificación:", error);
+    }
   };
 
-  const handleRead = async (id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const handleRead = async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
     try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAsRead", notificationId: id }),
-      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+      await supabase
+        .from("Notificacion")
+        .update({ leido: true })
+        .eq("id_notificacion", id);
       window.dispatchEvent(new Event("refresh-notification-badge"));
     } catch (error) {
       console.error("Error al marcar como leída:", error);
@@ -106,13 +162,16 @@ export function NotificationPanel() {
   };
 
   const handleMarkAll = async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    if (!user?.id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
     try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAllAsRead" }),
-      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      await supabase
+        .from("Notificacion")
+        .update({ leido: true })
+        .eq("id_usuario", user.id);
       window.dispatchEvent(new Event("refresh-notification-badge"));
     } catch (error) {
       console.error("Error al marcar todas como leídas:", error);
@@ -120,8 +179,8 @@ export function NotificationPanel() {
   };
 
   return (
-<div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">     
- <NotificationHeader total={notifications.length} />
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
+      <NotificationHeader total={notifications.length} />
 
       <div className="p-2">
         <NotificationTabs
@@ -137,14 +196,14 @@ export function NotificationPanel() {
           Cargando notificaciones...
         </div>
       ) : hasError ? (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-          <BellOff size={22} />
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+            <BellOff size={22} />
+          </div>
+          <p className="text-gray-500 text-sm font-medium">
+            No fue posible cargar las notificaciones.
+          </p>
         </div>
-        <p className="text-gray-500 text-sm font-medium">
-          No fue posible cargar las notificaciones.
-        </p>
-      </div>
       ) : visibleNotifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">

@@ -1,9 +1,3 @@
-/**
- * dev: Kevin isnado
- * ultima modif: 27/03/2025 - horas: 12 pm
- * descripcion: endpoint del backend / encarga de obtener y devolver el historial de pagos del usuario desde la base de datos
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
@@ -13,11 +7,8 @@ export async function GET(req: NextRequest) {
     const estado = req.nextUrl.searchParams.get("estado");
     const userId = req.nextUrl.searchParams.get("id_usuario");
 
-    if (!userId) {
-      return NextResponse.json(
-        { message: "id_usuario es requerido" },
-        { status: 400 }
-      );
+    if (!userId || userId.trim() === "") {
+      return NextResponse.json([]);
     }
 
     const pagos = await prisma.detallePago.findMany({
@@ -33,6 +24,7 @@ export async function GET(req: NextRequest) {
       orderBy: {
         fecha_detalle: "desc",
       },
+      take: 5,
     });
 
     return NextResponse.json(pagos);
