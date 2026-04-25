@@ -8,6 +8,15 @@
  * @param bolChecking - Estado booleano que muestra el estado de carga y deshabilita el botón de publicación durante la verificación
  * @return JSX con los botones responsivos de acción y el componente FreePublicationLimitModal
  */
+/**
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix Corrección de ruta (/publicacion/formularioPublicacion) y limpieza estricta de sessionStorage.
+ * Funcionalidad: Footer de acciones para ver historial o publicar nuevo inmueble validando límites.
+ * @param {void} No recibe parámetros (usa contexto de autenticación).
+ * @return {JSX.Element} Botones responsivos y modales de límites.
+ */
+
 "use client";
 
 import { useRouter }          from "next/navigation";
@@ -36,7 +45,8 @@ export const PropertyActions = () => {
 
   const handleNuevaPublicacion = async () => {
     if (!user) {
-      router.push("/publicacion/informacion-comercial");
+      // FIX: Ruta correcta del nuevo formulario dinámico
+      router.push("/publicacion/formularioPublicacion");
       return;
     }
 
@@ -45,7 +55,6 @@ export const PropertyActions = () => {
       const objEstado = await verificarEstadoPublicacion(user.id);
 
       if (objEstado.bolLimiteAlcanzado) {
-        // Decide qué modal mostrar según el tipo de límite
         if (objEstado.strTipoLimite === "plan") {
           setBolShowModalPlan(true);      // HU7 — plan activo excedido
         } else {
@@ -54,19 +63,32 @@ export const PropertyActions = () => {
         return;
       }
 
-      // Sin límite → limpiar session y navegar
-      sessionStorage.removeItem("caracteristicasInmueble");
-      sessionStorage.removeItem("caracteristicasInmuebleUsuario");
-      sessionStorage.removeItem("informacionComercialDraft");
-      sessionStorage.removeItem("informacionComercialDraftUsuario");
-      sessionStorage.removeItem("informacionComercial");
-      sessionStorage.removeItem("videoUrl");
-      sessionStorage.removeItem("imageUploader_userInteracted");
-      router.push("/publicacion/informacion-comercial");
+      // FIX: Limpiar exactamente las variables que usa el Formulario Dinámico
+      const KEYS_TO_CLEAN = [
+        'publicacion_currentStep', 
+        'publicacion_completedSteps', 
+        'datosAviso', 
+        'categoriaYEstado', 
+        'ubicacion', 
+        'caracteristicasDetalle', 
+        'imagenesPropiedad_interacted', 
+        'caracteristicasImagenesPreview', 
+        'caracteristicasImagenesNombres', 
+        'videoPropiedad', 
+        'descripcionPropiedad', 
+        'imagenesIniciales'
+      ];
+      
+      KEYS_TO_CLEAN.forEach(k => { 
+        try { sessionStorage.removeItem(k) } catch { } 
+      });
+
+      // FIX: Redirigir a la ruta correcta del nuevo formulario sin 404
+      router.push("/publicacion/formularioPublicacion");
 
     } catch (error) {
       console.error("Error verificando publicaciones:", error);
-      router.push("/publicacion/informacion-comercial");
+      router.push("/publicacion/formularioPublicacion");
     } finally {
       setBolChecking(false);
     }
@@ -100,7 +122,7 @@ export const PropertyActions = () => {
         onBack={() => setBolShowModalGratuito(false)}
       />
 
-      {/* HU7 — Modal plan activo excedido (nuevo) */}
+      {/* HU7 — Modal plan activo excedido */}
       <PlanLimitModal
         bolOpen={bolShowModalPlan}
         onBack={() => setBolShowModalPlan(false)}
