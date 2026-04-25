@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 23/04/2026
  * funcionalidad: recupera la lista de blogs publicados y los formatea

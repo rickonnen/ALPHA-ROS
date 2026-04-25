@@ -85,7 +85,7 @@ export default function blogSection() {
       <div className="w-full flex justify-end mt-2">
         <Link 
           href="/home/blogs" 
-          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary ${strBtnHoverClasses}`}
+          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${strBtnHoverClasses}`}
         >
           Ver mas blogs <ObjArrowRight className="w-6 h-6" strokeWidth={2} />
         </Link>

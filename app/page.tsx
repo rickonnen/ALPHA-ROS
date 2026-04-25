@@ -16,13 +16,17 @@ export default function HomePage() {
         </div>
       </section>
       
-      <TopCities />
-
-      <section className="w-full max-w-6xl mx-auto px-4 pb-20 mt-16">
+      <section className="w-full px-4 mt-16">
+        <TopCities />
+      </section>
+      
+      <section className="w-full max-w-6xl mx-auto px-4 mt-5">
         <ExploreBy />
       </section>
 
-      <BlogSection />
+      <section className="w-full mx-auto px-4 mt-5">
+        <BlogSection />
+      </section>
     </main>
   );
 }
