@@ -74,12 +74,7 @@ export const MobileMenu = ({
 
   return (
     <>
-      {/* permite cerrar el menú al tocar cualquier área fuera del panel */}
-      <div 
-        className="lg:hidden fixed inset-0 z-40" 
-        onClick={onClose} 
-        aria-hidden="true" 
-      />
+      {/* SE ELIMINÓ EL DIV INVISIBLE: El hook useClickOutside del Header ahora gestiona esto sin interferencias */}
 
       {/* panel de navegación movil posición derecha rectangulares */}
       <nav
