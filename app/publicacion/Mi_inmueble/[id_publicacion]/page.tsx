@@ -22,6 +22,14 @@
   * @return {void | never} Lanza un 'redirect' (Next.js) hacia la ruta pública si falla la validación, 
   *                        o permite continuar con el renderizado si el usuario es el dueño legítimo.
 */
+/**
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix Modificación de "Compra" a "Venta" en frontend antes de pasar a PropertyDetails.
+ * @param {Promise<{ id_publicacion: string }>} params - Promesa con el ID dinámico de la URL.
+ * @return {JSX.Element} Interfaz completa privada del inmueble.
+ */
+
 import { notFound, redirect }     from "next/navigation";
 import { cookies }           from "next/headers";
 import { verify }            from "jsonwebtoken";
@@ -167,7 +175,7 @@ export default async function PerfilInmueblePage({
         <PropertyDetails
           objInfo={{
             strTipoInmueble:       objPerfil.TipoInmueble?.nombre_inmueble                   ?? "—",
-            strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion                 ?? "—",
+            strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion === "Compra" ? "Venta" : (objPerfil.TipoOperacion?.nombre_operacion ?? "—"),
             strDepartamento:       objPerfil.Ubicacion?.Ciudad?.nombre_ciudad                ?? "—",
             strZona:               objPerfil.Ubicacion?.zona                                 ?? "—",
             strEstadoConstruccion: objPerfil.EstadoConstruccion?.nombre_estado_construccion  ?? "—",

@@ -9,6 +9,13 @@
  *                                         directamente desde la URL.
  * @return {JSX.Element} Interfaz completa de la vista del inmueble renderizada desde el servidor.
  */
+/**
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix Modificación de "Compra" a "Venta" en frontend antes de pasar a PropertyDetails.
+ * @param {Promise<{ id_publicacion: string }>} params - Promesa con el ID dinámico de la URL.
+ * @return {JSX.Element} Interfaz completa pública del inmueble.
+ */
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";    
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
@@ -121,7 +128,7 @@ export default async function VistaInmueblePage({
         <PropertyDetails
           objInfo={{
             strTipoInmueble:       objPerfil.TipoInmueble?.nombre_inmueble         ?? "—",
-            strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion       ?? "—",
+            strTipoOperacion:      objPerfil.TipoOperacion?.nombre_operacion === "Compra" ? "Venta" : (objPerfil.TipoOperacion?.nombre_operacion ?? "—"),
             strDepartamento:       objPerfil.Ubicacion?.Ciudad?.nombre_ciudad      ?? "—",
             strZona:               objPerfil.Ubicacion?.zona                       ?? "—",
             strEstadoConstruccion: objPerfil.EstadoConstruccion?.nombre_estado_construccion  ?? "—",
