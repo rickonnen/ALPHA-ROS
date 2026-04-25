@@ -7,7 +7,7 @@
 
 import { useRef, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 /* hooks y ui */
@@ -64,6 +64,9 @@ export const Header = () => {
   const { strNombreHeader } = useUsuarioHeader(objUser); // centraliza el nombre/username actualizado
   const unreadCount = useUnreadCount(objUser);
   const objRouter = useRouter();
+  const strPathname = usePathname();
+  const objSearchParams = useSearchParams();
+  const bolForceLoginModal = objSearchParams.get("auth") === "login";
 
   // modales y menus
   const [bolIsMobileMenuOpen, setBolIsMobileMenuOpen] = useState(false);
@@ -105,6 +108,19 @@ export const Header = () => {
     handleCloseMobileMenu();
     setBolShowProtected(false);
   }, [handleCloseMobileMenu]);
+
+  const handleCloseAuthModal = useCallback(() => {
+    setBolShowAuth(false);
+
+    if (!bolForceLoginModal) return;
+
+    const objParams = new URLSearchParams(objSearchParams.toString());
+    objParams.delete("auth");
+    objParams.delete("from");
+    const strQuery = objParams.toString();
+    const strNextUrl = strQuery ? `${strPathname}?${strQuery}` : strPathname;
+    objRouter.replace(strNextUrl);
+  }, [bolForceLoginModal, objSearchParams, strPathname, objRouter]);
 
   // navegación con parámetros de búsqueda
   const handleFilterNavigation = useCallback((objLink: NavLink) => {
@@ -235,7 +251,11 @@ export const Header = () => {
 
       {/* modales globales */}
       <ProtectedFeatureModal isOpen={bolShowProtected} onClose={() => setBolShowProtected(false)} onLoginClick={handleOpenLogin} onRegisterClick={handleOpenRegister} />
-      <AuthModal isOpen={bolShowAuth} onClose={() => setBolShowAuth(false)} initialMode={strAuthMode} />
+      <AuthModal
+        isOpen={bolShowAuth || bolForceLoginModal}
+        onClose={handleCloseAuthModal}
+        initialMode={bolForceLoginModal ? "login" : strAuthMode}
+      />
       <FreePublicationLimitModal bolOpen={bolShowLimitModal} onBack={() => setBolShowLimitModal(false)} />
     </>
   );

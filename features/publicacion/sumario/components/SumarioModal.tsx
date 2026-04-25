@@ -42,6 +42,9 @@ interface SumarioModalProps {
   onGoPaso2: () => void
 }
 
+const SUMARIO_TITULO = 'Resumen de Publicación'
+const SUMARIO_DESCRIPCION = 'Revisa la información de tu inmueble antes de guardarlo'
+
 const DEPARTAMENTOS_LABELS: Record<string, string> = {
   beni: 'Beni',
   chuquisaca: 'Chuquisaca',
@@ -227,14 +230,14 @@ export function SumarioModal({ onClose, onGoPaso1, onGoPaso2 }: SumarioModalProp
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/45 p-3 sm:p-6 flex items-center justify-center">
+    <div className="fixed inset-0 z-[120] bg-black/45 p-3 sm:p-6 flex items-center justify-center">
       <div className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-2xl border border-[#DDD6CB] bg-[#F4EFE6] shadow-xl">
         <div className="px-5 sm:px-6 pt-5 pb-3 border-b border-[#ECE7DD]">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+            <h2 className="text-xl sm:text-3xl font-bold text-[#1F3A4D]">{SUMARIO_TITULO}</h2>
             <Badge className="bg-[#E7A18F] text-white">Paso final</Badge>
           </div>
-          <p className="text-sm text-[#6C6761]">Revisa la informacion de tu inmueble antes de publicarlo.</p>
+          <p className="text-sm text-[#6C6761]">{SUMARIO_DESCRIPCION}</p>
         </div>
 
         <div className="px-5 sm:px-6 pb-6 pt-4 space-y-5">

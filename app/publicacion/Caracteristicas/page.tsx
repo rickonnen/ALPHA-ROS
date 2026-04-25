@@ -20,6 +20,8 @@ import { VideoSection } from '@/features/publicacion/caracteristicas/components/
 import { SumarioModal } from '@/features/publicacion/sumario/components/SumarioModal'
 import { Button } from '@/components/ui/button'
 
+const SUMARIO_VISIBLE_KEY = 'publicacionSumarioVisible'
+
 export default function CaracteristicasPage() {
   const {
     values,
@@ -34,7 +36,23 @@ export default function CaracteristicasPage() {
 
   const router = useRouter()
   const [strErrorNavegacion, setStrErrorNavegacion] = useState<string | null>(null)
-  const [bolShowSumarioModal, setBolShowSumarioModal] = useState(false)
+  const [bolShowSumarioModal, setBolShowSumarioModal] = useState(() => {
+    if (typeof window === 'undefined') return false
+
+    const bolSumarioVisible = sessionStorage.getItem(SUMARIO_VISIBLE_KEY) === 'true'
+    if (!bolSumarioVisible) return false
+
+    const strPaso1 = sessionStorage.getItem('informacionComercial')
+    const strPaso2 = sessionStorage.getItem('caracteristicasInmueble')
+    const bolTieneDatosRecuperables = Boolean(strPaso1 || strPaso2)
+
+    if (!bolTieneDatosRecuperables) {
+      sessionStorage.removeItem(SUMARIO_VISIBLE_KEY)
+      return false
+    }
+
+    return true
+  })
 
   const [strVideoUrl, setStrVideoUrl] = useState(() => {
     if (typeof window === 'undefined') return ''
@@ -49,10 +67,46 @@ export default function CaracteristicasPage() {
     sessionStorage.setItem('videoUrl', url)
   }
 
+  const limpiarBanderaSumario = () => {
+    if (typeof window === 'undefined') return
+    sessionStorage.removeItem(SUMARIO_VISIBLE_KEY)
+  }
+
+  const limpiarSugerenciaActiva = () => {
+    if (typeof document === 'undefined') return
+    const objElementoActivo = document.activeElement
+    if (objElementoActivo instanceof HTMLElement) {
+      objElementoActivo.blur()
+    }
+  }
+
   const guardarPreviewImagenes = (files: File[]) => {
     try {
-      const arrPreviews = files.map((file) => URL.createObjectURL(file))
-      const arrNombres = files.map((file) => file.name)
+      const arrPreviewsNuevas = files.map((file) => URL.createObjectURL(file))
+      const arrNombresNuevos = files.map((file) => file.name)
+
+      const arrPreviewsGuardadas = JSON.parse(sessionStorage.getItem('caracteristicasImagenesPreview') ?? '[]')
+      const arrNombresGuardados = JSON.parse(sessionStorage.getItem('caracteristicasImagenesNombres') ?? '[]')
+
+      const arrPreviewsPrevias: string[] = []
+      const arrNombresPrevios: string[] = []
+
+      if (Array.isArray(arrPreviewsGuardadas)) {
+        arrPreviewsGuardadas.forEach((item, index) => {
+          const strPreview = typeof item === 'string' ? item.trim() : ''
+          if (!strPreview || strPreview.startsWith('blob:')) return
+
+          arrPreviewsPrevias.push(strPreview)
+
+          const strNombre = Array.isArray(arrNombresGuardados) && typeof arrNombresGuardados[index] === 'string'
+            ? String(arrNombresGuardados[index]).trim()
+            : ''
+          arrNombresPrevios.push(strNombre || `Imagen ${arrPreviewsPrevias.length}`)
+        })
+      }
+
+      const arrPreviews = [...arrPreviewsPrevias, ...arrPreviewsNuevas]
+      const arrNombres = [...arrNombresPrevios, ...arrNombresNuevos]
       sessionStorage.setItem('caracteristicasImagenesPreview', JSON.stringify(arrPreviews))
       sessionStorage.setItem('caracteristicasImagenesNombres', JSON.stringify(arrNombres))
     } catch {
@@ -69,6 +123,8 @@ export default function CaracteristicasPage() {
         return
       }
       guardarPreviewImagenes(formValues.imagenes)
+      limpiarSugerenciaActiva()
+      sessionStorage.setItem(SUMARIO_VISIBLE_KEY, 'true')
       setBolShowSumarioModal(true)
     })
   }
@@ -183,12 +239,17 @@ export default function CaracteristicasPage() {
 
       {bolShowSumarioModal && (
         <SumarioModal
-          onClose={() => setBolShowSumarioModal(false)}
+          onClose={() => {
+            limpiarBanderaSumario()
+            setBolShowSumarioModal(false)
+          }}
           onGoPaso1={() => {
+            limpiarBanderaSumario()
             setBolShowSumarioModal(false)
             router.push('/publicacion/informacion-comercial')
           }}
           onGoPaso2={() => {
+            limpiarBanderaSumario()
             setBolShowSumarioModal(false)
           }}
         />
