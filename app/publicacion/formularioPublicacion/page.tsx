@@ -2,11 +2,11 @@
 
 import { useRef, Suspense } from 'react'
 import { useFormularioState } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Useformulariostate'
-import { usePublicar }        from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Usepublicar'
-import { StepContent }        from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Stepcontent'
+import { usePublicar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Usepublicar'
+import { StepContent } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Stepcontent'
 import { C, STEPS, SIDEBAR_STEPS } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Sessionutils'
-import { StepsSidebar }       from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
-import { SumarioModal }       from '@/features/publicacion/sumario/components/SumarioModal'
+import { StepsSidebar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
+import { SumarioModal } from '@/features/publicacion/sumario/components/SumarioModal'
 
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
@@ -44,17 +44,22 @@ function FormularioDinamicoInner() {
 
   if (!hydrated || !datosListos || !sessionKey) return null
 
-  const tituloPagina   = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
-  const textoPublicar  = modoEdicion ? 'Guardar'             : 'Publicar'
-  const textoGuardando = modoEdicion ? 'Guardando...'        : 'Publicando...'
+  const tituloPagina = modoEdicion ? 'Editar publicación' : 'Crear publicación'
+  const textoPublicar = modoEdicion ? 'Guardar' : 'Publicar'
+  const textoGuardando = modoEdicion ? 'Guardando...' : 'Publicando...'
 
   const stepContentProps = {
-    advanceDirect: currentStep === 6 ? () => setBolShowSumario(true) : advanceDirect,
-    onBack:        handleBack,
+    advanceDirect: currentStep === 6
+  ? () => {
+      (document.activeElement as HTMLElement)?.blur()
+      setBolShowSumario(true)
+    }
+  : advanceDirect,
+    onBack: handleBack,
     triggerRefs,
     imagenesRef,
     imagenesIniciales,
-    onUrlsChange:  handleUrlsChange,
+    onUrlsChange: handleUrlsChange,
     sessionKey,
   }
 
@@ -109,12 +114,12 @@ function FormularioDinamicoInner() {
           )}
 
           <div key={currentStep} style={{ backgroundColor: C.crema, borderRadius: 10, padding: 14, animation: 'stepIn 0.3s ease forwards' }}>
-  <StepContent step={currentStep} {...stepContentProps} />
-</div>
+            <StepContent step={currentStep} {...stepContentProps} />
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
             {STEPS.map((_, i) => {
-              const isActive    = i === currentStep
+              const isActive = i === currentStep
               const isCompleted = completedSteps.has(i)
               return (
                 <button
@@ -226,10 +231,10 @@ function FormularioDinamicoInner() {
             padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
           }}>
             <h2 key={`title-${currentStep}`} style={{
-  fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
-  textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
-  animation: 'stepIn 0.3s ease forwards',
-}}>
+              fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
+              textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
+              animation: 'stepIn 0.3s ease forwards',
+            }}>
               {STEPS[currentStep].title}
               {STEPS[currentStep].opcional && (
                 <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
@@ -246,11 +251,11 @@ function FormularioDinamicoInner() {
             )}
 
             <div key={currentStep} style={{
-  backgroundColor: C.crema, borderRadius: 12, padding: 15,
-  flex: 1, overflowY: 'auto', animation: 'stepIn 0.3s ease forwards',
-}}>
-  <StepContent step={currentStep} {...stepContentProps} />
-</div>
+              backgroundColor: C.crema, borderRadius: 12, padding: 15,
+              flex: 1, overflowY: 'auto', animation: 'stepIn 0.3s ease forwards',
+            }}>
+              <StepContent step={currentStep} {...stepContentProps} />
+            </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
               <button
                 type="button" onClick={handleBack} disabled={isPublishing}

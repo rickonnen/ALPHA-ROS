@@ -3,13 +3,16 @@
  * Date: 19/04/2026
  * Funcionalidad: Descripción de la propiedad e integración de Características Extras
  *
- * FIXES v5:
+ * FIXES v6:
  *  1. Auto-selecciona la primera etiqueta al montar (modo edición con características ya cargadas).
  *  2. Sin autoFocus en el input de detalle — seleccionar etiqueta no entra al campo de texto.
  *  3. Dropdown usa createPortal — escapa de overflow:hidden del contenedor padre.
  *  4. Posición del dropdown via ref DOM directo (sin setState en useEffect).
  *  5. Contador del detalle ENCIMA del input.
  *  6. Sin ícono lápiz en modo lectura del título.
+ *  7. FIX: submitRef.current ahora cierra todos los dropdowns antes de avanzar
+ *     (corrige bug donde setIsAdding/setEditingTitle se ejecutaban en cada render
+ *     por falta de llaves {} en la arrow function).
  */
 'use client'
 
@@ -115,10 +118,19 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   const addInputRef   = useRef<HTMLInputElement | null>(null)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
 
-  // submitRef
+  // ── submitRef ──────────────────────────────────────────────────
+  // IMPORTANTE: las llaves {} son obligatorias para que todas las
+  // líneas queden DENTRO de la arrow function y no se ejecuten
+  // en cada render.
   useEffect(() => {
     if (!submitRef) return
-    submitRef.current = () => handleSubmit(() => onNext())
+    submitRef.current = () => {
+      setSearchTerm('')
+      setIsAdding(false)
+      setEditingTitle(false)
+      setTitleSearchTerm('')
+      handleSubmit(() => onNext())
+    }
   })
   useEffect(() => {
     if (!submitRef) return
@@ -242,7 +254,11 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-500 font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
-            {isLimitReached && <span className="text-red-500 text-xs font-semibold">Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras</span>}
+            {isLimitReached && (
+              <span className="text-red-500 text-xs font-semibold">
+                Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras
+              </span>
+            )}
           </div>
         </div>
 
@@ -252,7 +268,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             type="button"
             disabled={isLimitReached}
             onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
-            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent transition-colors focus:outline-none flex-shrink-0 ${isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#C26E5A]/10'}`}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent transition-colors focus:outline-none flex-shrink-0 ${
+              isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#C26E5A]/10'
+            }`}
             title="Añadir característica"
           >
             <span className="text-xl font-bold leading-none mb-0.5">+</span>
@@ -280,7 +298,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                 <button
                   type="button"
                   onClick={(e) => handleRemove(c.titulo, e)}
-                  className={`${isVisuallyActive ? 'hover:text-white/70' : 'hover:text-red-700'} focus:outline-none transition-colors`}
+                  className={`${
+                    isVisuallyActive ? 'hover:text-white/70' : 'hover:text-red-700'
+                  } focus:outline-none transition-colors`}
                 >
                   ✕
                 </button>
@@ -341,8 +361,12 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                           backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
                           color:           yaAgregada ? '#9ca3af'    : undefined,
                         }}
-                        onMouseEnter={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
-                        onMouseLeave={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
+                        onMouseEnter={e => {
+                          if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)'
+                        }}
+                        onMouseLeave={e => {
+                          if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = ''
+                        }}
                       >
                         {sug}{yaAgregada && <span style={{ fontSize: 12, marginLeft: 6 }}>(Ya agregada)</span>}
                       </li>
@@ -401,7 +425,8 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                   >
                     {titleSugs.length > 0 ? (
                       titleSugs.map((sug) => {
-                        const yaAgregada = sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
+                        const yaAgregada =
+                          sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
                           caracteristicas.some(c => c.titulo.toLowerCase() === sug.toLowerCase())
                         return (
                           <li
@@ -414,8 +439,12 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                               backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
                               color:           yaAgregada ? '#9ca3af'    : undefined,
                             }}
-                            onMouseEnter={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
-                            onMouseLeave={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
+                            onMouseEnter={e => {
+                              if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)'
+                            }}
+                            onMouseLeave={e => {
+                              if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = ''
+                            }}
                           >
                             {sug}{yaAgregada && <span style={{ fontSize: 12, marginLeft: 6 }}>(Ya agregada)</span>}
                           </li>
@@ -446,7 +475,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
               )}
             </div>
 
-            {/* Detalle — FIX 2: sin autoFocus para no entrar al campo al seleccionar etiqueta */}
+            {/* Detalle — sin autoFocus para no entrar al campo al seleccionar etiqueta */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <Label className="text-xs font-bold text-gray-700">
