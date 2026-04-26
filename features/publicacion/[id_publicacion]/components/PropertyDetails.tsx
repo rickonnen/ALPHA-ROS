@@ -13,6 +13,11 @@
  * @param {PerfilDetallesProps} objInfo - Objeto con las métricas y detalles del inmueble.
  * @return {JSX.Element} Estructura visual de los detalles del inmueble.
  */
+/**
+ * Dev: Marcela C.
+ * Fecha: 26/04/2026
+ * Update: Fix quitar last:border-0 de DetalleItem.
+ */
 
 import React from "react";
 import { PropertyDetailsDesktop } from "./PropertyDetailsDesktop";
@@ -55,7 +60,7 @@ export const DetalleItem = ({
   strLabel: string;
   strValor: string | number;
 }) => (
-  <div className="flex justify-between items-center py-2 border-b border-[#2E2E2E]/5 last:border-0">
+  <div className="flex justify-between items-center py-2 border-b border-[#2E2E2E]/5">
     <span className="text-[#2E2E2E]/70 font-medium text-base">{strLabel}</span>
     <span className="bg-[#C26E5A] text-white px-4 md:px-5 py-1 rounded-full text-base font-bold min-w-12.5 text-center">
       {strValor ?? "—"}
