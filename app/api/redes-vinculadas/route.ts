@@ -27,7 +27,7 @@ export async function GET() {
     // 2. Obtener primary_provider del usuario
     const { data: usuario } = await dbInstance
       .from("Usuario")
-      .select("primary_provider, email")
+      .select("primary_provider, email, google_id")
       .eq("id_usuario", id_usuario)
       .maybeSingle()
 
@@ -66,10 +66,11 @@ export async function GET() {
           ? usuario.email
           : red?.id_proveedor ?? null,
         vinculada: esGoogle
-          ? !!usuario.email
+          ? !!usuario.google_id
           : red?.estado === true,
-        // Si es el primary_provider → no puede desvincular
-        puedeDesvincular: proveedor !== usuario.primary_provider,
+        puedeDesvincular: esGoogle
+          ? false
+          : proveedor !== usuario.primary_provider,
       }
     })
 

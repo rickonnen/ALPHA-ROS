@@ -27,7 +27,7 @@ export async function GET() {
     // Ya da discord 
   const params = new URLSearchParams({
     client_id: process.env.DISCORD_CLIENT_ID!,
-    redirect_uri: `${process.env.NEXTAUTH_URL}/api/vincular/discord/oauth-respuesta`,
+    redirect_uri: `${process.env.NEXTAUTH_URL}api/vincular/discord/oauth-respuesta`,
 
     response_type: "code",
     scope: "identify email",
