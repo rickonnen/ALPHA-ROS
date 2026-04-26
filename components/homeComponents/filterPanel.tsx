@@ -96,6 +96,20 @@ export default function FilterPanel() {
     citySearchHook.setBolShowHistory(false);
   }, [arrOperations, arrSelectedPropertyTypes, citySearchHook, objRouter]);
 
+  // auto scroll en dispositivos móviles al 25% de la pantalla
+  const handleSearchInteraction = useCallback(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 800 && objPanelRef.current) {
+      const objRect = objPanelRef.current.getBoundingClientRect();
+      const numScrollY = window.scrollY || document.documentElement.scrollTop;
+      const numTargetY = numScrollY + objRect.top - (window.innerHeight * 0.20);
+      
+      window.scrollTo({
+        top: numTargetY,
+        behavior: "smooth"
+      });
+    }
+  }, []);
+
   const strChipClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-background border border-border text-foreground animate-in fade-in duration-200 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-secondary-fund";
 
   return (
@@ -129,10 +143,16 @@ export default function FilterPanel() {
         <div className="h-px w-full md:w-px md:h-5 bg-border flex-shrink-0" />
 
         {/* buscador de ciudades */}
-        <CitySearchInput 
-          hookData={citySearchHook}
-          fnOnSearch={handleSearch}
-        />
+        <div 
+          className="w-full flex-1" 
+          onClickCapture={handleSearchInteraction} 
+          onFocusCapture={handleSearchInteraction}
+        >
+          <CitySearchInput 
+            hookData={citySearchHook}
+            fnOnSearch={handleSearch}
+          />
+        </div>
       </div>  
 
       {/* chips de filtros activos */}

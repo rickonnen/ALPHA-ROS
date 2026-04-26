@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X as ObjXIcon } from "lucide-react";
@@ -20,7 +19,6 @@ interface articleCardProps {
  * @return {React.JSX.Element} la tarjeta visual estructurada
  */
 export default function articleCard(ObjPropsBlo: articleCardProps) {
-  // desestructuración usando las propiedades con el estándar PascalCase y sufijo Blo
   const { IntIdBlo, StrTitleBlo, StrDateBlo, StrDescriptionBlo, StrImageUrlBlo } = ObjPropsBlo;
 
   const StrCardHoverClassesBlo = useHoverAnimation(false, true, 'default', true, false);
