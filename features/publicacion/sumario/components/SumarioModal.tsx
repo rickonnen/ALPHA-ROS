@@ -153,10 +153,14 @@ function getInitialStorageData(): SumarioStorageData {
     const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
-    const arrPreviewFinal = arrPreview.length > 0
-        ? arrPreview
-        : parseJSON<string[]>(sessionStorage.getItem('imagenesIniciales'), [])
-            .filter((item) => typeof item === 'string' && item.trim().length > 0)
+    const arrImagenesIniciales = parseJSON<string[]>(
+    sessionStorage.getItem('imagenesIniciales'), []
+    ).filter((item) => typeof item === 'string' && item.trim().length > 0)
+
+    const arrPreviewFinal = [
+        ...arrImagenesIniciales,
+        ...arrPreview,
+    ].filter((url, index, self) => self.indexOf(url) === index)
 
     return {
         titulo:          datosAviso.titulo           ?? '',
@@ -174,7 +178,10 @@ function getInitialStorageData(): SumarioStorageData {
         plantas:         String(caracteristicas.plantas      ?? ''),
         superficie:      String(caracteristicas.superficie   ?? ''),
         imagenesPreview: arrPreviewFinal,
-        imagenesNombres: arrNombres,
+        imagenesNombres: [
+            ...arrImagenesIniciales.map((_, i) => `Imagen original ${i + 1}`),
+            ...arrNombres,
+        ],
         videoUrl:        video.url                              ?? '',
         descripcion:     descripcionRaw.descripcion             ?? '',
         caracteristicas: Array.isArray(descripcionRaw.caracteristicas)
@@ -276,7 +283,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                     {/* Desktop: título izq, badge der */}
                     <div className="hidden md:flex items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Resumen de Publicacion</h2>
+                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                             <p className="text-sm text-[#6C6761] mt-0.5">
                                 {modoEdicion
                                     ? 'Revisa la información de tu inmueble antes de guardarlo.'
@@ -294,7 +301,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                     </div>
                     {/* Mobile: centrado */}
                     <div className="md:hidden text-center">
-                        <h2 className="text-lg font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+                        <h2 className="text-lg font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                         <p className="text-xs text-[#6C6761] mt-0.5">
                             {modoEdicion
                                 ? 'Revisa la información antes de guardar.'
