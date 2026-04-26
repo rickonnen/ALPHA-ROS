@@ -31,64 +31,74 @@ interface MediaGalleryProps {
   mostrarFav?: boolean;
 }
 export const MediaGallery = ({ id_publicacion, arrImagenes, strVideoId, strReelId, mostrarFav = false }: MediaGalleryProps) => {
-  const strFallback = "/company-placeholder.png"; // Task 4.11: fallback empresa
+const strFallback = "/company-placeholder.png"; 
   const [intCurrentIndex, setIntCurrentIndex]   = useState(0);
   const [intLightboxIndex, setIntLightboxIndex] = useState<number | null>(null);
-  // Task 4.11: Trackear índices de imágenes rotas
   const [arrImagenesRotas, setArrImagenesRotas] = useState<number[]>([]);
-  // Task 4.11: Si no hay imágenes usar fallback
-  const arrImagenesSafe = arrImagenes.length > 0 ? arrImagenes : [strFallback];
-  // Task 4.5: Total slides = imágenes + 1 si hay video o reel
-const intTotalSlides = arrImagenesSafe.length + (strVideoId || strReelId ? 1 : 0);
-  // Task 4.11: Guardar índice de imagen rota y mostrar fallback
+
+  const arrImagenesLimpias = arrImagenes.filter(img => 
+    img && typeof img === 'string' && img.trim() !== "" && img !== "[]" && !img.includes("null") && !img.includes("undefined")
+  );
+
+  let arrImagenesSafe = arrImagenesLimpias.length > 0 ? arrImagenesLimpias : [strFallback];
+  arrImagenesSafe = arrImagenesSafe.map((img, idx) => arrImagenesRotas.includes(idx) ? strFallback : img);
+
+  //FIX: Si todas las fotos son fallbacks o placeholders, colapsamos el array a 1 solo elemento
+  const bolAllFallback = arrImagenesSafe.every(img => img === strFallback || img.includes("placeholder"));
+  if (bolAllFallback) {
+    arrImagenesSafe = [strFallback];
+  }
+// Primero calculamos el total real de slides (Imágenes + Video)
+  const intTotalSlides = arrImagenesSafe.length + (strVideoId || strReelId ? 1 : 0);
+  
+  //FIX: Protegemos el índice permitiendo que llegue hasta el video
+  const safeCurrentIndex = Math.min(intCurrentIndex, Math.max(0, intTotalSlides - 1));
+
+  //FIX: Evitar bucles asegurando que no se repitan índices en el state
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>, intIdx?: number) => {
     e.currentTarget.src = strFallback;
     if (intIdx !== undefined) {
-      setArrImagenesRotas((prev) => [...prev, intIdx]);
+      setArrImagenesRotas((prev) => prev.includes(intIdx) ? prev : [...prev, intIdx]);
     }
   };
-  // Task 4.11: Solo abrir lightbox si la imagen no es el fallback
-const handleOpenLightbox = (intIdx: number) => {
-  // Si el array original no tenía imagen en ese índice, no abrir
-  if (!arrImagenes[intIdx] || arrImagenes[intIdx] === "") return;
-  // Si está en la lista de rotas, no abrir
-  if (arrImagenesRotas.includes(intIdx)) return;
-  setIntLightboxIndex(intIdx);
-};
+
+  const handleOpenLightbox = (intIdx: number) => {
+    if (arrImagenesSafe[intIdx] === strFallback || arrImagenesSafe[intIdx].includes("placeholder")) return;
+    setIntLightboxIndex(intIdx);
+  };
+
   const handleCloseLightbox = () => setIntLightboxIndex(null);
-  const handlePrev          = () => setIntCurrentIndex((i) => i - 1);
-  const handleNext          = () => setIntCurrentIndex((i) => i + 1);
-  // Task 4.4: Handlers de navegación del lightbox
+  const handlePrev          = () => setIntCurrentIndex((i) => Math.max(0, i - 1));
+  
+  //FIX RM02-02: La flecha derecha ahora respeta el slide extra del video
+  const handleNext          = () => setIntCurrentIndex((i) => Math.min(intTotalSlides - 1, i + 1));
+  
   const handleLightboxPrev  = () => setIntLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
   const handleLightboxNext  = () => setIntLightboxIndex((i) => (i !== null && i < arrImagenesSafe.length - 1 ? i + 1 : i));
   return (
     <>
-      {/* 4. AÑADIMOS relative group AL CONTENEDOR PARA POSICIONAR EL BOTÓN */}
       <div className="space-y-6 mb-8 relative">
-        {/* 5. EL BOTÓN CONDICIONADO */}
         {mostrarFav && (
           <div className="absolute bottom-6 right-6 md:bottom-14 md:right-8 z-20">
             <FavButton id_publicacion={id_publicacion} />
           </div>
         )}
-        {/* Task 4.4 + 4.5 + 4.11: Grilla desktop — componente de Marcela */}
         <MediaGalleryDesktop
           arrImagenesSafe={arrImagenesSafe}
           strVideoId={strVideoId}
           strReelId={strReelId}
-          intCurrentIndex={intCurrentIndex}
+          intCurrentIndex={safeCurrentIndex}
           strFallback={strFallback}
           onPrev={handlePrev}
           onNext={handleNext}
           onOpenLightbox={handleOpenLightbox}
           onImgError={handleImgError}
         />
-        {/* Task 4.4 + 4.5 + 4.12: Carrusel mobile — componente de Marcela */}
         <MediaGalleryMobile
           arrImagenesSafe={arrImagenesSafe}
           strVideoId={strVideoId}
           strReelId={strReelId}
-          intCurrentIndex={intCurrentIndex}
+          intCurrentIndex={safeCurrentIndex}   
           intTotalSlides={intTotalSlides}
           onPrev={handlePrev}
           onNext={handleNext}
