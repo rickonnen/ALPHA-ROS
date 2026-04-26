@@ -1,5 +1,6 @@
 'use client'
 
+// Componente de modal para mostrar el resumen de la publicación antes de confirmar.
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
