@@ -127,8 +127,6 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   }, [submitRef])
 
   // ── FIX 1: Auto-seleccionar la primera etiqueta al montar o cuando cambia la lista ──
-  // Si no hay ninguna activa (o la activa ya no existe), selecciona la primera disponible.
-  // Cuando se está en modo "añadir" no interfiere.
   useEffect(() => {
     const lista = values.caracteristicas || []
     if (lista.length === 0) {
@@ -143,13 +141,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   // Sugerencias para edición de título (derivado puro)
   const titleSugs = (() => {
     if (!titleSearchTerm.trim()) return []
-    const term        = titleSearchTerm.toLowerCase()
-    const yaAgregados = (values.caracteristicas || []).map(c => c.titulo.toLowerCase())
+    const term = titleSearchTerm.toLowerCase()
     return PREDEFINED_FEATURES
-      .filter(f =>
-        f.nombre.toLowerCase().startsWith(term) &&
-        !yaAgregados.includes(f.nombre.toLowerCase())
-      )
+      .filter(f => f.nombre.toLowerCase().startsWith(term))
       .map(f => f.nombre)
   })()
 
@@ -161,13 +155,12 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   const handleAgregarClick = (nombreSugerido: string) => {
     const t = nombreSugerido.trim()
     if (!t) return
-    agregarCaracteristica(t)
     const existe = caracteristicas.some(c => c.titulo.toLowerCase() === t.toLowerCase())
-    if (!existe && !isLimitReached) {
-      setActiveTag(t)
-      setIsAdding(false)
-      setSearchTerm('')
-    }
+    if (existe || isLimitReached) return
+    agregarCaracteristica(t)
+    setActiveTag(t)
+    setIsAdding(false)
+    setSearchTerm('')
   }
 
   const handleRemove = (titulo: string, e: React.MouseEvent) => {
@@ -199,6 +192,11 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
 
   const handleTitleSelect = (nuevoTitulo: string) => {
     if (!activeTag) return
+    const yaExiste = caracteristicas.some(
+      c => c.titulo.toLowerCase() === nuevoTitulo.toLowerCase() &&
+           c.titulo.toLowerCase() !== activeTag.toLowerCase()
+    )
+    if (yaExiste) return
     actualizarTitulo(activeTag, nuevoTitulo)
     setActiveTag(nuevoTitulo)
     setEditingTitle(false)
@@ -242,25 +240,23 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             <span className="text-sm font-semibold text-[#1A1714]">Caracteristicas Extras</span>
             <span className="text-sm font-normal text-[#C26E5A]">-Opcional</span>
           </div>
-          {(caracteristicas.length > 0 || isAdding) && (
-            <span className="text-xs text-gray-500 font-medium">
-              {caracteristicas.length}/{MAX_CARACTERISTICAS}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
+            {isLimitReached && <span className="text-red-500 text-xs font-semibold">Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras</span>}
+          </div>
         </div>
 
         {/* Botón "+" y Etiquetas */}
         <div className="flex flex-wrap items-center gap-2 mt-1">
-          {!isLimitReached && (
-            <button
-              type="button"
-              onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
-              className="flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 transition-colors focus:outline-none flex-shrink-0"
-              title="Añadir característica"
-            >
-              <span className="text-xl font-bold leading-none mb-0.5">+</span>
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={isLimitReached}
+            onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent transition-colors focus:outline-none flex-shrink-0 ${isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#C26E5A]/10'}`}
+            title="Añadir característica"
+          >
+            <span className="text-xl font-bold leading-none mb-0.5">+</span>
+          </button>
 
           {caracteristicas.map((c) => {
             const isVisuallyActive = activeTag === c.titulo && !isAdding
@@ -404,17 +400,27 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                     open={titleSearchTerm.trim().length > 0}
                   >
                     {titleSugs.length > 0 ? (
-                      titleSugs.map((sug) => (
-                        <li
-                          key={sug}
-                          onMouseDown={(e) => { e.preventDefault(); handleTitleSelect(sug) }}
-                          style={{ padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
-                        >
-                          {sug}
-                        </li>
-                      ))
+                      titleSugs.map((sug) => {
+                        const yaAgregada = sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
+                          caracteristicas.some(c => c.titulo.toLowerCase() === sug.toLowerCase())
+                        return (
+                          <li
+                            key={sug}
+                            onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleTitleSelect(sug) }}
+                            style={{
+                              padding:         '8px 16px',
+                              fontSize:        14,
+                              cursor:          yaAgregada ? 'not-allowed' : 'pointer',
+                              backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
+                              color:           yaAgregada ? '#9ca3af'    : undefined,
+                            }}
+                            onMouseEnter={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
+                            onMouseLeave={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
+                          >
+                            {sug}{yaAgregada && <span style={{ fontSize: 12, marginLeft: 6 }}>(Ya agregada)</span>}
+                          </li>
+                        )
+                      })
                     ) : (
                       <li style={{ padding: '8px 16px', fontSize: 14, color: '#9ca3af' }}>
                         Sin sugerencias para &quot;{titleSearchTerm.trim()}&quot;

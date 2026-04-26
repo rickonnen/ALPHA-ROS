@@ -115,38 +115,45 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
         <Label htmlFor="tipoOperacion" className="text-sm font-medium text-[#1A1714]">
           ¿Qué tipo de operación desea realizar?
         </Label>
-        <button
-          type="button"
-          id="tipoOperacion"
-          role="combobox"
-          aria-haspopup="listbox"
-          aria-expanded={dropdownOpen}
-          aria-controls="tipoOperacion-listbox"
-          onClick={() => { setDropdownOpen(prev => !prev); setDropdownTouched(true) }}
-          onKeyDown={e => {
-            if (e.key === 'Tab' || e.key === 'Escape') {
-              setDropdownOpen(false)
-              handleBlur('tipoOperacion')
-            }
-          }}
-          className={`w-full h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between transition-colors ${
-            touched.tipoOperacion && errors.tipoOperacion
-              ? 'border-red-400'
-              : dropdownOpen ? 'border-gray-500' : 'border-[#D4CFC6]'
-          } ${values.tipoOperacion ? 'text-[#1A1714]' : 'text-gray-400'}`}
-        >
-          <span>{values.tipoOperacion || 'Seleccione una opción'}</span>
-          <svg
-            className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
-            viewBox="0 0 20 20" fill="currentColor"
+
+        {/*en el wrapper del botón el ul flota sin empujar */}
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            id="tipoOperacion"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded={dropdownOpen}
+            aria-controls="tipoOperacion-listbox"
+            onClick={() => { setDropdownOpen(prev => !prev); setDropdownTouched(true) }}
+            onKeyDown={e => {
+              if (e.key === 'Tab' || e.key === 'Escape') {
+                setDropdownOpen(false)
+                handleBlur('tipoOperacion')
+              }
+            }}
+            className={`w-full h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between transition-colors ${
+              touched.tipoOperacion && errors.tipoOperacion
+                ? 'border-red-400'
+                : dropdownOpen ? 'border-gray-500' : 'border-[#D4CFC6]'
+            } ${values.tipoOperacion ? 'text-[#1A1714]' : 'text-gray-400'}`}
           >
-            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-          </svg>
-        </button>
-        {dropdownOpen && (
-          <div className="relative z-50">
-            <ul id="tipoOperacion-listbox" role="listbox"
-              className="absolute top-1 left-0 w-full bg-white border border-[#D4CFC6] rounded-md shadow-md py-1 max-h-60 overflow-auto"
+            <span>{values.tipoOperacion || 'Seleccione una opción'}</span>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
+              viewBox="0 0 20 20" fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/*flota sobre el contenido */}
+          {dropdownOpen && (
+            <ul
+              id="tipoOperacion-listbox"
+              role="listbox"
+              style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50 }}
+              className="bg-white border border-[#D4CFC6] rounded-md shadow-md py-1 max-h-60 overflow-auto"
             >
               {TIPOS_OPERACION.map((opcion: string) => (
                 <li key={opcion} role="option" aria-selected={opcion === values.tipoOperacion}
@@ -164,17 +171,19 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-        {touched.tipoOperacion && errors.tipoOperacion && (
-          <span className="text-red-500 text-xs">{errors.tipoOperacion}</span>
-        )}
+          )}
+        </div>
+
+        {/*espacio reservado haya error o no */}
+        <span className="text-red-500 text-xs h-4 block">
+          {touched.tipoOperacion && errors.tipoOperacion ? errors.tipoOperacion : ''}
+        </span>
       </div>
 
       {/* Precio + Tipo de moneda */}
       <div className="flex flex-row items-start gap-3">
 
-        {/* Campo Precio — crece para ocupar el espacio disponible */}
+        {/* Campo Precio crece para ocupar el espacio disponible */}
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
           <Label htmlFor="precio" className="text-sm font-medium text-[#1A1714]">
             Precio 
@@ -194,7 +203,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           </span>
         </div>
 
-        {/* Selector USD / Bs — ancho fijo compacto */}
+        {/* Selector USD / Bs ancho fijo compacto */}
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           <Label className="text-sm font-medium text-[#1A1714]">Tipo de moneda</Label>
           <div className="relative flex items-center rounded-md"

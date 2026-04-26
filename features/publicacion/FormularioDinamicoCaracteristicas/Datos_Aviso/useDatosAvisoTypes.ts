@@ -11,7 +11,7 @@ export interface DatosAvisoValues {
 //Cambiado: derivado de DatosAvisoValues para que keyof coincida
 export type DatosAvisoErrors = Partial<Record<keyof DatosAvisoValues, string>>
 
-export const TIPOS_OPERACION = ['Compra', 'Alquiler', 'Anticrético'] as const
+export const TIPOS_OPERACION = ['Venta', 'Alquiler', 'Anticrético'] as const
 
 export const MAX_TITULO  = 150
 export const MIN_TITULO  = 5

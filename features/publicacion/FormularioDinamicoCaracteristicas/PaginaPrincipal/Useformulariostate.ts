@@ -8,7 +8,8 @@ import {
   leerPaso, guardarPaso,
   leerCompletados, guardarCompletados,
   STEPS,
-} from './Sessionutils' 
+} from './Sessionutils'
+import { limpiarImagenes } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/imagenesDB'
 
 export function useFormularioState() {
   const router       = useRouter()
@@ -50,18 +51,45 @@ export function useFormularioState() {
     urlsQueQuedanRef.current = []
     urlsABorrarRef.current   = []
 
-    setSessionKey(`session-${Date.now()}`)
-
     if (!modoEdicion || !idPublicacion) {
-      SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
-      setCurrentStep(leerPaso())
-      setCompletedSteps(leerCompletados())
+      const keyEnStorage = sessionStorage.getItem('publicacion_sessionKey')
+
+      let key: string
+
+      if (keyEnStorage) {
+        // F5/recarga: ya había key en sessionStorage → misma sesión → restaurar todo
+        key = keyEnStorage
+      } else {
+        // Sin key → sesión nueva (vino de otra página) → limpiar todo
+        SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
+        limpiarImagenes()
+        key = `session-${Date.now()}`
+        sessionStorage.setItem('publicacion_sessionKey', key)
+      }
+
+      setSessionKey(key)
+
+      const paso        = leerPaso()
+      const completados = leerCompletados()
+      setCurrentStep(paso)
+      setCompletedSteps(completados)
       setHydrated(true)
       setDatosListos(true)
-      return
+
+      return () => {
+        // Al desmontar (salir del form) → borrar todo para próxima entrada limpia
+        sessionStorage.removeItem('publicacion_sessionKey')
+        SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
+        limpiarImagenes()
+      }
     }
 
+    // Modo edición: siempre sesión nueva
     SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
+    limpiarImagenes()
+    const nuevaKey = `session-${Date.now()}`
+    sessionStorage.setItem('publicacion_sessionKey', nuevaKey)
+    setSessionKey(nuevaKey)
 
     getPublicacionById(idPublicacion).then(pub => {
       if (!pub) {
@@ -116,11 +144,18 @@ export function useFormularioState() {
       setHydrated(true)
       setDatosListos(true)
     })
+
+    return () => {
+      sessionStorage.removeItem('publicacion_sessionKey')
+      SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
+      limpiarImagenes()
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Persistir paso y completados (solo modo creación)
-  useEffect(() => { if (hydrated && !modoEdicion) guardarPaso(currentStep) },       [currentStep,    hydrated, modoEdicion])
+  useEffect(() => { if (hydrated && !modoEdicion) guardarPaso(currentStep) },           [currentStep,    hydrated, modoEdicion])
   useEffect(() => { if (hydrated && !modoEdicion) guardarCompletados(completedSteps) }, [completedSteps, hydrated, modoEdicion])
 
   const isFirstStep = currentStep === 0
