@@ -69,7 +69,14 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
 
   const handleToggle = () => {
     if (bolActivado) {
-      setMostrarConfirmDesactivar(true);
+      if (ya2FAConfigurado) {
+        setMostrarConfirmDesactivar(true);
+      } else {
+        setBolActivado(false);
+        setSecreto("");
+        setQrCode("");
+        setMostrarInputCodigo(false);
+      }
     } else {
       setBolActivado(true);
     }
@@ -121,7 +128,7 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
           <p className="flex-1 text-sm text-white/80">
             {ya2FAConfigurado
               ? "El segundo factor está activado."
-              : "Obtén un codigo de alguna app como google authenticator."}
+              : "Obtén un codigo de alguna app de autenticación."}
           </p>
           <button
             type="button"
@@ -167,6 +174,9 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
 
             <p className="text-sm text-white/80">
               <span className="font-bold">1.</span> Descarga una app de autenticación.
+            </p>
+            <p className="text-xs text-white/50 -mt-3">
+              Ejm: Google Authenticator, Authy, 2FA Authenticator.
             </p>
 
             <div className="space-y-3">
