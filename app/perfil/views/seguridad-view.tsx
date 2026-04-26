@@ -222,6 +222,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
     "2fa": (
       <Autenticacion2FAView
         id_usuario={id_usuario}
+        primary_provider={objUsuario?.google_id ? "google" : null}
         onBack={() => setSubView("menu")}
       />
     ),

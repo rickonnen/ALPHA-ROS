@@ -14,10 +14,11 @@ import ConfirmarDesactivar2FA from "./components/ConfirmarDesactivar2FA";
 
 interface Autenticacion2FAProps {
   id_usuario: string;
+  primary_provider?: string | null;
   onBack: () => void;
 }
 
-export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticacion2FAProps) {
+export default function Autenticacion2FAView({ id_usuario, primary_provider, onBack }: Autenticacion2FAProps) {
   const [bolActivado, setBolActivado] = useState(false);
   const [secreto, setSecreto] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
@@ -143,6 +144,7 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
       {mostrarConfirmDesactivar && (
         <ConfirmarDesactivar2FA
           id_usuario={id_usuario}
+          primary_provider={primary_provider}
           onSuccess={() => {
             setBolActivado(false);
             setSecreto("");
