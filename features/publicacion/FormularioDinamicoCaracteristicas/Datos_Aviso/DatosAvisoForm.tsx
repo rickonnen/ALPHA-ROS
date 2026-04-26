@@ -116,7 +116,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           ¿Qué tipo de operación desea realizar?
         </Label>
 
-        {/* ✅ position relative en el wrapper del botón — el ul flota sin empujar */}
+        {/*en el wrapper del botón el ul flota sin empujar */}
         <div style={{ position: 'relative' }}>
           <button
             type="button"
@@ -147,7 +147,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
             </svg>
           </button>
 
-          {/* ✅ ul con position absolute — flota sobre el contenido */}
+          {/*flota sobre el contenido */}
           {dropdownOpen && (
             <ul
               id="tipoOperacion-listbox"
@@ -174,7 +174,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           )}
         </div>
 
-        {/* ✅ h-4 fijo — espacio reservado haya error o no */}
+        {/*espacio reservado haya error o no */}
         <span className="text-red-500 text-xs h-4 block">
           {touched.tipoOperacion && errors.tipoOperacion ? errors.tipoOperacion : ''}
         </span>
@@ -183,7 +183,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
       {/* Precio + Tipo de moneda */}
       <div className="flex flex-row items-start gap-3">
 
-        {/* Campo Precio — crece para ocupar el espacio disponible */}
+        {/* Campo Precio crece para ocupar el espacio disponible */}
         <div className="flex flex-col gap-1.5 flex-1 min-w-0">
           <Label htmlFor="precio" className="text-sm font-medium text-[#1A1714]">
             Precio 
@@ -203,7 +203,7 @@ export function DatosAvisoForm({ onNext, onBack, submitRef }: DatosAvisoFormProp
           </span>
         </div>
 
-        {/* Selector USD / Bs — ancho fijo compacto */}
+        {/* Selector USD / Bs ancho fijo compacto */}
         <div className="flex flex-col gap-1.5 flex-shrink-0">
           <Label className="text-sm font-medium text-[#1A1714]">Tipo de moneda</Label>
           <div className="relative flex items-center rounded-md"
