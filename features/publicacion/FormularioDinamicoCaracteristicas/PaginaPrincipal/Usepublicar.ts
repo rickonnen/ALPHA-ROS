@@ -9,24 +9,28 @@ import { SESSION_KEYS_TO_CLEAN, STEPS, ESTADO_IDS, parseIntNullableClient } from
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
 interface UsePublicarParams {
-  router:            AppRouterInstance
-  modoEdicion:       boolean
-  idPublicacion:     number | null
-  currentStep:       number
-  completedSteps:    Set<number>
-  isFirstStep:       boolean
-  isLastStep:        boolean
-  setCurrentStep:    (fn: number | ((p: number) => number)) => void
-  setCompletedSteps: (fn: (p: Set<number>) => Set<number>) => void
-  setBlockMsg:       (msg: string | null) => void
-  setPublishError:   (err: string | null) => void
-  setIsPublishing:   (v: boolean) => void
-  setBolShowSumario: (v: boolean) => void
-  imagenesRef:       React.MutableRefObject<File[]>
-  urlsQueQuedanRef:  React.MutableRefObject<string[]>
-  urlsABorrarRef:    React.MutableRefObject<string[]>
-  pendingStepRef:    React.MutableRefObject<number | null>
-  triggerRefs:       Record<number, TriggerRef>
+  router:                   AppRouterInstance
+  modoEdicion:              boolean
+  idPublicacion:            number | null
+  currentStep:              number
+  completedSteps:           Set<number>
+  isFirstStep:              boolean
+  isLastStep:               boolean
+  setCurrentStep:           (fn: number | ((p: number) => number)) => void
+  setCompletedSteps:        (fn: (p: Set<number>) => Set<number>) => void
+  setBlockMsg:              (msg: string | null) => void
+  setPublishError:          (err: string | null) => void
+  setIsPublishing:          (v: boolean) => void
+  setBolShowSumario:        (v: boolean) => void
+  // ── Modales de límite ──────────────────────────────────────
+  setBolShowFreeModal:      (v: boolean) => void   // HU5: límite gratuito
+  setBolShowPlanLimitModal: (v: boolean) => void   // HU7: límite plan de pago
+  // ──────────────────────────────────────────────────────────
+  imagenesRef:              React.MutableRefObject<File[]>
+  urlsQueQuedanRef:         React.MutableRefObject<string[]>
+  urlsABorrarRef:           React.MutableRefObject<string[]>
+  pendingStepRef:           React.MutableRefObject<number | null>
+  triggerRefs:              Record<number, TriggerRef>
 }
 
 export function usePublicar({
@@ -34,6 +38,7 @@ export function usePublicar({
   currentStep, completedSteps, isFirstStep, isLastStep,
   setCurrentStep, setCompletedSteps,
   setBlockMsg, setPublishError, setIsPublishing, setBolShowSumario,
+  setBolShowFreeModal, setBolShowPlanLimitModal,
   imagenesRef, urlsQueQuedanRef, urlsABorrarRef, pendingStepRef,
   triggerRefs,
 }: UsePublicarParams) {
@@ -89,7 +94,7 @@ export function usePublicar({
       formData.append('garajes',      toNullableStr(caracteristicas.garajes))
       formData.append('plantas',      toNullableStr(caracteristicas.plantas))
       formData.append('superficie',   String(caracteristicas.superficie ?? '0'))
-      formData.append('videoUrl',     video.url         ?? '')
+      formData.append('videoUrl',     video.url        ?? '')
       formData.append('descripcion',  descripcion.descripcion ?? '')
 
       const caracteristicasExtras = (descripcion.caracteristicas ?? []).map(
@@ -115,6 +120,7 @@ export function usePublicar({
           const firstError = Object.values(result.errors ?? {}).flat()[0] as string | undefined
           setPublishError(firstError ?? 'Error al guardar. Intenta de nuevo.')
         }
+
       } else {
         if (imagenesRef.current.length === 0) {
           setPublishError('Debes subir al menos 1 imagen.')
@@ -124,11 +130,19 @@ export function usePublicar({
         imagenesRef.current.forEach(f => formData.append('imagenes', f))
 
         const result = await publicarInmueble(formData)
+
         if (result.success) {
           SESSION_KEYS_TO_CLEAN.forEach(k => { try { sessionStorage.removeItem(k) } catch { } })
           router.push(`/publicacion/Mi_inmueble/${result.idPublicacion}`)
+
+        } else if (result.reason === 'LIMITE_PLAN_ALCANZADO') {
+          // Modal HU7: tiene plan de pago pero agotó sus publicaciones
+          setBolShowPlanLimitModal(true)
+
         } else if (result.reason === 'LIMITE_ALCANZADO') {
-          setPublishError('Has alcanzado el límite de publicaciones gratuitas.')
+          // Modal HU5: agotó sus 2 publicaciones gratuitas
+          setBolShowFreeModal(true)
+
         } else {
           const firstError = Object.values(result.errors ?? {}).flat()[0] as string | undefined
           setPublishError(firstError ?? 'Error al publicar. Intenta de nuevo.')
@@ -139,7 +153,12 @@ export function usePublicar({
     } finally {
       setIsPublishing(false)
     }
-  }, [router, modoEdicion, idPublicacion, imagenesRef, urlsQueQuedanRef, urlsABorrarRef, setPublishError, setIsPublishing])
+  }, [
+    router, modoEdicion, idPublicacion,
+    imagenesRef, urlsQueQuedanRef, urlsABorrarRef,
+    setPublishError, setIsPublishing,
+    setBolShowFreeModal, setBolShowPlanLimitModal,
+  ])
 
   const handleNext = useCallback(() => {
     pendingStepRef.current = null

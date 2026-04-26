@@ -1,12 +1,5 @@
 "use server";
 
-/**
- * @Dev: jimmyP / Oliver
- * @Fecha: 18/04/2026
- * @Funcionalidad: Server Actions para verificar el contador de publicaciones
- * del usuario. Maneja tanto el flujo gratuito (HU5) como el de plan activo (HU7).
- */
-
 import { prisma } from "@/lib/prisma";
 
 const INT_LIMITE_GRATUITO = 2;
@@ -22,7 +15,6 @@ export interface EstadoPublicacionUsuario {
 export async function verificarEstadoPublicacion(
   strUserId: string,
 ): Promise<EstadoPublicacionUsuario> {
-
   if (!strUserId || strUserId.trim() === "") {
     return { intPublicacionesRestantes: 0, bolLimiteAlcanzado: true, strTipoLimite: "gratuito" };
   }
@@ -35,9 +27,11 @@ export async function verificarEstadoPublicacion(
       Suscripcion: {
         select: {
           fecha_fin: true,
+          id_plan: true,          // ← traer id_plan explícitamente
           PlanPublicacion: {
             select: {
               cant_publicaciones: true,
+              nombre_plan: true,  // ← útil para debug
             },
           },
         },
@@ -52,14 +46,18 @@ export async function verificarEstadoPublicacion(
   const hoy = new Date();
   const objSuscripcion = objUsuario.Suscripcion;
 
-  // ── RAMA 1: Tiene plan activo vigente (fecha_fin > hoy) ──────────────────
-  if (objSuscripcion && objSuscripcion.fecha_fin > hoy) {
-    const intPermitidas = objSuscripcion.PlanPublicacion?.cant_publicaciones ?? 0;
+  // ── RAMA 1: Tiene suscripción con plan activo vigente ──────────────────
+  if (
+    objSuscripcion &&
+    objSuscripcion.fecha_fin > hoy &&
+    objSuscripcion.PlanPublicacion !== null &&          // ← verificar que el plan existe
+    objSuscripcion.PlanPublicacion.cant_publicaciones !== null  // ← y tiene límite definido
+  ) {
+    const intPermitidas = objSuscripcion.PlanPublicacion.cant_publicaciones!;
     const intHechas     = objUsuario.publicaciones_hechas ?? 0;
     const intRestantes  = intPermitidas - intHechas;
 
     if (intRestantes <= 0) {
-      // Excedió el límite del plan activo → modal HU7
       return {
         intPublicacionesRestantes: 0,
         bolLimiteAlcanzado: true,
@@ -74,7 +72,7 @@ export async function verificarEstadoPublicacion(
     };
   }
 
-  // ── RAMA 2: Sin plan activo → flujo gratuito original HU5 (sin cambios) ──
+  // ── RAMA 2: Sin plan activo → flujo gratuito ──────────────────────────
   const intRestantesGratuitos = objUsuario.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
 
   return {

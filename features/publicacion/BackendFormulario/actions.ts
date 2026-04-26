@@ -6,56 +6,47 @@ import { verify }  from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
 import { subirImagen } from './cloudinary'
-import { SK } from './sessionKeys'
+import { verificarEstadoPublicacion } from '@/features/publicacion/modal/action'
 
-// Tipo de respuesta
 type ActionResult =
   | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
 
-// Helper: lee el id_usuario desde la cookie auth_token (JWT).
-// Helper: lee el id_usuario desde JWT manual o desde Google (NextAuth)
-// Helper: lee el id_usuario desde JWT manual o desde Google (NextAuth)
 async function getUserIdSeguro(): Promise<string | null> {
-  // 1. Intentamos sacar el ID por JWT manual
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
     if (token) {
       const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string }
-      const id = decoded.userId || decoded.id || decoded.sub;
-      if (id) return id;
+      const id = decoded.userId || decoded.id || decoded.sub
+      if (id) return id
     }
   } catch (error) {
-    console.error("Error JWT:", error);
+    console.error("Error JWT:", error)
   }
 
-  // 2. Si no hay JWT, intentamos sacar el ID por NextAuth (Google)
-  const session = await getServerSession();
-  
+  const session = await getServerSession()
   if (session?.user?.email) {
-    // Usamos findFirst que es más flexible y le decimos a TS que es un string seguro
     try {
       const usuarioBd = await prisma.usuario.findFirst({
-        where: { email: session.user.email as string }, 
+        where: { email: session.user.email as string },
         select: { id_usuario: true }
-      });
-      if (usuarioBd) return usuarioBd.id_usuario;
+      })
+      if (usuarioBd) return usuarioBd.id_usuario
     } catch (error) {
-      console.error("Error buscando usuario por email:", error);
+      console.error("Error buscando usuario por email:", error)
     }
   }
 
-  return null;
+  return null
 }
-// Helper: convierte 'null' | '' | undefined | número en number | null
+
 function parseIntNullable(raw: FormDataEntryValue | null): number | null {
   if (!raw || raw === 'null' || raw === '') return null
   const n = parseInt(raw as string, 10)
   return isNaN(n) ? null : n
 }
 
-// Action principal
 export async function publicarInmueble(formData: FormData): Promise<ActionResult> {
 
   // 1. Subir imágenes a Cloudinary
@@ -72,59 +63,40 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: { imagenes: ['Error al subir imágenes. Intenta de nuevo.'] } }
   }
 
-  // 2. Parsear características extras desde FormData
+  // 2. Parsear características extras
   let caracteristicasExtras: { id_caracteristica: number; detalle?: string | null }[] = []
   try {
     const rawCaract = formData.get('caracteristicasExtras') as string
-    if (rawCaract) {
-      caracteristicasExtras = JSON.parse(rawCaract)
-    }
+    if (rawCaract) caracteristicasExtras = JSON.parse(rawCaract)
   } catch {
     caracteristicasExtras = []
   }
 
-// 3. Armar payload — lee tanto Google como JWT
+  // 3. Obtener id_usuario
   const rawIdUsuario = await getUserIdSeguro()
 
   const payload = {
-    // Paso 0
-    titulo: formData.get('titulo') as string,
-    tipoOperacion: formData.get('tipoOperacion') as string,
-    precio: parseFloat(formData.get('precio') as string),
-    tipoMoneda: (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
-
-    // Paso 1
-    tipoInmueble: formData.get('tipoInmueble') as string,
+    titulo:             formData.get('titulo') as string,
+    tipoOperacion:      formData.get('tipoOperacion') as string,
+    precio:             parseFloat(formData.get('precio') as string),
+    tipoMoneda:         (formData.get('tipoMoneda') ?? 'USD') as 'USD' | 'Bs',
+    tipoInmueble:       formData.get('tipoInmueble') as string,
     estadoConstruccion: parseInt(formData.get('estadoConstruccion') as string, 10),
-
-    // Paso 2
-    direccion: formData.get('direccion') as string,
-    departamento: formData.get('departamento') as string,
-    zona: formData.get('zona') as string,
-    lat: formData.get('lat') ? parseFloat(formData.get('lat') as string) : undefined,
-    lng: formData.get('lng') ? parseFloat(formData.get('lng') as string) : undefined,
-
-    // Paso 3 — nullable: Terreno → null, campo vacío → null, número → number
-    habitaciones: parseIntNullable(formData.get('habitaciones')),
-    banios: parseIntNullable(formData.get('banios')),
-    garajes: parseIntNullable(formData.get('garajes')),
-    plantas: parseIntNullable(formData.get('plantas')),
-    superficie: parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
-
-    // Paso 4
+    direccion:          formData.get('direccion') as string,
+    departamento:       formData.get('departamento') as string,
+    zona:               formData.get('zona') as string,
+    lat:                formData.get('lat') ? parseFloat(formData.get('lat') as string) : undefined,
+    lng:                formData.get('lng') ? parseFloat(formData.get('lng') as string) : undefined,
+    habitaciones:       parseIntNullable(formData.get('habitaciones')),
+    banios:             parseIntNullable(formData.get('banios')),
+    garajes:            parseIntNullable(formData.get('garajes')),
+    plantas:            parseIntNullable(formData.get('plantas')),
+    superficie:         parseFloat((formData.get('superficie') as string).replace(/\./g, '')),
     imagenesUrl,
-
-    // Paso 5
-    videoUrl: (formData.get('videoUrl') as string) || null,
-
-    // Paso 6
-    descripcion: formData.get('descripcion') as string,
-
-    // Paso 6 — Características Extras
+    videoUrl:           (formData.get('videoUrl') as string) || null,
+    descripcion:        formData.get('descripcion') as string,
     caracteristicasExtras,
-
-    // Usuario — leído desde cookie JWT
-    id_usuario: rawIdUsuario,
+    id_usuario:         rawIdUsuario,
   }
 
   // 4. Validar con Zod
@@ -136,22 +108,25 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     }
   }
   const d = parsed.data
-  // --- EL GUARDIA DE SEGURIDAD ---
+
   if (!d.id_usuario) {
     return { success: false, errors: { general: ['Debes iniciar sesión para publicar.'] } }
   }
 
-  // 5. Verificación de límite de publicaciones
-  const usuario = await prisma.usuario.findUnique({
-    where: { id_usuario: d.id_usuario }, // Ya no necesitamos el "!" porque ya validamos que no es null
-    select: { cant_publicaciones_restantes: true },
-  })
-  
-  if (!usuario || (usuario.cant_publicaciones_restantes ?? 0) <= 0) {
-    return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
+  // 5. Verificación de límite — maneja tanto gratuito como plan de pago
+  const estadoPublicacion = await verificarEstadoPublicacion(d.id_usuario)
+
+  if (estadoPublicacion.bolLimiteAlcanzado) {
+    return {
+      success: false,
+      errors: {},
+      reason: estadoPublicacion.strTipoLimite === 'plan'
+        ? 'LIMITE_PLAN_ALCANZADO'
+        : 'LIMITE_ALCANZADO',
+    }
   }
 
-  // 6. Insertar en BD (transacción atómica)
+  // 6. Insertar en BD
   try {
     const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
     const idMoneda  = MONEDA_IDS[d.tipoMoneda]
@@ -160,19 +135,17 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
     const resultado = await prisma.$transaction(async (tx) => {
 
-      // 6a. Ubicacion
       const ubicacion = await tx.ubicacion.create({
         data: {
           direccion: d.direccion,
-          zona: d.zona,
-          latitud: d.lat ?? null,
-          longitud: d.lng ?? null,
+          zona:      d.zona,
+          latitud:   d.lat ?? null,
+          longitud:  d.lng ?? null,
           id_ciudad: idCiudad,
-          id_pais: 1,
+          id_pais:   1,
         },
       })
 
-      // 6b. Publicacion — con o sin id_usuario
       const [pub] = d.id_usuario
         ? await tx.$queryRaw<{ id_publicacion: number }[]>`
             INSERT INTO "Publicacion" (
@@ -182,20 +155,10 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               id_estado_construccion,
               id_ubicacion, id_moneda, id_usuario
             ) VALUES (
-              ${d.titulo},
-              ${d.descripcion},
-              ${d.precio},
-              ${d.superficie},
-              ${d.habitaciones},
-              ${d.banios},
-              ${d.garajes},
-              ${d.plantas},
-              ${idTipoInm},
-              ${idTipoOp},
-              ${d.estadoConstruccion},
-              ${ubicacion.id_ubicacion},
-              ${idMoneda},
-              ${d.id_usuario}::uuid
+              ${d.titulo}, ${d.descripcion}, ${d.precio}, ${d.superficie},
+              ${d.habitaciones}, ${d.banios}, ${d.garajes}, ${d.plantas},
+              ${idTipoInm}, ${idTipoOp}, ${d.estadoConstruccion},
+              ${ubicacion.id_ubicacion}, ${idMoneda}, ${d.id_usuario}::uuid
             )
             RETURNING id_publicacion
           `
@@ -207,24 +170,14 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               id_estado_construccion,
               id_ubicacion, id_moneda
             ) VALUES (
-              ${d.titulo},
-              ${d.descripcion},
-              ${d.precio},
-              ${d.superficie},
-              ${d.habitaciones},
-              ${d.banios},
-              ${d.garajes},
-              ${d.plantas},
-              ${idTipoInm},
-              ${idTipoOp},
-              ${d.estadoConstruccion},
-              ${ubicacion.id_ubicacion},
-              ${idMoneda}
+              ${d.titulo}, ${d.descripcion}, ${d.precio}, ${d.superficie},
+              ${d.habitaciones}, ${d.banios}, ${d.garajes}, ${d.plantas},
+              ${idTipoInm}, ${idTipoOp}, ${d.estadoConstruccion},
+              ${ubicacion.id_ubicacion}, ${idMoneda}
             )
             RETURNING id_publicacion
           `
 
-      // 6c. Imagenes
       for (const url of d.imagenesUrl) {
         await tx.$executeRaw`
           INSERT INTO "Imagen" (id_publicacion, url_imagen)
@@ -232,7 +185,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 6d. Video (opcional)
       if (d.videoUrl) {
         await tx.$executeRaw`
           INSERT INTO "Video" (id_publicacion, url_video)
@@ -240,7 +192,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 6e. Características Extras (PublicacionCaracteristica)
       if (d.caracteristicasExtras && d.caracteristicasExtras.length > 0) {
         for (const caract of d.caracteristicasExtras) {
           await tx.$executeRaw`
@@ -249,9 +200,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
           `
         }
       }
-
-      // 6f. El descuento de publicaciones restantes y el incremento de
-      //     publicaciones_hechas lo maneja un trigger en la base de datos..
 
       return pub
     })
