@@ -146,28 +146,44 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
           }
           // --- FIN LÓGICA HU6 ---
 
+          // Pa ver si ya tiene una suscripción
+          const objExistingSub = await tx.suscripcion.findUnique({
+            where: { id_usuario: strUserId }
+          });
+
+          const objNow = new Date();
+          let objFechaInicioBase = objNow;
+
           await tx.usuario.update({
             where: { id_usuario: strUserId },
             data: {
               cant_publicaciones_restantes: intNewQuota
             }
           });
-
-          const objFechaInicio = new Date();
-          const objFechaFin = new Date(objFechaInicio);
-          const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
           
+          //si es el mismo plan y no se venció, se acumula el tiempo
+          if (objExistingSub && objExistingSub.id_plan === intPlanId && objExistingSub.fecha_fin > objNow) {
+            objFechaInicioBase = new Date(objExistingSub.fecha_fin);
+          } else {
+            //sino empieza hoy...
+            objFechaInicioBase = objNow;
+          }
+          
+          const objFechaFin = new Date(objFechaInicioBase);
+          const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
+          // Si es anual se suma 1 año exacto, sino ps, se suma 30 días
           if (strModalidad.toLowerCase().includes('anual')) {
             objFechaFin.setFullYear(objFechaFin.getFullYear() + 1);
           } else {
             objFechaFin.setDate(objFechaFin.getDate() + 30);
           }
           
+          //Crea/actualiza suscripción
           await tx.suscripcion.upsert({
             where: { id_usuario: strUserId },
             update: {
               id_plan: intPlanId,
-              fecha_inicio: objFechaInicio,
+              fecha_inicio: objNow,
               fecha_fin: objFechaFin,
               modalidad: strModalidad,
               notificado_7d: false,
@@ -176,7 +192,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
             create: {
               id_usuario: strUserId,
               id_plan: intPlanId,
-              fecha_inicio: objFechaInicio,
+              fecha_inicio: objNow,
               fecha_fin: objFechaFin,
               modalidad: strModalidad,
               notificado_7d: false,
