@@ -6,43 +6,45 @@ import { ArrowRight as ObjArrowRight } from "lucide-react";
 import ArticleCard from "@/app/home/blogs/articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 
+// titulo de la interface en camel case
+interface blogData {
+  IntIdBlo: number;
+  StrTitleBlo: string;
+  StrDescriptionBlo: string;
+  StrImageUrlBlo: string;
+  StrDateBlo: string;
+}
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 23/04/2026
  * funcionalidad: consume la api de blogs y muestra maximo 3 tarjetas en cuadricula horizontal
  * @return {React.JSX.Element} contenedor de la seccion de blogs
  */
-interface objBlogData {
-  intId: number;
-  strTitle: string;
-  strDescription: string;
-  strImageUrl: string;
-  strDate: string;
-}
-
 export default function blogSection() {
-  const [arrBlogs, setArrBlogs] = useState<objBlogData[]>([]);
-  const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
+  // variables en PascalCase con prefijo y sufijo de entidad
+  const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
+  const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
 
   // hook de animacion para el enlace inferior
-  const strBtnHoverClasses = useHoverAnimation(true, false, 'pointer', true, true);
+  const StrBtnHoverClassesBlo = useHoverAnimation(true, false, 'pointer', true, true);
 
   useEffect(() => {
     // funcion asincrona para recuperar los blogs de la base de datos
-    const fnFetchBlogs = async () => {
+    const FnFetchBlogsBlo = async () => {
       try {
-        const objResponse = await fetch("/api/home/blogs");
-        if (!objResponse.ok) throw new Error("error en la peticion");
+        const ObjResponseBlo = await fetch("/api/home/blogs");
+        if (!ObjResponseBlo.ok) throw new Error("error en la peticion");
         
-        const arrData: objBlogData[] = await objResponse.json();
-        setArrBlogs(arrData.slice(0, 3));
-      } catch (objError) {
-        console.error("[FETCH_BLOGS_ERROR]", objError);
+        const ArrDataBlo: blogData[] = await ObjResponseBlo.json();
+        SetArrBlogsBlo(ArrDataBlo.slice(0, 3));
+      } catch (ObjErrorBlo) {
+        console.error("[FETCH_BLOGS_ERROR]", ObjErrorBlo);
       } finally {
-        setBolIsLoading(false);
+        SetBolIsLoadingBlo(false);
       }
     };
 
-    fnFetchBlogs();
+    FnFetchBlogsBlo();
   }, []);
 
   return (
@@ -59,19 +61,19 @@ export default function blogSection() {
 
       {/* cuadricula responsiva para el listado de tarjetas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        {bolIsLoading ? (
+        {BolIsLoadingBlo ? (
           <p className="text-muted-foreground col-span-1 md:col-span-3 text-center py-8">
             Cargando publicaciones...
           </p>
-        ) : arrBlogs.length > 0 ? (
-          arrBlogs.map((objBlog) => (
+        ) : ArrBlogsBlo.length > 0 ? (
+          ArrBlogsBlo.map((ObjBlogBlo) => (
             <ArticleCard 
-              key={objBlog.intId}
-              intId={objBlog.intId}
-              strTitle={objBlog.strTitle}
-              strDescription={objBlog.strDescription}
-              strImageUrl={objBlog.strImageUrl}
-              strDate={objBlog.strDate}
+              key={ObjBlogBlo.IntIdBlo}
+              IntIdBlo={ObjBlogBlo.IntIdBlo}
+              StrTitleBlo={ObjBlogBlo.StrTitleBlo}
+              StrDescriptionBlo={ObjBlogBlo.StrDescriptionBlo}
+              StrImageUrlBlo={ObjBlogBlo.StrImageUrlBlo}
+              StrDateBlo={ObjBlogBlo.StrDateBlo}
             />
           ))
         ) : (
@@ -85,7 +87,7 @@ export default function blogSection() {
       <div className="w-full flex justify-end mt-2">
         <Link 
           href="/home/blogs" 
-          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${strBtnHoverClasses}`}
+          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${StrBtnHoverClassesBlo}`}
         >
           Ver mas blogs <ObjArrowRight className="w-6 h-6" strokeWidth={2} />
         </Link>
