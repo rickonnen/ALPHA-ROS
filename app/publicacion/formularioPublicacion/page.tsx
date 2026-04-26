@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, Suspense } from 'react'
+import { useRef, Suspense, useState } from 'react'
 import { useFormularioState } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Useformulariostate'
 import { usePublicar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Usepublicar'
 import { StepContent } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Stepcontent'
@@ -23,6 +23,8 @@ function FormularioDinamicoInner() {
     imagenesRef, imagenesIniciales,
     isFirstStep, isLastStep,
   } = state
+
+  const [showCancelarModal, setShowCancelarModal] = useState(false)
 
   const triggerRefs: Record<number, TriggerRef> = {
     0: useRef<(() => void) | null>(null),
@@ -63,6 +65,73 @@ function FormularioDinamicoInner() {
     sessionKey,
   }
 
+  // ─── Handler para el botón Regresar ──────────────────────────────────────
+  // Si estamos en el primer paso, muestra el modal de cancelar en vez de navegar
+  const handleBackOrCancel = () => {
+    if (isFirstStep) {
+      setShowCancelarModal(true)
+    } else {
+      handleBack()
+    }
+  }
+
+  // ─── Modal cancelar ───────────────────────────────────────────────────────
+  const CancelarModal = (
+    <div
+      onClick={() => setShowCancelarModal(false)}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          backgroundColor: '#ffffff', borderRadius: 16,
+          padding: '36px 32px', maxWidth: 420, width: '90%',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          gap: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
+          textAlign: 'center',
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.marino }}>
+          ¿Cancelar formulario?
+        </h3>
+        <p style={{ margin: 0, fontSize: 15, color: '#6b7280', lineHeight: 1.5 }}>
+          Si cancelas ahora perderás todo el progreso.<br />
+          Esta acción no se puede deshacer.
+        </p>
+        <div style={{ display: 'flex', gap: 12, marginTop: 8, width: '100%', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowCancelarModal(false)}
+            style={{
+              flex: 1, maxWidth: 160,
+              backgroundColor: '#ffffff', border: `1.5px solid ${C.terracota}`,
+              color: C.terracota, borderRadius: 8, padding: '11px 0',
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowCancelarModal(false); router.push('/') }}
+            style={{
+              flex: 1, maxWidth: 160,
+              backgroundColor: C.terracota, border: 'none',
+              color: '#ffffff', borderRadius: 8, padding: '11px 0',
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   // ─── MOBILE ───────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
@@ -78,6 +147,8 @@ function FormularioDinamicoInner() {
           backgroundColor: C.marino, borderRadius: 12, display: 'flex',
           flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
         }}>
+
+          {/* Barra de progreso */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
               Completa el proceso para {modoEdicion ? 'guardar' : 'publicar'} tu propiedad
@@ -94,15 +165,30 @@ function FormularioDinamicoInner() {
             </p>
           </div>
 
-          <h2 style={{
-            fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
-            textTransform: 'uppercase', letterSpacing: '0.06em',
-          }}>
-            {STEPS[currentStep].title}
-            {STEPS[currentStep].opcional && (
-              <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: C.terracota }}>-Opcional</span>
-            )}
-          </h2>
+          {/* Título del paso + botón X alineados */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <h2 style={{
+              fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
+              textTransform: 'uppercase', letterSpacing: '0.06em', flex: 1,
+            }}>
+              {STEPS[currentStep].title}
+              {STEPS[currentStep].opcional && (
+                <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: C.terracota }}>-Opcional</span>
+              )}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowCancelarModal(true)}
+              style={{
+                background: 'none', border: 'none',
+                color: '#ffffff', fontSize: 24, fontWeight: 700,
+                cursor: 'pointer', lineHeight: 1, padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
 
           {(blockMsg || publishError) && (
             <div style={{
@@ -140,9 +226,10 @@ function FormularioDinamicoInner() {
           </div>
         </div>
 
+        {/* ↓ CAMBIO: handleBackOrCancel en vez de handleBack */}
         <div style={{ display: 'flex', gap: 10, padding: '12px 0 0' }}>
           <button
-            type="button" onClick={handleBack} disabled={isPublishing}
+            type="button" onClick={handleBackOrCancel} disabled={isPublishing}
             style={{
               flex: 1, backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
               color: C.terracota, borderRadius: 8, padding: '11px 0',
@@ -174,6 +261,8 @@ function FormularioDinamicoInner() {
             modoEdicion={modoEdicion}
           />
         )}
+
+        {showCancelarModal && CancelarModal}
       </main>
     )
   }
@@ -218,6 +307,7 @@ function FormularioDinamicoInner() {
           width: '100%', maxWidth: 1000, height: 560,
           display: 'flex', borderRadius: 12, overflow: 'hidden',
           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+          position: 'relative',
         }}>
           <StepsSidebar
             currentStep={currentStep}
@@ -230,16 +320,31 @@ function FormularioDinamicoInner() {
             flex: 1, backgroundColor: C.marino,
             padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
           }}>
-            <h2 key={`title-${currentStep}`} style={{
-              fontSize: 20, fontWeight: 600, color: '#ffffff', marginBottom: 20,
-              textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0,
-              animation: 'stepIn 0.3s ease forwards',
-            }}>
-              {STEPS[currentStep].title}
-              {STEPS[currentStep].opcional && (
-                <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
-              )}
-            </h2>
+            {/* Título del paso + botón X alineados */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
+              <h2 key={`title-${currentStep}`} style={{
+                fontSize: 20, fontWeight: 600, color: '#ffffff', margin: 0,
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                animation: 'stepIn 0.3s ease forwards',
+              }}>
+                {STEPS[currentStep].title}
+                {STEPS[currentStep].opcional && (
+                  <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
+                )}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCancelarModal(true)}
+                style={{
+                  background: 'none', border: 'none',
+                  color: '#ffffff', fontSize: 28, fontWeight: 700,
+                  cursor: 'pointer', lineHeight: 1, padding: 0,
+                  flexShrink: 0,
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
             {(blockMsg || publishError) && (
               <div style={{
@@ -256,9 +361,11 @@ function FormularioDinamicoInner() {
             }}>
               <StepContent step={currentStep} {...stepContentProps} />
             </div>
+
+            {/* ↓ CAMBIO: handleBackOrCancel en vez de handleBack */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
               <button
-                type="button" onClick={handleBack} disabled={isPublishing}
+                type="button" onClick={handleBackOrCancel} disabled={isPublishing}
                 style={{
                   backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
                   color: C.terracota, borderRadius: 6, padding: '5px 20px',
@@ -293,6 +400,8 @@ function FormularioDinamicoInner() {
           modoEdicion={modoEdicion}
         />
       )}
+
+      {showCancelarModal && CancelarModal}
     </main>
   )
 }
