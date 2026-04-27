@@ -6,10 +6,11 @@ import BlogSection from "@/components/homeComponents/blogSection";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center bg-[#F4EFE6] w-full overflow-x-hidden">
+    <main className="flex min-h-screen flex-col items-center bg-background w-full overflow-x-hidden transition-colors duration-300">
       <section className="w-full">
         <Banner /> 
       </section>
+      
       <section className="w-full px-4 py-6 sm:px-6 lg:px-10">
         <div className="mx-auto w-full max-w-6xl">
           <FilterPanel />

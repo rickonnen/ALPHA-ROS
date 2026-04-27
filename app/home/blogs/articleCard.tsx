@@ -25,7 +25,7 @@ export default function articleCard(ObjPropsBlo: articleCardProps) {
   const StrBtnHoverClassesBlo = useHoverAnimation(true, false, 'pointer', true, true);
 
   return (
-    <article className={`flex flex-col w-full aspect-[16/9] bg-[#f3efea] rounded-2xl border-3 border-secondary shadow-md p-3 sm:p-4 gap-2 sm:gap-3 overflow-hidden ${StrCardHoverClassesBlo}`}>
+    <article className={`flex flex-col w-full aspect-[16/9] bg-card-bg rounded-2xl border-3 border-secondary shadow-md p-3 sm:p-4 gap-2 sm:gap-3 overflow-hidden ${StrCardHoverClassesBlo}`}>
       <h3 className="font-bold text-foreground text-[0.9rem] uppercase leading-tight w-full truncate">
         {StrTitleBlo}
       </h3>

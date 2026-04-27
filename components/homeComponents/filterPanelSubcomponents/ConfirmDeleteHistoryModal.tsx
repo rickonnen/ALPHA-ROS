@@ -1,5 +1,5 @@
 /**
- * Dev: Jose Daniel Condarco Flores       Fecha: 27/04/2026
+ * Dev: Jose Daniel Condarco Flores      Fecha: 27/04/2026
  * Modal de confirmacion para eliminar un elemento del historial de busqueda.
  * Muestra una ventana centrada con mensaje, boton de aceptar, boton de cancelar y boton X.
  * Solo permite cerrar el modal mediante aceptar, cancelar o X; no se cierra con clic fuera ni con ESC.
@@ -32,7 +32,7 @@ export default function ConfirmDeleteHistoryModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-history-title"
-        className="relative w-full max-w-[450px] rounded-lg bg-white px-8 pb-8 pt-8 shadow-2xl"
+        className="relative w-full max-w-[450px] rounded-lg bg-background px-8 pb-8 pt-8 shadow-2xl"
         onMouseDown={(objEvent) => {
             objEvent.stopPropagation();
         }}
@@ -44,26 +44,26 @@ export default function ConfirmDeleteHistoryModal({
             type="button"
             onClick={fnOnCancel}
             aria-label="Cerrar modal"
-            className="absolute right-5 top-4 text-3xl leading-none text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="absolute right-5 top-4 text-3xl leading-none text-foreground/40 transition-colors hover:text-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
             x
         </button>
 
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#F7DAD6]">
-            <span className="text-3xl font-bold text-[#B97965]">!</span>
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/20">
+            <span className="text-3xl font-bold text-secondary">!</span>
         </div>
 
         <h2
             id="delete-history-title"
-            className="mb-3 text-center text-2xl font-bold text-[#111827]"
+            className="mb-3 text-center text-2xl font-bold text-foreground"
         >
             Eliminar busqueda
         </h2>
 
-        <p className="mb-6 text-center text-base leading-relaxed text-slate-600">
+        <p className="mb-6 text-center text-base leading-relaxed text-foreground/70">
             Estas seguro de eliminar esta busqueda del historial?
             {strItemName ? (
-            <span className="mt-2 block font-semibold text-slate-800">
+            <span className="mt-2 block font-semibold text-foreground">
                 {strItemName}
             </span>
             ) : null}
@@ -73,7 +73,7 @@ export default function ConfirmDeleteHistoryModal({
             <button
             type="button"
             onClick={fnOnAccept}
-            className="w-full rounded-md bg-[#B97965] px-4 py-3 font-bold text-white transition-colors hover:bg-[#a96856] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B97965] focus-visible:ring-offset-2"
+            className="w-full rounded-md bg-secondary px-4 py-3 font-bold text-white transition-colors hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
             Aceptar
         </button>
@@ -81,13 +81,13 @@ export default function ConfirmDeleteHistoryModal({
             <button
             type="button"
             onClick={fnOnCancel}
-            className="w-full rounded-md bg-slate-100 px-4 py-3 font-bold text-[#111827] transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
+            className="w-full rounded-md bg-secondary-fund px-4 py-3 font-bold text-foreground transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
             Cancelar
             </button>
         </div>
 
-        <p className="mt-5 text-center text-xs font-medium text-slate-400">
+        <p className="mt-5 text-center text-xs font-medium text-foreground/40">
             Esta accion solo eliminara el elemento seleccionado
         </p>
         </div>

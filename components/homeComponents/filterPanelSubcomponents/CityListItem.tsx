@@ -106,7 +106,7 @@ export default function CityListItem({
           <img
             src="/binDelete.svg"
             alt="Eliminar"
-            className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity filter group-hover:hue-rotate-180"
+            className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity filter group-hover:hue-rotate-180 svg-theme-invert"
           />
         </button>
       )}

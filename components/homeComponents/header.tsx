@@ -159,7 +159,7 @@ export const Header = () => {
             ) : null}
             <div ref={refMobileMenuButton}>
               <button aria-label="menú principal" className={`p-2 rounded-md ${clsFocusBase}`} onClick={() => setBolIsMobileMenuOpen((p) => !p)}>
-                <Image src="/hamburger_icon.svg" alt="menú" width={28} height={28} className="w-7 h-7 object-contain" />
+                <Image src="/hamburger_icon.svg" alt="menú" width={28} height={28} className="w-7 h-7 object-contain svg-theme-invert" />
               </button>
             </div>
           </div>
@@ -195,15 +195,15 @@ export const Header = () => {
                 />
                 <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}`)} 
                   className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
-                  <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className="w-7 h-7 object-cover rounded-full bg-muted" 
-                  unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; }} />
+                  <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className={`w-7 h-7 object-cover rounded-full bg-muted ${!strFotoPerfil ? "svg-theme-invert" : ""}`} 
+                  unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; e.currentTarget.classList.add("svg-theme-invert"); }} />
                   <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">{strNombreHeader}</span>
                 </button>
               </>
             ) : (
               <button onClick={handleOpenLogin} className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
                 <div className="relative flex items-center justify-center">
-                  <Image src="/account_avatar.svg" alt="iniciar sesión" width={28} height={28} className="w-7 h-7 object-contain" />
+                  <Image src="/account_avatar.svg" alt="iniciar sesión" width={28} height={28} className="w-7 h-7 object-contain svg-theme-invert" />
                   <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
                 </div>
                 <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none pt-0.5 whitespace-nowrap">iniciar sesión</span>

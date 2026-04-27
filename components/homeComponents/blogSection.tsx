@@ -22,29 +22,29 @@ interface blogData {
  */
 export default function blogSection() {
   // variables en PascalCase con prefijo y sufijo de entidad
-  const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
-  const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
+  const [arrBlogsBlo, setArrBlogsBlo] = useState<blogData[]>([]);
+  const [bolIsLoadingBlo, setBolIsLoadingBlo] = useState<boolean>(true);
 
   // hook de animacion para el enlace inferior
-  const StrBtnHoverClassesBlo = useHoverAnimation(true, false, 'pointer', true, true);
+  const strBtnHoverClassesBlo = useHoverAnimation(true, false, 'pointer', true, true);
 
   useEffect(() => {
     // funcion asincrona para recuperar los blogs de la base de datos
-    const FnFetchBlogsBlo = async () => {
+    const fnFetchBlogsBlo = async () => {
       try {
-        const ObjResponseBlo = await fetch("/api/home/blogs");
-        if (!ObjResponseBlo.ok) throw new Error("error en la peticion");
+        const objResponseBlo = await fetch("/api/home/blogs");
+        if (!objResponseBlo.ok) throw new Error("error en la peticion");
         
-        const ArrDataBlo: blogData[] = await ObjResponseBlo.json();
-        SetArrBlogsBlo(ArrDataBlo.slice(0, 3));
-      } catch (ObjErrorBlo) {
-        console.error("[FETCH_BLOGS_ERROR]", ObjErrorBlo);
+        const arrDataBlo: blogData[] = await objResponseBlo.json();
+        setArrBlogsBlo(arrDataBlo.slice(0, 3));
+      } catch (objErrorBlo) {
+        console.error("[FETCH_BLOGS_ERROR]", objErrorBlo);
       } finally {
-        SetBolIsLoadingBlo(false);
+        setBolIsLoadingBlo(false);
       }
     };
 
-    FnFetchBlogsBlo();
+    fnFetchBlogsBlo();
   }, []);
 
   return (
@@ -61,19 +61,19 @@ export default function blogSection() {
 
       {/* cuadricula responsiva para el listado de tarjetas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        {BolIsLoadingBlo ? (
+        {bolIsLoadingBlo ? (
           <p className="text-muted-foreground col-span-1 md:col-span-3 text-center py-8">
             Cargando publicaciones...
           </p>
-        ) : ArrBlogsBlo.length > 0 ? (
-          ArrBlogsBlo.map((ObjBlogBlo) => (
+        ) : arrBlogsBlo.length > 0 ? (
+          arrBlogsBlo.map((objBlogBlo) => (
             <ArticleCard 
-              key={ObjBlogBlo.IntIdBlo}
-              IntIdBlo={ObjBlogBlo.IntIdBlo}
-              StrTitleBlo={ObjBlogBlo.StrTitleBlo}
-              StrDescriptionBlo={ObjBlogBlo.StrDescriptionBlo}
-              StrImageUrlBlo={ObjBlogBlo.StrImageUrlBlo}
-              StrDateBlo={ObjBlogBlo.StrDateBlo}
+              key={objBlogBlo.IntIdBlo}
+              IntIdBlo={objBlogBlo.IntIdBlo}
+              StrTitleBlo={objBlogBlo.StrTitleBlo}
+              StrDescriptionBlo={objBlogBlo.StrDescriptionBlo}
+              StrImageUrlBlo={objBlogBlo.StrImageUrlBlo}
+              StrDateBlo={objBlogBlo.StrDateBlo}
             />
           ))
         ) : (
@@ -87,7 +87,7 @@ export default function blogSection() {
       <div className="w-full flex justify-end mt-2">
         <Link 
           href="/home/blogs" 
-          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${StrBtnHoverClassesBlo}`}
+          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${strBtnHoverClassesBlo}`}
         >
           Ver mas blogs <ObjArrowRight className="w-6 h-6" strokeWidth={2} />
         </Link>

@@ -1,0 +1,165 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Variación adaptada para que Tailwind reconozca tu atributo data-theme como modo oscuro */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme inline {
+  /* Mapeo de fuentes para conectarlas con el layout.tsx */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+
+  /* Mapeo exclusivo de tus colores personalizados a las clases utilitarias de Tailwind */
+  --color-background: var(--background);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border); /* Mapeo del nuevo color de borde */
+  --color-secondary-fund: var(--secondary-fund);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  /* Valores básicos necesarios para evitar errores en componentes base */
+  --radius: 0.5rem;
+  --color-border: var(--card-border); /* Sincronizado con el nuevo borde */
+  --color-ring: var(--primary);
+
+  /* Escala tipográfica personalizada */
+  --text-main-title: var(--text-3xl);
+  --text-subtitle: var(--text-xl);
+  --text-body-info: var(--text-base);
+}
+
+:root {
+  /* ==========================================
+     MODO CLARO 
+     ========================================== */
+  /* fondo principal: Beige arena suave (#F4EFE6) */
+  --background: oklch(0.95 0.01 82);
+
+  /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
+  --card-bg: oklch(0.958 0.011 85);
+
+  /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
+  --card-border: oklch(0.85 0.01 83);
+
+  /* fondo secundario: Gris cálido claro (#E7E1D7) */
+  --secondary-fund: oklch(0.91 0.01 81);
+
+  /* texto principal: Gris profundo (#2E2E2E) */
+  --foreground: oklch(0.30 0.00 0);
+
+  /* boton primario: Azul petróleo (#1F3A4D) */
+  --primary: oklch(0.34 0.05 241);
+
+  /* texto de boton primario: Beige arena suave (#F4EFE6) */
+  --primary-foreground: oklch(0.952 0.01 84.8);
+
+  /* boton secundario: Terracota suave (#C26E5A) */
+  --secondary: oklch(0.63 0.11 34);
+
+  /* texto de boton secundario: Beige arena suave (#F4EFE6) */
+  --secondary-foreground: oklch(0.952 0.01 84.8);
+
+  /* ==========================================
+     TIPOGRAFÍA (Común para ambos modos)
+     ========================================== */
+  --text-3xl: 1.80rem; 
+  --text-xl: 1.30rem;
+  --text-base: 1rem;
+}
+
+/* ==========================================
+   MODO OSCURO ("Noche Moderna")
+   ========================================== */
+/* 1. Activa el modo oscuro si el sistema lo pide Y el usuario NO ha forzado el claro */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* fondo principal: Gris carbón profundo (#1A1A1A) */
+    --background: #1A1A1A;
+    /* fondo de tarjeta: Gris oscuro intermedio (#242424) */
+    --card-bg: #242424;
+    /* borde de tarjeta: Gris suave para contraste nocturno (#333333) */
+    --card-border: #333333;
+    /* fondo secundario: Gris basalto suave (#2A2A2A) */
+    --secondary-fund: #2A2A2A;
+    /* texto principal: Beige suave (#F4EFE6) */
+    --foreground: #F4EFE6;
+    /* boton primario: Azul petróleo (#1F3A4D) */
+    --primary: #1F3A4D;
+    /* texto de boton primario: Beige suave (#F4EFE6) */
+    --primary-foreground: #F4EFE6;
+    /* boton secundario: Terracota suave (#C26E5A) */
+    --secondary: #C26E5A;
+    /* texto de boton secundario: Beige suave (#F4EFE6) */
+    --secondary-foreground: #F4EFE6;
+  }
+}
+
+/* 2. Activa el modo oscuro si el usuario lo fuerza con el botón */
+[data-theme="dark"] {
+  --background: #1A1A1A;
+  --card-bg: #242424;
+  --card-border: #333333;
+  --secondary-fund: #2A2A2A;
+  --foreground: #F4EFE6;
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
+}
+
+/* ==========================================
+   APLICACIÓN GLOBAL Y UTILIDADES
+   ========================================== */
+@layer base {
+  * {
+    @apply border-card-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: var(--text-base);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-card-border) transparent; 
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-card-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+
+  /* Inversión a blanco de los SVG en Modo Oscuro (Por sistema o forzado) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .svg-theme-invert {
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  [data-theme="dark"] .svg-theme-invert {
+    filter: brightness(0) invert(1);
+  }
+}
