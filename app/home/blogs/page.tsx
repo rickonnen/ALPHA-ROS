@@ -7,6 +7,7 @@ import ArticleCard from "./articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import GenericDropdown from "@/components/homeComponents/filterPanelSubcomponents/genericDropdown";
 
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
  * funcionalidad: pagina que muestra todos los blogs con filtrado y paginacion (9 por pagina)

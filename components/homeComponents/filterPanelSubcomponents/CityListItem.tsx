@@ -1,20 +1,22 @@
 "use client";
+
 /**
  * Autor: Jose Daniel Condarco Flores
  * Componente: CityListItem
  * fecha: 19/4/2026
  * Función: Muestra una ciudad, permite seleccionarla y eliminarla del historial.
  */
+import type { MouseEvent, RefObject } from "react";
 import type { CitySuggestion } from "../../hooks/mapboxService";
 
 interface CityListItemProps {
   objItem: CitySuggestion;
   bolIsSelected: boolean;
-  objItemRef?: React.RefObject<HTMLElement | null> | null;
+  objItemRef?: RefObject<HTMLElement | null> | null;
   strSuggestionHover: string;
   fnOnMouseEnter: () => void;
   fnOnSelect: () => void;
-  fnOnDelete?: (objEvent: React.MouseEvent) => void;
+  fnOnDelete?: (objEvent: MouseEvent<HTMLButtonElement>) => void;
 }
 
 export default function CityListItem({
@@ -27,14 +29,25 @@ export default function CityListItem({
   fnOnDelete,
 }: CityListItemProps) {
   const arrParts = objItem.strFullName.split(",");
-  const strSecondary = arrParts.slice(1).join(",").replace(/Bolivia/gi, "").replace(/,\s*$/, "").trim();
+  const strSecondary = arrParts
+    .slice(1)
+    .join(",")
+    .replace(/Bolivia/gi, "")
+    .replace(/,\s*$/, "")
+    .trim();
 
   return (
     <li
-      ref={objItemRef as React.RefObject<HTMLLIElement>}
+      ref={objItemRef as RefObject<HTMLLIElement>}
       data-active={bolIsSelected}
       onMouseEnter={fnOnMouseEnter}
       onMouseDown={(objEvent) => {
+        const objTarget = objEvent.target as HTMLElement;
+
+        if (objTarget.closest("button")) {
+          return;
+        }
+
         objEvent.preventDefault();
         fnOnSelect();
       }}
@@ -45,10 +58,16 @@ export default function CityListItem({
       } ${strSuggestionHover}`}
     >
       <div className="flex items-center gap-3 overflow-hidden flex-1">
-        <img src={objItem.strIcon} alt="BO" className="h-4 w-5 flex-shrink-0" />
+        <img
+          src={objItem.strIcon}
+          alt="BO"
+          className="h-4 w-5 flex-shrink-0"
+        />
 
         <div className="flex flex-col overflow-hidden">
-          <span className="text-sm font-medium text-foreground truncate">{objItem.strName}</span>
+          <span className="text-sm font-medium text-foreground truncate">
+            {objItem.strName}
+          </span>
 
           {(objItem.strTypePlace || strSecondary) && (
             <span className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
@@ -57,7 +76,12 @@ export default function CityListItem({
                   {objItem.strTypePlace}
                 </span>
               )}
-              {strSecondary && <span className="truncate">{strSecondary.replace(/^,\s*/, "")}</span>}
+
+              {strSecondary && (
+                <span className="truncate">
+                  {strSecondary.replace(/^,\s*/, "")}
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -65,12 +89,19 @@ export default function CityListItem({
 
       {fnOnDelete && (
         <button
+          type="button"
+          onMouseDown={(objEvent) => {
+            objEvent.preventDefault();
+            objEvent.stopPropagation();
+          }}
           onClick={(objEvent) => {
+            objEvent.preventDefault();
             objEvent.stopPropagation();
             fnOnDelete(objEvent);
           }}
           className="p-2 hover:bg-destructive/10 rounded-full flex-shrink-0 group transition-colors ml-2"
           title="Eliminar del historial"
+          aria-label="Eliminar del historial"
         >
           <img
             src="/binDelete.svg"
