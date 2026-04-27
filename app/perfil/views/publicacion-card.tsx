@@ -129,7 +129,7 @@ export default function PublicacionCard({
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
                 router.push(
-                  `/publicacion/perfil_del_inmueble/${publicacion.id}`,
+                  `/publicacion/Mi_inmueble/${publicacion.id}`,
                 )
               }
             >
@@ -188,9 +188,7 @@ export default function PublicacionCard({
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() =>
-                  router.push(
-                    `/publicacion/perfil_del_inmueble/${publicacion.id}`,
-                  )
+                  window.open(`/publicacion/Mi_inmueble/${publicacion.id}`, `tab_inmueble_${publicacion.id}`)                
                 }
               >
                 Ver Detalle
@@ -199,7 +197,7 @@ export default function PublicacionCard({
                 variant="azul"
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
-                /*onClick={() => router.push(`/publicacion/editar/${publicacion.id}`,)}*/
+                onClick={() => router.push(`/publicacion/formularioPublicacion?editar=${publicacion.id}`)}
               >
                 Editar
               </Button>
