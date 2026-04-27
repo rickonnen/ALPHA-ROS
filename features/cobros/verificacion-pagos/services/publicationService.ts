@@ -5,52 +5,57 @@ export const syncUserPublicationsAndQuota = async (
   strUserId: string, 
   intNewQuota: number
 ) => {
-    const estadoActivo = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Activo' } });
-    const estadoSuspendido = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Suspendido' } });
-    
-    if (estadoActivo && estadoSuspendido) {
-        // Obtener publicaciones del usuario ordenadas por las más recientes primero
-        const publicaciones = await tx.publicacion.findMany({
-            where: { id_usuario: strUserId },
-            orderBy: { fecha_creacion: 'desc' }
-        });
+    console.log(`--- INICIO SYNC PAGO (User: ${strUserId}) ---`);
+    console.log(`Nuevo Cupo del Plan: ${intNewQuota}`);
 
-        const activas = publicaciones.filter(p => p.id_estado === estadoActivo.id_estado);
-        const suspendidas = publicaciones.filter(p => p.id_estado === estadoSuspendido.id_estado);
+    // 1. Traer TODAS las publicaciones del usuario (sin filtrar estado)
+    const publicaciones = await tx.publicacion.findMany({
+        where: { id_usuario: strUserId },
+        orderBy: { fecha_creacion: 'asc' }
+    });
 
-        if (activas.length > intNewQuota) {
-            // Downgrade: Si excede el cupo, ssuspender las MÁS RECIENTES
-            const exceso = activas.length - intNewQuota;
-            const paraSuspender = activas.slice(0, exceso); 
-            
-            if (paraSuspender.length > 0) {
-            await tx.publicacion.updateMany({
+    console.log(`Total publicaciones encontradas: ${publicaciones.length}`);
+
+    // 2. Clasificamos usando IDs numéricos (1=Activa, 4=Suspencion)
+    const activas = publicaciones.filter(p => p.id_estado === 1);
+    const suspendidas = publicaciones.filter(p => p.id_estado === 4);
+
+    console.log(`Publicaciones actualmente Activas (ID 1): ${activas.length}`);
+    console.log(`Publicaciones actualmente Suspendidas (ID 4): ${suspendidas.length}`);
+
+    if (activas.length > intNewQuota) {
+        // ESCENARIO: Downgrade
+        const exceso = activas.length - intNewQuota;
+        const paraSuspender = activas.slice(-exceso); 
+        
+        console.log(`Acción: Downgrade. Suspendiendo ${paraSuspender.length} más recientes.`);
+
+        if (paraSuspender.length > 0) {
+            const res = await tx.publicacion.updateMany({
                 where: { id_publicacion: { in: paraSuspender.map(p => p.id_publicacion) } },
-                data: { id_estado: estadoSuspendido.id_estado }
+                data: { id_estado: 4 }
             });
-            }
-        } else if (activas.length < intNewQuota && suspendidas.length > 0) {
-            // Upgrade/Renovación: Reactivar las suspendidas hasta alcanzar el nuevo límite
-            const cupoDisponible = intNewQuota - activas.length;
-            const paraReactivar = suspendidas.slice(0, cupoDisponible);
-
-            if (paraReactivar.length > 0) {
-            await tx.publicacion.updateMany({
-                where: { id_publicacion: { in: paraReactivar.map(p => p.id_publicacion) } },
-                data: { id_estado: estadoActivo.id_estado }
-            });
-            }
+            console.log(`Resultado update: ${res.count} actualizadas a ID 4`);
         }
+    } 
+    else if (activas.length < intNewQuota && suspendidas.length > 0) {
+        // ESCENARIO: Upgrade/Reactivación
+        const cupoDisponible = intNewQuota - activas.length;
+        // Reactivamos las más antiguas (inicio del array)
+        const paraReactivar = suspendidas.slice(0, cupoDisponible);
+
+        console.log(`Acción: Upgrade. Reactivando ${paraReactivar.length} más antiguas.`);
+
+        if (paraReactivar.length > 0) {
+            const res = await tx.publicacion.updateMany({
+                where: { id_publicacion: { in: paraReactivar.map(p => p.id_publicacion) } },
+                data: { id_estado: 1 }
+            });
+            console.log(`Resultado update: ${res.count} actualizadas a ID 1`);
+        }
+    } else {
+        console.log("No se requiere ajuste de estados (el cupo ya es correcto o no hay suspendidas).");
     }
 
-
-    //lo único que hace es cambiar la cantidad de publicaciones al del plan que se compró;
-    // se compró un plan de 12 y antes se tenía de otro (2/50) solo cambia la cantidad a 12,
-    // no toca nada de suspender publicaciones solo actualiza la cantidad
-    await tx.usuario.update({
-        where: { id_usuario: strUserId },
-        data: {
-            cant_publicaciones_restantes: intNewQuota
-        }
-    });
+    console.log(`--- FIN SYNC PAGO ---`);
 };
