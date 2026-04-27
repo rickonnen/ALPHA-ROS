@@ -125,6 +125,18 @@ export const authOptions: NextAuthOptions = {
             await supabase.auth.admin.deleteUser(supabaseUserId)
             return "/api/google-cancelado"
           }
+          
+         const { enviarBienvenidaGoogle } = await import("@/lib/email/emailService")
+          const { crearNotificacion } = await import("@/lib/notifications/notificationService")
+          const nombre = user.name?.split(" ")[0] ?? "Usuario"
+          
+          await enviarBienvenidaGoogle(user.email!, nombre)
+          await crearNotificacion({
+            id_usuario: supabaseUserId,
+            titulo: "¡Bienvenido a PROPBOL!",
+            mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente con Google. Bienvenido a la plataforma.`,
+            id_categoria: 1,
+          })
         }
         if (account.provider === "discord") {
           const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")

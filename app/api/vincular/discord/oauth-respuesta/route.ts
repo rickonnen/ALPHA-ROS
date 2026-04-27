@@ -4,6 +4,9 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { linkDiscord } from "@/lib/auth/linkDiscord"
+import { crearNotificacion } from "@/lib/notifications/notificationService"
+import { enviarDiscordVinculado } from "@/lib/email/emailService"
+import { createClient } from "@supabase/supabase-js"
 
 export async function GET(req: NextRequest) {
 
@@ -63,6 +66,27 @@ export async function GET(req: NextRequest) {
     if (!resultado.ok) {
       const errorMsg = encodeURIComponent(resultado.error ?? "error")
       return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/perfil?seccion=redes-vinculadas&error=${errorMsg}`)
+    }
+
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: usuario } = await supabase
+      .from("Usuario")
+      .select("nombres, email")
+      .eq("id_usuario", id_usuario)
+      .maybeSingle()
+
+    if (usuario) {
+      await enviarDiscordVinculado(usuario.email, usuario.nombres)
+      await crearNotificacion({
+        id_usuario,
+        titulo: "🎮 Discord vinculado",
+        mensaje: "Tu cuenta ha sido vinculada exitosamente con Discord.",
+        id_categoria: 5,
+      })
     }
 
     // 6. Todo ok → redirigir de vuelta al perfil

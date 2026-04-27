@@ -55,12 +55,12 @@ export async function verifyEmailConnection(): Promise<{
     }
 
     await transporter.verify();
-    console.log("✅ [EMAIL] Conexión SMTP verificada correctamente");
+    console.log(" [EMAIL] Conexión SMTP verificada correctamente");
     return { connected: true };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Error desconocido";
-    console.error("❌ [EMAIL] Error verificando conexión SMTP:", errorMsg);
+    console.error("[EMAIL] Error verificando conexión SMTP:", errorMsg);
     return { connected: false, error: errorMsg };
   }
 }
@@ -71,8 +71,8 @@ export async function verifyEmailConnection(): Promise<{
 export async function closeEmailConnection(): Promise<void> {
   try {
     await transporter.close();
-    console.log("✅ [EMAIL] Conexión SMTP cerrada");
+    console.log(" [EMAIL] Conexión SMTP cerrada");
   } catch (error) {
-    console.error("❌ [EMAIL] Error cerrando conexión SMTP:", error);
+    console.error(" [EMAIL] Error cerrando conexión SMTP:", error);
   }
 }

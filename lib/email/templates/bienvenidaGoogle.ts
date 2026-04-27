@@ -1,33 +1,47 @@
-/**
- * Template: Bienvenida registro con Google OAuth
- * app/api/auth/[...nextauth]/route.ts
- */
+
 export function templateBienvenidaGoogle(nombre: string): string {
   return `
-    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+    <!DOCTYPE html>
+    <html lang="es" style="margin:0;padding:0">
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Arial,sans-serif">
+      <div style="max-width:600px;margin:0 auto;background:white">
 
-      <!-- Header -->
-      <div style="background:#C85A4F;padding:24px;text-align:center">
-        <h1 style="color:white;margin:0;font-size:24px">¡Bienvenido a PROPBOL!</h1>
-      </div>
-
-      <!-- Cuerpo -->
-      <div style="background:#ffffff;padding:32px">
-        <p style="color:#1a1a1a;font-size:16px">Hola, ${nombre} 👋</p>
-        <p style="color:#444444;font-size:15px">Te registraste exitosamente usando tu cuenta de Google.</p>
-
-        <!-- Caja destacada -->
-        <div style="background:#f9fafb;border:2px solid #C85A4F;border-radius:10px;padding:24px;text-align:center;margin-bottom:24px">
-          <p style="color:#666666;font-size:14px;margin:0">Estamos felices de tenerte en</p>
-          <p style="color:#C85A4F;font-size:32px;letter-spacing:4px;margin:8px 0;font-weight:bold">PROPBOL</p>
-          <p style="color:#666666;font-size:13px;margin:0">Gracias por tu elección</p>
+        <!-- Logo -->
+        <div style="padding:30px 0 24px 0;text-align:center">
+          <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja" 
+               alt="PROPBOL" style="height:60px;vertical-align:middle" />
+          <span style="font-size:26px;font-weight:800;color:#1F3A4D;vertical-align:middle;margin-left:10px;font-family:'Segoe UI',Arial,sans-serif">Propbol</span>
         </div>
 
-        <p style="color:#999999;font-size:12px;text-align:center">
-          Si no creaste esta cuenta, por favor contáctanos.
-        </p>
-      </div>
+        <!-- Header -->
+        <div style="background:#1F3A4D;padding:28px 24px;text-align:center;color:white;border-radius:10px;margin:0 24px">
+<h1 style="margin:0;font-size:22px;font-weight:700">TEST NUEVO - ¡Bienvenido a PROPBOL!</h1>         
+ <p style="margin:8px 0 0 0;font-size:13px;opacity:0.8">Registrado con Google</p>
+        </div>
 
-    </div>
+        <!-- Cuerpo -->
+        <div style="padding:32px 48px;color:#333">
+          <p style="margin:0 0 24px 0;font-size:15px">Hola, <strong>${nombre}</strong> 👋</p>
+          <p style="margin:0 0 24px 0;font-size:14px;color:#333;line-height:1.6">
+            Te registraste exitosamente usando tu cuenta de Google. Estamos felices de tenerte en <strong>PROPBOL</strong>.
+          </p>
+
+          <div style="text-align:center;padding:20px 0">
+            <a href="${process.env.NEXTAUTH_URL}/home"
+               style="display:inline-block;background:#1F3A4D;color:white;padding:14px 44px;text-decoration:none;border-radius:20px;font-weight:600;font-size:15px">
+              Explorar la plataforma
+            </a>
+          </div>
+
+          <p style="margin:24px 0 0 0;font-size:13px;color:#666;line-height:1.6">
+            Si no creaste esta cuenta o tienes dudas, contacta a soporte:
+            <a href="mailto:soporte@propbol.com" style="color:#1F3A4D">soporte@propbol.com</a>
+          </p>
+        </div>
+
+      </div>
+    </body>
+    </html>
   `;
 }
