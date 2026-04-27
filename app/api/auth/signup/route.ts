@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
           nombres: nombre,
           apellidos: apellido,
           rol: 2,
-          estado: 1
+          estado: 1,
+          primary_provider: "credentials"
         }
       ], { onConflict: 'id_usuario' });
 
