@@ -40,6 +40,7 @@ export default function SuscripcionPage() {
             }
             console.log("User ID:", user?.id);
             const res = await fetch(`/api/cobros/getSuscripcion?id_usuario=${user.id}`, {
+                cache: "no-store",
                 method: "GET"
             });
 
@@ -92,8 +93,16 @@ export default function SuscripcionPage() {
 
 
     useEffect(() => {
-        if (!user?.id) return;
-        obtenerDatosSuscripcion();
+    if (!user?.id) return;
+    obtenerDatosSuscripcion();
+
+    // Solo en desarrollo
+    if (process.env.NODE_ENV === "development") {
+            const interval = setInterval(() => {
+                obtenerDatosSuscripcion();
+            }, 3000); // cada 5 segundos
+            return () => clearInterval(interval);
+        }
     }, [user?.id]);
 
     
