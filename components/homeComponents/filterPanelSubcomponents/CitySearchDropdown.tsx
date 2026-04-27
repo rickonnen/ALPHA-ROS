@@ -70,7 +70,8 @@ export default function CitySearchDropdown({
                 objItemRef={intSelectedIndex === intIndex ? objActiveItemRef : null}
                 strSuggestionHover={strSuggestionHover}
                 fnOnMouseEnter={() => setIntSelectedIndex(intIndex)}
-                fnOnSelect={() => handleFillFromHistory(objItem.strName)}
+                // ✨ CAMBIO AQUÍ: Ahora enviamos objItem completo en lugar de solo strName
+                fnOnSelect={() => handleFillFromHistory(objItem)} 
               />
             ))}
 

@@ -676,6 +676,7 @@ model HistorialBusqueda {
   Zona                    Zona?        @relation(fields: [id_zona], references: [id_zona], onDelete: NoAction, onUpdate: NoAction)
   Usuario                 Usuario      @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
+  @@unique([id_usuario, mapbox_id])
   @@schema("public")
 }
 
