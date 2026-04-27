@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"; 
 import { useCitySearch } from "../hooks/useCitySearch";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
+import { useVerifyJWT } from "../hooks/useVerifyJWT"; 
 
 import GenericDropdown from "./filterPanelSubcomponents/genericDropdown";
 import CitySearchInput from "./filterPanelSubcomponents/citySearchInput";
@@ -26,7 +27,14 @@ export default function FilterPanel() {
   const [strPropertyType, setStrPropertyType] = useState<string | null>(null);
   const [strOpenDropdown, setStrOpenDropdown] = useState<"operation" | "type" | null>(null);
 
-  const citySearchHook = useCitySearch(); 
+  // 1. Obtenemos el usuario autenticado y su estado de carga
+  const { user, loading } = useVerifyJWT();
+
+  // 2. Le pasamos el usuario al hook del buscador para activar sus privilegios
+  const citySearchHook = useCitySearch({ 
+    objUser: user, 
+    bolIsAuthLoading: loading 
+  }); 
 
   const actionBtnHover = useHoverAnimation(false, false, 'pointer'); 
   const chipBtnHover = useHoverAnimation(true, true, 'pointer'); 
@@ -56,6 +64,20 @@ export default function FilterPanel() {
     if (strPropertyType) objParams.set("tipo", strPropertyType);
     if (ciudadSeleccionada.trim()) objParams.set("ciudad", ciudadSeleccionada.trim());
     if (bolAvanzado) objParams.set("avanzado", "true");
+    if (ciudadSeleccionada.trim() && arrOperations.length > 0) {
+      for (const strOp of arrOperations) {
+        fetch("/api/home/reporte", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lugar: ciudadSeleccionada.trim(),
+            operacion: strOp.toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, ""),
+          }),
+        }).catch(() => {});
+      }
+    }
 
     const strQuery = objParams.toString();
     objRouter.push(strQuery ? `/busqueda?${strQuery}` : "/busqueda");

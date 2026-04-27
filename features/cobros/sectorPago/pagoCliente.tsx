@@ -58,9 +58,12 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
         
         {/* Contenedor Superior (Título y Descripción) */}
         <div className="flex flex-col">
-          {/* Botón Volver solo para móvil (arriba según tu lógica previa) */}
-          <div className="block md:hidden mb-6">
-            <Link href={`/cobros/planes?id=${user?.id}`}>
+          {/* Botón Volver solo para móvil*/}
+          <div className="md:hidden mb-6">
+            <Link 
+              href={`/cobros/planes?id=${user?.id}`} 
+              className="w-fit block"
+            >
               <Button variant="default" className="font-bold uppercase text-xs">
                 Volver
               </Button>
@@ -155,7 +158,10 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
 
         {/* Botón Volver para PC: Pegado abajo */}
         <div className="hidden md:block mt-10">
-          <Link href={`/cobros/planes?id=${user?.id}`}>
+          <Link 
+            href={`/cobros/planes?id=${user?.id}`} 
+            className="w-fit block"
+          >
             <Button variant="default" className="font-bold uppercase flex items-center transition-all duration-300 cursor-pointer hover:bg-primary/80">
               <ArrowLeft className="h-4 w-4 mr-2" /> Volver
             </Button>
@@ -254,7 +260,13 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                     </div>
                     
                     <button
-                      onClick={() => setArchivoSeleccionado(null)}
+                      onClick={() => {
+                        setArchivoSeleccionado(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                        }
+                      }}
+                      
                       className="ml-4 p-2 hover:bg-red-100 rounded-full transition-all group cursor-pointer"
                       title="Quitar archivo"
                       type="button"

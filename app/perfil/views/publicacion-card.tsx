@@ -52,9 +52,11 @@ export default function PublicacionCard({
   onCambiarEstado,
 }: PublicacionCardProps) {
   const router = useRouter();
-  const [activo, setActivo] = useState(publicacion.id_estado === 1);
+  const [activo, setActivo] = useState(publicacion.id_estado !== 4);
   const [bloqueado, setBloqueado] = useState(false);
-
+  const [estadoPrevio, setEstadoPrevio] = useState(
+  publicacion.id_estado !== 4 ? publicacion.id_estado : 1);
+  
   const strEtiqueta = [publicacion.tipo, publicacion.tipoOperacion]
     .filter(Boolean)
     .join(" en ")
@@ -110,7 +112,14 @@ export default function PublicacionCard({
                   onCheckedChange={async (checked) => {
                     setBloqueado(true);
                     setActivo(checked);
-                    await onCambiarEstado(publicacion.id, checked ? 1 : 4);
+
+                    if (checked) {
+                      await onCambiarEstado(publicacion.id, estadoPrevio);
+                    } else {
+                      setEstadoPrevio(publicacion.id_estado);
+                      await onCambiarEstado(publicacion.id, 4);
+                    }
+
                     setBloqueado(false);
                   }}
                 />
@@ -185,6 +194,14 @@ export default function PublicacionCard({
                 }
               >
                 Ver Detalle
+              </Button>
+              <Button
+                variant="azul"
+                size="sm"
+                className="flex-1 min-[480px]:flex-none"
+                /*onClick={() => router.push(`/publicacion/editar/${publicacion.id}`,)}*/
+              >
+                Editar
               </Button>
               <Button
                 size="sm"

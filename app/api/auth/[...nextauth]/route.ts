@@ -1,12 +1,15 @@
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import DiscordProvider from "next-auth/providers/discord"
+import FacebookProvider from "next-auth/providers/facebook"
 import CredentialsProvider from "next-auth/providers/credentials"
+import type { NextAuthOptions } from "next-auth"
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const, // 👈 fix error 1
   },
 
   providers: [
@@ -16,10 +19,17 @@ const handler = NextAuth({
       authorization: {
         params: { 
           prompt: "select_account consent",
-
           access_type: "offline",
         },
       },
+    }),
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -31,36 +41,28 @@ const handler = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-
         try {
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
-
-          // Autenticar contra Supabase
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           })
-
           if (error || !data?.user) {
             console.error("Error autenticando:", error?.message)
             return null
           }
-
-          // Obtener datos del usuario
           const { data: userData } = await supabase
             .from("Usuario")
             .select("*")
             .eq("id_usuario", data.user.id)
             .maybeSingle()
-
           if (!userData) {
             return null
           }
-
           return {
             id: data.user.id,
             email: data.user.email,
@@ -75,62 +77,98 @@ const handler = NextAuth({
   ],
 
   callbacks: {
-
     async signIn({ user, account }: any) {
-      // Permitir credenciales sin account
       if (!account) {
         return true
       }
       try {
         if (account?.provider === "google") {
+          if (!user?.email) return false
+
           const { createClient } = await import("@supabase/supabase-js")
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           )
 
-          const { data: existingUser } = await supabase
+          const providerAccountId = account.providerAccountId as string | undefined
+          if (!providerAccountId) return false
+
+          const { data: existingByGoogle } = await supabase
+            .from("Usuario")
+            .select("id_usuario")
+            .eq("google_id", providerAccountId)
+            .maybeSingle()
+
+          if (existingByGoogle?.id_usuario) {
+            return true
+          }
+
+          const { data: existingByEmail } = await supabase
             .from("Usuario")
             .select("id_usuario")
             .eq("email", user.email)
             .maybeSingle()
 
-          if (existingUser) {
+          const nombre = user.name?.split(" ")[0] ?? ""
+          const apellido = user.name?.split(" ").slice(1).join(" ") ?? ""
+
+          if (existingByEmail?.id_usuario) {
+            await supabase
+              .from("Usuario")
+              .update({
+                google_id: providerAccountId,
+                url_foto_perfil: user.image ?? null,
+                nombres: nombre,
+                apellidos: apellido,
+              })
+              .eq("id_usuario", existingByEmail.id_usuario)
             return true
           }
 
-          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-            email: user.email!,
-            email_confirm: true,
-            user_metadata: {
-              nombre: user.name?.split(" ")[0] ?? "",
-              apellido: user.name?.split(" ").slice(1).join(" ") ?? "",
-            }
-          })
-          if (authError) {
-            console.error("Error creando en auth.users:", authError)
-            return "/api/google-cancelado"
+          const { data: authData, error: authError } =
+            await supabase.auth.admin.createUser({
+              email: user.email,
+              password: crypto.randomUUID() + crypto.randomUUID(),
+              email_confirm: true,
+              user_metadata: { nombre, apellido },
+            })
+
+          if (authError || !authData.user) {
+            console.error("Error creando usuario en Supabase Auth:", authError)
+            return false
           }
 
-          const supabaseUserId = authData.user.id
-
-          const { error: dbError } = await supabase.from("Usuario").upsert({
-            id_usuario: supabaseUserId,
+          const { error: dbError } = await supabase.from("Usuario").insert({
+            id_usuario: authData.user.id,
             email: user.email,
-            nombres: user.name?.split(" ")[0] ?? "",
-            apellidos: user.name?.split(" ").slice(1).join(" ") ?? "",
-            google_id: account.providerAccountId,
+            nombres: nombre,
+            apellidos: apellido,
+            google_id: providerAccountId,
             url_foto_perfil: user.image ?? null,
             rol: 2,
             estado: 1,
-          }, { onConflict: "id_usuario" })
+          })
 
           if (dbError) {
-            console.error("Error insertando en tabla Usuario:", dbError)
-            await supabase.auth.admin.deleteUser(supabaseUserId)
-            return "/api/google-cancelado"
+            console.error("Error creando usuario en tabla Usuario:", dbError)
+            await supabase.auth.admin.deleteUser(authData.user.id)
+            return false
           }
+
+          console.log("Usuario creado en Supabase Auth + tabla Usuario")
         }
+
+        if (account.provider === "discord") {
+          const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
+          return await handleDiscordSignIn(user, account)
+        }
+
+        if (account.provider === "facebook") {
+          const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
+          return await handleFacebookSignIn(user, account)
+        }
+
         return true
       } catch (error) {
         console.error("Error signIn:", error)
@@ -142,13 +180,14 @@ const handler = NextAuth({
       if (user?.id) {
         token.id = user.id;
       }
-      
-      if (account?.provider === "google" && user?.email) {
+
+      if (account?.provider && user?.email) {
         const { createClient } = await import("@supabase/supabase-js")
         const supabase = createClient(
-          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
+
         const { data } = await supabase
           .from("Usuario")
           .select("id_usuario")
@@ -157,6 +196,21 @@ const handler = NextAuth({
 
         if (data?.id_usuario) {
           token.id = data.id_usuario
+          return token
+        }
+
+        if (account.provider === "google") {
+          const providerAccountId = account.providerAccountId as string | undefined
+
+          if (providerAccountId) {
+            const { data: userRow } = await supabase
+              .from("Usuario")
+              .select("id_usuario")
+              .eq("google_id", providerAccountId)
+              .maybeSingle()
+
+            if (userRow?.id_usuario) token.id = userRow.id_usuario
+          }
         }
       }
       return token
@@ -167,23 +221,9 @@ const handler = NextAuth({
         session.user.id = token.id as string
       }
       return session
-
     },
 
-    async redirect({ url, baseUrl }: any) {
-      if (
-        url.includes("error=Callback") ||
-        url.includes("error=OAuthCallback") ||
-        url.includes("access_denied")
-      ) {
-        return baseUrl
-      }
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      if (url.startsWith(baseUrl)) return url
-      return baseUrl
-
-    },
-
+    // 👇 fix error 2: solo un redirect
     async redirect({ url, baseUrl }: any) {
       if (
         url.includes("error=Callback") ||
@@ -196,14 +236,13 @@ const handler = NextAuth({
       if (url.startsWith(baseUrl)) return url
       return baseUrl
     },
-
   },
 
   pages: {
     signIn: "/api/google-cancelado",
     error: "/api/google-cancelado",
   },
+}
 
-})
-
+const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }

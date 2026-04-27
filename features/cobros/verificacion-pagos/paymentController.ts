@@ -84,10 +84,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     const objUpdatedPayment = await prisma.$transaction(async (tx) => {
       const objCurrentPayment = await tx.detallePago.findUnique({
         where: { id_detalle: intId },
-        include: { 
-          PlanPublicacion: true, 
-          Usuario: { select: { cant_publicaciones_restantes: true } } 
-        }
+        include: { PlanPublicacion: true }
       });
 
       if (!objCurrentPayment) {
@@ -106,22 +103,109 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         
         const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
         const strUserId = objCurrentPayment.id_usuario;
+        const intPlanId = objCurrentPayment.id_plan;
 
-        if (strUserId) {
-          //Se asigna la cantidad del nuevo plan
+        if (strUserId && intPlanId) {
+          // --- INICIO LÓGICA HU6 (Upgrade / Downgrade) ---
+          const estadoActivo = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Activo' } });
+          const estadoSuspendido = await tx.estadoPublicacion.findFirst({ where: { nombre_estado: 'Suspendido' } });
+
+          if (estadoActivo && estadoSuspendido) {
+            // Obtener publicaciones del usuario ordenadas por las más recientes primero
+            const publicaciones = await tx.publicacion.findMany({
+              where: { id_usuario: strUserId },
+              orderBy: { fecha_creacion: 'desc' }
+            });
+
+            const activas = publicaciones.filter(p => p.id_estado === estadoActivo.id_estado);
+            const suspendidas = publicaciones.filter(p => p.id_estado === estadoSuspendido.id_estado);
+
+            if (activas.length > intNewQuota) {
+              // Downgrade: Si excede el cupo, ssuspender las MÁS RECIENTES
+              const exceso = activas.length - intNewQuota;
+              const paraSuspender = activas.slice(0, exceso); 
+              
+              if (paraSuspender.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraSuspender.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoSuspendido.id_estado }
+                });
+              }
+            } else if (activas.length < intNewQuota && suspendidas.length > 0) {
+              // Upgrade/Renovación: Reactivar las suspendidas hasta alcanzar el nuevo límite
+              const cupoDisponible = intNewQuota - activas.length;
+              const paraReactivar = suspendidas.slice(0, cupoDisponible);
+
+              if (paraReactivar.length > 0) {
+                await tx.publicacion.updateMany({
+                  where: { id_publicacion: { in: paraReactivar.map(p => p.id_publicacion) } },
+                  data: { id_estado: estadoActivo.id_estado }
+                });
+              }
+            }
+          }
+          // --- FIN LÓGICA HU6 ---
+
+          // Pa ver si ya tiene una suscripción
+          const objExistingSub = await tx.suscripcion.findUnique({
+            where: { id_usuario: strUserId }
+          });
+
+          const objNow = new Date();
+          let objFechaInicioBase = objNow;
+
           await tx.usuario.update({
             where: { id_usuario: strUserId },
             data: {
               cant_publicaciones_restantes: intNewQuota
             }
           });
+          
+          //si es el mismo plan y no se venció, se acumula el tiempo
+          if (objExistingSub && objExistingSub.id_plan === intPlanId && objExistingSub.fecha_fin > objNow) {
+            objFechaInicioBase = new Date(objExistingSub.fecha_fin);
+          } else {
+            //sino empieza hoy...
+            objFechaInicioBase = objNow;
+          }
+          
+          const objFechaFin = new Date(objFechaInicioBase);
+          const strModalidad = objCurrentPayment.tiempo_pago || 'mensual';
+          // Si es anual se suma 1 año exacto, sino ps, se suma 30 días
+          if (strModalidad.toLowerCase().includes('anual')) {
+            objFechaFin.setFullYear(objFechaFin.getFullYear() + 1);
+          } else {
+            objFechaFin.setDate(objFechaFin.getDate() + 30);
+          }
+          
+          //Crea/actualiza suscripción
+          await tx.suscripcion.upsert({
+            where: { id_usuario: strUserId },
+            update: {
+              id_plan: intPlanId,
+              fecha_inicio: objNow,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            },
+            create: {
+              id_usuario: strUserId,
+              id_plan: intPlanId,
+              fecha_inicio: objNow,
+              fecha_fin: objFechaFin,
+              modalidad: strModalidad,
+              notificado_7d: false,
+              notificado_48h: false
+            }
+          });
         }
       }
 
       return objPaymentResult;
-      
+
     });
-    
+
     console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
@@ -133,5 +217,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
-  
+
 };

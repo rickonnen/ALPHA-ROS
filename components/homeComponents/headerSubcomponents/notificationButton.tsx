@@ -34,7 +34,7 @@ export const NotificationButton = ({
   useClickOutside(
     [refContainer],
     () => setBolShowNotifications(false),
-    bolShowNotifications
+    { enabled:bolShowNotifications }
   );
 
   const handleToggleNotifications = () => {
