@@ -20,6 +20,7 @@ interface Autenticacion2FAProps {
 
 export default function Autenticacion2FAView({ id_usuario, primary_provider, onBack }: Autenticacion2FAProps) {
   const [bolActivado, setBolActivado] = useState(false);
+  const [cargandoEstado, setCargandoEstado] = useState(true);
   const [secreto, setSecreto] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
   const [copiado, setCopiado] = useState(false);
@@ -43,6 +44,8 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
         }
       } catch (error) {
         console.error("Error cargando estado 2FA:", error);
+      } finally {
+        setCargandoEstado(false); 
       }
     };
     cargarEstado2FA();
@@ -130,20 +133,25 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
               ? "El segundo factor está activado."
               : "Obtén un codigo de alguna app de autenticación."}
           </p>
-          <button
-            type="button"
-            onClick={handleToggle}
-            aria-label={bolActivado ? "Desactivar 2FA" : "Activar 2FA"}
-            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none ${
-              bolActivado ? "bg-white/80" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                bolActivado ? "translate-x-8" : "translate-x-1"
+          {/* Toggle real cuando el estado ya se conoce */}
+          {cargandoEstado ? (
+            <div className="relative inline-flex h-7 w-14 items-center rounded-full bg-white/10 animate-pulse" />
+          ) : (
+            <button
+              type="button"
+              onClick={handleToggle}
+              aria-label={bolActivado ? "Desactivar 2FA" : "Activar 2FA"}
+              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none ${
+                bolActivado ? "bg-white/80" : "bg-white/20"
               }`}
-            />
-          </button>
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                  bolActivado ? "translate-x-8" : "translate-x-1"
+                }`}
+              />
+            </button>
+          )}
         </div>
       </div>
 
@@ -184,7 +192,8 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
                 <span className="font-bold">2.</span> Escanea este codigo QR o copia la clave secreta.
               </p>
 
-              <div className="flex gap-6 items-start">
+              {/* flex-col en mobile, flex-row en desktop */}
+              <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                 {/* QR */}
                 <div className="flex flex-col items-center gap-3 flex-shrink-0">
                   {qrCode && (
@@ -192,19 +201,11 @@ export default function Autenticacion2FAView({ id_usuario, primary_provider, onB
                       <img src={qrCode} alt="QR Code 2FA" className="w-36 h-36" />
                     </div>
                   )}
-                  <button
-                    type="button"
-                    title="Mostrar código QR"
-                    className="px-4 py-2 text-xs font-bold text-white/70 border border-white/20 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
-                  >
-                    <QrCode className="h-3.5 w-3.5" />
-                    CODIGO QR
-                  </button>
                 </div>
 
                 {/* Clave secreta */}
-                <div className="flex flex-col items-center gap-3 flex-1">
-                  <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 min-h-[144px]">
+                <div className="flex flex-col items-center gap-3 w-full sm:flex-1">
+                  <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 sm:min-h-[144px]">
                     {secreto.match(/.{1,4}/g)?.reduce<string[][]>((rows, chunk, i) => {
                       const rowIndex = Math.floor(i / 3);
                       if (!rows[rowIndex]) rows[rowIndex] = [];
