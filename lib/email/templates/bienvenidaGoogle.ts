@@ -16,7 +16,7 @@ export function templateBienvenidaGoogle(nombre: string): string {
 
         <!-- Header -->
         <div style="background:#1F3A4D;padding:28px 24px;text-align:center;color:white;border-radius:10px;margin:0 24px">
-<h1 style="margin:0;font-size:22px;font-weight:700">TEST NUEVO - ¡Bienvenido a PROPBOL!</h1>         
+<h1 style="margin:0;font-size:22px;font-weight:700"> Bienvenido a PROPBOL</h1>         
  <p style="margin:8px 0 0 0;font-size:13px;opacity:0.8">Registrado con Google</p>
         </div>
 
