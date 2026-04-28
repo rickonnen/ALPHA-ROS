@@ -43,7 +43,7 @@ export interface Publicacion {
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
-  onCambiarEstado: (id: string, nuevoEstado: number) => Promise<void>;
+  onCambiarEstado: (id: string, nuevoEstado: number) => Promise<boolean>;
 }
 
 export default function PublicacionCard({
@@ -111,15 +111,16 @@ export default function PublicacionCard({
                   className="h-5 w-9"
                   onCheckedChange={async (checked) => {
                     setBloqueado(true);
-                    setActivo(checked);
-
+                    let exito = false;
                     if (checked) {
-                      await onCambiarEstado(publicacion.id, estadoPrevio);
+                      exito = await onCambiarEstado(publicacion.id, estadoPrevio);
                     } else {
                       setEstadoPrevio(publicacion.id_estado);
-                      await onCambiarEstado(publicacion.id, 4);
+                      exito = await onCambiarEstado(publicacion.id, 4);
                     }
-
+                    if (exito) {
+                      setActivo(checked);
+                    }
                     setBloqueado(false);
                   }}
                 />

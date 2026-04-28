@@ -163,7 +163,8 @@ export default function PublicacionesView({
       setEliminando(false);
     }
   };
-  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number) => {
+
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number): Promise<boolean> => {
     try {
       setError(null);
       // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
@@ -172,22 +173,33 @@ export default function PublicacionesView({
       const res = await fetch(url, { method: "PATCH" });
 
       if (res.ok) {
+        const data = await res.json();
         // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
         setPublicaciones((prev) =>
           prev.map((p) =>
             p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
           ),
         );
+        return true; 
+
       } else {
         const errorData = await res.json();
+
         console.error("Error desde el servidor:", errorData.error);
-        setError("No se pudo actualizar el estado de la publicación.");
+        if (res.status === 400) {
+           setBolShowModalPlan(true); 
+        } else {
+           setError(errorData.error || "No se pudo actualizar el estado de la publicación.");
+        }
+        return false;
       }
     } catch (err) {
       console.error("Error de red:", err);
       setError("Error de conexión al intentar cambiar el estado.");
+      return false;
     }
   };
+  
   const handleAgregar = async () => {
     if (!user) {
       router.push("/login");
