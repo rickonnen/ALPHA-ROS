@@ -29,6 +29,20 @@ export function usePaymentActions(onPaymentUpdated?: () => void) {
       });
 
       if (objResponse.ok) {
+        try {
+          await fetch('/api/admin/envioNotificacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id_detalle: objSelectedPayment.intId,
+              decision: strNewStatus === 'Aceptado' ? 'ACEPTAR' : 'RECHAZAR',
+              motivo_rechazo: strReason || null
+            }),
+          });
+          console.log("Notificación enviada correctamente");
+        } catch (errorNotif) {
+          console.error("Error al enviar la notificación:", errorNotif);
+        }
         setBolShowAcceptModal(false);
         setBolShowRejectModal(false);
         if (onPaymentUpdated) onPaymentUpdated();

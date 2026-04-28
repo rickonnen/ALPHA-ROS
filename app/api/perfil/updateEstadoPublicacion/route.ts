@@ -1,8 +1,8 @@
 /* Dev: Rene Gabriel Vera Portanda
-    Fecha: 17/04/2026
+    Fecha: 27/04/2026
     Funcionalidad: PATCH /api/perfil/updateEstadoPublicacion
       - Cambia el estado de una publicación (ej. 1 Activa, 4 Suspendida)
-      - Valida que el usuario sea el dueño de la publicación
+      - Valida límites dinámicos consultando la tabla Suscripcion y PlanPublicacion
       - Query params: ?id_usuario=...&id_publicacion=...&id_estado=...
 */
 
@@ -29,43 +29,63 @@ export async function PATCH(req: NextRequest) {
   const idEst = Number(id_estado);
 
   try {
-    // 2. Buscar la publicación para verificar que existe
-    const publicacion = await prisma.publicacion.findUnique({
-      where: { id_publicacion: idPub },
-    });
+      const publicacion = await prisma.publicacion.findUnique({
+        where: { id_publicacion: idPub },
+      });
 
-    if (!publicacion) {
-      return NextResponse.json(
-        { error: "Publicación no encontrada" },
-        { status: 404 }
-      );
-    }
+      if (!publicacion) {
+        return NextResponse.json({ error: "Publicación no encontrada" }, { status: 404 });
+      }
 
-    // 3. Verificamos que el usuario sea el dueño (Seguridad)
-    if (publicacion.id_usuario !== id_usuario) {
-      return NextResponse.json(
-        { error: "No tienes permiso para modificar esta publicación" },
-        { status: 403 }
-      );
-    }
+      if (publicacion.id_usuario !== id_usuario) {
+        return NextResponse.json({ error: "No tienes permiso" }, { status: 403 });
+      }
+
+      const estadoAnterior = publicacion.id_estado ?? -1;
+      const estadosQueOcupanCupo = [1, 2, 3];
+
+      if (!estadosQueOcupanCupo.includes(estadoAnterior) && estadosQueOcupanCupo.includes(idEst)) {
+        // 1. Buscamos la suscripción del usuario incluyendo los datos del plan asociado
+        const suscripcion = await prisma.suscripcion.findUnique({
+          where: { id_usuario: id_usuario },
+          include: { PlanPublicacion: true },
+        });
+        const limiteTotal = suscripcion?.PlanPublicacion?.cant_publicaciones ?? 0;
+
+        // 2. Conteo de publicaciones activas (estado 1,2,3)
+        const activasActuales = await prisma.publicacion.count({
+          where: { 
+              id_usuario: id_usuario, 
+              id_estado:{ in: estadosQueOcupanCupo },
+            },
+        });
+
+        // 3. Validación de intento de activación
+        if (activasActuales >= limiteTotal) {
+          return NextResponse.json(
+            { error: "No tienes cupos disponibles. Adquiere un plan para publicar." },
+            { status: 400 }
+          );
+        }
+      }
 
     // 4. Actualizamos el estado
-    await prisma.publicacion.update({
-      where: { id_publicacion: idPub },
-      data: {
-        id_estado: idEst,
-      },
-    });
+      await prisma.publicacion.update({
+        where: { id_publicacion: idPub },
+        data: {
+          id_estado: idEst,
+        },
+      });
 
-    return NextResponse.json(
-      { message: "Estado de la publicación actualizado correctamente" },
-      { status: 200 }
-    );
-  } catch (error) {
+      return NextResponse.json(
+        { message: "Estado de la publicación actualizado correctamente" },
+        { status: 200 }
+      );
+    } catch (error) {
     console.error("Error al actualizar el estado de la publicación:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+      return NextResponse.json(
+        { error: "Error interno del servidor" }, 
+        { status: 500 }
+      );
   }
 }
