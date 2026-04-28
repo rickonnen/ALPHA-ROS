@@ -43,14 +43,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar código TOTP con tolerancia de ±60 segundos
-    // window: 2 acepta códigos de hasta hace 60 segundos (permite sincronización de tiempo)
-    const esValido = speakeasy.totp.verify({
-      secret: secreto,
-      encoding: "base32",
-      token: codigo,
-      window: 2, // Permite ±2 ventanas (±60 segundos) para sincronización de tiempo
-    });
+    // Buscar coincidencia en ventanas de tiempo cercanas (±3 minutos)
+    let esValido = false;
+
+    for (let i = -6; i <= 6; i++) {
+      const tiempoVentana = ahora + i * 30;
+      const codigoVentana = speakeasy.totp({
+        secret: secreto,
+        encoding: "base32",
+        time: tiempoVentana,
+      });
+      if (codigoVentana === codigo) {
+        esValido = true;
+        break;
+      }
+    }
 
     // Manejar intentos fallidos / exitosos
     if (!esValido) {
