@@ -50,6 +50,7 @@ interface SeguridadProps {
   onSuccess: () => void;
   onTelefonosChange: (nuevosTelefonos: string[]) => void;
   onPerfilActualizado: () => void;
+  initialSubView?: string;
 }
 
 // Definir el tipo para los metadatos OTP
@@ -58,8 +59,8 @@ interface OtpMeta {
   resendAfterSec?: number;
 }
 
-export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
-  const [subView, setSubView] = useState<string>("menu");
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado, initialSubView }: SeguridadProps) {
+  const [subView, setSubView] = useState<string>(initialSubView ?? "menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState<string>("");
   const [objOtpMeta, setObjOtpMeta] = useState<OtpMeta>({});
   const [objUsuario, setObjUsuario] = useState<any>(null);

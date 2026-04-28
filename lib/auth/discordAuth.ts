@@ -10,14 +10,18 @@ export async function handleDiscordSignIn(user: any, account: any) {
   // 1. ¿Ya existe este discord_id en Redes_vinculadas?
   const { data: redExistente } = await dbInstance
     .from("RedesVinculadas")
-    .select("id_usuario")
-    .eq("proveedor", "discord")
+    .select("id_usuario, estado") 
+   .eq("proveedor", "discord")
     .eq("id_proveedor", account.providerAccountId)
-    .eq("estado", true)
+    //.eq("estado", true)
     .maybeSingle()
 
-  if (redExistente) return true // Ya existe → solo iniciar sesión
-
+    if (redExistente) {
+      if (redExistente.estado === true) return true // DC activo → iniciar sesión
+      if (redExistente.estado === false) {           //DC desvinculado → bloquear
+        return "/auth/discord-desvinculado"
+      }
+    }
   // 2. ¿Ya existe un usuario con ese email?
   const { data: usuarioExistente } = await dbInstance
     .from("Usuario")
