@@ -43,6 +43,11 @@
  * extracción de regexSoloLetras y regexSinAcentos fuera del handler para evitar
  * reinstanciación en cada request
  */
+/** Dev: Alvarado Alisson Dalet - sow-AlissonA
+ * Fecha: 22/04/2026
+ * Fix: Validacion de username duplicado, verifica si otro usuario ya usa el mismo
+ *      username antes de ejecutar el update
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -199,6 +204,20 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(
         { error: `El username debe contener al menos ${intMinLetrasUsername} letras.` },
         { status: 400 }
+      );
+    }
+
+    // Verificar si el username ya está en uso por otro usuario
+    const objUsuarioExistente = await prisma.usuario.findFirst({
+      where: {
+        username: strUsername,
+        NOT: { id_usuario },
+      },
+    });
+    if (objUsuarioExistente) {
+      return NextResponse.json(
+        { error: "El nombre de usuario ya está en uso. Por favor elige otro." },
+        { status: 409 }
       );
     }
 

@@ -130,9 +130,9 @@
   --secondary-foreground: oklch(0.952 0.01 84.8);
 
   /* Título Principal (Hero/Propiedad) */
-  --text-3xl: 1.875rem; 
+  --text-3xl: 1.80rem; 
   /* Subtítulos (Secciones destacadas) */
-  --text-xl: 1.25rem;
+  --text-xl: 1.30rem;
   /* Cuerpo e Información general */
   --text-base: 1rem;
 }
@@ -190,5 +190,30 @@
 
   body {
     @apply antialiased;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar personalizado moderno */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent; 
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
   }
 }

@@ -11,14 +11,24 @@ import SuccessModal from "./SuccessModal";
 import OTP2FAModal from "./OTP2FAModal";
 import { useAuth } from "./AuthContext";
 
-  import { SignInFacebook } from "./FacebookSignInButton";
-  import { SignInDiscord } from "./DiscordSignInButton";
+import { SignInFacebook } from "./FacebookSignInButton";
+import { SignInDiscord } from "./DiscordSignInButton";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
   onClose?: () => void;
   onForgotPassword?: () => void;
 }
+
+interface LoginTelemetry {
+  latitud: number | null;
+  longitud: number | null;
+}
+
+const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
+const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
+const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
+const GOOGLE_TELEMETRY_CREATED_AT_KEY = "google_telemetry_created_at";
 
 export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
   const router = useRouter();
@@ -84,6 +94,54 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     return email.trim() !== "" && password !== "" && Object.keys(errors).length === 0;
   }
 
+  function getLoginTelemetry(): Promise<LoginTelemetry> {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      return Promise.resolve({ latitud: null, longitud: null });
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitud: position.coords.latitude,
+            longitud: position.coords.longitude,
+          });
+        },
+        () => {
+          resolve({ latitud: null, longitud: null });
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 60000,
+        }
+      );
+    });
+  }
+
+  function savePendingGoogleTelemetry(telemetry: LoginTelemetry) {
+    sessionStorage.setItem(GOOGLE_TELEMETRY_PENDING_KEY, "1");
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LAT_KEY,
+      telemetry.latitud === null ? "null" : String(telemetry.latitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_LNG_KEY,
+      telemetry.longitud === null ? "null" : String(telemetry.longitud)
+    );
+    sessionStorage.setItem(
+      GOOGLE_TELEMETRY_CREATED_AT_KEY,
+      String(Date.now())
+    );
+  }
+
+  function clearPendingGoogleTelemetry() {
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_PENDING_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LAT_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_LNG_KEY);
+    sessionStorage.removeItem(GOOGLE_TELEMETRY_CREATED_AT_KEY);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -97,7 +155,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     setCuentaDesactivada(false);
     setLoading(true);
     try {
-      await login(email, password);
+      const telemetry = await getLoginTelemetry();
+      await login(email, password, telemetry);
       const resMe = await fetch("/api/auth/me");
       if (resMe.ok) {
         const dataMe = await resMe.json();
@@ -172,9 +231,11 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     googleClickedRef.current = true;
     setGoogleLoading(true);
     try {
-      // ✅ NUEVO: Usar ruta especial de callback que verifica 2FA
-      await signIn("google", { callbackUrl: "/google-auth-check" });
+      const telemetry = await getLoginTelemetry();
+      savePendingGoogleTelemetry(telemetry);
+      await signIn("google", { callbackUrl: "/" });
     } catch (error) {
+      clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
       setGoogleLoading(false);
     }
@@ -229,29 +290,18 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
 
   // ✅ NUEVO: Manejo de 2FA exitoso
   async function handle2FASuccess() {
-    console.log("[LoginForm] 2FA verificado exitosamente, refrescando usuario...");
     setShow2FAModal(false);
     setPending2FAUserId("");
-    
     // Refrescar el usuario desde el servidor
     const success = await fetchUserFromServer();
-    console.log("[LoginForm] fetchUserFromServer resultado:", success);
-    
     if (success) {
-      const resMe = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-      console.log("[LoginForm] /api/auth/me status:", resMe.status);
-      
+      const resMe = await fetch("/api/auth/me");
       if (resMe.ok) {
         const dataMe = await resMe.json();
-        console.log("[LoginForm] User data:", dataMe);
         setUserRol(dataMe.user.rol);
       }
-      console.log("[LoginForm] Mostrando modal de éxito");
       setShowSuccess(true);
     } else {
-      console.error("[LoginForm] Error fetching user");
       setGeneralError("Error al cargar tu usuario después de 2FA");
     }
   }

@@ -74,18 +74,13 @@ export const MobileMenu = ({
 
   return (
     <>
-      {/* permite cerrar el menú al tocar cualquier área fuera del panel */}
-      <div 
-        className="lg:hidden fixed inset-0 z-40" 
-        onClick={onClose} 
-        aria-hidden="true" 
-      />
+      {/* SE ELIMINÓ EL DIV INVISIBLE: El hook useClickOutside del Header ahora gestiona esto sin interferencias */}
 
       {/* panel de navegación movil posición derecha rectangulares */}
       <nav
         ref={menuRef}
         aria-label="menú móvil"
-        className="lg:hidden absolute top-18 right-0 w-full landscape:w-[35%] max-h-[calc(100vh-4.5rem)] overflow-y-auto bg-primary text-primary-foreground shadow-2xl flex flex-col px-8 py-8 z-50 animate-in slide-in-from-right-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
+        className="lg:hidden absolute top-18 right-0 w-full landscape:w-[35%] h-[calc(100vh-4.5rem)] overflow-y-auto bg-primary text-primary-foreground shadow-2xl flex flex-col px-8 py-8 z-50 animate-in slide-in-from-right-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
         onClick={(e) => e.stopPropagation()}
       >
         
