@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, codigo } = await request.json();
 
-    // ✅ Validación estricta de parámetros
+    //  Validación estricta de parámetros
     if (!userId || typeof userId !== "string" || userId.trim() === "") {
       console.error("[2FA LOGIN] userId inválido o vacío:", userId);
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ✅ Validar que el secret sea válido y no vacío
+    //  Validar que el secret sea válido y no vacío
     const secret = usuario.dos_fa_secreto.trim();
     if (!secret || secret.length === 0) {
       console.error(`[2FA LOGIN] Secret 2FA vacío para usuario: ${userId}`);
@@ -89,28 +89,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar código TOTP (buscar en ±3 minutos como en setup)
-    const ahora = Math.floor(Date.now() / 1000);
-    let esValido = false;
-
-    for (let i = -6; i <= 6; i++) {
-      const tiempoVentana = ahora + (i * 30);
-      try {
-        const codigoVentana = speakeasy.totp({
-          secret: secret,
-          encoding: "base32",
-          time: tiempoVentana,
-        });
-
-        if (codigoVentana === codigo) {
-          esValido = true;
-          break;
-        }
-      } catch (err: any) {
-        console.error(`[2FA LOGIN] Error generando TOTP en ventana ${i}:`, err.message);
-        // Continuar con la siguiente ventana si hay error
-      }
-    }
+    // Verificar código TOTP con tolerancia de ±60 segundos
+    // window: 2 acepta códigos de hasta hace 60 segundos (permite sincronización de tiempo)
+    const esValido = speakeasy.totp.verify({
+      secret: secret,
+      encoding: "base32",
+      token: codigo,
+      window: 2, // Permite ±2 ventanas (±60 segundos) para sincronización de tiempo
+    });
 
     if (!esValido) {
       console.log(`[2FA LOGIN] Código inválido para usuario: ${userId}`);
