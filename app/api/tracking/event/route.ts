@@ -28,8 +28,10 @@ export interface TrackEventPayload {
   pagina_origen?: string;
 }
 
-function getSessionId(request: NextRequest): string | null {
-  return request.cookies.get('session_id')?.value ?? null;
+function getSessionIdOrCreate(request: NextRequest): { sessionId: string; isNew: boolean } {
+  const existing = request.cookies.get('session_id')?.value;
+  if (existing) return { sessionId: existing, isNew: false };
+  return { sessionId: crypto.randomUUID(), isNew: true };
 }
 
 function getUserIdFromToken(request: NextRequest): string | null {
@@ -46,12 +48,8 @@ function getUserIdFromToken(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackEventPayload;
-    const session_id = getSessionId(request);
+    const { sessionId: session_id, isNew } = getSessionIdOrCreate(request);
     const id_usuario = getUserIdFromToken(request);
-
-    if (!session_id) {
-      return NextResponse.json({ success: false, message: 'session_id requerido' }, { status: 400 });
-    }
 
     if (!body.id_publicacion || !body.tipo_evento) {
       return NextResponse.json({ success: false, message: 'Faltan campos requeridos' }, { status: 400 });
@@ -81,7 +79,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    if (isNew) {
+      response.cookies.set('session_id', session_id, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365,
+        path: '/',
+      });
+    }
+    return response;
   } catch (error) {
     console.error('[tracking/event] Error:', error);
     return NextResponse.json({ success: false }, { status: 500 });

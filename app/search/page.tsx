@@ -378,8 +378,18 @@ function SearchPageContent() {
       setSearchResults(resultados);
       setHasSearched(true);
 
+      const OPERACION_ID: Record<string, number> = {
+        alquiler: 1,
+        venta: 2,
+        anticretico: 3,
+      };
+
       const trackPayload = {
         texto_busqueda: searchLocation,
+        id_tipo_operacion:
+          selectedOperation.length === 1 ? OPERACION_ID[selectedOperation[0]] : undefined,
+        id_tipo_inmueble:
+          selectedPropertyTypes.length === 1 ? selectedPropertyTypes[0] : undefined,
         habitaciones: advancedFilterValues.habitaciones ? parseInt(advancedFilterValues.habitaciones) : undefined,
         banos: advancedFilterValues.banos ? parseInt(advancedFilterValues.banos) : undefined,
         precio_min: appliedPriceFilter?.minPrice,
@@ -466,20 +476,29 @@ function SearchPageContent() {
     if (selectedSort === 'mas-recomendados') {
       const fetchRecommendations = async () => {
         try {
-          const response = await fetch('/api/recommendations/personal');
+          const candidate_ids = searchResults.map((item) => item.id_publicacion);
+          const response = await fetch('/api/recommendations/personal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ candidate_ids }),
+          });
           if (response.ok) {
             const data = (await response.json()) as { id_publicacion: number }[];
             setRecommendedIds(data.map((item) => item.id_publicacion));
+          } else {
+            setRecommendedIds([]);
           }
         } catch (error) {
           console.error('Error fetching recommendations:', error);
+          setRecommendedIds([]);
         }
       };
       void fetchRecommendations();
     } else {
       setRecommendedIds([]);
     }
-  }, [selectedSort]);
+  }, [selectedSort, searchResults]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);

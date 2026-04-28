@@ -1,5 +1,5 @@
 'use client';
-import { useState, memo } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import Image from 'next/image';
 import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,9 +54,68 @@ function PropertyCard({
 }: PropertyCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { trackEvent } = useTracking();
-  const viewRef = useCardViewTracking(property.id, 0);
-  
-    const exchangeRate = 6.96;
+
+  const canHover =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  const hoverStartAt = useRef<number | null>(null);
+  const hasHovered = useRef(false);
+  const hasIgnored = useRef(false);
+  const ignoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearIgnoreTimer = useCallback(() => {
+    if (ignoreTimer.current) {
+      clearTimeout(ignoreTimer.current);
+      ignoreTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => clearIgnoreTimer();
+  }, [clearIgnoreTimer]);
+
+  const scheduleIgnoreIfNeeded = useCallback(
+    () => {
+      if (!canHover) return;
+      clearIgnoreTimer();
+      ignoreTimer.current = setTimeout(() => {
+        if (hasHovered.current || hasIgnored.current) return;
+        hasIgnored.current = true;
+        trackEvent(property.id, 'ignorar');
+      }, 30_000);
+    },
+    [canHover, clearIgnoreTimer, property.id, trackEvent]
+  );
+
+  const viewRef = useCardViewTracking(property.id, 0, () => {
+    scheduleIgnoreIfNeeded();
+  });
+
+  const handleMouseEnter = useCallback(() => {
+    if (canHover) {
+      hasHovered.current = true;
+      hoverStartAt.current = Date.now();
+      clearIgnoreTimer();
+    }
+    onMouseEnter?.();
+  }, [canHover, clearIgnoreTimer, onMouseEnter]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (canHover) {
+      const start = hoverStartAt.current;
+      hoverStartAt.current = null;
+      clearIgnoreTimer();
+      if (start != null) {
+        const duration = Math.max(0, Date.now() - start);
+        trackEvent(property.id, 'hover', { duracion_ms: duration });
+      }
+    }
+    onMouseLeave?.();
+  }, [canHover, clearIgnoreTimer, onMouseLeave, property.id, trackEvent]);
+   
+     const exchangeRate = 6.96;
 
     const convertedPrice =
     selectedCurrency === "USD"
@@ -78,10 +137,12 @@ function PropertyCard({
     return (
       <>
         <div 
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
+          ref={viewRef}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           onClick={()=>{
             setIsDetailOpen(true);
+            trackEvent(property.id, 'click');
             if (onClick) onClick();
           }}
           className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 
@@ -182,8 +243,8 @@ function PropertyCard({
   return (
     <div 
       ref={viewRef}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={() => {
         trackEvent(property.id, 'click');
         onClick?.();
@@ -272,7 +333,10 @@ function PropertyCard({
             <Button 
               size="sm" 
               className="h-8 text-[11px]"
-              onClick={() => setIsDetailOpen(true)}
+              onClick={() => {
+                setIsDetailOpen(true);
+                trackEvent(property.id, 'detalle');
+              }}
             >
               Ver Detalle
             </Button>
@@ -284,7 +348,12 @@ function PropertyCard({
               asChild={isContactAvailable}
             >
               {isContactAvailable ? (
-                <a href={`https://wa.me/${telefonoParaWhatsapp}`} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={`https://wa.me/${telefonoParaWhatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackEvent(property.id, 'contacto')}
+                >
                   <MessageCircle className="w-3.5 h-3.5 text-green-600" />
                   <span className="hidden xl:inline">WhatsApp</span>
                 </a>

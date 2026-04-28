@@ -3,7 +3,7 @@
  * Funcionalidad: Retorna las redes vinculadas del usuario con su primary_provider
  */
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route" // 
+import { authOptions } from "@/lib/auth/nextAuthOptions" // 
 
 import { NextResponse } from "next/server"
 import { dbInstance } from "@/lib/auth/dbInstance"

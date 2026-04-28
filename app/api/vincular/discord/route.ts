@@ -3,7 +3,7 @@
  * Funcionalidad: Inicia el flujo OAuth de Discord para vincular desde perfil
  */
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth/nextAuthOptions"
 import { NextResponse } from "next/server"
 
 export async function GET() {
