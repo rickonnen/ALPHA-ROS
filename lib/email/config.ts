@@ -9,7 +9,6 @@ import nodemailer from "nodemailer";
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "PROBOL Notificaciones";
-
 if (!GMAIL_USER || !GMAIL_PASSWORD) {
   console.warn(
     "⚠️ [EMAIL CONFIG] Variables GMAIL_USER o GMAIL_PASSWORD no configuradas. Los emails no se enviarán."

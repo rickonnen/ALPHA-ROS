@@ -73,6 +73,10 @@ export default function RedesView({ onBack }: RedesViewProps) {
     try {
       const res  = await fetch("/api/redes-vinculadas")
       const data = await res.json()
+      if (!res.ok) {
+        setMensaje({ texto: data?.error ?? "Error al cargar las redes vinculadas.", tipo: "error" })
+        return
+      }
       if (data.redes) setRedes(data.redes)
     } catch (err) {
       console.error("Error cargando redes:", err)

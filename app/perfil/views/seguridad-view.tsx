@@ -27,6 +27,11 @@
    Fecha: [fecha]
    Feature: Agrega opción "Estado de Cuenta" al menú de seguridad.
 */
+/* Dev: [Tu nombre] - HU-04
+   Fecha: [fecha]
+   Fix: Pasa prop onLimpiarDatos a EstadoCuentaView para limpiar el historial
+        de visitas del UI inmediatamente al confirmar la desactivación (CA-5).
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -232,6 +237,11 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         id_usuario={id_usuario}
         estadoCuenta={objUsuario?.estado ?? 1}
         onBack={() => setSubView("menu")}
+        onLimpiarDatos={() =>
+          setObjUsuario((prev: any) =>
+            prev ? { ...prev, HistorialVistos: [] } : prev
+          )
+        }
       />
     ),
   };

@@ -3,25 +3,35 @@
  * Funcionalidad: Retorna las redes vinculadas del usuario con su primary_provider
  */
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route" // 
-
-import { NextResponse } from "next/server"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { NextRequest, NextResponse } from "next/server"
 import { dbInstance } from "@/lib/auth/dbInstance"
+import { verify } from "jsonwebtoken"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // 1. Intentar sesión NextAuth (Google/Discord/Facebook)
   const session = await getServerSession(authOptions)
+  let id_usuario: string | null = session?.user?.id ?? null
 
-  // 1. Verificar que hay sesión activa
-  //const session = await getServerSession()
+  // 2. Si no hay sesión NextAuth, intentar con auth_token JWT (credentials)
+  if (!id_usuario) {
+    const token = request.cookies.get("auth_token")?.value
+    if (token) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
+        id_usuario = decoded.userId
+      } catch {
+        // token inválido o expirado
+      }
+    }
+  }
 
-  if (!session?.user?.id) {
+  if (!id_usuario) {
     return NextResponse.json(
       { error: "No autorizado" },
       { status: 401 }
     )
   }
-
-  const id_usuario = session.user.id
 
   try {
     // 2. Obtener primary_provider del usuario
@@ -55,22 +65,24 @@ export async function GET() {
     // 4. Construir respuesta con los 3 proveedores siempre presentes
     const proveedores = ["google", "discord", "facebook"]
 
+    // Para cuentas credentials, primary_provider puede ser null
+    const primaryProvider = usuario.primary_provider ?? "credentials"
+
     const resultado = proveedores.map((proveedor) => {
       const red = redes?.find((r) => r.proveedor === proveedor)
       const esGoogle = proveedor === "google"
 
       return {
         proveedor,
-        // Google muestra el email, Discord y Facebook muestran el id_proveedor
         cuenta: esGoogle
-          ? usuario.email
+          ? (usuario.google_id ? usuario.email : null)
           : red?.id_proveedor ?? null,
         vinculada: esGoogle
           ? !!usuario.google_id
           : red?.estado === true,
         puedeDesvincular: esGoogle
           ? false
-          : proveedor !== usuario.primary_provider,
+          : (primaryProvider !== "credentials" || !!usuario.google_id) && proveedor !== primaryProvider,
       }
     })
 
