@@ -8,7 +8,7 @@
 export const useHoverAnimation = (
   includeColor: boolean = true, 
   includeGlow: boolean = true, 
-  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' = 'pointer',
+  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' | 'default' = 'pointer',
   isAnimated: boolean = true,  
   includeScale: boolean = true 
 ) => {
@@ -19,6 +19,7 @@ export const useHoverAnimation = (
     'not-allowed': 'cursor-not-allowed',
     'grab': 'cursor-grab',
     'zoom-in': 'cursor-zoom-in',
+    'default': 'cursor-default',
   };
 
   const strCursorClass = cursorClasses[cursorType];

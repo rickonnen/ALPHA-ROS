@@ -28,14 +28,18 @@ export function convertPublicacionesToLocations(
 ): Location[] {
   return publicaciones
     .filter((pub) => {
-      // Solo incluir publicaciones que tengan ubicación válida
-      return (
-        pub.ubicacion?.latitud !== undefined &&
-        pub.ubicacion?.longitud !== undefined &&
-        pub.ubicacion.latitud !== null &&
-        pub.ubicacion.longitud !== null
-      );
-    })
+  const lat = Number(pub.ubicacion?.latitud);
+  const lng = Number(pub.ubicacion?.longitud);
+  return (
+    pub.ubicacion?.latitud !== undefined &&
+    pub.ubicacion?.longitud !== undefined &&
+    pub.ubicacion.latitud !== null &&
+    pub.ubicacion.longitud !== null &&
+    !isNaN(lat) && !isNaN(lng) &&
+    isFinite(lat) && isFinite(lng) &&
+    lat !== 0 && lng !== 0
+  );
+})
     .map((pub) => ({
       id: pub.id_publicacion,
       direccion: pub.ubicacion?.direccion || 'Ubicación no especificada',

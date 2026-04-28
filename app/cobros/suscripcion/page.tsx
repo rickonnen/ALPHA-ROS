@@ -40,6 +40,7 @@ export default function SuscripcionPage() {
             }
             console.log("User ID:", user?.id);
             const res = await fetch(`/api/cobros/getSuscripcion?id_usuario=${user.id}`, {
+                cache: "no-store",
                 method: "GET"
             });
 
@@ -92,8 +93,16 @@ export default function SuscripcionPage() {
 
 
     useEffect(() => {
-        if (!user?.id) return;
-        obtenerDatosSuscripcion();
+    if (!user?.id) return;
+    obtenerDatosSuscripcion();
+
+    // Solo en desarrollo
+    if (process.env.NODE_ENV === "development") {
+            const interval = setInterval(() => {
+                obtenerDatosSuscripcion();
+            }, 3000); // cada 5 segundos
+            return () => clearInterval(interval);
+        }
     }, [user?.id]);
 
     
@@ -177,7 +186,9 @@ export default function SuscripcionPage() {
                         Descripción
                     </h2>
                     <p className="text-1xl text-gray-700 mt-3 leading-relaxed">
-                        El {!isFree ? nombre_plan : "PLAN GRATUITO"} te permite realizar {!isFree ? `${cupos} publicaciones adicionales` : "hasta 2 publicaciones"}.
+                        {!isFree
+                        ? `El ${nombre_plan} te permite realizar ${cupos} publicaciones`
+                        : "El plan gratuito te permite realizar 2 publicaciones de prueba"}
                     </p>
                 </div>
             </div>

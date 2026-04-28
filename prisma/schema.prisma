@@ -498,7 +498,7 @@ model Blogs {
   descripcion       String?           @db.VarChar(128)
   contenido         String?
   imagen_url        String?           @db.VarChar(128)
-  estado            Boolean?          @default(true)
+  estado            String?           @default("NOPUBLICADO") @db.VarChar(50)
   fecha_creacion    DateTime?         @default(now()) @db.Timestamptz(6)
   fecha_publicacion DateTime?         @db.Timestamptz(6)
   deleted_at        DateTime?         @db.Timestamptz(6)
@@ -676,6 +676,7 @@ model HistorialBusqueda {
   Zona                    Zona?        @relation(fields: [id_zona], references: [id_zona], onDelete: NoAction, onUpdate: NoAction)
   Usuario                 Usuario      @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
+  @@unique([id_usuario, mapbox_id])
   @@schema("public")
 }
 
@@ -807,9 +808,8 @@ model PlanPublicacion {
   precio_plan        Decimal?      @db.Decimal(25, 2)
   cant_publicaciones Int?
   activo             Boolean?      @default(false)
-  id_metodo          Int?          @db.SmallInt
   DetallePago        DetallePago[]
-  QrUrl              QrUrl?        @relation(fields: [id_metodo], references: [id_metodo], onUpdate: NoAction, map: "fk_qr_url")
+  QrUrl              QrUrl[]
   Suscripcion        Suscripcion[]
 
   @@schema("public")
@@ -866,9 +866,11 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo       Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  id_metodo       Int              @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
   qr_URL          String?
-  PlanPublicacion PlanPublicacion[]
+  id_plan         Int?             @db.SmallInt
+  modalidad       String?          @db.VarChar
+  PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }

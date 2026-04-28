@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import speakeasy from "speakeasy";
 import { prisma } from "@/lib/prisma";
 import { sign } from "jsonwebtoken";
+import { registrarSesionTelemetry } from "@/lib/auth/sessionTelemetry";
+
+const PENDING_LOGIN_LAT_COOKIE = "pending_login_latitud";
+const PENDING_LOGIN_LNG_COOKIE = "pending_login_longitud";
+
+type Usuario2FALogin = {
+  id_usuario: string;
+  dos_fa_secreto: string | null;
+  dos_fa_habilitado: boolean | null;
+  nombres: string | null;
+  email: string | null;
+  rol: number | null;
+};
+
+function parseNullableCoordinate(value: string | undefined): number | null {
+  if (!value || value === "null") {
+    return null;
+  }
+
+  const parsedValue = Number.parseFloat(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+}
 
 /**
  * ENDPOINT: Verificar código 2FA durante login
@@ -28,7 +50,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener secreto 2FA del usuario
-    const usuario = await (prisma.usuario.findUnique as any)({
+    const findUniqueUsuario2FA = prisma.usuario.findUnique as unknown as (args: {
+      where: { id_usuario: string };
+      select: {
+        id_usuario: true;
+        dos_fa_secreto: true;
+        dos_fa_habilitado: true;
+        nombres: true;
+        email: true;
+        rol: true;
+      };
+    }) => Promise<Usuario2FALogin | null>;
+
+    const usuario = await findUniqueUsuario2FA({
       where: { id_usuario: userId },
       select: { 
         id_usuario: true,
@@ -38,7 +72,7 @@ export async function POST(request: NextRequest) {
         email: true,
         rol: true
       }
-    }).catch((e: any) => null);
+    }).catch(() => null);
 
     if (!usuario || !usuario.dos_fa_secreto || !usuario.dos_fa_habilitado) {
       return NextResponse.json(
@@ -90,6 +124,20 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
+    const latitud = parseNullableCoordinate(
+      request.cookies.get(PENDING_LOGIN_LAT_COOKIE)?.value
+    );
+    const longitud = parseNullableCoordinate(
+      request.cookies.get(PENDING_LOGIN_LNG_COOKIE)?.value
+    );
+
+    await registrarSesionTelemetry({
+      request,
+      idUsuario: usuario.id_usuario,
+      latitud,
+      longitud,
+    });
+
     // Establecer JWT token
     response.cookies.set("auth_token", jwtToken, {
       httpOnly: true,
@@ -105,6 +153,14 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
     response.cookies.set("pending_2fa_user", "", {
+      maxAge: 0,
+      path: "/",
+    });
+    response.cookies.set(PENDING_LOGIN_LAT_COOKIE, "", {
+      maxAge: 0,
+      path: "/",
+    });
+    response.cookies.set(PENDING_LOGIN_LNG_COOKIE, "", {
       maxAge: 0,
       path: "/",
     });
