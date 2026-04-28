@@ -4,7 +4,24 @@
       - Retorna las publicaciones vistas por el usuario
       - Incluye: título, precio, moneda, tipo operación, primera imagen
 */
-
+/*  Dev: Luis - xdev/sow-luisc
+    Fecha: 09/04/2026
+    Funcionalidad: GET /backend/perfil/historial?id_usuario
+      - Incluye: título, precio, zona, moneda, tipo operación, primera imagen
+      - Agrega campo zona desde Ubicacion para cumplir criterios de aceptación
+*/
+/*  Dev: Luis - xdev/sow-luisc
+    Fecha: 22/04/2026
+    Funcionalidad: GET /api/perfil/getHistorial?id_usuario
+      - Incluye: título, precio, tipo inmueble, dirección, superficie,
+        habitaciones, baños, moneda, tipo operación, primera imagen
+*/
+/*  Dev: Luis - xdev/sow-luisc
+    Fecha: 22/04/2026
+    Funcionalidad: GET /api/perfil/getHistorial?id_usuario
+      - Incluye: título, precio, tipo inmueble, dirección, superficie,
+        habitaciones, baños, moneda, tipo operación, primera imagen
+*/
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -30,25 +47,32 @@ export async function GET(req: NextRequest) {
           include: {
             Imagen:        { take: 1 },
             Moneda:        true,
+            TipoInmueble:  true,
             TipoOperacion: true,
+            Ubicacion:     true,
           },
         },
       },
     });
 
-    const data = historial.map((item) => ({
+    const data = historial.map((item: any) => ({
       id_publicacion: item.Publicacion.id_publicacion,
       fecha:          item.fecha,
       Publicacion: {
         titulo:        item.Publicacion.titulo ?? "Sin título",
-        precio:        item.Publicacion.precio ?? null,
+        precio:        item.Publicacion.precio ? Number(item.Publicacion.precio) : null,
+        tipo:          item.Publicacion.TipoInmueble?.nombre_inmueble ?? null,
+        direccion:     item.Publicacion.Ubicacion?.direccion ?? null,
+        superficie:    item.Publicacion.superficie ?? null,
+        habitaciones:  item.Publicacion.habitaciones ?? null,
+        banos:         item.Publicacion.banos ?? null,
         Moneda:        item.Publicacion.Moneda
                          ? { simbolo: item.Publicacion.Moneda.simbolo }
                          : null,
         TipoOperacion: item.Publicacion.TipoOperacion
                          ? { nombre_operacion: item.Publicacion.TipoOperacion.nombre_operacion }
                          : null,
-        Imagen:        item.Publicacion.Imagen.map((img) => ({
+        Imagen:        item.Publicacion.Imagen.map((img: any) => ({
                          url_imagen: img.url_imagen,
                        })),
       },
