@@ -125,7 +125,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() => handleInfo(favorito.id)}
               >
-                Ver Detalles
+                Ver Detalle
               </Button>
               <FavButton
                 id_publicacion={favorito.id}
