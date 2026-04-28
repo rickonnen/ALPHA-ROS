@@ -7,6 +7,7 @@ import ArticleCard from "./articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import GenericDropdown from "@/components/homeComponents/filterPanelSubcomponents/genericDropdown";
 
+import { useAuth } from "@/app/auth/AuthContext";
 
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
@@ -25,6 +26,9 @@ const ARR_SORT_OPTIONS = ["Más reciente", "Más antiguos"];
 const CLS_FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function BlogsPage() {
+  // 2. Extraemos el usuario actual
+  const { user: objUser } = useAuth();
+
   const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
   const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
 
@@ -228,7 +232,7 @@ export default function BlogsPage() {
         </div>
       )}
 
-      <div className="w-full flex justify-center mt-8 pt-8 border-t border-border/50">
+      <div className="w-full flex flex-wrap justify-center gap-4 mt-8 pt-8 border-t border-border/50">
         <Link
           href="/"
           className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
@@ -236,6 +240,16 @@ export default function BlogsPage() {
           <Image src="/leftArrow.svg" alt="Flecha izquierda" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
           Volver al inicio
         </Link>
+
+        {/* Botón exclusivo para usuarios logeados */}
+        {objUser && (
+          <Link
+            href="/home/blogs/createBlog"
+            className={`flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
+          >
+            Crear mi blog
+          </Link>
+        )}
       </div>
     </main>
   );
