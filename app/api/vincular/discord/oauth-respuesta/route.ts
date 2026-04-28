@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
         client_secret: process.env.DISCORD_CLIENT_SECRET!,
         grant_type:    "authorization_code",
         code,
-        redirect_uri:  `${process.env.NEXTAUTH_URL}/api/vincular/discord/oauth-respuesta`,
+        redirect_uri:  `${process.env.NEXTAUTH_URL}api/vincular/discord/oauth-respuesta`,
       }),
     })
 

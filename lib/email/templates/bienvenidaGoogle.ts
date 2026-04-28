@@ -28,7 +28,7 @@ export function templateBienvenidaGoogle(nombre: string): string {
           </p>
 
           <div style="text-align:center;padding:20px 0">
-            <a href="${process.env.NEXTAUTH_URL}/home"
+            <a href="${process.env.NEXTAUTH_URL}/"
                style="display:inline-block;background:#1F3A4D;color:white;padding:14px 44px;text-decoration:none;border-radius:20px;font-weight:600;font-size:15px">
               Explorar la plataforma
             </a>
