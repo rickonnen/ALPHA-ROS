@@ -118,7 +118,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <Button
                 variant="azul"
                 size="sm"
