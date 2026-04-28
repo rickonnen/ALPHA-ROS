@@ -25,18 +25,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShieldCheck, Mail, RefreshCcw, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ResultModal from "@/components/ui/modal";
 interface ConfirmarCorreoProps {
   id_usuario: string;
   nuevo_email: string;
+  expires_in_sec?: number;
+  resend_after_sec?: number;
   onBack: () => void;
 }
 
 const OTP_LENGTH = 6;
-const OTP_EXP_SECONDS = 600; // 10 min
+const OTP_EXP_SECONDS_FALLBACK = 600; // 10 min
+const OTP_RESEND_SECONDS_FALLBACK = 60;
 
 function maskEmail(email: string): string {
   const [name, domain] = email.split("@");
@@ -48,10 +51,16 @@ function maskEmail(email: string): string {
 export default function ConfirmarCorreoView({
   id_usuario,
   nuevo_email,
+  expires_in_sec,
+  resend_after_sec,
   onBack,
 }: ConfirmarCorreoProps) {
+  const intInitialOtpSeconds = expires_in_sec ?? OTP_EXP_SECONDS_FALLBACK;
+  const intInitialResendSeconds =
+    resend_after_sec ?? OTP_RESEND_SECONDS_FALLBACK;
   const [arrOtp, setArrOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
-  const [intTimeLeft, setIntTimeLeft] = useState(OTP_EXP_SECONDS);
+  const [intTimeLeft, setIntTimeLeft] = useState(intInitialOtpSeconds);
+  const [intResendLeft, setIntResendLeft] = useState(intInitialResendSeconds);
   const [bolSubmitting, setBolSubmitting] = useState(false);
   const arrRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -75,6 +84,14 @@ export default function ConfirmarCorreoView({
     return () => clearInterval(timer);
   }, [intTimeLeft]);
 
+  useEffect(() => {
+    if (intResendLeft <= 0) return;
+    const timer = setInterval(() => {
+      setIntResendLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [intResendLeft]);
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -88,9 +105,13 @@ export default function ConfirmarCorreoView({
     setBolShowResultModal(true);
   };
 
-  const openSuccessModal = (message: string, bolRedirect = false) => {
+  const openSuccessModal = (
+    title: string,
+    message: string,
+    bolRedirect = false,
+  ) => {
     setStrModalType("success");
-    setStrModalTitle("Operación exitosa");
+    setStrModalTitle(title);
     setStrModalMessage(message);
     setBolRedirectToPerfilOnClose(bolRedirect);
     setBolShowResultModal(true);
@@ -166,14 +187,38 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_COOLDOWN") {
+          setIntResendLeft(
+            Number.isFinite(json.resendAfterSec)
+              ? json.resendAfterSec
+              : OTP_RESEND_SECONDS_FALLBACK,
+          );
+          openErrorModal(
+            "Espera unos segundos antes de reenviar el código.",
+          );
+          return;
+        }
         openErrorModal(json.message || "No se pudo reenviar el código.");
         return;
       }
 
       setArrOtp(Array(OTP_LENGTH).fill(""));
-      setIntTimeLeft(OTP_EXP_SECONDS);
+      setIntTimeLeft(
+        Number.isFinite(json.expiresInSec)
+          ? json.expiresInSec
+          : OTP_EXP_SECONDS_FALLBACK,
+      );
+      setIntResendLeft(
+        Number.isFinite(json.resendAfterSec)
+          ? json.resendAfterSec
+          : OTP_RESEND_SECONDS_FALLBACK,
+      );
       arrRefs.current[0]?.focus();
-      openSuccessModal("Código reenviado correctamente.", false);
+      openSuccessModal(
+        "Código reenviado",
+        "Código reenviado correctamente.",
+        false,
+      );
     } catch (error) {
       console.error("Error al reenviar OTP:", error);
       openErrorModal("Error de red al reenviar código.");
@@ -199,11 +244,22 @@ export default function ConfirmarCorreoView({
       const json = await res.json();
 
       if (!res.ok || !json.ok) {
+        if (json.reason === "OTP_EXPIRED") {
+          openErrorModal(
+            "El código ya expiró. Solicita uno nuevo con Reenviar código.",
+          );
+          return;
+        }
+
         openErrorModal(json.message || "No se pudo verificar el código.");
         return;
       }
 
-      openSuccessModal("Correo actualizado correctamente.", true);
+      openSuccessModal(
+        "¡Correo Actualizado!",
+        "Tu correo se cambió exitosamente.",
+        true,
+      );
     } catch (error) {
       console.error("Error al verificar OTP:", error);
       openErrorModal("Error de red al verificar el código.");
@@ -225,18 +281,19 @@ export default function ConfirmarCorreoView({
           Seguridad
         </span>
       </Button>
-      <div className="mx-auto mt-auto max-w-2xl rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
+      <div className="mb-4 border-b border-white/15" />
+      <div className="mt-auto w-full rounded-2xl border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-sm">
         <div className="border-b border-white/15 p-5">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15">
               <ShieldCheck className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-3xl font-extrabold tracking-tight">
-                Confirmar nuevo correo electronico
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                Confirmar nuevo correo
               </h2>
               <p className="text-base text-white/70">
-                Ingresa el codigo de 6 digitos que enviamos a{" "}
+                Ingresa el código enviado a {" "}
                 {maskEmail(nuevo_email)}
               </p>
             </div>
@@ -255,10 +312,10 @@ export default function ConfirmarCorreoView({
 
           <div>
             <p className="mb-2 text-sm font-black uppercase tracking-wider text-white/70">
-              Codigo de verificacion
+              Código de verificación
             </p>
 
-            <div className="flex gap-3">
+            <div className="grid grid-cols-6 gap-2 md:flex md:gap-3">
               {arrOtp.map((digit, idx) => (
                 <Input
                   key={idx}
@@ -271,23 +328,23 @@ export default function ConfirmarCorreoView({
                   onChange={(e) => handleOtpChange(idx, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                   onPaste={handleOtpPaste}
-                  className="h-16 w-16 rounded-xl border-2 border-white/25 bg-white/5 text-center text-3xl font-black tracking-widest text-white focus-visible:border-white focus-visible:ring-0"
+                  className="h-16 w-full min-w-0 rounded-xl border-2 border-white/25 bg-white/5 px-0 text-center text-2xl font-black tracking-normal text-white focus-visible:border-white focus-visible:ring-0 md:w-16 md:flex-none md:text-3xl"
                 />
               ))}
             </div>
 
             <p className="mt-2 text-sm text-white/65">
-              El codigo expira en {formatTime(intTimeLeft)}.
+              El código expira en {formatTime(intTimeLeft)}.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 p-5">
+        <div className="flex flex-col gap-3 border-t border-white/15 p-5 md:flex-row md:flex-wrap md:items-center">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancelar}
-            className="h-11 min-w-32 rounded-xl border-white/25 bg-white/10 text-white/80 hover:bg-white/15"
+            className="order-3 h-11 w-full rounded-xl border-white/25 bg-white/10 text-white/80 hover:bg-white/15 md:order-1 md:w-auto md:min-w-32"
           >
             Cancelar
           </Button>
@@ -296,18 +353,31 @@ export default function ConfirmarCorreoView({
             type="button"
             variant="outline"
             onClick={handleReenviar}
-            disabled={bolSubmitting}
-            className="h-11 min-w-40 rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10"
+            disabled={bolSubmitting || intResendLeft > 0}
+            className="order-2 h-11 w-full rounded-xl border-white/25 bg-transparent text-white/85 hover:bg-white/10 md:order-2 md:w-auto md:min-w-40"
           >
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Reenviar codigo
+            <svg
+              className="mr-2 h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M 3 12 A 9 9 0 1 1 12 21" />
+              <polyline points="17 21 12 21 13 16" />
+            </svg>
+            {intResendLeft > 0
+              ? `Reenviar en ${formatTime(intResendLeft)}`
+              : "Reenviar código"}
           </Button>
 
           <Button
             type="button"
             onClick={handleConfirmar}
-            disabled={!bolOtpCompleto || bolSubmitting || intTimeLeft === 0}
-            className="h-11 min-w-36 rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50"
+            disabled={!bolOtpCompleto || bolSubmitting}
+            className="order-1 h-11 w-full rounded-xl bg-primary-foreground font-bold text-primary hover:bg-primary-foreground/90 disabled:opacity-50 md:order-3 md:w-auto md:min-w-36"
           >
             {bolSubmitting ? "Verificando..." : "Confirmar"}
           </Button>

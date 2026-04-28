@@ -12,28 +12,47 @@ export async function GET(request: NextRequest) {
     const authToken = request.cookies.get("auth_token")?.value;
 
     if (!authToken) {
+     
       return NextResponse.json(
         { error: "No autenticado" },
         { status: 401 }
       );
     }
 
+    console.log("[AUTH/ME] Token encontrado, verificando...");
+
     const decoded = verify(authToken, process.env.JWT_SECRET!) as {
       userId: string;
     };
 
+    console.log("[AUTH/ME] JWT válido para userId:", decoded.userId);
+
     const { data: userData, error } = await supabaseAdmin
       .from("Usuario")
-      .select("id_usuario, nombres, email, rol")
+      .select("id_usuario, nombres, email, rol, estado")
       .eq("id_usuario", decoded.userId) 
       .maybeSingle();
 
     if (error || !userData) {
+      console.error("[AUTH/ME] Usuario no encontrado en BD");
       return NextResponse.json(
         { error: "Usuario no encontrado en tokens" },
         { status: 404 }
       );
     }
+
+    // HU-04 CA-3: si la cuenta está desactivada, rechazar la sesión
+if (userData.estado === 0) {
+  const response = NextResponse.json(
+    { error: "Cuenta desactivada" },
+    { status: 403 }
+  );
+  response.cookies.delete("auth_token");
+  return response;
+}
+    
+
+
 
     const user = {
       id: userData.id_usuario,
@@ -42,10 +61,12 @@ export async function GET(request: NextRequest) {
       rol: userData.rol,
     };
 
+    console.log("[AUTH/ME] ✅ Usuario autenticado:", user.email);
+
     return NextResponse.json({ user }, { status: 200 });
 
   } catch (error) {
-    console.error("Get user error:", error);
+    console.error("[AUTH/ME] Error:", error);
     return NextResponse.json(
       { error: "No autenticado o token inválido" },
       { status: 401 }

@@ -56,7 +56,10 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     return NextResponse.json(
-      { error: "Error interno del servidor" },
+      { 
+        error: "Error interno del servidor",
+        detalle: error instanceof Error ? error.message : String(error) // ← ver qué pasó
+      },
       { status: 500 }
     );
   }

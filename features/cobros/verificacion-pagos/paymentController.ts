@@ -65,7 +65,7 @@ export const getPaymentsByStatus = async (
  * @param {string} strNewStatusName - El nuevo nombre de estado.
  * @return {object} objUpdatedPayment - El registro actualizado de la base de datos de pagos.
  */
-export const updatePaymentStatus = async (intId: number, strNewStatusName: string) => {
+export const updatePaymentStatus = async (intId: number, strNewStatusName: string, strReason?: string) => {
   const objStatusMap: Record<string, number> = {
     'Aceptado': objStatuses.intAccepted,
     'Rechazado': objStatuses.intRejected
@@ -79,16 +79,50 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
 
   try {
     // Prisma actualizará el estado. 
-    // Si cambia de 1 (Pendiente) a 2 (Aceptado), el Trigger trg_pago_aprobado_update 
-    // en Supabase se disparará de forma invisible y sumará las publicaciones al usuario.
-    const objUpdatedPayment = await prisma.detallePago.update({
-      where: { id_detalle: intId },
-      data: {
-        estado: intNewStatus,
-      },
-    });
+    // Se cambia la razón del rachazo 
+    // actualiza la cantidad de publicaciones de acuerdo al plan
+    const objUpdatedPayment = await prisma.$transaction(async (tx) => {
+      const objCurrentPayment = await tx.detallePago.findUnique({
+        where: { id_detalle: intId },
+        include: { 
+          PlanPublicacion: true, 
+          Usuario: { select: { cant_publicaciones_restantes: true } } 
+        }
+      });
 
-    console.log(`Estado del pago ${intId} actualizado a ${strNewStatusName}.`);
+      if (!objCurrentPayment) {
+        throw new Error(`No se encontró el pago con id ${intId}`);
+      }
+
+      const objPaymentResult = await tx.detallePago.update({
+        where: { id_detalle: intId },
+        data: {
+          estado: intNewStatus,
+          razon_rechazo: strNewStatusName === 'Rechazado' ? strReason : null,
+        },
+      });
+
+      if (strNewStatusName === 'Aceptado' && objCurrentPayment.estado === objStatuses.intPending) {
+        
+        const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
+        const strUserId = objCurrentPayment.id_usuario;
+
+        if (strUserId) {
+          //Se asigna la cantidad del nuevo plan
+          await tx.usuario.update({
+            where: { id_usuario: strUserId },
+            data: {
+              cant_publicaciones_restantes: intNewQuota
+            }
+          });
+        }
+      }
+
+      return objPaymentResult;
+      
+    });
+    
+    console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
   } catch (error: any) {

@@ -29,19 +29,50 @@
          apellidos max 15 caracteres, direccion max 40 caracteres
          Agregar username a campos editables
 */
+/*  Dev: Alvarado Alisson Dalet - sow-AlissonA
+    Fecha: 09/04/2026
+    Fix: Validacion de minimo 3 letras en username
+         Restriccion de emojis en username
+*/
+/*
+ * Modificado: Dylan Coca Beltran - 16/04/2026
+ * Cambio: Adición de campos genero, fecha_nac y estado_civil al destructuring
+ * y al prisma.update — campos presentes en el schema pero ausentes en la versión anterior,
+ * validación de emojis extendida a nombre, apellido y dirección (antes solo aplicaba a username),
+ * corrección de id_pais vacío usando || null en lugar de ?? null para capturar strings vacíos,
+ * extracción de regexSoloLetras y regexSinAcentos fuera del handler para evitar
+ * reinstanciación en cada request
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
-const intMaxName   = 15;
-const intMaxLastName = 15;
-const intMaxAddress = 40;
-const intMaxUsername  = 15;
+const intMaxName           = 50;
+const intMaxLastName       = 50;
+const intMaxAddress        = 200;
+const intMaxUsername       = 20;
+const intMinLetrasUsername = 3;
+const regexSinEmojis       = /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{FE00}-\u{FE0F}]/u;
+const regexSoloLetras      = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+const regexSinAcentos      = /^[^\u00C0-\u024F]+$/;
 
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id_usuario, nombres, apellidos, direccion, url_foto_perfil, id_pais, username } = body;
+    const {
+      id_usuario,
+      nombres,
+      apellidos,
+      direccion,
+      url_foto_perfil,
+      id_pais,
+      username,
+      genero,
+      fecha_nac,
+      estado_civil,
+    } = body;
 
+    // id_usuario
     if (!id_usuario) {
       return NextResponse.json(
         { error: "Falta el campo id_usuario" },
@@ -54,24 +85,48 @@ export async function PUT(req: NextRequest) {
     const strDireccion = direccion?.trim() ?? "";
     const strUsername  = username?.trim();
 
-    // --- Validaciones de nombre ---
-    if (!strNombres || strNombres === "") {
+    // Nombre
+    if (!strNombres) {
       return NextResponse.json(
-        { error: "El campo nombre no puede estar vacío" },
+        { error: "El campo nombre no puede estar vacío." },
         { status: 400 }
       );
     }
-    if (!strApellidos || strApellidos === "") {
+    if (regexSinEmojis.test(strNombres)) {
       return NextResponse.json(
-        { error: "El campo apellido no puede estar vacío" },
+        { error: "El nombre no puede contener emojis." },
+        { status: 400 }
+      );
+    }
+    if (!regexSoloLetras.test(strNombres)) {
+      return NextResponse.json(
+        { error: "El nombre solo puede contener letras." },
+        { status: 400 }
+      );
+    }
+    if (strNombres.length < 3) {
+      return NextResponse.json(
+        { error: "El nombre debe tener al menos 3 caracteres." },
+        { status: 400 }
+      );
+    }
+    if (strNombres.length > intMaxName) {
+      return NextResponse.json(
+        { error: `El nombre no puede superar ${intMaxName} caracteres.` },
         { status: 400 }
       );
     }
 
-    const regexSoloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
-    if (!regexSoloLetras.test(strNombres)) {
+    // Apellido
+    if (!strApellidos) {
       return NextResponse.json(
-        { error: "El nombre solo puede contener letras." },
+        { error: "El campo apellido no puede estar vacío." },
+        { status: 400 }
+      );
+    }
+    if (regexSinEmojis.test(strApellidos)) {
+      return NextResponse.json(
+        { error: "El apellido no puede contener emojis." },
         { status: 400 }
       );
     }
@@ -81,29 +136,29 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    if (strNombres.length < 3) {
-      return NextResponse.json(
-        { error: "El nombre debe tener al menos 3 caracteres." },
-        { status: 400 }
-      );
-    }
     if (strApellidos.length < 3) {
       return NextResponse.json(
         { error: "El apellido debe tener al menos 3 caracteres." },
         { status: 400 }
       );
     }
-
-    if (strNombres.length > intMaxName) {
-      return NextResponse.json(
-        { error: `El nombre no puede superar ${intMaxName} caracteres.` },
-        { status: 400 }
-      );
-    }
     if (strApellidos.length > intMaxLastName) {
       return NextResponse.json(
         { error: `El apellido no puede superar ${intMaxLastName} caracteres.` },
+        { status: 400 }
+      );
+    }
+
+    // Dirección
+    if (!strDireccion) {
+      return NextResponse.json(
+        { error: "El campo dirección no puede estar vacío." },
+        { status: 400 }
+      );
+    }
+    if (regexSinEmojis.test(strDireccion)) {
+      return NextResponse.json(
+        { error: "La dirección no puede contener emojis." },
         { status: 400 }
       );
     }
@@ -114,7 +169,8 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    if (!strUsername || strUsername === "") {
+    // Username
+    if (!strUsername) {
       return NextResponse.json(
         { error: "El campo username no puede estar vacío." },
         { status: 400 }
@@ -126,24 +182,40 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const regexSinAcentos = /^[^\u00C0-\u024F]+$/;
     if (!regexSinAcentos.test(strUsername)) {
       return NextResponse.json(
         { error: "El username no puede contener letras con acento." },
         { status: 400 }
       );
     }
+    if (regexSinEmojis.test(strUsername)) {
+      return NextResponse.json(
+        { error: "El username no puede contener emojis." },
+        { status: 400 }
+      );
+    }
+    const intCantLetras = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
+    if (intCantLetras < intMinLetrasUsername) {
+      return NextResponse.json(
+        { error: `El username debe contener al menos ${intMinLetrasUsername} letras.` },
+        { status: 400 }
+      );
+    }
 
+    // Prisma update
+    const dtFechaNac = fecha_nac ? new Date(fecha_nac) : null;
     const objUsuarioActualizado = await prisma.usuario.update({
       where: { id_usuario },
       data: {
-        nombres: strNombres,
-        apellidos: strApellidos,
-        direccion: strDireccion,
+        nombres:          strNombres,
+        apellidos:        strApellidos,
+        direccion:        strDireccion,
         url_foto_perfil,
-        id_pais: id_pais ?? null,
-        username: strUsername,
+        id_pais:          id_pais || null,
+        username:         strUsername,
+        genero:           genero          ?? null,
+        fecha_nac:        dtFechaNac,
+        estado_civil:     estado_civil    ?? null,
       },
     });
 

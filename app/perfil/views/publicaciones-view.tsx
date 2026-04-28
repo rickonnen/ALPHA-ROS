@@ -31,7 +31,15 @@
       - Botón "+ Agregar" en el header redirige a /publicaciones/nueva
       - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
 */
-
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del título de la sección principal a "Publicaciones".
+    Feat: Implementación de estados focus-visible para navegación por teclado en el botón "+ Agregar".
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 18/04/2026
+    Feat: Integración del modal de límite de publicaciones (Criterio 11).
+*/
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,38 +47,56 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import PublicacionCard, { Publicacion } from "./publicacion-card";
+import { useAuth } from "@/app/auth/AuthContext";
+import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
 
 interface PublicacionesViewProps {
   id_usuario: string;
 }
 
-const ITEMS_POR_PAGINA = 4;
+const ITEMS_POR_PAGINA = 5;
 
 export default function PublicacionesView({
   id_usuario,
 }: PublicacionesViewProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [publicacionesRestantes, setPublicacionesRestantes] = useState(0);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [bolShowModal, setBolShowModal] = useState(false);
+  const [bolChecking, setBolChecking] = useState(false);
 
   useEffect(() => {
     let activo = true;
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
-        const res = await fetch(
-          `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
-        );
-        if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
-        const json = await res.json();
+        const [resPubs, resRestantes] = await Promise.all([
+          fetch(
+            `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
+          ),
+          fetch(`/api/perfil/publicaciones-restantes?id_usuario=${id_usuario}`),
+        ]);
+
+        if (!resPubs.ok)
+          throw new Error("No se pudieron cargar las publicaciones");
+
+        const jsonPubs = await resPubs.json();
+        const jsonRestantes = await resRestantes.json();
+
         if (activo) {
-          setPublicaciones(json.data);
-          setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
+          setPublicaciones(jsonPubs.data);
+          setTotalPaginas(Math.ceil(jsonPubs.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(
+            jsonRestantes.cant_publicaciones_restantes ?? 0,
+          );
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -107,6 +133,7 @@ export default function PublicacionesView({
 
       const nuevas = publicaciones.filter((p) => p.id !== idAEliminar);
       setPublicaciones(nuevas);
+      setPublicacionesRestantes((prev) => prev + 1);
       setIdAEliminar(null);
 
       const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
@@ -123,22 +150,72 @@ export default function PublicacionesView({
       setEliminando(false);
     }
   };
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number) => {
+    try {
+      setError(null);
+      // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
+      const url = `/api/perfil/updateEstadoPublicacion?id_publicacion=${id_pub}&id_estado=${nuevoEstado}&id_usuario=${id_usuario}`;
+
+      const res = await fetch(url, { method: "PATCH" });
+
+      if (res.ok) {
+        // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
+        setPublicaciones((prev) =>
+          prev.map((p) =>
+            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
+          ),
+        );
+      } else {
+        const errorData = await res.json();
+        console.error("Error desde el servidor:", errorData.error);
+        setError("No se pudo actualizar el estado de la publicación.");
+      }
+    } catch (err) {
+      console.error("Error de red:", err);
+      setError("Error de conexión al intentar cambiar el estado.");
+    }
+  };
+  const handleAgregar = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setBolChecking(true);
+    try {
+      const objEstado = await verificarEstadoPublicacion(user.id);
+      if (objEstado.bolLimiteAlcanzado) {
+        setBolShowModal(true);
+      } else {
+        router.push("/publicacion/informacion-comercial");
+      }
+    } catch {
+      router.push("/publicacion/informacion-comercial");
+    } finally {
+      setBolChecking(false);
+    }
+  };
 
   return (
     <>
       <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
-              Mis publicaciones
+              PUBLICACIONES
             </CardTitle>
-            <Button
-              onClick={() => router.push("/publicacion/informacion-comercial")}
-              size="sm"
-              className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
-            >
-              + Agregar
-            </Button>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-white/60 text-sm whitespace-nowrap">
+                {publicacionesRestantes} publicaciones disponibles
+              </span>
+              <Button
+                onClick={handleAgregar}
+                disabled={bolChecking}
+                size="sm"
+                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
+              >
+                {bolChecking ? "..." : "+ Agregar"}
+              </Button>
+            </div>
           </div>
           <div className="border-b border-white/20 w-full mt-1" />
         </CardHeader>
@@ -170,12 +247,13 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando && publicaciones.length > 0 && (
-            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1">
               {publicaciones.map((pub) => (
                 <PublicacionCard
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
+                  onCambiarEstado={handleCambiarEstado}
                 />
               ))}
             </div>
@@ -201,7 +279,7 @@ export default function PublicacionesView({
                     variant="ghost"
                     size="sm"
                     onClick={() => setPaginaActual(num)}
-                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all ${
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)] ${
                       paginaActual === num
                         ? "bg-white text-[var(--primary)]"
                         : "text-white/60 hover:text-white"
@@ -226,7 +304,7 @@ export default function PublicacionesView({
         </CardContent>
       </Card>
 
-      {/* Modal de confirmación */}
+      {/* Modal de confirmación de eliminación */}
       {idAEliminar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
@@ -276,6 +354,12 @@ export default function PublicacionesView({
           </div>
         </div>
       )}
+
+      <FreePublicationLimitModal
+        bolOpen={bolShowModal}
+        onBack={() => setBolShowModal(false)}
+        strPlansHref="/cobros/planes"
+      />
     </>
   );
 }

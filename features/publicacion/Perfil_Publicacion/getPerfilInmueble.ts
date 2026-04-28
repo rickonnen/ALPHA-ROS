@@ -28,11 +28,11 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       Ubicacion: {
         select: {
           direccion: true,
-          zona:      true,
+          //zona:      true,
           Ciudad:    { select: { nombre_ciudad: true } },
         },
       },
-      Zona:   { select: { nombre_zona: true } },
+      //Zona:   { select: { nombre_zona: true } },
       Video:  { select: { url_video:   true } },
       Imagen: { select: { url_imagen:  true } },
     },

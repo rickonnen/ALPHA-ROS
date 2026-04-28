@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
 import { sign } from "jsonwebtoken";
+import { enviarBienvenida } from "@/lib/email/emailService";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
+
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,15 +22,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalizar email a minúsculas
+    const normalizedEmail = email.toLowerCase();
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password,
       email_confirm: true,        
       user_metadata: { nombre, apellido }       
     });
 
     if (authError) {
-      return NextResponse.json({ error: "Error en Auth: " + authError.message }, { status: 400 });
+      // Mapear errores de Supabase a mensajes en español
+      const errorMsg = authError.message?.toLowerCase() || "";
+      let errorMessage = authError.message || "Error al registrarse";
+      
+      if (errorMsg.includes("already registered") || 
+          errorMsg.includes("already exists") || 
+          errorMsg.includes("already been registered") ||
+          errorMsg.includes("duplicate") ||
+          errorMsg.includes("user already exists")) {
+        errorMessage = "El correo electrónico ingresado ya se encuentra registrado. Por favor, inicia sesión o intenta con uno distinto.";
+      }
+      
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     // 3. INSERTAR EN TABLA "Usuario"
@@ -36,7 +54,7 @@ export async function POST(request: NextRequest) {
       .upsert([
         {
           id_usuario: authData.user.id,
-          email: email,
+          email: normalizedEmail,
           nombres: nombre,
           apellidos: apellido,
           rol: 2,
@@ -85,9 +103,27 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    await enviarBienvenida(normalizedEmail, nombre);
+    await crearNotificacion({
+      id_usuario: authData.user.id,
+      titulo: "Bienvenido a PROBOL",
+      mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente. Bienvenido a la plataforma.`,
+      id_categoria: 1,
+    });
+
     return response;
 
-  } catch (error) {
+  } catch (error: any) {
+    // Detectar errores de conexión a base de datos
+    if (error.code === "P1011" || 
+        error.message?.includes("Can't reach database") ||
+        error.message?.includes("database server")) {
+      return NextResponse.json(
+        { error: "No tienes conexión a internet" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Error en el servidor: " + String(error) },
       { status: 500 }
