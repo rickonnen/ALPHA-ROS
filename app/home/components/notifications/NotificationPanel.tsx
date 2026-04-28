@@ -1,12 +1,14 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
+import { SettingsPanel } from "./SettingsPanel";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthContext";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
 type Notification = {
   id: string;
@@ -15,75 +17,74 @@ type Notification = {
   read: boolean;
   time?: string;
   createdAt?: string | null;
+  type: 1 | 2 | 3;
 };
 
 function formatRelativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (minutes < 1) return "ahora";
-  if (minutes < 60) return `hace ${minutes} min`;
-  if (hours < 24) return `hace ${hours} h`;
-  return `hace ${days} d`;
-}
-
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Faltan variables de entorno de Supabase");
-    return null;
+  try {
+    const diff = Date.now() - new Date(isoString).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) return "ahora";
+    if (minutes < 60) return `hace ${minutes} min`;
+    if (hours < 24) return `hace ${hours} h`;
+    return `hace ${days} d`;
+  } catch {
+    return "fecha desconocida";
   }
-  
-  return createClient(supabaseUrl, supabaseKey);
 }
 
 export function NotificationPanel() {
   const { user } = useAuth();
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  const [gmailEnabled, setGmailEnabled] = useState(true);
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
+    const userId = user?.id ?? "guest";
+    const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
+    const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
+    if (savedGmail !== null) setGmailEnabled(savedGmail === "true");
+    if (savedWhatsapp !== null) setWhatsappEnabled(savedWhatsapp === "true");
+  }, [user]);
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setHasError(true);
-      setIsLoading(false);
-      return;
-    }
-
+  useEffect(() => {
     const fetchNotifications = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from("Notificacion")
+          .from("notificacion_campana")
           .select("*")
-          .eq("id_usuario", user.id)
-          .order("creado_en", { ascending: false });
+          .order("created_at", { ascending: false });
 
-        if (error) throw error;
+        if (error || !data) {
+          setNotifications([]);
+          return;
+        }
 
-        const mapped = (data ?? []).map((n: any) => ({
-          id: n.id_notificacion,
-          title: n.titulo,
-          description: n.mensaje,
-          read: n.leido,
-          createdAt: n.creado_en ?? null,
-          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
-        }));
+        const mapped: Notification[] = data.map((n: any) => {
+          let typeNum: 1 | 2 | 3 = 3;
+          if (n.type === "gmail") typeNum = 1;
+          else if (n.type === "whatsapp") typeNum = 2;
+          return {
+            id: String(n.id),
+            title: n.title || "Sin título",
+            description: n.message || "Sin contenido",
+            read: n.read || false,
+            createdAt: n.created_at || null,
+            time: n.created_at ? formatRelativeTime(n.created_at) : "ahora",
+            type: typeNum,
+          };
+        });
 
         setNotifications(mapped);
-        setHasError(false);
-      } catch (error) {
-        console.error("Error al cargar notificaciones:", error);
-        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -92,147 +93,148 @@ export function NotificationPanel() {
     fetchNotifications();
 
     const channel = supabase
-      .channel("notificaciones-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "Notificacion",
-          filter: `id_usuario=eq.${user.id}`,
-        },
-        (payload) => {
+      .channel("notificacion-campana-global")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "notificacion_campana",
+      }, (payload) => {
+        if (payload.eventType === "INSERT") {
           const n = payload.new as any;
+          let typeNum: 1 | 2 | 3 = 3;
+          if (n.type === "gmail") typeNum = 1;
+          else if (n.type === "whatsapp") typeNum = 2;
           const nueva: Notification = {
-            id: n.id_notificacion,
-            title: n.titulo,
-            description: n.mensaje,
-            read: n.leido,
-            createdAt: n.creado_en ?? null,
-            time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
+            id: String(n.id),
+            title: n.title || "Sin título",
+            description: n.message || "Sin contenido",
+            read: n.read || false,
+            createdAt: n.created_at || null,
+            time: n.created_at ? formatRelativeTime(n.created_at) : "ahora",
+            type: typeNum,
           };
           setNotifications((prev) => [nueva, ...prev]);
         }
-      )
+        if (payload.eventType === "UPDATE") {
+          setNotifications((prev) =>
+            prev.map((n) => n.id === String(payload.new.id) ? { ...n, read: payload.new.read } : n)
+          );
+        }
+        if (payload.eventType === "DELETE") {
+          setNotifications((prev) => prev.filter((n) => n.id !== String(payload.old.id)));
+        }
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const handleRead = useCallback(async (id: string) => {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    await supabase.from("notificacion_campana").update({ read: true }).eq("id", id);
+  }, []);
+
+  const handleDelete = useCallback(async (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    await supabase.from("notificacion_campana").delete().eq("id", id);
+  }, []);
+
+  const handleGmailToggle = useCallback((enabled: boolean) => {
+    setGmailEnabled(enabled);
+    localStorage.setItem(`gmail_enabled_${user?.id ?? "guest"}`, String(enabled));
   }, [user?.id]);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  const handleWhatsappToggle = useCallback((enabled: boolean) => {
+    setWhatsappEnabled(enabled);
+    localStorage.setItem(`whatsapp_enabled_${user?.id ?? "guest"}`, String(enabled));
+  }, [user?.id]);
 
+  // 1. FILTRO MAESTRO
+  const activeNotifications = useMemo(() => {
+    return notifications.filter((n) => {
+      if (n.type === 1 && !gmailEnabled) return false;
+      if (n.type === 2 && !whatsappEnabled) return false;
+      return true;
+    });
+  }, [notifications, gmailEnabled, whatsappEnabled]);
+
+  // 2. CONTEO
+  const unreadCount = useMemo(() => {
+    return activeNotifications.filter((n) => !n.read).length;
+  }, [activeNotifications]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("optimistic-unread-sync", { detail: unreadCount }));
+  }, [unreadCount]);
+
+  // 3. VISTA FINAL
   const visibleNotifications = useMemo(() => {
-    if (activeTab === "unread") return notifications.filter((n) => !n.read);
-    return notifications;
-  }, [notifications, activeTab]);
+    let filtered = activeNotifications; 
 
-  const handleDelete = async (id: string) => {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    
-    try {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      await supabase.from("Notificacion").delete().eq("id_notificacion", id);
-    } catch (error) {
-      console.error("Error al eliminar notificación:", error);
+    if (activeTab === "unread") {
+      filtered = filtered.filter((n) => !n.read);
     }
-  };
 
-  const handleRead = async (id: string) => {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    
-    try {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-      await supabase
-        .from("Notificacion")
-        .update({ leido: true })
-        .eq("id_notificacion", id);
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-    } catch (error) {
-      console.error("Error al marcar como leída:", error);
+    if (activeFilter === "gmail") {
+      filtered = filtered.filter((n) => n.type === 1);
+    } else if (activeFilter === "whatsapp") {
+      filtered = filtered.filter((n) => n.type === 2);
     }
-  };
 
-  const handleMarkAll = async () => {
-    if (!user?.id) return;
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    
-    try {
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      await supabase
-        .from("Notificacion")
-        .update({ leido: true })
-        .eq("id_usuario", user.id);
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-    } catch (error) {
-      console.error("Error al marcar todas como leídas:", error);
-    }
-  };
+    return filtered;
+  }, [activeNotifications, activeTab, activeFilter]);
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
-      <NotificationHeader total={notifications.length} />
-
-      <div className="p-2">
-        <NotificationTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          unreadCount={unreadCount}
-          onMarkAll={handleMarkAll}
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[420px] rounded-2xl shadow-xl bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-3 md:left-auto md:right-0 md:translate-x-0 border border-gray-100">
+      
+      {showSettings ? (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+          gmailEnabled={gmailEnabled}
+          whatsappEnabled={whatsappEnabled}
+          onGmailToggle={handleGmailToggle}
+          onWhatsappToggle={handleWhatsappToggle}
         />
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          Cargando notificaciones...
-        </div>
-      ) : hasError ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-            <BellOff size={22} />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">
-            No fue posible cargar las notificaciones.
-          </p>
-        </div>
-      ) : visibleNotifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-            <BellOff size={22} />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">
-            {activeTab === "unread"
-              ? "No tienes notificaciones no leídas."
-              : "No tienes notificaciones por el momento."}
-          </p>
-        </div>
       ) : (
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-2">
-            {visibleNotifications.map((n) => (
-              <NotificationItem
-                key={n.id}
-                id={n.id}
-                title={n.title}
-                description={n.description}
-                read={n.read}
-                time={n.time}
-                onDelete={handleDelete}
-                onRead={handleRead}
-              />
-            ))}
+        <>
+          <NotificationHeader unreadCount={unreadCount} />
+          
+          <div className="px-4 pt-3 pb-2">
+            <NotificationTabs
+              activeTab={activeTab}
+              onTabChange={(tab) => { setActiveTab(tab); setActiveFilter("all"); }}
+              unreadCount={unreadCount}
+              activeFilter={activeFilter}
+              onFilterChange={(f) => setActiveFilter(f)}
+              onOpenSettings={() => setShowSettings(true)}
+            />
           </div>
-          <ScrollBar orientation="vertical" />
-        </ScrollArea>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+              Cargando...
+            </div>
+          ) : visibleNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400 text-sm gap-2">
+              <BellOff size={32} className="text-gray-300" />
+              <span>No tienes notificaciones visibles.</span>
+            </div>
+          ) : (
+            <ScrollArea className="flex-1 max-h-[50vh] md:max-h-[60vh] overflow-y-auto">
+              <div className="p-2 space-y-2 pb-4">
+                {visibleNotifications.map((n) => (
+                  <NotificationItem
+                    key={n.id}
+                    {...n}
+                    onRead={handleRead}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
+          )}
+        </>
       )}
     </div>
   );
