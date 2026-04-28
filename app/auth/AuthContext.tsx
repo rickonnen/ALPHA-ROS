@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json();
 
-      // ✅ Detectar si se requiere 2FA
+      //  Detectar si se requiere 2FA
       if (data.requiresOTP && data.userId) {
         const err: any = new Error("Requiere verificación 2FA");
         err.requiresOTP = true;
