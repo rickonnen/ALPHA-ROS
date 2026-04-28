@@ -22,30 +22,29 @@ export async function GET(request: Request) {
   
   const { searchParams } = new URL(request.url);
   const includeSettings = searchParams.get("settings") === "true";
+  const userId = searchParams.get("userId");
   
   try {
-    // Verificar que supabase esté inicializado
     if (!supabase) {
       console.error("❌ Supabase no está inicializado");
       return NextResponse.json({ error: "Supabase no configurado" }, { status: 500 });
     }
 
-    console.log("🔄 Consultando tabla: notificacion_campana");
+    console.log("Consultando tabla: notificacion_campana");
     
-    // Obtener notificaciones de Supabase
-    const { data: notifications, error } = await supabase
+    let query = supabase
       .from('notificacion_campana')
       .select('*')
       .order('created_at', { ascending: false });
+    
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data: notifications, error } = await query;
 
     if (error) {
       console.error("❌ Error de Supabase:", error);
-      console.error("Detalles del error:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
       return NextResponse.json({ 
         error: "Error al cargar notificaciones",
         details: error.message 
@@ -53,7 +52,6 @@ export async function GET(request: Request) {
     }
 
     console.log(`✅ Notificaciones obtenidas: ${notifications?.length || 0}`);
-    console.log("📝 Primera notificación (si existe):", notifications?.[0]);
 
     const response: any = { notifications: notifications || [] };
     
@@ -76,30 +74,35 @@ export async function PATCH(request: Request) {
   
   try {
     const body = await request.json();
-    console.log("📦 Body recibido:", body);
+    console.log("Body recibido:", body);
     
-    const { action, notificationId, settings } = body;
+    const { action, notificationId, settings, userId } = body;
     
     if (action === "updateSettings" && settings) {
       userSettings = {
         ...userSettings,
         ...settings
       };
-      console.log("✅ Settings actualizados:", userSettings);
+      console.log("Settings actualizados:", userSettings);
       return NextResponse.json({ success: true, settings: userSettings });
     }
     
     if (action === "markAllAsRead") {
-      console.log("🔄 Marcando todas como leídas...");
+      console.log("Marcando todas como leídas...");
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('notificacion_campana')
         .update({ read: true })
-        .eq('read', false)
-        .select();
+        .eq('read', false);
+      
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      
+      const { data, error } = await query.select();
 
       if (error) {
-        console.error("❌ Error marcando todas como leídas:", error);
+        console.error("Error marcando todas como leídas:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
       
@@ -108,16 +111,21 @@ export async function PATCH(request: Request) {
     }
     
     if (action === "markAsRead" && notificationId) {
-      console.log(`🔄 Marcando notificación ${notificationId} como leída...`);
+      console.log(`Marcando notificación ${notificationId} como leída...`);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('notificacion_campana')
         .update({ read: true })
-        .eq('id', notificationId)
-        .select();
+        .eq('id', notificationId);
+      
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      
+      const { data, error } = await query.select();
 
       if (error) {
-        console.error(`❌ Error marcando notificación ${notificationId}:`, error);
+        console.error(`Error marcando notificación ${notificationId}:`, error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
       
@@ -125,7 +133,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true });
     }
     
-    console.log("⚠️ Acción no válida:", action);
+    console.log("Acción no válida:", action);
     return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
   } catch (error) {
     console.error("❌ Error en PATCH:", error);
@@ -139,23 +147,29 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const userId = searchParams.get("userId");
     
     if (!id) {
-      console.log("⚠️ ID no proporcionado");
+      console.log("❌ ID no proporcionado");
       return NextResponse.json({ error: "ID no proporcionado" }, { status: 400 });
     }
     
     const notificationId = parseInt(id);
-    console.log(`🗑️ Eliminando notificación ${notificationId}...`);
+    console.log(`Eliminando notificación ${notificationId}...`);
     
-    const { data, error } = await supabase
+    let query = supabase
       .from('notificacion_campana')
       .delete()
-      .eq('id', notificationId)
-      .select();
+      .eq('id', notificationId);
+    
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data, error } = await query.select();
 
     if (error) {
-      console.error(`❌ Error eliminando notificación ${notificationId}:`, error);
+      console.error(`Error eliminando notificación ${notificationId}:`, error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     
@@ -172,29 +186,33 @@ export async function POST(request: Request) {
   
   try {
     const body = await request.json();
-    console.log("📦 Body recibido:", body);
+    console.log("Body recibido:", body);
     
-    const { title, message, type } = body;
+    const { title, message, type, userId } = body;
+    
+    const insertData: any = {
+      title,
+      message,
+      read: false,
+      type,
+      created_at: new Date().toISOString()
+    };
+    
+    if (userId) {
+      insertData.user_id = userId;
+    }
     
     const { data, error } = await supabase
       .from('notificacion_campana')
-      .insert([
-        {
-          title,
-          message,
-          read: false,
-          type,
-          created_at: new Date().toISOString()
-        }
-      ])
+      .insert([insertData])
       .select();
 
     if (error) {
-      console.error("❌ Error creando notificación:", error);
+      console.error("Error creando notificación:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     
-    console.log("✅ Notificación creada:", data?.[0]);
+    console.log("Notificación creada:", data?.[0]);
     return NextResponse.json({ success: true, notification: data?.[0] }, { status: 201 });
   } catch (error) {
     console.error("❌ Error en POST:", error);

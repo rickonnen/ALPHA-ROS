@@ -1,15 +1,11 @@
 "use client";
 
-import { useUnreadCount } from "@/components/hooks/useUnreadCount";
-import { useAuth } from "@/app/auth/AuthContext";
-
 interface NotificationHeaderProps {
-  total?: number;
+  unreadCount: number;
 }
 
-export function NotificationHeader({ total }: NotificationHeaderProps) {
-  const { user } = useAuth();
-  const { unreadCount } = useUnreadCount(user);
+export function NotificationHeader({ unreadCount }: NotificationHeaderProps) {
+  // Eliminamos los hooks useAuth y useUnreadCount para evitar desincronización
   
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-[#2C4A5A] text-white rounded-t-md">
