@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
           : red?.estado === true,
         puedeDesvincular: esGoogle
           ? false
-          : primaryProvider !== "credentials" && proveedor !== primaryProvider,
+          : (primaryProvider !== "credentials" || !!usuario.google_id) && proveedor !== primaryProvider,
       }
     })
 
