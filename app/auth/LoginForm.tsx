@@ -185,14 +185,16 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
   }
 
   function handleSuccessClose() {
-    setShowSuccess(false);
-    if (onClose) onClose();
-    if (userRol === 1) {
-      router.push("/admin/verificacion-pagos");
-    } else {
-      router.push("/");
-    }
+  setShowSuccess(false);
+  if (onClose) {
+    onClose();
   }
+  if (Number(userRol) === 1) {
+    router.push("/admin");
+    return;
+  }
+  router.push("/");
+}
 
   const googleClickedRef = useRef(false);
 

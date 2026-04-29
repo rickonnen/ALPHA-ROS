@@ -19,9 +19,9 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import { Skeleton } from "@/components/ui/skeleton";
 
 const arrExploreLinks = [
-  { strHref: "/search?operaciones=compra", strLabel: "Compra" },
-  { strHref: "/search?operaciones=alquiler", strLabel: "Alquiler" },
-  { strHref: "/search?operaciones=anticretico", strLabel: "Anticrético" },
+  { strHref: "/search?operaciones=compra", strLabel: "Compra", strValue: "compra" },
+  { strHref: "/search?operaciones=alquiler", strLabel: "Alquiler", strValue: "alquiler" },
+  { strHref: "/search?operaciones=anticretico", strLabel: "Anticrético", strValue: "anticretico" },
 ];
 
 const arrInfoLinks = [
@@ -31,9 +31,9 @@ const arrInfoLinks = [
 ];
 
 const arrSocialLinks = [
-  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-8 w-8", objStyle: { transform: "scale(1.12)" } },
-  { strHref: "https://www.instagram.com/propbol.inmo/", strAriaLabel: "Instagram", strImgSrc: "/logo-instagram.svg", strImgAlt: "Instagram icon", strImgClasses: "h-10 w-10" },
-  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-9 w-9", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.facebook.com/share/1Fgy1caBsd/", strAriaLabel: "Facebook", strImgSrc: "/logo-facebook.svg", strImgAlt: "Facebook icon", strImgClasses: "h-8 w-8 svg-theme-invert", objStyle: { transform: "scale(1.12)" } },
+  { strHref: "https://www.instagram.com/propbol.inmo/", strAriaLabel: "Instagram", strImgSrc: "/logo-instagram.svg", strImgAlt: "Instagram icon", strImgClasses: "h-10 w-10 svg-theme-invert" },
+  { strHref: "https://www.tiktok.com/@propbolinmo", strAriaLabel: "TikTok", strImgSrc: "/logo-tiktok.svg", strImgAlt: "TikTok icon", strImgClasses: "h-9 w-9 svg-theme-invert", objStyle: { transform: "scale(1.12)" } },
 ];
 
 export default function Footer() {
@@ -59,10 +59,14 @@ export default function Footer() {
   });
 
   // función para manejar la navegación con parámetros de filtro
-  const handleFilterNavigation = (objLink: { strHref: string; strValue: string }) => {
-    const objParams = new URLSearchParams();
-    objParams.set("operaciones", objLink.strValue);
-    objRouter.push(`${objLink.strHref}?${objParams.toString()}`);
+  const handleFilterNavigation = (objLink: { strHref: string; strValue?: string }) => {
+    if (objLink.strValue) {
+      const objParams = new URLSearchParams();
+      objParams.set("operaciones", objLink.strValue);
+      objRouter.push(`${objLink.strHref.split('?')[0]}?${objParams.toString()}`);
+    } else {
+      objRouter.push(objLink.strHref);
+    }
   };
 
   const strBaseLinkClasses = useMemo(() => 
@@ -100,13 +104,13 @@ export default function Footer() {
               </>
             ) : (
               <>
-                {arrExploreLinks.map((link) => (
-                  <li key={link.strLabel}>
+                {arrExploreLinks.map((objLink) => (
+                  <li key={objLink.strLabel}>
                     <button 
-                      onClick={() => handleFilterNavigation(link)} 
+                      onClick={() => handleFilterNavigation(objLink)} 
                       className={strBaseLinkClasses}
                     >
-                      {link.strLabel}
+                      {objLink.strLabel}
                     </button>
                   </li>
                 ))}
@@ -126,8 +130,8 @@ export default function Footer() {
                 <Skeleton className="h-4 w-36" />
               </>
             ) : (
-              arrInfoLinks.map((link) => (
-                <li key={link.strLabel}><Link href={link.strHref} className={strBaseLinkClasses}>{link.strLabel}</Link></li>
+              arrInfoLinks.map((objLink) => (
+                <li key={objLink.strLabel}><Link href={objLink.strHref} className={strBaseLinkClasses}>{objLink.strLabel}</Link></li>
               ))
             )}
           </ul>
@@ -141,15 +145,20 @@ export default function Footer() {
           ) : (
             <>
               <span className="text-muted-foreground text-[0.83rem] md:text-[0.95rem] cursor-default">Síguenos:</span>
-              {arrSocialLinks.map((soc) => (
+              {arrSocialLinks.map((objSocial) => (
                 <a 
-                  key={soc.strAriaLabel} 
-                  href={soc.strHref} 
+                  key={objSocial.strAriaLabel} 
+                  href={objSocial.strHref} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strSocialAnim}`}
                 >
-                  <img src={soc.strImgSrc} alt={soc.strAriaLabel} className={soc.strImgClasses} />
+                  <img 
+                    src={objSocial.strImgSrc} 
+                    alt={objSocial.strImgAlt} 
+                    className={objSocial.strImgClasses} 
+                    style={objSocial.objStyle} 
+                  />
                 </a>
               ))}
               <span className="text-foreground text-[0.83rem] md:text-[0.95rem] cursor-default">© 2026 PROPBOL</span>

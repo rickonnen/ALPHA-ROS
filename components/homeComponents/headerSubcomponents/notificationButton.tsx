@@ -58,7 +58,7 @@ export const NotificationButton = ({
           alt="Notificaciones"
           width={24}
           height={24}
-          className="w-6 h-6 object-contain"
+          className="w-6 h-6 object-contain svg-theme-invert"
         />
         <NotificationBadge count={unreadCount} />
       </button>
