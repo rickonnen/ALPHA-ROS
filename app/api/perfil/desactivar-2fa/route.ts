@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyCode } from "@/lib/verificationCodes";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -9,28 +10,44 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { id_usuario, password } = await request.json();
+    const { id_usuario, password, otp_code } = await request.json();
 
-    if (!id_usuario || !password) {
+    if (!id_usuario) {
       return NextResponse.json({ error: "Parámetros incompletos" }, { status: 400 });
     }
 
     const usuario = await (prisma.usuario.findUnique as any)({
       where: { id_usuario },
-      select: { email: true },
+      select: { email: true, google_id: true },
     });
 
     if (!usuario) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    const { error: authError } = await supabaseAdmin.auth.signInWithPassword({
-      email: usuario.email,
-      password,
-    });
+    const esGoogle = !!usuario.google_id;
 
-    if (authError) {
-      return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
+    if (esGoogle) {
+      // Usuarios de Google
+      if (!otp_code) {
+        return NextResponse.json({ error: "Código OTP requerido" }, { status: 400 });
+      }
+      const validation = await verifyCode(usuario.email.toLowerCase(), otp_code);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error || "Código inválido o expirado" }, { status: 401 });
+      }
+    } else {
+      // Usuarios normales
+      if (!password) {
+        return NextResponse.json({ error: "Contraseña requerida" }, { status: 400 });
+      }
+      const { error: authError } = await supabaseAdmin.auth.signInWithPassword({
+        email: usuario.email,
+        password,
+      });
+      if (authError) {
+        return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
+      }
     }
 
     await (prisma.usuario.update as any)({

@@ -6,6 +6,7 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import ResetCodeForm from "./ResetCodeForm";
 import NewPasswordForm from "./NewPasswordForm";
 import SuccessModal from "./SuccessModal";
+import { useResetFlow } from "./useResetFlow";
 import { X } from "lucide-react";
 
 interface AuthModalProps {
@@ -16,8 +17,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(initialMode === "login");
-  const [screen, setScreen] = useState<"auth" | "forgot" | "code" | "newpass">("auth");
-  const [forgotEmail, setForgotEmail] = useState("");
+  const { screen, setScreen, forgotEmail, setForgotEmail, clearResetFlow } = useResetFlow();
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -30,8 +30,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
     <div className="fixed inset-0 z-[100] flex justify-end">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-10 flex flex-col">
-        
+      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-6 flex flex-col">
         <button onClick={onClose} className="self-end text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline">
           <X size={16} /> Volver al inicio
         </button>
@@ -69,7 +68,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
             <NewPasswordForm
               email={forgotEmail}
               onBack={() => setScreen("code")}
-              onSuccess={() => { setShowSuccess(true); setScreen("auth"); setIsLogin(true); }}
+              onSuccess={() => { clearResetFlow(); setShowSuccess(true); setIsLogin(true); }}
             />
           ) : isLogin ? (
             <LoginForm

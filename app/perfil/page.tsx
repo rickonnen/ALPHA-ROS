@@ -38,7 +38,7 @@ import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, Loader2 } from "lucide-react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
@@ -68,13 +68,15 @@ function PerfilContent() {
   const { user, logout } = useAuth();
   const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
   const userId = user?.id ?? "";
   console.log("Tipo de Usuario:", typeof userId);
   console.log("Usuario:", userId);
 
-  const [view, setView] = useState("perfil");
+  const seccionInicial = searchParams.get("seccion") === "redes-vinculadas" ? "seguridad" : (searchParams.get("seccion") ?? "perfil");
+  const [view, setView] = useState(seccionInicial);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -159,6 +161,7 @@ function PerfilContent() {
         onSuccess={() => setView("perfil")}
         onTelefonosChange={handleTelefonosChange}
         onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
+        initialSubView={searchParams.get("seccion") === "redes-vinculadas" ? "redes" : undefined}
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,

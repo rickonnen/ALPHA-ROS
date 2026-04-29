@@ -21,7 +21,6 @@ export function SettingsPanel({
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [isPhoneSaved, setIsPhoneSaved] = useState<boolean>(false);
 
-  // Cargar número de teléfono guardado
   useEffect(() => {
     const saved = localStorage.getItem("user_whatsapp_number");
     if (saved !== null && saved !== "") {
@@ -58,14 +57,14 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="bg-white rounded-b-2xl overflow-hidden">
       <div className="flex items-center gap-2 bg-slate-700 text-white px-4 py-3">
         <Settings size={18} />
         <span className="font-semibold">Configuración de Notificaciones</span>
       </div>
 
       <div className="p-4 space-y-3">
-        {/* Gmail Toggle */}
+        {/* Gmail */}
         <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
@@ -75,26 +74,23 @@ export function SettingsPanel({
             />
             <div>
               <p className="font-semibold">Gmail</p>
-              <p className="text-sm text-gray-500">
-                usuario@gmail.com
-              </p>
+              <p className="text-sm text-gray-500">usuario@gmail.com</p>
             </div>
           </div>
-
           <label className="relative inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={gmailEnabled}
               onChange={(e) => handleGmailToggle(e.target.checked)}
               disabled={isUpdating}
-              className="sr-only peer" 
+              className="sr-only peer"
             />
-            <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? 'opacity-50' : ''}`}></div>
+            <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""}`}></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
           </label>
         </div>
 
-        {/* Configuración de WhatsApp */}
+        {/* WhatsApp */}
         <div className="bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -107,26 +103,22 @@ export function SettingsPanel({
                 <p className="font-semibold">WhatsApp</p>
               </div>
             </div>
-
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={whatsappEnabled}
                 onChange={(e) => handleWhatsappToggle(e.target.checked)}
                 disabled={isUpdating}
-                className="sr-only peer" 
+                className="sr-only peer"
               />
-              <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? 'opacity-50' : ''}`}></div>
+              <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""}`}></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
             </label>
           </div>
 
-          {/* Número de WhatsApp */}
           {isPhoneSaved ? (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500 ml-10">
-                {phoneNumber}
-              </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-sm text-gray-500 ml-10">{phoneNumber}</p>
               <button
                 onClick={handleEditPhoneNumber}
                 className="text-xs text-blue-600 hover:text-blue-700 hover:underline px-2 py-1"
@@ -161,7 +153,6 @@ export function SettingsPanel({
           )}
         </div>
 
-        {/* Botón Volver */}
         <button
           onClick={onClose}
           className="text-blue-600 text-sm hover:underline mt-2 w-full text-center"

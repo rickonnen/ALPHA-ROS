@@ -14,11 +14,13 @@ import ConfirmarDesactivar2FA from "./components/ConfirmarDesactivar2FA";
 
 interface Autenticacion2FAProps {
   id_usuario: string;
+  primary_provider?: string | null;
   onBack: () => void;
 }
 
-export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticacion2FAProps) {
+export default function Autenticacion2FAView({ id_usuario, primary_provider, onBack }: Autenticacion2FAProps) {
   const [bolActivado, setBolActivado] = useState(false);
+  const [cargandoEstado, setCargandoEstado] = useState(true);
   const [secreto, setSecreto] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
   const [copiado, setCopiado] = useState(false);
@@ -42,6 +44,8 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
         }
       } catch (error) {
         console.error("Error cargando estado 2FA:", error);
+      } finally {
+        setCargandoEstado(false); 
       }
     };
     cargarEstado2FA();
@@ -68,7 +72,14 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
 
   const handleToggle = () => {
     if (bolActivado) {
-      setMostrarConfirmDesactivar(true);
+      if (ya2FAConfigurado) {
+        setMostrarConfirmDesactivar(true);
+      } else {
+        setBolActivado(false);
+        setSecreto("");
+        setQrCode("");
+        setMostrarInputCodigo(false);
+      }
     } else {
       setBolActivado(true);
     }
@@ -120,22 +131,27 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
           <p className="flex-1 text-sm text-white/80">
             {ya2FAConfigurado
               ? "El segundo factor está activado."
-              : "Obtén un codigo de alguna app como google authenticator."}
+              : "Obtén un codigo de alguna app de autenticación."}
           </p>
-          <button
-            type="button"
-            onClick={handleToggle}
-            aria-label={bolActivado ? "Desactivar 2FA" : "Activar 2FA"}
-            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none ${
-              bolActivado ? "bg-white/80" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                bolActivado ? "translate-x-8" : "translate-x-1"
+          {/* Toggle real cuando el estado ya se conoce */}
+          {cargandoEstado ? (
+            <div className="relative inline-flex h-7 w-14 items-center rounded-full bg-white/10 animate-pulse" />
+          ) : (
+            <button
+              type="button"
+              onClick={handleToggle}
+              aria-label={bolActivado ? "Desactivar 2FA" : "Activar 2FA"}
+              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none ${
+                bolActivado ? "bg-white/80" : "bg-white/20"
               }`}
-            />
-          </button>
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                  bolActivado ? "translate-x-8" : "translate-x-1"
+                }`}
+              />
+            </button>
+          )}
         </div>
       </div>
 
@@ -143,6 +159,7 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
       {mostrarConfirmDesactivar && (
         <ConfirmarDesactivar2FA
           id_usuario={id_usuario}
+          primary_provider={primary_provider}
           onSuccess={() => {
             setBolActivado(false);
             setSecreto("");
@@ -166,13 +183,17 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
             <p className="text-sm text-white/80">
               <span className="font-bold">1.</span> Descarga una app de autenticación.
             </p>
+            <p className="text-xs text-white/50 -mt-3">
+              Ejm: Google Authenticator, Authy, 2FA Authenticator.
+            </p>
 
             <div className="space-y-3">
               <p className="text-sm text-white/80">
                 <span className="font-bold">2.</span> Escanea este codigo QR o copia la clave secreta.
               </p>
 
-              <div className="flex gap-6 items-start">
+              {/* flex-col en mobile, flex-row en desktop */}
+              <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                 {/* QR */}
                 <div className="flex flex-col items-center gap-3 flex-shrink-0">
                   {qrCode && (
@@ -180,19 +201,11 @@ export default function Autenticacion2FAView({ id_usuario, onBack }: Autenticaci
                       <img src={qrCode} alt="QR Code 2FA" className="w-36 h-36" />
                     </div>
                   )}
-                  <button
-                    type="button"
-                    title="Mostrar código QR"
-                    className="px-4 py-2 text-xs font-bold text-white/70 border border-white/20 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
-                  >
-                    <QrCode className="h-3.5 w-3.5" />
-                    CODIGO QR
-                  </button>
                 </div>
 
                 {/* Clave secreta */}
-                <div className="flex flex-col items-center gap-3 flex-1">
-                  <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 min-h-[144px]">
+                <div className="flex flex-col items-center gap-3 w-full sm:flex-1">
+                  <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 sm:min-h-[144px]">
                     {secreto.match(/.{1,4}/g)?.reduce<string[][]>((rows, chunk, i) => {
                       const rowIndex = Math.floor(i / 3);
                       if (!rows[rowIndex]) rows[rowIndex] = [];
