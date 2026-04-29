@@ -19,6 +19,7 @@ type TipoEvento =
 // Tope acumulativo: evita “burbuja” de repetir siempre lo mismo.
 // 30 puntos permite que el perfil siga diferenciando preferencias sin saturar tan rÃ¡pido como 20.
 const SCORE_CAP = 30;
+const ITEM_SCORE_CAP = 12;
 
 const EVENT_WEIGHTS: Record<TipoEvento, number> = {
   // Prioridades acordadas:
@@ -63,23 +64,23 @@ function addScore(map: Map<number, number>, key: number | null | undefined, delt
   map.set(key, (map.get(key) ?? 0) + delta);
 }
 
-function capValue(value: number): number {
-  return Math.max(-SCORE_CAP, Math.min(SCORE_CAP, value));
+function capValue(value: number, cap: number): number {
+  return Math.max(-cap, Math.min(cap, value));
 }
 
-function capScores(map: Map<number, number>): Map<number, number> {
+function capScores(map: Map<number, number>, cap: number): Map<number, number> {
   const capped = new Map<number, number>();
   for (const [key, value] of map.entries()) {
-    const v = capValue(value);
+    const v = capValue(value, cap);
     if (v !== 0) capped.set(key, v);
   }
   return capped;
 }
 
-function scaledPreference(map: Map<number, number>, key: number | null | undefined): number {
+function scaledPreference(map: Map<number, number>, key: number | null | undefined, cap: number): number {
   if (key == null) return 0;
   const raw = map.get(key) ?? 0;
-  return raw / SCORE_CAP; // [-1..1]
+  return raw / cap; // [-1..1]
 }
 
 function topKeys(map: Map<number, number>, limit: number): number[] {
@@ -113,6 +114,7 @@ async function loadPreferences(request: NextRequest) {
       prefCiudad: new Map<number, number>(),
       prefHabitaciones: new Map<number, number>(),
       prefBanos: new Map<number, number>(),
+      prefPublicacion: new Map<number, number>(),
       desiredMinPrice: null as number | null,
       desiredMaxPrice: null as number | null,
       totalInteracciones: 0,
@@ -174,6 +176,7 @@ async function loadPreferences(request: NextRequest) {
   const scoreCiudad = new Map<number, number>();
   const scoreHabitaciones = new Map<number, number>();
   const scoreBanos = new Map<number, number>();
+  const scorePublicacion = new Map<number, number>();
 
   for (const event of events) {
     const tipo = event.tipo_evento as TipoEvento;
@@ -197,6 +200,7 @@ async function loadPreferences(request: NextRequest) {
     addScore(scoreCiudad, event.Publicacion.Ubicacion?.id_ciudad, delta);
     addScore(scoreHabitaciones, event.Publicacion.habitaciones, delta * 0.5);
     addScore(scoreBanos, event.Publicacion.banos, delta * 0.4);
+    addScore(scorePublicacion, event.Publicacion.id_publicacion, delta * 1.1);
   }
 
   let desiredMinPrice: number | null = null;
@@ -215,11 +219,12 @@ async function loadPreferences(request: NextRequest) {
     if (desiredMinPrice != null && desiredMaxPrice != null) break;
   }
 
-  const prefOperacion = capScores(scoreOperacion);
-  const prefInmueble = capScores(scoreInmueble);
-  const prefCiudad = capScores(scoreCiudad);
-  const prefHabitaciones = capScores(scoreHabitaciones);
-  const prefBanos = capScores(scoreBanos);
+  const prefOperacion = capScores(scoreOperacion, SCORE_CAP);
+  const prefInmueble = capScores(scoreInmueble, SCORE_CAP);
+  const prefCiudad = capScores(scoreCiudad, SCORE_CAP);
+  const prefHabitaciones = capScores(scoreHabitaciones, SCORE_CAP);
+  const prefBanos = capScores(scoreBanos, SCORE_CAP);
+  const prefPublicacion = capScores(scorePublicacion, ITEM_SCORE_CAP);
 
   const hasSignal =
     prefOperacion.size > 0 ||
@@ -227,6 +232,7 @@ async function loadPreferences(request: NextRequest) {
     prefCiudad.size > 0 ||
     prefHabitaciones.size > 0 ||
     prefBanos.size > 0 ||
+    prefPublicacion.size > 0 ||
     desiredMinPrice != null ||
     desiredMaxPrice != null;
 
@@ -238,6 +244,7 @@ async function loadPreferences(request: NextRequest) {
     prefCiudad,
     prefHabitaciones,
     prefBanos,
+    prefPublicacion,
     desiredMinPrice,
     desiredMaxPrice,
     totalInteracciones: events.length + searches.length,
@@ -271,6 +278,7 @@ async function scoreCandidates(
     prefCiudad,
     prefHabitaciones,
     prefBanos,
+    prefPublicacion,
     desiredMinPrice,
     desiredMaxPrice,
   } = prefs;
@@ -282,14 +290,22 @@ async function scoreCandidates(
 
   const scored = candidates
     .map((candidate) => {
-      const opScore = scaledPreference(prefOperacion, candidate.id_tipo_operacion);
-      const inScore = scaledPreference(prefInmueble, candidate.id_tipo_inmueble);
-      const cityScore = scaledPreference(prefCiudad, candidate.Ubicacion?.id_ciudad ?? null);
-      const habScore = scaledPreference(prefHabitaciones, candidate.habitaciones ?? null);
-      const banosScore = scaledPreference(prefBanos, candidate.banos ?? null);
+      const opScore = scaledPreference(prefOperacion, candidate.id_tipo_operacion, SCORE_CAP);
+      const inScore = scaledPreference(prefInmueble, candidate.id_tipo_inmueble, SCORE_CAP);
+      const cityScore = scaledPreference(prefCiudad, candidate.Ubicacion?.id_ciudad ?? null, SCORE_CAP);
+      const habScore = scaledPreference(prefHabitaciones, candidate.habitaciones ?? null, SCORE_CAP);
+      const banosScore = scaledPreference(prefBanos, candidate.banos ?? null, SCORE_CAP);
+      const itemAffinity = scaledPreference(prefPublicacion, candidate.id_publicacion, ITEM_SCORE_CAP);
 
       // Contenido: suma ponderada (acepta negativo para penalizar).
-      let score = opScore * 0.6 + inScore * 0.6 + cityScore * 0.35 + habScore * 0.22 + banosScore * 0.18;
+      // itemAffinity ayuda a que las cards con mÃ¡s interacciÃ³n directa queden arriba (sin crear bloques por operaciÃ³n).
+      let score =
+        itemAffinity * 1.25 +
+        opScore * 0.25 +
+        inScore * 0.6 +
+        cityScore * 0.35 +
+        habScore * 0.22 +
+        banosScore * 0.18;
 
       const price = toNumber(candidate.precio);
       if (price != null && (desiredMinPrice != null || desiredMaxPrice != null)) {
