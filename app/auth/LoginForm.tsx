@@ -233,7 +233,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     try {
       const telemetry = await getLoginTelemetry();
       savePendingGoogleTelemetry(telemetry);
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/google-auth-check" });
     } catch (error) {
       clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
