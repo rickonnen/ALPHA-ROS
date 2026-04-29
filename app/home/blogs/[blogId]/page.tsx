@@ -7,7 +7,7 @@ import { X as ObjXIcon } from "lucide-react";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 24/04/2026
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
  * funcionalidad: renderiza la vista completa de un blog especifico
  */
 interface singleBlogData {
@@ -17,6 +17,7 @@ interface singleBlogData {
   StrContentBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  StrAuthorBlo: string;
 }
 
 export default function blogPostPage({ params }: { params: Promise<{ blogId: string }> }) {
@@ -101,6 +102,12 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
 
       <div className="w-full text-foreground text-[1.1rem] leading-loose whitespace-pre-wrap">
         {ObjBlogBlo.StrContentBlo}
+      </div>
+
+      <div className="w-full mt-4 text-right">
+        <p className="text-secondary font-medium text-lg">
+          Escrito por: {ObjBlogBlo.StrAuthorBlo}
+        </p>
       </div>
 
       <div className="w-full flex justify-center mt-12 pt-8 border-t border-border/50">

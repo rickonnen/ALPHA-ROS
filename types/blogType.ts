@@ -18,6 +18,7 @@ export interface blogData {
   StrDescriptionBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  StrAuthorBlo: string;
 }
 
 // interface para la vista completa de un blog individual
@@ -28,6 +29,7 @@ export interface singleBlogData {
   StrContentBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  StrAuthorBlo: string;
 }
 
 // interface para la tabla de gestion del administrador

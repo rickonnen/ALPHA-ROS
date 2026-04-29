@@ -85,15 +85,6 @@ export default function blogSection() {
 
       {/* Contenedor inferior: Boton de crear a la izquierda, enlace de ver mas a la derecha */}
       <div className="w-full flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4 mt-2">
-        
-        {/* Boton para crear blog */}
-        <Link 
-          href="/home/blogs/createBlog"
-          className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 rounded-md font-semibold text-white bg-[#E2725B] hover:bg-[#C85A46] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E2725B] shadow-sm w-full sm:w-auto"
-        >
-          <PenSquare className="w-5 h-5" />
-          Crea tu Blog
-        </Link>
 
         {/* enlace de redireccion al listado completo de blogs */}
         <Link 

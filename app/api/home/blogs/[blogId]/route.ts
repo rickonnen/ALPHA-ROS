@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState, singleBlogData } from "@/types/blogType";
 
-/**
- * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
- * funcionalidad: renderiza la vista completa de un blog especifico
- */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ blogId: string }> } 
@@ -18,13 +14,16 @@ export async function GET(
       return NextResponse.json({ error: "id invalido" }, { status: 400 });
     }
 
-    // consulta a prisma filtrando por id, estado (con enum) y que no este eliminado
+    // 1. Consulta a Prisma
     const ObjDbBlogBlo = await prisma.blogs.findFirst({
       where: {
         id_blog: IntBlogIdBlo,
         estado: blogState.PUBLICADO,
         deleted_at: null,
       },
+      include: {
+        Usuario: true 
+      }
     });
 
     if (!ObjDbBlogBlo) {
@@ -39,6 +38,7 @@ export async function GET(
         })
       : "fecha desconocida";
 
+    // 3. Mapeo de datos
     const ObjFormattedBlogBlo: singleBlogData = {
       IntIdBlo: ObjDbBlogBlo.id_blog,
       StrTitleBlo: ObjDbBlogBlo.titulo || "",
@@ -46,6 +46,7 @@ export async function GET(
       StrContentBlo: ObjDbBlogBlo.contenido || "",
       StrImageUrlBlo: ObjDbBlogBlo.imagen_url || "",
       StrDateBlo: StrFormattedDateBlo,
+      StrAuthorBlo: ObjDbBlogBlo.Usuario?.nombres || "Autor Desconocido", 
     };
 
     return NextResponse.json(ObjFormattedBlogBlo);
