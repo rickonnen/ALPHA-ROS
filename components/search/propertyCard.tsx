@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
+import { useDollarRate } from '@/components/hooks/getDollarRate';
 
 
 type Currency = "USD" | "BS";
@@ -53,10 +54,11 @@ function PropertyCard({
 }: PropertyCardProps) {
   const { trackEvent } = useTracking();
   const viewRef = useCardViewTracking(property.id, 0);
+  const { compra } = useDollarRate();
   
-    const exchangeRate = 6.96;
+  const exchangeRate = compra ?? 6.96;
 
-    const convertedPrice =
+  const convertedPrice =
     selectedCurrency === "USD"
         ? property.price
         : Math.round(property.price * exchangeRate * 100) / 100;

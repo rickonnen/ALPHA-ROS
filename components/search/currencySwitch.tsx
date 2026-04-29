@@ -39,7 +39,7 @@ export default function CurrencySwitch({
   };
 
   return (
-    <div className="flex items-center w-full rounded-lg overflow-hidden border border-border">
+    <div className="flex items-center w-full rounded-lg overflow-hidden">
       <Button
         ref={usdButtonRef}
         className={`w-1/2 ${

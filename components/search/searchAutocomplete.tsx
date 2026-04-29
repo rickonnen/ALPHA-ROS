@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import { useCitySearch } from "../hooks/useCitySearch";
 
 interface SearchAutocompleteProps {
@@ -58,14 +59,30 @@ export default function SearchAutocomplete({
 
   return (
     <div ref={wrapperRef} className="relative w-full mt-3">
-      <input
-        type="text"
-        placeholder="Buscar por ubicación"
-        value={strCity}
-        onChange={(e) => handleCityChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className="w-full rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55] shadow-sm"
-      />
+      <div className="relative w-full flex items-center">
+        <input
+          type="text"
+          placeholder="Buscar por ubicación"
+          value={strCity}
+          onChange={(e) => handleCityChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] outline-none placeholder:text-[#5E5A55] shadow-sm"
+        />
+        
+        {strCity && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCityChange("");
+            }}
+            className="absolute right-3 p-1 rounded-full hover:bg-[#D4CCBF] transition-colors cursor-pointer flex items-center justify-center"
+            aria-label="Limpiar búsqueda"
+          >
+            <X className="h-4 w-4 text-[#5E5A55]" />
+          </button>
+        )}
+      </div>
 
       {bolShowSuggestions && (
         <ul className="absolute top-full z-50 mt-2 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-2 shadow-sm max-h-[200px] overflow-y-auto">

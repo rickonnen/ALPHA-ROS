@@ -112,8 +112,8 @@ function roundToTwo(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function convertBsToUsd(amount: number): number {
-  return roundToTwo(amount / BS_EXCHANGE_RATE);
+function convertBsToUsd(amount: number, exchangeRate: number = BS_EXCHANGE_RATE): number {
+  return roundToTwo(amount / exchangeRate);
 }
 
 function getPropertyTypeNames(value: string | undefined): string[] {
@@ -288,7 +288,7 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   return where;
 }
 
-function convertPublicationPriceToUsd(publication: PublicationWithRelations): number | null {
+function convertPublicationPriceToUsd(publication: PublicationWithRelations, apiExchangeRate: number = BS_EXCHANGE_RATE): number | null {
   const rawPrice = toNumber(publication.precio);
   if (rawPrice === null) {
     return null;
@@ -301,12 +301,8 @@ function convertPublicationPriceToUsd(publication: PublicationWithRelations): nu
   }
 
   if (currencyName === 'bs' || currencyName.includes('boliv')) {
-    const exchangeRate = toNumber(publication.Moneda?.tasa_cambio);
-    if (exchangeRate && exchangeRate > 0) {
-      return rawPrice / exchangeRate;
-    }
-
-    return convertBsToUsd(rawPrice);
+    // Usar el precio de compra de la API DolarAPI como primera opción
+    return convertBsToUsd(rawPrice, apiExchangeRate);
   }
 
   return rawPrice;
@@ -315,12 +311,13 @@ function convertPublicationPriceToUsd(publication: PublicationWithRelations): nu
 function passesPriceFilter(
   publication: PublicationWithRelations,
   filters: SearchFiltersInput,
+  apiExchangeRate: number = BS_EXCHANGE_RATE,
 ): boolean {
   if (filters.minPrice === undefined && filters.maxPrice === undefined) {
     return true;
   }
 
-  const publicationPriceInUsd = convertPublicationPriceToUsd(publication);
+  const publicationPriceInUsd = convertPublicationPriceToUsd(publication, apiExchangeRate);
   if (publicationPriceInUsd === null) {
     return false;
   }
@@ -329,14 +326,14 @@ function passesPriceFilter(
     filters.minPrice === undefined
       ? undefined
       : filters.currency === 'BS'
-        ? convertBsToUsd(filters.minPrice)
+        ? convertBsToUsd(filters.minPrice, apiExchangeRate)
         : filters.minPrice;
 
   const maxPriceInUsd =
     filters.maxPrice === undefined
       ? undefined
       : filters.currency === 'BS'
-        ? convertBsToUsd(filters.maxPrice)
+        ? convertBsToUsd(filters.maxPrice, apiExchangeRate)
         : filters.maxPrice;
 
   if (minPriceInUsd !== undefined && publicationPriceInUsd < minPriceInUsd) {
@@ -390,6 +387,22 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
 export async function searchPublicaciones(
   filters: SearchFiltersInput,
 ): Promise<SearchPublicationResult[]> {
+  // Obtener el precio de compra de la API DolarAPI
+  let apiExchangeRate = BS_EXCHANGE_RATE;
+  try {
+    const exchangeRateResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/exchange_rate`,
+      { cache: 'no-store' }
+    );
+    if (exchangeRateResponse.ok) {
+      const exchangeData = await exchangeRateResponse.json();
+      apiExchangeRate = exchangeData.compra ?? BS_EXCHANGE_RATE;
+    }
+  } catch {
+    // Si falla, usar el valor por defecto
+    apiExchangeRate = BS_EXCHANGE_RATE;
+  }
+
   const publications = await prisma.publicacion.findMany({
     where: buildWhere(filters),
     orderBy: {
@@ -421,7 +434,7 @@ export async function searchPublicaciones(
   });
 
   const priceFiltered = publications.filter((publication) =>
-    passesPriceFilter(publication, filters),
+    passesPriceFilter(publication, filters, apiExchangeRate),
   );
 
   return priceFiltered.map(mapPublication);
