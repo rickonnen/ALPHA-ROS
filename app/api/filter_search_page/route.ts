@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  searchPublicaciones,
+  //searchPublicaciones,
+  getCachedPublications,
   type SearchFiltersInput,
 } from '../../../features/filter_search_page/services';
 
 export async function POST(request: NextRequest) {
   try {
     const filters = (await request.json()) as SearchFiltersInput;
-    const publications = await searchPublicaciones(filters);
+    //const publications = await searchPublicaciones(filters);
+    const publications = await getCachedPublications(filters);
 
     return NextResponse.json({
       success: true,
