@@ -6,13 +6,12 @@ export function templateCambioContrasena(nombre: string, fecha: string): string 
     <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Arial,sans-serif">
       <div style="max-width:600px;margin:0 auto;background:white">
 
-       <!-- Logo -->
+        <!-- Logo -->
         <div style="padding:30px 0 24px 0;text-align:center">
           <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja" 
                alt="PROPBOL" style="height:60px;vertical-align:middle" />
           <span style="font-size:26px;font-weight:800;color:#1F3A4D;vertical-align:middle;margin-left:10px;font-family:'Segoe UI',Arial,sans-serif">Propbol</span>
         </div>
-
 
         <!-- Header -->
         <div style="background:#1F3A4D;padding:28px 24px;text-align:center;color:white;border-radius:10px;margin:0 24px">
@@ -35,17 +34,10 @@ export function templateCambioContrasena(nombre: string, fecha: string): string 
           </p>
 
           <p style="margin:0 0 6px 0;font-size:13px;color:#333;font-weight:700">ALERTA DE SEGURIDAD</p>
-          <p style="margin:0 0 32px 0;font-size:13px;color:#333;line-height:1.6">
+          <p style="margin:0;font-size:13px;color:#333;line-height:1.6">
             Si no realizaste este cambio, contacta a nuestro equipo de soporte inmediatamente en:
             <a href="mailto:soporte@propbol.com" style="color:#C85A4F">soporte@propbol.com</a>
           </p>
-
-          <div style="text-align:center;padding-bottom:16px">
-            <a href="${process.env.NEXTAUTH_URL}/api/auth/signout"
-               style="display:inline-block;background:#1F3A4D;color:white;padding:14px 44px;text-decoration:none;border-radius:20px;font-weight:600;font-size:15px">
-              Cerrar sesión
-            </a>
-          </div>
 
         </div>
 
