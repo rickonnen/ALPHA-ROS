@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client';
 
 import { prisma } from './prismaClient';
 
+import { unstable_cache } from 'next/cache';
+
 export type SearchCurrency = 'USD' | 'BS';
 
 export type SearchFiltersInput = {
@@ -425,4 +427,15 @@ export async function searchPublicaciones(
   );
 
   return priceFiltered.map(mapPublication);
+}
+
+export async function getCachedPublications(filters: SearchFiltersInput) {
+  return unstable_cache(
+    async () => searchPublicaciones(filters),
+    ['search-results', JSON.stringify(filters)],
+    {
+      revalidate: 60,
+      tags: ['publicaciones']
+    }
+  )();
 }
