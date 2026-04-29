@@ -302,7 +302,7 @@ function convertPublicationPriceToUsd(publication: PublicationWithRelations, api
   }
 
   if (currencyName === 'bs' || currencyName.includes('boliv')) {
-    // Usar el precio de compra de la API DolarAPI como primera opción
+    // Usar el tipo de cambio de venta de DolarAPI
     return convertBsToUsd(rawPrice, apiExchangeRate);
   }
 
@@ -389,19 +389,24 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
 export async function searchPublicaciones(
   filters: SearchFiltersInput,
 ): Promise<SearchPublicationResult[]> {
-  // Obtener el precio de compra de la API DolarAPI
+  // Obtener el tipo de cambio de venta directamente desde DolarAPI Bolivia
   let apiExchangeRate = BS_EXCHANGE_RATE;
+
   try {
     const exchangeRateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/exchange_rate`,
-      { cache: 'no-store' }
+      `${process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"}/v1/dolares/binance`,
+      { cache: "no-store" }
     );
+
     if (exchangeRateResponse.ok) {
       const exchangeData = await exchangeRateResponse.json();
-      apiExchangeRate = exchangeData.compra ?? BS_EXCHANGE_RATE;
+      const venta = Number(exchangeData.venta);
+
+      if (!Number.isNaN(venta) && venta > 0) {
+        apiExchangeRate = venta;
+      }
     }
   } catch {
-    // Si falla, usar el valor por defecto
     apiExchangeRate = BS_EXCHANGE_RATE;
   }
 
