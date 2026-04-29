@@ -60,7 +60,7 @@ export default function Banner() {
       try {
         const objResponse = await fetch("/api/home/bannerHome");
         const arrData = await objResponse.json();
-        setArrImages(arrData);
+        setArrImages(Array.isArray(arrData) ? arrData : []);
       } catch (objError) {
         console.error("Error al cargar el banner:", objError);
       } finally {

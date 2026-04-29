@@ -180,8 +180,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       });
 
+      const data = await res.json();
+
+      //  Detectar si se requiere 2FA
+      if (data.requiresOTP && data.userId) {
+        const err: any = new Error("Requiere verificación 2FA");
+        err.requiresOTP = true;
+        err.userId = data.userId;
+        throw err;
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         const err: any = new Error(data.error || "Error al iniciar sesión");
         err.code = data.code;
         throw err;

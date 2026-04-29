@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from "react";
 interface GoogleSignInButtonProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  on2FARequired?: (userId: string) => void;
 }
 
-export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({ onSuccess, onCancel, on2FARequired }: GoogleSignInButtonProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [blockedByConnection, setBlockedByConnection] = useState(false);
   const [error, setError] = useState("");
@@ -59,9 +60,28 @@ export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignIn
         //Verificar sesión de NextAuth (no /api/auth/me de Max)
         fetch("/api/auth/session")
           .then(res => res.json())
-          .then(session => {
+          .then(async (session) => {
             if (session?.user) {
-              //Login exitoso con Google
+              // ✅ NUEVO: Verificar si requiere 2FA
+              console.log("[GoogleSignInButton] Sesión encontrada, verificando 2FA...");
+              try {
+                const check2FARes = await fetch("/api/auth/check-2fa-status");
+                if (check2FARes.ok) {
+                  const { requires2FA, userId } = await check2FARes.json();
+                  console.log("[GoogleSignInButton] requires2FA:", requires2FA);
+                  
+                  if (requires2FA && userId && on2FARequired) {
+                    // Requiere 2FA
+                    console.log("[GoogleSignInButton] 2FA requerido");
+                    on2FARequired(userId);
+                    return;
+                  }
+                }
+              } catch (err) {
+                console.error("[GoogleSignInButton] Error verificando 2FA:", err);
+              }
+
+              // No requiere 2FA o error en verificación - proceder normalmente
               if (onSuccess) onSuccess();
               window.location.href = "/";
             } else {

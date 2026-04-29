@@ -13,6 +13,13 @@ export async function POST(req: NextRequest) {
 
   if (!user) return NextResponse.json({ error: "No encontramos una cuenta con este correo electrónico" }, { status: 404 });
 
+  // ✅ FIX BUG-HU02_14: Invalidar códigos anteriores antes de crear uno nuevo
+  await supabase
+    .from("Recuperacion_password")
+    .update({ usado: true })
+    .eq("id_usuario", user.id_usuario)
+    .eq("usado", false);
+
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   const ahora = new Date();
   const expiracion = new Date(ahora.getTime() + 8 * 60 * 1000);

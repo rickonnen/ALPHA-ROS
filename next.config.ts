@@ -18,13 +18,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '50mb', // mismo límite que el máximo de imagen (10MB por archivo)
     },
   },
-  eslint: {
-    // ESTO IGNORA LOS WARNINGS Y ERRORES DE ESLINT DURANTE EL BUILD
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // ESTO IGNORA LOS ERRORES DE TIPOS RESTANTES DURANTE EL BUILD
     ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 }
 

@@ -11,8 +11,8 @@ export function SignInDiscord() {
   }
 
   return (
-    <button onClick={handleClick} className={discordStyles}>
-      {discordIcon}
+    <button type="button" onClick={handleClick} className={discordStyles}>     
+    {discordIcon}
     </button>
   )
 }

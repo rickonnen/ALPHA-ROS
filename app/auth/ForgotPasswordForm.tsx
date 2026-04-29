@@ -30,7 +30,7 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-if (!res.ok) { setError("Si el correo está registrado, recibirás un código en tu bandeja de entrada."); return; }
+      if (!res.ok) { setError("Si el correo está registrado, recibirás un código en tu bandeja de entrada."); return; }
       onCodeSent(email);
     } catch {
       setError("Si el correo está registrado, recibirás un código en tu bandeja de entrada.");
