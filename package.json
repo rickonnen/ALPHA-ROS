@@ -19,6 +19,7 @@
     "embla-carousel-react": "^8.6.0",
     "geist": "^1.7.0",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "libphonenumber-js": "^1.12.41",
     "lucide-react": "^1.0.1",
