@@ -876,15 +876,18 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
+                <AdvancedFilters
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues}
+                />
+
+                <div className="my-4 h-px bg-[#D8D2C8]" />
+
                 <PriceDropdown
                   selectedCurrency={selectedCurrency}
                   appliedPriceFilter={appliedPriceFilter}
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
-                />
-                <AdvancedFilters
-                  key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
                 />
               </div>
               <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1148,16 +1151,16 @@ function SearchPageContent() {
                     selected={selectedPropertyTypes}
                     onChange={setSelectedPropertyTypes}
                   />
+                  <AdvancedFilters
+                    key={advancedFiltersKey}
+                    onChange={setAdvancedFilterValues}
+                  />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <PriceDropdown
                     selectedCurrency={selectedCurrency}
                     appliedPriceFilter={appliedPriceFilter}
                     onCurrencyChange={handleCurrencyChange}
                     onApplyRange={handleApplyRange}
-                  />
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
                   />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <div className="pb-2">
