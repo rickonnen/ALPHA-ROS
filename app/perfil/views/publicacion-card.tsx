@@ -17,6 +17,15 @@
     Fecha: 17/04/2026
     Fix: Actualización del texto del botón secundario a "Ver detalle".
 */
+/* Dev: Candy Camila Ordoñez Pinto
+   Fecha: 28/04/2026
+   Fix: Ocultamiento de métricas y ubicación en mobile
+     - Se agregó clase `hidden sm:flex` en el bloque de ubicación (MapPin)
+       para ocultar la dirección/zona en pantallas menores a 640px
+     - Se agregó clase `hidden sm:flex` en el bloque de métricas
+       (superficie, habitaciones, baños) para ocultarlas en mobile
+     - Ambos elementos siguen visibles desde el breakpoint `sm` en adelante
+*/
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,7 +52,7 @@ export interface Publicacion {
 interface PublicacionCardProps {
   publicacion: Publicacion;
   onEliminar: (id: string) => void;
-  onCambiarEstado: (id: string, nuevoEstado: number) => Promise<void>;
+  onCambiarEstado: (id: string, nuevoEstado: number) => Promise<boolean>;
 }
 
 export default function PublicacionCard({
@@ -111,15 +120,16 @@ export default function PublicacionCard({
                   className="h-5 w-9"
                   onCheckedChange={async (checked) => {
                     setBloqueado(true);
-                    setActivo(checked);
-
+                    let exito = false;
                     if (checked) {
-                      await onCambiarEstado(publicacion.id, estadoPrevio);
+                      exito = await onCambiarEstado(publicacion.id, estadoPrevio);
                     } else {
                       setEstadoPrevio(publicacion.id_estado);
-                      await onCambiarEstado(publicacion.id, 4);
+                      exito = await onCambiarEstado(publicacion.id, 4);
                     }
-
+                    if (exito) {
+                      setActivo(checked);
+                    }
                     setBloqueado(false);
                   }}
                 />
@@ -129,14 +139,14 @@ export default function PublicacionCard({
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
                 router.push(
-                  `/publicacion/perfil_del_inmueble/${publicacion.id}`,
+                  `/publicacion/Mi_inmueble/${publicacion.id}`,
                 )
               }
             >
               {publicacion.titulo}
             </h3>
             {publicacion.direccion && (
-              <div className="flex items-center gap-1 mt-1">
+              <div className="hidden sm:flex items-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
                 <p className="text-xs text-gray-500 truncate">
                   {[publicacion.direccion].filter(Boolean).join(", ")}
@@ -146,7 +156,7 @@ export default function PublicacionCard({
           </div>
 
           {/* Métricas */}
-          <div className="flex items-center gap-4 text-xs text-gray-600 flex-wrap">
+          <div className="hidden sm:flex items-center gap-4 text-xs text-gray-600 flex-wrap">
             {publicacion.superficie != null && (
               <span className="flex items-center gap-1">
                 <Square className="w-3 h-3" />
@@ -188,9 +198,7 @@ export default function PublicacionCard({
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() =>
-                  router.push(
-                    `/publicacion/perfil_del_inmueble/${publicacion.id}`,
-                  )
+                  window.open(`/publicacion/Mi_inmueble/${publicacion.id}`, `tab_inmueble_${publicacion.id}`)                
                 }
               >
                 Ver Detalle
@@ -199,7 +207,7 @@ export default function PublicacionCard({
                 variant="azul"
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
-                /*onClick={() => router.push(`/publicacion/editar/${publicacion.id}`,)}*/
+                onClick={() => router.push(`/publicacion/formularioPublicacion?editar=${publicacion.id}`)}
               >
                 Editar
               </Button>

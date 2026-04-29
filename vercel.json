@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/suspend-expired",
-      "schedule": "10 0 * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }

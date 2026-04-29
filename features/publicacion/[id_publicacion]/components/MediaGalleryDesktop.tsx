@@ -1,4 +1,3 @@
-
 /**
  * Dev: Gustavo Montaño
  * Date: 07/04/2026
@@ -15,8 +14,17 @@
  * @return JSX con grilla adaptativa visible solo en desktop
  */
 import React from "react";
-import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, AlertTriangle } from "lucide-react";
 
+// FIX: Componente reutilizable con el diseño exacto del AlertTriangle
+  const FallbackOverlay = () => (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#2E2E2E]/50 pointer-events-none z-10 backdrop-blur-[2px]">
+      <AlertTriangle className="w-8 h-8 text-white/90 mb-2" strokeWidth={1.5} />
+      <span className="text-white text-sm font-semibold tracking-wide drop-shadow-md px-2 text-center">
+        Imagen no disponible
+      </span>
+    </div>
+  );
 interface MediaGalleryDesktopProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
@@ -40,27 +48,42 @@ export const MediaGalleryDesktop = ({
   onOpenLightbox,
   onImgError,
 }: MediaGalleryDesktopProps) => {
-
-  const bolHasVideo    = !!(strVideoId || strReelId);
+const bolHasVideo    = !!(strVideoId || strReelId);
   const intImgCount    = arrImagenesSafe.length;
   const bolCase1 = intImgCount === 1 && !bolHasVideo;
   const bolCase2 = (intImgCount === 2 && !bolHasVideo) || (intImgCount === 1 && bolHasVideo);
+
+  // FIX: Función para detectar si cualquier imagen está rota
+  const isFallback = (imgUrl: string) => !imgUrl || imgUrl === strFallback || imgUrl.includes("placeholder");
+
+  
+
+  const bolIsFallbackPrincipal = isFallback(arrImagenesSafe[intCurrentIndex]);
+
   const SlotPrincipal = (
-    <div className="relative bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm group cursor-pointer h-full">
+    <div className={`relative bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm h-full ${!bolIsFallbackPrincipal ? 'group cursor-pointer' : ''}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={arrImagenesSafe[intCurrentIndex]}
         onError={(e) => onImgError(e, intCurrentIndex)}
-        onClick={() => onOpenLightbox(intCurrentIndex)}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        onClick={() => { if(!bolIsFallbackPrincipal) onOpenLightbox(intCurrentIndex) }}
+        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ${!bolIsFallbackPrincipal ? 'group-hover:scale-105' : ''}`}
         alt={`Vista ${intCurrentIndex + 1}`}
       />
-      <div
-        onClick={() => onOpenLightbox(intCurrentIndex)}
-        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10"
-      >
-        <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
-      </div>
+      
+      {/* FIX RM02-02: Nuevo letrero con ícono */}
+      {bolIsFallbackPrincipal && <FallbackOverlay />}
+
+      {/* Solo mostramos la Lupa si NO es el fallback */}
+      {!bolIsFallbackPrincipal && (
+        <div
+          onClick={() => onOpenLightbox(intCurrentIndex)}
+          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10"
+        >
+          <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+        </div>
+      )}
+
       {intCurrentIndex > 0 && !bolCase2 && (
         <button
           onClick={(e) => { e.stopPropagation(); onPrev(); }}
@@ -112,6 +135,7 @@ export const MediaGalleryDesktop = ({
     );
   }
   if (bolCase2) {
+    const bolIsFallbackSec = isFallback(arrImagenesSafe[1]);
     return (
       <div className="hidden lg:grid grid-cols-2 gap-4 h-125">
         {SlotPrincipal}
@@ -119,28 +143,34 @@ export const MediaGalleryDesktop = ({
           {bolHasVideo ? (
             SlotVideo
           ) : (
-            <div className="relative w-full h-full group cursor-pointer" onClick={() => onOpenLightbox(1)}>
+            <div className={`relative w-full h-full ${!bolIsFallbackSec ? 'group cursor-pointer' : ''}`} onClick={() => { if(!bolIsFallbackSec) onOpenLightbox(1) }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={arrImagenesSafe[1]}
                 onError={(e) => onImgError(e, 1)}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className={`w-full h-full object-cover transition-transform duration-300 ${!bolIsFallbackSec ? 'group-hover:scale-105' : ''}`}
                 alt="Vista secundaria"
               />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
-                <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
-              </div>
+              {bolIsFallbackSec && <FallbackOverlay />}
+              {!bolIsFallbackSec && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                  <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
     );
   }
-
-  const intSlot2Idx = bolHasVideo
-    ? (intCurrentIndex + 1) % intImgCount
-    : (intCurrentIndex + 1) % intImgCount;
+const intSlot2Idx = bolHasVideo ? (intCurrentIndex + 1) % intImgCount : (intCurrentIndex + 1) % intImgCount;
   const intSlot3Idx = (intCurrentIndex + (bolHasVideo ? 1 : 2)) % intImgCount;
+
+  const imgSlot2 = arrImagenesSafe[intSlot2Idx];
+  const bolIsFallback2 = isFallback(imgSlot2);
+  
+  const imgSlot3 = arrImagenesSafe[bolHasVideo ? intSlot2Idx : intSlot3Idx] || strFallback;
+  const bolIsFallback3 = isFallback(imgSlot3);
 
   return (
     <div className="hidden lg:grid grid-cols-3 gap-4 h-125">
@@ -152,34 +182,40 @@ export const MediaGalleryDesktop = ({
           {bolHasVideo ? (
             SlotVideo
           ) : (
-            <div className="relative w-full h-full group cursor-pointer" onClick={() => onOpenLightbox(intSlot2Idx)}>
+            <div className={`relative w-full h-full ${!bolIsFallback2 ? 'group cursor-pointer' : ''}`} onClick={() => { if(!bolIsFallback2) onOpenLightbox(intSlot2Idx) }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={arrImagenesSafe[intSlot2Idx]}
+                src={imgSlot2}
                 onError={(e) => onImgError(e, intSlot2Idx)}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className={`w-full h-full object-cover transition-transform duration-300 ${!bolIsFallback2 ? 'group-hover:scale-105' : ''}`}
                 alt="Vista secundaria"
               />
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
-                <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
-              </div>
+              {bolIsFallback2 && <FallbackOverlay />}
+              {!bolIsFallback2 && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                  <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+                </div>
+              )}
             </div>
           )}
         </div>
         <div
-          className="h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm relative group cursor-pointer"
-          onClick={() => onOpenLightbox(bolHasVideo ? intSlot2Idx : intSlot3Idx)}
+          className={`h-1/2 bg-[#E7E1D7] rounded-2xl overflow-hidden shadow-sm relative ${!bolIsFallback3 ? 'group cursor-pointer' : ''}`}
+          onClick={() => { if(!bolIsFallback3) onOpenLightbox(bolHasVideo ? intSlot2Idx : intSlot3Idx) }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={arrImagenesSafe[bolHasVideo ? intSlot2Idx : intSlot3Idx] || strFallback}
+            src={imgSlot3}
             onError={(e) => onImgError(e, bolHasVideo ? intSlot2Idx : intSlot3Idx)}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-300 ${!bolIsFallback3 ? 'group-hover:scale-105' : ''}`}
             alt="Vista adicional"
           />
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
-            <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
-          </div>
+          {bolIsFallback3 && <FallbackOverlay />}
+          {!bolIsFallback3 && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+              <ZoomIn className="w-10 h-10 text-white drop-shadow-lg" />
+            </div>
+          )}
         </div>
       </div>
     </div>

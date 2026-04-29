@@ -93,7 +93,7 @@ export function PricingClient({ planes }: { planes: PlanFormateado[] }) {
                 )}
 
                 <div className="mt-8 text-foreground text-lg font-medium">
-                  + {plan.cant_publicaciones} cupos de publicación
+                  {plan.cant_publicaciones} cupos de publicación
                 </div>
               </CardContent>
 

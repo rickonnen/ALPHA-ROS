@@ -5,6 +5,14 @@ import { sign } from "jsonwebtoken";
 import { registrarSesionTelemetry } from "@/lib/auth/sessionTelemetry";
 import { randomBytes } from 'crypto';
 
+const PENDING_LOGIN_LAT_COOKIE = "pending_login_latitud";
+const PENDING_LOGIN_LNG_COOKIE = "pending_login_longitud";
+
+type Usuario2FAState = {
+  dos_fa_habilitado: boolean | null;
+  dos_fa_secreto: string | null;
+};
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -68,13 +76,18 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ NUEVO: Verificar si 2FA está habilitado (usando any por compatibilidad)
-    const userExtra = await (prisma.usuario.findUnique as any)({
+    const findUniqueUsuario2FA = prisma.usuario.findUnique as unknown as (args: {
+      where: { id_usuario: string };
+      select: { dos_fa_habilitado: true; dos_fa_secreto: true };
+    }) => Promise<Usuario2FAState | null>;
+
+    const userExtra = await findUniqueUsuario2FA({
       where: { id_usuario: authData.user.id },
       select: { 
         dos_fa_habilitado: true,
         dos_fa_secreto: true,
       }
-    }).catch((e: any) => ({
+    }).catch((): Usuario2FAState => ({
       dos_fa_habilitado: false,
       dos_fa_secreto: null
     }));
@@ -111,6 +124,29 @@ export async function POST(request: NextRequest) {
         path: "/",
       });
 
+      response.cookies.set(
+        PENDING_LOGIN_LAT_COOKIE,
+        latitud === null ? "null" : String(latitud),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 5 * 60,
+          path: "/",
+        }
+      );
+      response.cookies.set(
+        PENDING_LOGIN_LNG_COOKIE,
+        longitud === null ? "null" : String(longitud),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 5 * 60,
+          path: "/",
+        }
+      );
+
       return response;
     }
 
@@ -118,32 +154,33 @@ export async function POST(request: NextRequest) {
     
     //  Si no tiene 2FA, proceder normalmente
     const userData = await prisma.usuario.findUnique({
-  where: { id_usuario: authData.user.id }, 
-  select: { id_usuario: true, nombres: true, email: true, rol: true, estado: true }
-});
+      where: { id_usuario: authData.user.id }, 
+      select: { id_usuario: true, nombres: true, email: true, rol: true, estado: true }
+    });
 
-if (!userData) {
-  return NextResponse.json(
-    { error: "Error al obtener datos del usuario" },
-    { status: 400 }
-  );
-}
-await registrarSesionTelemetry({
+    if (!userData) {
+      return NextResponse.json(
+        { error: "Error al obtener datos del usuario" },
+        { status: 400 }
+      );
+    }
+    // HU-04 CA-3: bloquear login si cuenta desactivada
+    if (userData.estado === 0) {
+      return NextResponse.json(
+        {
+          error: "Tu cuenta está desactivada. Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.",
+          code: "ACCOUNT_DISABLED",
+        },
+        { status: 403 }
+      );
+    }
+
+    await registrarSesionTelemetry({
       request,
       idUsuario: userData.id_usuario,
       latitud,
       longitud,
     });
-// HU-04 CA-3: bloquear login si cuenta desactivada
-if (userData.estado === 0) {
-  return NextResponse.json(
-    {
-      error: "Tu cuenta está desactivada. Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.",
-      code: "ACCOUNT_DISABLED",
-    },
-    { status: 403 }
-  );
-}
 
     const jwtToken = sign(
       { userId: userData.id_usuario },  
@@ -179,14 +216,28 @@ if (userData.estado === 0) {
       maxAge: 60 * 60 * 24 * 365,
       path: "/",
     });
+    response.cookies.set(PENDING_LOGIN_LAT_COOKIE, "", {
+      maxAge: 0,
+      path: "/",
+    });
+    response.cookies.set(PENDING_LOGIN_LNG_COOKIE, "", {
+      maxAge: 0,
+      path: "/",
+    });
 
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Detectar errores de conexión a base de datos
-    if (error.code === "P1011" || 
-        error.message?.includes("Can't reach database") ||
-        error.message?.includes("database server")) {
+    const errorCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? String(error.code)
+        : "";
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorCode === "P1011" || 
+        errorMessage.includes("Can't reach database") ||
+        errorMessage.includes("database server")) {
       return NextResponse.json(
         { error: "No tienes conexión a internet" },
         { status: 503 }
@@ -194,7 +245,7 @@ if (userData.estado === 0) {
     }
     
     return NextResponse.json(
-      { error: "Error en el servidor: " + String(error) },
+      { error: "Error en el servidor: " + errorMessage },
       { status: 500 }
     );
   } finally {

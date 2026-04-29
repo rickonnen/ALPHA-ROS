@@ -10,7 +10,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import SearchDetailModal from './SearchDetailModal';
 import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
 
 
@@ -52,7 +51,6 @@ function PropertyCard({
   onMouseLeave,
   onClick
 }: PropertyCardProps) {
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { trackEvent } = useTracking();
   const viewRef = useCardViewTracking(property.id, 0);
   
@@ -81,7 +79,8 @@ function PropertyCard({
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
           onClick={()=>{
-            setIsDetailOpen(true);
+            trackEvent(property.id, 'click');
+            window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, `tab_mi_inmueble_${property.id}`);
             if (onClick) onClick();
           }}
           className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 
@@ -165,15 +164,6 @@ function PropertyCard({
             </div>
           </div>
         </div>
-        {/* Modal de detalle */}
-        {isDetailOpen && (
-          <SearchDetailModal
-            isOpen={isDetailOpen}
-            onClose={() => setIsDetailOpen(false)}
-            publicacionId={property.id}
-            selectedCurrency={selectedCurrency}
-          />
-        )}
       </>
     );
   }
@@ -186,7 +176,8 @@ function PropertyCard({
       onMouseLeave={onMouseLeave}
       onClick={() => {
         trackEvent(property.id, 'click');
-        onClick?.();
+        window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, `tab_mi_inmueble_${property.id}`);
+        if (onClick) onClick();
       }}
       className={`group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none cursor-pointer ${
         isHovered 
@@ -272,7 +263,11 @@ function PropertyCard({
             <Button 
               size="sm" 
               className="h-8 text-[11px]"
-              onClick={() => setIsDetailOpen(true)}
+              onClick={() => {
+        trackEvent(property.id, 'click');
+        window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, `tab_mi_inmueble_${property.id}`);
+        onClick?.();
+      }}
             >
               Ver Detalle
             </Button>
@@ -296,16 +291,6 @@ function PropertyCard({
 
         </div>
       </div>
-
-      {/* Modal de detalle */}
-      {isDetailOpen && (
-        <SearchDetailModal
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          publicacionId={property.id}
-          selectedCurrency={selectedCurrency}
-        />
-      )}
     </div>
   );
 }
