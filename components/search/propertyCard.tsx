@@ -273,22 +273,6 @@ function PropertyCard({
             >
               Ver Detalle
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className={`gap-1 h-8 text-[11px] px-2 ${!isContactAvailable ? 'opacity-50' : ''}`}
-              disabled={!isContactAvailable}
-              asChild={isContactAvailable}
-            >
-              {isContactAvailable ? (
-                <a href={`https://wa.me/${telefonoParaWhatsapp}`} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="w-3.5 h-3.5 text-green-600" />
-                  <span className="hidden xl:inline">WhatsApp</span>
-                </a>
-              ) : (
-                <span>No disp.</span>
-              )}
-            </Button>
           </div>
 
         </div>
