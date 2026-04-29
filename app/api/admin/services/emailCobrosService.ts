@@ -1,6 +1,5 @@
 import { transporter, getFormattedSender } from "@/lib/email/config";
 import { templatePagoProcesado } from "@/lib/email/templates/pagoProcesado";
-import { templateNotificacionAdmin } from "@/lib/email/templates/notificacionAdmin"; // <-- Tu nueva importación
 
 export async function enviarEmailCobroConPDF(datos: {
   emailCliente: string,
@@ -11,8 +10,6 @@ export async function enviarEmailCobroConPDF(datos: {
   cupos: number,
   pdfBuffer: Buffer
 }) {
-  
-  // cliente
   const htmlCliente = templatePagoProcesado(
     datos.nombreCliente,
     datos.plan,
@@ -21,23 +18,13 @@ export async function enviarEmailCobroConPDF(datos: {
     datos.cupos
   );
 
-  // admin
-  const htmlAdmin = templateNotificacionAdmin(
-    datos.nombreCliente,
-    datos.emailCliente,
-    datos.plan,
-    datos.monto,
-    new Date().toLocaleString('es-BO') 
-  );
-
-  // enviar gmails
-
-  // Al Cliente
-  const envioCliente = transporter.sendMail({
+  // AGREGAMOS EL RETURN AQUÍ ABAJO:
+  return await transporter.sendMail({
     from: getFormattedSender(),
     to: datos.emailCliente,
+    bcc: datos.emailAdmin,
     subject: `✅ ¡Tu pago ha sido aprobado! - ${datos.plan}`,
-    html: htmlCliente,
+    html: htmlCliente, 
     attachments: [
       {
         filename: `comprobante_pago.pdf`,
@@ -46,24 +33,4 @@ export async function enviarEmailCobroConPDF(datos: {
       }
     ]
   });
-
-  // Al Administrador
-  const envioAdmin = transporter.sendMail({
-    from: getFormattedSender(),
-    to: datos.emailAdmin,
-    subject: `[ADMIN] Nueva Venta: ${datos.nombreCliente} - ${datos.plan}`,
-    html: htmlAdmin,
-    attachments: [
-      {
-        filename: `copia_comprobante_${datos.nombreCliente.replace(/\s+/g, '_')}.pdf`,
-        content: datos.pdfBuffer,
-        contentType: 'application/pdf'
-      }
-    ]
-  });
-
-  // Esperamos a que ambos se completen
-  const resultados = await Promise.all([envioCliente, envioAdmin]);
-  
-  return resultados[0]; 
 }
