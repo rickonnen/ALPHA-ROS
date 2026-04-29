@@ -36,6 +36,7 @@ export type SearchPublicationResult = {
   moneda_nombre: string | null;
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
+  fecha_creacion: string | null;
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -368,6 +369,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     moneda_nombre: publication.Moneda?.nombre ?? null,
     moneda_simbolo: publication.Moneda?.simbolo ?? null,
     moneda_tasa_cambio: toNumber(publication.Moneda?.tasa_cambio),
+    fecha_creacion: publication.fecha_creacion ? publication.fecha_creacion.toISOString() : null,
     ubicacion: publication.Ubicacion
       ? {
           direccion: publication.Ubicacion.direccion,
