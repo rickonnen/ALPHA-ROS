@@ -828,6 +828,11 @@ model Publicacion {
   PublicacionCaracteristica PublicacionCaracteristica[]
   Video                     Video[]
 
+  @@index([fecha_creacion(sort: Desc)], map: "idx_publicacion_fecha")
+  @@index([id_tipo_operacion], map: "idx_publicacion_operacion")
+  @@index([precio], map: "idx_publicacion_precio")
+  @@index([id_tipo_inmueble], map: "idx_publicacion_tipo")
+  @@index([id_ubicacion], map: "idx_publicacion_ubicacion")
   @@schema("public")
 }
 

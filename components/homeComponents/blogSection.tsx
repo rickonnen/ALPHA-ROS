@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight as ObjArrowRight } from "lucide-react"; 
+import { ArrowRight as ObjArrowRight, PenSquare } from "lucide-react"; 
 import ArticleCard from "@/app/home/blogs/articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 
@@ -83,14 +83,26 @@ export default function blogSection() {
         )}
       </div>
 
-      {/* enlace de redireccion al listado completo de blogs */}
-      <div className="w-full flex justify-end mt-2">
+      {/* Contenedor inferior: Boton de crear a la izquierda, enlace de ver mas a la derecha */}
+      <div className="w-full flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4 mt-2">
+        
+        {/* Boton para crear blog */}
+        <Link 
+          href="/home/blogs/createBlog"
+          className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 rounded-md font-semibold text-white bg-[#E2725B] hover:bg-[#C85A46] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E2725B] shadow-sm w-full sm:w-auto"
+        >
+          <PenSquare className="w-5 h-5" />
+          Crea tu Blog
+        </Link>
+
+        {/* enlace de redireccion al listado completo de blogs */}
         <Link 
           href="/home/blogs" 
-          className={`flex items-center gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md ${strBtnHoverClassesBlo}`}
+          className={`flex items-center justify-center sm:justify-end gap-2 font-semibold text-[1.25rem] text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md w-full sm:w-auto ${strBtnHoverClassesBlo}`}
         >
           Ver mas blogs <ObjArrowRight className="w-6 h-6" strokeWidth={2} />
         </Link>
+        
       </div>
     </section>
   );
