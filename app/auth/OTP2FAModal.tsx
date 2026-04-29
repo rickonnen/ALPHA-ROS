@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lock } from "lucide-react";
 
 interface OTP2FAModalProps {
@@ -19,6 +19,11 @@ export default function OTP2FAModal({
   const [error, setError] = useState("");
   const [hovVerificar, setHovVerificar] = useState(false);
   const [hovCancelar, setHovCancelar] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
+  const [intentosRestantes, setIntentosRestantes] = useState(5);
+  const intervaloRef = useRef<NodeJS.Timeout | null>(null);
+ 
 
   // Paleta existente del proyecto
   const CREAM_BG   = "#F4EFE6"; 
@@ -27,6 +32,27 @@ export default function OTP2FAModal({
   const INPUT_BG   = "#4a6878";  
   const MUTED_TEXT = "#5a7a8a"; 
   // 
+
+  // Countdown automático cada segundo cuando está bloqueado
+  useEffect(() => {
+    if (bloqueado && segundosRestantes > 0) {
+      intervaloRef.current = setInterval(() => {
+        setSegundosRestantes((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervaloRef.current!);
+            setBloqueado(false);
+            setIntentosRestantes(5);
+            setError("");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (intervaloRef.current) clearInterval(intervaloRef.current);
+    };
+  }, [bloqueado, segundosRestantes]);
 
   const handleVerifyOTP = async () => {
     if (codigo.length !== 6) {
@@ -59,12 +85,30 @@ export default function OTP2FAModal({
       
       console.log(`[2FA Modal] Response data:`, data);
       
+      // Manejar bloqueo 
+      if (response.status === 429 || data.bloqueado) {
+        setBloqueado(true);
+        setSegundosRestantes(data.segundosRestantes ?? 60);
+        setCodigo("");
+        setError("");
+        return;
+      }
       if (response.ok) {
         console.log(`[2FA Modal] ✓ Verificación exitosa`);
         onSuccess();
       } else {
         console.error(`[2FA Modal] Error en respuesta:`, data);
-        setError(data.error || "Código inválido");
+        // Mostrar intentos restantes si el backend los devuelve
+        if (data.intentosRestantes !== undefined) {
+          setIntentosRestantes(data.intentosRestantes);
+          setError(
+            data.intentosRestantes > 0
+              ? `Código inválido. Te quedan ${data.intentosRestantes} intento${data.intentosRestantes !== 1 ? "s" : ""}.`
+              : "Código inválido."
+          );
+        } else {
+          setError(data.error || "Código inválido");
+        }
         setCodigo("");
       }
     } catch (error) {
@@ -149,6 +193,33 @@ export default function OTP2FAModal({
           Ingresa el código de 6 dígitos de tu Google Authenticator o app de autenticación
         </p>
 
+        {/* Banner de bloqueo */}
+        {bloqueado && (
+          <div
+            style={{
+              background: `${TERRACOTTA}cc`,
+              border: `1px solid ${TERRACOTTA}`,
+              borderRadius: 10,
+              padding: "10px 14px",
+              fontSize: 13,
+              color: "white",
+              textAlign: "center",
+              marginBottom: 14,
+            }}
+          >
+            Demasiados intentos fallidos. Espera{" "}
+            <span style={{ fontWeight: 700 }}>{segundosRestantes}s</span>{" "}
+            antes de intentar de nuevo.
+          </div>
+        )}
+ 
+        {/* Intentos restantes */}
+        {!bloqueado && intentosRestantes < 5 && intentosRestantes > 0 && (
+          <p style={{ color: TERRACOTTA, fontSize: 12, textAlign: "center", margin: "0 0 10px" }}>
+            ⚠ Te quedan {intentosRestantes} intento{intentosRestantes !== 1 ? "s" : ""}.
+          </p>
+        )}
+
         {/* Input */}
         <input
           type="text"
@@ -161,19 +232,19 @@ export default function OTP2FAModal({
           }}
           placeholder="0 0 0 0 0 0"
           autoFocus
-          disabled={cargando}
+          disabled={cargando || bloqueado}
           className="otp-input"
           style={{
             width: "100%",
             boxSizing: "border-box",
-            background: INPUT_BG,
+            background: bloqueado ? `${INPUT_BG}66` : INPUT_BG,
             border: "none",
             borderRadius: 12,
             padding: "15px 0",
             fontSize: 22,
             fontFamily: "monospace",
             letterSpacing: "0.5em",
-            color: "white",
+            color: bloqueado ? "rgba(255,255,255,0.35)" : "white",
             textAlign: "center",
             marginBottom: error ? 8 : 20,
             outline: "none",
@@ -196,11 +267,11 @@ export default function OTP2FAModal({
             onMouseLeave={() => setHovVerificar(false)}
             style={{
               ...btnStyle(hovVerificar),
-              opacity: cargando || codigo.length !== 6 ? 0.45 : 1,
-              cursor: cargando || codigo.length !== 6 ? "not-allowed" : "pointer",
+              opacity: cargando || codigo.length !== 6 || bloqueado ? 0.45 : 1,
+              cursor: cargando || codigo.length !== 6 || bloqueado ? "not-allowed" : "pointer",
             }}
           >
-            {cargando ? "Verificando..." : "Verificar"}
+            {cargando ? "Verificando..." : bloqueado ? `Bloqueado (${segundosRestantes}s)` : "Verificar"}
           </button>
           <button
             onClick={onCancel}
