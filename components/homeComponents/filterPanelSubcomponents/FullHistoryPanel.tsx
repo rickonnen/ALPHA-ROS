@@ -1,5 +1,5 @@
 /**
- * Dev: Rodrigo Saul Zarate Villarroel       Fecha: 19/04/2026
+ * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 19/04/2026
  * Panel lateral para visualizar y gestionar el historial completo de busqueda de ciudades.
  * Implementa un trap de foco para accesibilidad y navegacion fluida por teclado
  * @param hookData Datos y funciones expuestas por el hook useCitySearch para la gestion del estado
@@ -170,6 +170,20 @@ export default function FullHistoryPanel({
           <h2 className="font-semibold text-sm text-foreground">
             Historial de Busqueda
           </h2>
+          
+          <button
+            onClick={() => setBolShowFullHistoryPanel(false)}
+            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="Cerrar panel de historial"
+          >
+            <img 
+              src="/xicon.svg" 
+              alt="Cerrar" 
+              width={20} 
+              height={20} 
+              className="opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </button>
         </div>
 
         <ul className="flex-1 overflow-y-auto py-2 scrollbar-custom">
