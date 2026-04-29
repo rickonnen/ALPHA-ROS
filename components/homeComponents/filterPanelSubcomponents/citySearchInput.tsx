@@ -1,5 +1,5 @@
 /**
- * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 20/04/2026
+ * Dev: Rodrigo Saul Zarate Villarroel       Fecha: 20/04/2026
  * Componente de entrada de búsqueda para ciudades con soporte de autocompletado e historial.
  * Gestiona la navegación por teclado y coordina la visualización de paneles desplegables.
  * @param hookData Datos y métodos provenientes del hook centralizado useCitySearch
@@ -107,7 +107,8 @@ export default function CitySearchInput({ hookData, fnOnSearch }: CitySearchInpu
             handleSelectSuggestion(objSelectedItem);
             fnOnSearch(false, objSelectedItem.strName);
           } else {
-            handleFillFromHistory(objSelectedItem.strName);
+            // ✨ CAMBIO AQUÍ: Enviamos objSelectedItem completo
+            handleFillFromHistory(objSelectedItem); 
           }
         } else {
           fnOnSearch(false);
