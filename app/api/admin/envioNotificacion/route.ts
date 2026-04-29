@@ -4,16 +4,27 @@ import { prisma } from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { generarComprobantePDF } from "@/app/api/admin/services/pdfService";
 import { enviarEmailCobroConPDF } from "@/app/api/admin/services/emailCobrosService";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  const emailAdminLogueado = session?.user?.email;
+  
 
   try {
     const body = await req.json();
-    const { id_detalle, decision, motivo_rechazo } = body;
+    const { id_detalle, decision, motivo_rechazo, id_admin_ejecutor } = body;
+
+    let emailAdminFinal = process.env.GMAIL_USER;
+
+    if (id_admin_ejecutor) {
+      const adminDB = await prisma.usuario.findUnique({
+        where: { id_usuario: id_admin_ejecutor },
+        select: { email: true }
+      });
+      
+      if (adminDB?.email) {
+        emailAdminFinal = adminDB.email;
+        console.log("✅ Admin identificado por DB:", emailAdminFinal);
+      }
+    }
 
     const detalle = await prisma.detallePago.findUnique({
       where: { id_detalle },
@@ -29,7 +40,6 @@ export async function POST(req: NextRequest) {
     const cupos = detalle.PlanPublicacion?.cant_publicaciones || 0;
     const nuevoEstado = decision === "ACEPTAR" ? 2 : 3;
 
-    // 1. Transacción de Base de Datos
     const resultado = await prisma.$transaction(async (tx) => {
       const pagoActualizado = await tx.detallePago.update({
         where: { id_detalle },
@@ -61,7 +71,6 @@ export async function POST(req: NextRequest) {
       return { pagoActualizado, nuevaNotificacion };
     });
 
-    // 2. Proceso colateral: PDF y Email Dual
     if (decision === "ACEPTAR") {
       try {
         const pdfBuffer = await generarComprobantePDF({
@@ -72,10 +81,9 @@ export async function POST(req: NextRequest) {
           cupos: cupos
         });
 
-        // LLAMADA ÚNICA AL SERVICIO (Él se encarga de enviar los dos correos)
         const infoEmail = await enviarEmailCobroConPDF({
           emailCliente: detalle.Usuario?.email!,
-          emailAdmin: emailAdminLogueado || process.env.GMAIL_USER!,
+          emailAdmin: emailAdminFinal!,
           nombreCliente: detalle.Usuario?.nombres!,
           plan: planNombre,
           monto: montoPlan,
@@ -83,7 +91,6 @@ export async function POST(req: NextRequest) {
           pdfBuffer
         });
 
-        // 3. Marcamos como completado si el envío fue exitoso
         if (infoEmail) {
           await prisma.notificacion.update({
             where: { id_notificacion: resultado.nuevaNotificacion.id_notificacion },
