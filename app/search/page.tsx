@@ -11,7 +11,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
-import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
+// import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -728,6 +728,26 @@ function SearchPageContent() {
 
   const handleSort = (sortOption: string) => setSelectedSort(sortOption);
 
+  useEffect(() => {
+    // Si el usuario escribe o hace clic, esperamos 200ms antes de buscar
+    // para no saturar la base de datos (debounce)
+    const timer = setTimeout(() => {
+      // Solo ejecutamos si ya se hizo una busqueda inicial o hay filtros
+      if (hasSearched || hasActiveFilters) {
+        saveFiltersToUrl(); // Actualiza la URL arriba en el navegador
+        void runSearch();   // Llama a tu función de Prisma/API
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    searchLocation,       // Escucha cambios en el buscador de texto
+    selectedOperation,    // Escucha cambios en Venta/Alquiler
+    selectedPropertyTypes,// Escucha cambios en Casa/Dpto
+    appliedPriceFilter,   // Escucha cambios en el precio
+    advancedFilterValues, // Escucha cambios en habitaciones/baños
+    selectedSort,         // Escucha cambios en el ordenamiento
+    selectedCurrency      // Escucha cambios en la moneda
+  ]);
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
@@ -850,14 +870,14 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                   closeMobileFilters();
                 }}
-              />
+              /> */}
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -1123,13 +1143,13 @@ function SearchPageContent() {
                 </div>
               </div>
 
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                 }}
-              />
+              /> */}
               <div className="my-3 h-px bg-[#F4EFE6]" />
               <SearchAutocomplete
                 value={searchLocation}
