@@ -1,7 +1,7 @@
 // C:\dev\alpha-ros-deploy\app\api\home\blogs\createBlog\route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { blogState } from "@/types/blogType"; // Ajusta la ruta si es distinta
+import { blogState } from "@/types/blogType";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // 3. INSERCIÓN EN BASE DE DATOS
     const objNewBlog = await prisma.blogs.create({
       data: {
-        id_user: strUserIdFromSession, // Obtenido del token validado por NextAuth, 100% seguro
+        id_user: strUserIdFromSession,
         titulo: StrTitleBlo,
         descripcion: StrDescriptionBlo,
         imagen_url: StrImageUrlBlo,

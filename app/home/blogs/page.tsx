@@ -241,7 +241,7 @@ export default function BlogsPage() {
           Volver al inicio
         </Link>
 
-        {/* Botón exclusivo para usuarios logeados 
+        {/* Botón exclusivo para usuarios logeados */}
         {objUser && (
           <Link
             href="/home/blogs/createBlog"
@@ -249,7 +249,7 @@ export default function BlogsPage() {
           >
             Crear mi blog
           </Link>
-        )}*/}
+        )}
       </div>
     </main>
   );
