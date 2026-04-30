@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, memo } from 'react';
+import { useCallback, useEffect, useRef, memo } from 'react';
 import Image from 'next/image';
 import {
   MapPin,
@@ -12,7 +12,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-import SearchDetailModal from './SearchDetailModal';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -62,7 +61,6 @@ function PropertyCard({
   onMouseLeave,
   onClick,
 }: PropertyCardProps) {
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { trackEvent } = useTracking();
   const { compra } = useDollarRate();
 
@@ -136,19 +134,18 @@ function PropertyCard({
 
   if (viewMode === 'list') {
     return (
-      <>
-        <div
-          ref={viewRef}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onClick={() => {
-            setIsDetailOpen(true);
-            trackEvent(property.id, 'click');
-            onClick?.();
-          }}
-          className={`group flex w-full cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-xl border-2 bg-white p-1 shadow-sm transition-all hover:shadow-md sm:gap-4 sm:p-3 ${
-            isHovered ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' : 'border-transparent'
-          }`}
+      <div
+        ref={viewRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => {
+          window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, '_blank');
+          trackEvent(property.id, 'click');
+          onClick?.();
+        }}
+        className={`group flex w-full cursor-pointer flex-row items-center gap-2 overflow-hidden rounded-xl border-2 bg-white p-1 shadow-sm transition-all hover:shadow-md sm:gap-4 sm:p-3 ${
+          isHovered ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' : 'border-transparent'
+        }`}
         >
           <div className="relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]">
             <img
@@ -214,16 +211,6 @@ function PropertyCard({
             </div>
           </div>
         </div>
-
-        {isDetailOpen && (
-          <SearchDetailModal
-            isOpen={isDetailOpen}
-            onClose={() => setIsDetailOpen(false)}
-            publicacionId={property.id}
-            selectedCurrency={selectedCurrency}
-          />
-        )}
-      </>
     );
   }
 
@@ -233,6 +220,7 @@ function PropertyCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => {
+        window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, '_blank');
         trackEvent(property.id, 'click');
         onClick?.();
       }}
@@ -307,16 +295,6 @@ function PropertyCard({
 
           <div className="flex shrink-0 items-center gap-1.5">
             <Button
-              size="sm"
-              className="h-8 text-[11px]"
-              onClick={() => {
-                setIsDetailOpen(true);
-                trackEvent(property.id, 'detalle');
-              }}
-            >
-              Ver Detalle
-            </Button>
-            <Button
               variant="outline"
               size="sm"
               className={`h-8 gap-1 px-2 text-[11px] ${!isContactAvailable ? 'opacity-50' : ''}`}
@@ -340,15 +318,6 @@ function PropertyCard({
           </div>
         </div>
       </div>
-
-      {isDetailOpen && (
-        <SearchDetailModal
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          publicacionId={property.id}
-          selectedCurrency={selectedCurrency}
-        />
-      )}
     </div>
   );
 }
