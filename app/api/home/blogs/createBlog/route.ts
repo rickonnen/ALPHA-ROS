@@ -1,60 +1,181 @@
-// C:\dev\alpha-ros-deploy\app\api\home\blogs\createBlog\route.ts
-import { NextResponse } from "next/server";
+/**
+ * Author: Maicol Ismael Nina Zarate
+ * Date: 29/04/2026
+ * Description: API endpoint for creating blog posts in the real estate platform.
+ * It validates the authenticated user through the auth_token cookie, prevents
+ * users from having more than one pending blog, validates the submitted data,
+ * and creates the blog with NOPUBLICADO status for administrative review.
+ * The image field is optional and fecha_publicacion is not used at this stage.
+ * @return JSON response with the created blog identifier or an error message.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { verify } from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // 1. ESCUDO DE EMERGENCIA NATIVO DE NEXTAUTH
-    // Esto lee la cookie, la desencripta, valida la firma y la caducidad automáticamente
-    const session = await getServerSession(authOptions);
+    // ======================================================
+    // 1. Leer la cookie de autenticación real del proyecto
+    // ======================================================
+    const authToken = request.cookies.get("auth_token")?.value;
 
-    // Verificamos que la sesión exista y que el ID del usuario esté presente
-    if (!session?.user?.id) {
+    if (!authToken) {
       return NextResponse.json(
-        { error: "No autorizado. Sesión inválida o expirada." },
+        { error: "No autorizado. Debes iniciar sesión." },
         { status: 401 }
       );
     }
 
-    const strUserIdFromSession = session.user.id;
+    // ======================================================
+    // 2. Validar el token JWT
+    // ======================================================
+    const decoded = verify(authToken, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
 
-    // 2. LECTURA DEL BODY Y VALIDACIONES
-    const objBody = await request.json();
-    const { StrTitleBlo, StrDescriptionBlo, StrImageUrlBlo, StrContentBlo } = objBody;
+    if (!decoded?.userId) {
+      return NextResponse.json(
+        { error: "No autorizado. Token inválido." },
+        { status: 401 }
+      );
+    }
 
-    if (!StrTitleBlo || StrTitleBlo.length > 100) return NextResponse.json({ error: "Título inválido o excede 100 caracteres." }, { status: 400 });
-    if (!StrDescriptionBlo || StrDescriptionBlo.length > 120) return NextResponse.json({ error: "Descripción excede 120 caracteres." }, { status: 400 });
-    if (!StrImageUrlBlo || StrImageUrlBlo.length > 120) return NextResponse.json({ error: "URL de imagen excede 120 caracteres." }, { status: 400 });
-    if (!StrContentBlo || StrContentBlo.length > 400) return NextResponse.json({ error: "Contenido excede 400 caracteres." }, { status: 400 });
+    const strUserIdFromToken = decoded.userId;
 
-    // 3. INSERCIÓN EN BASE DE DATOS
-    const objNewBlog = await prisma.blogs.create({
-      data: {
-        id_user: strUserIdFromSession,
-        titulo: StrTitleBlo,
-        descripcion: StrDescriptionBlo,
-        imagen_url: StrImageUrlBlo,
-        contenido: StrContentBlo,
-        estado: blogState.PUBLICADO,
-        //estado: blogState.NOPUBLICADO,
-        fecha_creacion: new Date(),
-        fecha_publicacion: new Date(),
+    // ======================================================
+    // 3. Verificar si el usuario ya tiene un blog pendiente
+    // ======================================================
+    const objPendingBlog = await prisma.blogs.findFirst({
+      where: {
+        id_user: strUserIdFromToken,
+        estado: blogState.NOPUBLICADO,
+      },
+      select: {
+        id_blog: true,
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Borrador de blog creado correctamente.",
-      data: { IntIdBlo: objNewBlog.id_blog }
+    if (objPendingBlog) {
+      return NextResponse.json(
+        { error: "Ya tienes un blog pendiente de revisión." },
+        { status: 409 }
+      );
+    }
+
+    // ======================================================
+    // 4. Leer datos enviados desde el formulario
+    // ======================================================
+    const objBody = await request.json();
+
+    const {
+      StrTitleBlo,
+      StrDescriptionBlo,
+      StrImageUrlBlo,
+      StrContentBlo,
+    } = objBody;
+
+    // ======================================================
+    // 5. Validar título
+    // ======================================================
+    if (!StrTitleBlo || typeof StrTitleBlo !== "string") {
+      return NextResponse.json(
+        { error: "El título es obligatorio." },
+        { status: 400 }
+      );
+    }
+
+    if (StrTitleBlo.trim().length > 100) {
+      return NextResponse.json(
+        { error: "El título excede 100 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    // ======================================================
+    // 6. Validar descripción
+    // ======================================================
+    if (!StrDescriptionBlo || typeof StrDescriptionBlo !== "string") {
+      return NextResponse.json(
+        { error: "La descripción es obligatoria." },
+        { status: 400 }
+      );
+    }
+
+    if (StrDescriptionBlo.trim().length > 120) {
+      return NextResponse.json(
+        { error: "La descripción excede 120 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    // ======================================================
+    // 7. Validar contenido
+    // ======================================================
+    if (!StrContentBlo || typeof StrContentBlo !== "string") {
+      return NextResponse.json(
+        { error: "El contenido es obligatorio." },
+        { status: 400 }
+      );
+    }
+
+    if (StrContentBlo.trim().length > 400) {
+      return NextResponse.json(
+        { error: "El contenido excede 400 caracteres." },
+        { status: 400 }
+      );
+    }
+
+    // ======================================================
+    // 8. Validar imagen opcional
+    // Si no llega imagen, se guarda null.
+    // Si llega imagen, validamos longitud.
+    // ======================================================
+    let strImageUrlBlo: string | null = null;
+
+    if (StrImageUrlBlo && typeof StrImageUrlBlo === "string") {
+      if (StrImageUrlBlo.trim().length > 200) {
+        return NextResponse.json(
+          { error: "La URL de imagen excede 200 caracteres." },
+          { status: 400 }
+        );
+      }
+
+      strImageUrlBlo = StrImageUrlBlo.trim();
+    }
+
+    // ======================================================
+    // 9. Crear blog como pendiente de revisión
+    // No se usa fecha_publicacion porque el admin lo aprobará luego.
+    // ======================================================
+    const objNewBlog = await prisma.blogs.create({
+      data: {
+        id_user: strUserIdFromToken,
+        titulo: StrTitleBlo.trim(),
+        descripcion: StrDescriptionBlo.trim(),
+        imagen_url: strImageUrlBlo,
+        contenido: StrContentBlo.trim(),
+        estado: blogState.NOPUBLICADO,
+        fecha_creacion: new Date(),
+      },
     });
 
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Blog enviado a revisión correctamente.",
+        data: {
+          IntIdBlo: objNewBlog.id_blog,
+        },
+      },
+      { status: 201 }
+    );
   } catch (objError) {
     console.error("[CREATE_BLOG_ERROR]", objError);
+
     return NextResponse.json(
-      { error: "Error interno al procesar la solicitud." },
+      { error: "No autorizado o error interno al crear el blog." },
       { status: 500 }
     );
   }

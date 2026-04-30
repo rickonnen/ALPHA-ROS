@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import ArticleCard from "./articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import GenericDropdown from "@/components/homeComponents/filterPanelSubcomponents/genericDropdown";
@@ -23,36 +24,52 @@ interface blogData {
 
 const INT_ITEMS_PER_PAGE = 9;
 const ARR_SORT_OPTIONS = ["Más reciente", "Más antiguos"];
-const CLS_FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+const CLS_FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function BlogsPage() {
+  const router = useRouter();
+
   // 2. Extraemos el usuario actual
   const { user: objUser } = useAuth();
 
   const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
   const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
 
-  const [StrSortOrderBlo, SetStrSortOrderBlo] = useState<"desc" | "asc">("desc");
+  const [StrSortOrderBlo, SetStrSortOrderBlo] = useState<"desc" | "asc">(
+    "desc"
+  );
   const [IntCurrentPageBlo, SetIntCurrentPageBlo] = useState<number>(1);
 
-  const [BolIsDropdownOpenBlo, SetBolIsDropdownOpenBlo] = useState<boolean>(false);
+  const [BolIsDropdownOpenBlo, SetBolIsDropdownOpenBlo] =
+    useState<boolean>(false);
+
+  // Estado para el botón Crear mi blog
+  const [BolIsCheckingPendingBlo, SetBolIsCheckingPendingBlo] =
+    useState<boolean>(false);
+
   const ObjDropdownRefBlo = useRef<HTMLDivElement>(null);
 
-  const StrCurrentSortLabelBlo = StrSortOrderBlo === "desc" ? "Más reciente" : "Más antiguos";
+  const StrCurrentSortLabelBlo =
+    StrSortOrderBlo === "desc" ? "Más reciente" : "Más antiguos";
 
-  const StrHoverAnimBlo = useHoverAnimation(false, false, 'pointer', true, true);
+  const StrHoverAnimBlo = useHoverAnimation(false, false, "pointer", true, true);
 
   useEffect(() => {
     if (!BolIsDropdownOpenBlo) return;
 
     const FnHandleClickOutsideBlo = (ObjEventBlo: MouseEvent) => {
-      if (ObjDropdownRefBlo.current && !ObjDropdownRefBlo.current.contains(ObjEventBlo.target as Node)) {
+      if (
+        ObjDropdownRefBlo.current &&
+        !ObjDropdownRefBlo.current.contains(ObjEventBlo.target as Node)
+      ) {
         SetBolIsDropdownOpenBlo(false);
       }
     };
-    
+
     document.addEventListener("mousedown", FnHandleClickOutsideBlo);
-    return () => document.removeEventListener("mousedown", FnHandleClickOutsideBlo);
+    return () =>
+      document.removeEventListener("mousedown", FnHandleClickOutsideBlo);
   }, [BolIsDropdownOpenBlo]);
 
   const FnHandleSortSelectBlo = (StrOptionBlo: string) => {
@@ -68,8 +85,10 @@ export default function BlogsPage() {
         const ObjResponseBlo = await fetch("/api/home/blogs", {
           signal: ObjAbortControllerBlo.signal,
         });
-        
-        if (!ObjResponseBlo.ok) throw new Error("error en la peticion al obtener todos los blogs");
+
+        if (!ObjResponseBlo.ok) {
+          throw new Error("error en la peticion al obtener todos los blogs");
+        }
 
         const ArrDataBlo: blogData[] = await ObjResponseBlo.json();
         SetArrBlogsBlo(ArrDataBlo);
@@ -85,7 +104,7 @@ export default function BlogsPage() {
     };
 
     FnFetchAllBlogsBlo();
-    
+
     return () => ObjAbortControllerBlo.abort();
   }, []);
 
@@ -97,7 +116,9 @@ export default function BlogsPage() {
     }
   }, [ArrBlogsBlo, StrSortOrderBlo]);
 
-  const IntTotalPagesBlo = Math.ceil(ArrSortedBlogsBlo.length / INT_ITEMS_PER_PAGE);
+  const IntTotalPagesBlo = Math.ceil(
+    ArrSortedBlogsBlo.length / INT_ITEMS_PER_PAGE
+  );
 
   const ArrPaginatedBlogsBlo = useMemo(() => {
     const IntStartIndexBlo = (IntCurrentPageBlo - 1) * INT_ITEMS_PER_PAGE;
@@ -135,6 +156,49 @@ export default function BlogsPage() {
     SetIntCurrentPageBlo(1);
   }, [StrSortOrderBlo]);
 
+  // ======================================================
+  // Botón Crear mi blog
+  // Si el usuario ya tiene un blog pendiente, lo manda a pending.
+  // Si no tiene pendiente, abre el formulario.
+  // ======================================================
+  const FnHandleCreateBlogBlo = async () => {
+    try {
+      SetBolIsCheckingPendingBlo(true);
+
+      const ObjResponseBlo = await fetch("/api/home/blogs/checkPendingBlog", {
+        method: "GET",
+      });
+
+      const ObjDataBlo = await ObjResponseBlo.json();
+
+      if (ObjResponseBlo.status === 401) {
+        router.push("/auth/login");
+        return;
+      }
+
+      if (!ObjResponseBlo.ok) {
+        throw new Error(
+          ObjDataBlo.error || "No se pudo verificar el blog pendiente."
+        );
+      }
+
+      if (ObjDataBlo.hasPendingBlog) {
+        router.push("/home/blogs/pending?existing=1");
+        return;
+      }
+
+      router.push("/home/blogs/createBlog");
+    } catch (ObjErrorBlo) {
+      console.error("[CHECK_PENDING_BEFORE_CREATE_BLOG_ERROR]", ObjErrorBlo);
+
+      // Respaldo: si falla la verificación, igual abre el formulario.
+      // La API createBlog igual volverá a validar antes de guardar.
+      router.push("/home/blogs/createBlog");
+    } finally {
+      SetBolIsCheckingPendingBlo(false);
+    }
+  };
+
   return (
     <main className="w-full max-w-6xl mx-auto px-4 py-12 min-h-screen flex flex-col gap-6">
       <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-border/50 pb-4">
@@ -158,7 +222,9 @@ export default function BlogsPage() {
               arrOptions={ARR_SORT_OPTIONS}
               arrSelectedValues={[StrCurrentSortLabelBlo]}
               bolIsOpen={BolIsDropdownOpenBlo}
-              fnToggleOpen={() => SetBolIsDropdownOpenBlo(!BolIsDropdownOpenBlo)}
+              fnToggleOpen={() =>
+                SetBolIsDropdownOpenBlo(!BolIsDropdownOpenBlo)
+              }
               fnOnSelect={FnHandleSortSelectBlo}
               bolIsMultiple={false}
             />
@@ -197,7 +263,13 @@ export default function BlogsPage() {
               className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
               aria-label="Página anterior"
             >
-              <Image src="/leftArrow.svg" alt="Anterior" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
+              <Image
+                src="/leftArrow.svg"
+                alt="Anterior"
+                width={20}
+                height={20}
+                className="w-5 h-5 object-contain brightness-0 invert"
+              />
             </button>
           )}
 
@@ -226,7 +298,13 @@ export default function BlogsPage() {
               className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
               aria-label="Página siguiente"
             >
-              <Image src="/rightArrow.svg" alt="Siguiente" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
+              <Image
+                src="/rightArrow.svg"
+                alt="Siguiente"
+                width={20}
+                height={20}
+                className="w-5 h-5 object-contain brightness-0 invert"
+              />
             </button>
           )}
         </div>
@@ -237,18 +315,26 @@ export default function BlogsPage() {
           href="/"
           className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
         >
-          <Image src="/leftArrow.svg" alt="Flecha izquierda" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
+          <Image
+            src="/leftArrow.svg"
+            alt="Flecha izquierda"
+            width={20}
+            height={20}
+            className="w-5 h-5 object-contain brightness-0 invert"
+          />
           Volver al inicio
         </Link>
 
         {/* Botón exclusivo para usuarios logeados */}
         {objUser && (
-          <Link
-            href="/home/blogs/createBlog"
-            className={`flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
+          <button
+            type="button"
+            onClick={FnHandleCreateBlogBlo}
+            disabled={BolIsCheckingPendingBlo}
+            className={`flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo} disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            Crear mi blog
-          </Link>
+            {BolIsCheckingPendingBlo ? "Verificando..." : "Crear mi blog"}
+          </button>
         )}
       </div>
     </main>
