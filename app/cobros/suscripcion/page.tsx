@@ -96,11 +96,10 @@ export default function SuscripcionPage() {
     if (!user?.id) return;
     obtenerDatosSuscripcion();
 
-    // Solo en desarrollo
     if (process.env.NODE_ENV === "development") {
             const interval = setInterval(() => {
                 obtenerDatosSuscripcion();
-            }, 3000); // cada 5 segundos
+            }, 3000);
             return () => clearInterval(interval);
         }
     }, [user?.id]);

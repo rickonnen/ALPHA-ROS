@@ -813,6 +813,7 @@ model Publicacion {
   id_estado                 Int?                        @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
+  gratuito                  Boolean                     @default(false)
   Favorito                  Favorito[]
   HistorialVistos           HistorialVistos[]
   Imagen                    Imagen[]
@@ -833,6 +834,7 @@ model Publicacion {
   @@index([precio], map: "idx_publicacion_precio")
   @@index([id_tipo_inmueble], map: "idx_publicacion_tipo")
   @@index([id_ubicacion], map: "idx_publicacion_ubicacion")
+  @@index([superficie], map: "idx_publicacion_superficie")
   @@schema("public")
 }
 
@@ -1013,6 +1015,7 @@ model Usuario {
   dos_fa_habilitado            Boolean?                @default(false)
   dos_fa_secreto               String?                 @db.VarChar
   primary_provider             String?                 @db.VarChar(20)
+  fecha_desactivacion          DateTime?               @db.Timestamptz(6)
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
@@ -1064,19 +1067,6 @@ model Zona {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model notificacion_whatsapp {
-  id         BigInt    @id @default(autoincrement())
-  title      String
-  message    String
-  read       Boolean?  @default(false)
-  type       String?
-  created_at DateTime? @default(now()) @db.Timestamptz(6)
-
-  @@schema("public")
-}
-
 model otp_cambio_correo {
   id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
@@ -1102,6 +1092,19 @@ model verification_codes {
   code       String
   expires_at DateTime  @db.Timestamp(6)
   created_at DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notificacion_campana {
+  id         BigInt    @id(map: "notificacion_whatsapp_pkey") @default(autoincrement())
+  title      String
+  message    String
+  read       Boolean?  @default(false)
+  type       String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
 
   @@schema("public")
 }
