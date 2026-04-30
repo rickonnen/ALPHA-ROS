@@ -81,7 +81,7 @@ export default function Banner() {
 
   const {
     intCurrentIndex,
-    objBannerRef,
+    containerRef,
     bolShowControls,
     goToNextImage,
     goToPreviousImage,
@@ -116,7 +116,7 @@ export default function Banner() {
 
   return (
     <section
-      ref={objBannerRef}
+      ref={containerRef}
       className="w-full overflow-hidden font-sans"
       aria-label="Main home banner"
     >
