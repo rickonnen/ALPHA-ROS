@@ -31,16 +31,11 @@ const IconBox = ({ icon, disabled }: { icon: React.ReactNode; disabled?: boolean
     style={{
       width: '42px',
       height: '42px',
-      borderRadius: '8px',
-      border: '1px solid',
-      borderColor: disabled ? '#E0DDD6' : '#D4CFC6',
-      backgroundColor: disabled ? '#F1EFE8' : '#ffffff',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       flexShrink: 0,
       opacity: disabled ? 0.5 : 1,
-      transition: 'background-color 0.2s, opacity 0.2s',
     }}
   >
     {icon}
