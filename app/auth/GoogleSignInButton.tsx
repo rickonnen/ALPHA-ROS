@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 interface GoogleSignInButtonProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  on2FARequired?: (userId: string) => void;
 }
 
 const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
@@ -20,7 +21,11 @@ function consumePostAuthRedirect(): string {
   return redirectTarget;
 }
 
-export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignInButtonProps) {
+export default function GoogleSignInButton({
+  onSuccess,
+  onCancel,
+  on2FARequired,
+}: GoogleSignInButtonProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [blockedByConnection, setBlockedByConnection] = useState(false);
   const [error, setError] = useState("");
@@ -73,9 +78,22 @@ export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignIn
         //Verificar sesión de NextAuth (no /api/auth/me de Max)
         fetch("/api/auth/session")
           .then(res => res.json())
-          .then(session => {
+          .then(async (session) => {
             if (session?.user) {
-              //Login exitoso con Google
+              try {
+                const check2FARes = await fetch("/api/auth/check-2fa-status");
+                if (check2FARes.ok) {
+                  const { requires2FA, userId } = await check2FARes.json();
+
+                  if (requires2FA && userId && on2FARequired) {
+                    on2FARequired(userId);
+                    return;
+                  }
+                }
+              } catch (error) {
+                console.error("[GoogleSignInButton] Error verificando 2FA:", error);
+              }
+
               if (onSuccess) onSuccess();
               window.location.href = consumePostAuthRedirect();
             } else {
