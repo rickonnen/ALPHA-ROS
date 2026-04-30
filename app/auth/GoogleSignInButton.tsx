@@ -6,6 +6,20 @@ interface GoogleSignInButtonProps {
   onCancel?: () => void;
 }
 
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+
+function getPostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  return sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+}
+
+function consumePostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  const redirectTarget = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+  sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  return redirectTarget;
+}
+
 export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignInButtonProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [blockedByConnection, setBlockedByConnection] = useState(false);
@@ -43,7 +57,7 @@ export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignIn
     const top = window.screenY + (window.outerHeight - height) / 2;
 
     const popup = window.open(
-      "/api/auth/signin/google?callbackUrl=/",
+      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(getPostAuthRedirect())}`,
       "Google Login",
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=no`
     );
@@ -63,7 +77,7 @@ export default function GoogleSignInButton({ onSuccess, onCancel }: GoogleSignIn
             if (session?.user) {
               //Login exitoso con Google
               if (onSuccess) onSuccess();
-              window.location.href = "/";
+              window.location.href = consumePostAuthRedirect();
             } else {
               //Canceló o falló
               setError("Inicio de sesión cancelado");

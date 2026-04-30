@@ -1,5 +1,5 @@
 'use client';
-import { useState, memo } from 'react';
+import { memo } from 'react';
 import Image from 'next/image';
 import { MapPin, BedDouble, Bath, CalendarDays, MessageCircle, Square, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import SearchDetailModal from './SearchDetailModal';
 import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
+import { formatPropertyPrice } from '@/lib/locations';
 
 
 type Currency = "USD" | "BS";
@@ -52,20 +52,18 @@ function PropertyCard({
   onMouseLeave,
   onClick
 }: PropertyCardProps) {
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { trackEvent } = useTracking();
   const viewRef = useCardViewTracking(property.id, 0);
   
-    const exchangeRate = 6.96;
-
-    const convertedPrice =
-    selectedCurrency === "USD"
-        ? property.price
-        : Math.round(property.price * exchangeRate * 100) / 100;
-
-    const displayCurrencySymbol = selectedCurrency === "USD" ? "$us" : "Bs";
-
-    const displayPrice = `${displayCurrencySymbol} ${convertedPrice.toLocaleString("es-BO")}`;
+  const displayPrice = formatPropertyPrice(property.price, selectedCurrency);
+  const openPropertyDetails = () => {
+    trackEvent(property.id, 'click');
+    window.open(
+      `/publicacion/${property.id}`,
+      `tab_mi_inmueble_${property.id}`,
+    );
+    onClick?.();
+  };
 
   
   const isContactAvailable = !!property.whatsappContact;
@@ -80,10 +78,7 @@ function PropertyCard({
         <div 
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
-          onClick={()=>{
-            setIsDetailOpen(true);
-            if (onClick) onClick();
-          }}
+          onClick={openPropertyDetails}
           className={`group flex flex-row items-center gap-2 sm:gap-4 p-1 sm:p-3 
             bg-white rounded-xl shadow-sm hover:shadow-md transition-all border-2 
             cursor-pointer w-full overflow-hidden ${
@@ -165,15 +160,6 @@ function PropertyCard({
             </div>
           </div>
         </div>
-        {/* Modal de detalle */}
-        {isDetailOpen && (
-          <SearchDetailModal
-            isOpen={isDetailOpen}
-            onClose={() => setIsDetailOpen(false)}
-            publicacionId={property.id}
-            selectedCurrency={selectedCurrency}
-          />
-        )}
       </>
     );
   }
@@ -184,10 +170,7 @@ function PropertyCard({
       ref={viewRef}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onClick={() => {
-        trackEvent(property.id, 'click');
-        onClick?.();
-      }}
+      onClick={openPropertyDetails}
       className={`group flex flex-row h-auto min-h-[12rem] sm:h-48 bg-white rounded-xl border-2 shadow-sm hover:shadow-md transition-all overflow-hidden focus-within:ring-2 focus-within:ring-[#a67c52] outline-none cursor-pointer ${
         isHovered 
           ? 'border-[#C26E5A] bg-orange-50/30 shadow-lg' 
@@ -272,7 +255,10 @@ function PropertyCard({
             <Button 
               size="sm" 
               className="h-8 text-[11px]"
-              onClick={() => setIsDetailOpen(true)}
+              onClick={(event) => {
+                event.stopPropagation();
+                openPropertyDetails();
+              }}
             >
               Ver Detalle
             </Button>
@@ -296,16 +282,6 @@ function PropertyCard({
 
         </div>
       </div>
-
-      {/* Modal de detalle */}
-      {isDetailOpen && (
-        <SearchDetailModal
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          publicacionId={property.id}
-          selectedCurrency={selectedCurrency}
-        />
-      )}
     </div>
   );
 }
