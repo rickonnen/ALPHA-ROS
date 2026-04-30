@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client';
 
 import { prisma } from './prismaClient';
 
+import { unstable_cache } from 'next/cache';
+
 export type SearchCurrency = 'USD' | 'BS';
 
 export type SearchFiltersInput = {
@@ -147,6 +149,14 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
       estado: { not: 0 },
     },
   };
+
+  // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    where.precio = {
+      ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
+      ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
+    };
+  }
 
   const operationIds = getOperationIds(filters.operacion);
   if (operationIds.length === 1) {
@@ -445,4 +455,18 @@ export async function searchPublicaciones(
   );
 
   return priceFiltered.map(mapPublication);
+}
+// con esto la llave es única y estable, no importa el orden de los filtros
+export async function getCachedPublicaciones(filters: SearchFiltersInput) {
+  // Ordenamos las llaves para que {a:1, b:2} sea igual a {b:2, a:1}
+  const stableKey = JSON.stringify(filters, Object.keys(filters).sort());
+
+  return unstable_cache(
+    async () => searchPublicaciones(filters),
+    ['search-results', stableKey], 
+    { 
+      revalidate: 60, 
+      tags: ['publicaciones'] 
+    }
+  )();
 }

@@ -11,7 +11,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
-import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
+// import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -52,6 +52,11 @@ type AppliedPriceFilter = {
   maxPrice?: number;
 };
 
+interface FiltrosBusquedaParams extends FiltrosPublicacion{
+  page?:number;
+  limit?:number;
+  currency?: undefined;
+}
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -290,7 +295,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página anterior"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -300,9 +304,7 @@ function Pagination({
         const showEllipsis = prev !== undefined && page - prev > 1;
         return (
           <span key={page} className="flex items-center gap-1">
-            {showEllipsis && (
-              <span className="px-1 text-gray-400 text-sm">…</span>
-            )}
+            {showEllipsis && <span className="px-1 text-gray-400 text-sm">…</span>}
             <button
               onClick={() => onPageChange(page)}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
@@ -321,7 +323,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página siguiente"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -334,6 +335,7 @@ function SearchPageContent() {
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
 
+  const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -343,7 +345,13 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({
+  const [advancedFilterValues, setAdvancedFilterValues] = useState<{
+    habitaciones?: string;
+    banos?: string;
+    piscina?: string;
+    minSurface?: number;
+    maxSurface?: number;
+  }>({
     habitaciones: "",
     banos: "",
     piscina: "",
@@ -387,7 +395,7 @@ function SearchPageContent() {
   // Reset page when filters/sort/view change (merge-sysinfosquad-bughunters)
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSort, viewMode, isMapOpen, searchResults]);
+  }, [selectedSort, viewMode, isMapOpen]);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -397,6 +405,8 @@ function SearchPageContent() {
       advancedFilterValues.habitaciones ||
       advancedFilterValues.banos ||
       advancedFilterValues.piscina ||
+      advancedFilterValues.minSurface !== undefined ||
+      advancedFilterValues.maxSurface !== undefined ||
       appliedPriceFilter?.minPrice !== undefined ||
       appliedPriceFilter?.maxPrice !== undefined ||
       selectedSort !== "fecha-reciente",
@@ -407,6 +417,8 @@ function SearchPageContent() {
     advancedFilterValues.piscina,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
+    advancedFilterValues?.minSurface,
+    advancedFilterValues?.maxSurface,
     searchLocation,
     selectedOperation,
     selectedPropertyTypes.length,
@@ -573,6 +585,43 @@ function SearchPageContent() {
         selectedPropertyTypes,
         PROPERTY_TYPE_OPTIONS,
       );
+      // Mínimas modificaciones para llamar a la API con paginación
+    //   const response = await fetch("/api/filter_search_page", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       ubicacion: searchLocation,
+    //       operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
+    //       tipoInmueble: selectedPropertyLabels.join(","),
+    //       habitaciones: advancedFilterValues.habitaciones,
+    //       banos: advancedFilterValues.banos,
+    //       piscina: advancedFilterValues.piscina,
+    //       minPrice: appliedPriceFilter?.minPrice,
+    //       maxPrice: appliedPriceFilter?.maxPrice,
+    //       currency: selectedCurrency,
+    //       page: currentPage,
+    //       limit: itemsPerPage,
+    //       ...overrides,
+    //     }),
+    //   });
+
+    //   const data = await response.json();
+    //   if (data.success) {
+    //     setSearchResults(data.publications);
+    //     setTotalCount(data.total);
+    //   }
+    //   setHasSearched(true);
+
+    //   trackSearch({
+    //     texto_busqueda: searchLocation,
+    //     cant_resultados: data.total,
+    //   });
+    // } catch (error) {
+    //   console.error("Search error:", error);
+    //   setSearchResults([]);
+    // } finally {
+    //   setIsApplyingFilters(false);
+    // }
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion:
@@ -585,8 +634,13 @@ function SearchPageContent() {
         piscina: advancedFilterValues.piscina,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
+        minSurface: advancedFilterValues.minSurface, 
+        maxSurface: advancedFilterValues.maxSurface,
+        currency: selectedCurrency,
         ...overrides,
       };
+
+      
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
       setHasSearched(true);
@@ -758,7 +812,13 @@ function SearchPageContent() {
     setSearchLocation("");
     setSelectedOperation([]);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({ habitaciones: "", banos: "", piscina: "" });
+    setAdvancedFilterValues({ 
+      habitaciones: "", 
+      banos: "", 
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined 
+    }as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
@@ -774,11 +834,33 @@ function SearchPageContent() {
       piscina: "",
       minPrice: undefined,
       maxPrice: undefined,
+      minSurface: undefined, 
+      maxSurface: undefined  
     });
   };
 
   const handleSort = (sortOption: string) => setSelectedSort(sortOption);
 
+  useEffect(() => {
+    // Si el usuario escribe o hace clic, esperamos 200ms antes de buscar
+    // para no saturar la base de datos (debounce)
+    const timer = setTimeout(() => {
+      // Solo ejecutamos si ya se hizo una busqueda inicial o hay filtros
+      if (hasSearched || hasActiveFilters) {
+        saveFiltersToUrl(); // Actualiza la URL arriba en el navegador
+        void runSearch();   // Llama a tu función de Prisma/API
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    searchLocation,       // Escucha cambios en el buscador de texto
+    selectedOperation,    // Escucha cambios en Venta/Alquiler
+    selectedPropertyTypes,// Escucha cambios en Casa/Dpto
+    appliedPriceFilter,   // Escucha cambios en el precio
+    advancedFilterValues, // Escucha cambios en habitaciones/baños
+    selectedSort,         // Escucha cambios en el ordenamiento
+    selectedCurrency,      // Escucha cambios en la moneda
+  ]);
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
@@ -901,14 +983,14 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                   closeMobileFilters();
                 }}
-              />
+              /> */}
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -1177,13 +1259,13 @@ function SearchPageContent() {
                 </div>
               </div>
 
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                 }}
-              />
+              /> */}
               <div className="my-3 h-px bg-[#F4EFE6]" />
               <SearchAutocomplete
                 value={searchLocation}

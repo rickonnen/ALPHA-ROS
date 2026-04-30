@@ -373,7 +373,7 @@ export default function PriceDropdown({
 
   return (
     <div className="mt-3 w-full">
-      <div className="mb-4">
+      <div className="mb-4 hidden md:block">
         <CurrencySwitch
           currentCurrency={selectedCurrency}
           setCurrentCurrency={onCurrencyChange}
