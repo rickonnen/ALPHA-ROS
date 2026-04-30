@@ -14,7 +14,6 @@ export async function GET() {
     const finDia = new Date(fechaMeta);
     finDia.setUTCHours(23, 59, 59, 999);
 
-    console.log("🔍 Iniciando proceso de notificación 7D...");
 
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
@@ -28,7 +27,6 @@ export async function GET() {
       include: { Usuario: true, PlanPublicacion: true }
     });
 
-    console.log(`📊 Planes encontrados para procesar: ${suscripciones.length}`);
 
     for (const sub of suscripciones) {
       
@@ -41,7 +39,6 @@ export async function GET() {
             fechaFin: sub.fecha_fin.toLocaleDateString(),
             tipo: '7D'
           });
-          console.log(`📧 Email enviado a: ${sub.Usuario.email}`);
         } catch (mailError) {
           console.error(`❌ Error al enviar email a ${sub.Usuario.email}:`, mailError);
         }
@@ -56,10 +53,11 @@ export async function GET() {
           mensaje: `Su plan actual ${sub.PlanPublicacion?.nombre_plan} expira en 7 días. Por favor, pagar antes de que expire.`,
           id_categoria: 2,
           leido: false,
-          creado_en: new Date()
+          creado_en: new Date(),
+          estado_envio: "pendiente",
+          email_enviado: false
         }
       });
-      console.log(`🔔 Notificación creada en DB para el usuario: ${sub.id_usuario}`);
 
       await prisma.suscripcion.update({
         where: { id_suscripcion: sub.id_suscripcion },

@@ -14,12 +14,11 @@ export async function GET() {
     const finDia = new Date(fechaMeta);
     finDia.setUTCHours(23, 59, 59, 999);
 
-    console.log("🔍 Cron 5D: Buscando vencimientos para el:", inicioDia.toISOString());
 
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
         id_plan: { not: 7 }, 
-        notificado_48h: false, // Usamos esta bandera para el segundo aviso
+        notificado_48h: false, 
         fecha_fin: {
           gte: inicioDia,
           lte: finDia
@@ -28,7 +27,6 @@ export async function GET() {
       include: { Usuario: true, PlanPublicacion: true }
     });
 
-    console.log(`📊 Planes encontrados (5 días): ${suscripciones.length}`);
 
     for (const sub of suscripciones) {
       if (sub.Usuario?.email) {
@@ -40,7 +38,6 @@ export async function GET() {
             fechaFin: sub.fecha_fin.toLocaleDateString(),
             tipo: '5D'
           });
-          console.log(`📧 Email 5D enviado a: ${sub.Usuario.email}`);
         } catch (mailError) {
           console.error(`❌ Error Mail 5D (${sub.Usuario.email}):`, mailError);
         }
@@ -51,14 +48,15 @@ export async function GET() {
           id_notificacion: uuidv4(),
           id_usuario: sub.id_usuario,
           id_publicacion: 1, 
+          id_categoria:2,
           titulo: "Recordatorio Próximo Vencimiento",
           mensaje: `Segundo aviso: Su plan ${sub.PlanPublicacion?.nombre_plan} vence en 5 días. Por favor, pagar antes de que expire.`,
           leido: false,
-          creado_en: new Date()
+          creado_en: new Date(),
+          estado_envio: "pendiente",
+          email_enviado: false
         }
       });
-
-      console.log(`Noti 5D creada para: ${sub.id_usuario}`);
 
       await prisma.suscripcion.update({
         where: { id_suscripcion: sub.id_suscripcion },
