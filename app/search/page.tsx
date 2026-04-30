@@ -52,6 +52,11 @@ type AppliedPriceFilter = {
   maxPrice?: number;
 };
 
+interface FiltrosBusquedaParams extends FiltrosPublicacion{
+  page?:number;
+  limit?:number;
+  currency?: undefined;
+}
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -254,7 +259,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página anterior"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -264,9 +268,7 @@ function Pagination({
         const showEllipsis = prev !== undefined && page - prev > 1;
         return (
           <span key={page} className="flex items-center gap-1">
-            {showEllipsis && (
-              <span className="px-1 text-gray-400 text-sm">…</span>
-            )}
+            {showEllipsis && <span className="px-1 text-gray-400 text-sm">…</span>}
             <button
               onClick={() => onPageChange(page)}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
@@ -285,7 +287,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página siguiente"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -298,6 +299,7 @@ function SearchPageContent() {
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
 
+  const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -537,44 +539,84 @@ function SearchPageContent() {
         selectedPropertyTypes,
         PROPERTY_TYPE_OPTIONS,
       );
-      const filtros: FiltrosPublicacion = {
-        ubicacion: searchLocation,
-        operacion:
-          selectedOperation.length > 0
-            ? selectedOperation.join(",")
-            : undefined,
-        tipoInmueble: selectedPropertyLabels.join(","),
-        habitaciones: advancedFilterValues.habitaciones,
-        banos: advancedFilterValues.banos,
-        piscina: advancedFilterValues.piscina,
-        minPrice: appliedPriceFilter?.minPrice,
-        maxPrice: appliedPriceFilter?.maxPrice,
-        ...overrides,
-      };
-      const resultados = await buscarPublicaciones(filtros);
-      setSearchResults(resultados);
+      // Mínimas modificaciones para llamar a la API con paginación
+      const response = await fetch("/api/filter_search_page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ubicacion: searchLocation,
+          operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
+          tipoInmueble: selectedPropertyLabels.join(","),
+          habitaciones: advancedFilterValues.habitaciones,
+          banos: advancedFilterValues.banos,
+          piscina: advancedFilterValues.piscina,
+          minPrice: appliedPriceFilter?.minPrice,
+          maxPrice: appliedPriceFilter?.maxPrice,
+          currency: selectedCurrency,
+          page: currentPage,
+          limit: itemsPerPage,
+          ...overrides,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSearchResults(data.publications);
+        setTotalCount(data.total);
+      }
       setHasSearched(true);
 
-      const trackPayload = {
+      trackSearch({
         texto_busqueda: searchLocation,
-        habitaciones: advancedFilterValues.habitaciones
-          ? parseInt(advancedFilterValues.habitaciones)
-          : undefined,
-        banos: advancedFilterValues.banos
-          ? parseInt(advancedFilterValues.banos)
-          : undefined,
-        precio_min: appliedPriceFilter?.minPrice,
-        precio_max: appliedPriceFilter?.maxPrice,
-        cant_resultados: resultados.length,
-      };
-      trackSearch(trackPayload);
+        cant_resultados: data.total,
+      });
     } catch (error) {
-      console.error(error);
+      console.error("Search error:", error);
       setSearchResults([]);
-      setHasSearched(true);
     } finally {
       setIsApplyingFilters(false);
     }
+    //   const filtros: FiltrosPublicacion = {
+    //     ubicacion: searchLocation,
+    //     operacion:
+    //       selectedOperation.length > 0
+    //         ? selectedOperation.join(",")
+    //         : undefined,
+    //     tipoInmueble: selectedPropertyLabels.join(","),
+    //     habitaciones: advancedFilterValues.habitaciones,
+    //     banos: advancedFilterValues.banos,
+    //     piscina: advancedFilterValues.piscina,
+    //     minPrice: appliedPriceFilter?.minPrice,
+    //     maxPrice: appliedPriceFilter?.maxPrice,
+    //     currency: selectedCurrency,
+    //     ...overrides,
+    //   };
+
+      
+    //   const resultados = await buscarPublicaciones(filtros);
+    //   setSearchResults(resultados);
+    //   setHasSearched(true);
+
+    //   const trackPayload = {
+    //     texto_busqueda: searchLocation,
+    //     habitaciones: advancedFilterValues.habitaciones
+    //       ? parseInt(advancedFilterValues.habitaciones)
+    //       : undefined,
+    //     banos: advancedFilterValues.banos
+    //       ? parseInt(advancedFilterValues.banos)
+    //       : undefined,
+    //     precio_min: appliedPriceFilter?.minPrice,
+    //     precio_max: appliedPriceFilter?.maxPrice,
+    //     cant_resultados: resultados.length,
+    //   };
+    //   trackSearch(trackPayload);
+    // } catch (error) {
+    //   console.error(error);
+    //   setSearchResults([]);
+    //   setHasSearched(true);
+    // } finally {
+    //   setIsApplyingFilters(false);
+    // }
   };
 
   // Cargar estado del mapa y zona guardada desde localStorage (combinado)
@@ -746,7 +788,8 @@ function SearchPageContent() {
     appliedPriceFilter,   // Escucha cambios en el precio
     advancedFilterValues, // Escucha cambios en habitaciones/baños
     selectedSort,         // Escucha cambios en el ordenamiento
-    selectedCurrency      // Escucha cambios en la moneda
+    selectedCurrency,      // Escucha cambios en la moneda
+    currentPage,
   ]);
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
