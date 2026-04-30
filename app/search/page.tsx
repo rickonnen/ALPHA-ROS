@@ -309,7 +309,13 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({
+  const [advancedFilterValues, setAdvancedFilterValues] = useState<{
+    habitaciones?: string;
+    banos?: string;
+    piscina?: string;
+    minSurface?: number;
+    maxSurface?: number;
+  }>({
     habitaciones: "",
     banos: "",
     piscina: "",
@@ -363,6 +369,8 @@ function SearchPageContent() {
       advancedFilterValues.habitaciones ||
       advancedFilterValues.banos ||
       advancedFilterValues.piscina ||
+      advancedFilterValues.minSurface !== undefined ||
+      advancedFilterValues.maxSurface !== undefined ||
       appliedPriceFilter?.minPrice !== undefined ||
       appliedPriceFilter?.maxPrice !== undefined ||
       selectedSort !== "fecha-reciente",
@@ -373,6 +381,8 @@ function SearchPageContent() {
     advancedFilterValues.piscina,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
+    advancedFilterValues?.minSurface,
+    advancedFilterValues?.maxSurface,
     searchLocation,
     selectedOperation,
     selectedPropertyTypes.length,
@@ -540,83 +550,85 @@ function SearchPageContent() {
         PROPERTY_TYPE_OPTIONS,
       );
       // Mínimas modificaciones para llamar a la API con paginación
-      const response = await fetch("/api/filter_search_page", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ubicacion: searchLocation,
-          operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
-          tipoInmueble: selectedPropertyLabels.join(","),
-          habitaciones: advancedFilterValues.habitaciones,
-          banos: advancedFilterValues.banos,
-          piscina: advancedFilterValues.piscina,
-          minPrice: appliedPriceFilter?.minPrice,
-          maxPrice: appliedPriceFilter?.maxPrice,
-          currency: selectedCurrency,
-          page: currentPage,
-          limit: itemsPerPage,
-          ...overrides,
-        }),
-      });
+    //   const response = await fetch("/api/filter_search_page", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       ubicacion: searchLocation,
+    //       operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
+    //       tipoInmueble: selectedPropertyLabels.join(","),
+    //       habitaciones: advancedFilterValues.habitaciones,
+    //       banos: advancedFilterValues.banos,
+    //       piscina: advancedFilterValues.piscina,
+    //       minPrice: appliedPriceFilter?.minPrice,
+    //       maxPrice: appliedPriceFilter?.maxPrice,
+    //       currency: selectedCurrency,
+    //       page: currentPage,
+    //       limit: itemsPerPage,
+    //       ...overrides,
+    //     }),
+    //   });
 
-      const data = await response.json();
-      if (data.success) {
-        setSearchResults(data.publications);
-        setTotalCount(data.total);
-      }
-      setHasSearched(true);
-
-      trackSearch({
-        texto_busqueda: searchLocation,
-        cant_resultados: data.total,
-      });
-    } catch (error) {
-      console.error("Search error:", error);
-      setSearchResults([]);
-    } finally {
-      setIsApplyingFilters(false);
-    }
-    //   const filtros: FiltrosPublicacion = {
-    //     ubicacion: searchLocation,
-    //     operacion:
-    //       selectedOperation.length > 0
-    //         ? selectedOperation.join(",")
-    //         : undefined,
-    //     tipoInmueble: selectedPropertyLabels.join(","),
-    //     habitaciones: advancedFilterValues.habitaciones,
-    //     banos: advancedFilterValues.banos,
-    //     piscina: advancedFilterValues.piscina,
-    //     minPrice: appliedPriceFilter?.minPrice,
-    //     maxPrice: appliedPriceFilter?.maxPrice,
-    //     currency: selectedCurrency,
-    //     ...overrides,
-    //   };
-
-      
-    //   const resultados = await buscarPublicaciones(filtros);
-    //   setSearchResults(resultados);
+    //   const data = await response.json();
+    //   if (data.success) {
+    //     setSearchResults(data.publications);
+    //     setTotalCount(data.total);
+    //   }
     //   setHasSearched(true);
 
-    //   const trackPayload = {
+    //   trackSearch({
     //     texto_busqueda: searchLocation,
-    //     habitaciones: advancedFilterValues.habitaciones
-    //       ? parseInt(advancedFilterValues.habitaciones)
-    //       : undefined,
-    //     banos: advancedFilterValues.banos
-    //       ? parseInt(advancedFilterValues.banos)
-    //       : undefined,
-    //     precio_min: appliedPriceFilter?.minPrice,
-    //     precio_max: appliedPriceFilter?.maxPrice,
-    //     cant_resultados: resultados.length,
-    //   };
-    //   trackSearch(trackPayload);
+    //     cant_resultados: data.total,
+    //   });
     // } catch (error) {
-    //   console.error(error);
+    //   console.error("Search error:", error);
     //   setSearchResults([]);
-    //   setHasSearched(true);
     // } finally {
     //   setIsApplyingFilters(false);
     // }
+      const filtros: FiltrosPublicacion = {
+        ubicacion: searchLocation,
+        operacion:
+          selectedOperation.length > 0
+            ? selectedOperation.join(",")
+            : undefined,
+        tipoInmueble: selectedPropertyLabels.join(","),
+        habitaciones: advancedFilterValues.habitaciones,
+        banos: advancedFilterValues.banos,
+        piscina: advancedFilterValues.piscina,
+        minPrice: appliedPriceFilter?.minPrice,
+        maxPrice: appliedPriceFilter?.maxPrice,
+        minSurface: advancedFilterValues.minSurface, 
+        maxSurface: advancedFilterValues.maxSurface,
+        currency: selectedCurrency,
+        ...overrides,
+      };
+
+      
+      const resultados = await buscarPublicaciones(filtros);
+      setSearchResults(resultados);
+      setHasSearched(true);
+
+      const trackPayload = {
+        texto_busqueda: searchLocation,
+        habitaciones: advancedFilterValues.habitaciones
+          ? parseInt(advancedFilterValues.habitaciones)
+          : undefined,
+        banos: advancedFilterValues.banos
+          ? parseInt(advancedFilterValues.banos)
+          : undefined,
+        precio_min: appliedPriceFilter?.minPrice,
+        precio_max: appliedPriceFilter?.maxPrice,
+        cant_resultados: resultados.length,
+      };
+      trackSearch(trackPayload);
+    } catch (error) {
+      console.error(error);
+      setSearchResults([]);
+      setHasSearched(true);
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   // Cargar estado del mapa y zona guardada desde localStorage (combinado)
@@ -749,7 +761,13 @@ function SearchPageContent() {
     setSearchLocation("");
     setSelectedOperation([]);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({ habitaciones: "", banos: "", piscina: "" });
+    setAdvancedFilterValues({ 
+      habitaciones: "", 
+      banos: "", 
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined 
+    }as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
@@ -765,6 +783,8 @@ function SearchPageContent() {
       piscina: "",
       minPrice: undefined,
       maxPrice: undefined,
+      minSurface: undefined, 
+      maxSurface: undefined  
     });
   };
 
@@ -946,8 +966,8 @@ function SearchPageContent() {
                   onApplyRange={handleApplyRange}
                 />
                 <AdvancedFilters
-                  key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
+                 key={advancedFiltersKey}
+                 onChange={(v: any) => setAdvancedFilterValues((prev) => ({ ...prev, ...v }))}
                 />
               </div>
               <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1220,7 +1240,7 @@ function SearchPageContent() {
                   />
                   <AdvancedFilters
                     key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
+                    onChange={(v: any) => setAdvancedFilterValues((prev) => ({ ...prev, ...v }))}
                   />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <div className="pb-2">
