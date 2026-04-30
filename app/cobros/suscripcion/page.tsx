@@ -93,16 +93,8 @@ export default function SuscripcionPage() {
 
 
     useEffect(() => {
-    if (!user?.id) return;
-    obtenerDatosSuscripcion();
-
-    // Solo en desarrollo
-    if (process.env.NODE_ENV === "development") {
-            const interval = setInterval(() => {
-                obtenerDatosSuscripcion();
-            }, 3000); // cada 5 segundos
-            return () => clearInterval(interval);
-        }
+        if (!user?.id) return;
+        obtenerDatosSuscripcion();
     }, [user?.id]);
 
     

@@ -17,7 +17,7 @@ export default function AdminLayout({
       <HeaderAdmin />
 
       <AdminGuard>
-        <main className="mx-auto w-full max-w-6xl px-6 py-10">
+        <main className="mx-auto w-full max-w-[95%] px-2 sm:px-6 py-10">
           {children}
         </main>
       </AdminGuard>

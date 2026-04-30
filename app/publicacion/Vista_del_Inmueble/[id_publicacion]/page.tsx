@@ -25,6 +25,7 @@ import { ContactCard }       from "@/features/publicacion/[id_publicacion]/compo
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
 import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
+//historial Inicio dev Luis
 import CloseTabButton from "./CloseTabButton";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
@@ -58,6 +59,7 @@ export default async function VistaInmueblePage({
   } catch {
     // Si falla el registro no interrumpe la vista
   }
+//historial fin dev luis
   
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
