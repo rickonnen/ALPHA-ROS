@@ -5,15 +5,14 @@ import Image from "next/image";
 import { triggerNotificationUpdate } from "@/components/hooks/useNotificationUpdates";
 
 type Props = {
-  id: string;  // ← ahora
+  id: string;  // Cambiado a string
   title: string;
   description: string;
   read: boolean;
   time?: string;
-
   type?: string | number;
-  onDelete: (id: number) => void;
-  onRead: (id: number) => void;
+  onDelete: (id: string) => void;  // Cambiado a string
+  onRead: (id: string) => void;     // Cambiado a string
 };
 
 function getTypeString(type: string | number | undefined): string {
@@ -93,24 +92,18 @@ export function NotificationItem({
     }
   }, [description]);
 
-  // Función para obtener el número de teléfono del usuario
   const getUserPhoneNumber = (): string | null => {
-    // Primero intentar obtener del localStorage
     const savedPhone = localStorage.getItem("user_whatsapp_number");
     if (savedPhone) return savedPhone;
     
-    // Si no hay, usar un número de prueba (reemplaza con tu número)
-    // Formato: código de país + número (ej: +59171234567)
     const testPhone = process.env.NEXT_PUBLIC_TEST_WHATSAPP_NUMBER;
     if (testPhone) return testPhone;
     
-    // Número por defecto para pruebas (CAMBIA ESTO POR TU NÚMERO)
-    return "+59170000000"; // <-- CAMBIA ESTE NÚMERO POR EL TUYO
+    return "+59170000000";
   };
 
-  // Función para enviar mensaje de WhatsApp
-  const sendWhatsAppMessage = async () => {
-    if (isSendingWhatsApp) return;
+  const sendWhatsAppMessage = async (): Promise<{ success: boolean; notificationId?: string }> => {
+    if (isSendingWhatsApp) return { success: false };
     
     setIsSendingWhatsApp(true);
     try {
@@ -119,7 +112,7 @@ export function NotificationItem({
       if (!userPhone) {
         console.error("No se encontró número de teléfono del usuario");
         alert("Por favor, configura tu número de teléfono en la configuración");
-        return;
+        return { success: false };
       }
 
       const response = await fetch("/api/send-whatsapp", {
@@ -137,13 +130,16 @@ export function NotificationItem({
       if (response.ok) {
         console.log("Mensaje de WhatsApp enviado exitosamente:", data);
         alert("✅ Mensaje de WhatsApp enviado correctamente");
+        return { success: true, notificationId: data.notificationId };
       } else {
         console.error("Error al enviar mensaje de WhatsApp:", data.error);
         alert(`❌ Error: ${data.error || "No se pudo enviar el mensaje"}`);
+        return { success: false };
       }
     } catch (error) {
       console.error("Error en sendWhatsAppMessage:", error);
       alert("❌ Error de conexión al enviar mensaje de WhatsApp");
+      return { success: false };
     } finally {
       setIsSendingWhatsApp(false);
     }
@@ -174,25 +170,25 @@ export function NotificationItem({
   };
 
   const handleItemClick = async () => {
-    // Solo procesar si no está leída
-    if (!read && !isMarkingRead) {
-      setIsMarkingRead(true);
-      try {
-        // Primero marcar como leída
-        await onRead(id);
-        
-        // Si es de tipo WhatsApp, enviar mensaje
-        const typeStr = getTypeString(type);
-        if (typeStr === "whatsapp") {
-          await sendWhatsAppMessage();
-        }
-        
-        triggerNotificationUpdate();
-      } catch (error) {
-        console.error("Error en handleItemClick:", error);
-      } finally {
-        setIsMarkingRead(false);
+    if (read || isMarkingRead) return;
+    
+    setIsMarkingRead(true);
+    
+    try {
+      onRead(id);
+      
+      const typeStr = getTypeString(type);
+      
+      if (typeStr === "whatsapp") {
+        sendWhatsAppMessage().catch((error) => {
+          console.error("Fallo silencioso al enviar WhatsApp en background:", error);
+        });
       }
+      
+    } catch (error) {
+      console.error("Error crítico en handleItemClick:", error);
+    } finally {
+      setIsMarkingRead(false);
     }
   };
 
@@ -204,8 +200,11 @@ export function NotificationItem({
   return (
     <div 
       onClick={handleItemClick}
-      className={`rounded-lg p-3 flex items-start gap-3 max-w-[99%] mx-auto cursor-pointer transition-colors group relative
-        ${read ? "bg-[#9EA5AE]/20" : "bg-blue-50 border border-blue-100"}`}
+      className={`rounded-lg p-3 flex items-start gap-3 max-w-[99%] mx-auto cursor-pointer transition-all duration-200 group relative border
+        ${read 
+          ? "bg-white border-gray-100 shadow-sm"
+          : "bg-gray-100 border-gray-200"
+        }`}
     >
       <div
         className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-full ${typeColor} text-white`}
@@ -269,7 +268,6 @@ export function NotificationItem({
         </button>
       </div>
 
-      {/* Indicador de envío de WhatsApp */}
       {isWhatsApp && !read && isSendingWhatsApp && (
         <div className="absolute bottom-1 right-1">
           <div className="text-xs text-green-600 animate-pulse bg-white px-2 py-1 rounded-full shadow">
@@ -280,4 +278,3 @@ export function NotificationItem({
     </div>
   );
 }
-    

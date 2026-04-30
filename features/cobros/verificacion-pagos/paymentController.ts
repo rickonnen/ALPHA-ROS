@@ -1,5 +1,8 @@
 // app/backend/cobros/controllers/paymentController.ts
 import { prisma } from '@/lib/prisma';
+import { syncUserPublicationsAndQuota } from './services/publicationService';
+import { upsertUserSubscription } from './services/subscriptionService';
+
 // Mapeo de estados según la lógica acordada
 const objStatuses = {
   intPending: 1,
@@ -78,16 +81,10 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
   }
 
   try {
-    // Prisma actualizará el estado. 
-    // Se cambia la razón del rachazo 
-    // actualiza la cantidad de publicaciones de acuerdo al plan
     const objUpdatedPayment = await prisma.$transaction(async (tx) => {
       const objCurrentPayment = await tx.detallePago.findUnique({
         where: { id_detalle: intId },
-        include: { 
-          PlanPublicacion: true, 
-          Usuario: { select: { cant_publicaciones_restantes: true } } 
-        }
+        include: { PlanPublicacion: true }
       });
 
       if (!objCurrentPayment) {
@@ -106,22 +103,18 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         
         const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
         const strUserId = objCurrentPayment.id_usuario;
+        const intPlanId = objCurrentPayment.id_plan;
 
-        if (strUserId) {
-          //Se asigna la cantidad del nuevo plan
-          await tx.usuario.update({
-            where: { id_usuario: strUserId },
-            data: {
-              cant_publicaciones_restantes: intNewQuota
-            }
-          });
+        if (strUserId && intPlanId) {
+          // lo de la hu6 (suspender publicaciones) y el cambio de cantidad de publicaciones
+          await syncUserPublicationsAndQuota(tx, strUserId, intNewQuota);
+          // lo de la creación o actualización de la tabla suscripción
+          await upsertUserSubscription(tx, strUserId, intPlanId, objCurrentPayment.tiempo_pago);
         }
       }
-
       return objPaymentResult;
-      
     });
-    
+
     console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
@@ -133,5 +126,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
-  
+
 };

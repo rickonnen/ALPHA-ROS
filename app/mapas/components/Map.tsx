@@ -156,7 +156,7 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
             type="button"
             onClick={() =>
               window.open(
-                `/publicacion/${location.id}`,
+                `/publicacion/Vista_del_Inmueble/${location.id}`,
                 `tab_mi_inmueble_${location.id}`,
               )
             }
@@ -327,91 +327,96 @@ export default function PropertyMap({
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
       >
-      {validHoveredPos && <ChangeView center={validHoveredPos} />}
-      {!validHoveredPos && validSelectedPos && (
-        <ChangeView center={validSelectedPos} />
-      )}
+        {validHoveredPos && <ChangeView center={validHoveredPos} />}
+        {!validHoveredPos && validSelectedPos && (
+          <ChangeView center={validSelectedPos} />
+        )}
 
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      <MapDrawingLogic
-        isDrawingMode={isDrawingMode}
-        onPolygonComplete={onPolygonComplete}
-      />
-
-      {drawnPolygon && (
-        <Polygon
-          positions={drawnPolygon}
-          color="#8B4423"
-          fillColor="#C26E5A"
-          fillOpacity={0.25}
-          weight={2}
+        <MapDrawingLogic
+          isDrawingMode={isDrawingMode}
+          onPolygonComplete={onPolygonComplete}
         />
-      )}
 
-      <MarkerClusterGroup
-        disableClusteringAtZoom={17}
-        spiderfyOnMaxZoom={false}
-        showCoverageOnHover={false}
-        iconCreateFunction={createClusterIcon}
-        eventHandlers={{
-          clustermouseover: (e: {
-            layer: {
-              getAllChildMarkers: () => L.Marker[];
-              getLatLng: () => L.LatLng;
-            };
-            target: { _map: L.Map };
-          }) => {
-            const cluster = e.layer;
-            const childMarkers = cluster.getAllChildMarkers();
+        {drawnPolygon && (
+          <Polygon
+            positions={drawnPolygon}
+            color="#8B4423"
+            fillColor="#C26E5A"
+            fillOpacity={0.25}
+            weight={2}
+          />
+        )}
 
-            const clusterLocations = childMarkers
-              .map((marker: L.Marker) => {
-                const pos = marker.getLatLng();
-                return locations.find(
-                  (location) =>
-                    Math.abs(location.lat - pos.lat) < 0.000001 &&
-                    Math.abs(location.lng - pos.lng) < 0.000001,
-                );
+        <MarkerClusterGroup
+          disableClusteringAtZoom={17}
+          spiderfyOnMaxZoom={false}
+          showCoverageOnHover={false}
+          iconCreateFunction={createClusterIcon}
+          eventHandlers={{
+            clustermouseover: (e: {
+              layer: {
+                getAllChildMarkers: () => L.Marker[];
+                getLatLng: () => L.LatLng;
+              };
+              target: { _map: L.Map };
+            }) => {
+              const cluster = e.layer;
+              const childMarkers = cluster.getAllChildMarkers();
+
+              const clusterLocations = childMarkers
+                .map((marker: L.Marker) => {
+                  const pos = marker.getLatLng();
+                  return locations.find(
+                    (location) =>
+                      Math.abs(location.lat - pos.lat) < 0.000001 &&
+                      Math.abs(location.lng - pos.lng) < 0.000001,
+                  );
+                })
+                .filter(Boolean) as Location[];
+
+              if (clusterLocations.length === 0) return;
+
+              closePopup();
+
+              const popup = L.popup({
+                closeButton: false,
+                autoClose: false,
+                closeOnClick: false,
+                offset: [0, -10],
               })
-              .filter(Boolean) as Location[];
+                .setLatLng(cluster.getLatLng())
+                .setContent(createClusterPopupHTML(clusterLocations))
+                .openOn(e.target._map);
 
-            if (clusterLocations.length === 0) return;
-
-            closePopup();
-
-            const popup = L.popup({
-              closeButton: false,
-              autoClose: false,
-              closeOnClick: false,
-              offset: [0, -10],
-            })
-              .setLatLng(cluster.getLatLng())
-              .setContent(createClusterPopupHTML(clusterLocations))
-              .openOn(e.target._map);
-
-            popupRef.current = popup;
-          },
-          clustermouseout: closePopup,
-          animationend: closePopup,
-        }}
-      >
-        {locations.map((location) => (
-          <Marker
-            key={location.id}
-            position={[location.lat, location.lng]}
-            icon={createPriceIcon(location.precio, hoveredId === location.id)}
-            zIndexOffset={hoveredId === location.id ? 1000 : 0}
-            eventHandlers={{
-              click: () => setSelectedPos([location.lat, location.lng]),
-            }}
-          >
-            <Popup maxWidth={320} minWidth={300} closeButton={false} className="property-marker-popup">
-              <MarkerPropertyPopup location={location} />
-            </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
+              popupRef.current = popup;
+            },
+            clustermouseout: closePopup,
+            animationend: closePopup,
+          }}
+        >
+          {locations.map((location) => (
+            <Marker
+              key={location.id}
+              position={[location.lat, location.lng]}
+              icon={createPriceIcon(location.precio, hoveredId === location.id)}
+              zIndexOffset={hoveredId === location.id ? 1000 : 0}
+              eventHandlers={{
+                click: () => setSelectedPos([location.lat, location.lng]),
+              }}
+            >
+              <Popup
+                maxWidth={320}
+                minWidth={300}
+                closeButton={false}
+                className="property-marker-popup"
+              >
+                <MarkerPropertyPopup location={location} />
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </>
   );

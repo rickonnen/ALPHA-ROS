@@ -73,6 +73,10 @@ export default function RedesView({ onBack }: RedesViewProps) {
     try {
       const res  = await fetch("/api/redes-vinculadas")
       const data = await res.json()
+      if (!res.ok) {
+        setMensaje({ texto: data?.error ?? "Error al cargar las redes vinculadas.", tipo: "error" })
+        return
+      }
       if (data.redes) setRedes(data.redes)
     } catch (err) {
       console.error("Error cargando redes:", err)
@@ -131,7 +135,7 @@ export default function RedesView({ onBack }: RedesViewProps) {
   const disponibles = redes.filter((r) => !r.vinculada)
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 text-white p-8">
 
       {/* Botón volver */}
       <div className="flex items-center gap-2 mb-1">
@@ -139,8 +143,11 @@ export default function RedesView({ onBack }: RedesViewProps) {
           onClick={onBack}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
         >
-          <span>←</span>
-          <span className="text-xs uppercase tracking-widest">Seguridad</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5"/>
+            <path d="M12 5l-7 7 7 7"/>
+          </svg>
+          <span className="text-xs uppercase tracking-widest font-bold">Seguridad</span>
         </button>
       </div>
 
@@ -175,7 +182,7 @@ export default function RedesView({ onBack }: RedesViewProps) {
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Vinculadas</p>
           <div className="space-y-3">
             {vinculadas.map((red) => (
-              <div key={red.proveedor} className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl">
+              <div key={red.proveedor} className="w-full flex justify-between items-center bg-white/10 p-5 rounded-2xl border border-white/20">
                 <div className="flex items-center gap-3">
                   {iconos[red.proveedor]}
                   <div className="text-left">
@@ -207,7 +214,7 @@ export default function RedesView({ onBack }: RedesViewProps) {
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-3">Disponibles para vincular</p>
           <div className="space-y-3">
             {disponibles.map((red) => (
-              <div key={red.proveedor} className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl">
+              <div key={red.proveedor} className="w-full flex justify-between items-center bg-white/10 p-5 rounded-2xl border border-white/20">
                 <div className="flex items-center gap-3">
                   {iconos[red.proveedor]}
                   <div className="text-left">

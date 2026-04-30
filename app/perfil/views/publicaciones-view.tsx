@@ -40,6 +40,18 @@
     Fecha: 18/04/2026
     Feat: Integración del modal de límite de publicaciones (Criterio 11).
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 22/04/2026
+    Fix: Se aplicó estado visual "disabled" (grisáceo y cursor bloqueado) en el botón "+ Agregar" cuando el límite de publicaciones llega a 0.
+*/
+/*
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix de modales(gratuitos y de planes) y adición de limpieza de sessionStorage en botón "Agregar".
+ * Funcionalidad: Vista de modales segun el plan
+ - @param {PublicacionesViewProps} id_usuario - ID del usuario actual autenticado.
+ - @return {JSX.Element} Interfaz de lista de publicaciones y modales.
+ */
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +62,7 @@ import PublicacionCard, { Publicacion } from "./publicacion-card";
 import { useAuth } from "@/app/auth/AuthContext";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
-
+import PlanLimitModal from "@/features/publicacion/components/PlanLimitModal";
 interface PublicacionesViewProps {
   id_usuario: string;
 }
@@ -70,7 +82,8 @@ export default function PublicacionesView({
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [bolShowModal, setBolShowModal] = useState(false);
+  const [bolShowModalGratuito, setBolShowModalGratuito] = useState(false);
+  const [bolShowModalPlan, setBolShowModalPlan] = useState(false);
   const [bolChecking, setBolChecking] = useState(false);
 
   useEffect(() => {
@@ -150,7 +163,8 @@ export default function PublicacionesView({
       setEliminando(false);
     }
   };
-  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number) => {
+
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number): Promise<boolean> => {
     try {
       setError(null);
       // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
@@ -159,22 +173,33 @@ export default function PublicacionesView({
       const res = await fetch(url, { method: "PATCH" });
 
       if (res.ok) {
+        const data = await res.json();
         // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
         setPublicaciones((prev) =>
           prev.map((p) =>
             p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
           ),
         );
+        return true; 
+
       } else {
         const errorData = await res.json();
+
         console.error("Error desde el servidor:", errorData.error);
-        setError("No se pudo actualizar el estado de la publicación.");
+        if (res.status === 400) {
+           setBolShowModalPlan(true); 
+        } else {
+           setError(errorData.error || "No se pudo actualizar el estado de la publicación.");
+        }
+        return false;
       }
     } catch (err) {
       console.error("Error de red:", err);
       setError("Error de conexión al intentar cambiar el estado.");
+      return false;
     }
   };
+  
   const handleAgregar = async () => {
     if (!user) {
       router.push("/login");
@@ -184,12 +209,47 @@ export default function PublicacionesView({
     try {
       const objEstado = await verificarEstadoPublicacion(user.id);
       if (objEstado.bolLimiteAlcanzado) {
-        setBolShowModal(true);
-      } else {
-        router.push("/publicacion/informacion-comercial");
+        if (objEstado.strTipoLimite === "plan") {
+          setBolShowModalPlan(true);
+        } else {
+          setBolShowModalGratuito(true);
+        }
+        return; // Salimos de la función si alcanzó el límite
       }
+      // FIX: Limpiar las llaves del sessionStorage del Formulario Dinámico
+      const KEYS_TO_CLEAN = [
+        'publicacion_currentStep', 
+        'publicacion_completedSteps', 
+        'datosAviso', 
+        'categoriaYEstado', 
+        'ubicacion', 
+        'caracteristicasDetalle', 
+        'imagenesPropiedad_interacted', 
+        'caracteristicasImagenesPreview', 
+        'caracteristicasImagenesNombres', 
+        'videoPropiedad', 
+        'descripcionPropiedad', 
+        'imagenesIniciales'
+      ];
+      KEYS_TO_CLEAN.forEach(k => { 
+        try { sessionStorage.removeItem(k) } catch { } 
+      });
+
+      router.push("/publicacion/formularioPublicacion");
     } catch {
-      router.push("/publicacion/informacion-comercial");
+      // FIX: Limpiamos también en caso de error por seguridad antes de redirigir
+      const KEYS_TO_CLEAN = [
+        'publicacion_currentStep', 'publicacion_completedSteps', 'datosAviso', 
+        'categoriaYEstado', 'ubicacion', 'caracteristicasDetalle', 
+        'imagenesPropiedad_interacted', 'caracteristicasImagenesPreview', 
+        'caracteristicasImagenesNombres', 'videoPropiedad', 
+        'descripcionPropiedad', 'imagenesIniciales'
+      ];
+      KEYS_TO_CLEAN.forEach(k => { 
+        try { sessionStorage.removeItem(k) } catch { } 
+      });
+      
+      router.push("/publicacion/formularioPublicacion");
     } finally {
       setBolChecking(false);
     }
@@ -207,11 +267,16 @@ export default function PublicacionesView({
               <span className="text-white/60 text-sm whitespace-nowrap">
                 {publicacionesRestantes} publicaciones disponibles
               </span>
+  
               <Button
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
+                className={`flex-shrink-0 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)] ${
+                  publicacionesRestantes <= 0
+                    ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80" 
+                    : "bg-[var(--secondary)] hover:bg-[var(--secondary)]/80"
+                }`}
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
@@ -355,10 +420,16 @@ export default function PublicacionesView({
         </div>
       )}
 
+      {/* Modal límite de publicaciones gratuitas */}
       <FreePublicationLimitModal
-        bolOpen={bolShowModal}
-        onBack={() => setBolShowModal(false)}
-        strPlansHref="/cobros/planes"
+        bolOpen={bolShowModalGratuito}
+        onBack={() => setBolShowModalGratuito(false)}
+      />
+
+      {/* Modal límite de plan activo excedido */}
+      <PlanLimitModal
+        bolOpen={bolShowModalPlan}
+        onBack={() => setBolShowModalPlan(false)}
       />
     </>
   );

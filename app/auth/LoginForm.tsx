@@ -214,9 +214,9 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     if (onClose) onClose();
     if (userRol === 1) {
       router.push("/admin/verificacion-pagos");
-    } else {
-      router.push(consumePostAuthRedirect() || "/");
+      return;
     }
+    router.push(consumePostAuthRedirect() || "/");
   }
 
   const googleClickedRef = useRef(false);
@@ -258,7 +258,9 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     try {
       const telemetry = await getLoginTelemetry();
       savePendingGoogleTelemetry(telemetry);
-      await signIn("google", { callbackUrl: getPostAuthRedirect() });
+      await signIn("google", {
+        callbackUrl: `/google-auth-check?redirect=${encodeURIComponent(getPostAuthRedirect())}`,
+      });
     } catch (error) {
       clearPendingGoogleTelemetry();
       googleClickedRef.current = false;

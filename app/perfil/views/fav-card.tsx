@@ -74,7 +74,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
               </p>
             )}
             <h3
-              className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
+              className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline"
               onClick={() => router.push(`/publicacion/perfil_del_inmueble/${favorito.id}`)}
             >
               {favorito.titulo}
@@ -118,14 +118,14 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <Button
                 variant="azul"
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() => handleInfo(favorito.id)}
               >
-                Info.
+                Ver Detalle
               </Button>
               <FavButton
                 id_publicacion={favorito.id}

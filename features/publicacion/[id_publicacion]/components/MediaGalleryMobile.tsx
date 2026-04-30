@@ -14,7 +14,7 @@
  * @return JSX con carrusel de una columna visible solo en mobile
  */
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 interface MediaGalleryMobileProps {
   arrImagenesSafe: string[];
   strVideoId?:     string;
@@ -37,8 +37,13 @@ export const MediaGalleryMobile = ({
   onOpenLightbox,
   onImgError,
 }: MediaGalleryMobileProps) => {
+  const strFallback = "/company-placeholder.png";
+  
   // Task 4.5: El video o reel ocupa el último slide del carrusel
   const bolEsSlideVideo = (strVideoId || strReelId) && intCurrentIndex === arrImagenesSafe.length;
+  
+  // FIX RM02-02: Comprobar si la imagen actual es el fallback para celular
+  const bolIsFallback = arrImagenesSafe[intCurrentIndex] === strFallback && !bolEsSlideVideo;
   return (
     // Task 4.12: Solo visible en mobile
 <div className="lg:hidden relative h-[min(280px,100svh)] bg-[#E7E1D7] rounded-2xl overflow-hidden">
@@ -70,10 +75,20 @@ export const MediaGalleryMobile = ({
           <img
             src={arrImagenesSafe[intCurrentIndex]}
             onError={(e) => onImgError(e, intCurrentIndex)}
-            onClick={() => onOpenLightbox(intCurrentIndex)}
-            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => { if(!bolIsFallback) onOpenLightbox(intCurrentIndex) }}
+            className={`w-full h-full object-cover ${!bolIsFallback ? "cursor-pointer" : ""}`}
             alt={`Imagen ${intCurrentIndex + 1}`}
           />
+          
+          {/* FIX RM02-02: Diseño calcado para mobile */}
+          {bolIsFallback && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#2E2E2E]/50 pointer-events-none z-10 backdrop-blur-[2px]">
+              <AlertTriangle className="w-7 h-7 text-white/90 mb-1.5" strokeWidth={1.5} />
+              <span className="text-white px-4 py-2 rounded-lg text-xs font-semibold tracking-wide drop-shadow-md">
+                Imagen no disponible
+              </span>
+            </div>
+          )}
         </>
       )}
       {/* Task 4.4: Flecha izquierda */}
@@ -95,6 +110,7 @@ export const MediaGalleryMobile = ({
         </button>
       )}
       {/* Task 4.4: Indicadores — un punto por imagen + uno para video o reel */}
+      {intTotalSlides > 1 && (
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-10">
         {Array.from({ length: intTotalSlides }).map((_, intIdx) => (
           <div
@@ -103,6 +119,7 @@ export const MediaGalleryMobile = ({
           />
         ))}
       </div>
+      )}
     </div>
   );
 };

@@ -55,7 +55,6 @@ export default function GoogleSignInButton({
     setGoogleLoading(true);
     setError("");
 
-    //Abrir popup pequeño de Google
     const width = 500;
     const height = 600;
     const left = window.screenX + (window.outerWidth - width) / 2;
@@ -69,15 +68,13 @@ export default function GoogleSignInButton({
 
     popupRef.current = popup;
 
-    //Detectar cuando el popup se cierra
     checkPopupRef.current = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(checkPopupRef.current!);
         setGoogleLoading(false);
 
-        //Verificar sesión de NextAuth (no /api/auth/me de Max)
         fetch("/api/auth/session")
-          .then(res => res.json())
+          .then((res) => res.json())
           .then(async (session) => {
             if (session?.user) {
               try {
@@ -97,7 +94,6 @@ export default function GoogleSignInButton({
               if (onSuccess) onSuccess();
               window.location.href = consumePostAuthRedirect();
             } else {
-              //Canceló o falló
               setError("Inicio de sesión cancelado");
               if (onCancel) onCancel();
             }
@@ -109,7 +105,6 @@ export default function GoogleSignInButton({
     }, 500);
   }
 
-  // Limpiar interval al desmontar
   useEffect(() => {
     return () => {
       if (checkPopupRef.current) clearInterval(checkPopupRef.current);
@@ -158,7 +153,6 @@ export default function GoogleSignInButton({
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
 
-      {/*BUG 1 — Mensaje de cancelación o error de conexión */}
       {error && (
         <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>
           {error}

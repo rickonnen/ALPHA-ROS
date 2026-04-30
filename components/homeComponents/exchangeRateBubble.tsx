@@ -10,6 +10,7 @@ export default function ExchangeRateBubble() {
   const { compra, venta, loading, error, lastUpdate } = useDollarRate();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Cierra al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -18,6 +19,22 @@ export default function ExchangeRateBubble() {
     };
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // Cierra con ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  // Auto-cierre luego de 10 segundos
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => setOpen(false), 10000);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const formatDate = (dateStr: string | null) => {

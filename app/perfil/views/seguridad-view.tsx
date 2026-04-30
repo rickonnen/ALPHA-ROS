@@ -27,6 +27,11 @@
    Fecha: [fecha]
    Feature: Agrega opción "Estado de Cuenta" al menú de seguridad.
 */
+/* Dev: [Tu nombre] - HU-04
+   Fecha: [fecha]
+   Fix: Pasa prop onLimpiarDatos a EstadoCuentaView para limpiar el historial
+        de visitas del UI inmediatamente al confirmar la desactivación (CA-5).
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -45,6 +50,7 @@ interface SeguridadProps {
   onSuccess: () => void;
   onTelefonosChange: (nuevosTelefonos: string[]) => void;
   onPerfilActualizado: () => void;
+  initialSubView?: string;
 }
 
 // Definir el tipo para los metadatos OTP
@@ -53,8 +59,8 @@ interface OtpMeta {
   resendAfterSec?: number;
 }
 
-export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
-  const [subView, setSubView] = useState<string>("menu");
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado, initialSubView }: SeguridadProps) {
+  const [subView, setSubView] = useState<string>(initialSubView ?? "menu");
   const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState<string>("");
   const [objOtpMeta, setObjOtpMeta] = useState<OtpMeta>({});
   const [objUsuario, setObjUsuario] = useState<any>(null);
@@ -222,6 +228,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
     "2fa": (
       <Autenticacion2FAView
         id_usuario={id_usuario}
+        primary_provider={objUsuario?.google_id ? "google" : null}
         onBack={() => setSubView("menu")}
       />
     ),
@@ -231,6 +238,11 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         id_usuario={id_usuario}
         estadoCuenta={objUsuario?.estado ?? 1}
         onBack={() => setSubView("menu")}
+        onLimpiarDatos={() =>
+          setObjUsuario((prev: any) =>
+            prev ? { ...prev, HistorialVistos: [] } : prev
+          )
+        }
       />
     ),
   };

@@ -59,7 +59,7 @@ function PropertyCard({
   const openPropertyDetails = () => {
     trackEvent(property.id, 'click');
     window.open(
-      `/publicacion/${property.id}`,
+      `/publicacion/Vista_del_Inmueble/${property.id}`,
       `tab_mi_inmueble_${property.id}`,
     );
     onClick?.();
