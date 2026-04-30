@@ -31,9 +31,7 @@ export async function GET() {
     console.log(`📊 Planes encontrados para procesar: ${suscripciones.length}`);
 
     for (const sub of suscripciones) {
-      // ELIMINAMOS LA VALIDACIÓN DE PUBLICACIONES PARA QUE NO SE SALTE AL USUARIO
       
-      // 1. Envío de Email
       if (sub.Usuario?.email) {
         try {
           await enviarEmailRecordatorio({
@@ -49,12 +47,11 @@ export async function GET() {
         }
       }
 
-      // 2. Creación de Notificación en la App (Campanita)
       await prisma.notificacion.create({
         data: {
           id_notificacion: uuidv4(),
           id_usuario: sub.id_usuario,
-          id_publicacion: 1, // VALOR FORZADO SEGÚN TU SOLICITUD
+          id_publicacion: 1, 
           titulo: "Recordatorio de Pago",
           mensaje: `Su plan actual ${sub.PlanPublicacion?.nombre_plan} expira en 7 días. Por favor, pagar antes de que expire.`,
           id_categoria: 2,
@@ -64,7 +61,6 @@ export async function GET() {
       });
       console.log(`🔔 Notificación creada en DB para el usuario: ${sub.id_usuario}`);
 
-      // 3. Marcamos como notificado para que no se repita el proceso
       await prisma.suscripcion.update({
         where: { id_suscripcion: sub.id_suscripcion },
         data: { notificado_7d: true }
