@@ -144,10 +144,7 @@ function getOperationIds(value: string | undefined): number[] {
 
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   const where: Prisma.PublicacionWhereInput = {
-    id_estado: 1,
-    Usuario: {
-      estado: { not: 0 },
-    },
+   id_estado: 1,
   };
 
   // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos

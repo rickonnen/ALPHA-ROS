@@ -497,7 +497,7 @@ model Blogs {
   titulo            String?           @db.VarChar(128)
   descripcion       String?           @db.VarChar(128)
   contenido         String?
-  imagen_url        String?           @db.VarChar(128)
+  imagen_url        String?           @db.VarChar(220)
   estado            String?           @default("NOPUBLICADO") @db.VarChar(50)
   fecha_creacion    DateTime?         @default(now()) @db.Timestamptz(6)
   fecha_publicacion DateTime?         @db.Timestamptz(6)
@@ -815,6 +815,7 @@ model Publicacion {
   id_estado                 Int?                        @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
+  gratuito                  Boolean                     @default(false)
   Favorito                  Favorito[]
   HistorialVistos           HistorialVistos[]
   Imagen                    Imagen[]
@@ -833,6 +834,7 @@ model Publicacion {
   @@index([fecha_creacion(sort: Desc)], map: "idx_publicacion_fecha")
   @@index([id_tipo_operacion], map: "idx_publicacion_operacion")
   @@index([precio], map: "idx_publicacion_precio")
+  @@index([superficie], map: "idx_publicacion_superficie")
   @@index([id_tipo_inmueble], map: "idx_publicacion_tipo")
   @@index([id_ubicacion], map: "idx_publicacion_ubicacion")
   @@schema("public")
@@ -1070,8 +1072,8 @@ model Zona {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model notificacion_whatsapp {
-  id         BigInt    @id @default(autoincrement())
+model notificacion_campana {
+  id         BigInt    @id(map: "notificacion_whatsapp_pkey") @default(autoincrement())
   title      String
   message    String
   read       Boolean?  @default(false)
