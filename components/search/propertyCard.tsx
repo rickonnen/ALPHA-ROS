@@ -22,6 +22,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
+import { useDollarRate } from '@/components/hooks/getDollarRate';
 
 type Currency = 'USD' | 'BS';
 
@@ -63,6 +64,7 @@ function PropertyCard({
 }: PropertyCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const { trackEvent } = useTracking();
+  const { compra } = useDollarRate();
 
   const canHover =
     typeof window !== 'undefined' &&
@@ -121,7 +123,7 @@ function PropertyCard({
     onMouseLeave?.();
   }, [canHover, clearIgnoreTimer, onMouseLeave, property.id, trackEvent]);
 
-  const exchangeRate = 6.96;
+  const exchangeRate = compra ?? 6.96;
   const convertedPrice =
     selectedCurrency === 'USD'
       ? property.price

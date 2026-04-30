@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import * as turf from "@turf/turf";
 
 import {
   buscarPublicaciones,
@@ -51,8 +52,6 @@ type AppliedPriceFilter = {
   maxPrice?: number;
 };
 
-type LatLngPoint = [number, number];
-
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -82,32 +81,6 @@ function isValidLatLng(lat: unknown, lng: unknown): lat is number {
     (lng as number) >= -180 &&
     (lng as number) <= 180
   );
-}
-
-function isPointInsidePolygon(
-  point: LatLngPoint,
-  polygon: LatLngPoint[],
-): boolean {
-  const [pointLat, pointLng] = point;
-  let isInside = false;
-
-  for (let currentIndex = 0, previousIndex = polygon.length - 1; currentIndex < polygon.length; previousIndex = currentIndex++) {
-    const [currentLat, currentLng] = polygon[currentIndex];
-    const [previousLat, previousLng] = polygon[previousIndex];
-
-    const intersects =
-      currentLng > pointLng !== previousLng > pointLng &&
-      pointLat <
-        ((previousLat - currentLat) * (pointLng - currentLng)) /
-          (previousLng - currentLng) +
-          currentLat;
-
-    if (intersects) {
-      isInside = !isInside;
-    }
-  }
-
-  return isInside;
 }
 
 function normalizeText(value: string): string {
@@ -229,6 +202,42 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
   return [LOCAL_FALLBACK_IMAGES[fallbackIndex]];
 }
 
+function formatPublishedDate(date: Date | string | null | undefined): string {
+  if (!date) return "Reciente";
+  
+  try {
+    const publishedDate = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(publishedDate.getTime())) return "Reciente";
+    
+    const now = new Date();
+    const diffMs = now.getTime() - publishedDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    // Mostrar hace cuánto tiempo fue publicado
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Ayer";
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `Hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
+    }
+    if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `Hace ${months} ${months === 1 ? "mes" : "meses"}`;
+    }
+    
+    // Para fechas más antiguas, mostrar la fecha formateada
+    const formatter = new Intl.DateTimeFormat("es-BO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    return formatter.format(publishedDate);
+  } catch {
+    return "Reciente";
+  }
+}
+
 function mapPublicationToProperty(
   publication: PublicacionBusqueda,
   selectedOperation: OperationTypeValue,
@@ -252,7 +261,7 @@ function mapPublicationToProperty(
     bathrooms: publication.banos ?? 0,
     price: toNumber(publication.precio),
     currencySymbol: publication.moneda_simbolo ?? "$us",
-    publishedDate: "Reciente",
+    publishedDate: formatPublishedDate(publication.fecha_creacion),
     whatsappContact: "",
     images: getSafeImages(publication),
   };
@@ -404,15 +413,20 @@ function SearchPageContent() {
     selectedSort,
   ]);
 
-  // 1. Filtrar por zona dibujada (team-bugHunters)
+  // 1. Filtrar por zona dibujada con Turf.js (team-bugHunters)
   const filteredSearchResults = useMemo(() => {
     if (!drawnPolygon || drawnPolygon.length < 3) return searchResults;
+
+    const turfCoords = drawnPolygon.map((p) => [p[1], p[0]]);
+    turfCoords.push(turfCoords[0]);
+    const searchArea = turf.polygon([turfCoords]);
 
     return searchResults.filter((pub) => {
       const lat = pub.ubicacion?.latitud;
       const lng = pub.ubicacion?.longitud;
       if (!lat || !lng) return false;
-      return isPointInsidePolygon([Number(lat), Number(lng)], drawnPolygon);
+      const pt = turf.point([Number(lng), Number(lat)]);
+      return turf.booleanPointInPolygon(pt, searchArea);
     });
   }, [searchResults, drawnPolygon]);
 
@@ -913,15 +927,18 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
+                <AdvancedFilters
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues}
+                />
+
+                <div className="my-4 h-px bg-[#D8D2C8]" />
+
                 <PriceDropdown
                   selectedCurrency={selectedCurrency}
                   appliedPriceFilter={appliedPriceFilter}
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
-                />
-                <AdvancedFilters
-                  key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
                 />
               </div>
               <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1124,7 +1141,7 @@ function SearchPageContent() {
               )}
             </div>
 
-            <div className="flex h-[calc(95vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
 
               <div className="flex mb-4 items-center justify-between">
@@ -1185,16 +1202,16 @@ function SearchPageContent() {
                     selected={selectedPropertyTypes}
                     onChange={setSelectedPropertyTypes}
                   />
+                  <AdvancedFilters
+                    key={advancedFiltersKey}
+                    onChange={setAdvancedFilterValues}
+                  />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <PriceDropdown
                     selectedCurrency={selectedCurrency}
                     appliedPriceFilter={appliedPriceFilter}
                     onCurrencyChange={handleCurrencyChange}
                     onApplyRange={handleApplyRange}
-                  />
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
                   />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <div className="pb-2">
