@@ -10,17 +10,17 @@
  * @return Objeto estructurado con todos los datos del inmueble, sus relaciones (Ubicación, 
  *         Tipo, Multimedia) y el perfil del anunciante, o null si el ID es inválido o no existe.
  */
- /**
- * Modificacion
- * Dev: Gustavo Montaño
- * Date: 17/04/2026
- * Funcionalidad: Extracción de los datos del creador de la publicación 
- *                para poblar la tarjeta de contacto directo.
- * @param Usuario - Relación del ORM Prisma para acceder a la tabla del 
- *                publicador y sus teléfonos vinculados.
- * @return Objeto con los campos nombres, apellidos, username, email, 
- *                url_foto_perfil y el primer número de teléfono registrado.
- */
+/**
+* Modificacion
+* Dev: Gustavo Montaño
+* Date: 17/04/2026
+* Funcionalidad: Extracción de los datos del creador de la publicación 
+*                para poblar la tarjeta de contacto directo.
+* @param Usuario - Relación del ORM Prisma para acceder a la tabla del 
+*                publicador y sus teléfonos vinculados.
+* @return Objeto con los campos nombres, apellidos, username, email, 
+*                url_foto_perfil y el primer número de teléfono registrado.
+*/
 import { prisma } from "@/lib/prisma";
 
 export async function getPerfilInmueble(intIdPublicacion: number) {
@@ -31,31 +31,29 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
     where: { id_publicacion: intIdPublicacion },
     select: {
       id_usuario: true,
-      titulo:       true,
-      descripcion:  true,
-      precio:       true,
-      superficie:   true,
-      Moneda:       { select: { simbolo: true, nombre: true } },
+      titulo: true,
+      descripcion: true,
+      precio: true,
+      superficie: true,
+      Moneda: { select: { simbolo: true, nombre: true } },
       habitaciones: true,
-      banos:        true,
-      garajes:      true,
-      plantas:      true,
-      TipoInmueble:  { select: { nombre_inmueble:  true } },
+      banos: true,
+      garajes: true,
+      plantas: true,
+      TipoInmueble: { select: { nombre_inmueble: true } },
       TipoOperacion: { select: { nombre_operacion: true } },
       Ubicacion: {
         select: {
           direccion: true,
-          zona:      true,
+          zona: true,
           latitud: true,
           longitud: true,
-          Ciudad:    { select: { nombre_ciudad: true } },
+          Ciudad: { select: { nombre_ciudad: true } },
         },
       },
-      Zona:   { select: { nombre_zona: true } },
-      
       EstadoPublicacion: {
         select: { nombre_estado: true },
-},
+      },
       EstadoConstruccion: {
         select: { nombre_estado_construccion: true },
       },
@@ -73,8 +71,8 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
           },
         },
       },
-      Video:  { select: { url_video:   true } },
-      Imagen: { select: { url_imagen:  true } },
+      Video: { select: { url_video: true } },
+      Imagen: { select: { url_imagen: true } },
       //Parte para el ContactCard
       Usuario: {
         select: {
