@@ -16,7 +16,7 @@ const arrAdminOptions = [
     strTitle: "Gestión de blogs",
     strDescription:
       "Administra artículos, publicaciones y contenido informativo para la plataforma.",
-    strHref: "/admin/blogs",
+    strHref: "/admin/manageBlogs",
     Icon: Newspaper,
     strButtonText: "Inspeccionar",
   },

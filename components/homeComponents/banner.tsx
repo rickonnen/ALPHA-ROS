@@ -81,7 +81,7 @@ export default function Banner() {
 
   const {
     intCurrentIndex,
-    objBannerRef,
+    containerRef,
     bolShowControls,
     goToNextImage,
     goToPreviousImage,
@@ -94,7 +94,8 @@ export default function Banner() {
 
   if (bolLoading) {
     return (
-      <section className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans">
+      <section className="w-full overflow-hidden font-sans">
+        {/* CAMBIO 1: Eliminada max-w y mx-auto en el skeleton para ancho completo */}
         <div className="flex w-full animate-pulse items-center justify-center bg-muted aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]" />
       </section>
     );
@@ -102,7 +103,8 @@ export default function Banner() {
 
   if (arrActiveImages.length === 0) {
     return (
-      <section className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans">
+      <section className="w-full overflow-hidden font-sans">
+        {/* CAMBIO 2: Eliminada max-w y mx-auto en el mensaje de error para ancho completo */}
         <div className="flex w-full items-center justify-center bg-muted px-6 text-center aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]">
           <p className="text-sm text-muted-foreground sm:text-base">
             No hay imágenes activas para mostrar en el banner.
@@ -114,8 +116,8 @@ export default function Banner() {
 
   return (
     <section
-      ref={objBannerRef}
-      className="mx-auto w-full max-w-[1600px] overflow-hidden font-sans"
+      ref={containerRef}
+      className="w-full overflow-hidden font-sans"
       aria-label="Main home banner"
     >
       <div
@@ -145,7 +147,8 @@ export default function Banner() {
                 <>
                   <div className="absolute inset-0 bg-black/35" />
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center sm:px-6 md:px-8 lg:px-10">
-                    <div className="max-w-[320px] select-none sm:max-w-2xl lg:max-w-4xl">
+                    {/* CAMBIO 4: Eliminada max-w-[320px] y sm:max-w-2xl para que el texto ocupe más espacio si es necesario */}
+                    <div className="select-none lg:max-w-4xl">
                       <h1 className="text-4xl font-bold leading-[0.98] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem]">
                         Encuentra el lugar donde
                         <br />
@@ -164,6 +167,7 @@ export default function Banner() {
 
         {bolShowControls && (
           <>
+            {/* ... (botones de navegación y carrusel permanecen iguales, pero se alejan más hacia afuera al estar en ancho completo) */}
             <button
               type="button"
               onClick={goToPreviousImage}
