@@ -26,6 +26,9 @@ import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/compo
 import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import CloseTabButton from "./CloseTabButton";
+import { cookies } from "next/headers";
+import { verify } from "jsonwebtoken";
+
 export default async function VistaInmueblePage({
   params,
 }: {
@@ -34,6 +37,27 @@ export default async function VistaInmueblePage({
   const { id_publicacion } = await params;
   const intId = parseInt(id_publicacion, 10);
   if (isNaN(intId)) return notFound();
+
+  // Registrar visita en historial si hay sesión activa
+  try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth_token")?.value;
+    if (authToken) {
+      const decoded = verify(authToken, process.env.JWT_SECRET!) as { userId: string };
+      if (decoded?.userId) {
+        await fetch(`${process.env.NEXTAUTH_URL}/api/perfil/addHistorial`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_usuario: decoded.userId,
+            id_publicacion: intId,
+          }),
+        });
+      }
+    }
+  } catch {
+    // Si falla el registro no interrumpe la vista
+  }
   
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();

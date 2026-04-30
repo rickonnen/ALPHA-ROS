@@ -12,7 +12,8 @@ type TriggerRef = React.MutableRefObject<(() => void) | null>
 
 function FormularioDinamicoInner() {
   const state = useFormularioState()
-
+  const [bolShowFreeModal, setBolShowFreeModal] = useState(false)
+  const [bolShowPlanLimitModal, setBolShowPlanLimitModal] = useState(false) 
   const {
     modoEdicion, router,
     currentStep, completedSteps,
@@ -42,7 +43,8 @@ function FormularioDinamicoInner() {
     handleNext,
     handleBack,
     handleSidebarClick,
-  } = usePublicar({ ...state, triggerRefs })
+  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal,
+  setBolShowPlanLimitModal, })
 
   if (!hydrated || !datosListos || !sessionKey) return null
 

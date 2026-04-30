@@ -37,7 +37,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
   const router = useRouter()
 
   const handleInfo = (id: string) => {
-    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+    router.push(`/publicacion/Vista_del_Inmueble/${id}`);
   };
   const strEtiqueta = [favorito.tipo, favorito.tipo_operacion]
     .filter(Boolean)
