@@ -185,14 +185,16 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
   }
 
   function handleSuccessClose() {
-    setShowSuccess(false);
-    if (onClose) onClose();
-    if (userRol === 1) {
-      router.push("/admin/verificacion-pagos");
-    } else {
-      router.push("/");
-    }
+  setShowSuccess(false);
+  if (onClose) {
+    onClose();
   }
+  if (Number(userRol) === 1) {
+    router.push("/admin");
+    return;
+  }
+  router.push("/");
+}
 
   const googleClickedRef = useRef(false);
 
@@ -233,7 +235,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     try {
       const telemetry = await getLoginTelemetry();
       savePendingGoogleTelemetry(telemetry);
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl: "/google-auth-check" });
     } catch (error) {
       clearPendingGoogleTelemetry();
       googleClickedRef.current = false;

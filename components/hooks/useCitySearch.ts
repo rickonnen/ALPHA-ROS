@@ -105,9 +105,12 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     }, 300);
   }, [arrHistory.length, clearSuggestions, fetchSuggestions]);
 
-  const handleFillFromHistory = useCallback((strName: string) => {
+  const handleFillFromHistory = useCallback(async (objItem: CitySuggestion) => {
     objActiveQueryRef.current = "";
-    setStrCity(strName);
+    
+    // Extraemos solo el texto para el input (Soluciona el [object Object])
+    setStrCity(objItem.strName); 
+    
     setBolShowHistory(false);
     setBolShowSuggestions(false);
     setBolShowFullHistoryPanel(false);
@@ -117,7 +120,15 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     if (objSearchTimeoutRef.current) {
       clearTimeout(objSearchTimeoutRef.current);
     }
-  }, []);
+
+    // Hacemos el Upsert en la BD para actualizar la fecha
+    if (!bolIsAuthLoading) {
+      const arrUpdated = await historyService.save(objItem, bolIsAuthenticated);
+      if (arrUpdated.length > 0) {
+        setArrHistory(arrUpdated);
+      }
+    }
+  }, [bolIsAuthenticated, bolIsAuthLoading]);
 
   const handleSelectSuggestion = useCallback(async (objSuggestion: CitySuggestion) => {
     if (bolIsAuthLoading) return;
@@ -165,7 +176,7 @@ export function useCitySearch({ objUser = null, bolIsAuthLoading = false }: UseC
     } else if (objEvent.key === "Enter") {
        objEvent.preventDefault();
        if (intSelectedIndex >= 0 && arrCurrentList[intSelectedIndex]) {
-          handleFillFromHistory(arrCurrentList[intSelectedIndex].strName);
+          handleFillFromHistory(arrCurrentList[intSelectedIndex]);
        }
     } else if (objEvent.key === "Escape") {
       setBolShowSuggestions(false);

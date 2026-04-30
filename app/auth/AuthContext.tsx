@@ -7,12 +7,36 @@ interface User {
   id: string;
   name: string;
   email: string;
+  rol?: number | null;
+  role?: string | null;
+  isAdmin?: boolean;
+  perfil?: string | null;
+  nombreRol?: string | null;
 }
 
 interface LoginTelemetry {
   latitud?: number | null;
   longitud?: number | null;
 }
+
+export const isAdminUser = (objUser: User | null | undefined): boolean => {
+  if (!objUser) return false;
+
+  if (typeof objUser.rol !== "undefined" && objUser.rol !== null) {
+    return Number(objUser.rol) === 1;
+  }
+
+  if (typeof objUser.role === "string") {
+    const roleLower = objUser.role.toLowerCase();
+    return roleLower === "admin" || roleLower === "administrador";
+  }
+
+  if (typeof objUser.isAdmin === "boolean") {
+    return objUser.isAdmin;
+  }
+
+  return false;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -151,6 +175,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const session = await sessionRes.json();
 
           if (session?.user) {
+            const fetched = await fetchUserFromServer();
+            if (fetched) {
+              await flushPendingGoogleTelemetry();
+              setIsLoading(false);
+              return;
+            }
+
             const googleUser: User = {
               id: session.user.id ?? session.user.email ?? "",
               name: session.user.name ?? "",
@@ -190,8 +221,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       });
 
+      const data = await res.json();
+
+      //  Detectar si se requiere 2FA
+      if (data.requiresOTP && data.userId) {
+        const err: any = new Error("Requiere verificación 2FA");
+        err.requiresOTP = true;
+        err.userId = data.userId;
+        throw err;
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         const err: any = new Error(data.error || "Error al iniciar sesión");
         err.code = data.code;
         throw err;

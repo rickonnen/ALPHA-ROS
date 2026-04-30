@@ -57,6 +57,7 @@ export default function NewPasswordForm({ email, onBack, onSuccess }: NewPasswor
     else if (password.length < 8 || password.length > 15) e.password = "Entre 8 y 15 caracteres";
     else if (!/[A-Z]/.test(password)) e.password = "Debe incluir al menos una mayúscula";
     else if (!/[0-9]/.test(password)) e.password = "Debe incluir al menos un número";
+     else if (/\s/.test(password)) e.password = "La contraseña no puede contener espacios en blanco"; 
     if (!confirm) e.confirm = "Este campo es obligatorio";
     else if (confirm !== password) e.confirm = "Las contraseñas no coinciden";
     setErrors(e);
@@ -81,7 +82,6 @@ export default function NewPasswordForm({ email, onBack, onSuccess }: NewPasswor
       setLoading(false);
     }
   }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

@@ -8,15 +8,20 @@ export default function ChangeView({ center }: { center: [number, number] | null
   useEffect(() => {
     if (!center || !map) return;
     
-    // Validar que center tenga valores numéricos válidos
     const [lat, lng] = center;
-    if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+    if (
+      typeof lat !== 'number' || typeof lng !== 'number' ||
+      isNaN(lat) || isNaN(lng) ||
+      !isFinite(lat) || !isFinite(lng) ||
+      lat < -90 || lat > 90 ||
+      lng < -180 || lng > 180
+    ) {
       console.warn('ChangeView: Coordenadas inválidas', { lat, lng });
       return;
     }
-    
+
     try {
-      map.flyTo(center, 17, { duration: 1.5 });
+      map.setView([lat, lng], 17);
     } catch (error) {
       console.error("Error al cambiar vista del mapa:", error);
     }

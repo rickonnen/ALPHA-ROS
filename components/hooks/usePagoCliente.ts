@@ -62,7 +62,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
       
       // Cargar QR
       try {
-        const resQr = await fetch(`/api/cobros/descargar?planId=${planId}`);
+        const resQr = await fetch(`/api/cobros/descargar?planId=${planId}&modalidad=${modalidad}`);
         const dataQr = await resQr.json();
         if (dataQr?.url) setQrUrl(dataQr.url);
       } catch (e) { console.error("Error QR:", e); }
@@ -73,7 +73,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     };
 
     inicializarDatos();
-  }, [user?.id, planId, refrescarEstadoGlobal]);
+  }, [user?.id, planId, modalidad, refrescarEstadoGlobal]);
 
   const tienePagoPendiente = useMemo(() => {
     // Bloqueamos si hay pendientes generales o si el registro actual está en espera (Estado 1)
@@ -97,7 +97,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
   const manejarAceptarPago = async () => {
     if (!user?.id || !archivoSeleccionado) return;
 
-    setEstadoModal("verificando_pago");
+    
 
     const formData = new FormData();
     formData.append("file", archivoSeleccionado);
@@ -126,6 +126,8 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
       console.error("Error en el envío");
       setEstadoModal("cerrado");
     }
+
+    setEstadoModal("verificando_pago");
   };
 
   // --- Helpers Adicionales ---

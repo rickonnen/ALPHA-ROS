@@ -91,7 +91,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
-import { ArrowLeft, Smartphone, ChevronDown } from "lucide-react";
+import { ArrowLeft, Smartphone, ChevronDown, Pencil, Trash2 } from "lucide-react";
 
 interface TelefonosViewProps {
   id_usuario: string;
@@ -328,6 +328,17 @@ const guardarSnapshot = () => {
       actualizar("invalid");
       return;
     }
+      const existeEnOtroSlot = telefonosActivos.some((activo, idx) => {
+      if (idx === index || !activo) return false;
+      const otroNumero = `${paisesSeleccionados[idx].codigo}${telefonosValues[idx].trim()}`;
+      return otroNumero === numeroCompleto;
+    });
+
+    if (existeEnOtroSlot) {
+      actualizar("exists");
+      return;
+    }
+
 
     actualizar("valid", true);
     try {
@@ -583,14 +594,14 @@ const handleGuardar = async () => {
         </div>
       </div>
 
-      <Card className="bg-white/10 border border-white/20 backdrop-blur-md">
-        <CardHeader className="px-3 sm:px-6">
+      <Card className="bg-white/10 border border-white/20 backdrop-blur-md overflow-visible">
+      <CardHeader className="px-4 sm:px-6">
           <CardTitle className="text-base text-white">
             Teléfonos registrados
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-5 pb-14 px-3 sm:px-6">
+        <CardContent className="space-y-5 pb-20 px-3 pr-4 sm:px-6">
           {[0, 1, 2].map((i) =>
             telefonosActivos[i] ? (
               
@@ -599,10 +610,9 @@ const handleGuardar = async () => {
                   TELÉFONO {i + 1}
                 </label>
 
-                <div className="grid grid-cols-[1fr_70px_50px] sm:grid-cols-[1fr_100px_100px] gap-2 sm:gap-3 items-center">
-                    <div className="flex gap-2 w-full">
+                  <div className="grid grid-cols-[1fr_36px_36px] sm:grid-cols-[1fr_100px_100px] gap-1.5 sm:gap-3 items-center">                    <div className="flex gap-2 w-full">
                       
-                    <div className="relative w-28 sm:w-40">
+                    <div className="relative w-36 sm:w-40">
 
                     {/* SELECT VISIBLE */}
                     <div
@@ -619,12 +629,21 @@ const handleGuardar = async () => {
                         className="w-5 h-4"
                       />
                       <span className="text-sm text-white">{paisesSeleccionados[i].codigo}</span>
-                      <ChevronDown className="w-3 h-3 text-white/50 ml-auto" />
+                      {slotEnEdicion === i && <ChevronDown className="w-3 h-3 text-white/50 ml-auto" />}
                     </div>
 
                       {/* DROPDOWN */}
-                      {openSelect === i && (
-                        <div className="absolute top-full mt-1 left-0 w-44 sm:w-60 max-h-[144px] overflow-y-auto bg-[#1e1e2e] border border-white/20 rounded-md z-[10000] text-white scrollbar-thin scrollbar-thumb-white/20">
+                        {openSelect === i && (
+                          <div
+                           className="absolute top-full left-0 w-44 sm:w-60 h-[144px] overflow-y-auto bg-[#1e1e2e] border border-white/20 rounded-md z-[10000] text-white scrollbar-thin scrollbar-thumb-white/20"
+                              style={{
+                                marginTop: !editando[i] || validaciones[i].estado === "idle"
+                                  ? "4px"
+                                  : validaciones[i].estado === "valid"
+                                  ? "18px"
+                                  : "34px"
+                              }}
+                          >
                           {PAISES.map((p) => (
                             <div
                               key={p.iso}
@@ -657,9 +676,9 @@ const handleGuardar = async () => {
                     </div>
 
                     {/* INPUT NUMERO + MENSAJE */}
-                    <div className="flex flex-col w-full">
-                      <div className="relative">
-                        <input
+                      <div className="relative flex flex-col w-full">
+                        <div>
+                          <input
                           value={telefonosValues[i] || ""}
                           placeholder="Número"
                           maxLength={15}
@@ -696,21 +715,25 @@ const handleGuardar = async () => {
                       </div>
 
                       {editando[i] && (
-                        <div className="sm:relative sm:h-0">
-                          <div className="sm:absolute sm:right-0 sm:top-0.5 flex justify-end mt-1 sm:mt-0">
-                          {validaciones[i].estado === "empty" && (
-                            <span className="text-xs text-red-400">El número no puede estar vacio</span>
-                          )}
-                          {validaciones[i].estado === "invalid" && (
-                            <span className="text-xs text-red-400">Número inválido para el país seleccionado</span>
-                          )}
-                          {validaciones[i].estado === "exists" && (
-                            <span className="text-xs text-red-400">Este número ya está registrado</span>
-                          )}
-                          {validaciones[i].estado === "valid" && !validaciones[i].verificando && (
-                            <span className="text-xs text-orange-400">Número válido</span>
-                          )}
-                        </div>
+                        <div className="absolute top-full right-0 mt-0.5 pointer-events-none z-[10001]">
+                        {validaciones[i].estado === "empty" && (
+                          <span className="text-xs text-red-400 text-right leading-tight block">
+                            El número no<br />debe ser vacío
+                          </span>
+                        )}
+                        {validaciones[i].estado === "invalid" && (
+                          <span className="text-xs text-red-400 text-right leading-tight block">
+                            Número inválido<br />para este país
+                          </span>
+                        )}
+                        {validaciones[i].estado === "exists" && (
+                          <span className="text-xs text-red-400 text-right leading-tight block">
+                            Este número ya<br />está registrado
+                          </span>
+                        )}
+                        {validaciones[i].estado === "valid" && !validaciones[i].verificando && (
+                          <span className="text-xs text-orange-400 block">Número válido</span>
+                        )}
                       </div>
                     )}
                     </div>
@@ -721,14 +744,19 @@ const handleGuardar = async () => {
                     variant="outline"
                     onClick={() => handleEditar(i)}
                     disabled={hayEdicionAbierta && slotEnEdicion !== i}
-                    className={`h-10 w-full text-xs sm:text-sm disabled:opacity-40 cursor-pointer transition-colors ${
-                      slotEnEdicion === i
+                    className={`h-10 w-9 sm:w-full text-xs sm:text-sm disabled:opacity-40 cursor-pointer transition-colors ${                   slotEnEdicion === i
                         ? "border-white/25 bg-[#1F3A4D] text-white/60 hover:bg-[#1F3A4D]/80"
                         : "border-white/25 bg-transparent text-white/80 hover:bg-white/10"
                     }`}
                                       >
-                    {slotEnEdicion === i ? "Editando" : "Editar"}
-                  </Button>
+                    {/* {slotEnEdicion === i ? "Editando" : "Editar"} */}
+                    <span className="sm:hidden">
+                      <Pencil className={`w-4 h-4 ${slotEnEdicion === i ? "opacity-50" : ""}`} />
+                    </span>
+                    <span className="hidden sm:inline">
+                      {slotEnEdicion === i ? "Editando" : "Editar"}
+                    </span>
+                    </Button>
 
                   {i !== 0 ? (
                     <Button
@@ -736,10 +764,9 @@ const handleGuardar = async () => {
                       variant="outline"
                       onClick={() => handleEliminarClick(i)}
                       disabled={hayEdicionAbierta}
-                      className="h-10 w-full border-red-500 bg-transparent text-red-400 hover:bg-red-500/20 text-xs sm:text-sm disabled:opacity-40 cursor-pointer"
-                    >
-                      <span className="sm:hidden">🗑</span>
-                      <span className="hidden sm:inline">Eliminar</span>
+                   className="h-10 w-9 sm:w-full mt-1 border-red-500 bg-transparent text-red-400 hover:bg-red-500/20 text-xs sm:text-sm disabled:opacity-40 cursor-pointer"                >
+                    <span className="sm:hidden"><Trash2 className="w-4 h-4 text-red-400" /></span>
+                    <span className="hidden sm:inline">Eliminar</span>
                     </Button>
                   ) : (
                     <div />

@@ -2,37 +2,41 @@
  * Dirección: alpha-ros-deploy1\app\api\vincular\discord\route.ts
  * Funcionalidad: Inicia el flujo OAuth de Discord para vincular desde perfil
  */
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/nextAuthOptions"
-import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { verify } from "jsonwebtoken";
 
-export async function GET() {
-  const session = await getServerSession(authOptions)
+import { authOptions } from "@/lib/auth/nextAuthOptions";
 
-  // 1. Verificar que hay sesión activa
-  //const session = await getServerSession()
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  let id_usuario: string | null = session?.user?.id ?? null;
 
-  if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "No autorizado" },
-      { status: 401 }
-    )
+  if (!id_usuario) {
+    const token = request.cookies.get("auth_token")?.value;
+    if (token) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
+        id_usuario = decoded.userId;
+      } catch {
+        // Token inválido o expirado.
+      }
+    }
   }
 
-  // 2. Guardar id_usuario en state para recuperarlo en el callback
-  const state = Buffer.from(session.user.id).toString("base64")
+  if (!id_usuario) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
 
-  // 3. Construir URL de autorización de Discord
+  const state = Buffer.from(id_usuario).toString("base64");
   const params = new URLSearchParams({
     client_id: process.env.DISCORD_CLIENT_ID!,
-    redirect_uri: `${process.env.NEXTAUTH_URL}/api/vincular/discord/callback`,
+    redirect_uri: `${process.env.NEXTAUTH_URL}api/vincular/discord/oauth-respuesta`,
     response_type: "code",
     scope: "identify email",
     state,
-  })
+  });
 
-  const discordAuthUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`
-
-  // 4. Redirigir al OAuth de Discord
-  return NextResponse.redirect(discordAuthUrl)
+  const discordAuthUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+  return NextResponse.redirect(discordAuthUrl);
 }

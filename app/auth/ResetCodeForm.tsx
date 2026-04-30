@@ -128,7 +128,7 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
         Código de verificación
       </label>
 
-      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: "6px", justifyContent: "center", width: "100%" }}>
         {code.map((digit, index) => (
           <input
             key={index}
@@ -140,7 +140,7 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
             disabled={loading || expired}
             onFocus={e => e.target.select()}
             style={{
-              width: "48px", height: "56px", fontSize: "24px", fontWeight: "bold",
+              width: "14%", height: "48px", fontSize: "18px", fontWeight: "bold",
               textAlign: "center",
               border: `2px solid ${emptyCells.includes(index) ? "#ef4444" : digit ? "#C85A4F" : "#d1d5db"}`,
              borderRadius: "8px", outline: "none",

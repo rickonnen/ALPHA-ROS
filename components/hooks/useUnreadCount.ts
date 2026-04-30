@@ -1,81 +1,93 @@
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+"use client";
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Faltan variables de entorno de Supabase para useUnreadCount");
-    return null;
-  }
-  
-  return createClient(supabaseUrl, supabaseKey);
-}
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
+// Usamos 'any' para evitar errores estrictos de TypeScript con el objeto User
 export function useUnreadCount(user: any) {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // ✅ Extraemos el ID para evitar la advertencia del React Compiler
+  const userId = user?.id;
+
+  const fetchCount = useCallback(async () => {
+    if (!userId) {
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      // ✅ PASO 1: En vez de un conteo ciego, traemos la columna "type"
+      const { data, error } = await supabase
+        .from("notificacion_campana")
+        .select("type")
+        .eq("read", false);
+
+      if (error) { 
+        console.error("Error:", error.message); 
+        return; 
+      }
+
+      if (data) {
+        // ✅ PASO 2: Leemos tu configuración local
+        const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
+        const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
+        
+        const gmailEnabled = savedGmail !== "false"; 
+        const whatsappEnabled = savedWhatsapp !== "false";
+
+        // ✅ PASO 3: Filtramos la basura. Si WhatsApp está apagado, no lo cuenta.
+        const conteoReal = data.filter((n: Record<string, any>) => {
+          if (n.type === "gmail" && !gmailEnabled) return false;
+          if (n.type === "whatsapp" && !whatsappEnabled) return false;
+          return true;
+        }).length;
+
+        // Ahora setea "1" en lugar de "6"
+        setUnreadCount(conteoReal);
+      }
+    } catch (err) {
+      console.error("Error inesperado:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!userId) {
       setUnreadCount(0);
+      setLoading(false);
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setUnreadCount(0);
-      return;
-    }
-
-    const fetchCount = async () => {
-      try {
-        const { count, error } = await supabase
-          .from("Notificacion")
-          .select("*", { count: "exact", head: true })
-          .eq("id_usuario", user.id)
-          .eq("leido", false);
-        
-        if (error) {
-          console.error("Error fetching unread count:", error);
-          return;
-        }
-        
-        setUnreadCount(count ?? 0);
-      } catch (error) {
-        console.error("Error in fetchCount:", error);
+    fetchCount();
+    
+    const interval = setInterval(fetchCount, 10000);
+    const handleRefresh = () => fetchCount();
+    
+    // ✅ PASO 4: Esta es la "antena" que escucha cuando modificas el panel
+    const handleOptimisticSync = (e: any) => {
+      if (e.detail !== undefined) {
+        setUnreadCount(e.detail);
       }
     };
 
-    fetchCount();
-
-    // Canal único por usuario para evitar conflictos
-    const channelName = `badge-realtime-${user.id}`;
-    
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "Notificacion",
-          filter: `id_usuario=eq.${user.id}`,
-        },
-        () => {
-          fetchCount();
-        }
-      )
-      .subscribe();
-
-    const handleRefresh = () => fetchCount();
+    window.addEventListener("notifications-updated", handleRefresh);
     window.addEventListener("refresh-notification-badge", handleRefresh);
+    window.addEventListener("optimistic-unread-sync", handleOptimisticSync);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
+      window.removeEventListener("notifications-updated", handleRefresh);
       window.removeEventListener("refresh-notification-badge", handleRefresh);
+      // ✅ PASO 5: Faltaba limpiar esto en tu código original, causaba bugs
+      window.removeEventListener("optimistic-unread-sync", handleOptimisticSync);
     };
-  }, [user?.id]);
+  }, [userId, fetchCount]);
 
-  return unreadCount;
+  return { unreadCount, refreshCount: fetchCount, loading };
 }
