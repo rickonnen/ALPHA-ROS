@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import * as turf from "@turf/turf";
 
 import {
   buscarPublicaciones,
@@ -52,6 +51,8 @@ type AppliedPriceFilter = {
   maxPrice?: number;
 };
 
+type LatLngPoint = [number, number];
+
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -81,6 +82,32 @@ function isValidLatLng(lat: unknown, lng: unknown): lat is number {
     (lng as number) >= -180 &&
     (lng as number) <= 180
   );
+}
+
+function isPointInsidePolygon(
+  point: LatLngPoint,
+  polygon: LatLngPoint[],
+): boolean {
+  const [pointLat, pointLng] = point;
+  let isInside = false;
+
+  for (let currentIndex = 0, previousIndex = polygon.length - 1; currentIndex < polygon.length; previousIndex = currentIndex++) {
+    const [currentLat, currentLng] = polygon[currentIndex];
+    const [previousLat, previousLng] = polygon[previousIndex];
+
+    const intersects =
+      currentLng > pointLng !== previousLng > pointLng &&
+      pointLat <
+        ((previousLat - currentLat) * (pointLng - currentLng)) /
+          (previousLng - currentLng) +
+          currentLat;
+
+    if (intersects) {
+      isInside = !isInside;
+    }
+  }
+
+  return isInside;
 }
 
 function normalizeText(value: string): string {
@@ -377,20 +404,15 @@ function SearchPageContent() {
     selectedSort,
   ]);
 
-  // 1. Filtrar por zona dibujada con Turf.js (team-bugHunters)
+  // 1. Filtrar por zona dibujada (team-bugHunters)
   const filteredSearchResults = useMemo(() => {
     if (!drawnPolygon || drawnPolygon.length < 3) return searchResults;
-
-    const turfCoords = drawnPolygon.map((p) => [p[1], p[0]]);
-    turfCoords.push(turfCoords[0]);
-    const searchArea = turf.polygon([turfCoords]);
 
     return searchResults.filter((pub) => {
       const lat = pub.ubicacion?.latitud;
       const lng = pub.ubicacion?.longitud;
       if (!lat || !lng) return false;
-      const pt = turf.point([Number(lng), Number(lat)]);
-      return turf.booleanPointInPolygon(pt, searchArea);
+      return isPointInsidePolygon([Number(lat), Number(lng)], drawnPolygon);
     });
   }, [searchResults, drawnPolygon]);
 
