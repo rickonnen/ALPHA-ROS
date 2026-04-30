@@ -14,7 +14,7 @@ export async function GET() {
     const finDia = new Date(fechaMeta);
     finDia.setUTCHours(23, 59, 59, 999);
 
-    console.log("🔍 Buscando planes que vencen en 7 días:", inicioDia.toISOString());
+    console.log("🔍 Iniciando proceso de notificación 7D...");
 
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
@@ -28,40 +28,43 @@ export async function GET() {
       include: { Usuario: true, PlanPublicacion: true }
     });
 
+    console.log(`📊 Planes encontrados para procesar: ${suscripciones.length}`);
+
     for (const sub of suscripciones) {
-      const publicacionRelacionada = await prisma.publicacion.findFirst({
-        where: { id_usuario: sub.id_usuario },
-        select: { id_publicacion: true }
-      });
-
-      if (!publicacionRelacionada) {
-        console.log(`⚠️ Usuario ${sub.id_usuario} sin publicaciones. Saltando notificación.`);
-        continue;
-      }
-
+      // ELIMINAMOS LA VALIDACIÓN DE PUBLICACIONES PARA QUE NO SE SALTE AL USUARIO
+      
+      // 1. Envío de Email
       if (sub.Usuario?.email) {
-        await enviarEmailRecordatorio({
-          emailCliente: sub.Usuario.email,
-          nombreCliente: sub.Usuario.nombres || "Usuario",
-          plan: sub.PlanPublicacion?.nombre_plan || "Plan Profesional",
-          fechaFin: sub.fecha_fin.toLocaleDateString(),
-          tipo: '7D'
-        });
+        try {
+          await enviarEmailRecordatorio({
+            emailCliente: sub.Usuario.email,
+            nombreCliente: sub.Usuario.nombres || "Usuario",
+            plan: sub.PlanPublicacion?.nombre_plan || "Plan Profesional",
+            fechaFin: sub.fecha_fin.toLocaleDateString(),
+            tipo: '7D'
+          });
+          console.log(`📧 Email enviado a: ${sub.Usuario.email}`);
+        } catch (mailError) {
+          console.error(`❌ Error al enviar email a ${sub.Usuario.email}:`, mailError);
+        }
       }
 
+      // 2. Creación de Notificación en la App (Campanita)
       await prisma.notificacion.create({
         data: {
           id_notificacion: uuidv4(),
           id_usuario: sub.id_usuario,
-          id_publicacion: publicacionRelacionada.id_publicacion, 
+          id_publicacion: 1, // VALOR FORZADO SEGÚN TU SOLICITUD
           titulo: "Recordatorio de Pago",
-          mensaje: `Su plan actual ${sub.PlanPublicacion?.nombre_plan} expira en 7 días. Por favor, realice su pago para evitar la suspensión.`,
+          mensaje: `Su plan actual ${sub.PlanPublicacion?.nombre_plan} expira en 7 días. Por favor, pagar antes de que expire.`,
           id_categoria: 2,
           leido: false,
           creado_en: new Date()
         }
       });
+      console.log(`🔔 Notificación creada en DB para el usuario: ${sub.id_usuario}`);
 
+      // 3. Marcamos como notificado para que no se repita el proceso
       await prisma.suscripcion.update({
         where: { id_suscripcion: sub.id_suscripcion },
         data: { notificado_7d: true }
@@ -70,7 +73,7 @@ export async function GET() {
 
     return NextResponse.json({ ok: true, mensaje: `7D: Procesados ${suscripciones.length}` });
   } catch (error: any) {
-    console.error("ERROR_7D:", error);
+    console.error("❌ ERROR CRÍTICO 7D:", error);
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 }
