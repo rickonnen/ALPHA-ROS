@@ -18,7 +18,6 @@ export async function enviarEmailCobroConPDF(datos: {
     datos.cupos
   );
 
-  // AGREGAMOS EL RETURN AQUÍ ABAJO:
   return await transporter.sendMail({
     from: getFormattedSender(),
     to: datos.emailCliente,
