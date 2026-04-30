@@ -6,16 +6,19 @@ import Image from "next/image";
 import ArticleCard from "./articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import GenericDropdown from "@/components/homeComponents/filterPanelSubcomponents/genericDropdown";
+
+import { useAuth } from "@/app/auth/AuthContext";
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
  * funcionalidad: pagina que muestra todos los blogs con filtrado y paginacion (9 por pagina)
  */
-interface objBlogData {
-  intId: number;
-  strTitle: string;
-  strDescription: string;
-  strImageUrl: string;
-  strDate: string;
+interface blogData {
+  IntIdBlo: number;
+  StrTitleBlo: string;
+  StrDescriptionBlo: string;
+  StrImageUrlBlo: string;
+  StrDateBlo: string;
 }
 
 const INT_ITEMS_PER_PAGE = 9;
@@ -23,111 +26,114 @@ const ARR_SORT_OPTIONS = ["Más reciente", "Más antiguos"];
 const CLS_FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 export default function BlogsPage() {
-  const [arrBlogs, setArrBlogs] = useState<objBlogData[]>([]);
-  const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
+  // 2. Extraemos el usuario actual
+  const { user: objUser } = useAuth();
 
-  const [strSortOrder, setStrSortOrder] = useState<"desc" | "asc">("desc");
-  const [intCurrentPage, setIntCurrentPage] = useState<number>(1);
+  const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
+  const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
 
-  const [bolIsDropdownOpen, setBolIsDropdownOpen] = useState<boolean>(false);
-  const objDropdownRef = useRef<HTMLDivElement>(null);
+  const [StrSortOrderBlo, SetStrSortOrderBlo] = useState<"desc" | "asc">("desc");
+  const [IntCurrentPageBlo, SetIntCurrentPageBlo] = useState<number>(1);
 
-  const strCurrentSortLabel = strSortOrder === "desc" ? "Más reciente" : "Más antiguos";
+  const [BolIsDropdownOpenBlo, SetBolIsDropdownOpenBlo] = useState<boolean>(false);
+  const ObjDropdownRefBlo = useRef<HTMLDivElement>(null);
 
-  const strHoverAnim = useHoverAnimation(false, false, 'pointer', true, true);
+  const StrCurrentSortLabelBlo = StrSortOrderBlo === "desc" ? "Más reciente" : "Más antiguos";
+
+  const StrHoverAnimBlo = useHoverAnimation(false, false, 'pointer', true, true);
 
   useEffect(() => {
-    if (!bolIsDropdownOpen) return;
+    if (!BolIsDropdownOpenBlo) return;
 
-    const handleClickOutside = (objEvent: MouseEvent) => {
-      if (objDropdownRef.current && !objDropdownRef.current.contains(objEvent.target as Node)) {
-        setBolIsDropdownOpen(false);
+    const FnHandleClickOutsideBlo = (ObjEventBlo: MouseEvent) => {
+      if (ObjDropdownRefBlo.current && !ObjDropdownRefBlo.current.contains(ObjEventBlo.target as Node)) {
+        SetBolIsDropdownOpenBlo(false);
       }
     };
     
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [bolIsDropdownOpen]);
+    document.addEventListener("mousedown", FnHandleClickOutsideBlo);
+    return () => document.removeEventListener("mousedown", FnHandleClickOutsideBlo);
+  }, [BolIsDropdownOpenBlo]);
 
-  const fnHandleSortSelect = (strOption: string) => {
-    setStrSortOrder(strOption === "Más reciente" ? "desc" : "asc");
-    setBolIsDropdownOpen(false);
+  const FnHandleSortSelectBlo = (StrOptionBlo: string) => {
+    SetStrSortOrderBlo(StrOptionBlo === "Más reciente" ? "desc" : "asc");
+    SetBolIsDropdownOpenBlo(false);
   };
 
   useEffect(() => {
-    const objAbortController = new AbortController();
+    const ObjAbortControllerBlo = new AbortController();
 
-    const fnFetchAllBlogs = async () => {
+    const FnFetchAllBlogsBlo = async () => {
       try {
-        const objResponse = await fetch("/api/home/blogs", {
-          signal: objAbortController.signal,
+        const ObjResponseBlo = await fetch("/api/home/blogs", {
+          signal: ObjAbortControllerBlo.signal,
         });
         
-        if (!objResponse.ok) throw new Error("error en la peticion al obtener todos los blogs");
+        if (!ObjResponseBlo.ok) throw new Error("error en la peticion al obtener todos los blogs");
 
-        const arrData: objBlogData[] = await objResponse.json();
-        setArrBlogs(arrData);
-      } catch (objError: any) {
-        if (objError.name !== "AbortError") {
-          console.error("[FETCH_ALL_BLOGS_ERROR]", objError);
+        const ArrDataBlo: blogData[] = await ObjResponseBlo.json();
+        SetArrBlogsBlo(ArrDataBlo);
+      } catch (ObjErrorBlo: any) {
+        if (ObjErrorBlo.name !== "AbortError") {
+          console.error("[FETCH_ALL_BLOGS_ERROR]", ObjErrorBlo);
         }
       } finally {
-        if (!objAbortController.signal.aborted) {
-          setBolIsLoading(false);
+        if (!ObjAbortControllerBlo.signal.aborted) {
+          SetBolIsLoadingBlo(false);
         }
       }
     };
 
-    fnFetchAllBlogs();
+    FnFetchAllBlogsBlo();
     
-    return () => objAbortController.abort();
+    return () => ObjAbortControllerBlo.abort();
   }, []);
 
-  const arrSortedBlogs = useMemo(() => {
-    if (strSortOrder === "desc") {
-      return [...arrBlogs];
+  const ArrSortedBlogsBlo = useMemo(() => {
+    if (StrSortOrderBlo === "desc") {
+      return [...ArrBlogsBlo];
     } else {
-      return [...arrBlogs].reverse();
+      return [...ArrBlogsBlo].reverse();
     }
-  }, [arrBlogs, strSortOrder]);
+  }, [ArrBlogsBlo, StrSortOrderBlo]);
 
-  const intTotalPages = Math.ceil(arrSortedBlogs.length / INT_ITEMS_PER_PAGE);
+  const IntTotalPagesBlo = Math.ceil(ArrSortedBlogsBlo.length / INT_ITEMS_PER_PAGE);
 
-  const arrPaginatedBlogs = useMemo(() => {
-    const intStartIndex = (intCurrentPage - 1) * INT_ITEMS_PER_PAGE;
-    const intEndIndex = intStartIndex + INT_ITEMS_PER_PAGE;
-    return arrSortedBlogs.slice(intStartIndex, intEndIndex);
-  }, [arrSortedBlogs, intCurrentPage]);
+  const ArrPaginatedBlogsBlo = useMemo(() => {
+    const IntStartIndexBlo = (IntCurrentPageBlo - 1) * INT_ITEMS_PER_PAGE;
+    const IntEndIndexBlo = IntStartIndexBlo + INT_ITEMS_PER_PAGE;
+    return ArrSortedBlogsBlo.slice(IntStartIndexBlo, IntEndIndexBlo);
+  }, [ArrSortedBlogsBlo, IntCurrentPageBlo]);
 
-  const fnScrollToTop = () => {
+  const FnScrollToTopBlo = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
 
-  const fnHandlePrevPage = () => {
-    if (intCurrentPage > 1) {
-      setIntCurrentPage(intCurrentPage - 1);
-      fnScrollToTop();
+  const FnHandlePrevPageBlo = () => {
+    if (IntCurrentPageBlo > 1) {
+      SetIntCurrentPageBlo(IntCurrentPageBlo - 1);
+      FnScrollToTopBlo();
     }
   };
 
-  const fnHandleNextPage = () => {
-    if (intCurrentPage < intTotalPages) {
-      setIntCurrentPage(intCurrentPage + 1);
-      fnScrollToTop();
+  const FnHandleNextPageBlo = () => {
+    if (IntCurrentPageBlo < IntTotalPagesBlo) {
+      SetIntCurrentPageBlo(IntCurrentPageBlo + 1);
+      FnScrollToTopBlo();
     }
   };
 
-  const fnHandlePageClick = (intPageNum: number) => {
-    setIntCurrentPage(intPageNum);
-    fnScrollToTop();
+  const FnHandlePageClickBlo = (IntPageNumBlo: number) => {
+    SetIntCurrentPageBlo(IntPageNumBlo);
+    FnScrollToTopBlo();
   };
 
   useEffect(() => {
-    setIntCurrentPage(1);
-  }, [strSortOrder]);
+    SetIntCurrentPageBlo(1);
+  }, [StrSortOrderBlo]);
 
   return (
     <main className="w-full max-w-6xl mx-auto px-4 py-12 min-h-screen flex flex-col gap-6">
@@ -146,14 +152,14 @@ export default function BlogsPage() {
             Ordenar por:
           </span>
 
-          <div ref={objDropdownRef} className="w-44 z-40">
+          <div ref={ObjDropdownRefBlo} className="w-44 z-40">
             <GenericDropdown
-              strDisplayText={strCurrentSortLabel}
+              strDisplayText={StrCurrentSortLabelBlo}
               arrOptions={ARR_SORT_OPTIONS}
-              arrSelectedValues={[strCurrentSortLabel]}
-              bolIsOpen={bolIsDropdownOpen}
-              fnToggleOpen={() => setBolIsDropdownOpen(!bolIsDropdownOpen)}
-              fnOnSelect={fnHandleSortSelect}
+              arrSelectedValues={[StrCurrentSortLabelBlo]}
+              bolIsOpen={BolIsDropdownOpenBlo}
+              fnToggleOpen={() => SetBolIsDropdownOpenBlo(!BolIsDropdownOpenBlo)}
+              fnOnSelect={FnHandleSortSelectBlo}
               bolIsMultiple={false}
             />
           </div>
@@ -161,19 +167,19 @@ export default function BlogsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full flex-1 relative z-10">
-        {bolIsLoading ? (
+        {BolIsLoadingBlo ? (
           <p className="text-muted-foreground col-span-1 md:col-span-2 lg:col-span-3 text-center py-20">
             Cargando publicaciones...
           </p>
-        ) : arrPaginatedBlogs.length > 0 ? (
-          arrPaginatedBlogs.map((objBlog) => (
+        ) : ArrPaginatedBlogsBlo.length > 0 ? (
+          ArrPaginatedBlogsBlo.map((ObjBlogBlo) => (
             <ArticleCard
-              key={objBlog.intId}
-              intId={objBlog.intId}
-              strTitle={objBlog.strTitle}
-              strDescription={objBlog.strDescription}
-              strImageUrl={objBlog.strImageUrl}
-              strDate={objBlog.strDate}
+              key={ObjBlogBlo.IntIdBlo}
+              IntIdBlo={ObjBlogBlo.IntIdBlo}
+              StrTitleBlo={ObjBlogBlo.StrTitleBlo}
+              StrDescriptionBlo={ObjBlogBlo.StrDescriptionBlo}
+              StrImageUrlBlo={ObjBlogBlo.StrImageUrlBlo}
+              StrDateBlo={ObjBlogBlo.StrDateBlo}
             />
           ))
         ) : (
@@ -183,41 +189,41 @@ export default function BlogsPage() {
         )}
       </div>
 
-      {!bolIsLoading && intTotalPages > 1 && (
+      {!BolIsLoadingBlo && IntTotalPagesBlo > 1 && (
         <div className="w-full flex justify-center items-center gap-3 mt-8 py-4">
-          {intCurrentPage > 1 && (
+          {IntCurrentPageBlo > 1 && (
             <button
-              onClick={fnHandlePrevPage}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${strHoverAnim}`}
+              onClick={FnHandlePrevPageBlo}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
               aria-label="Página anterior"
             >
               <Image src="/leftArrow.svg" alt="Anterior" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
             </button>
           )}
 
-          {Array.from({ length: intTotalPages }).map((_, index) => {
-            const intPageNum = index + 1;
-            const bolIsActive = intPageNum === intCurrentPage;
+          {Array.from({ length: IntTotalPagesBlo }).map((_, index) => {
+            const IntPageNumBlo = index + 1;
+            const BolIsActiveBlo = IntPageNumBlo === IntCurrentPageBlo;
 
             return (
               <button
-                key={intPageNum}
-                onClick={() => fnHandlePageClick(intPageNum)}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg text-[1.1rem] font-bold ${CLS_FOCUS} ${strHoverAnim} ${
-                  bolIsActive
+                key={IntPageNumBlo}
+                onClick={() => FnHandlePageClickBlo(IntPageNumBlo)}
+                className={`w-10 h-10 flex items-center justify-center rounded-lg text-[1.1rem] font-bold ${CLS_FOCUS} ${StrHoverAnimBlo} ${
+                  BolIsActiveBlo
                     ? "bg-secondary text-secondary-foreground shadow-md"
                     : "bg-transparent border-2 border-secondary text-secondary"
                 }`}
               >
-                {intPageNum}
+                {IntPageNumBlo}
               </button>
             );
           })}
 
-          {intCurrentPage < intTotalPages && (
+          {IntCurrentPageBlo < IntTotalPagesBlo && (
             <button
-              onClick={fnHandleNextPage}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${strHoverAnim}`}
+              onClick={FnHandleNextPageBlo}
+              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-primary shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
               aria-label="Página siguiente"
             >
               <Image src="/rightArrow.svg" alt="Siguiente" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
@@ -226,14 +232,24 @@ export default function BlogsPage() {
         </div>
       )}
 
-      <div className="w-full flex justify-center mt-8 pt-8 border-t border-border/50">
+      <div className="w-full flex flex-wrap justify-center gap-4 mt-8 pt-8 border-t border-border/50">
         <Link
           href="/"
-          className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${strHoverAnim}`}
+          className={`flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
         >
           <Image src="/leftArrow.svg" alt="Flecha izquierda" width={20} height={20} className="w-5 h-5 object-contain brightness-0 invert" />
           Volver al inicio
         </Link>
+
+        {/* Botón exclusivo para usuarios logeados 
+        {objUser && (
+          <Link
+            href="/home/blogs/createBlog"
+            className={`flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo}`}
+          >
+            Crear mi blog
+          </Link>
+        )}*/}
       </div>
     </main>
   );
