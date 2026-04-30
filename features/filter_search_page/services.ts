@@ -437,14 +437,17 @@ export async function searchPublicaciones(
   // return priceFiltered.map(mapPublication);
   return publications.map(mapPublication);
 }
+// con esto la llave es única y estable, no importa el orden de los filtros
+export async function getCachedPublicaciones(filters: SearchFiltersInput) {
+  // Ordenamos las llaves para que {a:1, b:2} sea igual a {b:2, a:1}
+  const stableKey = JSON.stringify(filters, Object.keys(filters).sort());
 
-export async function getCachedPublications(filters: SearchFiltersInput) {
   return unstable_cache(
     async () => searchPublicaciones(filters),
-    ['search-results', JSON.stringify(filters)],
-    {
-      revalidate: 60,
-      tags: ['publicaciones']
+    ['search-results', stableKey], 
+    { 
+      revalidate: 60, 
+      tags: ['publicaciones'] 
     }
   )();
 }
