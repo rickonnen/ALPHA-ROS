@@ -149,6 +149,14 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
     },
   };
 
+  // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    where.precio = {
+      ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
+      ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
+    };
+  }
+
   const operationIds = getOperationIds(filters.operacion);
   if (operationIds.length === 1) {
     where.id_tipo_operacion = operationIds[0];
@@ -422,11 +430,12 @@ export async function searchPublicaciones(
     },
   });
 
-  const priceFiltered = publications.filter((publication) =>
-    passesPriceFilter(publication, filters),
-  );
+  // const priceFiltered = publications.filter((publication) =>
+  //   passesPriceFilter(publication, filters),
+  // );
 
-  return priceFiltered.map(mapPublication);
+  // return priceFiltered.map(mapPublication);
+  return publications.map(mapPublication);
 }
 
 export async function getCachedPublications(filters: SearchFiltersInput) {
