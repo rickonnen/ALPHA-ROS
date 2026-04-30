@@ -770,7 +770,7 @@ function SearchPageContent() {
   return (
     <div className="w-full py-3">
       {/* ══════════════════ MOBILE BAR ══════════════════ */}
-      <div className="relative z-[60] mb-4 flex items-center justify-between gap-3 border-b pb-3 px-4 md:hidden">
+      <div className="relative z-[60] mb-4 flex items-center justify-between gap-3 border-b pb-3 px-4 lg:hidden">
         <Button
           variant="secondary"
           onClick={openMobileFilters}
@@ -835,7 +835,7 @@ function SearchPageContent() {
       </div>
 
       {/* ══════════════════ MOBILE INFO + SORT ══════════════════ */}
-      <div className="block md:hidden px-4 mb-3">
+      <div className="block lg:hidden px-4 mb-3">
         <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
         <h1 className="text-base font-semibold mb-2">
           {allProperties.length} inmuebles disponibles
@@ -865,7 +865,7 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE FILTERS DRAWER ══════════════════ */}
       {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           <div
             className={`absolute inset-0 bg-black/45 transition-opacity duration-250 ease-out ${isMobileFiltersVisible ? "opacity-100" : "opacity-0"}`}
           />
@@ -939,7 +939,7 @@ function SearchPageContent() {
       )}
 
       {/* ══════════════════ MOBILE RESULTS ══════════════════ */}
-      <div className="block md:hidden px-4">
+      <div className="block lg:hidden px-4">
         {!isMapOpen && (
           <>
             {!hasSearched && isApplyingFilters ? (
@@ -982,7 +982,7 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE MAP ══════════════════ */}
       {isMapOpen && (
-        <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 md:hidden">
+        <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 lg:hidden">
           {/* Controles de dibujo flotantes en móvil */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[998]">
             {!drawnPolygon ? (
@@ -1063,7 +1063,7 @@ function SearchPageContent() {
       )}
 
       {/* ══════════════════ DESKTOP LAYOUT ══════════════════ */}
-      <div className="hidden md:flex items-stretch min-h-screen">
+      <div className="hidden lg:flex items-stretch min-h-screen">
         {/* ── Sidebar filtros ── */}
         <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
           <div className="sticky top-6">
