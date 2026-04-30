@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /* subcomponentes */
 import { NotificationButton } from "./headerSubcomponents/notificationButton";
 import { MobileMenu } from "./headerSubcomponents/mobileMenu";
+import { LogoPropBol } from "@/public/logoPropBol"; 
 
 interface NavLink {
   strHref: string;
@@ -37,7 +38,7 @@ interface NavLink {
   strValue: string;
 }
 
-//rutas
+// rutas (no hacen ningun tipo de validacion)
 const APP_PATHS = {
   home: "/",
   profile: "/perfil",
@@ -120,8 +121,8 @@ export const Header = () => {
   const { handlePublicar, bolIsChecking: bolIsCheckingLimit } = usePublicarAccion({
     objUser,
     onShowProtected: handleShowProtected,
-    onShowLimit: () => setBolShowLimitModal(true),         // HU5 — ya existía
-    onShowLimitPlan: () => setBolShowLimitPlanModal(true), // HU7 — nuevo
+    onShowLimit: () => setBolShowLimitModal(true),
+    onShowLimitPlan: () => setBolShowLimitPlanModal(true),
     onCloseMobileMenu: handleCloseMobileMenu,
     bolIsAuthLoading,
   });
@@ -131,8 +132,8 @@ export const Header = () => {
   // renderizado optimizado del logo
   const objLogoElement = useMemo(() => (
     <Link href={APP_PATHS.home} aria-label="ir a inicio" className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} priority
-      style={{ width: 'auto' }} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
+      {/* componente logo PropBol */}
+      <LogoPropBol className="h-10 w-auto shrink-0 lg:h-10 xl:h-12 2xl:h-14" />
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
         <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>

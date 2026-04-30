@@ -69,7 +69,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
               onClick={() => FnOnActionBlo(IntIdBlo, "BORRADO_PERMANENTE")} 
               className={`${StrBaseBtnClassesBlo} bg-secondary text-secondary-foreground`}
             >
-              BORRADO PERM.
+              BORRADO PERMANENTE
             </button>
             <button 
               onClick={() => FnOnActionBlo(IntIdBlo, "PUBLICAR")} 

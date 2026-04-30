@@ -11,12 +11,13 @@ import { useUsuarioHeader } from "../../components/hooks/useUsuarioHeader";
 import { useFotoPerfil } from "../../components/hooks/useFotoPerfil";
 import { useHoverAnimation } from "../../components/hooks/useHoverAnimation";
 import { useScrollDirection } from "../../components/hooks/useScrollDirection";
+import { LogoPropBol } from "@/public/logoPropBol";
 
 export default function HeaderAdmin() {
   const objRouter = useRouter();
 
   const clsFocusBase = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund";
-  const strHoverAnim = useHoverAnimation(true);
+  const strHoverAnim = useHoverAnimation(true ,true, "pointer", true, true);
 
   const objAuth = useAuth() as {
     user?: {
@@ -56,8 +57,8 @@ export default function HeaderAdmin() {
 
   const objLogoElement = useMemo(() => (
     <Link href="/admin" aria-label="ir al panel admin" className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} priority
-      style={{ width: 'auto' }} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
+      {/* componente logo PropBol */}
+      <LogoPropBol className="h-10 w-auto shrink-0 lg:h-8 xl:h-10 2xl:h-14" />
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
         <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>
@@ -87,20 +88,21 @@ export default function HeaderAdmin() {
         bolHideHeader ? "-translate-y-full" : "translate-y-0"
       }`}
     >
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between gap-4 lg:gap-8">
         {objLogoElement}
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-row items-center gap-x-4 md:gap-x-6">
           <button
             type="button"
             onClick={handleCerrarSesion}
-            className="text-sm font-semibold uppercase text-primary transition-colors hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={`text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-bold uppercase text-primary transition-colors hover:text-secondary whitespace-nowrap ${strHoverAnim}`}
           >
             Cerrar sesión
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-border">
+          {/* INICIO DEL DISEÑO DE PERFIL ACTUALIZADO */}
+          <div className="flex items-center gap-2 p-1 pr-4 bg-background border border-border rounded-full shrink-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-border">
               {!bolLoading && strFotoPerfil ? (
                 <Image
                   src={strFotoPerfil}
@@ -114,7 +116,7 @@ export default function HeaderAdmin() {
               )}
             </div>
 
-            <span className="hidden text-sm font-semibold uppercase text-foreground md:inline">
+            <span className="hidden md:block text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">
               {strAdminName}
             </span>
           </div>
