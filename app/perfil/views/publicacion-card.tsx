@@ -47,6 +47,7 @@ export interface Publicacion {
   banos?: number;
   fechaPublicacion?: string;
   id_estado: number;
+  gratuito: boolean;
 }
 
 interface PublicacionCardProps {
@@ -109,6 +110,11 @@ export default function PublicacionCard({
                 <span />
               )}
               <div className="flex items-center gap-2">
+                {publicacion.gratuito && (
+                    <span className="px-2 py-1 text-[10px] font-semibold text-blue-800 bg-blue-100 rounded-full">
+                    Gratuita
+                    </span>
+                )}
                 <span
                   className={`text-[10px] font-bold uppercase ${activo ? "text-green-600" : "text-red-500"}`}
                 >
@@ -116,7 +122,7 @@ export default function PublicacionCard({
                 </span>
                 <Switch
                   checked={activo}
-                  disabled={bloqueado}
+                  disabled={bloqueado || publicacion.gratuito}
                   className="h-5 w-9"
                   onCheckedChange={async (checked) => {
                     setBloqueado(true);

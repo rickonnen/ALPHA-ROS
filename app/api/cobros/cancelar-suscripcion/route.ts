@@ -20,7 +20,10 @@ export async function POST(req: NextRequest) {
         data: { id_plan: 7 },
       }),
       prisma.publicacion.updateMany({
-        where: { id_usuario },
+        where: { 
+          id_usuario,
+          gratuito: false
+        },
         data: { id_estado: 4 },
       }),
     ]);

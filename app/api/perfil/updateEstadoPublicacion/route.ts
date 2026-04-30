@@ -41,6 +41,10 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: "No tienes permiso" }, { status: 403 });
       }
 
+      if (publicacion.gratuito) {
+        return NextResponse.json({ error: "No se puede cambiar el estado de una publicación gratuita" }, { status: 400 });
+      }
+
       const estadoAnterior = publicacion.id_estado ?? -1;
       const estadosQueOcupanCupo = [1, 2, 3];
 
@@ -52,11 +56,12 @@ export async function PATCH(req: NextRequest) {
         });
         const limiteTotal = suscripcion?.PlanPublicacion?.cant_publicaciones ?? 0;
 
-        // 2. Conteo de publicaciones activas (estado 1,2,3)
+        // 2. Conteo de publicaciones activas (estado 1,2,3) excluyendo las gratuitas
         const activasActuales = await prisma.publicacion.count({
           where: { 
               id_usuario: id_usuario, 
               id_estado:{ in: estadosQueOcupanCupo },
+              gratuito: false,
             },
         });
 
