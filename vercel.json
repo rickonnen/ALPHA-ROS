@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/recordatorio48H",
-      "schedule": "5 4 * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
