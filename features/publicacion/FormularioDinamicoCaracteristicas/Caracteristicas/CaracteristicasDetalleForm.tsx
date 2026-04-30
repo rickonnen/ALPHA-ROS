@@ -94,7 +94,7 @@ export function CaracteristicasDetalleForm({
 
         {/* Habitaciones */}
         <div className="flex flex-col gap-1">
-          <label className={`text-sm font-medium flex items-end ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Habitaciones
           </label>
           <div className="flex items-center gap-2">
