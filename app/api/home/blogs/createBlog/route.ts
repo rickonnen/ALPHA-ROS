@@ -14,6 +14,11 @@ import { verify } from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
 
+const INT_MAX_TITLE_LENGTH_BLO = 80;
+const INT_MAX_DESCRIPTION_LENGTH_BLO = 120;
+const INT_MAX_CONTENT_LENGTH_BLO = 400;
+const INT_MAX_IMAGE_URL_LENGTH_BLO = 200;
+
 export async function POST(request: NextRequest) {
   try {
     // ======================================================
@@ -69,12 +74,8 @@ export async function POST(request: NextRequest) {
     // ======================================================
     const objBody = await request.json();
 
-    const {
-      StrTitleBlo,
-      StrDescriptionBlo,
-      StrImageUrlBlo,
-      StrContentBlo,
-    } = objBody;
+    const { StrTitleBlo, StrDescriptionBlo, StrImageUrlBlo, StrContentBlo } =
+      objBody;
 
     // ======================================================
     // 5. Validar título
@@ -86,9 +87,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (StrTitleBlo.trim().length > 100) {
+    if (StrTitleBlo.trim().length > INT_MAX_TITLE_LENGTH_BLO) {
       return NextResponse.json(
-        { error: "El título excede 100 caracteres." },
+        { error: "El título excede 80 caracteres." },
         { status: 400 }
       );
     }
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (StrDescriptionBlo.trim().length > 120) {
+    if (StrDescriptionBlo.trim().length > INT_MAX_DESCRIPTION_LENGTH_BLO) {
       return NextResponse.json(
         { error: "La descripción excede 120 caracteres." },
         { status: 400 }
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (StrContentBlo.trim().length > 400) {
+    if (StrContentBlo.trim().length > INT_MAX_CONTENT_LENGTH_BLO) {
       return NextResponse.json(
         { error: "El contenido excede 400 caracteres." },
         { status: 400 }
@@ -130,12 +131,12 @@ export async function POST(request: NextRequest) {
     // ======================================================
     // 8. Validar imagen opcional
     // Si no llega imagen, se guarda null.
-    // Si llega imagen, validamos longitud.
+    // Si llega imagen, validamos la longitud de la URL.
     // ======================================================
     let strImageUrlBlo: string | null = null;
 
     if (StrImageUrlBlo && typeof StrImageUrlBlo === "string") {
-      if (StrImageUrlBlo.trim().length > 200) {
+      if (StrImageUrlBlo.trim().length > INT_MAX_IMAGE_URL_LENGTH_BLO) {
         return NextResponse.json(
           { error: "La URL de imagen excede 200 caracteres." },
           { status: 400 }
