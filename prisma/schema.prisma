@@ -508,7 +508,6 @@ model Blogs {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model BusquedaLog {
   id_busqueda       BigInt    @id(map: "BusquedaLog_pk") @default(autoincrement())
   id_usuario        String?   @db.Uuid
@@ -687,8 +686,6 @@ model Imagen {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model InteraccionEvento {
   id_interaccion   BigInt    @id(map: "InteraccionEvento_pk") @default(autoincrement())
   id_usuario       String?   @db.Uuid
@@ -709,7 +706,6 @@ model InteraccionEvento {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MisZonas {
   id_mi_zona     Int       @id @default(autoincrement())
   id_usuario     String    @db.Uuid
@@ -742,6 +738,7 @@ model Notificacion {
   email_enviado         Boolean?               @default(false)
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
+  tipo                  String                 @default("sistema") @db.VarChar(50)
   Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
 
@@ -758,8 +755,6 @@ model Pais {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PerfilPreferencias {
   id_perfil            Int       @id(map: "PerfilPreferencias_pk") @default(autoincrement())
   id_usuario           String    @unique(map: "PerfilPreferencias_uq") @db.Uuid
@@ -882,7 +877,6 @@ model RedesVinculadas {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ReporteInmuebles {
   id           Int    @id @default(autoincrement())
   departamento String @db.VarChar(50)
@@ -893,7 +887,6 @@ model ReporteInmuebles {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
   nombre_rol String?   @db.VarChar(30)
@@ -914,7 +907,6 @@ model Sesion {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model SnapshotInteraccion {
   id_snapshot       BigInt   @id(map: "SnapshotInteraccion_pk") @default(autoincrement())
   id_interaccion    BigInt
@@ -1056,7 +1048,6 @@ model Video {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Zona {
   id_zona     Int     @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
   nombre_zona String? @db.VarChar(128)
@@ -1067,8 +1058,6 @@ model Zona {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificacion_campana {
   id         BigInt    @id(map: "notificacion_whatsapp_pkey") @default(autoincrement())
   title      String
