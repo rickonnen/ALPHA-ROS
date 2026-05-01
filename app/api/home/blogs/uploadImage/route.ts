@@ -24,9 +24,9 @@ const ARR_ALLOWED_IMAGE_EXTENSIONS_BLO = [
 ];
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME2,
+  api_key: process.env.CLOUDINARY_API_KEY2,
+  api_secret: process.env.CLOUDINARY_API_SECRET2,
 });
 
 export async function POST(request: NextRequest) {
