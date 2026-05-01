@@ -2,18 +2,18 @@
 
 import { useRef, Suspense, useState } from 'react'
 import { useFormularioState } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Useformulariostate'
-import { usePublicar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Usepublicar'
-import { StepContent } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Stepcontent'
+import { usePublicar }        from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Usepublicar'
+import { StepContent }        from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Stepcontent'
 import { C, STEPS, SIDEBAR_STEPS } from '@/features/publicacion/FormularioDinamicoCaracteristicas/PaginaPrincipal/Sessionutils'
-import { StepsSidebar } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
-import { SumarioModal } from '@/features/publicacion/sumario/components/SumarioModal'
+import { StepsSidebar }       from '@/features/publicacion/FormularioDinamicoCaracteristicas/Pasos/Stepssidebar'
+import { SumarioModal }       from '@/features/publicacion/sumario/components/SumarioModal'
 
 type TriggerRef = React.MutableRefObject<(() => void) | null>
 
 function FormularioDinamicoInner() {
   const state = useFormularioState()
   const [bolShowFreeModal, setBolShowFreeModal] = useState(false)
-  const [bolShowPlanLimitModal, setBolShowPlanLimitModal] = useState(false) 
+  const [bolShowPlanLimitModal, setBolShowPlanLimitModal] = useState(false)
   const {
     modoEdicion, router,
     currentStep, completedSteps,
@@ -43,32 +43,25 @@ function FormularioDinamicoInner() {
     handleNext,
     handleBack,
     handleSidebarClick,
-  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal,
-  setBolShowPlanLimitModal, })
+  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal, setBolShowPlanLimitModal, })
 
   if (!hydrated || !datosListos || !sessionKey) return null
 
-  const tituloPagina = modoEdicion ? 'Editar publicación' : 'Crear publicación'
-  const textoPublicar = modoEdicion ? 'Guardar' : 'Publicar'
-  const textoGuardando = modoEdicion ? 'Guardando...' : 'Publicando...'
+  const tituloPagina   = modoEdicion ? 'Editar publicación'  : 'Crear publicación'
+  const textoPublicar  = modoEdicion ? 'Guardar'             : 'Publicar'
+  const textoGuardando = modoEdicion ? 'Guardando...'        : 'Publicando...'
 
   const stepContentProps = {
-    advanceDirect: currentStep === 6
-  ? () => {
-      (document.activeElement as HTMLElement)?.blur()
-      setBolShowSumario(true)
-    }
-  : advanceDirect,
-    onBack: handleBack,
+    advanceDirect: currentStep === 6 ? () => setBolShowSumario(true) : advanceDirect,
+    onBack:        handleBack,
     triggerRefs,
     imagenesRef,
     imagenesIniciales,
-    onUrlsChange: handleUrlsChange,
+    onUrlsChange:  handleUrlsChange,
     sessionKey,
   }
 
   // ─── Handler para el botón Regresar ──────────────────────────────────────
-  // Si estamos en el primer paso, muestra el modal de cancelar en vez de navegar
   const handleBackOrCancel = () => {
     if (isFirstStep) {
       setShowCancelarModal(true)
@@ -141,17 +134,25 @@ function FormularioDinamicoInner() {
         backgroundColor: C.crema, display: 'flex', flexDirection: 'column',
         fontFamily: 'var(--font-geist-sans)', padding: '16px 12px', gap: 0,
       }}>
+        <style>{`
+          @keyframes stepIn {
+            from { opacity: 0; transform: translateX(18px); }
+            to   { opacity: 1; transform: translateX(0); }
+          }
+        `}</style>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: C.marino, margin: '0 0 12px' }}>
           {tituloPagina}
         </h1>
 
+        {/* ── Contenedor marino altura fija: flex:1 en contenido lo distribuye bien ── */}
         <div style={{
           backgroundColor: C.marino, borderRadius: 12, display: 'flex',
           flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
+          height: 650,
         }}>
 
-          {/* Barra de progreso */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Barra de progreso — flexShrink: 0 para que nunca se comprima */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
             <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
               Completa el proceso para {modoEdicion ? 'guardar' : 'publicar'} tu propiedad
             </p>
@@ -167,8 +168,8 @@ function FormularioDinamicoInner() {
             </p>
           </div>
 
-          {/* Título del paso + botón X alineados */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          {/* Título del paso + botón X — minHeight reserva espacio para 2 líneas siempre */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, minHeight: 46 }}>
             <h2 style={{
               fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
               textTransform: 'uppercase', letterSpacing: '0.06em', flex: 1,
@@ -195,19 +196,25 @@ function FormularioDinamicoInner() {
           {(blockMsg || publishError) && (
             <div style={{
               backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-              padding: '8px 12px', fontSize: 13, color: '#991b1b',
+              padding: '8px 12px', fontSize: 13, color: '#991b1b', flexShrink: 0,
             }}>
               {blockMsg ?? publishError}
             </div>
           )}
 
-          <div key={currentStep} style={{ backgroundColor: C.crema, borderRadius: 10, padding: 14, animation: 'stepIn 0.3s ease forwards' }}>
+          {/* Área de contenido — height fijo siempre, scroll si desborda */}
+          <div key={currentStep} style={{
+            backgroundColor: C.crema, borderRadius: 10, padding: 14,
+            height: 430, flexShrink: 0, overflowY: 'auto',
+            animation: 'stepIn 0.3s ease forwards',
+          }}>
             <StepContent step={currentStep} {...stepContentProps} />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+          {/* Botones de pasos circulares — flexShrink: 0 */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
             {STEPS.map((_, i) => {
-              const isActive = i === currentStep
+              const isActive    = i === currentStep
               const isCompleted = completedSteps.has(i)
               return (
                 <button
@@ -228,7 +235,6 @@ function FormularioDinamicoInner() {
           </div>
         </div>
 
-        {/* ↓ CAMBIO: handleBackOrCancel en vez de handleBack */}
         <div style={{ display: 'flex', gap: 10, padding: '12px 0 0' }}>
           <button
             type="button" onClick={handleBackOrCancel} disabled={isPublishing}
@@ -364,7 +370,6 @@ function FormularioDinamicoInner() {
               <StepContent step={currentStep} {...stepContentProps} />
             </div>
 
-            {/* ↓ CAMBIO: handleBackOrCancel en vez de handleBack */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
               <button
                 type="button" onClick={handleBackOrCancel} disabled={isPublishing}
