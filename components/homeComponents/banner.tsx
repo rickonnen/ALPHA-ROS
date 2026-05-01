@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCarousel } from "../hooks/useCarousel";
-import { useIsMobile } from "../hooks/useIsMobile";
 import HelpButton from "./BotonAyuda";
 
 interface BannerImage {
@@ -13,72 +12,106 @@ interface BannerImage {
   image_url?: string;
   image_url_desktop?: string;
   image_url_mobile?: string;
+  image_alt?: string;
   public_id: string;
 }
 
-function getImageUrl(
-  objImage: BannerImage,
-  bolIsMobile: boolean,
-  bolIsLandscape: boolean,
-): string {
-  if (objImage.image_url) return objImage.image_url;
-  // Si es móvil y está en vertical (!bolIsLandscape), mostramos la imagen móvil
-  if (bolIsMobile && !bolIsLandscape && objImage.image_url_mobile) {
-    return objImage.image_url_mobile;
-  }
-  // En cualquier otro caso (Desktop, o Móvil en Horizontal), mostramos la de desktop
-  return objImage.image_url_desktop ?? "";
+// ─── 1. Hook de viewport — SSR-safe ──────────────────────────────────────────
+function useViewport() {
+  const [state, setState] = useState({
+    isMobile: false,
+    isLandscape: false,
+  });
+
+  useEffect(() => {
+    function update() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      setState({
+        isMobile: w < 768,
+        isLandscape: w > h,
+      });
+    }
+
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+
+  return state;
 }
 
-const INT_AUTOPLAY_DELAY = 5000;
+// ─── 2. Selección de imagen con fallback ─────────────────────────────────────
+const PLACEHOLDER_IMAGE = "/images/banner-placeholder.jpg";
+
+function getImageUrl(
+  image: BannerImage,
+  isMobile: boolean,
+  isLandscape: boolean,
+): string {
+  if (image.image_url) return image.image_url;
+  if (isMobile && !isLandscape && image.image_url_mobile) {
+    return image.image_url_mobile;
+  }
+  return image.image_url_desktop ?? PLACEHOLDER_IMAGE;
+}
+
+const AUTOPLAY_DELAY = 5000;
 
 export default function Banner() {
-  const [arrImages, setArrImages] = useState<BannerImage[]>([]);
-  const [bolLoading, setBolLoading] = useState<boolean>(true);
-  const [bolIsLandscape, setBolIsLandscape] = useState<boolean>(false);
-  const bolIsMobile = useIsMobile();
+  const [images, setImages] = useState<BannerImage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
-  // Detecta cambios en la orientación del dispositivo
+  const { isMobile, isLandscape } = useViewport();
+
+  // ─── 3. prefers-reduced-motion ───────────────────────────────────────────
+  const [reducedMotion, setReducedMotion] = useState(false);
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const mediaQuery = window.matchMedia("(orientation: landscape)");
-      setBolIsLandscape(mediaQuery.matches);
-
-      const handleOrientationChange = (e: MediaQueryListEvent) => {
-        setBolIsLandscape(e.matches);
-      };
-
-      mediaQuery.addEventListener("change", handleOrientationChange);
-      return () =>
-        mediaQuery.removeEventListener("change", handleOrientationChange);
-    }
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Carga las imágenes desde la API
+  // ─── 4. Carga de imágenes ────────────────────────────────────────────────
   useEffect(() => {
-    async function fetchBannerImages() {
+    async function fetchImages() {
       try {
-        const objResponse = await fetch("/api/home/bannerHome");
-        const arrData = await objResponse.json();
-        setArrImages(arrData);
-      } catch (objError) {
-        console.error("Error al cargar el banner:", objError);
+        const res = await fetch("/api/home/bannerHome");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setImages(data);
+      } catch (err) {
+        console.error("Error al cargar el banner:", err);
+        setFetchError(true);
       } finally {
-        setBolLoading(false);
+        setLoading(false);
       }
     }
-
-    fetchBannerImages();
+    fetchImages();
   }, []);
 
-  const arrActiveImages = useMemo(
+  // ─── 5. Filtrar imágenes activas y con URL válida ────────────────────────
+  const activeImages = useMemo(
     () =>
-      arrImages
-        .filter((objImage) => objImage.is_active)
+      images
+        .filter(
+          (img) =>
+            img.is_active &&
+            (img.image_url || img.image_url_desktop || img.image_url_mobile),
+        )
         .sort((a, b) => a.order - b.order),
-    [arrImages],
+    [images],
   );
 
+  // ─── 6. Carrusel ─────────────────────────────────────────────────────────
   const {
     intCurrentIndex,
     containerRef,
@@ -88,24 +121,57 @@ export default function Banner() {
     goToSelectedImage,
     touchHandlers,
   } = useCarousel({
-    intTotalItems: arrActiveImages.length,
-    intAutoPlayDelay: INT_AUTOPLAY_DELAY,
+    intTotalItems: activeImages.length,
+    intAutoPlayDelay: reducedMotion ? 999999 : AUTOPLAY_DELAY,
   });
 
-  if (bolLoading) {
+  // ─── 7. Aspect ratio dinámico ─────────────────────────────────────────────
+  const aspectClass =
+    isMobile && !isLandscape ? "aspect-square" : "aspect-[1600/656]";
+
+  // ─── 8. Clases de texto sin template literals condicionales ──────────────
+  const titleSizeClass =
+    isMobile && isLandscape
+      ? "text-xl sm:text-2xl"
+      : "text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[5rem]";
+
+  // ─── Estados de carga / error / vacío ────────────────────────────────────
+  if (loading) {
     return (
       <section className="w-full overflow-hidden font-sans">
-        {/* CAMBIO 1: Eliminada max-w y mx-auto en el skeleton para ancho completo */}
-        <div className="flex w-full animate-pulse items-center justify-center bg-muted aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]" />
+        <div
+          className={`flex w-full animate-pulse bg-muted ${aspectClass}`}
+        />
       </section>
     );
   }
 
-  if (arrActiveImages.length === 0) {
+  if (fetchError) {
     return (
       <section className="w-full overflow-hidden font-sans">
-        {/* CAMBIO 2: Eliminada max-w y mx-auto en el mensaje de error para ancho completo */}
-        <div className="flex w-full items-center justify-center bg-muted px-6 text-center aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]">
+        <div
+          className={`flex w-full flex-col items-center justify-center gap-3 bg-muted px-6 text-center ${aspectClass}`}
+        >
+          <p className="text-sm text-muted-foreground sm:text-base">
+            No se pudo cargar el banner. Intenta recargar la página.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
+          >
+            Recargar
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (activeImages.length === 0) {
+    return (
+      <section className="w-full overflow-hidden font-sans">
+        <div
+          className={`flex w-full items-center justify-center bg-muted px-6 text-center ${aspectClass}`}
+        >
           <p className="text-sm text-muted-foreground sm:text-base">
             No hay imágenes activas para mostrar en el banner.
           </p>
@@ -114,42 +180,57 @@ export default function Banner() {
     );
   }
 
+  // ─── Render principal ─────────────────────────────────────────────────────
   return (
     <section
       ref={containerRef}
       className="w-full overflow-hidden font-sans"
-      aria-label="Main home banner"
+      aria-label="Banner principal"
     >
       <div
-        className="relative w-full overflow-hidden aspect-square portrait:aspect-square landscape:aspect-[1600/656] md:aspect-[1600/656]"
+        className={`relative w-full overflow-hidden ${aspectClass}`}
         {...touchHandlers}
       >
+        {/* Botón de ayuda */}
         <div className="absolute left-4 top-4 z-50 sm:left-6 sm:top-6">
           <HelpButton />
         </div>
+
+        {/* Carrusel de imágenes */}
         <div
-          className="absolute inset-0 flex h-full transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${intCurrentIndex * 100}%)` }}
+          className="absolute inset-0 flex h-full"
+          style={{
+            transform: `translateX(-${intCurrentIndex * 100}%)`,
+            transition: reducedMotion
+              ? "none"
+              : "transform 700ms ease-in-out",
+          }}
         >
-          {arrActiveImages.map((objImage: BannerImage, intIndex: number) => (
+          {activeImages.map((image, index) => (
             <div
-              key={objImage.public_id}
+              key={image.public_id}
               className="relative h-full min-w-full flex-shrink-0"
             >
               <img
-                src={getImageUrl(objImage, bolIsMobile, bolIsLandscape)}
-                alt={`Banner ${intIndex + 1}`}
+                src={getImageUrl(image, isMobile, isLandscape)}
+                alt={image.image_alt ?? `Imagen del banner ${index + 1}`}
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
+                loading={index === 0 ? "eager" : "lazy"}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                }}
               />
 
-              {intIndex === 0 && (
+              {/* Overlay y texto — solo primera slide */}
+              {index === 0 && (
                 <>
                   <div className="absolute inset-0 bg-black/35" />
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center sm:px-6 md:px-8 lg:px-10">
-                    {/* CAMBIO 4: Eliminada max-w-[320px] y sm:max-w-2xl para que el texto ocupe más espacio si es necesario */}
-                    <div className="select-none lg:max-w-4xl">
-                      <h1 className="text-4xl font-bold leading-[0.98] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem]">
+                    <div className="select-none w-full max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
+                      <h1
+                        className={`font-bold leading-tight tracking-tight text-white ${titleSizeClass}`}
+                      >
                         Encuentra el lugar donde
                         <br />
                         <span className="font-light italic text-amber-200">
@@ -165,14 +246,14 @@ export default function Banner() {
           ))}
         </div>
 
+        {/* Controles de navegación */}
         {bolShowControls && (
           <>
-            {/* ... (botones de navegación y carrusel permanecen iguales, pero se alejan más hacia afuera al estar en ancho completo) */}
             <button
               type="button"
               onClick={goToPreviousImage}
               className="absolute left-3 top-1/2 z-20 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/50 sm:left-5 sm:p-3"
-              aria-label="Mostrar imagen anterior"
+              aria-label="Imagen anterior"
             >
               <ChevronLeft size={24} />
             </button>
@@ -181,31 +262,44 @@ export default function Banner() {
               type="button"
               onClick={goToNextImage}
               className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 items-center justify-center rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/50 sm:right-5 sm:p-3"
-              aria-label="Mostrar siguiente imagen"
+              aria-label="Siguiente imagen"
             >
               <ChevronRight size={24} />
             </button>
 
             <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 sm:bottom-5">
-              {arrActiveImages.map(
-                (objImage: BannerImage, intIndex: number) => (
-                  <button
-                    key={objImage.public_id}
-                    type="button"
-                    onClick={() => goToSelectedImage(intIndex)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      intIndex === intCurrentIndex
-                        ? "w-6 bg-white"
-                        : "w-2 bg-white/50 hover:bg-white/80"
-                    }`}
-                    aria-label={`Ir a la imagen ${intIndex + 1}`}
-                  />
-                ),
-              )}
+              {activeImages.map((image, index) => (
+                <button
+                  key={image.public_id}
+                  type="button"
+                  onClick={() => goToSelectedImage(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === intCurrentIndex
+                      ? "w-6 bg-white"
+                      : "w-2 bg-white/50 hover:bg-white/80"
+                  }`}
+                  aria-label={`Ir a imagen ${index + 1}`}
+                />
+              ))}
             </div>
           </>
         )}
       </div>
+
+      {/* Preload de la imagen siguiente — sin warning de preload ─────────── */}
+      {activeImages.map((image, index) => {
+        const isNext =
+          index === (intCurrentIndex + 1) % activeImages.length;
+        if (!isNext) return null;
+        return (
+          <link
+            key={image.public_id}
+            rel="preload"
+            as="image"
+            href={getImageUrl(image, isMobile, isLandscape)}
+          />
+        );
+      })}
     </section>
   );
 }
