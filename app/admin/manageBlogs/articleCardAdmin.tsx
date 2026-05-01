@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { X as ObjXIcon } from "lucide-react";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
+import { FnFormatLongWords } from "@/app/utils/textUtils";
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
  * funcionalidad: card para gestionar estados de los blogs
@@ -89,7 +90,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
       
       {/* Título Superior */}
       <h3 className="font-bold text-foreground text-body-info uppercase leading-tight w-full truncate shrink-0">
-        {StrTitleBlo}
+        {FnFormatLongWords(StrTitleBlo)}
       </h3>
 
       {/* Contenedor Medio: Imagen Izquierda, Texto Derecha */}
@@ -118,8 +119,10 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
           <span className="text-secondary font-medium text-[0.85rem] mb-1 shrink-0">
             {StrDateBlo}
           </span>
+          
+          {/* Descripción */}
           <p className="text-foreground text-[0.85rem] leading-snug overflow-hidden line-clamp-3 sm:line-clamp-4">
-            {StrDescriptionBlo}
+            {FnFormatLongWords(StrDescriptionBlo)}
           </p>
           
           <Link 

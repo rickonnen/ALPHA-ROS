@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link"; 
 import { X as ObjXIcon } from "lucide-react"; 
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
-
+import { FnFormatLongWords } from "@/app/utils/textUtils";
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
  * funcionalidad: renderiza la vista completa de un blog especifico
@@ -78,11 +78,11 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
       </span>
 
       <h1 className="text-foreground font-bold text-[2.5rem] leading-tight">
-        {ObjBlogBlo.StrTitleBlo}
+        {FnFormatLongWords(ObjBlogBlo.StrTitleBlo)}
       </h1>
 
       <p className="text-foreground/80 text-[1.25rem] leading-relaxed border-l-4 border-primary pl-4 italic">
-        {ObjBlogBlo.StrDescriptionBlo}
+        {FnFormatLongWords(ObjBlogBlo.StrDescriptionBlo)}
       </p>
 
       <div className="w-full aspect-[4/3] relative bg-muted rounded-2xl overflow-hidden border border-border/30 shadow-sm flex items-center justify-center text-muted-foreground mt-4 mb-4">
@@ -101,7 +101,7 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
       </div>
 
       <div className="w-full text-foreground text-[1.1rem] leading-loose whitespace-pre-wrap">
-        {ObjBlogBlo.StrContentBlo}
+        {FnFormatLongWords(ObjBlogBlo.StrContentBlo)}
       </div>
 
       <div className="w-full mt-4 text-right">
