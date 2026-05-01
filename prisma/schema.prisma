@@ -535,6 +535,12 @@ model BusquedaLog {
   texto_busqueda    String?   @db.VarChar
   creado_en         DateTime? @default(now()) @db.Timestamptz(6)
 
+  @@index([texto_calle], map: "idx_bl_calle")
+  @@index([id_ciudad], map: "idx_bl_ciudad")
+  @@index([creado_en(sort: Desc)], map: "idx_bl_fecha")
+  @@index([session_id], map: "idx_bl_session")
+  @@index([id_usuario], map: "idx_bl_usuario")
+  @@index([id_zona], map: "idx_bl_zona")
   @@schema("public")
 }
 
@@ -696,6 +702,10 @@ model InteraccionEvento {
   pagina_origen    String?   @db.VarChar
   creado_en        DateTime? @default(now()) @db.Timestamptz(6)
 
+  @@index([id_publicacion], map: "idx_ie_publicacion")
+  @@index([session_id], map: "idx_ie_session")
+  @@index([tipo_evento, creado_en(sort: Desc)], map: "idx_ie_tipo_fecha")
+  @@index([id_usuario], map: "idx_ie_usuario")
   @@schema("public")
 }
 
@@ -769,20 +779,19 @@ model PerfilPreferencias {
   creado_en            DateTime? @default(now()) @db.Timestamptz(6)
   actualizado_en       DateTime? @default(now()) @db.Timestamptz(6)
 
+  @@index([id_usuario], map: "idx_pp_usuario")
   @@schema("public")
 }
 
 model PlanPublicacion {
-  id_plan                                Int           @id(map: "PlanPublicacion_pk") @default(autoincrement()) @db.SmallInt
-  nombre_plan                            String?       @db.VarChar(128)
-  precio_plan                            Decimal?      @db.Decimal(25, 2)
-  cant_publicaciones                     Int?
-  activo                                 Boolean?      @default(false)
-  id_metodo                              Int?          @db.SmallInt
-  DetallePago                            DetallePago[]
-  QrUrl_PlanPublicacion_id_metodoToQrUrl QrUrl?        @relation("PlanPublicacion_id_metodoToQrUrl", fields: [id_metodo], references: [id_metodo], onDelete: NoAction, onUpdate: NoAction, map: "fk_qr_url")
-  QrUrl_QrUrl_id_planToPlanPublicacion   QrUrl[]       @relation("QrUrl_id_planToPlanPublicacion")
-  Suscripcion                            Suscripcion[]
+  id_plan            Int           @id(map: "PlanPublicacion_pk") @default(autoincrement()) @db.SmallInt
+  nombre_plan        String?       @db.VarChar(128)
+  precio_plan        Decimal?      @db.Decimal(25, 2)
+  cant_publicaciones Int?
+  activo             Boolean?      @default(false)
+  DetallePago        DetallePago[]
+  QrUrl              QrUrl[]
+  Suscripcion        Suscripcion[]
 
   @@schema("public")
 }
@@ -822,6 +831,12 @@ model Publicacion {
   PublicacionCaracteristica PublicacionCaracteristica[]
   Video                     Video[]
 
+  @@index([fecha_creacion(sort: Desc)], map: "idx_publicacion_fecha")
+  @@index([id_tipo_operacion], map: "idx_publicacion_operacion")
+  @@index([precio], map: "idx_publicacion_precio")
+  @@index([superficie], map: "idx_publicacion_superficie")
+  @@index([id_tipo_inmueble], map: "idx_publicacion_tipo")
+  @@index([id_ubicacion], map: "idx_publicacion_ubicacion")
   @@schema("public")
 }
 
@@ -837,12 +852,11 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo                                        Int               @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
-  qr_URL                                           String?
-  id_plan                                          Int?              @db.SmallInt
-  modalidad                                        String?           @db.VarChar
-  PlanPublicacion_PlanPublicacion_id_metodoToQrUrl PlanPublicacion[] @relation("PlanPublicacion_id_metodoToQrUrl")
-  PlanPublicacion_QrUrl_id_planToPlanPublicacion   PlanPublicacion?  @relation("QrUrl_id_planToPlanPublicacion", fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
+  id_metodo       Int              @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL          String?
+  id_plan         Int?             @db.SmallInt
+  modalidad       String?          @db.VarChar
+  PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -922,6 +936,8 @@ model SnapshotInteraccion {
   id_estado_constr  Int?     @db.SmallInt
   caracteristicas   Json?
 
+  @@index([id_interaccion], map: "idx_si_interaccion")
+  @@index([id_publicacion], map: "idx_si_publicacion")
   @@schema("public")
 }
 
