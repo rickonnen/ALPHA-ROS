@@ -242,8 +242,8 @@ export const authOptions: NextAuthOptions = {
   },
 
   pages: {
-    signIn: '/api/google-cancelado',
-    error: '/api/google-cancelado',
+    signIn: '/api/GoogleCancelado',
+    error: '/api/GoogleCancelado',
   },
 };
 
