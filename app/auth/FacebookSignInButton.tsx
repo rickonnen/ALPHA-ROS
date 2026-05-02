@@ -11,7 +11,7 @@ export function SignInFacebook() {
   }
 
   return (
-    <button onClick={handleClick} className={facebookStyles}>
+    <button type="button" onClick={handleClick} className={facebookStyles}>
       {facebookIcon}
     </button>
   )

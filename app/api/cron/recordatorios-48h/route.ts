@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
   try {
+    /*
     const cronSecret = req.headers.get("x-cron-secret");
     const expectedSecret = process.env.CRON_SECRET;
 
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
+      */
 
     console.log("[CRON] Iniciando: Recordatorios 48h");
     const respObtener = await fetch(

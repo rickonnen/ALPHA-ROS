@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
       const updatePubs = await tx.publicacion.updateMany({
         where: {
           id_usuario: { in: usuariosExpiradosIds },
+          gratuito: false,
+          id_estado: 1
         },
         data: { 
           id_estado: 4 

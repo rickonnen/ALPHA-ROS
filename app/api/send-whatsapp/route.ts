@@ -10,7 +10,7 @@ const client = twilio(accountSid, authToken);
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { to, message, notificationId } = body;
+    const { to, message, notificationId, userId } = body;
 
     // Validar que tengamos los datos necesarios
     if (!to || !message) {
@@ -33,15 +33,17 @@ export async function POST(request: Request) {
       to: formattedNumber,
     });
 
-    console.log(`Mensaje de WhatsApp enviado: ${twilioMessage.sid}`);
+    console.log(`✅ Mensaje de WhatsApp enviado: ${twilioMessage.sid}`);
 
+    // Retornar también el notificationId y userId para que el frontend pueda marcar como leída
     return NextResponse.json({
       success: true,
       messageSid: twilioMessage.sid,
-      notificationId,
+      notificationId: notificationId,
+      userId: userId,
     });
   } catch (error) {
-    console.error("Error al enviar mensaje de WhatsApp:", error);
+    console.error("❌ Error al enviar mensaje de WhatsApp:", error);
     return NextResponse.json(
       { error: "Error al enviar el mensaje de WhatsApp" },
       { status: 500 }

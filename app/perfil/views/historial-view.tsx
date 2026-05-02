@@ -89,7 +89,7 @@ export default function HistorialView({ id_usuario }: HistorialViewProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_usuario, id_publicacion: Number(id) }),
     });
-    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+    router.push(`/publicacion/Mi_inmueble/${id}`);
   };
 
   return (
