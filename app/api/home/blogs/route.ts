@@ -42,6 +42,7 @@ export async function GET() {
         StrDateBlo: StrFormattedDateBlo,
         StrDescriptionBlo: ObjRowBlo.descripcion || "",
         StrImageUrlBlo: ObjRowBlo.imagen_url || "",
+        StrAuthorBlo: "",
       };
     });
 

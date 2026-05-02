@@ -3,7 +3,8 @@
  * Date: 29/04/2026
  * Description: Create blog page for the real estate platform.
  * It allows authenticated users to submit a blog post for administrative review.
- * The image is optional and the blog is created with pending status.
+ * The image is optional, but if it is uploaded, it must have a valid image
+ * extension, a maximum file name length of 12 characters and a 4:3 ratio.
  * @return Create blog form page content.
  */
 
@@ -13,22 +14,26 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/app/auth/AuthContext";
 
+const INT_MAX_TITLE_LENGTH_BLO = 80;
+const INT_MAX_DESCRIPTION_LENGTH_BLO = 120;
+const INT_MAX_CONTENT_LENGTH_BLO = 400;
+const INT_MAX_IMAGE_NAME_LENGTH_BLO = 12;
+
+const ARR_ALLOWED_IMAGE_EXTENSIONS_BLO = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+];
+
 export default function CreateBlogPage() {
   const router = useRouter();
 
-  // ======================================================
-  // AuthContext del proyecto
-  // Se usa para validar desde frontend si hay usuario.
-  // La validación segura real se hace también en las APIs
-  // mediante la cookie auth_token.
-  // ======================================================
   const auth = useAuth();
   const objUser = auth.user;
   const bolIsAuthLoading = false;
 
-  // ======================================================
-  // Estados del formulario
-  // ======================================================
   const [strTitleBlo, setStrTitleBlo] = useState("");
   const [strDescriptionBlo, setStrDescriptionBlo] = useState("");
   const [strContentBlo, setStrContentBlo] = useState("");
@@ -38,28 +43,53 @@ export default function CreateBlogPage() {
   const [strError, setStrError] = useState("");
 
   // ======================================================
-  // Cancelar creación
+  // Validar proporción 4:3 de la imagen.
+  // Se usa tolerancia porque algunas imágenes pueden tener
+  // pequeñas variaciones de píxeles.
+  // Ejemplos válidos: 1440x1080, 1200x900, 1024x768, 800x600.
   // ======================================================
+  const validateImageRatioBlo = (objFile: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const strImageUrlBlo = URL.createObjectURL(objFile);
+      const objImageBlo = new window.Image();
+
+      objImageBlo.onload = () => {
+        const intWidthBlo = objImageBlo.width;
+        const intHeightBlo = objImageBlo.height;
+
+        URL.revokeObjectURL(strImageUrlBlo);
+
+        const numCurrentRatioBlo = intWidthBlo / intHeightBlo;
+        const numExpectedRatioBlo = 4 / 3;
+
+        // 4:3 equivale aproximadamente a 1.3333.
+        // La tolerancia permite aceptar imágenes casi 4:3.
+        const numToleranceBlo = 0.03;
+
+        const bolIsValidRatioBlo =
+          Math.abs(numCurrentRatioBlo - numExpectedRatioBlo) <=
+          numToleranceBlo;
+
+        resolve(bolIsValidRatioBlo);
+      };
+
+      objImageBlo.onerror = () => {
+        URL.revokeObjectURL(strImageUrlBlo);
+        resolve(false);
+      };
+
+      objImageBlo.src = strImageUrlBlo;
+    });
+  };
+
   const handleCancel = () => {
     router.push("/home/blogs");
   };
 
-  // ======================================================
-  // Crear blog
-  // Flujo:
-  // 1. Validar campos.
-  // 2. Verificar si ya tiene blog pendiente.
-  // 3. Subir imagen solo si el usuario seleccionó una.
-  // 4. Crear blog como NOPUBLICADO.
-  // 5. Redirigir a la página de blog pendiente.
-  // ======================================================
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setStrError("");
 
-    // ======================================================
-    // Validación de sesión desde frontend
-    // ======================================================
     if (bolIsAuthLoading) {
       setStrError("Se está verificando tu sesión. Intenta nuevamente.");
       return;
@@ -78,8 +108,8 @@ export default function CreateBlogPage() {
       return;
     }
 
-    if (strTitleBlo.trim().length > 100) {
-      setStrError("El título no debe exceder 100 caracteres.");
+    if (strTitleBlo.trim().length > INT_MAX_TITLE_LENGTH_BLO) {
+      setStrError("El título no debe exceder 80 caracteres.");
       return;
     }
 
@@ -91,7 +121,7 @@ export default function CreateBlogPage() {
       return;
     }
 
-    if (strDescriptionBlo.trim().length > 120) {
+    if (strDescriptionBlo.trim().length > INT_MAX_DESCRIPTION_LENGTH_BLO) {
       setStrError("La descripción no debe exceder 120 caracteres.");
       return;
     }
@@ -104,7 +134,7 @@ export default function CreateBlogPage() {
       return;
     }
 
-    if (strContentBlo.trim().length > 400) {
+    if (strContentBlo.trim().length > INT_MAX_CONTENT_LENGTH_BLO) {
       setStrError("El contenido no debe exceder 400 caracteres.");
       return;
     }
@@ -129,16 +159,63 @@ export default function CreateBlogPage() {
       }
 
       if (objCheckData.hasPendingBlog) {
-        router.push("/home/blogs/pending");
+        router.push("/home/blogs/pending?existing=1");
         return;
       }
 
       // ======================================================
       // 2. Imagen opcional
+      // Si el usuario seleccionó imagen, se valida antes de subir.
       // ======================================================
       let strImageUrlBlo: string | null = null;
 
       if (objImageFile) {
+        const strFileNameBlo = objImageFile.name;
+        const arrFilePartsBlo = strFileNameBlo.split(".");
+
+        const strFileExtensionBlo =
+          arrFilePartsBlo.length > 1
+            ? arrFilePartsBlo.pop()?.toLowerCase()
+            : "";
+
+        const strFileNameWithoutExtensionBlo = arrFilePartsBlo.join(".");
+
+        if (!strFileExtensionBlo) {
+          setStrError("La imagen debe tener una extensión válida.");
+          return;
+        }
+
+        if (!ARR_ALLOWED_IMAGE_EXTENSIONS_BLO.includes(strFileExtensionBlo)) {
+          setStrError(
+            "Formato de imagen no permitido. Solo se aceptan JPG, JPEG, PNG, WEBP o GIF."
+          );
+          return;
+        }
+
+        if (!objImageFile.type.startsWith("image/")) {
+          setStrError("El archivo seleccionado debe ser una imagen.");
+          return;
+        }
+
+        if (
+          strFileNameWithoutExtensionBlo.trim().length >
+          INT_MAX_IMAGE_NAME_LENGTH_BLO
+        ) {
+          setStrError("El nombre de la imagen no debe exceder 12 caracteres.");
+          return;
+        }
+
+        const bolIsValidImageRatioBlo = await validateImageRatioBlo(
+          objImageFile
+        );
+
+        if (!bolIsValidImageRatioBlo) {
+          setStrError(
+            "Mal formato de imagen. La imagen debe tener proporción 4:3 o una proporción muy cercana, por ejemplo 1440x1080, 1200x900, 1024x768 u 800x600."
+          );
+          return;
+        }
+
         const objFormData = new FormData();
         objFormData.append("file", objImageFile);
 
@@ -157,7 +234,7 @@ export default function CreateBlogPage() {
       }
 
       // ======================================================
-      // 3. Crear blog como pendiente
+      // 3. Crear blog como pendiente de revisión
       // ======================================================
       const objCreateResponse = await fetch("/api/home/blogs/createBlog", {
         method: "POST",
@@ -174,11 +251,8 @@ export default function CreateBlogPage() {
 
       const objCreateData = await objCreateResponse.json();
 
-      // ======================================================
-      // Si ya tiene blog pendiente, redirigir a su blog pendiente
-      // ======================================================
       if (objCreateResponse.status === 409) {
-        router.push("/home/blogs/pending");
+        router.push("/home/blogs/pending?existing=1");
         return;
       }
 
@@ -186,10 +260,7 @@ export default function CreateBlogPage() {
         throw new Error(objCreateData.error || "Error al crear el blog.");
       }
 
-      // ======================================================
-      // Si todo salió bien, ir a la página del blog pendiente
-      // ======================================================
-      router.push("/home/blogs/pending");
+      router.push("/home/blogs/pending?created=1");
     } catch (error) {
       const strMessage =
         error instanceof Error
@@ -202,9 +273,6 @@ export default function CreateBlogPage() {
     }
   };
 
-  // ======================================================
-  // Estado de carga de sesión
-  // ======================================================
   if (bolIsAuthLoading) {
     return (
       <main className="min-h-screen w-full bg-background px-4 py-12 text-foreground sm:px-6 lg:px-10">
@@ -221,9 +289,6 @@ export default function CreateBlogPage() {
     );
   }
 
-  // ======================================================
-  // Usuario no autenticado
-  // ======================================================
   if (!objUser) {
     return (
       <main className="min-h-screen w-full bg-background px-4 py-12 text-foreground sm:px-6 lg:px-10">
@@ -263,9 +328,6 @@ export default function CreateBlogPage() {
     );
   }
 
-  // ======================================================
-  // Formulario principal
-  // ======================================================
   return (
     <main className="min-h-screen w-full bg-background px-4 py-12 text-foreground sm:px-6 lg:px-10">
       <section className="mx-auto w-full max-w-3xl">
@@ -289,9 +351,6 @@ export default function CreateBlogPage() {
           className="rounded-[28px] border border-card-border bg-card-bg p-6 shadow-sm sm:p-8"
         >
           <div className="space-y-6">
-            {/* ======================================================
-                Campo título
-            ====================================================== */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">
                 Título
@@ -301,19 +360,16 @@ export default function CreateBlogPage() {
                 type="text"
                 value={strTitleBlo}
                 onChange={(event) => setStrTitleBlo(event.target.value)}
-                maxLength={100}
+                maxLength={INT_MAX_TITLE_LENGTH_BLO}
                 placeholder="Ej: Consejos para elegir una vivienda familiar"
                 className="w-full rounded-2xl border border-card-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/30"
               />
 
               <p className="mt-1 text-xs text-foreground/60">
-                {strTitleBlo.length}/100 caracteres.
+                {strTitleBlo.length}/{INT_MAX_TITLE_LENGTH_BLO} caracteres.
               </p>
             </div>
 
-            {/* ======================================================
-                Campo descripción
-            ====================================================== */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">
                 Descripción
@@ -322,28 +378,26 @@ export default function CreateBlogPage() {
               <textarea
                 value={strDescriptionBlo}
                 onChange={(event) => setStrDescriptionBlo(event.target.value)}
-                maxLength={120}
+                maxLength={INT_MAX_DESCRIPTION_LENGTH_BLO}
                 placeholder="Resume brevemente el tema principal de tu publicación."
                 rows={3}
                 className="w-full resize-none rounded-2xl border border-card-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/30"
               />
 
               <p className="mt-1 text-xs text-foreground/60">
-                {strDescriptionBlo.length}/120 caracteres.
+                {strDescriptionBlo.length}/{INT_MAX_DESCRIPTION_LENGTH_BLO}{" "}
+                caracteres.
               </p>
             </div>
 
-            {/* ======================================================
-                Campo imagen opcional
-            ====================================================== */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">
-                Imagen opcional
+                Imagen opcional 4:3
               </label>
 
               <input
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
                 onChange={(event) =>
                   setObjImageFile(event.target.files?.[0] || null)
                 }
@@ -351,15 +405,13 @@ export default function CreateBlogPage() {
               />
 
               <p className="mt-1 text-xs text-foreground/60">
-                  La imagen es opcional. Si decides subir una, debe tener un formato
-                  recomendado de 4:3 y el nombre del archivo debe tener como máximo
-                  12 caracteres.
+                La imagen es opcional. Si decides subir una, debe tener
+                proporción 4:3 o muy cercana, extensión JPG, JPEG, PNG, WEBP o
+                GIF, y el nombre del archivo debe tener como máximo 12
+                caracteres.
               </p>
             </div>
 
-            {/* ======================================================
-                Campo contenido
-            ====================================================== */}
             <div>
               <label className="mb-2 block text-sm font-semibold text-foreground">
                 Contenido
@@ -368,29 +420,23 @@ export default function CreateBlogPage() {
               <textarea
                 value={strContentBlo}
                 onChange={(event) => setStrContentBlo(event.target.value)}
-                maxLength={400}
+                maxLength={INT_MAX_CONTENT_LENGTH_BLO}
                 placeholder="Escribe el contenido principal del blog."
                 rows={8}
                 className="w-full resize-none rounded-2xl border border-card-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/30"
               />
 
               <p className="mt-1 text-xs text-foreground/60">
-                {strContentBlo.length}/400 caracteres.
+                {strContentBlo.length}/{INT_MAX_CONTENT_LENGTH_BLO} caracteres.
               </p>
             </div>
 
-            {/* ======================================================
-                Mensaje de error
-            ====================================================== */}
             {strError && (
               <div className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
                 {strError}
               </div>
             )}
 
-            {/* ======================================================
-                Botones
-            ====================================================== */}
             <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -406,7 +452,7 @@ export default function CreateBlogPage() {
                 disabled={bolIsLoading}
                 className="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:scale-[1.02] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {bolIsLoading ? "Enviando..." : "Solicitar revisión"}
+                {bolIsLoading ? "Enviando..." : "Enviar a revisión"}
               </button>
             </div>
           </div>
