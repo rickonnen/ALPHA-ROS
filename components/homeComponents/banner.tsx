@@ -27,6 +27,7 @@ function useViewport() {
     function update() {
       const w = window.innerWidth;
       const h = window.innerHeight;
+
       setState({
         isMobile: w < 768,
         isLandscape: w > h,
@@ -34,6 +35,7 @@ function useViewport() {
     }
 
     update();
+
     window.addEventListener("resize", update);
     window.addEventListener("orientationchange", update);
 
@@ -55,9 +57,11 @@ function getImageUrl(
   isLandscape: boolean,
 ): string {
   if (image.image_url) return image.image_url;
+
   if (isMobile && !isLandscape && image.image_url_mobile) {
     return image.image_url_mobile;
   }
+
   return image.image_url_desktop ?? PLACEHOLDER_IMAGE;
 }
 
@@ -72,11 +76,17 @@ export default function Banner() {
 
   // ─── 3. prefers-reduced-motion ───────────────────────────────────────────
   const [reducedMotion, setReducedMotion] = useState(false);
+
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+
     setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+
+    const handler = (event: MediaQueryListEvent) =>
+      setReducedMotion(event.matches);
+
     mq.addEventListener("change", handler);
+
     return () => mq.removeEventListener("change", handler);
   }, []);
 
@@ -84,17 +94,23 @@ export default function Banner() {
   useEffect(() => {
     async function fetchImages() {
       try {
-        const res = await fetch("/api/home/bannerHome");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setImages(data);
-      } catch (err) {
-        console.error("Error al cargar el banner:", err);
+        const objResponse = await fetch("/api/home/bannerHome");
+
+        if (!objResponse.ok) {
+          throw new Error(`HTTP ${objResponse.status}`);
+        }
+
+        const arrData = await objResponse.json();
+
+        setImages(Array.isArray(arrData) ? arrData : []);
+      } catch (objError) {
+        console.error("Error al cargar el banner:", objError);
         setFetchError(true);
       } finally {
         setLoading(false);
       }
     }
+
     fetchImages();
   }, []);
 
@@ -103,11 +119,13 @@ export default function Banner() {
     () =>
       images
         .filter(
-          (img) =>
-            img.is_active &&
-            (img.image_url || img.image_url_desktop || img.image_url_mobile),
+          (image) =>
+            image.is_active &&
+            (image.image_url ||
+              image.image_url_desktop ||
+              image.image_url_mobile),
         )
-        .sort((a, b) => a.order - b.order),
+        .sort((firstImage, secondImage) => firstImage.order - secondImage.order),
     [images],
   );
 
@@ -139,9 +157,7 @@ export default function Banner() {
   if (loading) {
     return (
       <section className="w-full overflow-hidden font-sans">
-        <div
-          className={`flex w-full animate-pulse bg-muted ${aspectClass}`}
-        />
+        <div className={`flex w-full animate-pulse bg-muted ${aspectClass}`} />
       </section>
     );
   }
@@ -155,7 +171,9 @@ export default function Banner() {
           <p className="text-sm text-muted-foreground sm:text-base">
             No se pudo cargar el banner. Intenta recargar la página.
           </p>
+
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
           >
@@ -217,8 +235,8 @@ export default function Banner() {
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 draggable={false}
                 loading={index === 0 ? "eager" : "lazy"}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                onError={(event) => {
+                  event.currentTarget.src = PLACEHOLDER_IMAGE;
                 }}
               />
 
@@ -226,8 +244,9 @@ export default function Banner() {
               {index === 0 && (
                 <>
                   <div className="absolute inset-0 bg-black/35" />
+
                   <div className="absolute inset-0 flex items-center justify-center px-4 text-center sm:px-6 md:px-8 lg:px-10">
-                    <div className="select-none w-full max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
+                    <div className="w-full max-w-xs select-none sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
                       <h1
                         className={`font-bold leading-tight tracking-tight text-white ${titleSizeClass}`}
                       >
@@ -286,11 +305,12 @@ export default function Banner() {
         )}
       </div>
 
-      {/* Preload de la imagen siguiente — sin warning de preload ─────────── */}
+      {/* Preload de la imagen siguiente — sin warning de preload */}
       {activeImages.map((image, index) => {
-        const isNext =
-          index === (intCurrentIndex + 1) % activeImages.length;
+        const isNext = index === (intCurrentIndex + 1) % activeImages.length;
+
         if (!isNext) return null;
+
         return (
           <link
             key={image.public_id}
