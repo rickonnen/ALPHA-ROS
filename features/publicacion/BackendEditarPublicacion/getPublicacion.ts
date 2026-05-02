@@ -9,7 +9,7 @@ const TIPO_INMUEBLE: Record<number, string> = {
   1: 'Casa', 2: 'Departamento', 3: 'Terreno', 4: 'Oficina',
 }
 const TIPO_OPERACION: Record<number, string> = {
-  2: 'Compra', 1: 'Alquiler', 3: 'Anticrético',
+  2: 'Venta', 1: 'Alquiler', 3: 'Anticrético',
 }
 const ESTADO_CONSTRUCCION: Record<number, string> = {
   1: 'En Planos', 2: 'En Construccion', 3: 'Entrega Inmediata',
