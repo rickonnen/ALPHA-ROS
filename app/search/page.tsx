@@ -65,7 +65,12 @@ const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 5, nombre_inmueble: "Espacio de cementerio" },
 ];
 
-const LOCAL_FALLBACK_IMAGES = ["/casa1.jpg", "/casa2.jpg", "/casa3.jpg"];
+const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
+const ZONE_NAME_PATTERN = /^[A-Za-z0-9]+$/;
+const ZONE_NAME_MAX_LENGTH = 50;
+const POST_AUTH_REDIRECT_KEY = 'postAuthRedirect';
+const POST_AUTH_LOADED_ZONE_KEY = 'loadedZona';
+const POST_AUTH_MAP_OPEN_KEY = 'searchMapOpen';
 
 // ── Pagination config ──
 const ITEMS_PER_PAGE_GRID = 6;
@@ -102,6 +107,80 @@ function getQueryValues(value: string | null): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeZoneName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isValidZoneCoordinates(
+  coordinates: unknown,
+): coordinates is [number, number][] {
+  return (
+    Array.isArray(coordinates) &&
+    coordinates.length >= 3 &&
+    coordinates.every(
+      (point) =>
+        Array.isArray(point) &&
+        point.length === 2 &&
+        typeof point[0] === 'number' &&
+        typeof point[1] === 'number' &&
+        Number.isFinite(point[0]) &&
+        Number.isFinite(point[1]),
+    )
+  );
+}
+
+function getPolygonSignature(coordinates: [number, number][]): string {
+  return JSON.stringify(
+    coordinates.map(([lat, lng]) => [
+      Number(lat.toFixed(6)),
+      Number(lng.toFixed(6)),
+    ]),
+  );
+}
+
+function getZoneNameError(value: string, savedZones: SavedZone[]): string | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return 'Ingresa un nombre para la zona.';
+  }
+
+  if (trimmedValue.length > ZONE_NAME_MAX_LENGTH) {
+    return `El nombre no puede superar ${ZONE_NAME_MAX_LENGTH} caracteres.`;
+  }
+
+  if (!ZONE_NAME_PATTERN.test(trimmedValue)) {
+    return 'Usa solo letras y números, sin espacios ni caracteres especiales.';
+  }
+
+  const normalizedValue = normalizeZoneName(trimmedValue);
+  const hasDuplicateName = savedZones.some(
+    (zone) =>
+      typeof zone.nombre_zona === 'string' &&
+      normalizeZoneName(zone.nombre_zona) === normalizedValue,
+  );
+
+  if (hasDuplicateName) {
+    return 'Ya tienes una zona guardada con ese nombre.';
+  }
+
+  return null;
+}
+
+function persistSearchStateForAuth(drawnPolygon: [number, number][] | null) {
+  if (typeof window === 'undefined') return;
+
+  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, '/search');
+  localStorage.setItem(POST_AUTH_MAP_OPEN_KEY, JSON.stringify(true));
+
+  if (drawnPolygon && isValidZoneCoordinates(drawnPolygon)) {
+    localStorage.setItem(
+      POST_AUTH_LOADED_ZONE_KEY,
+      JSON.stringify(drawnPolygon),
+    );
+  }
 }
 
 function mapQueryOperationToValue(value: string | null): OperationTypeValue {
@@ -390,12 +469,47 @@ function SearchPageContent() {
   // Modales para zonas (team-bugHunters)
   const [showZoneNameModal, setShowZoneNameModal] = useState(false);
   const [zoneName, setZoneName] = useState("");
+  const [savedZones, setSavedZones] = useState<SavedZone[]>([]);
+  const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Reset page when filters/sort/view change (merge-sysinfosquad-bughunters)
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedSort, viewMode, isMapOpen]);
+
+  useEffect(() => {
+    if (!objUser) return;
+
+    let isMounted = true;
+
+    const fetchSavedZones = async () => {
+      try {
+        const response = await fetch('/api/perfil/mis-zonas', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!isMounted || !Array.isArray(payload.data)) return;
+
+        setSavedZones(
+          payload.data.filter(
+            (zone: SavedZone) => isValidZoneCoordinates(zone.coordenadas),
+          ),
+        );
+      } catch (error) {
+        console.error('Error al cargar zonas guardadas:', error);
+      }
+    };
+
+    void fetchSavedZones();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [objUser]);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -424,6 +538,24 @@ function SearchPageContent() {
     selectedPropertyTypes.length,
     selectedSort,
   ]);
+
+  const currentPolygonSignature = useMemo(
+    () => (drawnPolygon ? getPolygonSignature(drawnPolygon) : null),
+    [drawnPolygon],
+  );
+
+  const isCurrentPolygonSaved = useMemo(
+    () =>
+      currentPolygonSignature !== null &&
+      savedZones.some(
+        (zone) =>
+          isValidZoneCoordinates(zone.coordenadas) &&
+          getPolygonSignature(zone.coordenadas) === currentPolygonSignature,
+      ),
+    [currentPolygonSignature, savedZones],
+  );
+
+  const currentZoneNameError = getZoneNameError(zoneName, savedZones);
 
   // 1. Filtrar por zona dibujada con Turf.js (team-bugHunters)
   const filteredSearchResults = useMemo(() => {
@@ -483,12 +615,14 @@ function SearchPageContent() {
 
   // Manejadores de autenticación (team-bugHunters)
   const handleOpenLogin = () => {
+    persistSearchStateForAuth(drawnPolygon);
     setStrAuthMode("login");
     setBolShowAuth(true);
     setBolShowProtected(false);
   };
 
   const handleOpenRegister = () => {
+    persistSearchStateForAuth(drawnPolygon);
     setStrAuthMode("register");
     setBolShowAuth(true);
     setBolShowProtected(false);
@@ -497,30 +631,53 @@ function SearchPageContent() {
   const handleCloseAuth = () => setBolShowAuth(false);
 
   const handleSaveZone = async () => {
-    if (!zoneName.trim() || !drawnPolygon) return;
+    if (!drawnPolygon) return;
+
+    if (isCurrentPolygonSaved) {
+      setZoneNameError('Esta zona ya está guardada en tu perfil.');
+      return;
+    }
+
+    if (currentZoneNameError) {
+      setZoneNameError(currentZoneNameError);
+      return;
+    }
+
     try {
+      const cleanZoneName = zoneName.trim();
       const response = await fetch("/api/perfil/mis-zonas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          nombre_zona: zoneName.trim(),
+          nombre_zona: cleanZoneName,
           coordenadas: drawnPolygon,
         }),
       });
       const data = await response.json();
       if (response.ok) {
+        setSavedZones((current) => [
+          {
+            id_mi_zona: data.data.id_mi_zona,
+            nombre_zona: data.data.nombre_zona,
+            coordenadas: data.data.coordenadas,
+          },
+          ...current,
+        ]);
         setShowZoneNameModal(false);
         setZoneName("");
+        setZoneNameError(null);
         setShowSuccessModal(true);
       } else {
         console.error("Error from API:", data);
-        alert(`Error al guardar la zona: ${data.error || "Error desconocido"}`);
+        setZoneNameError(data.error || "No se pudo guardar la zona.");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert(
-        `Error al guardar la zona: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      setZoneNameError(
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al guardar la zona.",
       );
     }
   };
@@ -528,6 +685,7 @@ function SearchPageContent() {
   const handleCloseZoneNameModal = () => {
     setShowZoneNameModal(false);
     setZoneName("");
+    setZoneNameError(null);
   };
 
   const breadcrumbPropertyLabel =
@@ -684,10 +842,12 @@ function SearchPageContent() {
       if (loadedZona) {
         try {
           const coordenadas = JSON.parse(loadedZona);
-          setDrawnPolygon(coordenadas);
-          setIsDrawingMode(false);
-          setIsMapOpen(true);
-          localStorage.removeItem("loadedZona");
+          if (isValidZoneCoordinates(coordenadas)) {
+            setDrawnPolygon(coordenadas);
+            setIsDrawingMode(false);
+            setIsMapOpen(true);
+          }
+          localStorage.removeItem('loadedZona');
         } catch (error) {
           console.error("Error al cargar zona:", error);
         }
@@ -895,29 +1055,6 @@ function SearchPageContent() {
         />
 
         <div className="flex items-center gap-2 shrink-0">
-          {isMapOpen && (
-            <button
-              onClick={() => setIsDrawingMode(!isDrawingMode)}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-white transition-colors ${
-                isDrawingMode ? "bg-slate-800" : "bg-[#C26E5A]"
-              }`}
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                />
-              </svg>
-              {isDrawingMode ? "Cancelar" : "Zona"}
-            </button>
-          )}
           <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
@@ -1058,7 +1195,7 @@ function SearchPageContent() {
                       viewMode={viewMode}
                       isHovered={hoveredId === property.id}
                       onMouseEnter={() => setHoveredId(property.id)}
-                      onMouseLeave={() => setHoveredId(null)}
+                      onMouseLeave={() => {}}
                       onClick={() => {}}
                     />
                   ))}
@@ -1117,11 +1254,17 @@ function SearchPageContent() {
                       setBolShowProtected(true);
                       return;
                     }
+                    if (isCurrentPolygonSaved) return;
                     setShowZoneNameModal(true);
                   }}
-                  className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                  className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                    isCurrentPolygonSaved
+                      ? 'cursor-not-allowed bg-slate-400'
+                      : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                  }`}
+                  disabled={isCurrentPolygonSaved}
                 >
-                  Guardar en mi Perfil
+                  {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
                 </button>
                 <button
                   onClick={() => {
@@ -1204,11 +1347,17 @@ function SearchPageContent() {
                         setBolShowProtected(true);
                         return;
                       }
+                      if (isCurrentPolygonSaved) return;
                       setShowZoneNameModal(true);
                     }}
-                    className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                    className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                      isCurrentPolygonSaved
+                        ? 'cursor-not-allowed bg-slate-400'
+                        : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                    }`}
+                    disabled={isCurrentPolygonSaved}
                   >
-                    Guardar en mi Perfil
+                    {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
                   </button>
                   <button
                     onClick={() => {
@@ -1358,17 +1507,18 @@ function SearchPageContent() {
                         const lng = Number(loc?.longitud);
                         if (isValidLatLng(lat, lng)) setHoveredPos([lat, lng]);
                       }}
-                      onMouseLeave={() => {
-                        setHoveredId(null);
-                        setHoveredPos(null);
-                      }}
+                      onMouseLeave={() => {}}
                       onClick={() => {
+                        setHoveredId(property.id);
                         const loc = searchResults.find(
                           (p) => p.id_publicacion === property.id,
                         )?.ubicacion;
                         const lat = Number(loc?.latitud);
                         const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) setSelectedPos([lat, lng]);
+                        if (isValidLatLng(lat, lng)) {
+                          setHoveredPos([lat, lng]);
+                          setSelectedPos([lat, lng]);
+                        }
                       }}
                     />
                   ))}
@@ -1480,10 +1630,20 @@ function SearchPageContent() {
             <input
               type="text"
               value={zoneName}
-              onChange={(e) => setZoneName(e.target.value)}
+              onChange={(e) => {
+                setZoneName(e.target.value);
+                setZoneNameError(getZoneNameError(e.target.value, savedZones));
+              }}
               placeholder="Ingresa el nombre de la zona"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${
+                zoneNameError ? 'mb-2 border-red-400' : 'mb-6 border-slate-300'
+              }`}
             />
+            {zoneNameError && (
+              <p className="mb-4 text-left text-sm font-medium text-red-500">
+                {zoneNameError}
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={handleCloseZoneNameModal}
@@ -1493,8 +1653,12 @@ function SearchPageContent() {
               </button>
               <button
                 onClick={handleSaveZone}
-                className="flex-1 px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary)]/90 transition-colors"
-                disabled={!zoneName.trim()}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors ${
+                  currentZoneNameError || isCurrentPolygonSaved
+                    ? 'cursor-not-allowed bg-slate-400'
+                    : 'bg-[var(--primary)] hover:bg-[var(--primary)]/90'
+                }`}
+                disabled={Boolean(currentZoneNameError) || isCurrentPolygonSaved}
               >
                 Guardar
               </button>

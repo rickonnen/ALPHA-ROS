@@ -1,69 +1,39 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import OTP2FAModal from "@/app/auth/OTP2FAModal";
+
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+
+function getSafeRedirectTarget(
+  searchRedirect: string | null,
+  sessionRedirect: string | null,
+) {
+  const candidate = searchRedirect || sessionRedirect || "/";
+  return candidate.startsWith("/") ? candidate : "/";
+}
 
 export default function GoogleAuthCheckPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [pending2FAUserId, setPending2FAUserId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // Verificar si el usuario tiene sesión
-        const sessionRes = await fetch("/api/auth/session");
-        if (!sessionRes.ok) {
-          console.log("[GoogleAuthCheck] No hay sesión, redirigiendo a login");
-          router.push("/");
-          return;
-        }
+  const redirectTarget = useMemo(() => {
+    const sessionRedirect =
+      typeof window === "undefined"
+        ? null
+        : sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
 
-        const session = await sessionRes.json();
-        if (!session?.user?.id) {
-          console.log("[GoogleAuthCheck] No hay usuario en sesión");
-          router.push("/");
-          return;
-        }
+    return getSafeRedirectTarget(
+      searchParams.get("redirect"),
+      sessionRedirect,
+    );
+  }, [searchParams]);
 
-        // Verificar si requiere 2FA
-        console.log("[GoogleAuthCheck] Verificando si usuario requiere 2FA...");
-        const check2FARes = await fetch("/api/auth/check-2fa-status");
-        if (!check2FARes.ok) {
-          console.error("[GoogleAuthCheck] Error checking 2FA status");
-          router.push("/");
-          return;
-        }
-
-        const { requires2FA, userId } = await check2FARes.json();
-        console.log("[GoogleAuthCheck] requires2FA:", requires2FA, "userId:", userId);
-
-        if (requires2FA && userId) {
-          // Requiere 2FA - mostrar modal
-          console.log("[GoogleAuthCheck] Mostrando modal 2FA");
-          setPending2FAUserId(userId);
-          setShow2FAModal(true);
-          setIsLoading(false);
-        } else {
-          // No requiere 2FA - redirigir al home
-          console.log("[GoogleAuthCheck] No requiere 2FA, redirigiendo a /");
-          router.push("/");
-        }
-      } catch (error) {
-        console.error("[GoogleAuthCheck] Error:", error);
-        router.push("/");
-      }
-    };
-
-    checkAuthStatus();
-  }, [router]);
-
-  const handle2FASuccess = async () => {
-    console.log("[GoogleAuthCheck] 2FA verificado, redirigiendo...");
-    setShow2FAModal(false);
-
-    // Obtener rol del usuario
+  const navigateAfterAuth = useCallback(async () => {
     try {
       const resMe = await fetch("/api/auth/me", {
         credentials: "include",
@@ -74,26 +44,79 @@ export default function GoogleAuthCheckPage() {
         const userRol = dataMe.user.rol;
         if (userRol === 1) {
           router.push("/admin/verificacion-pagos");
-        } else {
-          router.push("/");
+          return;
         }
-      } else {
-        router.push("/");
       }
     } catch (error) {
       console.error("[GoogleAuthCheck] Error fetching user role:", error);
-      router.push("/");
+    } finally {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+      }
     }
+
+    router.push(redirectTarget);
+  }, [redirectTarget, router]);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const sessionRes = await fetch("/api/auth/session");
+        if (!sessionRes.ok) {
+          router.push("/");
+          return;
+        }
+
+        const session = await sessionRes.json();
+        if (!session?.user?.id) {
+          router.push("/");
+          return;
+        }
+
+        const check2FARes = await fetch("/api/auth/check-2fa-status");
+        if (!check2FARes.ok) {
+          router.push("/");
+          return;
+        }
+
+        const { requires2FA, userId } = await check2FARes.json();
+
+        if (requires2FA && userId) {
+          setPending2FAUserId(userId);
+          setShow2FAModal(true);
+          setIsLoading(false);
+          return;
+        }
+
+        void navigateAfterAuth();
+      } catch (error) {
+        console.error("[GoogleAuthCheck] Error:", error);
+        router.push("/");
+      }
+    };
+
+    void checkAuthStatus();
+  }, [navigateAfterAuth, router]);
+
+  const handle2FASuccess = async () => {
+    setShow2FAModal(false);
+    await navigateAfterAuth();
   };
 
   const handle2FACancel = () => {
-    console.log("[GoogleAuthCheck] 2FA cancelado");
     setShow2FAModal(false);
-    router.push("/");
+    router.push(redirectTarget);
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+      }}
+    >
       {isLoading ? (
         <div style={{ textAlign: "center" }}>
           <div
@@ -107,7 +130,7 @@ export default function GoogleAuthCheckPage() {
               margin: "0 auto 16px",
             }}
           />
-          <p>Verificando autenticación...</p>
+          <p>Verificando autenticacion...</p>
         </div>
       ) : show2FAModal ? (
         <OTP2FAModal

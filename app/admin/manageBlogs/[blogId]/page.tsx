@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { X as ObjXIcon } from "lucide-react"; 
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import { blogState } from "@/types/blogType";
+import { FnFormatLongWords } from "@/app/utils/textUtils";
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
  * funcionalidad: renderiza la vista completa de un blog con controles de administrador
@@ -181,12 +182,14 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           </span>
         </div>
 
+        {/* TÍTULO PASADO POR LA UTILIDAD */}
         <h1 className="text-foreground font-bold text-main-title leading-tight">
-          {ObjBlogBlo.StrTitleBlo}
+          {FnFormatLongWords(ObjBlogBlo.StrTitleBlo)}
         </h1>
 
+        {/* DESCRIPCIÓN PASADA POR LA UTILIDAD */}
         <p className="text-foreground/80 text-subtitle leading-relaxed border-l-4 border-primary pl-4 italic">
-          {ObjBlogBlo.StrDescriptionBlo}
+          {FnFormatLongWords(ObjBlogBlo.StrDescriptionBlo)}
         </p>
 
         <div className="w-full aspect-[4/3] relative bg-secondary-fund rounded-2xl overflow-hidden border border-card-border shadow-sm flex items-center justify-center text-foreground/20 mt-4 mb-4">
@@ -204,8 +207,9 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           )}
         </div>
 
+        {/* CONTENIDO PASADO POR LA UTILIDAD */}
         <div className="w-full text-foreground text-body-info leading-loose whitespace-pre-wrap">
-          {ObjBlogBlo.StrContentBlo}
+          {FnFormatLongWords(ObjBlogBlo.StrContentBlo)}
         </div>
 
         <div className="w-full mt-4 text-right">

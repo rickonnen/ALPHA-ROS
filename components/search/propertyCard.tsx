@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, memo } from 'react';
+import { memo } from 'react';
 import Image from 'next/image';
 import {
   MapPin,
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/carousel';
 import { useCardViewTracking, useTracking } from '@/components/hooks/useTracking';
 import { useDollarRate } from '@/components/hooks/getDollarRate';
+import { formatPropertyPrice } from '@/lib/locations';
 
 type Currency = 'USD' | 'BS';
 

@@ -173,7 +173,7 @@ export default function PublicacionesView({
       } else {
         const errorData = await res.json();
 
-        console.error("Error desde el servidor:", errorData.error);
+        //console.error("Error desde el servidor:", errorData.error);
         if (res.status === 400) {
            setBolShowModalPlan(true); 
         } else {
