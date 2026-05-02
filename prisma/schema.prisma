@@ -812,7 +812,7 @@ model Publicacion {
   id_ubicacion              Int?
   id_moneda                 Int?
   id_etiqueta               Int?                        @db.SmallInt
-  id_estado                 Int?                        @db.SmallInt
+  id_estado                 Int?                        @default(1) @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   gratuito                  Boolean                     @default(false)
