@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       new URLSearchParams({
         client_id:     process.env.FACEBOOK_CLIENT_ID!,
         client_secret: process.env.FACEBOOK_CLIENT_SECRET!,
-        redirect_uri:  `${process.env.NEXTAUTH_URL}/api/vincular/facebook/oauth-respuesta`,
+        redirect_uri:  `${process.env.NEXTAUTH_URL}api/vincular/facebook/oauth-respuesta`,
         code,
       })
     )
