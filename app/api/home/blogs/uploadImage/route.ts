@@ -10,7 +10,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verify } from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
-import sharp from "sharp";
 
 const INT_MAX_IMAGE_SIZE_BLO = 5 * 1024 * 1024;
 const INT_MAX_IMAGE_NAME_LENGTH_BLO = 12;
@@ -117,34 +116,6 @@ export async function POST(request: NextRequest) {
     // ======================================================
     // Validar proporción 4:3 en backend con tolerancia
     // ======================================================
-    const objMetadataBlo = await sharp(objBuffer).metadata();
-
-    const intWidthBlo = objMetadataBlo.width;
-    const intHeightBlo = objMetadataBlo.height;
-
-    if (!intWidthBlo || !intHeightBlo) {
-      return NextResponse.json(
-        { error: "No se pudieron leer las dimensiones de la imagen." },
-        { status: 400 }
-      );
-    }
-
-    const numCurrentRatioBlo = intWidthBlo / intHeightBlo;
-    const numExpectedRatioBlo = 4 / 3;
-    const numToleranceBlo = 0.03;
-
-    const bolIsValidRatioBlo =
-      Math.abs(numCurrentRatioBlo - numExpectedRatioBlo) <= numToleranceBlo;
-
-    if (!bolIsValidRatioBlo) {
-      return NextResponse.json(
-        {
-          error:
-            "Mal formato de imagen. La imagen debe tener proporción 4:3 o muy cercana, por ejemplo 1440x1080, 1200x900, 1024x768 u 800x600.",
-        },
-        { status: 400 }
-      );
-    }
 
     const objUploadResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader
