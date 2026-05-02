@@ -44,9 +44,6 @@ export default function PendingBlogPage() {
   const BolWasCreatedBlo = ObjSearchParamsBlo.get("created") === "1";
   const BolAlreadyExistingBlo = ObjSearchParamsBlo.get("existing") === "1";
 
-  // ======================================================
-  // Mensajes dinámicos según el origen de la redirección
-  // ======================================================
   const StrMainTitleBlo = BolWasCreatedBlo
     ? "Tu blog fue enviado a revisión"
     : BolAlreadyExistingBlo
@@ -92,10 +89,10 @@ export default function PendingBlogPage() {
 
   if (BolHasErrorBlo || !ObjBlogBlo) {
     return (
-      <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-4">
+      <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-xl font-bold text-destructive">Sin blog pendiente</p>
 
-        <p className="text-muted-foreground">
+        <p className="max-w-md break-words text-muted-foreground [overflow-wrap:anywhere]">
           No se pudo encontrar un blog pendiente para este usuario.
         </p>
 
@@ -114,31 +111,31 @@ export default function PendingBlogPage() {
       {/* ======================================================
           Encabezado de estado pendiente
       ====================================================== */}
-      <span className="font-semibold uppercase tracking-wider text-secondary text-[1rem]">
+      <span className="text-[1rem] font-semibold uppercase tracking-wider text-secondary">
         Revisión pendiente
       </span>
 
-      <h1 className="font-bold leading-tight text-black text-[2.5rem]">
+      <h1 className="max-w-full break-words text-[2.5rem] font-bold leading-tight text-black [overflow-wrap:anywhere]">
         {StrMainTitleBlo}
       </h1>
 
-      <p className="border-l-4 border-primary pl-4 italic leading-relaxed text-black/80 text-[1.25rem]">
+      <p className="max-w-full break-words border-l-4 border-primary pl-4 text-[1.25rem] italic leading-relaxed text-black/80 [overflow-wrap:anywhere]">
         {StrMainDescriptionBlo}
       </p>
 
       {/* ======================================================
-          Título del blog pendiente
+          Título y descripción del blog pendiente
       ====================================================== */}
-      <div className="mt-4 rounded-2xl border border-border/30 bg-card-bg p-6 shadow-sm">
+      <div className="mt-4 max-w-full overflow-hidden rounded-2xl border border-border/30 bg-card-bg p-6 shadow-sm">
         <span className="inline-flex rounded-full bg-secondary-fund px-4 py-2 text-xs font-semibold text-secondary">
           Pendiente de aprobación
         </span>
 
-        <h2 className="mt-5 font-bold leading-tight text-foreground text-[2rem]">
+        <h2 className="mt-5 max-w-full break-words text-[2rem] font-bold leading-tight text-foreground [overflow-wrap:anywhere]">
           {ObjBlogBlo.titulo}
         </h2>
 
-        <p className="mt-3 leading-relaxed text-foreground/80 text-[1.1rem]">
+        <p className="mt-3 max-w-full break-words text-[1.1rem] leading-relaxed text-foreground/80 [overflow-wrap:anywhere]">
           {ObjBlogBlo.descripcion}
         </p>
       </div>
@@ -146,7 +143,7 @@ export default function PendingBlogPage() {
       {/* ======================================================
           Imagen del blog
       ====================================================== */}
-      <div className="relative mt-4 mb-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/30 bg-muted text-muted-foreground shadow-sm">
+      <div className="relative mb-4 mt-4 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/30 bg-muted text-muted-foreground shadow-sm">
         {ObjBlogBlo.imagen_url ? (
           <Image
             src={ObjBlogBlo.imagen_url}
@@ -157,9 +154,9 @@ export default function PendingBlogPage() {
             priority
           />
         ) : (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-3 px-4 text-center">
             <ObjXIcon className="h-20 w-20 opacity-20" strokeWidth={1} />
-            <p className="text-sm text-muted-foreground">
+            <p className="break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">
               Este blog fue enviado sin imagen.
             </p>
           </div>
@@ -169,7 +166,7 @@ export default function PendingBlogPage() {
       {/* ======================================================
           Contenido del blog
       ====================================================== */}
-      <div className="w-full whitespace-pre-wrap leading-loose text-foreground text-[1.1rem]">
+      <div className="w-full max-w-full whitespace-pre-wrap break-words text-[1.1rem] leading-loose text-foreground [overflow-wrap:anywhere]">
         {ObjBlogBlo.contenido}
       </div>
 
@@ -177,7 +174,7 @@ export default function PendingBlogPage() {
           Estado
       ====================================================== */}
       <div className="mt-4 w-full text-right">
-        <p className="text-lg font-medium text-secondary">
+        <p className="break-words text-lg font-medium text-secondary [overflow-wrap:anywhere]">
           Estado: Pendiente de aprobación
         </p>
       </div>

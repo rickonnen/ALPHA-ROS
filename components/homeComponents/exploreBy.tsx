@@ -46,8 +46,11 @@ const StrDisplayName: Record<string, string> = {
 async function FetchTop5CiudadesAlquiler(): Promise<categoryItem[]> {
   const Res = await fetch("/api/home/explore/alquiler");
   const { data: Data } = await Res.json();
-  return Data.map((Row: { ciudad: string; total: number }) => ({
-    StrName:  Row.ciudad,
+  console.log("Data raw:", Data);
+  return Data
+  .filter((Row: { nombre_ciudad: string; total: number }) => !!Row.nombre_ciudad)
+  .map((Row: { nombre_ciudad: string; total: number }) => ({
+    StrName:  Row.nombre_ciudad,
     IntCount: Number(Row.total),
   }));
 }
@@ -57,6 +60,7 @@ async function FetchTop5CiudadesVenta(): Promise<categoryItem[]> {
   const Json = await Res.json();
   console.log("respuesta venta:", Json);
   const { data: Data } = Json;
+  console.log("Data raw:", Data);
   if (!Data) return [];
   return Data.map((Row: { ciudad: string; total: number }) => ({
     StrName:  Row.ciudad,
@@ -67,8 +71,11 @@ async function FetchTop5CiudadesVenta(): Promise<categoryItem[]> {
 async function FetchTiposInmueble(): Promise<categoryItem[]> {
   const Res = await fetch("/api/home/explore/tipos");
   const { data: Data } = await Res.json();
-  return Data.map((Row: { tipo_inmueble: string; total: number }) => ({
-    StrName:  StrDisplayName[Row.tipo_inmueble] ?? Row.tipo_inmueble,
+  console.log("Data raw:", Data);
+  return Data
+  .filter((Row: { nombre_inmueble: string; total: number }) => !!Row.nombre_inmueble)
+  .map((Row: { nombre_inmueble: string; total: number }) => ({
+    StrName:  StrDisplayName[Row.nombre_inmueble] ?? Row.nombre_inmueble,
     IntCount: Number(Row.total),
   }));
 }
