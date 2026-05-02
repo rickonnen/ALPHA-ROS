@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       const publicacionesActivas = await tx.publicacion.findMany({
         where: {
           id_usuario: id_usuario,
-          id_estado: 1
+          id_estado: 1,
+          gratuito: false
         },
         orderBy: [
           { fecha_creacion: 'desc' },

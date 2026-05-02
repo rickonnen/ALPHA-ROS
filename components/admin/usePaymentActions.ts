@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { PaymentRecord } from "./paymentTypes";
+import { useAuth } from "@/app/auth/AuthContext";
 
 export function usePaymentActions(onPaymentUpdated?: () => void) {
+  const { user } = useAuth();
   const [bolShowAcceptModal, setBolShowAcceptModal] = useState<boolean>(false);
   const [bolShowRejectModal, setBolShowRejectModal] = useState<boolean>(false);
   const [objSelectedPayment, setObjSelectedPayment] = useState<PaymentRecord | null>(null);
@@ -29,6 +31,20 @@ export function usePaymentActions(onPaymentUpdated?: () => void) {
       });
 
       if (objResponse.ok) {
+        try {
+          await fetch('/api/admin/envioNotificacion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id_detalle: objSelectedPayment.intId,
+              decision: strNewStatus === 'Aceptado' ? 'ACEPTAR' : 'RECHAZAR',
+              motivo_rechazo: strReason || null,
+              id_admin_ejecutor: user?.id
+            }),
+          });
+        } catch (errorNotif) {
+          console.error("Error al enviar la notificación:", errorNotif);
+        }
         setBolShowAcceptModal(false);
         setBolShowRejectModal(false);
         if (onPaymentUpdated) onPaymentUpdated();

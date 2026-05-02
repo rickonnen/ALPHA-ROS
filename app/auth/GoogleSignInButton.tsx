@@ -7,7 +7,25 @@ interface GoogleSignInButtonProps {
   on2FARequired?: (userId: string) => void;
 }
 
-export default function GoogleSignInButton({ onSuccess, onCancel, on2FARequired }: GoogleSignInButtonProps) {
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+
+function getPostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  return sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+}
+
+function consumePostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  const redirectTarget = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+  sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  return redirectTarget;
+}
+
+export default function GoogleSignInButton({
+  onSuccess,
+  onCancel,
+  on2FARequired,
+}: GoogleSignInButtonProps) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [blockedByConnection, setBlockedByConnection] = useState(false);
   const [error, setError] = useState("");
@@ -37,55 +55,45 @@ export default function GoogleSignInButton({ onSuccess, onCancel, on2FARequired 
     setGoogleLoading(true);
     setError("");
 
-    //Abrir popup pequeño de Google
     const width = 500;
     const height = 600;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
     const popup = window.open(
-      "/api/auth/signin/google?callbackUrl=/",
+      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(getPostAuthRedirect())}`,
       "Google Login",
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=no`
     );
 
     popupRef.current = popup;
 
-    //Detectar cuando el popup se cierra
     checkPopupRef.current = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(checkPopupRef.current!);
         setGoogleLoading(false);
 
-        //Verificar sesión de NextAuth (no /api/auth/me de Max)
         fetch("/api/auth/session")
-          .then(res => res.json())
+          .then((res) => res.json())
           .then(async (session) => {
             if (session?.user) {
-              // ✅ NUEVO: Verificar si requiere 2FA
-              console.log("[GoogleSignInButton] Sesión encontrada, verificando 2FA...");
               try {
                 const check2FARes = await fetch("/api/auth/check-2fa-status");
                 if (check2FARes.ok) {
                   const { requires2FA, userId } = await check2FARes.json();
-                  console.log("[GoogleSignInButton] requires2FA:", requires2FA);
-                  
+
                   if (requires2FA && userId && on2FARequired) {
-                    // Requiere 2FA
-                    console.log("[GoogleSignInButton] 2FA requerido");
                     on2FARequired(userId);
                     return;
                   }
                 }
-              } catch (err) {
-                console.error("[GoogleSignInButton] Error verificando 2FA:", err);
+              } catch (error) {
+                console.error("[GoogleSignInButton] Error verificando 2FA:", error);
               }
 
-              // No requiere 2FA o error en verificación - proceder normalmente
               if (onSuccess) onSuccess();
-              window.location.href = "/";
+              window.location.href = consumePostAuthRedirect();
             } else {
-              //Canceló o falló
               setError("Inicio de sesión cancelado");
               if (onCancel) onCancel();
             }
@@ -97,7 +105,6 @@ export default function GoogleSignInButton({ onSuccess, onCancel, on2FARequired 
     }, 500);
   }
 
-  // Limpiar interval al desmontar
   useEffect(() => {
     return () => {
       if (checkPopupRef.current) clearInterval(checkPopupRef.current);
@@ -146,7 +153,6 @@ export default function GoogleSignInButton({ onSuccess, onCancel, on2FARequired 
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
 
-      {/*BUG 1 — Mensaje de cancelación o error de conexión */}
       {error && (
         <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>
           {error}

@@ -39,7 +39,7 @@ export const historyService = {
     }
 
     const arrCurrent = await this.getHistory(false);
-    const arrFiltered = arrCurrent.filter((objItem) => objItem.strName.toLowerCase() !== objData.strName.toLowerCase());
+    const arrFiltered = arrCurrent.filter((objItem) => objItem.strId !== objData.strId);
     const arrUpdated = [objData, ...arrFiltered].slice(0, 5); // Límite de 5 solo para anónimos
     localStorage.setItem(strStorageKey, JSON.stringify(arrUpdated));
     return arrUpdated;

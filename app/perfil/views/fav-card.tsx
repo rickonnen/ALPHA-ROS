@@ -37,7 +37,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
   const router = useRouter()
 
   const handleInfo = (id: string) => {
-    router.push(`/publicacion/perfil_del_inmueble/${id}`);
+    window.open(`/publicacion/Vista_del_Inmueble/${id}`, "_blank");
   };
   const strEtiqueta = [favorito.tipo, favorito.tipo_operacion]
     .filter(Boolean)
@@ -75,7 +75,7 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
             )}
             <h3
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline"
-              onClick={() => router.push(`/publicacion/perfil_del_inmueble/${favorito.id}`)}
+              onClick={() => handleInfo(favorito.id)}
             >
               {favorito.titulo}
             </h3>
@@ -118,14 +118,14 @@ export default function FavCard({ favorito, id_usuario, onRemoved }: FavCardProp
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <Button
                 variant="azul"
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() => handleInfo(favorito.id)}
               >
-                Ver Detalles
+                Ver Detalle
               </Button>
               <FavButton
                 id_publicacion={favorito.id}

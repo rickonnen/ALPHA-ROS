@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { blogState, blogData } from "@/types/blogType";
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 23/04/2026
  * funcionalidad: recupera la lista de blogs publicados y los formatea
@@ -7,11 +9,17 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET() {
   try {
-    // consulta a prisma para obtener blogs publicados
-    const arrDbBlogs = await prisma.blogs.findMany({
+    const ArrDbBlogsBlo = await prisma.blogs.findMany({
       where: {
-        estado: "PUBLICADO",
+        estado: blogState.PUBLICADO,
         deleted_at: null
+      },
+      select: {
+        id_blog: true,
+        titulo: true,
+        fecha_publicacion: true,
+        descripcion: true,
+        imagen_url: true,
       },
       orderBy: {
         fecha_creacion: "desc",
@@ -19,9 +27,9 @@ export async function GET() {
     });
 
     // formateo de datos y transformacion de la fecha
-    const arrFormattedBlogs = arrDbBlogs.map((objRow) => {
-      const strFormattedDate = objRow.fecha_publicacion
-        ? new Date(objRow.fecha_publicacion).toLocaleDateString("es-ES", {
+    const ArrFormattedBlogsBlo: blogData[] = ArrDbBlogsBlo.map((ObjRowBlo) => {
+      const StrFormattedDateBlo = ObjRowBlo.fecha_publicacion
+        ? new Date(ObjRowBlo.fecha_publicacion).toLocaleDateString("es-ES", {
             day: "numeric",
             month: "long",
             year: "numeric"
@@ -29,17 +37,18 @@ export async function GET() {
         : "fecha desconocida";
 
       return {
-        intId: objRow.id_blog,
-        strTitle: objRow.titulo,
-        strDate: strFormattedDate,
-        strDescription: objRow.descripcion,
-        strImageUrl: objRow.imagen_url || "",
+        IntIdBlo: ObjRowBlo.id_blog,
+        StrTitleBlo: ObjRowBlo.titulo || "",
+        StrDateBlo: StrFormattedDateBlo,
+        StrDescriptionBlo: ObjRowBlo.descripcion || "",
+        StrImageUrlBlo: ObjRowBlo.imagen_url || "",
+        StrAuthorBlo: "",
       };
     });
 
-    return NextResponse.json(arrFormattedBlogs);
-  } catch (objError) {
-    console.error("[BLOGS_GET_ERROR]", objError);
+    return NextResponse.json(ArrFormattedBlogsBlo);
+  } catch (ObjErrorBlo) {
+    console.error("[BLOGS_GET_ERROR]", ObjErrorBlo);
     return NextResponse.json({ error: "error al obtener los blogs" }, { status: 500 });
   }
 }

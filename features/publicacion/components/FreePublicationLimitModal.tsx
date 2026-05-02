@@ -10,13 +10,13 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FreePublicationLimitModalProps {
   bolOpen: boolean;
@@ -36,24 +36,22 @@ export default function FreePublicationLimitModal({
 
   const router = useRouter();
 
-  if (!bolOpen) return null;
-
   return (
-    <AlertDialog open={bolOpen}>
-      <AlertDialogContent
+    <Dialog open={bolOpen} onOpenChange={(open) => { if (!open) onBack(); }}>
+      <DialogContent
         className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-white"
         style={{ fontFamily: "var(--font-geist-sans)" }}
       >
-        <AlertDialogHeader className="text-center space-y-3">
-          <AlertDialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight">
+        <DialogHeader className="text-center space-y-3">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight text-[#1a1a1a]">
             {strTitle}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
+          </DialogTitle>
+          <DialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
             {strDescription}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <AlertDialogFooter className="mt-6 flex flex-row items-center justify-between gap-3 sm:gap-4 bg-transparent border-none">
+        <DialogFooter className="mt-6 flex !flex-row items-center justify-between gap-3 sm:gap-4 bg-transparent border-none">
           <Button
             type="button"
             variant="outline"
@@ -74,8 +72,8 @@ export default function FreePublicationLimitModal({
           >
             {"Ver Planes →"}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

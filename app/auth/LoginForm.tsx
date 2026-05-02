@@ -29,6 +29,31 @@ const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
 const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
 const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
 const GOOGLE_TELEMETRY_CREATED_AT_KEY = "google_telemetry_created_at";
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+
+function consumePostAuthRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+  const redirectTarget = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
+  if (redirectTarget) {
+    sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  }
+  return redirectTarget;
+}
+
+function getPostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  return sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+}
+
+async function checkInternetConnection() {
+  if (!navigator.onLine) return false;
+  try {
+    await fetch("https://www.google.com", { mode: "no-cors" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
   const router = useRouter();
@@ -189,9 +214,9 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     if (onClose) onClose();
     if (userRol === 1) {
       router.push("/admin/verificacion-pagos");
-    } else {
-      router.push("/");
+      return;
     }
+    router.push(consumePostAuthRedirect() || "/");
   }
 
   const googleClickedRef = useRef(false);
@@ -233,21 +258,13 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     try {
       const telemetry = await getLoginTelemetry();
       savePendingGoogleTelemetry(telemetry);
-      await signIn("google", { callbackUrl: "/google-auth-check" });
+      await signIn("google", {
+        callbackUrl: `/google-auth-check?redirect=${encodeURIComponent(getPostAuthRedirect())}`,
+      });
     } catch (error) {
       clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
       setGoogleLoading(false);
-    }
-  }
-
-  async function checkInternetConnection() {
-    if (!navigator.onLine) return false;
-    try {
-      await fetch("https://www.google.com", { mode: "no-cors" });
-      return true;
-    } catch {
-      return false;
     }
   }
 
