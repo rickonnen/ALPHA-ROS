@@ -1,5 +1,4 @@
 "use client";
-
 import { Suspense, useState } from "react"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +10,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/auth/AuthContext";
-import { useNotificaciones } from "@/components/hooks/useNotificaciones";
-import NotificacionesUI from "@/components/ui/NotificacionesUI";
 
 function HistorialPagosContent() {
   const { user } = useAuth();
@@ -20,8 +17,6 @@ function HistorialPagosContent() {
   const [activeTab, setActiveTab] = useState("pendientes");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fechaFiltro, setFechaFiltro] = useState<Date | undefined>(undefined);
-  const { notificaciones } = useNotificaciones();
-  
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
@@ -59,7 +54,6 @@ function HistorialPagosContent() {
                   PAGOS RECHAZADOS
                 </TabsTrigger>
               </TabsList>
-              <NotificacionesUI notificaciones={notificaciones} />
             </div>
             <div className="bg-[#F4EFE6] text-[#6B7280] text-sm px-3 py-1.5 inline-flex gap-3 items-center rounded-sm w-full md:w-auto justify-between md:justify-start">
               <span className="font-medium text-[#2E2E2E]">Filtrar:</span>
@@ -100,7 +94,6 @@ function HistorialPagosContent() {
     </Card>
   );
 }
-
 export default function HistorialPagosPage() {
   return (
     <Suspense fallback={<p className="text-sm text-white/50 p-6">Cargando historial...</p>}>

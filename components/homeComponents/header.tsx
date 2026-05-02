@@ -64,7 +64,10 @@ export const Header = () => {
   const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
   const { strFotoPerfil } = useFotoPerfil(objUser?.id);
   const { strNombreHeader } = useUsuarioHeader(objUser); // centraliza el nombre/username actualizado
-  const unreadCount = useUnreadCount(objUser);
+  
+  // 🔴 CORRECCIÓN AQUÍ: Usar objUser en lugar de user
+  const { unreadCount } = useUnreadCount(objUser); // ✅ Ahora usa objUser
+  
   const objRouter = useRouter();
 
   // modales y menus

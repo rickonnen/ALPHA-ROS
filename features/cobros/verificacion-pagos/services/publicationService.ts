@@ -10,15 +10,15 @@ export const syncUserPublicationsAndQuota = async (
 
     // 1. Traer TODAS las publicaciones del usuario (sin filtrar estado)
     const publicaciones = await tx.publicacion.findMany({
-        where: { id_usuario: strUserId },
+        where: { id_usuario: strUserId, gratuito: false },
         orderBy: { fecha_creacion: 'asc' }
     });
 
     console.log(`Total publicaciones encontradas: ${publicaciones.length}`);
 
     // 2. Clasificamos usando IDs numéricos (1=Activa, 4=Suspencion)
-    const activas = publicaciones.filter(p => p.id_estado === 1);
-    const suspendidas = publicaciones.filter(p => p.id_estado === 4);
+    const activas = publicaciones.filter(p => p.id_estado === 1 && p.gratuito === false);
+    const suspendidas = publicaciones.filter(p => p.id_estado === 4 && p.gratuito === false);
 
     console.log(`Publicaciones actualmente Activas (ID 1): ${activas.length}`);
     console.log(`Publicaciones actualmente Suspendidas (ID 4): ${suspendidas.length}`);

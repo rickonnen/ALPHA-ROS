@@ -10,14 +10,18 @@ export async function handleDiscordSignIn(user: any, account: any) {
   // 1. ¿Ya existe este discord_id en Redes_vinculadas?
   const { data: redExistente } = await dbInstance
     .from("RedesVinculadas")
-    .select("id_usuario")
-    .eq("proveedor", "discord")
+    .select("id_usuario, estado") 
+   .eq("proveedor", "discord")
     .eq("id_proveedor", account.providerAccountId)
-    .eq("estado", true)
+    //.eq("estado", true)
     .maybeSingle()
 
-  if (redExistente) return true // Ya existe → solo iniciar sesión
-
+    if (redExistente) {
+      if (redExistente.estado === true) return true // DC activo → iniciar sesión
+      if (redExistente.estado === false) {           //DC desvinculado → bloquear
+        return "/auth/discord-desvinculado"
+      }
+    }
   // 2. ¿Ya existe un usuario con ese email?
   const { data: usuarioExistente } = await dbInstance
     .from("Usuario")
@@ -26,16 +30,36 @@ export async function handleDiscordSignIn(user: any, account: any) {
     .maybeSingle()
 
   if (usuarioExistente) {
-    // Ya tiene cuenta con otro método → solo vinculamos Discord
-    const { error } = await dbInstance.from("RedesVinculadas").insert({
-      id_usuario: usuarioExistente.id_usuario,
-      proveedor: "discord",
-      id_proveedor: account.providerAccountId,
-      estado: true,
-    })
-    if (error) {
-      console.error("Error vinculando Discord a usuario existente:", error)
-      return false
+    // Verificar si ya existe una fila con estado = false
+    const { data: redExistente } = await dbInstance
+      .from("RedesVinculadas")
+      .select("id_redv, estado")
+      .eq("id_usuario", usuarioExistente.id_usuario)
+      .eq("proveedor", "discord")
+      .maybeSingle()
+
+    if (redExistente?.estado === false) {
+      // UPDATE en lugar de INSERT
+      const { error } = await dbInstance
+        .from("RedesVinculadas")
+        .update({ estado: true, id_proveedor: account.providerAccountId })
+        .eq("id_redv", redExistente.id_redv)
+      if (error) {
+        console.error("Error revinculando Discord:", error)
+        return false
+      }
+    } else if (!redExistente) {
+      // Solo INSERT si no existe nada
+      const { error } = await dbInstance.from("RedesVinculadas").insert({
+        id_usuario: usuarioExistente.id_usuario,
+        proveedor: "discord",
+        id_proveedor: account.providerAccountId,
+        estado: true,
+      })
+      if (error) {
+        console.error("Error vinculando Discord a usuario existente:", error)
+        return false
+      }
     }
     return true
   }
