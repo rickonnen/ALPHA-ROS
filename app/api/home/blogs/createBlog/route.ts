@@ -150,6 +150,20 @@ export async function POST(request: NextRequest) {
     // 9. Crear blog como pendiente de revisión
     // No se usa fecha_publicacion porque el admin lo aprobará luego.
     // ======================================================
+    const objUserExists = await prisma.usuario.findUnique({
+      where: { id_usuario: strUserIdFromToken },
+      select: { id_usuario: true },
+    });
+
+    console.log("[DEBUG] userId del token:", strUserIdFromToken);
+    console.log("[DEBUG] Usuario encontrado en DB:", objUserExists);
+
+    if (!objUserExists) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado. Vuelve a iniciar sesión." },
+        { status: 404 }
+      );
+    }
     const objNewBlog = await prisma.blogs.create({
       data: {
         id_user: strUserIdFromToken,
