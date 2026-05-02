@@ -4,6 +4,7 @@ import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { NextAuthOptions } from "next-auth"
+import { createClient } from "@supabase/supabase-js";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -178,6 +179,20 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id as string
+
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data } = await supabase
+          .from("Usuario")
+          .select("estado")
+          .eq("id_usuario", token.id)
+          .maybeSingle();
+    
+        if (data?.estado === 0) {
+          return null; // invalida la sesión
+        }
       }
       return session
     },
