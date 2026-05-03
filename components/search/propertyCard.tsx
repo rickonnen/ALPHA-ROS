@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, memo } from 'react';
-import { memo } from 'react';
 import Image from 'next/image';
 import {
   MapPin,
@@ -297,25 +296,16 @@ function PropertyCard({
 
           <div className="flex shrink-0 items-center gap-1.5">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className={`h-8 gap-1 px-2 text-[11px] ${!isContactAvailable ? 'opacity-50' : ''}`}
-              disabled={!isContactAvailable}
-              asChild={isContactAvailable}
+              className="h-8 gap-1 px-2 text-[11px]"
+              onClick={() => {
+                window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, '_blank');
+                trackEvent(property.id, 'click');
+                onClick?.();
+              }}
             >
-              {isContactAvailable ? (
-                <a
-                  href={`https://wa.me/${telefonoParaWhatsapp}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackEvent(property.id, 'contacto')}
-                >
-                  <MessageCircle className="h-3.5 w-3.5 text-green-600" />
-                  <span className="hidden xl:inline">WhatsApp</span>
-                </a>
-              ) : (
-                <span>No disp.</span>
-              )}
+              Ver Detalle
             </Button>
           </div>
         </div>

@@ -346,8 +346,9 @@ function mapPublicationToProperty(
     price: toNumber(publication.precio),
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
-    whatsappContact: "",
+    whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
+    usuarioTelefono: publication.usuario?.telefono,
   };
 }
 

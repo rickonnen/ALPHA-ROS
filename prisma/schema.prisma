@@ -665,6 +665,7 @@ model HistorialBusqueda {
   tiempo_en_resultados_ms Int?
   Usuario                 Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
+  @@unique([id_usuario, mapbox_id])
   @@schema("public")
 }
 
@@ -709,6 +710,7 @@ model InteraccionEvento {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MisZonas {
   id_mi_zona     Int       @id(map: "miszonas_pkey") @default(autoincrement())
   id_usuario     String    @db.Uuid
@@ -884,6 +886,7 @@ model RedesVinculadas {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ReporteInmuebles {
   id           Int    @id(map: "reporteinmuebles_pkey") @default(autoincrement())
   departamento String @db.VarChar
@@ -894,6 +897,7 @@ model ReporteInmuebles {
   @@schema("public")
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
   nombre_rol String?   @db.VarChar(30)
@@ -914,6 +918,7 @@ model Sesion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model SnapshotInteraccion {
   id_snapshot       BigInt   @id(map: "snapshotinteraccion_pkey") @default(autoincrement())
   id_interaccion    BigInt
@@ -1067,6 +1072,8 @@ model Zona {
   @@schema("public")
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificacion_campana {
   id         BigInt    @id(map: "notificacion_whatsapp_pkey") @default(autoincrement())
   title      String
