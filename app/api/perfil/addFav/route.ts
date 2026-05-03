@@ -10,8 +10,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+function getSessionId(request: NextRequest): string {
+  return request.cookies.get("session_id")?.value ?? crypto.randomUUID();
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const session_id = getSessionId(req);
     const body = await req.json();
     const { id_usuario, id_publicacion } = body;
 
@@ -27,6 +32,16 @@ export async function POST(req: NextRequest) {
         id_usuario,
         id_publicacion: Number(id_publicacion),
         fecha_add: new Date(), // now()
+      },
+    });
+
+    await prisma.interaccionEvento.create({
+      data: {
+        id_usuario,
+        session_id,
+        id_publicacion: Number(id_publicacion),
+        tipo_evento: "favorito",
+        creado_en: new Date(),
       },
     });
 

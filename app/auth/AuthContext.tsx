@@ -91,6 +91,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ensureSessionIdCookie();
   }, []);
 
+  useEffect(() => {
+    // Refuerzo server-side: garantiza que la cookie exista también para rutas API
+    // incluso si el primer evento se dispara antes del setCookie del cliente.
+    void fetch("/api/session/bootstrap", {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    }).catch(() => {});
+  }, []);
+
   const fetchUserFromServer = async () => {
     // SOLUCIÓN: Se eliminó la re-declaración local de AuthContextType que causaba ruido
     try {

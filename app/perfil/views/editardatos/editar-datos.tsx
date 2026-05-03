@@ -59,23 +59,6 @@
  * Feat: Campos genero, fecha de nacimiento y estado civil
  *                Asterisco de obligatorio en campos requeridos
  */
-/** Dev: Alvarado Alisson Dalet - sow-AlissonA
- * Fecha: 22/04/2026
- * Fix: No permite mismo username en dos personas
- */
-/** Dev: Dylan Coca Beltran - xdev/sow-dylanc
- * Fecha: 26/04/2026
- * Fix: Corrección de validación de mayoría de edad:
- *      strFechaMax apunta a exactamente hace 18 años en hora local
- *      en vez de la fecha de hoy, bloqueando fechas inválidas desde el calendario,
- *      parseo de fecha con split("-") para evitar desfase UTC-4 de Bolivia
- *      que hacía que new Date("YYYY-MM-DD") retrocediera un día al interpretar UTC medianoche,
- *      reubicación del isNaN antes del cálculo de intAnios para no operar sobre fecha inválida,
- *      reemplazo de resta simple de años por cálculo preciso con bolCumplio considerando
- *      mes y día exactos, separación de los casos menor de 18 y mayor de 120
- *      en bloques independientes con mensajes de error distintos
- */
-
 "use client";
 import { useState, useEffect } from "react";
 import ResultModal from "@/components/ui/ResultModal";
@@ -144,9 +127,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
   const [bolLoadingPaises, setBolLoadingPaises] = useState(false);
   const [bolLoading, setBolLoading]         = useState(false);
   const [bolLoadingFoto, setBolLoadingFoto] = useState(false);
-  // Estado para validacion inline de username duplicado
-  const [bolUsernameOcupado, setBolUsernameOcupado]       = useState(false);
-  const [bolCheckingUsername, setBolCheckingUsername]     = useState(false);
   const [objModal, setObjModal]             = useState<{
     type: "success" | "error";
     title: string;
@@ -169,39 +149,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     };
     fetchPaises();
   }, []);
-
-  // Debounce para verificar disponibilidad del username en tiempo real
-  useEffect(() => {
-    // Si el username es el mismo que el original, no hace falta consultar
-    if (strUsername.trim() === (usuario.username?.trim() ?? "")) {
-      setBolUsernameOcupado(false);
-      return;
-    }
-    // No consultar si no cumple el mínimo de letras (evita requests innecesarios)
-    const intLetrasActuales = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
-    if (strUsername.trim().length === 0 || intLetrasActuales < intMinLetrasUsername) {
-      setBolUsernameOcupado(false);
-      return;
-    }
-
-    setBolCheckingUsername(true);
-    const intTimeout = setTimeout(async () => {
-      try {
-        const res  = await fetch(
-          `/api/perfil/checkUsername?username=${encodeURIComponent(strUsername.trim())}&id_usuario=${usuario.id_usuario}`
-        );
-        const json = await res.json();
-        setBolUsernameOcupado(json.ocupado ?? false);
-      } catch {
-        // Error silencioso — el backend igual lo valida al guardar
-        setBolUsernameOcupado(false);
-      } finally {
-        setBolCheckingUsername(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(intTimeout);
-  }, [strUsername]);
 
   const handleGuardar = async () => {
     const bolSinCambios =
@@ -293,16 +240,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
         type: "error",
         title: "Campos inválidos",
         message: `El username debe contener al menos ${intMinLetrasUsername} letras.`,
-      });
-      return;
-    }
-
-    // Bloquear guardado si el username ya está en uso
-    if (bolUsernameOcupado) {
-      setObjModal({
-        type: "error",
-        title: "Username no disponible",
-        message: "El nombre de usuario que elegiste ya está en uso. Por favor elige otro.",
       });
       return;
     }
@@ -653,30 +590,6 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
                       Máximo {intMaxUsername} caracteres.
                     </span>
                   )}
-                  {/* Indicador de verificacion en tiempo real */}
-                  {bolCheckingUsername && (
-                    <span className="text-xs text-white/50 font-black flex items-center gap-1">
-                      <Loader2 className="animate-spin h-3 w-3" />
-                      Verificando disponibilidad...
-                    </span>
-                  )}
-                  {/* Mensaje de username ocupado */}
-                  {!bolCheckingUsername && bolUsernameOcupado && (
-                    <span className="text-xs text-red-400 font-black">
-                      Este username ya está en uso. Elige otro.
-                    </span>
-                  )}
-                  {/* Mensaje de username disponible */}
-                  {!bolCheckingUsername && !bolUsernameOcupado &&
-                    strUsername.trim() !== (usuario.username?.trim() ?? "") &&
-                    strUsername.trim().length > 0 &&
-                    intLetrasUsername >= intMinLetrasUsername &&
-                    regexSinAcentos.test(strUsername) &&
-                    !regexSinEmojis.test(strUsername) && (
-                    <span className="text-xs text-green-400 font-black">
-                      ✓ Username disponible.
-                    </span>
-                  )}
                 </div>
 
                 {/* Género */}
@@ -761,8 +674,8 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
             </Button>
             <Button
               onClick={handleGuardar}
-              disabled={bolLoading || bolCheckingUsername || bolUsernameOcupado}
-              className="bg-white text-[var(--primary)] font-black tracking-widest text-xs hover:bg-white/90 disabled:opacity-50"
+              disabled={bolLoading}
+              className="bg-white text-[var(--primary)] font-black tracking-widest text-xs hover:bg-white/90"
             >
               {bolLoading ? (
                 <><Loader2 className="animate-spin h-4 w-4 mr-2" /> Guardando...</>

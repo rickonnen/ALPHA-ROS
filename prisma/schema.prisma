@@ -665,6 +665,7 @@ model HistorialBusqueda {
   tiempo_en_resultados_ms Int?
   Usuario                 Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
+  @@unique([id_usuario, mapbox_id])
   @@schema("public")
 }
 
