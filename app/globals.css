@@ -115,27 +115,27 @@
   --sidebar-primary-foreground: var(--secondary-foreground);
 
   /* fondo principal: Beige arena suave (#F4EFE6)*/
-  --background: oklch(0.95 0.01 82);
+  --background: #F4EFE6;
 
   /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
-  --card-bg: oklch(0.958 0.011 85);
+  --card-bg: #F9F5F1;
 
   /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
-  --card-border: oklch(0.85 0.01 83);
+  --card-border: #D6CFC3;
 
   /* fondo secundario: Gris cálido claro (#E7E1D7)*/
-  --secondary-fund: oklch(0.91 0.01 81);
+  --secondary-fund: #E7E1D7;
 
   /* texto principal: Gris profundo (#2E2E2E)*/
-  --foreground: oklch(0.30 0.00 0);
+  --foreground: #2E2E2E;
 
   /* boton primario: Azul petróleo (#1F3A4D)*/
-  --primary: oklch(0.34 0.05 241);
-  --primary-foreground: oklch(0.952 0.01 84.8);
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
 
   /* boton secundario: Terracota suave (#C26E5A)*/
-  --secondary: oklch(0.63 0.11 34);
-  --secondary-foreground: oklch(0.952 0.01 84.8);
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
 
   /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
