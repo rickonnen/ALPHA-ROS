@@ -1,23 +1,23 @@
 "use client";
- 
+
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCarousel } from "../../hooks/useCarousel";
-import { OPERATION_LABEL, AUTOPLAY_DELAY } from "./constants";
+import { OPERATION_LABEL, INT_CITY_IMAGE_DELAY } from "./constants";
 import type { CityData, OperationType } from "./types";
- 
+
 /**
  * @Dev: Rodrigo Chalco
  */
- 
+
 interface CityCardProps {
   objCity:      CityData;
   strOperation: OperationType;
   bolIsLarge:   boolean;
   intRank:      number;
 }
- 
+
 export function CityCard({
   objCity,
   strOperation,
@@ -27,7 +27,7 @@ export function CityCard({
   const objRouter         = useRouter();
   const strOperationLabel = OPERATION_LABEL[strOperation];
   const bolSinDisponibles = objCity.intContador === 0;
- 
+
   const {
     intCurrentIndex,
     containerRef,
@@ -37,9 +37,9 @@ export function CityCard({
     touchHandlers,
   } = useCarousel({
     intTotalItems:    objCity.arrImagenes.length,
-    intAutoPlayDelay: AUTOPLAY_DELAY,
+    intAutoPlayDelay: INT_CITY_IMAGE_DELAY,
   });
- 
+
   const handleCardClick = (): void => {
     if (bolSinDisponibles) return;
     const params = new URLSearchParams({
@@ -48,7 +48,7 @@ export function CityCard({
     });
     objRouter.push(`/busqueda?${params.toString()}`);
   };
- 
+
   const handleArrowClick = (
     e: React.MouseEvent,
     direction: "prev" | "next",
@@ -56,12 +56,12 @@ export function CityCard({
     e.stopPropagation();
     direction === "next" ? goToNextImage() : goToPreviousImage();
   };
- 
+
   const handleDotClick = (e: React.MouseEvent, index: number): void => {
     e.stopPropagation();
     goToSelectedImage(index);
   };
- 
+
   return (
     <div
       ref={containerRef}
@@ -105,7 +105,7 @@ export function CityCard({
           />
         ))}
       </div>
- 
+
       {/* ── Gradiente inferior ── */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -114,7 +114,7 @@ export function CityCard({
             "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.82) 100%)",
         }}
       />
- 
+
       {/* ── Badge operación ── */}
       <div className="absolute top-4 left-4 z-10">
         <span
@@ -124,7 +124,7 @@ export function CityCard({
           {strOperationLabel}
         </span>
       </div>
- 
+
       {/* ── Flechas carrusel ── */}
       {objCity.arrImagenes.length > 1 && (
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
@@ -142,9 +142,9 @@ export function CityCard({
           ))}
         </div>
       )}
- 
+
       {/* ── Contenido inferior ── */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-10">
+      <div className="absolute bottom-[-8px] left-0 right-0 p-4 sm:p-5 z-10">
         <h3
           className="font-sans font-bold leading-none text-white"
           style={{
@@ -154,20 +154,23 @@ export function CityCard({
         >
           {objCity.strDepartamento}
         </h3>
- 
-        <p
-          className="font-sans mt-1 leading-snug"
-          style={{
-            fontSize: bolIsLarge ? "0.875rem" : "0.72rem",
-            color:    "rgba(255,255,255,0.72)",
-            maxWidth: "80%",
+
+        {objCity.strDescription && (
+            <p
+            className="font-sans mt-2 leading-snug"
+            style={{
+            fontSize:   bolIsLarge ? "0.95rem" : "0.78rem",
+            fontWeight: 500,
+            color:      "rgba(255,255,255,0.82)",
+            maxWidth:   "85%",
           }}
-        >
-          {strOperationLabel} · #{intRank} más buscado
-        </p>
- 
-        {/* Dots + botón */}
-        <div className="mt-3 flex items-center justify-between">
+    >
+      {objCity.strDescription}
+      </p>
+      )}
+
+        {/* ── Dots + botón ── */}
+        <div className="mt-0 flex items-center justify-between">
           <div
             className="flex items-center gap-1.5"
             onClick={(e) => e.stopPropagation()}
@@ -179,9 +182,9 @@ export function CityCard({
                 onClick={(e) => handleDotClick(e, intIndex)}
                 aria-label={`Ir a imagen ${intIndex + 1} de ${objCity.strDepartamento}`}
                 style={{
-                  height:     "5px",
-                  width:      intIndex === intCurrentIndex ? "18px" : "5px",
-                  background: intIndex === intCurrentIndex
+                  height:       "5px",
+                  width:        intIndex === intCurrentIndex ? "18px" : "5px",
+                  background:   intIndex === intCurrentIndex
                     ? "rgba(255,255,255,0.9)"
                     : "rgba(255,255,255,0.3)",
                   transition:   "width 0.5s ease",
@@ -194,7 +197,7 @@ export function CityCard({
               />
             ))}
           </div>
- 
+
           {bolSinDisponibles ? (
             <span
               className="font-sans text-[10px] font-semibold rounded-full px-2 py-1"
