@@ -44,10 +44,6 @@ function toNumber(value: Prisma.Decimal | number | null | undefined): number | n
   return typeof value === 'number' ? value : value.toNumber();
 }
 
-function getSessionId(request: NextRequest): string | null {
-  return request.cookies.get('session_id')?.value ?? null;
-}
-
 function getUserIdFromToken(request: NextRequest): string | null {
   try {
     const token = request.cookies.get('auth_token')?.value;
@@ -102,12 +98,10 @@ function mapToJson(map: Map<number, number>, limit: number): Record<string, numb
 }
 
 async function loadPreferences(request: NextRequest) {
-  const sessionId = getSessionId(request);
   const userId = getUserIdFromToken(request);
 
-  if (!sessionId && !userId) {
+  if (!userId) {
     return {
-      sessionId: null,
       userId: null,
       prefOperacion: new Map<number, number>(),
       prefInmueble: new Map<number, number>(),
@@ -121,17 +115,7 @@ async function loadPreferences(request: NextRequest) {
     };
   }
 
-  const whereTracking =
-    userId != null && sessionId
-      ? {
-          OR: [
-            { id_usuario: userId },
-            { session_id: sessionId, id_usuario: null as null },
-          ],
-        }
-      : userId != null
-        ? { id_usuario: userId }
-        : { session_id: sessionId as string, id_usuario: null as null };
+  const whereTracking = { id_usuario: userId };
 
   const [events, searches] = await Promise.all([
     prisma.interaccionEvento.findMany({
@@ -237,7 +221,6 @@ async function loadPreferences(request: NextRequest) {
     desiredMaxPrice != null;
 
   return {
-    sessionId: sessionId ?? null,
     userId: userId ?? null,
     prefOperacion,
     prefInmueble,
