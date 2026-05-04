@@ -22,7 +22,6 @@ const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionId = request.cookies.get("session_id")?.value ?? crypto.randomUUID();
     const requestBody = await request.json();
     const { email, password, latitud: flatLatitud, longitud: flatLongitud } = requestBody;
     const telemetry =
@@ -193,14 +192,6 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    const { error: migrateError } = await supabaseAdmin.rpc("migrar_eventos_sesion", {
-      p_session_id: sessionId,
-      p_id_usuario: userData.id_usuario,
-    });
-    if (migrateError) {
-      console.error("Error migrando eventos de sesión:", migrateError);
-    }
-
     response.cookies.set("auth_token", jwtToken, {
       httpOnly: true,                         
       secure: process.env.NODE_ENV === "production", 
@@ -209,13 +200,6 @@ export async function POST(request: NextRequest) {
       path: "/",                          
     });
 
-    response.cookies.set("session_id", sessionId, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 365,
-      path: "/",
-    });
     response.cookies.set(PENDING_LOGIN_LAT_COOKIE, "", {
       maxAge: 0,
       path: "/",
