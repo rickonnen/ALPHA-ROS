@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { adminBlogListResponse, blogState } from "@/types/blogType";
 
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 25/04/2026
  * funcionalidad: recupera todos los blogs y los formatea con select optimizado para admin
  * @return {NextResponse} lista completa de blogs con metadata de borrado
  */
@@ -25,8 +25,13 @@ export async function GET(request: Request) {
         imagen_url: true,
         fecha_creacion: true,
         deleted_at: true,
+        contenido: true,
         Usuario: {
-          select: { nombres: true } 
+          select: { 
+            nombres: true,
+            apellidos: true,
+            url_foto_perfil: true
+          } 
         }
       },
       orderBy: {
@@ -48,16 +53,31 @@ export async function GET(request: Request) {
       const StrStateValueBlo = Object.values(blogState).includes(StrRawState as blogState)
         ? (StrRawState as blogState)
         : blogState.NOPUBLICADO;
+      const StrFullName = ObjRowBlo.Usuario 
+        ? `${ObjRowBlo.Usuario.nombres || ''} ${ObjRowBlo.Usuario.apellidos || ''}`.trim() 
+        : "Equipo PropBol";
+
+      // calculamos el tiempo de lectura desde el contenido
+      const StrCleanContentBlo = ObjRowBlo.contenido 
+        ? String(ObjRowBlo.contenido).replace(/<[^>]*>?/gm, '') 
+        : '';
+      const IntWordCountBlo = StrCleanContentBlo.trim().split(/\s+/).filter(word => word.length > 0).length;
+      const IntReadTimeBlo = Math.max(1, Math.ceil(IntWordCountBlo / 200));
 
       return {
         IntIdBlo: ObjRowBlo.id_blog,
         StrTitleBlo: ObjRowBlo.titulo || "Sin título",
         StrStateBlo: StrStateValueBlo,
-        StrAuthorNameBlo: ObjRowBlo.Usuario?.nombres || "Anónimo",
+        StrAuthorNameBlo: StrFullName || "Anónimo",
         StrDescriptionBlo: ObjRowBlo.descripcion || "Sin descripción",
         StrImageUrlBlo: ObjRowBlo.imagen_url || "",
         StrDateBlo: StrDateBlo,
         BolIsDeletedBlo: ObjRowBlo.deleted_at !== null,
+        ObjAuthorBlo: {
+          name: StrFullName || "Anónimo",
+          avatar: ObjRowBlo.Usuario?.url_foto_perfil || undefined
+        },
+        StrReadTimeBlo: `${IntReadTimeBlo} min`,
       };
     });
 
