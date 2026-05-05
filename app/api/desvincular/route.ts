@@ -3,7 +3,7 @@
  * Funcionalidad: Desvincula una red social de la cuenta del usuario
  */
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/nextAuthOptions"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { NextRequest, NextResponse } from "next/server"
 import { dbInstance } from "@/lib/auth/dbInstance"
 
