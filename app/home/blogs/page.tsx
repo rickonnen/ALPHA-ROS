@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import ArticleCard from "./articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import GenericDropdown from "@/components/homeComponents/filterPanelSubcomponents/genericDropdown";
-
+import { useBlogActions } from "@/components/hooks/useBlogActions";
 import { useAuth } from "@/app/auth/AuthContext";
+import { ArticleCardSkeleton } from "./articleCardSkeleton";
 
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
@@ -20,6 +21,11 @@ interface blogData {
   StrDescriptionBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  ObjAuthorBlo?: {
+    name: string;
+    avatar?: string;
+  };
+  StrReadTimeBlo?: string;
 }
 
 const INT_ITEMS_PER_PAGE = 9;
@@ -32,6 +38,9 @@ export default function BlogsPage() {
 
   // 2. Extraemos el usuario actual
   const { user: objUser } = useAuth();
+  
+  // 3. Usamos nuestro nuevo Custom Hook para la lógica del botón
+  const { checkAndCreateBlog, isChecking } = useBlogActions();
 
   const [ArrBlogsBlo, SetArrBlogsBlo] = useState<blogData[]>([]);
   const [BolIsLoadingBlo, SetBolIsLoadingBlo] = useState<boolean>(true);
@@ -42,10 +51,6 @@ export default function BlogsPage() {
   const [IntCurrentPageBlo, SetIntCurrentPageBlo] = useState<number>(1);
 
   const [BolIsDropdownOpenBlo, SetBolIsDropdownOpenBlo] =
-    useState<boolean>(false);
-
-  // Estado para el botón Crear mi blog
-  const [BolIsCheckingPendingBlo, SetBolIsCheckingPendingBlo] =
     useState<boolean>(false);
 
   const ObjDropdownRefBlo = useRef<HTMLDivElement>(null);
@@ -156,49 +161,6 @@ export default function BlogsPage() {
     SetIntCurrentPageBlo(1);
   }, [StrSortOrderBlo]);
 
-  // ======================================================
-  // Botón Crear mi blog
-  // Si el usuario ya tiene un blog pendiente, lo manda a pending.
-  // Si no tiene pendiente, abre el formulario.
-  // ======================================================
-  const FnHandleCreateBlogBlo = async () => {
-    try {
-      SetBolIsCheckingPendingBlo(true);
-
-      const ObjResponseBlo = await fetch("/api/home/blogs/checkPendingBlog", {
-        method: "GET",
-      });
-
-      const ObjDataBlo = await ObjResponseBlo.json();
-
-      if (ObjResponseBlo.status === 401) {
-        router.push("/auth/login");
-        return;
-      }
-
-      if (!ObjResponseBlo.ok) {
-        throw new Error(
-          ObjDataBlo.error || "No se pudo verificar el blog pendiente."
-        );
-      }
-
-      if (ObjDataBlo.hasPendingBlog) {
-        router.push("/home/blogs/pending?existing=1");
-        return;
-      }
-
-      router.push("/home/blogs/createBlog");
-    } catch (ObjErrorBlo) {
-      console.error("[CHECK_PENDING_BEFORE_CREATE_BLOG_ERROR]", ObjErrorBlo);
-
-      // Respaldo: si falla la verificación, igual abre el formulario.
-      // La API createBlog igual volverá a validar antes de guardar.
-      router.push("/home/blogs/createBlog");
-    } finally {
-      SetBolIsCheckingPendingBlo(false);
-    }
-  };
-
   return (
     <main className="w-full max-w-6xl mx-auto px-4 py-12 min-h-screen flex flex-col gap-6">
       <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-border/50 pb-4">
@@ -234,9 +196,11 @@ export default function BlogsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full flex-1 relative z-10">
         {BolIsLoadingBlo ? (
-          <p className="text-muted-foreground col-span-1 md:col-span-2 lg:col-span-3 text-center py-20">
-            Cargando publicaciones...
-          </p>
+          Array.from({ 
+              length: Math.min(Math.max(3, Math.ceil(ArrPaginatedBlogsBlo.length / 3) * 3), 9) 
+            }).map((_, index) => (
+              <ArticleCardSkeleton key={index} />
+            ))
         ) : ArrPaginatedBlogsBlo.length > 0 ? (
           ArrPaginatedBlogsBlo.map((ObjBlogBlo) => (
             <ArticleCard
@@ -246,6 +210,8 @@ export default function BlogsPage() {
               StrDescriptionBlo={ObjBlogBlo.StrDescriptionBlo}
               StrImageUrlBlo={ObjBlogBlo.StrImageUrlBlo}
               StrDateBlo={ObjBlogBlo.StrDateBlo}
+              ObjAuthorBlo={ObjBlogBlo.ObjAuthorBlo}
+              StrReadTimeBlo={ObjBlogBlo.StrReadTimeBlo}
             />
           ))
         ) : (
@@ -329,11 +295,11 @@ export default function BlogsPage() {
         {objUser && (
           <button
             type="button"
-            onClick={FnHandleCreateBlogBlo}
-            disabled={BolIsCheckingPendingBlo}
+            onClick={checkAndCreateBlog}
+            disabled={isChecking}
             className={`flex items-center gap-2 px-8 py-3 bg-secondary text-secondary-foreground rounded-xl font-semibold shadow-sm ${CLS_FOCUS} ${StrHoverAnimBlo} disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            {BolIsCheckingPendingBlo ? "Verificando..." : "Crear mi blog"}
+            {isChecking ? "Verificando..." : "Crear mi blog"}
           </button>
         )}
       </div>

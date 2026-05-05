@@ -11,6 +11,8 @@
  */
 "use client";
 
+import { useEffect } from "react";
+
 interface ConfirmDeleteHistoryModalProps {
     bolOpen: boolean;
     strItemName?: string;
@@ -24,6 +26,16 @@ export default function ConfirmDeleteHistoryModal({
     fnOnAccept,
     fnOnCancel,
 }: ConfirmDeleteHistoryModalProps) {
+    
+    useEffect(() => {
+        if (bolOpen && typeof document !== "undefined") {
+            // Si hay un elemento activo (como un input) le quitamos el foco
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+        }
+    }, [bolOpen]);
+
     if (!bolOpen) return null;
 
     return (
@@ -32,7 +44,7 @@ export default function ConfirmDeleteHistoryModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-history-title"
-        className="relative w-full max-w-[450px] rounded-lg bg-background px-8 pb-8 pt-8 shadow-2xl"
+        className="relative w-full max-w-[28.125rem] rounded-lg bg-background px-8 pb-8 pt-8 shadow-2xl"
         onMouseDown={(objEvent) => {
             objEvent.stopPropagation();
         }}
@@ -73,7 +85,7 @@ export default function ConfirmDeleteHistoryModal({
             <button
             type="button"
             onClick={fnOnAccept}
-            className="w-full rounded-md bg-secondary px-4 py-3 font-bold text-white transition-colors hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="w-full rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground transition-colors hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
             Aceptar
         </button>

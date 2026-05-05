@@ -6,6 +6,7 @@ import Image from "next/image";
 import ArticleCardAdmin from "./articleCardAdmin";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import { blogState } from "@/types/blogType";
+import { ArticleCardSkeleton } from "@/app/home/blogs/articleCardSkeleton";
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
  * funcionalidad: panel de administracion para gestionar estados de los blogs
@@ -18,6 +19,11 @@ interface adminBlogData {
   StrDateBlo: string;
   StrStateBlo: string;
   BolIsDeletedBlo: boolean;
+  ObjAuthorBlo?: {
+    name: string;
+    avatar?: string;
+  };
+  StrReadTimeBlo?: string;
 }
 
 const INT_ITEMS_PER_PAGE = 9;
@@ -195,9 +201,11 @@ export default function AdminBlogsPage() {
       <div className="bg-secondary-fund p-6 sm:p-8 rounded-sm w-full min-h-[400px]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
           {BolIsLoadingBlo ? (
-            <p className="text-foreground/70 col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 font-bold text-body-info">
-              Cargando publicaciones...
-            </p>
+            Array.from({ 
+              length: Math.min(Math.max(3, Math.ceil(ArrFilteredBlogsBlo.length / 3) * 3), 9) 
+            }).map((_, index) => (
+              <ArticleCardSkeleton key={index} />
+            ))
           ) : ArrPaginatedBlogsBlo.length > 0 ? (
             ArrPaginatedBlogsBlo.map((ObjBlogBlo) => (
               <ArticleCardAdmin
@@ -209,6 +217,8 @@ export default function AdminBlogsPage() {
                 StrDateBlo={ObjBlogBlo.StrDateBlo}
                 StrCurrentTabBlo={StrActiveTabBlo}
                 FnOnActionBlo={FnHandleCardActionBlo}
+                ObjAuthorBlo={ObjBlogBlo.ObjAuthorBlo}
+                StrReadTimeBlo={ObjBlogBlo.StrReadTimeBlo}
               />
             ))
           ) : (
