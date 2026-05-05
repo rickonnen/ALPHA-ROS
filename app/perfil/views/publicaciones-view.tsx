@@ -40,6 +40,18 @@
     Fecha: 18/04/2026
     Feat: Integración del modal de límite de publicaciones (Criterio 11).
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 22/04/2026
+    Fix: Se aplicó estado visual "disabled" (grisáceo y cursor bloqueado) en el botón "+ Agregar" cuando el límite de publicaciones llega a 0.
+*/
+/*
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix de modales(gratuitos y de planes) y adición de limpieza de sessionStorage en botón "Agregar".
+ * Funcionalidad: Vista de modales segun el plan
+ - @param {PublicacionesViewProps} id_usuario - ID del usuario actual autenticado.
+ - @return {JSX.Element} Interfaz de lista de publicaciones y modales.
+ */
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -255,11 +267,16 @@ export default function PublicacionesView({
               <span className="text-white/60 text-sm whitespace-nowrap">
                 {publicacionesRestantes} publicaciones disponibles
               </span>
+  
               <Button
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)]"
+                className={`flex-shrink-0 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)] ${
+                  publicacionesRestantes <= 0
+                    ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80" 
+                    : "bg-[var(--secondary)] hover:bg-[var(--secondary)]/80"
+                }`}
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
@@ -417,3 +434,4 @@ export default function PublicacionesView({
     </>
   );
 }
+
