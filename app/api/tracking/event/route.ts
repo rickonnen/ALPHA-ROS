@@ -28,10 +28,6 @@ export interface TrackEventPayload {
   pagina_origen?: string;
 }
 
-function getSessionId(request: NextRequest): string | null {
-  return request.cookies.get('session_id')?.value ?? null;
-}
-
 function getUserIdFromToken(request: NextRequest): string | null {
   try {
     const token = request.cookies.get('auth_token')?.value;
@@ -46,11 +42,10 @@ function getUserIdFromToken(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackEventPayload;
-    const session_id = getSessionId(request);
     const id_usuario = getUserIdFromToken(request);
 
-    if (!session_id) {
-      return NextResponse.json({ success: false, message: 'session_id requerido' }, { status: 400 });
+    if (!id_usuario) {
+      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
     }
 
     if (!body.id_publicacion || !body.tipo_evento) {
@@ -58,8 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { error } = await supabaseAdmin.from('InteraccionEvento').insert({
-      id_usuario: id_usuario ?? null,
-      session_id,
+      id_usuario,
+      session_id: id_usuario,
       id_publicacion: body.id_publicacion,
       tipo_evento: body.tipo_evento,
       duracion_ms: body.duracion_ms ?? null,
@@ -72,13 +67,6 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('[tracking/event] Supabase error:', error);
       return NextResponse.json({ success: false }, { status: 500 });
-    }
-
-    if (id_usuario && session_id) {
-      await supabaseAdmin.rpc('migrar_eventos_sesion', {
-        p_session_id: session_id,
-        p_id_usuario: id_usuario,
-      });
     }
 
     return NextResponse.json({ success: true });

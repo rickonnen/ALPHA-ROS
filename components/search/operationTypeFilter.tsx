@@ -33,7 +33,7 @@ export function OperationTypeFilter({
   defaultOpen = false,
 }: OperationTypeFilterProps) {
   const [accordionValue, setAccordionValue] = useState<string>(
-    defaultOpen ? "operation-type" : "",
+    defaultOpen ? "operation-type" : ""
   );
 
   const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -43,7 +43,7 @@ export function OperationTypeFilter({
     onChange(
       value.includes(operation)
         ? value.filter((item) => item !== operation)
-        : [...value, operation],
+        : [...value, operation]
     );
   };
 
@@ -56,9 +56,7 @@ export function OperationTypeFilter({
           .join(", ");
 
   const labelTruncated =
-    selectedLabel.length > 30
-      ? `${selectedLabel.slice(0, 20)}..`
-      : selectedLabel;
+    selectedLabel.length > 30 ? `${selectedLabel.slice(0, 20)}..` : selectedLabel;
 
   const isOpen = accordionValue === "operation-type";
 
@@ -73,7 +71,7 @@ export function OperationTypeFilter({
   const handleOptionKeyDown = (
     event: React.KeyboardEvent<HTMLLabelElement>,
     index: number,
-    optionValue: OperationType,
+    optionValue: OperationType
   ) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -105,6 +103,12 @@ export function OperationTypeFilter({
     }
   };
 
+  const clearFilter = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onChange([]);
+  };
+
   return (
     <div className="mt-3 w-full">
       <Accordion
@@ -115,34 +119,37 @@ export function OperationTypeFilter({
         className="w-full"
       >
         <AccordionItem value="operation-type" className="border-none">
-          <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+          <div className="relative overflow-hidden rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
               ref={triggerButtonRef}
               className={cn(
-                "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
-                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]",
+                "relative w-full px-4 py-3 pr-20 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
+                "[&>svg]:absolute [&>svg]:right-3 [&>svg]:top-1/2 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:-translate-y-1/2 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
               )}
             >
-              <div className="flex w-full items-center justify-between pr-2">
-                <span className="truncate">{labelTruncated}</span>
-                {value.length > 0 && (
-                  <span
-                    role="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onChange([]);
-                    }}
-                    className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
-                  >
-                    <X className="h-4 w-4 text-[#5E5A55]" />
-                  </span>
-                )}
-              </div>
+              <span className="block max-w-full truncate pr-2">
+                {labelTruncated}
+              </span>
             </AccordionTrigger>
+
+            {value.length > 0 && (
+              <button
+                type="button"
+                aria-label="Limpiar filtro de tipo de operación"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onChange([]);
+                }}
+                className="absolute right-8 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg transition-colors hover:bg-[#DEDAD3]"
+              >
+                <X className="h-4 w-4 text-[#5E5A55]" />
+              </button>
+            )}
           </div>
 
           <AccordionContent className="pb-0 pt-3">
-            <div className="w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+            <div className="w-full rounded-lg border border-[#C8C0B5] bg-white p-3 shadow-sm">
               <div className="space-y-2">
                 {operationTypeOptions.map((option, index) => {
                   const id = `operation-type-${option.value}`;
@@ -160,11 +167,11 @@ export function OperationTypeFilter({
                         handleOptionKeyDown(event, index, option.value)
                       }
                       className={cn(
-                        "flex w-full cursor-pointer items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] transition outline-none",
+                        "flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] outline-none transition",
                         "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                         isChecked
                           ? "bg-[#E7E3DD]"
-                          : "bg-transparent hover:bg-[#F4EFE6]",
+                          : "bg-transparent hover:bg-[#F4EFE6]"
                       )}
                     >
                       <Checkbox
@@ -172,10 +179,11 @@ export function OperationTypeFilter({
                         checked={isChecked}
                         onCheckedChange={() => toggle(option.value)}
                         className={cn(
-                          "h-[18px] w-[18px] rounded-full border border-[#8A847C] data-[state=checked]:border-[#1F3A4D] data-[state=checked]:bg-[#1F3A4D]",
-                          "[&_svg]:text-white",
+                          "h-[18px] w-[18px] rounded-lg border border-[#8A847C] data-[state=checked]:border-[#1F3A4D] data-[state=checked]:bg-[#1F3A4D]",
+                          "[&_svg]:text-white"
                         )}
                       />
+
                       <span className="select-none text-sm text-[#2E2E2E]">
                         {option.label}
                       </span>

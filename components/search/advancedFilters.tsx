@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { Geist } from "next/font/google";
 import {
@@ -31,6 +31,7 @@ interface SubDropdownProps {
   opciones?: string[];
   valor?: string;
   onChange?: (v: string) => void;
+  mostrarLabelConValor?: boolean;
 }
 
 function SubDropdown({
@@ -38,6 +39,7 @@ function SubDropdown({
   opciones = [],
   valor = "",
   onChange,
+  mostrarLabelConValor = false,
 }: SubDropdownProps) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +54,10 @@ function SubDropdown({
     };
 
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -63,10 +68,23 @@ function SubDropdown({
     }
   }, [abierto, opciones.length]);
 
-  const handleTriggerKeyDown = (
-    event: React.KeyboardEvent<HTMLButtonElement>
-  ) => {
-    if (event.key === "Enter") {
+  const getButtonLabel = () => {
+    if (!valor) return label;
+
+    if (mostrarLabelConValor) {
+      return `${label}: ${valor}`;
+    }
+
+    return valor;
+  };
+
+  const clearValue = () => {
+    onChange?.("");
+    setAbierto(false);
+  };
+
+  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       setAbierto((prev) => !prev);
       return;
@@ -79,7 +97,7 @@ function SubDropdown({
   };
 
   const handleOptionKeyDown = (
-    event: React.KeyboardEvent<HTMLButtonElement>,
+    event: KeyboardEvent<HTMLButtonElement>,
     index: number,
     optionValue: string
   ) => {
@@ -97,7 +115,7 @@ function SubDropdown({
       return;
     }
 
-    if (event.key === "Enter") {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onChange?.(optionValue);
       setAbierto(false);
@@ -118,66 +136,73 @@ function SubDropdown({
     }
   };
 
-  
-
   return (
     <div ref={ref} className="w-full">
       <button
+        ref={triggerButtonRef}
         type="button"
-        onClick={() => setAbierto((p) => !p)}
-        className="flex w-full items-center justify-between rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD]"
+        onClick={() => setAbierto((prev) => !prev)}
+        onKeyDown={handleTriggerKeyDown}
+        className="flex w-full items-center justify-between rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition-colors hover:bg-[#DDD7CD] focus:outline-none focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2"
       >
-        
-      <span className={valor ? "font-normal text-[#2E2E2E]" : "text-[#2E2E2E]"}>
-        {valor || label}
-      </span>
+        <span className="text-[#2E2E2E]">{getButtonLabel()}</span>
 
-      <div className="flex items-center gap-2">
-        {valor && (
-          /* CAMBIO: button por span para evitar error de botones anidados */
+        <div className="flex items-center gap-2">
+          {valor && (
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label={`Limpiar ${label}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                clearValue();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  clearValue();
+                }
+              }}
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 transition-colors hover:bg-[#DEDAD3]"
+            >
+              <X className="h-4 w-4 text-[#5E5A55]" />
+            </span>
+          )}
+
           <span
-             role="button"
-             onClick={(e) => {
-               e.stopPropagation();
-               onChange?.("");
-             }}
-             className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
+            className="text-[#4B4B4B] transition-transform duration-200"
+            style={{
+              display: "inline-block",
+              transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+            }}
           >
-             <X className="h-4 w-4 text-[#5E5A55]" />
+            ▾
           </span>
-        )}
-        <span
-          className="text-[#4B4B4B] transition-transform duration-200"
-          style={{
-            display: "inline-block",
-            transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        >
-          ▾
-        </span>
-      </div>
+        </div>
       </button>
 
       {abierto && (
-        <div className="mt-3 w-full rounded-[16px] border border-[#C8C0B5] bg-white p-3 shadow-sm">
+        <div className="mt-3 w-full rounded-lg border border-[#C8C0B5] bg-white p-3 shadow-sm">
           <div className="space-y-2">
-            {opciones.map((op, i) => {
+            {opciones.map((op, index) => {
               const checked = valor === op;
 
               return (
                 <button
-                  key={i}
+                  key={op}
                   ref={(element) => {
-                    optionRefs.current[i] = element;
+                    optionRefs.current[index] = element;
                   }}
                   type="button"
-                  onMouseDown={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
                     onChange?.(op);
                     setAbierto(false);
                   }}
-                  onKeyDown={(event) => handleOptionKeyDown(event, i, op)}
+                  onKeyDown={(event) => handleOptionKeyDown(event, index, op)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-[12px] px-4 py-3 text-left text-sm transition outline-none",
+                    "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm outline-none transition",
                     "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                     checked
                       ? "bg-[#E7E3DD] text-[#2E2E2E]"
@@ -186,7 +211,7 @@ function SubDropdown({
                 >
                   <span
                     className={cn(
-                      "flex h-[18px] w-[18px] items-center justify-center rounded-full border transition",
+                      "flex h-[18px] w-[18px] items-center justify-center rounded-lg border transition",
                       checked
                         ? "border-[#6B6B6B] bg-white"
                         : "border-[#8A847C] bg-white"
@@ -194,7 +219,7 @@ function SubDropdown({
                   >
                     <span
                       className={cn(
-                        "h-[8px] w-[8px] rounded-full bg-[#1F3A4D] transition",
+                        "h-[8px] w-[8px] rounded-lg bg-[#1F3A4D] transition",
                         checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
                       )}
                     />
@@ -264,11 +289,10 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
   };
 
   const handleSurfaceInputChange =
-    (field: "minSurface" | "maxSurface") =>
-    (rawValue: string) => {
-      const value = rawValue.trim();
+    (field: "minSurface" | "maxSurface") => (rawValue: string) => {
+      const inputValue = rawValue.trim();
 
-      if (value === "") {
+      if (inputValue === "") {
         setSurfaceError(null);
 
         if (field === "minSurface") {
@@ -278,10 +302,11 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
           setMaxSurface("");
           actualizar("maxSurface", "");
         }
+
         return;
       }
 
-      const validSurface = /^\d*\.?\d*$/.test(value);
+      const validSurface = /^\d*\.?\d*$/.test(inputValue);
 
       if (!validSurface) {
         setSurfaceError("Solo se permiten números");
@@ -291,22 +316,27 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       setSurfaceError(null);
 
       if (field === "minSurface") {
-        setMinSurface(value);
-        actualizar("minSurface", value);
+        setMinSurface(inputValue);
+        actualizar("minSurface", inputValue);
       } else {
-        setMaxSurface(value);
-        actualizar("maxSurface", value);
+        setMaxSurface(inputValue);
+        actualizar("maxSurface", inputValue);
       }
     };
 
-  const surfaceLabel =
-    minSurface && maxSurface
-      ? `${minSurface}m² - ${maxSurface}m²`
-      : minSurface
-      ? `Desde ${minSurface}m²`
-      : maxSurface
-      ? `Hasta ${maxSurface}m²`
-      : "";
+  const clearSurfaceRange = () => {
+    setSurfaceError(null);
+    setMinSurface("");
+    setMaxSurface("");
+
+    onChange({
+      habitaciones,
+      banos,
+      piscina,
+      minSurface: "",
+      maxSurface: "",
+    });
+  };
 
   return (
     <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
@@ -318,7 +348,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
         className="w-full"
       >
         <AccordionItem value="advanced" className="border-none">
-          <div className="overflow-hidden rounded-[16px] border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] shadow-sm">
             <AccordionTrigger
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
@@ -332,7 +362,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
           <AccordionContent className="pb-0 pt-3">
             <div className="flex flex-col gap-3">
               <SubDropdown
-                label="Número total de habitaciones"
+                label="Número de habitaciones"
                 opciones={HABITACIONES}
                 valor={habitaciones}
                 onChange={(v) => {
@@ -355,6 +385,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                 label="Piscina"
                 opciones={PISCINA}
                 valor={piscina}
+                mostrarLabelConValor
                 onChange={(v) => {
                   setPiscina(v);
                   actualizar("piscina", v);
@@ -366,13 +397,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                 maxValue={maxSurface}
                 onMinChange={handleSurfaceInputChange("minSurface")}
                 onMaxChange={handleSurfaceInputChange("maxSurface")}
-                onClear={() => {
-                  setSurfaceError(null);
-                  setMinSurface("");
-                  setMaxSurface("");
-                  actualizar("minSurface", "");
-                  actualizar("maxSurface", "");
-                }}
+                onClear={clearSurfaceRange}
               />
 
               <div className={surfaceError ? "block" : "hidden"}>
