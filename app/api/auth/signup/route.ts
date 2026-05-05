@@ -12,6 +12,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    const sessionId = request.cookies.get("session_id")?.value ?? crypto.randomUUID();
     const { nombre, apellido, email, password } = await request.json();
 
     if (!nombre || !apellido || !email || !password) {
@@ -81,11 +82,27 @@ export async function POST(request: NextRequest) {
       { status: 201 }  // 201 = Created
     );
 
+    const { error: migrateError } = await supabaseAdmin.rpc("migrar_eventos_sesion", {
+      p_session_id: sessionId,
+      p_id_usuario: authData.user.id,
+    });
+    if (migrateError) {
+      console.error("Error migrando eventos de sesión:", migrateError);
+    }
+
     response.cookies.set("auth_token", jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    response.cookies.set("session_id", sessionId, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
       path: "/",
     });
 try {
