@@ -9,7 +9,7 @@ import { X, SlidersHorizontal, Loader2 } from "lucide-react";
 import CommentInput from "./CommentInput";
 import CommentItem, { CommentData } from "./CommentItem";
 
-export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComment }: any) {
+export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComment, isAuthenticated }: any) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<CommentData | null>(null);
@@ -94,6 +94,7 @@ export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComme
                 key={comment.IntIdCom} 
                 comment={comment} 
                 blogId={blogId}
+                isAuthenticated={isAuthenticated}
                 onReply={(cmt: CommentData, rootId: number) => {
                   setReplyingTo(cmt);
                   setActiveRootId(rootId);
@@ -104,13 +105,21 @@ export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComme
             ))
           )}
         </div>
-        <CommentInput 
-          blogId={blogId} 
-          onCommentAdded={handleCommentAdded} 
-          replyingTo={replyingTo} 
-          onCancelReply={handleCancelReply}
-          onOptimisticSubmit={handleOptimisticSubmit} 
-        />
+        {isAuthenticated ? (
+          <CommentInput 
+            blogId={blogId} 
+            onCommentAdded={handleCommentAdded} 
+            replyingTo={replyingTo} 
+            onCancelReply={handleCancelReply}
+            onOptimisticSubmit={handleOptimisticSubmit} 
+          />
+        ) : (
+          <div className="p-5 border-t border-card-border bg-secondary-fund text-center">
+            <p className="text-[14px] text-foreground/70 font-medium">
+              Inicia sesión para dejar un comentario.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

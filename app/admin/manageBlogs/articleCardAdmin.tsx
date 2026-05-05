@@ -4,7 +4,6 @@ import { BookOpen, Clock, X as ObjXIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button"; // Importamos el botón de Shadcn
-import { FnFormatLongWords } from "@/app/utils/textUtils";
 import { cn } from "@/lib/utils";
 
 /**
@@ -137,13 +136,13 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
         </div>
 
         {/* --- SECCIÓN DE CONTENIDO --- */}
-        <div className="flex flex-col flex-1 gap-4 p-5">
+        <div className="flex flex-col flex-1 gap-4 p-5 overflow-hidden">
           <div className="space-y-2 flex-1">
-            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase">
-              {FnFormatLongWords(StrTitleBlo)}
+            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase break-words">
+              {StrTitleBlo}
             </h3>
-            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug">
-              {FnFormatLongWords(StrDescriptionBlo)}
+            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug break-words">
+              {StrDescriptionBlo}
             </p>
           </div>
 

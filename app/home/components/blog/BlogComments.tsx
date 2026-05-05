@@ -10,9 +10,10 @@ import CommentItem, { CommentData } from "./CommentItem";
  */
 interface BlogCommentsProps {
   blogId: string;
+  isAuthenticated?: boolean;
 }
 
-export default function BlogComments({ blogId }: BlogCommentsProps) {
+export default function BlogComments({ blogId, isAuthenticated = false }: BlogCommentsProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -53,13 +54,11 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
       <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
         Comentarios
       </h3>
-      {/* Vista previa de 1 solo comentario */}
       {topComment ? (
-        <CommentItem comment={topComment} blogId={blogId} />
+        <CommentItem comment={topComment} blogId={blogId} isAuthenticated={isAuthenticated} />
       ) : (
         <p className="text-foreground/60 mt-4 mb-4 italic text-sm">Sé el primero en comentar.</p>
       )}
-      {/* Botón para abrir el modal */}
       <button 
         onClick={() => setIsDrawerOpen(true)}
         className="w-full py-3 bg-secondary-fund hover:bg-card-border/50 text-foreground font-semibold rounded-xl transition-colors mt-2"
@@ -72,6 +71,7 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         onNewUserComment={handleNewUserComment} 
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );

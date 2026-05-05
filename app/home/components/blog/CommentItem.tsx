@@ -18,7 +18,7 @@ export interface CommentData {
   isOptimistic?: boolean;
 }
 
-export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId }: any) {
+export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId, isAuthenticated }: any) {
   const [isVisible, setIsVisible] = useState(true);
   const [isLiked, setIsLiked] = useState(!!comment.BolCurrentUserLiked);
   const [likesCount, setLikesCount] = useState(comment.IntLikesCount);
@@ -61,6 +61,7 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
   }, [latestReply, comment.IntIdCom]);
 
   const handleToggleLike = async () => {
+    if (!isAuthenticated) return;
     setIsLiked(!isLiked);
     setLikesCount((prev: number) => isLiked ? prev - 1 : prev + 1);
     await fetch(`/api/home/blogs/${blogId}/comments/${comment.IntIdCom}/like`, { method: "POST" });
@@ -99,7 +100,6 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
     <>
       <div className={`flex flex-col w-full mb-5 relative group ${comment.isOptimistic ? "opacity-60 pointer-events-none" : "opacity-100 transition-opacity"}`}>
         <div className="flex gap-3 w-full">
-          {/* Avatar con fallback de inicial */}
             <div className="flex-shrink-0">
             {comment.ObjAuthorCom.avatar ? (
                 <Image
@@ -147,8 +147,10 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
             <p className="text-[15px] text-foreground leading-snug break-words">{comment.StrContentCom}</p>
             <div className="flex items-center gap-4 mt-1 text-[12px] text-foreground/50 font-bold">
               <span>{comment.StrDateCom}</span>
-              <button onClick={() => onReply(comment, currentRootId)}
-              className="hover:text-foreground">Responder</button>
+              {isAuthenticated && (
+                <button onClick={() => onReply(comment, currentRootId)}
+                className="hover:text-foreground">Responder</button>
+              )}
             </div>
 
             {!isReply && comment.IntRepliesCount > 0 && (
@@ -162,7 +164,7 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
           </div>
 
           <div className="flex flex-col items-center w-8 pt-1">
-            <button onClick={handleToggleLike}>
+            <button onClick={handleToggleLike} className={!isAuthenticated ? "cursor-default opacity-60" : ""}>
               <Heart fill={isLiked ? "#ff3b5c" : "transparent"} stroke={isLiked ? "#ff3b5c" : "currentColor"} className={`w-4 h-4 ${isLiked ? "text-destructive" : "text-foreground/30"}`} />
             </button>
             <span className="text-[11px] text-foreground/50 font-medium">{likesCount}</span>
@@ -181,6 +183,7 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
                 rootId={currentRootId} 
                 onDeleteSuccess={fetchReplies} 
                 latestReply={latestReply}
+                isAuthenticated={isAuthenticated}
               />
             ))}
             {isLoadingReplies && (
