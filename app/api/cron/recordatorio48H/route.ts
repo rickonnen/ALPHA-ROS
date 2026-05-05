@@ -45,8 +45,7 @@ export async function GET() {
             emailCliente: sub.Usuario.email,
             nombreCliente: sub.Usuario.nombres || "Usuario",
             plan: sub.PlanPublicacion?.nombre_plan || "Plan Profesional",
-            fechaFin: sub.fecha_fin.toLocaleDateString(),
-            tipo: '5D'
+            tipo: '48H'
           });
           //console.log(`📧 Email 5D enviado a: ${sub.Usuario.email}`);
         } catch (mailError) {
@@ -61,7 +60,7 @@ export async function GET() {
           id_publicacion: 1, 
           id_categoria:2,
           titulo: "Recordatorio Próximo Vencimiento",
-          mensaje: `Segundo aviso: Su plan ${sub.PlanPublicacion?.nombre_plan} vence en 5 días. Por favor, pagar antes de que expire.`,
+          mensaje: `Su plan ${sub.PlanPublicacion?.nombre_plan} vence en 5 días. Por favor, pagar antes de que expire.`,
           leido: false,
           creado_en: new Date(),
           estado_envio: "pendiente",

@@ -267,7 +267,7 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                       <button 
                         type="button"
                         onClick={() => setVerFoto(true)}
-                        className="text-sm font-medium truncate max-w-[150px] text-foreground hover:underline cursor-pointer"
+                        className="text-sm font-medium truncate text-foreground hover:underline cursor-pointer"
                       >
                         {archivoSeleccionado.name}
                       </button>
@@ -319,21 +319,28 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
 
       {verFoto && previewUrl && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative max-w-4xl w-full bg-white rounded-xl p-2 shadow-2xl">
+          {/* Agregamos flex-col y max-h-[95vh] para que el modal no se desborde */}
+          <div className="relative max-w-2xl w-full bg-white rounded-xl p-2 shadow-2xl flex flex-col max-h-[90vh]">
+            
+            {/* Botón X: Ahora con fondo para que siempre se vea sobre el blanco del BNB */}
             <button 
               onClick={() => setVerFoto(false)}
-              className="absolute -top-12 right-0 text-white hover:bg-white/20 p-2 rounded-full transition-all cursor-pointer"
+              className="absolute top-4 right-4 z-[120] bg-white/90 hover:bg-red-50 text-gray-800 p-2 rounded-full transition-all shadow-lg cursor-pointer"
             >
-              <X size={35} />
+              <X size={24} />
             </button>
             
-            <img 
-              src={previewUrl} 
-              alt="Comprobante" 
-              className="max-h-[80vh] w-full object-contain rounded-lg"
-            />
+            {/* Contenedor de imagen con scroll interno si es muy larga */}
+            <div className="overflow-y-auto p-2 flex-grow">
+              <img 
+                src={previewUrl} 
+                alt="Comprobante" 
+                className="w-full h-auto object-contain rounded-lg"
+              />
+            </div>
             
-            <div className="p-4 text-center">
+            {/* Texto inferior fijo */}
+            <div className="p-4 text-center border-t border-gray-100 bg-white rounded-b-xl">
               <p className="text-[#1D3547] font-bold text-lg">Comprobante seleccionado</p>
               <p className="text-muted-foreground text-sm">Verifica que los datos del pago sean legibles</p>
             </div>
@@ -341,8 +348,6 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
         </div>
       )}
 
-      
-      
       <ModalPago
         estadoModal={estadoModal}
         setEstadoModal={setEstadoModal}

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { generarComprobantePDF } from "@/app/api/admin/services/pdfService";
 import { enviarEmailCobroConPDF } from "@/app/api/admin/services/emailCobrosService";
+import { enviarEmailRechazo } from "@/app/api/admin/services/emailCobrosRechazo";
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       });
       return { pagoActualizado, nuevaNotificacion };
     });
-
+    console.log("hola")
     if (decision === "ACEPTAR") {
       try {
         const pdfBuffer = await generarComprobantePDF({
@@ -97,6 +98,29 @@ export async function POST(req: NextRequest) {
         }
       } catch (err) {
         console.error("Error en proceso de PDF o Email:", err);
+      }
+    }else if (decision === "RECHAZAR") {
+      console.log("--- INICIANDO FLUJO DE RECHAZO ---");
+      console.log("ID Detalle:", id_detalle);
+      console.log("Email Destinatario:", detalle.Usuario?.email);
+      console.log("Motivo:", motivo_rechazo);
+      try {
+        const infoEmailRechazo = await enviarEmailRechazo({
+          emailCliente: detalle.Usuario?.email!,
+          emailAdmin: emailAdminDestino!,
+          nombreCliente: detalle.Usuario?.nombres || "Cliente",
+          plan: planNombre,
+          motivo: motivo_rechazo || "No especificado"
+        });
+
+        if (infoEmailRechazo) {
+          await prisma.notificacion.update({
+            where: { id_notificacion: resultado.nuevaNotificacion.id_notificacion },
+            data: { email_enviado: true, estado_envio: "completado" }
+          });
+        }
+      } catch (err) {
+        console.error("Error al enviar email de rechazo:", err);
       }
     }
 

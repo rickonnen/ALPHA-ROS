@@ -45,7 +45,6 @@ export async function GET() {
             emailCliente: sub.Usuario.email,
             nombreCliente: sub.Usuario.nombres || "Usuario",
             plan: sub.PlanPublicacion?.nombre_plan || "Plan Profesional",
-            fechaFin: sub.fecha_fin.toLocaleDateString(),
             tipo: '7D'
           });
         } catch (mailError) {
