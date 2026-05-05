@@ -14,6 +14,7 @@ export async function GET() {
     const finDia = new Date(fechaMeta);
     finDia.setUTCHours(23, 59, 59, 999);
 
+    console.log("🔍 Cron 5D: Buscando vencimientos para el:", inicioDia.toISOString());
 
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
@@ -27,6 +28,7 @@ export async function GET() {
       include: { Usuario: true, PlanPublicacion: true }
     });
 
+    console.log(`📊 Planes encontrados (5 días): ${suscripciones.length}`);
 
     for (const sub of suscripciones) {
       if (sub.Usuario?.email) {
@@ -38,6 +40,7 @@ export async function GET() {
             fechaFin: sub.fecha_fin.toLocaleDateString(),
             tipo: '5D'
           });
+          console.log(`📧 Email 5D enviado a: ${sub.Usuario.email}`);
         } catch (mailError) {
           console.error(`❌ Error Mail 5D (${sub.Usuario.email}):`, mailError);
         }
@@ -57,6 +60,7 @@ export async function GET() {
           email_enviado: false
         }
       });
+       console.log(`Noti 5D creada para: ${sub.id_usuario}`);
 
       await prisma.suscripcion.update({
         where: { id_suscripcion: sub.id_suscripcion },

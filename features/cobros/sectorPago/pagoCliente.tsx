@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/app/auth/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePagoCliente } from "@/components/hooks/usePagoCliente";
 import { useRouter } from "next/navigation";
 import ModalPago from "@/components/cobros/ModalPago";
@@ -19,6 +19,7 @@ interface Props {
 export default function PagoCliente({ plan, planId, modalidad }: Props) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [mostrarPrevisualizacion, setMostrarPrevisualizacion] = useState(false);
 
   const {
     qrUrl,
@@ -31,11 +32,20 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
     irAlPerfil,
     archivoSeleccionado,
     setArchivoSeleccionado,
+    previewUrl,
     manejarSeleccionArchivo,
     fileInputRef,
     tienePagoPendiente,
     estaCargandoEstado,
   } = usePagoCliente(plan, planId, modalidad);
+
+  const [verFoto, setVerFoto] = useState(false);
+
+  useEffect(() => {
+    if (previewUrl) {
+      setVerFoto(true);
+    }
+  }, [previewUrl]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -254,10 +264,32 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
                 ) : (
                   <div className="flex items-center justify-between w-full p-4 bg-muted/50 rounded-lg border border-dashed border-gray-400 animate-in fade-in zoom-in duration-300">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <span className="text-sm font-medium truncate max-w-[150px] md:max-w-[200px] text-foreground">
+                      <button 
+                        type="button"
+                        onClick={() => setVerFoto(true)}
+                        className="text-sm font-medium truncate max-w-[150px] text-foreground hover:underline cursor-pointer"
+                      >
                         {archivoSeleccionado.name}
-                      </span>
+                      </button>
                     </div>
+
+                    {mostrarPrevisualizacion && archivoSeleccionado && (
+                      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
+                        <div className="relative max-w-4xl w-full bg-white rounded-lg p-2">
+                          <button 
+                            onClick={() => setMostrarPrevisualizacion(false)}
+                            className="absolute -top-10 right-0 text-white hover:text-gray-300"
+                          >
+                            <X size={32} />
+                          </button>
+                          <img 
+                            src={URL.createObjectURL(archivoSeleccionado)} 
+                            alt="Previsualización" 
+                            className="max-h-[80vh] w-full object-contain rounded"
+                          />
+                        </div>
+                      </div>
+                    )}
                     
                     <button
                       onClick={() => {
@@ -284,6 +316,30 @@ export default function PagoCliente({ plan, planId, modalidad }: Props) {
           </div>
         </div>
       </div>
+
+      {verFoto && previewUrl && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-4xl w-full bg-white rounded-xl p-2 shadow-2xl">
+            <button 
+              onClick={() => setVerFoto(false)}
+              className="absolute -top-12 right-0 text-white hover:bg-white/20 p-2 rounded-full transition-all cursor-pointer"
+            >
+              <X size={35} />
+            </button>
+            
+            <img 
+              src={previewUrl} 
+              alt="Comprobante" 
+              className="max-h-[80vh] w-full object-contain rounded-lg"
+            />
+            
+            <div className="p-4 text-center">
+              <p className="text-[#1D3547] font-bold text-lg">Comprobante seleccionado</p>
+              <p className="text-muted-foreground text-sm">Verifica que los datos del pago sean legibles</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       
       

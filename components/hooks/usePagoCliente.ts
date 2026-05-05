@@ -142,15 +142,24 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     link.click();
   };
 
+  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
-      if (file.type.startsWith("image/")) setArchivoSeleccionado(file);
-      else alert("Selecciona una imagen (JPG/PNG)");
+      if (file.type.startsWith("image/")) {
+        setArchivoSeleccionado(file);
+        
+        // Creamos la URL temporal para la imagen
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        alert("Selecciona una imagen (JPG/PNG)");
+      }
     }
   };
-
-  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
 
   return {
     qrUrl,
@@ -166,6 +175,8 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     archivoSeleccionado,
     setArchivoSeleccionado,
     manejarSeleccionArchivo,
+    previewUrl,
+    setPreviewUrl,
     estaCargandoEstado,
   };
 }
