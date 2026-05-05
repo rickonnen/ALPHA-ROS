@@ -64,6 +64,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState("");
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const ensureSessionIdCookie = () => {
+    if (typeof document === "undefined") return;
+
+    const cookieName = "session_id";
+
+    const existing = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${cookieName}=`))
+      ?.split("=")[1];
+
+    if (existing) return;
+
+    const sessionId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    document.cookie = `${cookieName}=${encodeURIComponent(sessionId)}; Path=/; Max-Age=${
+      60 * 60 * 24 * 365
+    }; SameSite=Lax${isHttps ? "; Secure" : ""}`;
+  };
+
+  useEffect(() => {
+    ensureSessionIdCookie();
+  }, []);
+
   const fetchUserFromServer = async () => {
     // SOLUCIÓN: Se eliminó la re-declaración local de AuthContextType que causaba ruido
     try {
@@ -392,3 +419,4 @@ export function useAuth() {
   }
   return context;
 }
+
