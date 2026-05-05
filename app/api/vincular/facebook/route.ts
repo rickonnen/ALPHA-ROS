@@ -3,7 +3,7 @@
  * Funcionalidad: Inicia el flujo OAuth de Facebook para vincular desde perfil
  */
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/nextAuthOptions"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { NextResponse } from "next/server"
 
 export async function GET() {
