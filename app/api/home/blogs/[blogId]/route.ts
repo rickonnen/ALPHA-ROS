@@ -1,3 +1,7 @@
+/**
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 04/05/2026
+ * funcionalidad: recupera la información pública de un blog específico
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState, singleBlogData } from "@/types/blogType";
@@ -14,7 +18,7 @@ export async function GET(
       return NextResponse.json({ error: "id invalido" }, { status: 400 });
     }
 
-    // 1. Consulta a Prisma
+    // Consulta a Prisma
     const ObjDbBlogBlo = await prisma.blogs.findFirst({
       where: {
         id_blog: IntBlogIdBlo,
@@ -30,6 +34,7 @@ export async function GET(
       return NextResponse.json({ error: "blog no encontrado" }, { status: 404 });
     }
 
+    // Formateo de fecha
     const StrFormattedDateBlo = ObjDbBlogBlo.fecha_publicacion
       ? new Date(ObjDbBlogBlo.fecha_publicacion).toLocaleDateString("es-ES", {
           day: "numeric",
@@ -38,7 +43,7 @@ export async function GET(
         })
       : "fecha desconocida";
 
-    // 3. Mapeo de datos
+    // Mapeo de datos
     const ObjFormattedBlogBlo: singleBlogData = {
       IntIdBlo: ObjDbBlogBlo.id_blog,
       StrTitleBlo: ObjDbBlogBlo.titulo || "",
