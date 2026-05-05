@@ -18,6 +18,7 @@ interface LoginFormProps {
   onSwitchToRegister: () => void;
   onClose?: () => void;
   onForgotPassword?: () => void;
+  onMagicLink?: () => void;
 }
 
 interface LoginTelemetry {
@@ -55,7 +56,7 @@ async function checkInternetConnection() {
   }
 }
 
-export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
+export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword, onMagicLink }: LoginFormProps) {
   const router = useRouter();
   const { login, fetchUserFromServer } = useAuth();
   const [email, setEmail] = useState("");
@@ -189,7 +190,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       }
       setShowSuccess(true);
     } catch (err: any) {
-      // ✅ NUEVO: Detectar error de 2FA requerido
+      // NUEVO: Detectar error de 2FA requerido
       if (err.requiresOTP && err.userId) {
         setPending2FAUserId(err.userId);
         setShow2FAModal(true);
@@ -305,7 +306,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // ✅ NUEVO: Manejo de 2FA exitoso
+  // NUEVO: Manejo de 2FA exitoso
   async function handle2FASuccess() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -323,7 +324,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // ✅ NUEVO: Cancelar modal 2FA
+  // NUEVO: Cancelar modal 2FA
   function handle2FACancel() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -623,7 +624,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#0F172A",
+          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#1C3445",
           cursor: blockedByConnection || googleLoading ? "not-allowed" : "pointer",
           opacity: blockedByConnection ? 0.5 : googleLoading ? 0.6 : 1,
           color: "white",
@@ -655,6 +656,36 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         )}
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
+
+      {/* Magic Link button */}
+      {onMagicLink && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onMagicLink}
+          style={{
+            width: "100%",
+            backgroundColor: "#1C3445",
+            color: "white",
+            fontWeight: "bold",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            marginBottom: "16px",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Continuar con Magic Link
+        </button>
+      )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -770,7 +801,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         autoCloseDuration={2000}
       />
 
-      {/* ✅ NUEVO: Modal 2FA */}
+      {/* NUEVO: Modal 2FA */}
       {show2FAModal && (
         <OTP2FAModal
           userId={pending2FAUserId}
