@@ -1085,14 +1085,7 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              {/* <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                  closeMobileFilters();
-                }}
-              /> */}
+              
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -1373,13 +1366,6 @@ function SearchPageContent() {
                 </div>
               </div>
 
-              {/* <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                }}
-              /> */}
               <div className="my-3 h-px bg-[#F4EFE6]" />
               <SearchAutocomplete
                 value={searchLocation}
