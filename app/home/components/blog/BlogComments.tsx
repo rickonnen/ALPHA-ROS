@@ -21,7 +21,10 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
   useEffect(() => {
     const fetchTopComment = async () => {
       try {
-        const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`);
+        const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`, {
+          cache: 'no-store'
+        });
+        
         if (res.ok) {
           const data = await res.json();
           setComments(data);
@@ -32,8 +35,11 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
         setIsLoading(false);
       }
     };
-    fetchTopComment();
-  }, [blogId]);
+
+    if (!isDrawerOpen) {
+      fetchTopComment();
+    }
+  }, [blogId, isDrawerOpen]);
 
   if (isLoading) return <div className="animate-pulse w-full h-24 bg-secondary-fund rounded-xl mt-8"></div>;
 
@@ -44,14 +50,12 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
       <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
         Comentarios
       </h3>
-
       {/* Vista previa de 1 solo comentario */}
       {topComment ? (
         <CommentItem comment={topComment} blogId={blogId} />
       ) : (
         <p className="text-foreground/60 mt-4 mb-4 italic text-sm">Sé el primero en comentar.</p>
       )}
-
       {/* Botón para abrir el modal */}
       <button 
         onClick={() => setIsDrawerOpen(true)}
@@ -59,7 +63,6 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
       >
         Ver comentarios y opinar
       </button>
-
       {/* El cajón flotante */}
       <CommentsDrawer 
         blogId={blogId}

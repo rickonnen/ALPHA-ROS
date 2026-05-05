@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useClickOutside } from "@/components/hooks/useClickOutside"; 
 import Image from "next/image";
 import { Heart, ChevronDown, ChevronUp, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
@@ -14,25 +15,42 @@ export interface CommentData {
   IntIdCom: number; StrContentCom: string; StrDateCom: string; ObjAuthorCom: AuthorData;
   IntLikesCount: number; IntRepliesCount: number; StrRepliedToName?: string;
   BolIsOwner?: boolean; BolCurrentUserLiked?: boolean;
+  isOptimistic?: boolean;
 }
 
-export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply }: any) {
+export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId }: any) {
   const [isVisible, setIsVisible] = useState(true);
   const [isLiked, setIsLiked] = useState(!!comment.BolCurrentUserLiked); 
   const [likesCount, setLikesCount] = useState(comment.IntLikesCount);
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<CommentData[]>([]);
   const [isLoadingReplies, setIsLoadingReplies] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const currentRootId = isReply ? rootId : comment.IntIdCom;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+  useClickOutside([menuRef], closeMenu, { enabled: isMenuOpen });
 
   useEffect(() => {
     if (latestReply && latestReply.parentId === comment.IntIdCom) {
+      if (!showReplies && replies.length === 0 && comment.IntRepliesCount > 1) {
+        fetchReplies();
+      }
       setReplies(prev => {
-        if (prev.some(c => c.IntIdCom === latestReply.comment.IntIdCom)) return prev;
-        return [...prev, latestReply.comment];
+        const isIncomingOptimistic = latestReply.comment.isOptimistic;
+        let updatedList = prev;
+        if (!isIncomingOptimistic) {
+          updatedList = prev.filter(c => !c.isOptimistic);
+        }
+        if (updatedList.some(c => c.IntIdCom === latestReply.comment.IntIdCom)) return updatedList;
+        return [...updatedList, latestReply.comment];
       });
+      
       setShowReplies(true);
     }
   }, [latestReply, comment.IntIdCom]);
@@ -47,8 +65,17 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
     setIsLoadingReplies(true);
     try {
       const res = await fetch(`/api/home/blogs/${blogId}/comments?parentId=${comment.IntIdCom}&sort=antiguo`);
-      if (res.ok) setReplies(await res.json());
-    } finally { setIsLoadingReplies(false); }
+      if (res.ok) {
+        const fetchedReplies = await res.json();
+        setReplies((prev: CommentData[]) => {
+          const existingIds = new Set(fetchedReplies.map((c: any) => c.IntIdCom));
+          const keepFromPrev = prev.filter((c: any) => !existingIds.has(c.IntIdCom));
+          return [...fetchedReplies, ...keepFromPrev];
+        });
+      }
+    } finally { 
+      setIsLoadingReplies(false); 
+    }
   };
 
   const handleDelete = async () => {
@@ -65,7 +92,7 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
 
   return (
     <>
-      <div className="flex flex-col w-full mb-5 relative group">
+      <div className={`flex flex-col w-full mb-5 relative group ${comment.isOptimistic ? "opacity-60 pointer-events-none" : "opacity-100 transition-opacity"}`}>
         <div className="flex gap-3 w-full">
           {/* Avatar con fallback de inicial */}
             <div className="flex-shrink-0">
@@ -97,11 +124,14 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
                 )}
               </span>
               {comment.BolIsOwner && (
-                <div className="relative">
-                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-foreground/30 hover:text-foreground p-1"><MoreHorizontal className="w-4 h-4" /></button>
+                <div className="relative" ref={menuRef}> 
+                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-foreground/30 hover:text-foreground p-1">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
                   {isMenuOpen && (
                     <div className="absolute right-0 top-6 bg-secondary-fund border border-card-border shadow-xl rounded-xl p-1 z-50 w-32">
-                      <button onClick={() => {setIsModalOpen(true); setIsMenuOpen(false);}} className="w-full flex items-center gap-2 px-3 py-2 text-destructive text-[13px] font-bold hover:bg-background rounded-lg transition-colors">
+                      <button onClick={() => {setIsModalOpen(true); setIsMenuOpen(false);}}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-destructive text-[13px] font-bold hover:bg-background rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" /> Eliminar
                       </button>
                     </div>
@@ -109,12 +139,11 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
                 </div>
               )}
             </div>
-
             <p className="text-[15px] text-foreground leading-snug break-words">{comment.StrContentCom}</p>
-            
             <div className="flex items-center gap-4 mt-1 text-[12px] text-foreground/50 font-bold">
               <span>{comment.StrDateCom}</span>
-              <button onClick={() => onReply(comment)} className="hover:text-foreground">Responder</button>
+              <button onClick={() => onReply(comment, currentRootId)}
+              className="hover:text-foreground">Responder</button>
             </div>
 
             {!isReply && comment.IntRepliesCount > 0 && (
@@ -137,13 +166,25 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
 
         {showReplies && (
           <div className={`mt-4 border-l-2 border-card-border/30 ${isReply ? "pl-4" : "pl-10"}`}>
-            {isLoadingReplies ? <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary" /> : 
-              replies.map(r => <CommentItem key={r.IntIdCom} comment={r} blogId={blogId} onReply={onReply} isReply={true} onDeleteSuccess={fetchReplies} />)
-            }
+            {replies.map(r => (
+              <CommentItem 
+                key={r.IntIdCom} 
+                comment={r} 
+                blogId={blogId} 
+                onReply={onReply} 
+                isReply={true} 
+                rootId={currentRootId} 
+                onDeleteSuccess={fetchReplies} 
+                latestReply={latestReply}
+              />
+            ))}
+            {isLoadingReplies && (
+              <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary mt-3 mb-1" />
+            )}
+            
           </div>
         )}
       </div>
-
       <ConfirmModal isOpen={isModalOpen} title="¿Eliminar comentario?" isProcessing={isDeleting} onConfirm={handleDelete} onCancel={() => setIsModalOpen(false)} />
     </>
   );
