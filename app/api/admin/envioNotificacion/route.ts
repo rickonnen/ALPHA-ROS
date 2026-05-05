@@ -100,10 +100,6 @@ export async function POST(req: NextRequest) {
         console.error("Error en proceso de PDF o Email:", err);
       }
     }else if (decision === "RECHAZAR") {
-      console.log("--- INICIANDO FLUJO DE RECHAZO ---");
-      console.log("ID Detalle:", id_detalle);
-      console.log("Email Destinatario:", detalle.Usuario?.email);
-      console.log("Motivo:", motivo_rechazo);
       try {
         const infoEmailRechazo = await enviarEmailRechazo({
           emailCliente: detalle.Usuario?.email!,
