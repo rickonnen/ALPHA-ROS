@@ -744,43 +744,7 @@ function SearchPageContent() {
         selectedPropertyTypes,
         PROPERTY_TYPE_OPTIONS,
       );
-      // Mínimas modificaciones para llamar a la API con paginación
-    //   const response = await fetch("/api/filter_search_page", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       ubicacion: searchLocation,
-    //       operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
-    //       tipoInmueble: selectedPropertyLabels.join(","),
-    //       habitaciones: advancedFilterValues.habitaciones,
-    //       banos: advancedFilterValues.banos,
-    //       piscina: advancedFilterValues.piscina,
-    //       minPrice: appliedPriceFilter?.minPrice,
-    //       maxPrice: appliedPriceFilter?.maxPrice,
-    //       currency: selectedCurrency,
-    //       page: currentPage,
-    //       limit: itemsPerPage,
-    //       ...overrides,
-    //     }),
-    //   });
-
-    //   const data = await response.json();
-    //   if (data.success) {
-    //     setSearchResults(data.publications);
-    //     setTotalCount(data.total);
-    //   }
-    //   setHasSearched(true);
-
-    //   trackSearch({
-    //     texto_busqueda: searchLocation,
-    //     cant_resultados: data.total,
-    //   });
-    // } catch (error) {
-    //   console.error("Search error:", error);
-    //   setSearchResults([]);
-    // } finally {
-    //   setIsApplyingFilters(false);
-    // }
+      
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion:
