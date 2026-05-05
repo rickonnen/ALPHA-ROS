@@ -6,6 +6,7 @@ import Link from "next/link";
 import { X as ObjXIcon } from "lucide-react"; 
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import { FnFormatLongWords } from "@/app/utils/textUtils";
+import BlogComments from "@/app/home/components/blog/BlogComments";
 /**
  * dev: Rodrigo Saul Zarate Villarroel       fecha: 24/04/2026
  * funcionalidad: renderiza la vista completa de un blog especifico
@@ -109,6 +110,9 @@ export default function blogPostPage({ params }: { params: Promise<{ blogId: str
           Escrito por: {ObjBlogBlo.StrAuthorBlo}
         </p>
       </div>
+
+      {/* comentarios pasamos el id del blog */}
+      <BlogComments blogId={ResolvedParamsBlo.blogId} />
 
       <div className="w-full flex justify-center mt-12 pt-8 border-t border-border/50">
         <Link 

@@ -21,6 +21,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   /* Valores básicos necesarios para evitar errores en componentes base */
   --radius: 0.5rem;
@@ -56,6 +58,9 @@
   /* boton secundario: Terracota suave (#C26E5A)*/
   --secondary: #C26E5A;
   --secondary-foreground: #F4EFE6;
+
+  --destructive: #ff193f;
+  --destructive-foreground: #F4EFE6;
 
   /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
