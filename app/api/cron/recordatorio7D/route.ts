@@ -5,16 +5,25 @@ import { enviarEmailRecordatorio } from "@/app/api/admin/services/recordatoriosS
 
 export async function GET() {
   try {
+    //aqui creamos las variables inicioDia y finDia para crear las variables de rango para detectar los limites
+    //arreglamos el error de la zona horaria con un cambio, porque en bolivia estamos 4 horas atras
     const ahora = new Date();
+    const ahoraBolivia = new Date(ahora.getTime() - (4 * 60 * 60 * 1000));
     const fechaMeta = new Date();
-    fechaMeta.setUTCDate(ahora.getUTCDate() + 7);
+    fechaMeta.setUTCDate(ahoraBolivia.getUTCDate() + 7);
 
+    //crea un rango en el dia limite osea faltando 7 dias para vencer
+    //inicioDia recibe +4 horas
     const inicioDia = new Date(fechaMeta);
-    inicioDia.setUTCHours(0, 0, 0, 0);
+    inicioDia.setUTCHours(4, 0, 0, 0);
+
+    //finDia recibe tambiem el mismo trato
     const finDia = new Date(fechaMeta);
+    finDia.setDate(finDia.getDate() + 1); 
     finDia.setUTCHours(23, 59, 59, 999);
 
-
+    // aca el gte(Greater Than or Equal) y let(Less Than or Equal) sirven para que garantizar que se tome el valor de fecha_fin
+    // con include traemos el dato del usuario y el dato del planpublicacion para el gmail
     const suscripciones = await prisma.suscripcion.findMany({
       where: {
         id_plan: { not: 7 }, 
@@ -28,8 +37,8 @@ export async function GET() {
     });
 
 
+    //iteramos los usuarios que tenemos en el const suscripciones
     for (const sub of suscripciones) {
-      
       if (sub.Usuario?.email) {
         try {
           await enviarEmailRecordatorio({

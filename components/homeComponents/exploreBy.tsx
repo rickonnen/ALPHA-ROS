@@ -30,7 +30,8 @@ const GetTotalCount = (ArrItems: categoryItem[]) =>
   ArrItems.reduce((IntSum, ObjItem) => IntSum + ObjItem.IntCount, 0);
 
 const ToQueryParam = (StrValue: string) =>
-  StrValue.replace(/ /g, "+");
+  //StrValue.replace(/ /g, "+");
+  (StrValue || "").replace(/ /g, "+");
 
 const StrDisplayName: Record<string, string> = {
   Casa:         "Casa",
