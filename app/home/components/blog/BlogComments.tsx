@@ -15,8 +15,8 @@ interface BlogCommentsProps {
 export default function BlogComments({ blogId }: BlogCommentsProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [userForcedPreview, setUserForcedPreview] = useState(false);
 
   useEffect(() => {
     const fetchTopComment = async () => {
@@ -35,11 +35,14 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
         setIsLoading(false);
       }
     };
-
-    if (!isDrawerOpen) {
+    if (!isDrawerOpen && !userForcedPreview) {
       fetchTopComment();
     }
-  }, [blogId, isDrawerOpen]);
+  }, [blogId, isDrawerOpen, userForcedPreview]);
+  const handleNewUserComment = (newComment: CommentData) => {
+    setComments([newComment]);
+    setUserForcedPreview(true);
+  };
 
   if (isLoading) return <div className="animate-pulse w-full h-24 bg-secondary-fund rounded-xl mt-8"></div>;
 
@@ -68,6 +71,7 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
         blogId={blogId}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        onNewUserComment={handleNewUserComment} 
       />
     </div>
   );

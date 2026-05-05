@@ -9,7 +9,7 @@ import { X, SlidersHorizontal, Loader2 } from "lucide-react";
 import CommentInput from "./CommentInput";
 import CommentItem, { CommentData } from "./CommentItem";
 
-export default function CommentsDrawer({ blogId, isOpen, onClose }: any) {
+export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComment }: any) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<CommentData | null>(null);
@@ -38,6 +38,7 @@ export default function CommentsDrawer({ blogId, isOpen, onClose }: any) {
       setActiveRootId(null); 
     } 
   }, [isOpen]);
+
   const handleCancelReply = () => {
     setReplyingTo(null);
     setActiveRootId(null);
@@ -46,6 +47,8 @@ export default function CommentsDrawer({ blogId, isOpen, onClose }: any) {
   const handleOptimisticSubmit = (tempComment: CommentData) => {
     if (!replyingTo || !activeRootId) {
       setComments(prev => [tempComment, ...prev]);
+
+      if (onNewUserComment) onNewUserComment(tempComment);
     } else {
       setLatestReply({ parentId: activeRootId, comment: tempComment });
     }
@@ -54,6 +57,8 @@ export default function CommentsDrawer({ blogId, isOpen, onClose }: any) {
   const handleCommentAdded = (newComment: CommentData, tempId: number, parentId: number | null) => {
     if (!activeRootId) {
       setComments(prev => prev.map(c => c.IntIdCom === tempId ? newComment : c));
+
+      if (onNewUserComment) onNewUserComment(newComment);
     } else {
       setLatestReply({ parentId: activeRootId, comment: newComment });
       setComments(prev => prev.map(c => 

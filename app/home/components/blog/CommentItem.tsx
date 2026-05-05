@@ -20,7 +20,7 @@ export interface CommentData {
 
 export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId }: any) {
   const [isVisible, setIsVisible] = useState(true);
-  const [isLiked, setIsLiked] = useState(!!comment.BolCurrentUserLiked); 
+  const [isLiked, setIsLiked] = useState(!!comment.BolCurrentUserLiked);
   const [likesCount, setLikesCount] = useState(comment.IntLikesCount);
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<CommentData[]>([]);
@@ -35,6 +35,11 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
     setIsMenuOpen(false);
   }, []);
   useClickOutside([menuRef], closeMenu, { enabled: isMenuOpen });
+
+  useEffect(() => {
+    setIsLiked(!!comment.BolCurrentUserLiked);
+    setLikesCount(comment.IntLikesCount);
+  }, [comment.BolCurrentUserLiked, comment.IntLikesCount]);
 
   useEffect(() => {
     if (latestReply && latestReply.parentId === comment.IntIdCom) {
