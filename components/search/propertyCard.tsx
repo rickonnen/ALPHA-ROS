@@ -43,6 +43,7 @@ export interface Property {
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
+  caracteristicas?: string[];
 }
 
 interface PropertyCardProps {
