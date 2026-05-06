@@ -10,6 +10,8 @@ import {
   MessageCircle,
   Square,
   ArrowRight,
+  ArrowRightLeft,
+  Check,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,9 @@ interface PropertyCardProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   onClick?: () => void;
+  //para la comparacion
+  isSelected?:boolean;
+  onToggleCompare?: () => void;
 }
 
 function PropertyCard({
@@ -61,6 +66,9 @@ function PropertyCard({
   onMouseEnter,
   onMouseLeave,
   onClick,
+
+  isSelected = false,
+  onToggleCompare,
 }: PropertyCardProps) {
   const { trackEvent } = useTracking();
   const { compra } = useDollarRate();
@@ -149,6 +157,30 @@ function PropertyCard({
         }`}
         >
           <div className="relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]">
+            {/*boton*/}
+            {onToggleCompare && (
+              <button
+                onClick = {(e)=>{
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onToggleCompare();
+                }}
+                className={`absolute top-1 left-1 z-[60] p-1.5 rounded-md
+                  bg-white/95 backdrop-blur border shadow-sm transition-all hover:scale-105
+                  ${isSelected ? 'border=[#c26e5a] text-[#C26E5A]' : 'border-gray-300 text-gray-400 hover:text-gray-600 '}
+                  `}
+                  title={isSelected?"Quitar de comparación":"Seleccionar para comparar" }
+                >
+                {isSelected ? (
+                  <Check className="h-3 w-3 sm:h-4" strokeWidth={3}/>
+                ):(
+                  <Square className="h-3 w-3 sm:h-4" strokeWidth={2}/>
+                )}
+
+              </button>
+              
+            )}
+            
             <img
               src={property.images[0]}
               alt={`Imagen de ${property.title}`}
@@ -230,6 +262,34 @@ function PropertyCard({
       }`}
     >
       <div className="relative h-48 w-2/5 shrink-0 overflow-hidden sm:w-1/3">
+       {/* --- BOTÓN PILL DE SELECCIÓN (GRILLA) --- */}
+        {onToggleCompare && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onToggleCompare();
+            }}
+            className={`absolute top-2 left-2 z-[60] flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all shadow-md hover:scale-105 ${
+              isSelected 
+                ? 'bg-[#1a2b4c] text-white border border-[#1a2b4c]' 
+                : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50'
+            }`}
+            title={isSelected ? "Quitar de comparación" : "Seleccionar para comparar"}
+          >
+            {isSelected ? (
+              <>
+                <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={3} />
+                <span className="hidden sm:inline">SELECCIONADO</span>
+              </>
+            ) : (
+              <>
+                <ArrowRightLeft className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
+                <span className="hidden sm:inline">COMPARAR</span>
+              </>
+            )}
+          </button>
+        )}
         <Carousel className="h-full w-full">
           <CarouselContent className="-ml-0 h-full">
             {property.images.map((img, index) => (
@@ -319,6 +379,7 @@ export default memo(PropertyCard, (prevProps, nextProps) => {
     prevProps.property.id === nextProps.property.id &&
     prevProps.viewMode === nextProps.viewMode &&
     prevProps.isHovered === nextProps.isHovered &&
+    prevProps.isSelected == nextProps.isSelected &&
     prevProps.selectedCurrency === nextProps.selectedCurrency
   );
 });
