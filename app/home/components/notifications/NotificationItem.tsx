@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Bell, Trash2, CheckCheck } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -83,7 +83,6 @@ export function NotificationItem({
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
-  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
 
   useEffect(() => {
     const el = textRef.current;
@@ -181,19 +180,8 @@ export function NotificationItem({
         <span className="text-gray-400 text-xs mt-1">{time}</span>
       </div>
 
-      {/* ACTIONS */}
+      {/* ACTIONS - Solo botón de eliminar */}
       <div className="shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!read && (
-          <button
-            onClick={handleRead}
-            disabled={isMarkingRead}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50"
-            title="Marcar como leída"
-          >
-            <CheckCheck size={15} />
-          </button>
-        )}
-
         <button
           onClick={handleDelete}
           disabled={isDeleting}
