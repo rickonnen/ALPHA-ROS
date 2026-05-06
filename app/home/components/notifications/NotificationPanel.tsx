@@ -215,7 +215,6 @@ export function NotificationPanel() {
 
 
 
-
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { NotificationHeader } from "./NotificationHeader";
@@ -252,6 +251,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+// Función helper para actualizar el badge
+const updateUnreadCountBadge = (count: number) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem("notification_unread_count", count.toString());
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+  }
+};
 
 export function NotificationPanel() {
   const { user } = useAuth();
@@ -332,6 +339,11 @@ export function NotificationPanel() {
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
+  // Actualizar el badge cada vez que cambia el contador de no leídas
+  useEffect(() => {
+    updateUnreadCountBadge(unreadCount);
+  }, [unreadCount]);
+
   const visibleNotifications = useMemo(() => {
     let filtered = notifications;
     if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
@@ -343,20 +355,20 @@ export function NotificationPanel() {
   const handleDelete = async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     await supabase.from("Notificacion").delete().eq("id_notificacion", id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
+    // El badge se actualizará automáticamente cuando cambie unreadCount
   };
 
   const handleRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
+    // El badge se actualizará automáticamente cuando cambie unreadCount
   };
 
   const handleMarkAll = async () => {
     if (!user?.id) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_usuario", user.id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
+    // El badge se actualizará automáticamente cuando cambie unreadCount
   };
 
   const handleGmailToggle = (enabled: boolean) => {
@@ -384,7 +396,7 @@ export function NotificationPanel() {
       ) : (
         // Mostrar el panel de notificaciones completo
         <>
-          <NotificationHeader total={notifications.length} />
+          <NotificationHeader unreadCount={unreadCount} />
 
           <div className="p-2">
             <NotificationTabs

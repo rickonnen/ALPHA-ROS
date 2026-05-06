@@ -41,12 +41,15 @@ export function NotificationTabs({
         </Tabs>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={onMarkAll}
-            className="text-xs text-gray-500 hover:text-black"
-          >
-            Marcar todo
-          </button>
+          {/* Mostrar "Marcar todo" solo cuando la pestaña activa sea "unread" */}
+          {activeTab === "unread" && (
+            <button
+              onClick={onMarkAll}
+              className="text-xs text-gray-500 hover:text-black"
+            >
+              Marcar todas
+            </button>
+          )}
 
           <button
             onClick={onOpenSettings}
