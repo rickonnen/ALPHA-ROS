@@ -453,7 +453,8 @@ function SearchPageContent() {
 
   // Estados de paginación y recomendaciones (merge-sysinfosquad-bughunters)
   const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
-
+  // Estado colapso sidebar desktop
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   // Estados de zona dibujada y fullscreen (team-bugHunters)
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -1306,153 +1307,160 @@ function SearchPageContent() {
       {/* ══════════════════ DESKTOP LAYOUT ══════════════════ */}
       <div className="hidden lg:flex items-stretch min-h-screen">
         {/* ── Sidebar filtros ── */}
-        <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
-          <div className="sticky top-6">
-            {/* Controles de zona dibujada (team-bugHunters) */}
-            <div className="mb-4">
-              {!drawnPolygon ? (
-                <button
-                  onClick={() => {
-                    setIsDrawingMode(!isDrawingMode);
-                    if (!isMapOpen) setIsMapOpen(true);
-                  }}
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
-                    isDrawingMode
-                      ? "bg-slate-800 hover:bg-slate-900"
-                      : "bg-[#C26E5A] hover:bg-[#b05e4a]"
-                  }`}
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                    />
-                  </svg>
-                  {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
-                </button>
-              ) : (
-                <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
-                  <span className="text-sm font-medium text-slate-900 text-center">
-                    Zona aplicada: {allProperties.length} inmuebles
-                  </span>
+        {/* ── Sidebar filtros ── */}
+        <aside
+          className={`relative shrink-0 border-r border-gray-200 transition-all duration-300 ease-in-out ${
+            isSidebarCollapsed
+              ? "w-0 px-0 pt-0 overflow-visible"
+              : "w-[280px] xl:w-[320px] px-4 pt-6"
+          }`}
+        >
+          {/* Pestaña para reabrir cuando está colapsado */}
+          {isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="absolute left-0 top-24 z-10 flex flex-col items-center justify-center gap-1 rounded-r-xl bg-[#C26E5A] px-1.5 py-4 text-white shadow-md hover:bg-[#b05e4a] transition-colors"
+              title="Mostrar filtros"
+              aria-label="Mostrar filtros"
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span
+                className="text-[10px] font-semibold tracking-wide"
+                style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+              >
+                Filtros
+              </span>
+            </button>
+          )}
+
+          {/* Contenido del sidebar */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isSidebarCollapsed
+                ? "invisible opacity-0 w-0 overflow-hidden"
+                : "visible opacity-100 w-full"
+            }`}
+          >
+            <div className="sticky top-6">
+              {/* Controles de zona dibujada (team-bugHunters) */}
+              <div className="mb-4">
+                {!drawnPolygon ? (
                   <button
                     onClick={() => {
-                      if (!objUser) {
-                        setBolShowProtected(true);
-                        return;
-                      }
-                      if (isCurrentPolygonSaved) return;
-                      setShowZoneNameModal(true);
+                      setIsDrawingMode(!isDrawingMode);
+                      if (!isMapOpen) setIsMapOpen(true);
                     }}
-                    className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
-                      isCurrentPolygonSaved
-                        ? 'cursor-not-allowed bg-slate-400'
-                        : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+                      isDrawingMode
+                        ? "bg-slate-800 hover:bg-slate-900"
+                        : "bg-[#C26E5A] hover:bg-[#b05e4a]"
                     }`}
-                    disabled={isCurrentPolygonSaved}
                   >
-                    {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                    </svg>
+                    {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
                   </button>
-                  <button
-                    onClick={() => {
-                      setDrawnPolygon(null);
-                      setIsDrawingMode(false);
-                    }}
-                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
-                  >
-                    Limpiar mapa
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
-
-              <div className="flex mb-4 items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isMapOpen}
-                      onChange={() => setIsMapOpen(!isMapOpen)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]" />
-                  </label>
-                  <span className="text-sm font-medium text-gray-700">
-                    Mapa
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-                    aria-label="vista grilla"
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-                    aria-label="vista lista"
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
+                    <span className="text-sm font-medium text-slate-900 text-center">
+                      Zona aplicada: {allProperties.length} inmuebles
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (!objUser) { setBolShowProtected(true); return; }
+                        if (isCurrentPolygonSaved) return;
+                        setShowZoneNameModal(true);
+                      }}
+                      className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                        isCurrentPolygonSaved ? 'cursor-not-allowed bg-slate-400' : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                      }`}
+                      disabled={isCurrentPolygonSaved}
+                    >
+                      {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
+                    </button>
+                    <button
+                      onClick={() => { setDrawnPolygon(null); setIsDrawingMode(false); }}
+                      className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
+                    >
+                      Limpiar mapa
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                }}
-              /> */}
-              <div className="my-3 h-px bg-[#F4EFE6]" />
-              <SearchAutocomplete
-                value={searchLocation}
-                onChange={setSearchLocation}
-              />
-              <div className="my-3 h-px bg-[#F4EFE6]" />
+              <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                {/* Título Filtros + botón ocultar en la misma fila */}
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+                  <button
+                    onClick={() => setIsSidebarCollapsed(true)}
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
+                    title="Ocultar filtros"
+                    aria-label="Ocultar filtros"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Ocultar
+                  </button>
+                </div>
 
-              <div className="min-h-0 flex-1">
-                <ScrollArea className="h-full pr-3">
-                  <OperationTypeFilter
-                    value={selectedOperation}
-                    onChange={setSelectedOperation}
-                  />
-                  <FilterTypeProperty
-                    tipos={PROPERTY_TYPE_OPTIONS}
-                    selected={selectedPropertyTypes}
-                    onChange={setSelectedPropertyTypes}
-                  />
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
-                  />
-                  <div className="my-3 h-px bg-[#F4EFE6]" />
-                  <PriceDropdown
-                    selectedCurrency={selectedCurrency}
-                    appliedPriceFilter={appliedPriceFilter}
-                    onCurrencyChange={handleCurrencyChange}
-                    onApplyRange={handleApplyRange}
-                  />
-                  <div className="my-3 h-px bg-[#F4EFE6]" />
-                  <div className="pb-2">
-                    <ClearFiltersButton
-                      hasActiveFilters={hasActiveFilters}
-                      onClear={handleClearFilters}
-                    />
+                <div className="flex mb-4 items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isMapOpen}
+                        onChange={() => setIsMapOpen(!isMapOpen)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]" />
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">Mapa</span>
                   </div>
-                </ScrollArea>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                      aria-label="vista grilla"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                      aria-label="vista lista"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="my-3 h-px bg-[#F4EFE6]" />
+                <SearchAutocomplete value={searchLocation} onChange={setSearchLocation} />
+                <div className="my-3 h-px bg-[#F4EFE6]" />
+
+                <div className="min-h-0 flex-1">
+                  <ScrollArea className="h-full pr-3">
+                    <OperationTypeFilter value={selectedOperation} onChange={setSelectedOperation} />
+                    <FilterTypeProperty
+                      tipos={PROPERTY_TYPE_OPTIONS}
+                      selected={selectedPropertyTypes}
+                      onChange={setSelectedPropertyTypes}
+                    />
+                    <AdvancedFilters key={advancedFiltersKey} onChange={setAdvancedFilterValues} />
+                    <div className="my-3 h-px bg-[#F4EFE6]" />
+                    <PriceDropdown
+                      selectedCurrency={selectedCurrency}
+                      appliedPriceFilter={appliedPriceFilter}
+                      onCurrencyChange={handleCurrencyChange}
+                      onApplyRange={handleApplyRange}
+                    />
+                    <div className="my-3 h-px bg-[#F4EFE6]" />
+                    <div className="pb-2">
+                      <ClearFiltersButton hasActiveFilters={hasActiveFilters} onClear={handleClearFilters} />
+                    </div>
+                  </ScrollArea>
+                </div>
               </div>
             </div>
           </div>
