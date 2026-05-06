@@ -352,6 +352,7 @@ function mapPublicationToProperty(
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono,
+    caracteristicas: publication.caracteristicas || [],
   };
 }
 
