@@ -212,6 +212,10 @@ export function NotificationPanel() {
 }*/
 
 
+
+
+
+
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { NotificationHeader } from "./NotificationHeader";
@@ -367,27 +371,9 @@ export function NotificationPanel() {
 
   return (
     <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
-      <NotificationHeader total={notifications.length} />
-
-      <div className="p-2">
-        <NotificationTabs
-          activeTab={activeTab}
-          onTabChange={(tab) => { setActiveTab(tab); setActiveFilter("all"); }}
-          unreadCount={unreadCount}
-          onMarkAll={handleMarkAll}
-          activeFilter={activeFilter}
-          onFilterChange={(filter) => { setActiveFilter(filter); setActiveTab("all"); }}
-          onOpenSettings={() => setShowSettings(true)}
-          showSettings={showSettings}
-          onCloseSettings={() => setShowSettings(false)}
-          gmailEnabled={gmailEnabled}
-          whatsappEnabled={whatsappEnabled}
-          onGmailToggle={handleGmailToggle}
-          onWhatsappToggle={handleWhatsappToggle}
-        />
-      </div>
-
+      
       {showSettings ? (
+        // Mostrar solo el panel de configuración
         <SettingsPanel
           onClose={() => setShowSettings(false)}
           gmailEnabled={gmailEnabled}
@@ -395,45 +381,69 @@ export function NotificationPanel() {
           onGmailToggle={handleGmailToggle}
           onWhatsappToggle={handleWhatsappToggle}
         />
-      ) : isLoading ? (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          Cargando notificaciones...
-        </div>
-      ) : hasError ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-            <BellOff size={22} />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">No fue posible cargar las notificaciones.</p>
-        </div>
-      ) : visibleNotifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-            <BellOff size={22} />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">
-            {activeTab === "unread" ? "No tienes notificaciones no leídas." : "No tienes notificaciones por el momento."}
-          </p>
-        </div>
       ) : (
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-2">
-            {visibleNotifications.map((n) => (
-              <NotificationItem
-                key={n.id}
-                id={n.id}
-                title={n.title}
-                description={n.description}
-                read={n.read}
-                time={n.time}
-                type={n.type}
-                onDelete={handleDelete}
-                onRead={handleRead}
-              />
-            ))}
+        // Mostrar el panel de notificaciones completo
+        <>
+          <NotificationHeader total={notifications.length} />
+
+          <div className="p-2">
+            <NotificationTabs
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab);
+                setActiveFilter("all");
+              }}
+              unreadCount={unreadCount}
+              onMarkAll={handleMarkAll}
+              onOpenSettings={() => setShowSettings(true)}
+            />
           </div>
-          <ScrollBar orientation="vertical" />
-        </ScrollArea>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
+              Cargando notificaciones...
+            </div>
+          ) : hasError ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <BellOff size={22} />
+              </div>
+              <p className="text-gray-500 text-sm font-medium">
+                No fue posible cargar las notificaciones.
+              </p>
+            </div>
+          ) : visibleNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <BellOff size={22} />
+              </div>
+              <p className="text-gray-500 text-sm font-medium">
+                {activeTab === "unread"
+                  ? "No tienes notificaciones no leídas."
+                  : "No tienes notificaciones por el momento."}
+              </p>
+            </div>
+          ) : (
+            <ScrollArea className="flex-1 overflow-y-auto">
+              <div className="p-2 space-y-2">
+                {visibleNotifications.map((n) => (
+                  <NotificationItem
+                    key={n.id}
+                    id={n.id}
+                    title={n.title}
+                    description={n.description}
+                    read={n.read}
+                    time={n.time}
+                    type={n.type}
+                    onDelete={handleDelete}
+                    onRead={handleRead}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
+          )}
+        </>
       )}
     </div>
   );
