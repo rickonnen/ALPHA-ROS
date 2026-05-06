@@ -370,8 +370,7 @@ const handleRestore = (id: string) => {
   if (notif) {
     setNotifications((prev) => [notif, ...prev]);
     setTrash((prev) => prev.filter((n) => n.id !== id));
-     await supabase.from("Notificacion").delete().eq("id_notificacion", id);
-    // El badge se actualizará automáticamente cuando cambie unreadCount
+    
   }
 };
 
