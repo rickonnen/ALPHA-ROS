@@ -262,6 +262,7 @@ function PropertyCard({
       }`}
     >
       <div className="relative h-48 w-2/5 shrink-0 overflow-hidden sm:w-1/3">
+       
        {/* --- BOTÓN PILL DE SELECCIÓN (GRILLA) --- */}
         {onToggleCompare && (
           <button 
