@@ -1175,6 +1175,7 @@ function SearchPageContent() {
                         onMouseEnter={() => setHoveredId(property.id)}
                         onMouseLeave={() => {}}
                         onClick={() => {}}
+                        isMapOpen={isMapOpen}
                       />
                     ))}
                   </div>
@@ -1476,6 +1477,7 @@ function SearchPageContent() {
                           selectedCurrency={selectedCurrency}
                           viewMode={viewMode}
                           isHovered={hoveredId === property.id}
+                          isMapOpen={isMapOpen}
                           isSelected={selectedIds.includes(property.id)} // <-- NUEVO
                           onToggleCompare={() => toggleSelection(property.id)} // <-- NUEVO
                           onMouseEnter={() => {
