@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, Newspaper, ArrowRight } from "lucide-react";
+import { CreditCard, Newspaper, ArrowRight, MessageSquare } from "lucide-react";
 
 const arrAdminOptions = [
   {
@@ -20,6 +20,14 @@ const arrAdminOptions = [
     Icon: Newspaper,
     strButtonText: "Inspeccionar",
   },
+  {
+    strTitle: "Gestión de comentarios",
+    strDescription:
+      "Modera o elimina las opiniones y mensajes dejados por los usuarios en el blog.",
+    strHref: "/admin/commentManagement",
+    Icon: MessageSquare,
+    strButtonText: "Inspeccionar",
+  },
 ];
 
 export default function MenuAdmin() {
@@ -34,7 +42,7 @@ export default function MenuAdmin() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         {arrAdminOptions.map((objOption) => {
           const Icon = objOption.Icon;
 
