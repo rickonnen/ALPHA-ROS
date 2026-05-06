@@ -222,6 +222,8 @@ import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
 import { SettingsPanel } from "./SettingsPanel";
+////////////////////////
+import { ConfirmModal } from "./ConfirmModal";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -264,6 +266,10 @@ export function NotificationPanel() {
   const [gmailEnabled, setGmailEnabled] = useState(true);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+//////////////////////////////HU2//////////
+
+  const [trash, setTrash] = useState<Notification[]>([]);
   useEffect(() => {
     const userId = user?.id ?? "guest";
     const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
@@ -333,19 +339,32 @@ export function NotificationPanel() {
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   const visibleNotifications = useMemo(() => {
-    let filtered = notifications;
+  if (activeTab === "trash") return trash;
+  let filtered = notifications;
     if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
     else if (activeFilter === "whatsapp") filtered = filtered.filter((n) => n.type === 2 || n.type === "whatsapp");
     else if (activeTab === "unread") filtered = filtered.filter((n) => !n.read);
     return filtered;
-  }, [notifications, activeTab, activeFilter]);
+}, [notifications, activeTab, activeFilter, trash]);
+///////////////////////HU2////////////
+  const handleDelete = (id: string) => {
+  const notif = notifications.find((n) => n.id === id);
+  if (notif) setTrash((prev) => [notif, ...prev]);
+  setNotifications((prev) => prev.filter((n) => n.id !== id));
+};
 
-  const handleDelete = async (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    await supabase.from("Notificacion").delete().eq("id_notificacion", id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
-  };
+const handleRestore = (id: string) => {
+  const notif = trash.find((n) => n.id === id);
+  if (notif) {
+    setNotifications((prev) => [notif, ...prev]);
+    setTrash((prev) => prev.filter((n) => n.id !== id));
+  }
+};
 
+const handleEmptyTrash = () => {
+  setTrash([]);
+  setShowConfirmModal(false);
+};
   const handleRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
@@ -394,11 +413,21 @@ export function NotificationPanel() {
                 setActiveFilter("all");
               }}
               unreadCount={unreadCount}
+               trashCount={trash.length}
               onMarkAll={handleMarkAll}
               onOpenSettings={() => setShowSettings(true)}
             />
           </div>
-
+            {activeTab === "trash" && trash.length > 0 && (
+  <div className="flex justify-end px-3 pb-1">
+    <button
+      onClick={() => setShowConfirmModal(true)}
+      className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
+    >
+      Vaciar papelera
+    </button>
+  </div>
+)}
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
               Cargando notificaciones...
@@ -418,9 +447,11 @@ export function NotificationPanel() {
                 <BellOff size={22} />
               </div>
               <p className="text-gray-500 text-sm font-medium">
-                {activeTab === "unread"
+               {activeTab === "unread"
                   ? "No tienes notificaciones no leídas."
-                  : "No tienes notificaciones por el momento."}
+                   : activeTab === "trash"
+                  ? "La papelera está vacía."
+                    : "No tienes notificaciones por el momento."}
               </p>
             </div>
           ) : (
@@ -445,6 +476,14 @@ export function NotificationPanel() {
           )}
         </>
       )}
+
+<ConfirmModal
+  isOpen={showConfirmModal}
+  onConfirm={handleEmptyTrash}
+  onCancel={() => setShowConfirmModal(false)}
+/>
+
+
     </div>
   );
 }

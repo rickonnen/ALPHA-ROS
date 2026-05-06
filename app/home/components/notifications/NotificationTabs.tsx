@@ -7,6 +7,9 @@ type Props = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   unreadCount: number;
+////////////h2////////
+  trashCount: number;
+
   onMarkAll: () => void;
   onOpenSettings: () => void;
 };
@@ -15,6 +18,7 @@ export function NotificationTabs({
   activeTab,
   onTabChange,
   unreadCount,
+  trashCount,
   onMarkAll,
   onOpenSettings,
 }: Props) {
@@ -37,6 +41,15 @@ export function NotificationTabs({
             >
               No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
             </TabsTrigger>
+             <TabsTrigger
+  value="trash"
+  className="text-sm px-3 py-1 rounded-lg data-[state=active]:bg-white"
+>
+  Papelera {trashCount > 0 ? `(${trashCount})` : ""}
+</TabsTrigger>
+
+
+
           </TabsList>
         </Tabs>
 
