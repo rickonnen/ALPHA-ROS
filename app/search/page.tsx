@@ -45,6 +45,10 @@ import { useAuth } from "@/app/auth/AuthContext";
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 
+/*Para comparacion de propiedades*/
+import { CompareTable } from "@/components/search/compareTable";
+import { CompareFloatingBar } from "@/components/search/floatBar";
+
 type Currency = "USD" | "BS";
 
 type AppliedPriceFilter = {
@@ -297,7 +301,7 @@ function formatPublishedDate(date: Date | string | null | undefined): string {
     const diffMs = now.getTime() - publishedDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    // Mostrar hace cuánto tiempo fue publicado
+    //Mostrar cuanto tiempo fue publicado
     if (diffDays === 0) return "Hoy";
     if (diffDays === 1) return "Ayer";
     if (diffDays < 7) return `Hace ${diffDays} días`;
@@ -310,7 +314,6 @@ function formatPublishedDate(date: Date | string | null | undefined): string {
       return `Hace ${months} ${months === 1 ? "mes" : "meses"}`;
     }
     
-    // Para fechas más antiguas, mostrar la fecha formateada
     const formatter = new Intl.DateTimeFormat("es-BO", {
       day: "2-digit",
       month: "2-digit",
@@ -450,6 +453,18 @@ function SearchPageContent() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+
+  // --- NUEVOS ESTADOS PARA LA VISTA DE COMPARACIÓN ---
+  const [appView, setAppView] = useState<"listings" | "compare">("listings");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((item) => item !== id);
+      if (prev.length >= 4) return prev; // Límite de 4
+      return [...prev, id];
+    });
+  };
 
   // Estados de paginación y recomendaciones (merge-sysinfosquad-bughunters)
   const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
@@ -763,7 +778,6 @@ function SearchPageContent() {
         ...overrides,
       };
 
-      
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
       setHasSearched(true);
@@ -801,7 +815,7 @@ function SearchPageContent() {
     if (typeof window !== "undefined") {
       const savedMapState = localStorage.getItem("searchMapOpen");
       if (savedMapState !== null) setIsMapOpen(JSON.parse(savedMapState));
-
+      
       // team-bugHunters: cargar zona desde perfil
       const loadedZona = localStorage.getItem("loadedZona");
       if (loadedZona) {
@@ -973,7 +987,7 @@ function SearchPageContent() {
       // Solo ejecutamos si ya se hizo una busqueda inicial o hay filtros
       if (hasSearched || hasActiveFilters) {
         saveFiltersToUrl(); // Actualiza la URL arriba en el navegador
-        void runSearch();   // Llama a tu función de Prisma/API
+        void runSearch(); // Llama a tu función de Prisma/API
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -984,8 +998,9 @@ function SearchPageContent() {
     appliedPriceFilter,   // Escucha cambios en el precio
     advancedFilterValues, // Escucha cambios en habitaciones/baños
     selectedSort,         // Escucha cambios en el ordenamiento
-    selectedCurrency,      // Escucha cambios en la moneda
+    selectedCurrency,      // Escucha cambios en la moneda     
   ]);
+
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1034,33 +1049,35 @@ function SearchPageContent() {
       </div>
 
       {/* ══════════════════ MOBILE INFO + SORT ══════════════════ */}
-      <div className="block lg:hidden px-4 mb-3">
-        <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
-        <h1 className="text-base font-semibold mb-2">
-          {allProperties.length} inmuebles disponibles
-        </h1>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 max-w-[220px]">
-            <SortSelect onSortChange={handleSort} />
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-              aria-label="vista grilla"
-            >
-              <LayoutGrid className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-              aria-label="vista lista"
-            >
-              <List className="h-5 w-5" />
-            </button>
+      {appView === "listings" && (
+        <div className="block lg:hidden px-4 mb-3">
+          <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
+          <h1 className="text-base font-semibold mb-2">
+            {allProperties.length} inmuebles disponibles
+          </h1>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 max-w-[220px]">
+              <SortSelect onSortChange={handleSort} />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                aria-label="vista grilla"
+              >
+                <LayoutGrid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                aria-label="vista lista"
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ══════════════════ MOBILE FILTERS DRAWER ══════════════════ */}
       {isMobileFiltersOpen && (
@@ -1085,7 +1102,6 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -1132,50 +1148,59 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE RESULTS ══════════════════ */}
       <div className="block lg:hidden px-4">
-        {!isMapOpen && (
-          <>
-            {!hasSearched && isApplyingFilters ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                Cargando inmuebles...
-              </div>
-            ) : allProperties.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                No se encontraron inmuebles con los filtros aplicados.
-              </div>
-            ) : (
-              <>
-                <div className="grid gap-2 grid-cols-1">
-                  {displayedProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      selectedCurrency={selectedCurrency}
-                      viewMode={viewMode}
-                      isHovered={hoveredId === property.id}
-                      onMouseEnter={() => setHoveredId(property.id)}
-                      onMouseLeave={() => {}}
-                      onClick={() => {}}
-                    />
-                  ))}
+        {appView === "listings" ? (
+          !isMapOpen && (
+            <>
+              {!hasSearched && isApplyingFilters ? (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                  Cargando inmuebles...
                 </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              </>
-            )}
-          </>
+              ) : allProperties.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                  No se encontraron inmuebles con los filtros aplicados.
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-2 grid-cols-1">
+                    {displayedProperties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        selectedCurrency={selectedCurrency}
+                        viewMode={viewMode}
+                        isHovered={hoveredId === property.id}
+                        isSelected={selectedIds.includes(property.id)} // 
+                        onToggleCompare={() => toggleSelection(property.id)} // 
+                        onMouseEnter={() => setHoveredId(property.id)}
+                        onMouseLeave={() => {}}
+                        onClick={() => {}}
+                      />
+                    ))}
+                  </div>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </>
+              )}
+            </>
+          )
+        ) : (
+          <CompareTable
+            properties={allProperties}
+            selectedIds={selectedIds}
+            onBack={() => setAppView("listings")}
+          />
         )}
       </div>
 
       {/* ══════════════════ MOBILE MAP ══════════════════ */}
-      {isMapOpen && (
+      {isMapOpen && appView === "listings" && (
         <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 lg:hidden">
-          {/* Controles de dibujo flotantes en móvil */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[998]">
             {!drawnPolygon ? (
               <button
@@ -1265,7 +1290,6 @@ function SearchPageContent() {
         {/* ── Sidebar filtros ── */}
         <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
           <div className="sticky top-6">
-            {/* Controles de zona dibujada (team-bugHunters) */}
             <div className="mb-4">
               {!drawnPolygon ? (
                 <button
@@ -1410,86 +1434,98 @@ function SearchPageContent() {
 
         {/* ── Results area ── */}
         <main className="flex flex-col pt-6 px-4 flex-1 min-w-0">
-          <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
-            <div>
-              <nav className="mb-0.5 text-sm text-gray-500">{breadcrumb}</nav>
-              <h1 className="text-base font-semibold">
-                {allProperties.length} inmuebles disponibles
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <SortSelect onSortChange={handleSort} />
-            </div>
-          </div>
+          {appView === "listings" ? (
+            <>
+              <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
+                <div>
+                  <nav className="mb-0.5 text-sm text-gray-500">{breadcrumb}</nav>
+                  <h1 className="text-base font-semibold">
+                    {allProperties.length} inmuebles disponibles
+                  </h1>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <SortSelect onSortChange={handleSort} />
+                </div>
+              </div>
 
-          <div className="flex-1">
-            {!hasSearched && isApplyingFilters ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                Cargando inmuebles...
-              </div>
-            ) : allProperties.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                No se encontraron inmuebles con los filtros aplicados.
-              </div>
-            ) : (
-              <>
-                <div
-                  className={`grid gap-2 ${
-                    isMapOpen
-                      ? "grid-cols-1"
-                      : viewMode === "grid"
-                        ? "grid-cols-2"
-                        : "grid-cols-1"
-                  }`}
-                >
-                  {displayedProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      selectedCurrency={selectedCurrency}
-                      viewMode={viewMode}
-                      isHovered={hoveredId === property.id}
-                      onMouseEnter={() => {
-                        setHoveredId(property.id);
-                        const loc = searchResults.find(
-                          (p) => p.id_publicacion === property.id,
-                        )?.ubicacion;
-                        const lat = Number(loc?.latitud);
-                        const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) setHoveredPos([lat, lng]);
-                      }}
-                      onMouseLeave={() => {}}
-                      onClick={() => {
-                        setHoveredId(property.id);
-                        const loc = searchResults.find(
-                          (p) => p.id_publicacion === property.id,
-                        )?.ubicacion;
-                        const lat = Number(loc?.latitud);
-                        const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) {
-                          setHoveredPos([lat, lng]);
-                          setSelectedPos([lat, lng]);
-                        }
+              <div className="flex-1">
+                {!hasSearched && isApplyingFilters ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                    Cargando inmuebles...
+                  </div>
+                ) : allProperties.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                    No se encontraron inmuebles con los filtros aplicados.
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className={`grid gap-2 ${
+                        isMapOpen
+                          ? "grid-cols-1"
+                          : viewMode === "grid"
+                            ? "grid-cols-2"
+                            : "grid-cols-1"
+                      }`}
+                    >
+                      {displayedProperties.map((property) => (
+                        <PropertyCard
+                          key={property.id}
+                          property={property}
+                          selectedCurrency={selectedCurrency}
+                          viewMode={viewMode}
+                          isHovered={hoveredId === property.id}
+                          isSelected={selectedIds.includes(property.id)} // <-- NUEVO
+                          onToggleCompare={() => toggleSelection(property.id)} // <-- NUEVO
+                          onMouseEnter={() => {
+                            setHoveredId(property.id);
+                            const loc = searchResults.find(
+                              (p) => p.id_publicacion === property.id,
+                            )?.ubicacion;
+                            const lat = Number(loc?.latitud);
+                            const lng = Number(loc?.longitud);
+                            if (isValidLatLng(lat, lng)) setHoveredPos([lat, lng]);
+                          }}
+                          onMouseLeave={() => {}}
+                          onClick={() => {
+                            setHoveredId(property.id);
+                            const loc = searchResults.find(
+                              (p) => p.id_publicacion === property.id,
+                            )?.ubicacion;
+                            const lat = Number(loc?.latitud);
+                            const lng = Number(loc?.longitud);
+                            if (isValidLatLng(lat, lng)) {
+                              setHoveredPos([lat, lng]);
+                              setSelectedPos([lat, lng]);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={(page) => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                     />
-                  ))}
-                </div>
-
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              </>
-            )}
-          </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <CompareTable
+              properties={allProperties}
+              selectedIds={selectedIds}
+              onBack={() => setAppView("listings")}
+            />
+          )}
         </main>
 
         {/* ── Map panel (team-bugHunters: fullscreen + drawing controls) ── */}
-        {isMapOpen && (
+        {isMapOpen && appView === "listings" && (
           <div
             className={`${
               isMapFullscreen
@@ -1502,12 +1538,12 @@ function SearchPageContent() {
                 : undefined
             }
           >
-            {/* Botón fullscreen */}
             <button
               onClick={() => setIsMapFullscreen(!isMapFullscreen)}
               className="absolute top-3 right-3 z-[999] flex items-center justify-center h-9 w-9 rounded-lg bg-white shadow-md hover:bg-gray-100 transition-colors"
               title={isMapFullscreen ? "Compactar mapa" : "Expandir mapa"}
             >
+              {/* Botón fullscreen */}
               {isMapFullscreen ? (
                 <svg
                   className="h-5 w-5 text-gray-700"
@@ -1551,6 +1587,15 @@ function SearchPageContent() {
           </div>
         )}
       </div>
+
+      {/* FLOATING BAR DE COMPARACIÓN */}
+      {appView === "listings" && selectedIds.length > 0 && (
+        <CompareFloatingBar
+          selectedCount={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onCompare={() => setAppView('compare')}
+        />
+      )}
 
       {/* ══════════════════ MODALES (team-bugHunters) ══════════════════ */}
 
