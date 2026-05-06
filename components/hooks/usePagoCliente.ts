@@ -9,11 +9,9 @@ export type EstadoModal =
   | "verificando_pago"
   | "pendiente_pago";
 
-type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
-  precio_plan: number;
-};
 
-export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string) {
+
+export function usePagoCliente(planId: string, modalidad: string) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -138,7 +136,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `QR_Plan_${plan.nombre_plan}.png`;
+    link.download = `codigoQR.png`;
     link.click();
   };
 
@@ -152,7 +150,6 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
       if (file.type.startsWith("image/")) {
         setArchivoSeleccionado(file);
         
-        // Creamos la URL temporal para la imagen
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
       } else {
@@ -160,6 +157,13 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
       }
     }
   };
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return {
     qrUrl,
