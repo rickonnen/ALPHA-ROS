@@ -1,5 +1,6 @@
 import DiscordProvider from "next-auth/providers/discord"
 import FacebookProvider from "next-auth/providers/facebook"
+import LinkedInProvider from "next-auth/providers/linkedin"
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -32,6 +33,10 @@ export const authOptions: NextAuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -148,6 +153,10 @@ export const authOptions: NextAuthOptions = {
         if (account.provider === "facebook") {
           const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
           return await handleFacebookSignIn(user, account)
+        }
+        if (account.provider === "linkedin") {
+          const { handleLinkedInSignIn } = await import("@/lib/auth/linkedInAuth")
+          return await handleLinkedInSignIn(user, account)
         }
         return true
       } catch (error) {

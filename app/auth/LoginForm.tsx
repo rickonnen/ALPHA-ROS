@@ -13,6 +13,7 @@ import { useAuth } from "./AuthContext";
 
 import { SignInFacebook } from "./FacebookSignInButton";
 import { SignInDiscord } from "./DiscordSignInButton";
+import { SignInLinkedIn } from "./LinkedInSignInButton"
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -790,6 +791,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                  <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
                   <SignInFacebook />
                   <SignInDiscord />
+                  <SignInLinkedIn />
                     </div>
            </div>
       </form>
