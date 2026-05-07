@@ -37,6 +37,8 @@ export interface Property {
   constructionArea?: number;
   bedrooms: number;
   bathrooms: number;
+  garages?: number;
+  floors?: number;
   price: number;
   currencySymbol: string;
   publishedDate: string;
@@ -165,17 +167,19 @@ function PropertyCard({
       >
         
 
-        <div className="relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]">
+        <div className={`relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]`}>
           {/* --- BOTÓN SOBRE LA IMAGEN (CUANDO EL MAPA ESTÁ ABIERTO) --- */}
-          {onToggleCompare && isMapOpen && (
+          {onToggleCompare && (
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 onToggleCompare();
               }}
-              className={`absolute top-1 left-1 z-[60] p-1.5 shrink-0 transparent-bg
-                rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 ${
+              className={`absolute top-1 left-1 z-[60] p-1.5 shrink-0 
+                rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 
+                ${!isMapOpen ? 'flex sm:hidden' : 'flex'} 
+                ${
                 isSelected 
                 ? 'bg-[#1a2b4c] text-white border border-[#1a2b4c]' 
                 : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50'
@@ -219,31 +223,49 @@ function PropertyCard({
           </p>
         </div>
 
+          
         <div className="hidden min-w-0 flex-1 items-center overflow-hidden sm:flex">
-          <div className="flex w-[200px] shrink-0 flex-col justify-center overflow-hidden pr-4">
-            <span className="text-[18px] font-bold leading-tight text-gray-950">
-              {displayPrice}
+          {/*Columna precio y tipo */}
+          <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
+            ? 'w-[100px] xl:w-[130px] pr-2' 
+            : 'w-[200px] pr-4'}`}>
+            <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
+            ? 'text-[14px] xl:text-[15px]'
+            : 'text-[18px]'
+            }`}>{displayPrice}
             </span>
-            <span className="mt-1 text-[12px] font-medium text-gray-500">{property.type}</span>
+            <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
+              ? 'text-[10px] xl:text-[11px]' 
+              : 'text-[12px]'
+            }`}>{property.type}</span>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col justify-center border-l border-gray-200 pl-4">
-            <h3 className="mb-1 truncate text-[14px] font-semibold text-[#a67c52] transition-colors group-hover:text-[#C26E5A]">
+          <div className={`flex min-w-0 flex-1 flex-col justify-center ${isMapOpen ? 'pl-1 xl:pl-2' : 'border-l border-gray-200 pl-4'}`}>
+            <h3 className={` font-semibold text-[#a67c52] transition-colors group-hover:text-[#C26E5A] ${isMapOpen ? 'mb-0.5 text-[12px] xl:text-[13px]' : 'mb-1 text-[14px]'}`}>
               {property.title}
             </h3>
-            <p className="mb-1 flex items-center gap-1 truncate text-[12px] text-gray-500">
+            <p className={`flex items-center gap-1 truncate text-gray-500 ${isMapOpen ? 'mb-0.5 text-[10px] xl:text-[11px]' : 'mb-1 text-[12px]'}`}>
               <MapPin className="h-3 w-3 shrink-0" />
-              {property.location}
+              <span className="truncate">{property.location}</span>
             </p>
-            <p className="flex items-center gap-1 truncate text-[12px] font-medium text-gray-400">
+            <p className={`flex items-center gap-1 truncate font-medium text-gray-400 ${isMapOpen ? 'text-[10px] xl:text-[11px]' : 'text-[12px]'}`}>
               <Square className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              {property.terrainArea.toLocaleString('es-BO')} m² Terreno /
-              <Bath className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              {property.bathrooms} Baños /
-              <BedDouble className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              {property.bedrooms} Rec.
+              <span className="truncate">{property.terrainArea.toLocaleString('es-BO')} m² {isMapOpen ? '' : 'Terreno'}</span>
+              
+              {/* Se ocultan datos extra si el mapa está abierto para ahorrar espacio */}
+              {!isMapOpen && (
+                <>
+                  <span className="mx-1">/</span>
+                  <Bath className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                  {property.bathrooms} <span className="hidden xl:inline">Baños</span>
+                  <span className="mx-1">/</span>
+                  <BedDouble className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                  {property.bedrooms} <span className="hidden xl:inline">Rec.</span>
+                </>
+              )}
             </p>
           </div>
+
           {/* --- BOTÓN A UN LADO (SOLO EN VISTA LISTA Y SIN MAPA) --- */}
           {onToggleCompare && !isMapOpen && (
             <button 
@@ -252,7 +274,9 @@ function PropertyCard({
                 e.preventDefault();
                 onToggleCompare();
               }}
-              className={`right-2 z-20 flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-[13px] sm:text-xs font-bold transition-all shadow-md hover:scale-105 ${
+              className={`right-2 z-20 flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 
+                sm:py-1.5 rounded-full text-[13px] sm:text-xs font-bold transition-all 
+                shadow-md hover:scale-105 ${
                 isSelected 
                 ? 'bg-[#1a2b4c] text-white border border-[#1a2b4c]' 
                 : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50'
@@ -262,12 +286,12 @@ function PropertyCard({
               {isSelected ? (
                 <>
                 <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={3} />
-                <span className="hidden sm:inline">SELECCIONADO</span>
+                <span className="hidden text-[15px] sm:inline">SELECCIONADO</span>
                 </>
               ) : (
                 <>
                 <ArrowRightLeft className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2} />
-                <span className="hidden sm:inline">COMPARAR</span>
+                <span className="hidden text-[15px] sm:inline">COMPARAR</span>
                 </>
               )}
             </button>
@@ -323,12 +347,12 @@ function PropertyCard({
             {isSelected ? (
               <>
                 <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={3} />
-                <span className="hidden sm:inline">SELECCIONADO</span>
+                <span >SELECCIONADO</span>
               </>
             ) : (
               <>
                 <ArrowRightLeft className="h-3 w-3 sm:h-3.5 sm:w-3.5" strokeWidth={2.5} />
-                <span className="hidden sm:inline">COMPARAR</span>
+                <span >COMPARAR</span>
               </>
             )}
           </button>
