@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { blogState } from "@/types/blogType";
 import { CommentBlogData, TabFilterState, INT_ITEMS_PER_PAGE } from "../types";
 /**
- * dev: Rodrigo Saul Zarate Villarroel
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: Custom hook 
  * se encarga exclusivamente de la obtención de datos (fetching), manejo de estados, 
  * filtrado dinámico y de paginación para los blogs

@@ -1,6 +1,6 @@
 import { blogState } from "@/types/blogType";
 /**
- * dev: Rodrigo Saul Zarate Villarroel
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: Definición de interfaces, tipos, constantes y funciones de utilidad visual compartidas
  */
 export interface CommentBlogData {

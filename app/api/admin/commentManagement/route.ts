@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
 /**
- * dev: Rodrigo Saul Zarate Villarroel
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: Obtiene la lista de blogs (PUBLICADOS y NOVISIBLES) con su respectivo contador de comentarios
  * (activos y eliminados softdelete)
  */

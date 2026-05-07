@@ -3,7 +3,7 @@ import { Settings2, Loader2 } from "lucide-react";
 import { blogState } from "@/types/blogType";
 import { CommentBlogData, getBadgeStyles, CLS_FOCUS } from "../types";
 /**
- * dev: Rodrigo Saul Zarate Villarroel
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: Componente de presentación
  * encargado exclusivamente de renderizar la interfaz visual de la tabla de publicaciones
  */

@@ -9,7 +9,7 @@ import { useCommentManagement } from "./hooks/useCommentManagement";
 import CommentTable from "./components/CommentTable";
 import { CLS_FOCUS } from "./types";
 /**
- * dev: Rodrigo Saul Zarate Villarroel
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: vista principal del panel de administración para la gestión de comentarios
  * contenedor y orquestador utiliza la lógica del hook useCommentManagement
  */
