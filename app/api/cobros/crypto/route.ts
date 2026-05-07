@@ -11,6 +11,7 @@ export async function POST(req: Request) {
       pay_currency: "trx",
       order_id: `PAGO-${bodyReq.planId}-${Date.now()}`,
       order_description: "Suscripcion de Plan",
+      case: "success", 
     };
 
     const response = await fetch(`${process.env.NOWPAYMENTS_API_URL}/v1/payment`, {
@@ -25,10 +26,13 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      return NextResponse.json({ error: "Error al crear pago", details: data }, { status: response.status });
+      return NextResponse.json(
+        { error: "Error al crear pago", details: data }, 
+        { status: response.status }
+      );
     }
 
-    // Retornamos los datos para que el frontend genere el QR
+    // Retornamos los datos (pay_address, payment_id, etc.)
     return NextResponse.json(data);
 
   } catch (error) {
