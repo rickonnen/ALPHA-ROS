@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { X as ObjXIcon } from "lucide-react"; 
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import { blogState } from "@/types/blogType";
-import { FnFormatLongWords } from "@/app/utils/textUtils";
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
  * funcionalidad: renderiza la vista completa de un blog con controles de administrador
@@ -88,6 +87,7 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           newState = blogState.RECHAZADO;
           isDeleted = false;
         } else if (StrActionBlo === "ELIMINAR") {
+          newState = blogState.NOVISIBLE;
           isDeleted = true;
         }
 

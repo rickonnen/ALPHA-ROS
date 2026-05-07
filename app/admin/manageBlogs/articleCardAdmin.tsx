@@ -18,7 +18,6 @@ export interface articleCardAdminProps {
   StrImageUrlBlo: string;
   StrCurrentTabBlo: string;
   FnOnActionBlo: (IntId: number, StrAction: string) => void;
-  // Añadimos las props opcionales del diseño Glass por si la API admin también las trae
   ObjAuthorBlo?: {
     name: string;
     avatar?: string;
@@ -124,7 +123,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
              </div>
           )}
 
-          {/* Botón Overlay que aparece al hacer hover (Adaptado para Admin) */}
+          {/* Botón Overlay que aparece al hacer hover */}
           <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[2px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
             <Link href={`/admin/manageBlogs/${IntIdBlo}`}>
               <button className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
