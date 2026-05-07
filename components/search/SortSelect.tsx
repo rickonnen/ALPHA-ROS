@@ -17,10 +17,12 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
   const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined)
 
   return (
-    <div className="flex w-full md:mt-3 gap-2">
-      
+  <div className="flex w-full flex-col gap-1 md:mt-3 md:flex-row md:items-center md:gap-2">
+
       {selectedValue &&(
-        <p className="flex font-medium text-xs w-full items-center justify-center md:text-sm"> Ordenado por:</p>
+        <p className="text-[11px] font-medium md:flex md:w-full md:items-center md:justify-center md:text-sm">
+          Ordenado por:
+        </p>
       )}
 
       <Select 

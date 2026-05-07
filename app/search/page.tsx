@@ -1101,11 +1101,11 @@ function SearchPageContent() {
           <h1 className="text-base font-semibold mb-2">
             {allProperties.length} inmuebles disponibles
           </h1>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex w-full items-center justify-between gap-2">
             <div className="flex-1 max-w-[220px]">
               <SortSelect onSortChange={handleSort} />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="ml-auto flex items-center gap-2 shrink-0 justify-end">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
