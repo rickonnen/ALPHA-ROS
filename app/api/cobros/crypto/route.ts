@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       price_currency: "usd",
       pay_currency: "trx",
       order_id: `PAGO-${bodyReq.planId}-${Date.now()}`,
-      order_description: "Suscripcion de Plan",
+      order_description: "pago a inmobiliaria propbol",
       case: "success", 
     };
 
