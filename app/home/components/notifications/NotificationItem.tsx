@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Bell, Trash2 } from "lucide-react";
+import { Bell, Trash2, RotateCcw } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -12,6 +12,8 @@ type Props = {
   type?: string | number;
   onDelete: (id: string) => void;
   onRead: (id: string) => void;
+  isInTrash?: boolean;
+  onRestore?: (id: string) => void;
 };
 
 function getTypeString(type: string | number | undefined): string {
@@ -76,6 +78,8 @@ export function NotificationItem({
   type = "general",
   onDelete,
   onRead,
+  isInTrash = false,
+  onRestore,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -180,17 +184,27 @@ export function NotificationItem({
         <span className="text-gray-400 text-xs mt-1">{time}</span>
       </div>
 
-      {/* ACTIONS - Solo botón de eliminar */}
-      <div className="shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-          title="Eliminar notificación"
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
+      {/* ACTIONS */}
+<div className="shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+  {isInTrash ? (
+    <button
+      onClick={(e) => { e.stopPropagation(); onRestore?.(id); }}
+      className="w-7 h-7 flex items-center justify-center rounded-full text-green-500 hover:bg-green-50 transition-colors"
+      title="Restaurar notificación"
+    >
+      <RotateCcw size={15} />
+    </button>
+  ) : (
+    <button
+      onClick={handleDelete}
+      disabled={isDeleting}
+      className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+      title="Eliminar notificación"
+    >
+      <Trash2 size={15} />
+    </button>
+  )}
+</div>
     </div>
   );
 }

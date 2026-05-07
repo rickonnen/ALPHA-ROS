@@ -471,18 +471,20 @@ const handleEmptyTrash = () => {
             <ScrollArea className="flex-1 overflow-y-auto">
               <div className="p-2 space-y-2">
                 {visibleNotifications.map((n) => (
-                  <NotificationItem
-                    key={n.id}
-                    id={n.id}
-                    title={n.title}
-                    description={n.description}
-                    read={n.read}
-                    time={n.time}
-                    type={n.type}
-                    onDelete={handleDelete}
-                    onRead={handleRead}
-                  />
-                ))}
+  <NotificationItem
+    key={n.id}
+    id={n.id}
+    title={n.title}
+    description={n.description}
+    read={n.read}
+    time={n.time}
+    type={n.type}
+    onDelete={handleDelete}
+    onRead={handleRead}
+    isInTrash={activeTab === "trash"}
+    onRestore={handleRestore}
+  />
+))}
               </div>
               <ScrollBar orientation="vertical" />
             </ScrollArea>
