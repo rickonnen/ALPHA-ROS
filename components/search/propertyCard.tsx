@@ -174,8 +174,11 @@ function PropertyCard({
                 e.preventDefault();
                 onToggleCompare();
               }}
-              className={`absolute top-1 left-1 z-[60] p-1.5 rounded-md bg-white/95 backdrop-blur border shadow-sm transition-all hover:scale-105 ${
-                isSelected ? 'border-[#C26E5A] text-[#C26E5A]' : 'border-gray-300 text-gray-400 hover:text-gray-600'
+              className={`absolute top-1 left-1 z-[60] p-1.5 shrink-0 transparent-bg
+                rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 ${
+                isSelected 
+                ? 'bg-[#1a2b4c] text-white border border-[#1a2b4c]' 
+                : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50'
               }`}
               title={isSelected ? "Quitar de comparación" : "Seleccionar para comparar"}
             >
