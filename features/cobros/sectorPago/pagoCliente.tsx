@@ -26,6 +26,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [verFoto, setVerFoto] = useState(false);
+  const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState<"qr" | "virtual">("qr");
 
   //para planes
   const {
@@ -76,6 +77,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
       <ResumenPago 
         titulo={datos.titulo} descripcion={datos.descripcion} 
         detalles={datos.detalleItems} monto={datos.precio} backUrl={backUrl} 
+        tipoPago={tipoPagoSeleccionado}
       />
 
       <AccionesPago 
@@ -102,6 +104,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
         cargandoCrypto={cargandoCrypto}
         iniciarPagoCrypto={iniciarPagoCrypto}
         idReferencia={datos.idReferencia}
+        onTabChange={setTipoPagoSeleccionado}
       />
 
       {verFoto && previewUrl && (

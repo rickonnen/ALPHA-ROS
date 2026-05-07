@@ -20,12 +20,14 @@ interface Props {
   cargandoCrypto: boolean;
   iniciarPagoCrypto: (precio: number, planId: string) => void;
   idReferencia: string;
+  onTabChange: (value: "qr" | "virtual") => void; 
 }
 
 export const AccionesPago = ({
   precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
   estaCargandoEstado, fileInputRef, onVerificar, onDescargar,
-  onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, cargandoCrypto, iniciarPagoCrypto, idReferencia
+  onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, 
+  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange // Desestructuramos aquí
 }: Props) => {
   return (
     <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
@@ -35,7 +37,12 @@ export const AccionesPago = ({
           $ {Number(precio).toLocaleString("es-ES")}
         </div>
 
-        <Tabs defaultValue="qr" className="w-full flex flex-col items-center">
+        {/* para cambio de pestañas */}
+        <Tabs 
+          defaultValue="qr" 
+          className="w-full flex flex-col items-center"
+          onValueChange={(value) => onTabChange(value === "crypto" ? "virtual" : "qr")}
+        >
           <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
             <TabsTrigger value="qr" className="gap-2">
               <QrCode size={18} /> Pago QR
@@ -45,7 +52,7 @@ export const AccionesPago = ({
             </TabsTrigger>
           </TabsList>
 
-          {/* Contenedor del QR */}
+          {/* Contenido Pago QR - Mantenemos igual */}
           <TabsContent value="qr" className="w-full flex flex-col items-center animate-in fade-in duration-300">
             <div className="mb-10 flex h-80 w-80 items-center justify-center rounded-md border border-border shadow-sm bg-white p-6">
               {generandoQr ? (
@@ -97,7 +104,7 @@ export const AccionesPago = ({
                     <div className="flex items-center gap-3 overflow-hidden">
                         <button 
                         type="button"
-                        onClick={onVerFoto} // Para abrir el modal de previsualización
+                        onClick={onVerFoto} 
                         className="text-sm font-medium truncate text-foreground hover:underline cursor-pointer"
                         >
                         {archivoSeleccionado.name}
@@ -106,7 +113,7 @@ export const AccionesPago = ({
                     
                     <button
                         type="button"
-                        onClick={onQuitarArchivo} // Debe llamar a la función de limpieza total de arriba
+                        onClick={onQuitarArchivo} 
                         className="ml-4 p-2 hover:bg-red-100 rounded-full transition-all group cursor-pointer"
                         >
                         <X 
@@ -119,7 +126,8 @@ export const AccionesPago = ({
               )}
             </div>
           </TabsContent>
-          {/* CONTENIDO PAGO VIRTUAL*/}
+
+          {/* Contenido Pago Virtual - Mantenemos igual */}
           <TabsContent value="crypto" className="w-full flex flex-col items-center animate-in fade-in duration-300">
             <div className="mb-6 flex min-h-[400px] w-80 flex-col items-center justify-center rounded-md border border-border shadow-sm bg-white p-6 text-center">
               {cargandoCrypto ? (
@@ -129,7 +137,6 @@ export const AccionesPago = ({
                 </div>
               ) : datosCrypto ? (
                 <div className="flex flex-col items-center w-full">
-                  {/* Generación automática de QR del qr*/}
                   <div className="bg-white p-2 border rounded-lg shadow-sm mb-4">
                     <img 
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=tron:${datosCrypto.address}`} 
@@ -140,17 +147,14 @@ export const AccionesPago = ({
                     />
                   </div>
                   
-                  <div className="space-y-1 w-full">
+                  <div className="space-y-1 w-full text-center">
                     <p className="text-[11px] font-mono text-muted-foreground break-all px-2 leading-tight">
-                      {datosCrypto.address.substring(0, 17)}
-                    </p>
-                    <p className="text-[11px] font-mono text-muted-foreground break-all px-2 leading-tight">
-                      {datosCrypto.address.substring(17)}
+                      {datosCrypto.address}
                     </p>
                   </div>
 
                   <p className="mt-4 text-lg font-bold text-emerald-600">
-                    Monto: {datosCrypto.amount} RTX
+                    Monto: {datosCrypto.amount} TRON(TRX)
                   </p>
                 </div>
               ) : (
@@ -158,7 +162,6 @@ export const AccionesPago = ({
               )}
             </div>
             
-            {/* El botón ahora solo cumple la función de Copiar */}
             <Button 
               size="lg" 
               variant="default"
@@ -175,7 +178,7 @@ export const AccionesPago = ({
             </Button>
 
             <p className="mt-4 text-[11px] text-center text-muted-foreground uppercase tracking-wider">
-              * Red: TRC-20 (Tron). Solo envía USDT a esta dirección.
+              * Red: TRON (TRC-20). Solo envía TRX a esta dirección.
             </p>
           </TabsContent>
         </Tabs>
