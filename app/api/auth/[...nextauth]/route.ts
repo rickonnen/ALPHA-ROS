@@ -6,7 +6,6 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { NextAuthOptions } from "next-auth"
 import { createClient } from "@supabase/supabase-js";
-import { MagicLinkProvider } from "@/lib/auth/magicLinkProvider";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -81,7 +80,6 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
-     MagicLinkProvider,  
   ],
 
   callbacks: {
@@ -166,13 +164,6 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, account, user }: any) {
-
-      if (user?.id && !account) {
-      // Viene del CredentialsProvider (Magic Link)
-      token.id = user.id;
-      console.log("[JWT] Magic Link - Usuario:", user.id);
-      return token;
-    }
       if (user?.id) {
         token.id = user.id;
       }
@@ -198,7 +189,6 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
 
-        const { createClient } = await import("@supabase/supabase-js");
         const supabase = createClient(
           process.env.SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -210,7 +200,6 @@ export const authOptions: NextAuthOptions = {
           .maybeSingle();
     
         if (data?.estado === 0) {
-          console.log("[Session] Usuario bloqueado:", token.id);
           return null; // invalida la sesión
         }
       }
