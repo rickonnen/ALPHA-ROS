@@ -45,18 +45,27 @@ export default function PagoCliente({ datos, backUrl }: Props) {
     fileInputRef, 
     tienePagoPendiente, 
     estaCargandoEstado, 
+    datosCrypto,      
+    cargandoCrypto,   
+    iniciarPagoCrypto
   } = usePagoCliente(datos.idReferencia, datos.modalidad);
+
+  useEffect(() => {
+    // Solo se dispara una vez cuando el usuario carga la página y está logueado
+    if (user?.id && !datosCrypto && !cargandoCrypto) {
+      iniciarPagoCrypto(datos.precio, datos.idReferencia);
+    }
+    // 💡 NOTA: Quitamos datosCrypto y cargandoCrypto de aquí
+    // para que si falla, no intente re-ejecutarse infinitamente.
+  }, [user?.id, datos.idReferencia]);
+
+
+
+
+
 
   if (isLoading || !user) return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
 
-
-
-
-
-
-
-
-  
   const manejarSeleccionYAbrir = (e: React.ChangeEvent<HTMLInputElement>) => {
     manejarSeleccionArchivo(e);
     setVerFoto(true); 
@@ -89,6 +98,10 @@ export default function PagoCliente({ datos, backUrl }: Props) {
           }
         }}
         onVerFoto={() => setVerFoto(true)}
+        datosCrypto={datosCrypto}
+        cargandoCrypto={cargandoCrypto}
+        iniciarPagoCrypto={iniciarPagoCrypto}
+        idReferencia={datos.idReferencia}
       />
 
       {verFoto && previewUrl && (

@@ -165,6 +165,44 @@ export function usePagoCliente(planId: string, modalidad: string) {
     };
   }, [previewUrl]);
 
+  //para las cripts
+  const [datosCrypto, setDatosCrypto] = useState<{
+    address: string;
+    amount: number;
+    paymentId: string;
+  } | null>(null);
+  const [cargandoCrypto, setCargandoCrypto] = useState(false);
+
+  // Función para llamar a la api nowpayments
+  const iniciarPagoCrypto = async (precio: number, planId: string) => {
+    setCargandoCrypto(true);
+    try {
+      const res = await fetch("/api/cobros/crypto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId, precio }),
+      });
+
+      const data = await res.json();
+
+      if (data.pay_address) {
+        setDatosCrypto({
+          address: data.pay_address,
+          amount: data.pay_amount, 
+          paymentId: data.payment_id
+        });
+      } else {
+        console.warn("C. Detalle del error del servidor:", data.details || data.error);
+      }
+    } catch (error) {
+      console.error("D. Error de red o conexión:", error);
+    } finally {
+      setCargandoCrypto(false);
+    }
+  };
+
   return {
     qrUrl,
     generandoQr,
@@ -182,5 +220,8 @@ export function usePagoCliente(planId: string, modalidad: string) {
     previewUrl,
     setPreviewUrl,
     estaCargandoEstado,
+    iniciarPagoCrypto,
+    datosCrypto,
+    cargandoCrypto
   };
 }
