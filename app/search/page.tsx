@@ -602,7 +602,7 @@ function SearchPageContent() {
       ? ITEMS_PER_PAGE_MAP_GRID
       : ITEMS_PER_PAGE_MAP_LIST
     : viewMode === "grid"
-      ? ITEMS_PER_PAGE_GRID
+      ? isSidebarCollapsed ? 9 : ITEMS_PER_PAGE_GRID
       : ITEMS_PER_PAGE_LIST;
 
   const totalPages = Math.max(
@@ -1496,7 +1496,7 @@ function SearchPageContent() {
                     isMapOpen
                       ? "grid-cols-1"
                       : viewMode === "grid"
-                        ? "grid-cols-2"
+                        ? isSidebarCollapsed ? "grid-cols-3" : "grid-cols-2"
                         : "grid-cols-1"
                   }`}
                 >
@@ -1556,7 +1556,12 @@ function SearchPageContent() {
             }`}
             style={
               !isMapFullscreen
-                ? { width: "calc(50% - 40px)", height: "90vh" }
+                ? {
+                    width: isSidebarCollapsed
+                      ? "calc(70% - 40px)"
+                      : "calc(50% - 40px)",
+                    height: "90vh",
+                  }
                 : undefined
             }
           >
