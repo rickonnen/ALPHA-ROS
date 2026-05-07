@@ -215,7 +215,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     setShowSuccess(false);
     if (onClose) onClose();
     if (userRol === 1) {
-      router.push("/admin/verificacion-pagos");
+      router.push("/admin");
       return;
     }
     router.push(consumePostAuthRedirect() || "/");

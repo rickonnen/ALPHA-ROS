@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  searchPublicaciones,
+  getCachedPublicaciones,
   type SearchFiltersInput,
 } from '../../../features/filter_search_page/services';
 
 export async function POST(request: NextRequest) {
   try {
-    const filters = (await request.json()) as SearchFiltersInput;
-    const publications = await searchPublicaciones(filters);
+    const body = await request.json();
+
+    // ESTO ES LO IMPORTANTE: Mirá tu terminal negra después de mover el slider
+    console.log("DATOS REALES DEL FRONTEND:", body);
+
+    const filters: SearchFiltersInput = {
+      ...body,
+      // ESTO ES LO QUE ARREGLA LA SUPERFICIE:
+      minSurface: body.minSurface ? Number(body.minSurface) : (body.superficieMin ? Number(body.superficieMin) : undefined),
+      maxSurface: body.maxSurface ? Number(body.maxSurface) : (body.superficieMax ? Number(body.superficieMax) : undefined),
+    };
+
+    const publications = await getCachedPublicaciones(filters);
 
     return NextResponse.json({
       success: true,
@@ -16,14 +27,6 @@ export async function POST(request: NextRequest) {
       total: publications.length,
     });
   } catch (error) {
-    console.error('[filter_search_page] Error processing search request:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to process search request',
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }

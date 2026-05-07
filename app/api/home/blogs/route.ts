@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { blogState, blogData } from "@/types/blogType";
+import { blogState } from "@/types/blogType";
 
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 23/04/2026
- * funcionalidad: recupera la lista de blogs publicados y los formatea
- * @return {NextResponse} json con los blogs formateados o estado 500 en caso de error
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 23/04/2026
+ * funcionalidad: recupera la lista de blogs publicados incluyendo datos del autor
  */
 export async function GET() {
   try {
@@ -20,14 +19,22 @@ export async function GET() {
         fecha_publicacion: true,
         descripcion: true,
         imagen_url: true,
+        contenido: true,
+        // Hacemos el JOIN con la tabla Usuario para el autor
+        Usuario: {
+          select: {
+            nombres: true,
+            apellidos: true, 
+            url_foto_perfil: true,
+          }
+        }
       },
       orderBy: {
         fecha_creacion: "desc",
       },
     });
 
-    // formateo de datos y transformacion de la fecha
-    const ArrFormattedBlogsBlo: blogData[] = ArrDbBlogsBlo.map((ObjRowBlo) => {
+    const ArrFormattedBlogsBlo = ArrDbBlogsBlo.map((ObjRowBlo) => {
       const StrFormattedDateBlo = ObjRowBlo.fecha_publicacion
         ? new Date(ObjRowBlo.fecha_publicacion).toLocaleDateString("es-ES", {
             day: "numeric",
@@ -36,13 +43,28 @@ export async function GET() {
           })
         : "fecha desconocida";
 
+      // Concatenamos nombre y apellido del usuario, o ponemos un default
+      const StrFullName = ObjRowBlo.Usuario 
+        ? `${ObjRowBlo.Usuario.nombres || ''} ${ObjRowBlo.Usuario.apellidos || ''}`.trim() 
+        : "Equipo PropBol";
+        // Simulamos un tiempo de lectura basado en la longitud del contenido
+        const StrCleanContentBlo = ObjRowBlo.contenido 
+        ? ObjRowBlo.contenido.replace(/<[^>]*>?/gm, '') 
+        : '';
+      const IntWordCountBlo = StrCleanContentBlo.trim().split(/\s+/).filter(word => word.length > 0).length;
+      const IntReadTimeBlo = Math.max(1, Math.ceil(IntWordCountBlo / 200));
+
       return {
         IntIdBlo: ObjRowBlo.id_blog,
         StrTitleBlo: ObjRowBlo.titulo || "",
         StrDateBlo: StrFormattedDateBlo,
         StrDescriptionBlo: ObjRowBlo.descripcion || "",
         StrImageUrlBlo: ObjRowBlo.imagen_url || "",
-        StrAuthorBlo: "",
+        ObjAuthorBlo: {
+          name: StrFullName || "Usuario Anónimo",
+          avatar: ObjRowBlo.Usuario?.url_foto_perfil || undefined
+        },
+        StrReadTimeBlo: `${IntReadTimeBlo} min`,
       };
     });
 

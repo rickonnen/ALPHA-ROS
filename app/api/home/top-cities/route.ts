@@ -1,89 +1,99 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { supabaseHome } from "@/lib/supabaseHome";
-import { VALID_OPERATIONS, TOP_CITIES_LIMIT } from "@/components/homeComponents/top-cities/constants";
-import type { OperationType, CityImage, ReporteRow } from "@/components/homeComponents/top-cities/types";
- 
+
 /**
  * @Dev: Rodrigo Chalco
+ * GET /api/home/top-cities?operacion=venta|alquiler|anticretico
+ *
+ * Cache: ISR de 24 horas por tipo de operación.
+ * La primera visita del día ejecuta las queries y guarda el resultado.
+ * Las siguientes 24 horas devuelven el resultado cacheado sin tocar las bases.
+ * Pasadas las 24 horas, la siguiente visita actualiza el cache.
  */
- 
-export const revalidate = 86_400; // ISR: revalidar cada 24h
- 
-// Map estático de columnas → evita interpolación dinámica en SQL
-const COLUMN_MAP: Record<OperationType, keyof ReporteRow> = {
-  venta:        "venta",
-  alquiler:     "alquiler",
-  anticretico:  "anticretico",
-};
- 
-export async function GET(objRequest: NextRequest) {
-  const strOperacion =
-    (objRequest.nextUrl.searchParams.get("operacion") as OperationType) ?? "venta";
- 
-  if (!VALID_OPERATIONS.includes(strOperacion)) {
-    return NextResponse.json({ error: "Operación no válida" }, { status: 400 });
-  }
- 
-  try {
-  
+
+type OperationType = "venta" | "alquiler" | "anticretico";
+
+interface CityImage {
+  id:          number;
+  city_name:   string;
+  image_url:   string;
+  alt_text:    string;
+  order:       number;
+  is_active:   boolean;
+  public_id:   string;
+  description: string;
+}
+
+interface ReporteRow {
+  id:           number;
+  departamento: string;
+  alquiler:     number;
+  venta:        number;
+  anticretico:  number;
+}
+
+const getTopCities = unstable_cache(
+  async (strOperacion: OperationType) => {
     const arrReporte = await prisma.$queryRawUnsafe<ReporteRow[]>(
-      `SELECT id, departamento, alquiler, venta, anticretico
-       FROM "ReporteInmuebles"
-       ORDER BY "${strOperacion}" DESC
-       LIMIT ${TOP_CITIES_LIMIT * 3}`,
-      // traemos más filas por si las primeras no tienen imágenes en Supabase
+      `SELECT id, departamento, alquiler, venta, anticretico 
+       FROM "ReporteInmuebles" 
+       ORDER BY "${strOperacion}" DESC`,
     );
- 
-    if (!arrReporte || arrReporte.length === 0) {
-      return NextResponse.json([]);
-    }
- 
-    // ── 2. UNA sola query a Supabase con todas las ciudades del ranking 
-    const arrCityNames = arrReporte.map((r) => r.departamento);
- 
-    const { data: arrAllImages, error } = await supabaseHome
-      .from("city_images")
-      .select("*")
-      .in("city_name", arrCityNames)
-      .eq("is_active", true)
-      .order("order", { ascending: true });
- 
-    if (error) {
-      console.error("[top-cities] Error al obtener imágenes:", error.message);
-      return NextResponse.json([]);
-    }
- 
-    // 3. Agrupar imágenes por ciudad en memoria 
-    const imagesByCity = (arrAllImages as CityImage[]).reduce<
-      Record<string, CityImage[]>
-    >((acc, img) => {
-      if (!acc[img.city_name]) acc[img.city_name] = [];
-      acc[img.city_name].push(img);
-      return acc;
-    }, {});
- 
-    // ── 4. Primeras 3 ciudades que tengan imágenes ───────────────────────────
-    const arrResult = arrReporte
-      .filter((row) => (imagesByCity[row.departamento]?.length ?? 0) > 0)
-      .slice(0, TOP_CITIES_LIMIT)
-      .map((row) => ({
-        strDepartamento: row.departamento,
-        intContador:     row[COLUMN_MAP[strOperacion]] as number,
-        arrImagenes:     imagesByCity[row.departamento].map((img) => ({
-          strUrl:      img.image_url,
-          strAlt:      img.alt_text,
-          strPublicId: img.public_id,
+
+    if (!arrReporte || arrReporte.length === 0) return [];
+
+    const arrResult = [];
+
+    for (const objRow of arrReporte) {
+      if (arrResult.length >= 3) break;
+
+      const { data: arrImages, error } = await supabaseHome
+        .from("city_images")
+        .select("*")
+        .eq("city_name", objRow.departamento)
+        .eq("is_active", true)
+        .order("order", { ascending: true });
+
+      if (error || !arrImages || arrImages.length === 0) {
+        continue;
+      }
+
+      arrResult.push({
+        strDepartamento: objRow.departamento,
+        intContador:     objRow[strOperacion],
+        strDescription:  (arrImages as CityImage[])[0]?.description ?? "",
+        arrImagenes: (arrImages as CityImage[]).map((objImg) => ({
+          strUrl:      objImg.image_url,
+          strAlt:      objImg.alt_text,
+          strPublicId: objImg.public_id,
         })),
-      }));
- 
-    return NextResponse.json(arrResult, {
-      headers: {
-        "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=3600",
-      },
-    });
+      });
+    }
+
+    return arrResult;
+  },
+  ["top-cities"], // clave base del cache
+  { revalidate: 86400 } // 24 horas
+);
+
+export async function GET(objRequest: NextRequest) {
+  try {
+    const strOperacion =
+      (objRequest.nextUrl.searchParams.get("operacion") as OperationType) ?? "venta";
+
+    const arrValidOps: OperationType[] = ["venta", "alquiler", "anticretico"];
+    if (!arrValidOps.includes(strOperacion)) {
+      return NextResponse.json({ error: "Operación no válida" }, { status: 400 });
+    }
+
+    // Llama a la función cacheada — Next.js maneja el cache automáticamente
+    const arrResult = await getTopCities(strOperacion);
+
+    return NextResponse.json(arrResult);
   } catch (objError) {
-    console.error("[top-cities] Error inesperado:", objError);
+    console.error("[top-cities] Error detallado:", objError);
     return NextResponse.json(
       { error: "Error al obtener las ciudades más buscadas" },
       { status: 500 },

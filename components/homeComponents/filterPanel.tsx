@@ -1,6 +1,6 @@
 /**
- * Dev: Gonzales Hetor     Fecha: 25/03/2026
- * Dev: Jose Alvarez       Fecha: 25/03/2026
+ * Dev: Gonzales Hetor      Fecha: 25/03/2026
+ * Dev: Jose Alvarez        Fecha: 25/03/2026
  * Funcionalidad: Panel del Filtro en la pagina del home.
  * Funcionalidad: Panel del Filtro en la pagina del home con cierre al clic externo y multiseleccion extendida.
  */
@@ -92,6 +92,9 @@ export default function filterPanel() {
     objCitySearchHook.setBolShowHistory(false);
   }, [arrOperations, arrSelectedPropertyTypes, objCitySearchHook, objRouter]);
 
+  // Nota: Los cálculos en esta función DEBEN mantenerse en píxeles (no rem) 
+  // porque la API nativa del navegador (window.scrollY y getBoundingClientRect) 
+  // devuelve y requiere valores estrictamente en píxeles para funcionar.
   const fnHandleSearchInteraction = useCallback(() => {
     if (typeof window !== "undefined" && window.innerWidth < 800 && objPanelRef.current) {
       const objRect = objPanelRef.current.getBoundingClientRect();
@@ -105,11 +108,13 @@ export default function filterPanel() {
     }
   }, []);
 
-  const strChipClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-background border border-border text-foreground animate-in fade-in duration-200 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-secondary-fund";
+  // Clases actualizadas respetando tus variables de globals.css
+  const strChipClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-background border border-card-border text-foreground animate-in fade-in duration-200 shadow-sm focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-secondary-fund";
 
   return (
-    <div ref={objPanelRef} className="w-full flex flex-col gap-3 font-geist">
-      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2 p-3 md:px-3 md:py-2 rounded-2xl md:rounded-full bg-secondary-fund border border-border shadow-xl">
+    <div ref={objPanelRef} className="w-full flex flex-col gap-3 font-sans">
+      
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2 p-3 md:px-3 md:py-2 rounded-2xl md:rounded-full bg-secondary-fund border border-card-border shadow-xl">
         
         <GenericDropdown
           strDisplayText={arrOperations.length > 0 ? `Operación (${arrOperations.length})` : "Seleccionar Operación"}
@@ -121,7 +126,8 @@ export default function filterPanel() {
           bolIsMultiple={true}
         />
 
-        <div className="h-px w-full md:w-px md:h-5 bg-border flex-shrink-0" />
+        {/* Separadores visuales */}
+        <div className="h-px w-full md:w-px md:h-5 bg-card-border flex-shrink-0" />
 
         <GenericDropdown
           strDisplayText={arrSelectedPropertyTypes.length > 0 ? `Inmueble (${arrSelectedPropertyTypes.length})` : "Seleccionar Inmueble"}
@@ -133,7 +139,7 @@ export default function filterPanel() {
           bolIsMultiple={true}
         />
 
-        <div className="h-px w-full md:w-px md:h-5 bg-border flex-shrink-0" />
+        <div className="h-px w-full md:w-px md:h-5 bg-card-border flex-shrink-0" />
 
         <div 
           className="w-full flex-1" 
@@ -152,13 +158,26 @@ export default function filterPanel() {
           {arrOperations.map((strOperationOption) => (
             <span key={`op-${strOperationOption}`} className={strChipClass}>
               {strOperationOption}
-              <button type="button" onClick={() => fnToggleOperation(strOperationOption)} className={`hover:text-destructive font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded-full px-1 ${strChipBtnHover}`}>✕</button>
+              {/* text-destructive reemplazado por text-secondary (tu Terracota/Verde oscuro) */}
+              <button 
+                type="button" 
+                onClick={() => fnToggleOperation(strOperationOption)} 
+                className={`hover:text-secondary font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-full px-1 ${strChipBtnHover}`}
+              >
+                ✕
+              </button>
             </span>
           ))}
           {arrSelectedPropertyTypes.map((strTypeOption) => (
             <span key={`type-${strTypeOption}`} className={strChipClass}>
               {strTypeOption}
-              <button type="button" onClick={() => fnTogglePropertyType(strTypeOption)} className={`hover:text-destructive font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded-full px-1 ${strChipBtnHover}`}>✕</button>
+              <button 
+                type="button" 
+                onClick={() => fnTogglePropertyType(strTypeOption)} 
+                className={`hover:text-secondary font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-full px-1 ${strChipBtnHover}`}
+              >
+                ✕
+              </button>
             </span>
           ))}
         </div>
@@ -171,14 +190,14 @@ export default function filterPanel() {
               setArrSelectedPropertyTypes([]);
               objCitySearchHook.setStrCity("");
             }}
-            className={`rounded-lg text-xs bg-secondary text-secondary-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strActionBtnHover}`}
+            className={`rounded-lg text-xs bg-secondary text-secondary-foreground hover:bg-secondary hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strActionBtnHover}`}
             >
             Limpiar
           </Button>
           <Button
             size="sm"
             onClick={() => fnHandleSearch(true)}
-            className={`rounded-lg text-xs bg-primary text-primary-foreground hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strActionBtnHover}`}
+            className={`rounded-lg text-xs bg-primary text-primary-foreground hover:bg-primary hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strActionBtnHover}`}
             >
             Avanzado
           </Button>

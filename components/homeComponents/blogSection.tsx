@@ -5,14 +5,19 @@ import Link from "next/link";
 import { ArrowRight as ObjArrowRight, PenSquare } from "lucide-react"; 
 import ArticleCard from "@/app/home/blogs/articleCard";
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
+import { ArticleCardSkeleton } from "@/app/home/blogs/articleCardSkeleton";
 
-// titulo de la interface en camel case
 interface blogData {
   IntIdBlo: number;
   StrTitleBlo: string;
   StrDescriptionBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  ObjAuthorBlo?: {
+    name: string;
+    avatar?: string;
+  };
+  StrReadTimeBlo?: string;
 }
 
 /**
@@ -62,18 +67,21 @@ export default function blogSection() {
       {/* cuadricula responsiva para el listado de tarjetas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {bolIsLoadingBlo ? (
-          <p className="text-muted-foreground col-span-1 md:col-span-3 text-center py-8">
-            Cargando publicaciones...
-          </p>
+          // Renderizamos 3 skeletons para la página de inicio
+          Array.from({ length: 3 }).map((_, index) => (
+            <ArticleCardSkeleton key={index} />
+          ))
         ) : arrBlogsBlo.length > 0 ? (
           arrBlogsBlo.map((objBlogBlo) => (
-            <ArticleCard 
+            <ArticleCard
               key={objBlogBlo.IntIdBlo}
               IntIdBlo={objBlogBlo.IntIdBlo}
               StrTitleBlo={objBlogBlo.StrTitleBlo}
               StrDescriptionBlo={objBlogBlo.StrDescriptionBlo}
               StrImageUrlBlo={objBlogBlo.StrImageUrlBlo}
               StrDateBlo={objBlogBlo.StrDateBlo}
+              ObjAuthorBlo={objBlogBlo.ObjAuthorBlo}
+              StrReadTimeBlo={objBlogBlo.StrReadTimeBlo}
             />
           ))
         ) : (
