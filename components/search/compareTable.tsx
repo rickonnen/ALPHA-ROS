@@ -134,7 +134,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onBack
                 </td>
               ))}
             </tr>
-            {/* <tr className="border-b border-gray-100 hover:bg-gray-50/50">
+            <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="p-6 font-bold text-gray-500 bg-slate-50 border-r border-gray-100">Garajes</td>
               {selectedProperties.map(prop => (
                 <td key={`garages-${prop.id}`} className="p-6 text-gray-800 font-medium border-r border-gray-100">{prop.garages || '—'}</td>
@@ -145,7 +145,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onBack
               {selectedProperties.map(prop => (
                 <td key={`floors-${prop.id}`} className="p-6 text-gray-800 font-medium border-r border-gray-100">{prop.floors || '—'}</td>
               ))}
-            </tr> */}
+            </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="p-6 font-bold text-gray-500 bg-slate-50 border-r border-gray-100">Ubicación</td>
               {selectedProperties.map(prop => (
