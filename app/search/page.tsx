@@ -1102,7 +1102,7 @@ function SearchPageContent() {
             {allProperties.length} inmuebles disponibles
           </h1>
           <div className="flex w-full items-center justify-between gap-2">
-            <div className="flex-1 max-w-[220px]">
+            <div className="flex-1 min-w-0">
               <SortSelect onSortChange={handleSort} />
             </div>
             <div className="ml-auto flex items-center gap-2 shrink-0 justify-end">

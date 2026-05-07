@@ -17,10 +17,10 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
   const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined)
 
   return (
-  <div className="flex w-full flex-col gap-1 md:mt-3 md:flex-row md:items-center md:gap-2">
+    <div className="flex w-full items-center gap-2 md:mt-3">
 
-      {selectedValue &&(
-        <p className="text-[11px] font-medium md:flex md:w-full md:items-center md:justify-center md:text-sm">
+      {selectedValue && (
+        <p className="shrink-0 whitespace-nowrap text-xs font-medium text-[#2E2E2E] md:text-sm">
           Ordenado por:
         </p>
       )}
@@ -36,12 +36,12 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
           onSortChange(val);
         }} 
       >
-        <SelectTrigger 
+        <SelectTrigger
           className={cn(
-            "max-w-full md:w-full h-20 flex items-center justify-between px-4 py-5 md:py-4",
-            "bg-[#E7E1D7]	border-none rounded-[8px]", 
-            "text-sm font-normal text-[#2E2E2E] focus:ring-0 focus:ring-offset-0",
-            "[&>svg]:hidden" 
+            "min-w-0 flex-1 h-10 md:h-20 flex items-center justify-between px-3 md:px-4 py-2 md:py-5",
+            "bg-[#E7E1D7] border-none rounded-[8px]",
+            "text-xs md:text-sm font-normal text-[#2E2E2E] focus:ring-0 focus:ring-offset-0",
+            "[&>svg]:hidden"
           )}
         >
           <SelectValue placeholder="Ordenado por"/>
