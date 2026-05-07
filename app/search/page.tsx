@@ -458,14 +458,39 @@ function SearchPageContent() {
   // --- NUEVOS ESTADOS PARA LA VISTA DE COMPARACIÓN ---
   const [appView, setAppView] = useState<"listings" | "compare">("listings");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSelectionLoaded, setIsSelectionLoaded] = useState(false);
 
   const toggleSelection = (id: number) => {
     setSelectedIds((prev) => {
       if (prev.includes(id)) return prev.filter((item) => item !== id);
-      if (prev.length >= 4) return prev; // Límite de 4
+      if (prev.length >= 4) {
+        setToastMessage("Solo puedes seleccionar hasta 4 inmuebles para comparar.");
+        return prev;
+      }
       return [...prev, id];
     });
   };
+
+  //Recuperar y guardar seleccion en LocalStorage 
+  useEffect(() => {
+    if(typeof window !== "undefined") {
+      const saved = localStorage.getItem("compareSelectedIds");
+      if(saved){
+        try{setSelectedIds(JSON.parse(saved));} catch (e){
+          console.error("Error parsing saved selected IDs:", e);
+        }
+      }
+      setIsSelectionLoaded(true);
+    }
+  },[]);
+
+  useEffect(()=> {
+    if(isSelectionLoaded && typeof window !== "undefined"){
+      localStorage.setItem("compareSelectedIds", JSON.stringify(selectedIds));
+      console.log("Selected IDs updated:", selectedIds);
+    }
+  }, [selectedIds, isSelectionLoaded]);
 
   // Estados de paginación y recomendaciones (merge-sysinfosquad-bughunters)
   const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
@@ -1197,6 +1222,7 @@ function SearchPageContent() {
             selectedIds={selectedIds}
             onBack={() => setAppView("listings")}
           />
+          
         )}
       </div>
 
