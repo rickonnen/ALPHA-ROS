@@ -1,17 +1,25 @@
 export function templateRecordatorioPlan(
   nombre: string,
   plan: string,
-  fechaFin: string,
-  tipo: '7D' | '5D' | '48H'
+  tipo: '7D' | '48H'
 ): string {
  
   const config = {
-    '7D': { titulo: "¡Aviso de Vencimiento!", sub: "Tu plan vence en 7 días", color: "#1F3A4D" },
-    '5D': { titulo: "Recordatorio de Pago", sub: "Faltan solo 5 días", color: "#D97706" }, 
-    '48H': { titulo: "Plan Vencido", sub: "Tu suscripción ha expirado", color: "#B91C1C" } 
+    '7D': { 
+      titulo: "¡Aviso de Vencimiento!", 
+      sub: "Tu plan vence en 7 días", 
+      color: "#1F3A4D",
+      mensajePersonalizado: `Su plan ${plan} vence en 7 días. Por favor, realice el pago antes de que expire.`
+    },
+    '48H': { 
+      titulo: "Recordatorio de Pago", 
+      sub: "Faltan solo 5 días", 
+      color: "#D97706",
+      mensajePersonalizado: `Su plan ${plan} vence en 5 días. Por favor, realice el pago antes de que expire.`
+    }
   };
 
-  const { titulo, sub, color } = config[tipo];
+  const { titulo, sub, color, mensajePersonalizado } = config[tipo];
 
   return `
     <!DOCTYPE html>
@@ -34,22 +42,17 @@ export function templateRecordatorioPlan(
         <!-- Cuerpo -->
         <div style="padding:32px 48px;color:#333">
           <p style="margin:0 0 24px 0;font-size:15px">Hola, <strong>${nombre}</strong> 👋</p>
-          <p style="margin:0 0 24px 0;font-size:14px;line-height:1.6">
-            Te informamos que tu plan <strong>${plan}</strong> tiene como fecha de finalización el <strong>${fechaFin}</strong>.
-          </p>
-
+        
           <div style="background:#f0f4f8;padding:16px;border-radius:8px;margin:20px 0;border-left:4px solid ${color}">
              <p style="margin:0;font-size:14px;color:#333">
-               ${tipo === '48H' 
-                 ? 'Tus anuncios han sido pausados. Renueva ahora para reactivarlos.' 
-                 : 'Evita interrupciones en tus publicaciones realizando tu pago a tiempo.'}
+               ${mensajePersonalizado}
              </p>
           </div>
 
           <div style="text-align:center;padding:16px 0">
             <a href="${process.env.NEXTAUTH_URL}/home"
                style="display:inline-block;background:${color};color:white;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
-              ${tipo === '48H' ? 'Renovar Plan' : 'Ir a mi cuenta'}
+              Ir a mi cuenta
             </a>
           </div>
 

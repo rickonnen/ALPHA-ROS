@@ -9,11 +9,9 @@ export type EstadoModal =
   | "verificando_pago"
   | "pendiente_pago";
 
-type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
-  precio_plan: number;
-};
 
-export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string) {
+
+export function usePagoCliente(planId: string, modalidad: string) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -138,19 +136,72 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `QR_Plan_${plan.nombre_plan}.png`;
+    link.download = `codigoQR.png`;
     link.click();
   };
+
+  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
-      if (file.type.startsWith("image/")) setArchivoSeleccionado(file);
-      else alert("Selecciona una imagen (JPG/PNG)");
+      if (file.type.startsWith("image/")) {
+        setArchivoSeleccionado(file);
+        
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        alert("Selecciona una imagen (JPG/PNG)");
+      }
     }
   };
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
-  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+  //para las cripts
+  const [datosCrypto, setDatosCrypto] = useState<{
+    address: string;
+    amount: number;
+    paymentId: string;
+  } | null>(null);
+  const [cargandoCrypto, setCargandoCrypto] = useState(false);
+
+  // Función para llamar a la api nowpayments
+  const iniciarPagoCrypto = async (precio: number, planId: string) => {
+    setCargandoCrypto(true);
+    try {
+      const res = await fetch("/api/cobros/crypto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId, precio }),
+      });
+
+      const data = await res.json();
+
+      if (data.pay_address) {
+        setDatosCrypto({
+          address: data.pay_address,
+          amount: data.pay_amount, 
+          paymentId: data.payment_id
+        });
+      } else {
+        console.warn("C. Detalle del error del servidor:", data.details || data.error);
+      }
+    } catch (error) {
+      console.error("D. Error de red o conexión:", error);
+    } finally {
+      setCargandoCrypto(false);
+    }
+  };
 
   return {
     qrUrl,
@@ -166,6 +217,11 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     archivoSeleccionado,
     setArchivoSeleccionado,
     manejarSeleccionArchivo,
+    previewUrl,
+    setPreviewUrl,
     estaCargandoEstado,
+    iniciarPagoCrypto,
+    datosCrypto,
+    cargandoCrypto
   };
 }
