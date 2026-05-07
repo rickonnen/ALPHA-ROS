@@ -17,7 +17,12 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
   const [selectedValue, setSelectedValue] = useState<string | undefined>(undefined)
 
   return (
-    <div className="w-full mt-3">
+    <div className="flex w-full md:mt-3 gap-2">
+      
+      {selectedValue &&(
+        <p className="flex font-medium text-xs w-full items-center justify-center md:text-sm"> Ordenado por:</p>
+      )}
+
       <Select 
         // TRUCO MAESTRO: La key obliga a React a destruir y recrear el componente
         // al cambiar a undefined, forzando que aparezca el placeholder.
@@ -31,15 +36,15 @@ export function SortSelect({ onSortChange }: { onSortChange: (value: string) => 
       >
         <SelectTrigger 
           className={cn(
-            "w-full h-20 flex items-center justify-between px-4 py-6 md:py-4",
-            "bg-[#E7E3DD] border-none rounded-[8px]", 
+            "max-w-full md:w-full h-20 flex items-center justify-between px-4 py-5 md:py-4",
+            "bg-[#E7E1D7]	border-none rounded-[8px]", 
             "text-sm font-normal text-[#2E2E2E] focus:ring-0 focus:ring-offset-0",
             "[&>svg]:hidden" 
           )}
         >
-          <SelectValue placeholder="Ordenado por" />
+          <SelectValue placeholder="Ordenado por"/>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3"> 
             {selectedValue && (
               <span
                 role="button"
