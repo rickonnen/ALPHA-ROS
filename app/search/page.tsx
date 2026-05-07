@@ -1219,6 +1219,7 @@ function SearchPageContent() {
         ) : (
           <CompareTable
             properties={allProperties}
+            selectedCurrency={selectedCurrency}
             selectedIds={selectedIds}
             onBack={() => setAppView("listings")}
           />
@@ -1547,6 +1548,7 @@ function SearchPageContent() {
           ) : (
             <CompareTable
               properties={allProperties}
+              selectedCurrency={selectedCurrency}
               selectedIds={selectedIds}
               onBack={() => setAppView("listings")}
             />
