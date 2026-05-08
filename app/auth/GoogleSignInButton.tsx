@@ -119,7 +119,7 @@ export default function GoogleSignInButton({
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: googleLoading || blockedByConnection ? "#9ca3af" : "#0F172A",
+          backgroundColor: googleLoading || blockedByConnection ? "#9ca3af" : "#1C3445",
           color: "white",
           fontWeight: "bold",
           padding: "12px",
