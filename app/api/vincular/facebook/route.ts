@@ -25,7 +25,7 @@ export async function GET() {
   // 3. Construir URL de autorización de Facebook
   const params = new URLSearchParams({
     client_id:     process.env.FACEBOOK_CLIENT_ID!,
-    redirect_uri:  `${process.env.NEXTAUTH_URL}/api/vincular/facebook/oauth-respuesta`,
+    redirect_uri:  `${process.env.NEXTAUTH_URL}api/vincular/facebook/oauth-respuesta`,
     response_type: "code",
     scope:         "public_profile,email",
     state,

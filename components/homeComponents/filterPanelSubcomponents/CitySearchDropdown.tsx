@@ -51,7 +51,7 @@ export default function CitySearchDropdown({
   return (
     <>
       {bolShowSuggestions && (
-        <ul className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-background rounded-xl border border-border shadow-2xl overflow-y-auto py-1 max-h-[120px] md:max-h-[180px] scrollbar-custom">
+        <ul className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-secondary-fund rounded-xl border border-card-border shadow-2xl overflow-y-auto py-1 max-h-[120px] md:max-h-[180px] scrollbar-custom">
           {arrSuggestions.map((objSuggestion, intIndex) => (
             <CityListItem
               key={objSuggestion.strId}
@@ -72,8 +72,8 @@ export default function CitySearchDropdown({
       )}
 
       {bolIsHistoryActive && (
-        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-background rounded-xl border border-border shadow-2xl overflow-y-auto scroll-pt-10 max-h-[120px] md:max-h-[180px] flex flex-col scrollbar-custom">
-          <div className="px-4 py-2 text-xs font-semibold text-foreground/70 bg-background border-b border-border sticky top-0 z-10">
+        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full  bg-secondary-fund rounded-xl border border-card-border shadow-2xl overflow-y-auto scroll-pt-10 max-h-[120px] md:max-h-[180px] flex flex-col scrollbar-custom">
+          <div className="px-4 py-2 text-xs font-semibold text-foreground/70  bg-secondary-fund border-b border-card-border sticky top-0 z-10">
             historial:
           </div>
 
@@ -100,7 +100,7 @@ export default function CitySearchDropdown({
             ))}
 
             {bolIsAuthenticated && (
-              <li className="w-full mt-1 border-t border-border px-1">
+              <li className="w-full mt-1 border-t border-card-border px-1">
                 <button
                   type="button"
                   ref={
@@ -133,7 +133,7 @@ export default function CitySearchDropdown({
       )}
 
       {bolNoResults && strCity.trim().length >= 2 && (
-        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full bg-background border border-border rounded-xl p-3 text-sm text-foreground shadow-xl">
+        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full  bg-secondary-fund border border-card-border rounded-xl p-3 text-sm text-foreground shadow-xl">
           no se encontraron resultados
         </div>
       )}

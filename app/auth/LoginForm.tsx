@@ -13,11 +13,13 @@ import { useAuth } from "./AuthContext";
 
 import { SignInFacebook } from "./FacebookSignInButton";
 import { SignInDiscord } from "./DiscordSignInButton";
+import { SignInLinkedIn } from "./LinkedInSignInButton"
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
   onClose?: () => void;
   onForgotPassword?: () => void;
+  onMagicLink?: () => void;
 }
 
 interface LoginTelemetry {
@@ -29,8 +31,33 @@ const GOOGLE_TELEMETRY_PENDING_KEY = "google_telemetry_pending";
 const GOOGLE_TELEMETRY_LAT_KEY = "google_telemetry_latitud";
 const GOOGLE_TELEMETRY_LNG_KEY = "google_telemetry_longitud";
 const GOOGLE_TELEMETRY_CREATED_AT_KEY = "google_telemetry_created_at";
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
 
-export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
+function consumePostAuthRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+  const redirectTarget = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
+  if (redirectTarget) {
+    sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  }
+  return redirectTarget;
+}
+
+function getPostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  return sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+}
+
+async function checkInternetConnection() {
+  if (!navigator.onLine) return false;
+  try {
+    await fetch("https://www.google.com", { mode: "no-cors" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword, onMagicLink }: LoginFormProps) {
   const router = useRouter();
   const { login, fetchUserFromServer } = useAuth();
   const [email, setEmail] = useState("");
@@ -164,7 +191,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       }
       setShowSuccess(true);
     } catch (err: any) {
-      // ✅ NUEVO: Detectar error de 2FA requerido
+      // NUEVO: Detectar error de 2FA requerido
       if (err.requiresOTP && err.userId) {
         setPending2FAUserId(err.userId);
         setShow2FAModal(true);
@@ -185,16 +212,14 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
   }
 
   function handleSuccessClose() {
-  setShowSuccess(false);
-  if (onClose) {
-    onClose();
+    setShowSuccess(false);
+    if (onClose) onClose();
+    if (userRol === 1) {
+      router.push("/admin");
+      return;
+    }
+    router.push(consumePostAuthRedirect() || "/");
   }
-  if (Number(userRol) === 1) {
-    router.push("/admin");
-    return;
-  }
-  router.push("/");
-}
 
   const googleClickedRef = useRef(false);
 
@@ -235,21 +260,13 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     try {
       const telemetry = await getLoginTelemetry();
       savePendingGoogleTelemetry(telemetry);
-      await signIn("google", { callbackUrl: "/google-auth-check" });
+      await signIn("google", {
+        callbackUrl: `/google-auth-check?redirect=${encodeURIComponent(getPostAuthRedirect())}`,
+      });
     } catch (error) {
       clearPendingGoogleTelemetry();
       googleClickedRef.current = false;
       setGoogleLoading(false);
-    }
-  }
-
-  async function checkInternetConnection() {
-    if (!navigator.onLine) return false;
-    try {
-      await fetch("https://www.google.com", { mode: "no-cors" });
-      return true;
-    } catch {
-      return false;
     }
   }
 
@@ -290,7 +307,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // ✅ NUEVO: Manejo de 2FA exitoso
+  // NUEVO: Manejo de 2FA exitoso
   async function handle2FASuccess() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -308,7 +325,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // ✅ NUEVO: Cancelar modal 2FA
+  // NUEVO: Cancelar modal 2FA
   function handle2FACancel() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -608,7 +625,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#0F172A",
+          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#1C3445",
           cursor: blockedByConnection || googleLoading ? "not-allowed" : "pointer",
           opacity: blockedByConnection ? 0.5 : googleLoading ? 0.6 : 1,
           color: "white",
@@ -640,6 +657,36 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         )}
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
+
+      {/* Magic Link button */}
+      {onMagicLink && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onMagicLink}
+          style={{
+            width: "100%",
+            backgroundColor: "#1C3445",
+            color: "white",
+            fontWeight: "bold",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            marginBottom: "16px",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Continuar con Magic Link
+        </button>
+      )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -744,6 +791,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                  <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
                   <SignInFacebook />
                   <SignInDiscord />
+                  <SignInLinkedIn />
                     </div>
            </div>
       </form>
@@ -755,7 +803,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         autoCloseDuration={2000}
       />
 
-      {/* ✅ NUEVO: Modal 2FA */}
+      {/* NUEVO: Modal 2FA */}
       {show2FAModal && (
         <OTP2FAModal
           userId={pending2FAUserId}

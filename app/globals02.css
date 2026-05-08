@@ -21,6 +21,15 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
   /* Valores básicos necesarios para evitar errores en componentes base */
   --radius: 0.5rem;
@@ -34,68 +43,97 @@
 }
 
 :root {
-  /* ==========================================
-     MODO CLARO 
-     ========================================== */
-  /* fondo principal: Beige arena suave (#F4EFE6) */
-  --background: oklch(0.95 0.01 82);
+    /* fondo principal: Beige arena suave (#F4EFE6)*/
+  --background: #F4EFE6;
 
   /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
-  --card-bg: oklch(0.958 0.011 85);
+  --card-bg: #F9F5F1;
 
   /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
-  --card-border: oklch(0.85 0.01 83);
+  --card-border: #D6CFC3;
 
-  /* fondo secundario: Gris cálido claro (#E7E1D7) */
-  --secondary-fund: oklch(0.91 0.01 81);
+  /* fondo secundario: Gris cálido claro (#E7E1D7)*/
+  --secondary-fund: #E7E1D7;
 
-  /* texto principal: Gris profundo (#2E2E2E) */
-  --foreground: oklch(0.30 0.00 0);
+  /* texto principal: Gris profundo (#2E2E2E)*/
+  --foreground: #2E2E2E;
 
-  /* boton primario: Azul petróleo (#1F3A4D) */
-  --primary: oklch(0.34 0.05 241);
+  /* boton primario: Azul petróleo (#1F3A4D)*/
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
 
-  /* texto de boton primario: Beige arena suave (#F4EFE6) */
-  --primary-foreground: oklch(0.952 0.01 84.8);
+  /* boton secundario: Terracota suave (#C26E5A)*/
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
 
-  /* boton secundario: Terracota suave (#C26E5A) */
-  --secondary: oklch(0.63 0.11 34);
+  --destructive: #ff193f;
+  --destructive-foreground: #F4EFE6;
+  /* ESTADOS (Gestión de comentarios y alertas) */
+  /* boton/badge de éxito (Aprobado): Verde oliva/bosque suave */
+  --success: #4A7C59;
+  --success-foreground: #F4EFE6;
 
-  /* texto de boton secundario: Beige arena suave (#F4EFE6) */
-  --secondary-foreground: oklch(0.952 0.01 84.8);
+  /* boton/badge de advertencia (Pendiente): Mostaza/Ámbar apagado */
+  --warning: #D4A373;
+  --warning-foreground: #2E2E2E;
 
-  /* ==========================================
-     TIPOGRAFÍA (Común para ambos modos)
-     ========================================== */
+  /* elementos inactivos o texto secundario */
+  --muted: #E7E1D7;
+  --muted-foreground: #7A756D;
+
+  /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
+  /* Subtítulos (Secciones destacadas) */
   --text-xl: 1.30rem;
+  /* Cuerpo e Información general */
   --text-base: 1rem;
 }
 
-/* ==========================================
-   MODO OSCURO ("Noche Moderna")
-   ========================================== */
-/* 1. Activa el modo oscuro si el sistema lo pide Y el usuario NO ha forzado el claro */
+/* MODO OSCURO ("Noche Moderna") */
+/* Activa el modo oscuro si el sistema lo pide Y el usuario NO ha forzado el claro */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    /* fondo principal: Gris carbón profundo (#1A1A1A) */
-    --background: #1A1A1A;
-    /* fondo de tarjeta: Gris oscuro intermedio (#242424) */
-    --card-bg: #242424;
-    /* borde de tarjeta: Gris suave para contraste nocturno (#333333) */
-    --card-border: #333333;
-    /* fondo secundario: Gris basalto suave (#2A2A2A) */
-    --secondary-fund: #2A2A2A;
-    /* texto principal: Beige suave (#F4EFE6) */
-    --foreground: #F4EFE6;
-    /* boton primario: Azul petróleo (#1F3A4D) */
-    --primary: #1F3A4D;
-    /* texto de boton primario: Beige suave (#F4EFE6) */
-    --primary-foreground: #F4EFE6;
-    /* boton secundario: Terracota suave (#C26E5A) */
-    --secondary: #C26E5A;
-    /* texto de boton secundario: Beige suave (#F4EFE6) */
-    --secondary-foreground: #F4EFE6;
+      /* fondo principal: Beige arena suave (#F4EFE6)*/
+  --background: #333333;
+
+  /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
+  --card-bg: #474747;
+
+  /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
+  --card-border: #1F1F1F;
+
+  /* fondo secundario: Gris cálido claro (#E7E1D7)*/
+  --secondary-fund: #292929;
+
+  /* texto principal: Gris profundo (#2E2E2E)*/
+  --foreground: #EBEBEB;
+
+  /* boton primario: Azul petróleo (#1F3A4D)*/
+  --primary: #294D66;
+  --primary-foreground: #EBEBEB;
+
+  /* boton secundario: Terracota suave (#C26E5A)*/
+  --secondary: #C26E5A;
+  --secondary-foreground: #333333;
+
+  --destructive: #EF4444; /* Un rojo un poco más suave para no lastimar la vista en oscuro */
+  --destructive-foreground: #FFFFFF;
+
+  --success: #528A63; /* Verde ligeramente más claro para contrastar con el fondo oscuro */
+  --success-foreground: #FFFFFF;
+
+  --warning: #E2B07E; /* Mostaza ligeramente más brillante */
+  --warning-foreground: #1A1A1A;
+
+  --muted: #3D3D3D;
+  --muted-foreground: #A3A3A3;
+
+  /* Título Principal (Hero/Propiedad) */
+  --text-3xl: 1.80rem; 
+  /* Subtítulos (Secciones destacadas) */
+  --text-xl: 1.30rem;
+  /* Cuerpo e Información general */
+  --text-base: 1rem;
   }
 }
 

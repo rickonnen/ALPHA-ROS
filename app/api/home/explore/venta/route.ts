@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-
+import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const data = await prisma.$queryRaw`SELECT * FROM get_top5_ciudades_venta()`;

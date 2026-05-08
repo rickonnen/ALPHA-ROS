@@ -9,6 +9,15 @@ import { useAuth } from "./AuthContext";
 import { isValidEmail, getSuspiciousDomainSuggestion } from "@/lib/utils";
 import GoogleSignInButton from "./GoogleSignInButton";
 
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+
+function consumePostAuthRedirect(): string {
+  if (typeof window === "undefined") return "/";
+  const redirectTarget = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY) || "/";
+  sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+  return redirectTarget;
+}
+
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
   onClose?: () => void;
@@ -310,7 +319,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose }: RegisterFormP
 
       setShowSuccess(true);
       setVerificationStep(false);
-      setTimeout(() => { window.location.href = "/"; }, 1000);
+      setTimeout(() => { window.location.href = consumePostAuthRedirect(); }, 1000);
     } catch (err: any) {
       setVerificationError(err.message || "Error al verificar. Intenta de nuevo.");
     } finally {

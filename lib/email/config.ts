@@ -1,9 +1,6 @@
 import nodemailer from "nodemailer";
 
-/**
- * TAREA 6: Crear método único para enviar correos reutilizable
- * Configuración de Nodemailer con Gmail SMTP
- */
+
 
 // Validar variables de entorno requeridas
 const GMAIL_USER = process.env.GMAIL_USER;
