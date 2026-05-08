@@ -81,7 +81,7 @@ const POST_AUTH_MAP_OPEN_KEY = "searchMapOpen";
 const ITEMS_PER_PAGE_GRID = 6;
 const ITEMS_PER_PAGE_LIST = 5;
 const ITEMS_PER_PAGE_MAP_GRID = 3;
-const ITEMS_PER_PAGE_MAP_LIST = 5;
+const ITEMS_PER_PAGE_MAP_LIST = 4;
 
 function isValidLatLng(lat: unknown, lng: unknown): lat is number {
   return (
@@ -295,36 +295,26 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
 }
 
 function formatPublishedDate(date: Date | string | null | undefined): string {
-  if (!date) return "Reciente";
-
   try {
-    const publishedDate = typeof date === "string" ? new Date(date) : date;
-    if (isNaN(publishedDate.getTime())) return "Reciente";
-
-    const now = new Date();
-    const diffMs = now.getTime() - publishedDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Hoy";
-    if (diffDays === 1) return "Ayer";
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return `Hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
-    }
-    if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30);
-      return `Hace ${months} ${months === 1 ? "mes" : "meses"}`;
+    const publishedDate = date ? (typeof date === "string" ? new Date(date) : date) : new Date();
+    if (isNaN(publishedDate.getTime())) {
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      return `${day}/${month}/${year}`;
     }
 
-    const formatter = new Intl.DateTimeFormat("es-BO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-    return formatter.format(publishedDate);
+    const day = String(publishedDate.getDate()).padStart(2, '0');
+    const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
+    const year = publishedDate.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
-    return "Reciente";
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 }
 
