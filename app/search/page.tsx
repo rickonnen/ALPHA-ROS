@@ -47,6 +47,7 @@ import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 /* Para comparacion de propiedades */
 import { CompareTable } from "@/components/search/compareTable";
 import { CompareFloatingBar } from "@/components/search/floatBar";
+import { countActiveFilters } from "@/features/filter_search_page/countActiveFilters"
 
 type Currency = "USD" | "BS";
 
@@ -574,8 +575,7 @@ function SearchPageContent() {
         advancedFilterValues.minSurface !== undefined ||
         advancedFilterValues.maxSurface !== undefined ||
         appliedPriceFilter?.minPrice !== undefined ||
-        appliedPriceFilter?.maxPrice !== undefined ||
-        selectedSort !== "fecha-reciente",
+        appliedPriceFilter?.maxPrice !== undefined,
     );
   }, [
     advancedFilterValues.banos,
@@ -588,6 +588,22 @@ function SearchPageContent() {
     searchLocation,
     selectedOperation,
     selectedPropertyTypes.length,
+  ]);
+
+  const activeFiltersCount = useMemo(() => {
+    return countActiveFilters({
+      searchLocation,
+      selectedOperation,
+      selectedPropertyTypes,
+      advancedFilterValues,
+      appliedPriceFilter,
+    });
+  }, [
+    searchLocation,
+    selectedOperation,
+    selectedPropertyTypes,
+    advancedFilterValues,
+    appliedPriceFilter,
     selectedSort,
   ]);
 
@@ -1182,6 +1198,7 @@ function SearchPageContent() {
               <div className="mt-4 pb-6">
                 <ClearFiltersButton
                   hasActiveFilters={hasActiveFilters}
+                  countFiltersCount={activeFiltersCount}
                   onClear={handleClearFilters}
                 />
               </div>
@@ -1515,6 +1532,7 @@ function SearchPageContent() {
                     <div className="pb-2">
                       <ClearFiltersButton
                         hasActiveFilters={hasActiveFilters}
+                        activeFiltersCount={activeFiltersCount}
                         onClear={handleClearFilters}
                       />
                     </div>
