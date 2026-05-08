@@ -49,15 +49,7 @@ function PlanesPromocionContent() {
       visibilidad: 'Visibilidad Premium',
       color: 'bg-[#bf735c]' 
     },
-    { 
-      id: '5', 
-      nombre: 'Master', 
-      precio: '29.99', 
-      dias: 90, 
-      prioridad: 'Prioridad Máxima Total', 
-      visibilidad: 'Visibilidad Máxima',
-      color: 'bg-[#1e3a5f]' 
-    },
+    
   ];
 
   const handleSelectPlan = (planId: string) => {
@@ -67,7 +59,8 @@ function PlanesPromocionContent() {
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1e3a5f] font-sans">
-      <main className="max-w-[95%] mx-auto px-4 pt-10 pb-12">
+      {/* max-w-5xl es la clave para juntarlos en el centro */}
+        <main className="max-w-5xl mx-auto px-4 pt-10 pb-12">
         
         {/* CABECERA */}
         <div className="relative mb-12 flex flex-col items-center justify-center">
@@ -86,11 +79,11 @@ function PlanesPromocionContent() {
         </div>
 
         {/* GRID DE 5 COLUMNAS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {planesPromocion.map((plan) => (
             <div 
               key={plan.id} 
-              className="border border-gray-300 rounded-lg p-6 flex flex-col items-center text-center bg-white/60 shadow-sm hover:shadow-xl transition-all h-full"
+              className="w-full h-full border border-gray-300 rounded-lg p-5 flex flex-col items-center text-center bg-white/60 shadow-sm hover:shadow-xl transition-all"
             >
               <span className="text-gray-400 text-xs mb-4 font-bold tracking-[0.3em]">X-----------X</span>
               
@@ -102,7 +95,7 @@ function PlanesPromocionContent() {
                 <p className="text-sm font-semibold">{plan.visibilidad}</p>
                 {plan.id === '3' && <p className="text-sm font-bold italic">Soporte Prioritario</p>}
                 {plan.id === '4' && <p className="text-sm font-bold italic">Soporte Exclusivo</p>}
-                {plan.id === '5' && <p className="text-sm font-bold italic">Todos los beneficios</p>}
+              
               </div>
               
               <div className="mb-6">
