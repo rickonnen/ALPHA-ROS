@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, Newspaper, ArrowRight, MessageSquare } from "lucide-react";
+import { CreditCard, Newspaper, ArrowRight, MessageSquare, LayoutList } from "lucide-react";
 
 const arrAdminOptions = [
   {
@@ -28,7 +28,16 @@ const arrAdminOptions = [
     Icon: MessageSquare,
     strButtonText: "Inspeccionar",
   },
+  {
+    strTitle: "Administrador de planes",
+    strDescription:
+      "Gestiona los planes de publicación y promoción, define precios, límites y vigencia.",
+    strHref: "/admin/planes", // <-- Esta será la ruta que crearemos para la HU1
+    Icon: LayoutList, 
+    strButtonText: "Inspeccionar",
+  },
 ];
+
 
 export default function MenuAdmin() {
   return (
