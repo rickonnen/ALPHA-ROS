@@ -27,11 +27,11 @@ export async function verificarEstadoPublicacion(
       Suscripcion: {
         select: {
           fecha_fin: true,
-          id_plan: true,          // ← traer id_plan explícitamente
+          id_plan: true,
           PlanPublicacion: {
             select: {
               cant_publicaciones: true,
-              nombre_plan: true,  // ← útil para debug
+              nombre_plan: true,
             },
           },
         },
@@ -50,25 +50,37 @@ export async function verificarEstadoPublicacion(
   if (
     objSuscripcion &&
     objSuscripcion.fecha_fin > hoy &&
-    objSuscripcion.PlanPublicacion !== null &&          // ← verificar que el plan existe
-    objSuscripcion.PlanPublicacion.cant_publicaciones !== null  // ← y tiene límite definido
+    objSuscripcion.PlanPublicacion !== null &&
+    objSuscripcion.PlanPublicacion.cant_publicaciones !== null
   ) {
     const intPermitidas = objSuscripcion.PlanPublicacion.cant_publicaciones!;
-    const intHechas     = objUsuario.publicaciones_hechas ?? 0;
-    const intRestantes  = intPermitidas - intHechas;
 
-    if (intRestantes <= 0) {
+    // Contar solo publicaciones de pago, igual que el trigger
+    const intPublisDePlan = await prisma.publicacion.count({
+      where: {
+        id_usuario: strUserId,
+        gratuito: false,
+      },
+    });
+
+    const intRestantesPlan = intPermitidas - intPublisDePlan;
+
+    if (intRestantesPlan > 0) {
+      // Aún tiene cupo en el plan
       return {
-        intPublicacionesRestantes: 0,
-        bolLimiteAlcanzado: true,
-        strTipoLimite: "plan",
+        intPublicacionesRestantes: intRestantesPlan,
+        bolLimiteAlcanzado: false,
+        strTipoLimite: "ninguno",
       };
     }
 
+    // Plan agotado → revisar colchón gratuito
+    const intRestantesGratuitos = objUsuario.cant_publicaciones_restantes ?? 0;
+
     return {
-      intPublicacionesRestantes: intRestantes,
-      bolLimiteAlcanzado: false,
-      strTipoLimite: "ninguno",
+      intPublicacionesRestantes: intRestantesGratuitos,
+      bolLimiteAlcanzado: intRestantesGratuitos <= 0,
+      strTipoLimite: intRestantesGratuitos <= 0 ? "plan" : "ninguno",
     };
   }
 

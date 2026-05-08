@@ -313,13 +313,15 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
         {caracteristicas.length === 0 && !isAdding && (
           <div className="flex items-center justify-center py-6">
             <p className="text-sm text-gray-500 text-center leading-relaxed">
-              En caso de necesitar ingresar más<br />
-              detalles del inmueble, añada una<br />
-              característica especifica de su<br />
-              inmueble
+              En caso de necesitar ingresar más detalles del inmueble,
+              haga click en{' '}
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-400 text-gray-600 font-bold text-xs">
+                +
+              </span>
+              {' '}y añada una característica específica de su inmueble.
             </p>
           </div>
-        )}
+         )}
 
         {/* ── Modo Añadir ── */}
         {isAdding && (

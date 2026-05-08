@@ -164,16 +164,19 @@ export default function FullHistoryPanel({
       <div
         ref={objFullPanelRef}
         tabIndex={-1}
-        className="fixed top-0 left-0 h-full z-[100] w-full landscape:max-sm:w-[85%] sm:w-[85%] md:w-[35%] bg-background shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 border-r border-border focus:outline-none"
+        // border-border unificado a border-card-border
+        className="fixed top-0 left-0 h-full z-[100] w-full landscape:max-sm:w-[85%] sm:w-[85%] md:w-[35%] bg-background shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 border-r border-card-border focus:outline-none"
       >
-        <div className="p-4 border-b border-border flex justify-between items-center bg-background">
+        {/* border-border unificado a border-card-border */}
+        <div className="p-4 border-b border-card-border flex justify-between items-center bg-background">
           <h2 className="font-semibold text-sm text-foreground">
-            Historial de Busqueda
+            Historial de Búsqueda
           </h2>
           
           <button
             onClick={() => setBolShowFullHistoryPanel(false)}
-            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            // Clases muted y muted-foreground cambiadas a tus colores globales (secondary-fund y foreground/60)
+            className="p-1.5 rounded-md text-foreground/60 hover:bg-secondary-fund hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             aria-label="Cerrar panel de historial"
           >
             <img 
@@ -181,7 +184,8 @@ export default function FullHistoryPanel({
               alt="Cerrar" 
               width={20} 
               height={20} 
-              className="opacity-70 hover:opacity-100 transition-opacity"
+              // Se añade svg-theme-invert para que invierta el color en Modo Oscuro si es necesario
+              className="opacity-70 hover:opacity-100 transition-opacity svg-theme-invert"
             />
           </button>
         </div>

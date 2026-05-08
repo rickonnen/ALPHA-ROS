@@ -2,7 +2,7 @@
 
 import Banner from "@/components/homeComponents/banner";
 import FilterPanel from "@/components/homeComponents/filterPanel";
-import TopCities from "@/components/homeComponents/TopCities";
+import TopCities from "@/components/homeComponents/top-cities/TopCities";
 import ExploreBy from "@/components/homeComponents/exploreBy";
 import BlogSection from "@/components/homeComponents/blogSection";
 import AdminRedirect from "./auth/AdminRedirect";
