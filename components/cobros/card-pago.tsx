@@ -39,12 +39,14 @@ export default function CardPago({ pago }: { pago: Pago }) {
   };
   return (
     <>
-      <div className="bg-[#F4EFE6] border border-[#E5E0D8] p-4 space-y-3">
+      <div className="bg-white border border-black/10 p-5 space-y-3 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
         <div className="flex justify-between items-center">
-          <h2 className="font-bold text-sm uppercase text-[#2E2E2E]">{getHeaderText()}</h2>
-          {pago.estado === "pendiente" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">VERIFICANDO PAGO</span>}
-          {pago.estado === "rechazado" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">PAGO RECHAZADO</span>}
-          {pago.estado === "realizado" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">PAGO EXITOSO</span>}
+          <h2 className="font-bold text-sm uppercase text-[#2E2E2E] leading-snug tracking-tight">
+            {getHeaderText()}
+          </h2>
+          {pago.estado === "pendiente" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">VERIFICANDO PAGO</span>}
+          {pago.estado === "rechazado" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">PAGO RECHAZADO</span>}
+          {pago.estado === "realizado" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">PAGO EXITOSO</span>}
         </div>
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
@@ -64,12 +66,12 @@ export default function CardPago({ pago }: { pago: Pago }) {
         </div>
         {pago.estado === "rechazado" && (
           <div className="flex justify-end">
-            <Button onClick={() => setOpenModal(true)} className="bg-[#1F3A4D] hover:bg-[#162c3a] text-white text-xs">CONTACTAR CON SOPORTE</Button>
+            <Button onClick={() => setOpenModal(true)} className="bg-[#1F3A4D] hover:bg-[#162c3a] text-white text-xs rounded-md shadow-sm transition-all">CONTACTAR CON SOPORTE</Button>
           </div>
         )}
       </div>
       {openModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm min-h-[100dvh] w-screen">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm min-h-dvh w-screen">
           <div ref={modalRef} className="bg-[#F4EFE6] border border-[#E5E0D8] w-full max-w-md p-6 rounded-md space-y-5 text-center relative shadow-xl">
             <button onClick={() => setOpenModal(false)} className="absolute top-2 right-3 text-gray-400 hover:text-[#2E2E2E] text-2xl font-light transition-colors">&times;</button>
             <h2 className="text-lg font-bold text-[#1F3A4D]">¿Problema con tu pago?</h2>
