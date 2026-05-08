@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { useDollarRate } from "@/components/hooks/getDollarRate";
+
 export interface Pago {
   id: number;
   fecha: string;
@@ -8,10 +10,14 @@ export interface Pago {
   monto: number;
   estado: "pendiente" | "realizado" | "rechazado";
 }
+
 export default function CardPago({ pago }: { pago: Pago }) {
   const [openModal, setOpenModal] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { venta } = useDollarRate();
+  const tipoDeCambio = venta !== null ? venta : 6.96;
+
   const getHeaderText = () => {
     switch (pago.estado) {
       case "realizado": return "TRANSACCIÓN REALIZADA";
@@ -19,6 +25,7 @@ export default function CardPago({ pago }: { pago: Pago }) {
       default: return "TRANSACCIÓN PENDIENTE";
     }
   };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -32,11 +39,13 @@ export default function CardPago({ pago }: { pago: Pago }) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [openModal]);
+
   const handleCopiarCorreo = () => {
     navigator.clipboard.writeText("propBol.support.payments@gmail.com");
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   };
+
   return (
     <>
       <div className="bg-white border border-black/10 p-5 space-y-3 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
@@ -60,7 +69,8 @@ export default function CardPago({ pago }: { pago: Pago }) {
           <div className="flex justify-between">
             <span className="text-[#6B7280]">{pago.estado === "realizado" ? "Total pagado:" : "Monto:"}</span>
             <span className="text-[#2E2E2E]">
-              ${Number(pago.monto).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-gray-400">(≈ Bs {(pago.monto * 6.96).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+              ${Number(pago.monto).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
+              <span className="text-sm font-medium text-secondary ml-1">(≈ Bs {(pago.monto * tipoDeCambio).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
             </span>
           </div>
         </div>
