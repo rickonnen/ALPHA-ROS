@@ -1219,7 +1219,7 @@ function SearchPageContent() {
               <div className="mt-4 pb-6">
                 <ClearFiltersButton
                   hasActiveFilters={hasActiveFilters}
-                  countFiltersCount={activeFiltersCount}
+                  activeFiltersCount={activeFiltersCount}
                   onClear={handleClearFilters}
                 />
               </div>
@@ -1472,7 +1472,7 @@ function SearchPageContent() {
                 )}
               </div>
 
-              <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex h-[min(604px,calc(100vh_-_120px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 {/* Título Filtros + botón ocultar */}
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-xl font-bold text-[#2E2E2E]">Filtros</h2>
@@ -1533,31 +1533,35 @@ function SearchPageContent() {
                       value={selectedOperation}
                       onChange={setSelectedOperation}
                     />
+
                     <FilterTypeProperty
                       tipos={PROPERTY_TYPE_OPTIONS}
                       selected={selectedPropertyTypes}
                       onChange={setSelectedPropertyTypes}
                     />
+
                     <AdvancedFilters
                       key={advancedFiltersKey}
                       onChange={setAdvancedFilterValues}
                     />
+
                     <div className="my-3 h-px bg-[#F4EFE6]" />
+
                     <PriceDropdown
                       selectedCurrency={selectedCurrency}
                       appliedPriceFilter={appliedPriceFilter}
                       onCurrencyChange={handleCurrencyChange}
                       onApplyRange={handleApplyRange}
                     />
-                    <div className="my-3 h-px bg-[#F4EFE6]" />
-                    <div className="pb-2">
-                      <ClearFiltersButton
-                        hasActiveFilters={hasActiveFilters}
-                        activeFiltersCount={activeFiltersCount}
-                        onClear={handleClearFilters}
-                      />
-                    </div>
                   </ScrollArea>
+                </div>
+
+                <div className="mt-3 shrink-0 border-t border-[#F4EFE6] bg-white pt-3">
+                  <ClearFiltersButton
+                    hasActiveFilters={hasActiveFilters}
+                    activeFiltersCount={activeFiltersCount}
+                    onClear={handleClearFilters}
+                  />
                 </div>
               </div>
             </div>
