@@ -63,9 +63,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Construir respuesta con los 3 proveedores siempre presentes
-    const proveedores = usuario.google_id
-      ? ["google", "discord", "facebook", "linkedin"]
-      : ["discord", "facebook", "linkedin"]
+    const proveedores = ["google", "discord", "facebook"]
+
     // Para cuentas credentials, primary_provider puede ser null
     const primaryProvider = usuario.primary_provider ?? "credentials"
 
