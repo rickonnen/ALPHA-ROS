@@ -29,7 +29,12 @@ interface ExploreCategory {
 const GetTotalCount = (items: CategoryItem[]) =>
   items.reduce((sum, item) => sum + item.IntCount, 0);
 
+<<<<<<< HEAD
 const ToQueryParam = (value: string) => value.replace(/ /g, "+");
+=======
+const ToQueryParam = (StrValue: string) =>
+  (StrValue || "").replace(/ /g, "+");
+>>>>>>> af5b88a54772aab4c9c4a2fe1c2d5c70c9c41655
 
 const DisplayNames: Record<string, string> = {
   Casa: "Casa",
