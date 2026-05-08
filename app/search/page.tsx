@@ -532,37 +532,58 @@ function SearchPageContent() {
   }, [selectedSort, viewMode, isMapOpen]);
 
   useEffect(() => {
-    if (!objUser) return;
+      if (!objUser) return;
 
-    let isMounted = true;
+      let isMounted = true;
 
-    const fetchSavedZones = async () => {
-      try {
-        const response = await fetch("/api/perfil/mis-zonas", {
-          credentials: "include",
-        });
+      const fetchSavedZones = async () => {
+        try {
+          const response = await fetch("/api/perfil/mis-zonas", {
+            credentials: "include",
+          });
 
-        if (!response.ok) return;
+          if (!response.ok) return;
 
-        const payload = await response.json();
-        if (!isMounted || !Array.isArray(payload.data)) return;
+          const payload = await response.json();
+          if (!isMounted || !Array.isArray(payload.data)) return;
 
-        setSavedZones(
-          payload.data.filter((zone: SavedZone) =>
-            isValidZoneCoordinates(zone.coordenadas),
-          ),
-        );
-      } catch (error) {
-        console.error("Error al cargar zonas guardadas:", error);
-      }
-    };
+          setSavedZones(
+            payload.data.filter((zone: SavedZone) =>
+              isValidZoneCoordinates(zone.coordenadas),
+            ),
+          );
+        } catch (error) {
+          console.error("Error al cargar zonas guardadas:", error);
+        }
+      };
 
-    void fetchSavedZones();
+      void fetchSavedZones();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [objUser]);
+      return () => {
+        isMounted = false;
+      };
+    }, [objUser]);
+
+    useEffect(() => {
+    console.table({
+      ubicacion: searchLocation,
+      operaciones: selectedOperation.length,
+      tipos: selectedPropertyTypes.length,
+      habitaciones: advancedFilterValues.habitaciones,
+      banos: advancedFilterValues.banos,
+      piscina: advancedFilterValues.piscina,
+      minSurface: advancedFilterValues.minSurface,
+      maxSurface: advancedFilterValues.maxSurface,
+      minPrice: appliedPriceFilter?.minPrice,
+      maxPrice: appliedPriceFilter?.maxPrice,
+    });
+  }, [
+    searchLocation,
+    selectedOperation,
+    selectedPropertyTypes,
+    advancedFilterValues,
+    appliedPriceFilter,
+  ]);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(

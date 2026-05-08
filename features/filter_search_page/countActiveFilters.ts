@@ -1,22 +1,37 @@
 type AppliedPriceFilter = {
-    minPrice?: number;
-    maxPrice?: number;
+  minPrice?: number;
+  maxPrice?: number;
 } | null;
 
 type AdvancedFilterValues = {
-    habitaciones?: string;
-    banos?: string;
-    piscina?: string;
-    minSurface?: number;
-    maxSurface?: number;
-}
+  habitaciones?: string;
+  banos?: string;
+  piscina?: string;
+  minSurface?: number;
+  maxSurface?: number;
+};
 
 type CountActiveFiltersParams = {
-    searchLocation: string;
-    selectedOperation: string[];
-    selectedPropertyTypes: number[];
-    advancedFilterValues: AdvancedFilterValues;
-    appliedPriceFilter: AppliedPriceFilter;
+  searchLocation: string;
+  selectedOperation: string[];
+  selectedPropertyTypes: number[];
+  advancedFilterValues: AdvancedFilterValues;
+  appliedPriceFilter: AppliedPriceFilter;
+};
+
+function isActiveValue(value?: string): boolean {
+  if (!value) return false;
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  return ![
+    "",
+    "todos",
+    "todas",
+    "cualquiera",
+    "ninguno",
+    "default",
+  ].includes(normalizedValue);
 }
 
 export function countActiveFilters({
@@ -38,11 +53,17 @@ export function countActiveFilters({
     count += selectedPropertyTypes.length;
   }
 
-  if (advancedFilterValues.habitaciones) count += 1;
+  if (isActiveValue(advancedFilterValues.habitaciones)) {
+    count += 1;
+  }
 
-  if (advancedFilterValues.banos) count += 1;
+  if (isActiveValue(advancedFilterValues.banos)) {
+    count += 1;
+  }
 
-  if (advancedFilterValues.piscina) count += 1;
+  if (isActiveValue(advancedFilterValues.piscina)) {
+    count += 1;
+  }
 
   if (
     advancedFilterValues.minSurface !== undefined ||
