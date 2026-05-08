@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ArrowLeft, Mail, Link2 } from "lucide-react";
+import { isValidEmail, getSuspiciousDomainSuggestion } from "@/lib/utils";
 
 interface MagicLinkFormProps {
   onBack: () => void;
@@ -14,7 +15,11 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
 
   function validateEmail(value: string) {
     if (!value.trim()) return "El correo es obligatorio";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Ingresa un correo válido";
+    if (!isValidEmail(value.trim())) {
+      const suggestion = getSuspiciousDomainSuggestion(value.trim());
+      if (suggestion) return `Ingresa un correo electrónico válido. ¿Quisiste escribir ${suggestion}?`;
+      return "Ingresa un correo válido: gmail.com, outlook.com, hotmail.com, icloud.com, live.com, office365.com, yahoo.com, .edu";
+    }
     return "";
   }
 
@@ -90,7 +95,12 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
-              if (error) setError(validateEmail(e.target.value));
+              if (e.target.value.trim()) {
+                const validationError = validateEmail(e.target.value);
+                setError(validationError);
+              } else {
+                setError("");
+              }
             }}
             onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
             style={{
@@ -105,18 +115,18 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
       {/* Submit button */}
       <button
         type="button"
-        disabled={loading}
+        disabled={loading || !email.trim() || !isValidEmail(email.trim())}
         onClick={handleSubmit}
         style={{
           width: "100%",
-          backgroundColor: loading ? "#e5a89f" : "#C26E5A",
+          backgroundColor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "#e5a89f" : "#C26E5A",
           color: "white",
           fontWeight: "bold",
           fontSize: "15px",
           padding: "13px",
           borderRadius: "8px",
           border: "none",
-          cursor: loading ? "not-allowed" : "pointer",
+          cursor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "not-allowed" : "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
           transition: "background-color 0.2s",
         }}

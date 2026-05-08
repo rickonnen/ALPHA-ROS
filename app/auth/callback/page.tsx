@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { Check, X } from "lucide-react";
 
 /**
  * Página a donde el usuario es redirigido tras hacer clic en el Magic Link
@@ -29,7 +30,7 @@ export default function Callback() {
         if (!token || !email) {
           console.error("[Callback] Falta token o email en URL");
           setError("Link inválido o incompleto. Solicita uno nuevo.");
-          setTimeout(() => router.push("/auth"), 2000);
+          setTimeout(() => router.push("/"), 2000);
           return;
         }
 
@@ -52,7 +53,7 @@ export default function Callback() {
         if (!verifyResponse.ok) {
           console.error("[Callback] Error en verify:", verifyData.error);
           setError(verifyData.error || "Error al verificar el link. Intenta nuevamente.");
-          setTimeout(() => router.push("/auth"), 3000);
+          setTimeout(() => router.push("/"), 3000);
           return;
         }
 
@@ -70,7 +71,7 @@ export default function Callback() {
         if (!result?.ok) {
           console.error("[Callback] Error creando sesión NextAuth:", result?.error);
           setError("Error al iniciar sesión. Intenta nuevamente.");
-          setTimeout(() => router.push("/auth"), 2000);
+          setTimeout(() => router.push("/"), 2000);
           return;
         }
 
@@ -81,7 +82,7 @@ export default function Callback() {
       } catch (error) {
         console.error("[Callback] Error:", error);
         setError("Error interno. Intenta nuevamente.");
-        setTimeout(() => router.push("/auth"), 2000);
+        setTimeout(() => router.push("/"), 2000);
       } finally {
         setLoading(false);
       }
@@ -96,14 +97,23 @@ export default function Callback() {
       <div style={styles.card}>
         {error ? (
           <>
-            <h2 style={styles.errorTitle}>⚠️ Error</h2>
+            <div style={styles.iconWrapper}>
+              <div style={styles.errorIconCircle}>
+                <X size={32} color="#DC2626" />
+              </div>
+            </div>
+            <h2 style={styles.errorTitle}>Error</h2>
             <p style={styles.errorText}>{error}</p>
             <p style={styles.subtext}>Redirigiendo a login...</p>
           </>
         ) : (
           <>
-            <h2 style={styles.title}>✓ Procesando tu acceso</h2>
-            <div style={styles.spinner}></div>
+            <div style={styles.iconWrapper}>
+              <div style={styles.successIconCircle}>
+                <Check size={32} color="#16A34A" />
+              </div>
+            </div>
+            <h2 style={styles.title}>Procesando tu acceso</h2>
             <p style={styles.text}>Verificando tu Magic Link...</p>
           </>
         )}
@@ -122,59 +132,64 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: "#f5f5f5",
   },
   card: {
-    backgroundColor: "white",
-    padding: "40px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+    backgroundColor: "#EAE3D9",
+    padding: "36px",
+    borderRadius: "28px",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.12)",
     textAlign: "center",
-    maxWidth: "400px",
+    maxWidth: "420px",
   },
   title: {
-    color: "#28a745",
-    fontSize: "24px",
-    marginBottom: "20px",
-    fontWeight: "600",
+    color: "#0F172A",
+    fontSize: "26px",
+    marginBottom: "10px",
+    fontWeight: "700",
   },
   errorTitle: {
-    color: "#dc3545",
-    fontSize: "24px",
-    marginBottom: "20px",
-    fontWeight: "600",
+    color: "#0F172A",
+    fontSize: "26px",
+    marginBottom: "10px",
+    fontWeight: "700",
   },
   text: {
-    color: "#666",
+    color: "#475569",
     fontSize: "16px",
-    marginTop: "10px",
+    marginTop: "4px",
   },
   errorText: {
-    color: "#dc3545",
+    color: "#991B1B",
     fontSize: "16px",
-    marginBottom: "10px",
+    marginBottom: "8px",
   },
   subtext: {
-    color: "#999",
+    color: "#475569",
     fontSize: "14px",
     marginTop: "10px",
   },
-  spinner: {
-    border: "4px solid #f3f3f3",
-    borderTop: "4px solid #1C3445",
-    borderRadius: "50%",
-    width: "40px",
-    height: "40px",
-    animation: "spin 1s linear infinite",
-    margin: "20px auto",
+  iconWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "18px",
   },
+  successIconCircle: {
+    width: "56px",
+    height: "56px",
+    borderRadius: "9999px",
+    backgroundColor: "#DCFCE7",
+    border: "2px solid #16A34A",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as React.CSSProperties,
+  errorIconCircle: {
+    width: "56px",
+    height: "56px",
+    borderRadius: "9999px",
+    backgroundColor: "#FEE2E2",
+    border: "2px solid #DC2626",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as React.CSSProperties,
 };
 
-// Animación del spinner
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
-}
