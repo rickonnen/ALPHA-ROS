@@ -6,6 +6,7 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { NextAuthOptions } from "next-auth"
 import { createClient } from "@supabase/supabase-js";
+import { MagicLinkProvider } from "@/lib/auth/magicLinkProvider";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -80,6 +81,7 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    MagicLinkProvider,
   ],
 
   callbacks: {
@@ -200,7 +202,8 @@ export const authOptions: NextAuthOptions = {
           .maybeSingle();
     
         if (data?.estado === 0) {
-          return null; // invalida la sesión
+          console.log("[Session] Usuario bloqueado:", token.id);
+          return { ...session, error: "ACCOUNT_BLOCKED" };
         }
       }
       return session

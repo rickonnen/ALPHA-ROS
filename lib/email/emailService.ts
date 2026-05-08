@@ -6,6 +6,7 @@ import { templateBienvenidaGoogle } from "./templates/bienvenidaGoogle";
 import { templateCambioContrasena } from "./templates/cambioContrasena";
 import { templateRecuperacionContrasena } from "./templates/recuperacionContrasena";
 import { templatePagoProcesado } from "./templates/pagoProcesado"
+import { templateMagicLink } from "./templates/magicLink";
 
 export interface SendEmailResult {
   success: boolean;
@@ -237,3 +238,16 @@ export async function enviarNotificacionDeGrupo(
   return sendEmail(email, `[${grupo.toUpperCase()}] ${titulo}`, html);
 }
 /////////////////////hasta aqui 
+
+/** Magic Link para autenticación sin contraseña */
+export async function enviarMagicLink(
+  email: string,
+  magicLinkUrl: string,
+  nombre: string = "Usuario"
+): Promise<SendEmailResult> {
+  return sendEmail(
+    email,
+    "Tu Magic Link de PROPBOL - Acceso Seguro",
+    templateMagicLink(nombre, magicLinkUrl)
+  );
+}

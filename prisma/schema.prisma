@@ -1090,6 +1090,26 @@ model Zona {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model magic_link_attempt {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String    @db.VarChar(320)
+  token       String    @unique @db.VarChar(255)
+  sent_at     DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at  DateTime  @db.Timestamptz(6)
+  consumed_at DateTime? @db.Timestamptz(6)
+  status      String    @default("pending") @db.VarChar(20)
+  ip_address  String?   @db.VarChar(45)
+  user_agent  String?   @db.VarChar(500)
+
+  @@unique([email, status])
+  @@index([email], map: "idx_magic_link_email")
+  @@index([expires_at], map: "idx_magic_link_expires_at")
+  @@index([status], map: "idx_magic_link_status")
+  @@index([token], map: "idx_magic_link_token")
+  @@schema("public")
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificacion_campana {
