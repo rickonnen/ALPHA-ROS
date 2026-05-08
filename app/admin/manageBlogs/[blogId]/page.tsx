@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { X as ObjXIcon } from "lucide-react"; 
 import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
 import { blogState } from "@/types/blogType";
-import { FnFormatLongWords } from "@/app/utils/textUtils";
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
  * funcionalidad: renderiza la vista completa de un blog con controles de administrador
@@ -88,6 +87,7 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           newState = blogState.RECHAZADO;
           isDeleted = false;
         } else if (StrActionBlo === "ELIMINAR") {
+          newState = blogState.NOVISIBLE;
           isDeleted = true;
         }
 
@@ -166,7 +166,7 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
 
   return (
     <main className="w-full min-h-screen bg-background">
-      <div className="w-full max-w-4xl mx-auto px-4 py-12 flex flex-col gap-6">
+      <div className="w-full max-w-4xl mx-auto px-4 py-12 flex flex-col gap-6 overflow-hidden">
         
         {/* INSIGNIA DE ESTADO */}
         <div className="flex w-full justify-between items-center border-b border-card-border pb-4">
@@ -182,14 +182,14 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           </span>
         </div>
 
-        {/* TÍTULO PASADO POR LA UTILIDAD */}
-        <h1 className="text-foreground font-bold text-main-title leading-tight">
-          {FnFormatLongWords(ObjBlogBlo.StrTitleBlo)}
+        {/* TÍTULO */}
+        <h1 className="text-foreground font-bold text-main-title leading-tight break-words line-clamp-4">
+          {ObjBlogBlo.StrTitleBlo}
         </h1>
 
-        {/* DESCRIPCIÓN PASADA POR LA UTILIDAD */}
-        <p className="text-foreground/80 text-subtitle leading-relaxed border-l-4 border-primary pl-4 italic">
-          {FnFormatLongWords(ObjBlogBlo.StrDescriptionBlo)}
+        {/* DESCRIPCIÓN */}
+        <p className="text-foreground/80 text-subtitle leading-relaxed border-l-4 border-primary pl-4 italic break-words">
+          {ObjBlogBlo.StrDescriptionBlo}
         </p>
 
         <div className="w-full aspect-[4/3] relative bg-secondary-fund rounded-2xl overflow-hidden border border-card-border shadow-sm flex items-center justify-center text-foreground/20 mt-4 mb-4">
@@ -207,9 +207,9 @@ export default function AdminBlogPostPage({ params }: { params: Promise<{ blogId
           )}
         </div>
 
-        {/* CONTENIDO PASADO POR LA UTILIDAD */}
-        <div className="w-full text-foreground text-body-info leading-loose whitespace-pre-wrap">
-          {FnFormatLongWords(ObjBlogBlo.StrContentBlo)}
+        {/* whitespace-pre-wrap respeta los saltos de línea y break-words evitará el desbordamiento */}
+        <div className="w-full text-foreground text-body-info leading-loose whitespace-pre-wrap break-words">
+          {ObjBlogBlo.StrContentBlo}
         </div>
 
         <div className="w-full mt-4 text-right">

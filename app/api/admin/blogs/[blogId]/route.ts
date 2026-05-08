@@ -104,8 +104,8 @@ export async function PATCH(
         };
         break;
       case "ELIMINAR":
-        // Soft delete: No tocamos el estado, solo ponemos la fecha de eliminación
         ObjUpdateDataBlo = { 
+          estado: blogState.NOVISIBLE,
           deleted_at: new Date()
         };
         break;

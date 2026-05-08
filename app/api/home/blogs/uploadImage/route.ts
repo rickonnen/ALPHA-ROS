@@ -9,9 +9,9 @@ const INT_MAX_IMAGE_NAME_LENGTH_BLO = 12;
 const ARR_ALLOWED_IMAGE_EXTENSIONS_BLO = ["jpg", "jpeg", "png", "webp", "gif"];
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME_BLOGS,
+  api_key: process.env.CLOUDINARY_API_KEY_BLOGS,
+  api_secret: process.env.CLOUDINARY_API_SECRET_BLOGS,
 });
 
 export async function POST(request: NextRequest) {

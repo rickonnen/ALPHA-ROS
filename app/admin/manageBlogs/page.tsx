@@ -143,6 +143,7 @@ export default function AdminBlogsPage() {
               newState = blogState.RECHAZADO;
               isDeleted = false;
             } else if (StrActionBlo === "ELIMINAR") {
+              newState = blogState.NOVISIBLE;
               isDeleted = true;
             }
 
@@ -176,7 +177,7 @@ export default function AdminBlogsPage() {
 
   return (
     <main className="w-full px-4 sm:px-8 lg:px-16 py-8 min-h-screen flex flex-col gap-6 bg-background">
-      <div className="w-full text-center mt-8 mb-4">
+      <div className="w-full text-center mb-4">
         <h1 className="text-main-title font-black text-foreground uppercase tracking-wide">
           {StrPageTitleBlo}
         </h1>
