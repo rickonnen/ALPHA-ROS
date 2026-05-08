@@ -1,9 +1,11 @@
 import DiscordProvider from "next-auth/providers/discord"
 import FacebookProvider from "next-auth/providers/facebook"
+import LinkedInProvider from "next-auth/providers/linkedin"
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { NextAuthOptions } from "next-auth"
+import { createClient } from "@supabase/supabase-js";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -30,6 +32,10 @@ export const authOptions: NextAuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
+    LinkedInProvider({
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -146,6 +152,10 @@ export const authOptions: NextAuthOptions = {
           const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
           return await handleFacebookSignIn(user, account)
         }
+        if (account.provider === "linkedin") {
+          const { handleLinkedInSignIn } = await import("@/lib/auth/linkedInAuth")
+          return await handleLinkedInSignIn(user, account)
+        }
         return true
       } catch (error) {
         console.error("Error signIn:", error)
@@ -178,6 +188,20 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.id as string
+
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { data } = await supabase
+          .from("Usuario")
+          .select("estado")
+          .eq("id_usuario", token.id)
+          .maybeSingle();
+    
+        if (data?.estado === 0) {
+          return null; // invalida la sesión
+        }
       }
       return session
     },
