@@ -240,8 +240,8 @@ interface AdvancedFiltersValues {
   habitaciones: string;
   banos: string;
   piscina: string;
-  minSurface: string;
-  maxSurface: string;
+  minSurface?: string;
+  maxSurface?: string;
 }
 
 interface Props {
@@ -277,14 +277,14 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
   const actualizar = (
     campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
-    valor: string
+    valor: string | undefined
   ) => {
     onChange({
-      habitaciones: campo === "habitaciones" ? valor : habitaciones,
-      banos: campo === "banos" ? valor : banos,
-      piscina: campo === "piscina" ? valor : piscina,
-      minSurface: campo === "minSurface" ? valor : minSurface,
-      maxSurface: campo === "maxSurface" ? valor : maxSurface,
+      habitaciones: campo === "habitaciones" ? valor ?? "" : habitaciones,
+      banos: campo === "banos" ? valor ?? "" : banos,
+      piscina: campo === "piscina" ? valor ?? "" : piscina,
+      minSurface: campo === "minSurface" ? valor : minSurface || undefined,
+      maxSurface: campo === "maxSurface" ? valor : maxSurface || undefined,
     });
   };
 
@@ -297,10 +297,10 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
         if (field === "minSurface") {
           setMinSurface("");
-          actualizar("minSurface", "");
+          actualizar("minSurface", undefined);
         } else {
           setMaxSurface("");
-          actualizar("maxSurface", "");
+          actualizar("maxSurface", undefined);
         }
 
         return;
@@ -324,19 +324,19 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       }
     };
 
-  const clearSurfaceRange = () => {
-    setSurfaceError(null);
-    setMinSurface("");
-    setMaxSurface("");
+    const clearSurfaceRange = () => {
+      setSurfaceError(null);
+      setMinSurface("");
+      setMaxSurface("");
 
-    onChange({
-      habitaciones,
-      banos,
-      piscina,
-      minSurface: "",
-      maxSurface: "",
-    });
-  };
+      onChange({
+        habitaciones,
+        banos,
+        piscina,
+        minSurface: undefined,
+        maxSurface: undefined,
+      });
+    };
 
   return (
     <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
