@@ -31,6 +31,7 @@ const GetTotalCount = (items: CategoryItem[]) =>
 
 const ToQueryParam = (StrValue: string) =>
   StrValue.replace(/ /g, "+");
+const ToQueryParam = (value: string) => value.replace(/ /g, "+");
 
 const DisplayNames: Record<string, string> = {
   Casa: "Casa",
