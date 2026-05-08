@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SurfaceRangeDropdownProps {
@@ -144,7 +144,7 @@ export default function SurfaceRangeDropdown({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex w-full items-center justify-between rounded-xl border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition"
+          "flex w-full items-center justify-between rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition"
         )}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -157,19 +157,23 @@ export default function SurfaceRangeDropdown({
                 setSurfaceError(null);
                 onClear();
               }}
-              className="inline-flex h-4 w-4 items-center justify-center text-[#4A4A4A] hover:text-black"
+              className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-[#5E5A55]" />
+
             </span>
           )}
         </div>
 
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-[#2E2E2E] transition-transform",
-            open && "rotate-180"
-          )}
-        />
+        <span
+          className="text-[#4B4B4B] transition-transform duration-200"
+          style={{
+            display: "inline-block",
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        >
+          ▾
+        </span>
       </button>
 
       <div
@@ -178,7 +182,7 @@ export default function SurfaceRangeDropdown({
           open ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="rounded-xl border border-[#B9B1A5] bg-[#E7E3DD] p-3 shadow-sm">
+        <div className="rounded-xl border border-[#B9B1A5] bg-white p-3 shadow-sm">
           <div className="grid grid-cols-2 gap-2">
             <input
               type="text"

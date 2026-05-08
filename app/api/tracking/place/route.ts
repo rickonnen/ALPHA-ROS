@@ -19,10 +19,6 @@ export interface TrackPlacePayload {
   cant_resultados?: number;
 }
 
-function getSessionId(request: NextRequest): string | null {
-  return request.cookies.get('session_id')?.value ?? null;
-}
-
 function getUserIdFromToken(request: NextRequest): string | null {
   try {
     const token = request.cookies.get('auth_token')?.value;
@@ -37,11 +33,10 @@ function getUserIdFromToken(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackPlacePayload;
-    const session_id = getSessionId(request);
     const id_usuario = getUserIdFromToken(request);
 
-    if (!session_id) {
-      return NextResponse.json({ success: false, message: 'session_id requerido' }, { status: 400 });
+    if (!id_usuario) {
+      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
     }
 
     if (!body.mapbox_id || !body.name) {
@@ -49,8 +44,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { error } = await supabaseAdmin.from('HistorialBusqueda').insert({
-      id_usuario: id_usuario ?? null,
-      session_id,
+      id_usuario,
+      session_id: id_usuario,
       mapbox_id: body.mapbox_id,
       name: body.name,
       full_name: body.full_name ?? null,

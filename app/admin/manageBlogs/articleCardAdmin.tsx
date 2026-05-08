@@ -1,11 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { X as ObjXIcon } from "lucide-react";
-import { useHoverAnimation } from "@/components/hooks/useHoverAnimation";
+import { BookOpen, Clock, X as ObjXIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button"; // Importamos el botón de Shadcn
 import { FnFormatLongWords } from "@/app/utils/textUtils";
+import { cn } from "@/lib/utils";
+
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026
- * funcionalidad: card para gestionar estados de los blogs
+ * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026 (Refactor Glassmorphism)
+ * funcionalidad: card estilo glass para gestionar estados de los blogs en admin
  */
 export interface articleCardAdminProps {
   IntIdBlo: number;
@@ -15,6 +19,13 @@ export interface articleCardAdminProps {
   StrImageUrlBlo: string;
   StrCurrentTabBlo: string;
   FnOnActionBlo: (IntId: number, StrAction: string) => void;
+  // Añadimos las props opcionales del diseño Glass por si la API admin también las trae
+  ObjAuthorBlo?: {
+    name: string;
+    avatar?: string;
+  };
+  StrReadTimeBlo?: string;
+  className?: string;
 }
 
 export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
@@ -25,59 +36,67 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
     StrDescriptionBlo, 
     StrImageUrlBlo, 
     StrCurrentTabBlo,
-    FnOnActionBlo 
+    FnOnActionBlo,
+    ObjAuthorBlo = { name: "Usuario" },
+    StrReadTimeBlo = "3 min",
+    className
   } = ObjPropsBlo;
 
-  const StrCardHoverClassesBlo = useHoverAnimation(false, true, 'default', false, false);
-  const StrBtnHoverClassesBlo = useHoverAnimation(false, false, 'pointer', true, true);
-  const StrLinkHoverClassesBlo = useHoverAnimation(true, false, 'pointer', true, true);
-
+  // Renderizado dinámico de botones usando Shadcn UI
   const FnRenderButtonsBlo = () => {
-    const StrBaseBtnClassesBlo = `text-[0.75rem] font-bold px-4 py-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0 transition-colors ${StrBtnHoverClassesBlo}`;
-
     switch (StrCurrentTabBlo) {
       case "NO PUBLICADOS":
         return (
           <>
-            <button 
-              onClick={() => FnOnActionBlo(IntIdBlo, "RECHAZAR")} 
-              className={`${StrBaseBtnClassesBlo} bg-secondary-fund text-foreground border border-card-border`}
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="text-[0.75rem] font-bold border-card-border"
+              onClick={() => FnOnActionBlo(IntIdBlo, "RECHAZAR")}
             >
               RECHAZAR
-            </button>
-            <button 
-              onClick={() => FnOnActionBlo(IntIdBlo, "ACEPTAR")} 
-              className={`${StrBaseBtnClassesBlo} bg-primary text-primary-foreground`}
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              className="text-[0.75rem] font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => FnOnActionBlo(IntIdBlo, "ACEPTAR")}
             >
               ACEPTAR
-            </button>
+            </Button>
           </>
         );
       case "PUBLICADOS":
         return (
-          <button 
-            onClick={() => FnOnActionBlo(IntIdBlo, "ELIMINAR")} 
-            className={`${StrBaseBtnClassesBlo} bg-secondary text-secondary-foreground`}
+          <Button 
+            variant="secondary" 
+            size="sm"
+            className="text-[0.75rem] font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            onClick={() => FnOnActionBlo(IntIdBlo, "ELIMINAR")}
           >
             ELIMINAR
-          </button>
+          </Button>
         );
       case "NO VISIBLES":
       case "RECHAZADOS":
         return (
           <>
-            <button 
-              onClick={() => FnOnActionBlo(IntIdBlo, "BORRADO_PERMANENTE")} 
-              className={`${StrBaseBtnClassesBlo} bg-secondary text-secondary-foreground`}
+            <Button 
+              variant="secondary" 
+              size="sm"
+              className="text-[0.75rem] font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              onClick={() => FnOnActionBlo(IntIdBlo, "BORRADO_PERMANENTE")}
             >
               BORRADO PERMANENTE
-            </button>
-            <button 
-              onClick={() => FnOnActionBlo(IntIdBlo, "PUBLICAR")} 
-              className={`${StrBaseBtnClassesBlo} bg-primary text-primary-foreground`}
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              className="text-[0.75rem] font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => FnOnActionBlo(IntIdBlo, "PUBLICAR")}
             >
               PUBLICAR
-            </button>
+            </Button>
           </>
         );
       default:
@@ -86,59 +105,78 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
   };
 
   return (
-    <article className={`flex flex-col w-full h-full bg-card-bg rounded-2xl border-2 border-card-border shadow-md p-3 sm:p-4 gap-3 overflow-hidden ${StrCardHoverClassesBlo}`}>
-      
-      {/* Título Superior */}
-      <h3 className="font-bold text-foreground text-body-info uppercase leading-tight w-full truncate shrink-0">
-        {FnFormatLongWords(StrTitleBlo)}
-      </h3>
-
-      {/* Contenedor Medio: Imagen Izquierda, Texto Derecha */}
-      <div className="flex flex-row w-full gap-3 sm:gap-4 flex-1 min-h-0">
+    <div className={cn("w-full animate-fadeInUp", className)}>
+      <Card className="group relative h-full flex flex-col overflow-hidden rounded-2xl border-border/50 bg-card-bg/60 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
         
-        {/* Imagen */}
-        <div className="w-1/2 flex flex-col shrink-0">
-          <div className="relative w-full aspect-[4/3] bg-secondary-fund flex items-center justify-center border border-card-border text-foreground/40 overflow-hidden rounded-lg shrink-0">
-            {StrImageUrlBlo ? (
-              <Image
-                src={StrImageUrlBlo}
-                alt={StrTitleBlo || "Imagen del blog"}
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 500px"
-                className="object-cover"
-              />
-            ) : (
-              <ObjXIcon className="w-10 h-10 opacity-30" strokeWidth={1} />
-            )}
+        {/* --- SECCIÓN DE IMAGEN (4:3) --- */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+          {StrImageUrlBlo ? (
+            <Image
+              src={StrImageUrlBlo}
+              alt={StrTitleBlo || "Imagen del blog"}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          ) : (
+             <div className="flex h-full w-full items-center justify-center">
+               <ObjXIcon className="w-10 h-10 opacity-30 text-muted-foreground" strokeWidth={1} />
+             </div>
+          )}
+
+          {/* Botón Overlay que aparece al hacer hover (Adaptado para Admin) */}
+          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[2px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
+            <Link href={`/admin/manageBlogs/${IntIdBlo}`}>
+              <button className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <BookOpen className="h-4 w-4" />
+                Revisar Blog
+              </button>
+            </Link>
           </div>
         </div>
 
-        {/* Textos */}
-        <div className="w-1/2 flex flex-col min-h-0 h-full">
-          <span className="text-secondary font-medium text-[0.85rem] mb-1 shrink-0">
-            {StrDateBlo}
-          </span>
+        {/* --- SECCIÓN DE CONTENIDO --- */}
+        <div className="flex flex-col flex-1 gap-4 p-5">
+          <div className="space-y-2 flex-1">
+            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase">
+              {FnFormatLongWords(StrTitleBlo)}
+            </h3>
+            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug">
+              {FnFormatLongWords(StrDescriptionBlo)}
+            </p>
+          </div>
+
+          {/* Footer de la tarjeta: Autor, Fecha y Reloj */}
+          <div className="flex items-center justify-between border-t border-card-border/60 pt-4 mt-auto">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8 border border-border/50 bg-secondary-fund">
+                {ObjAuthorBlo.avatar && <AvatarImage src={ObjAuthorBlo.avatar} alt={ObjAuthorBlo.name} />}
+                <AvatarFallback className="text-xs font-bold text-primary">
+                  {ObjAuthorBlo.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col text-xs">
+                <span className="font-medium text-foreground">
+                  {ObjAuthorBlo.name}
+                </span>
+                <span className="text-muted-foreground">{StrDateBlo}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 text-xs font-medium text-secondary">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{StrReadTimeBlo}</span>
+            </div>
+          </div>
           
-          {/* Descripción */}
-          <p className="text-foreground text-[0.85rem] leading-snug overflow-hidden line-clamp-3 sm:line-clamp-4">
-            {FnFormatLongWords(StrDescriptionBlo)}
-          </p>
-          
-          <Link 
-            href={`/admin/manageBlogs/${IntIdBlo}`}
-            className={`font-bold text-[0.85rem] mt-auto self-start ${StrLinkHoverClassesBlo} text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0 rounded-md pt-1`}
-          >
-            Leer más...
-          </Link>
+          {/* --- BOTONES DE ACCIÓN ADMIN --- */}
+          <div className="w-full flex flex-row justify-end flex-wrap gap-2 pt-3 border-t border-card-border/60">
+            {FnRenderButtonsBlo()}
+          </div>
+
         </div>
-      </div>
-
-      {/* Contenedor Inferior: Botones de Acción */}
-      <div className="w-full flex flex-row justify-end flex-wrap gap-2 mt-auto pt-3 border-t border-card-border shrink-0">
-        {FnRenderButtonsBlo()}
-      </div>
-
-    </article>
+      </Card>
+    </div>
   );
 }

@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+/**
+ * @Dev: Rodrigo Chalco
+ * POST /api/home/reporte
+ */
+
 export async function POST(objRequest: NextRequest) {
   try {
     const { lugar, operacion } = await objRequest.json();
 
     if (!lugar || !operacion) return NextResponse.json({ ok: true });
 
-    // Extrae el departamento del texto de Mapbox
-    const strDepartamento = lugar.includes("Departamento de")
-      ? lugar.split("Departamento de").pop()?.trim()
-      : lugar.trim();
+    // Limpia el texto de Mapbox correctamente
+    const strDepartamento = lugar
+      .replace(/Departamento de\s*/i, "")
+      .replace(/,.*$/, "")
+      .trim();
 
     if (!strDepartamento) return NextResponse.json({ ok: true });
 
@@ -26,7 +32,6 @@ export async function POST(objRequest: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch {
-    // Si falla no importa, no afecta la búsqueda
     return NextResponse.json({ ok: true });
   }
 }
