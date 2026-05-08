@@ -10,61 +10,26 @@ interface Settings {
 
 export function useNotificationSettings() {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<Settings>({
+
+  const [settings] = useState<Settings>({
     gmailEnabled: true,
     whatsappEnabled: true,
     gmailEmail: "usuario@gmail.com",
     whatsappNumber: "+591 73678412"
   });
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [isLoading] = useState(false);
 
   const loadSettings = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const response = await fetch(`/api/notifications?settings=true`);
-      const data = await response.json();
-      
-      if (data.settings) {
-        setSettings(data.settings);
-      }
-    } catch (error) {
-      console.error("Error loading settings:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  const updateSettings = useCallback(async (newSettings: Partial<Settings>) => {
-    try {
-      const response = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateSettings",
-          settings: newSettings
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data.settings);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error updating settings:", error);
-      return false;
-    }
+    // no-op (ya no se usa API mock)
   }, []);
 
-  const toggleGmail = useCallback(async (enabled: boolean) => {
-    return await updateSettings({ gmailEnabled: enabled });
-  }, [updateSettings]);
+  const updateSettings = useCallback(async (_newSettings: Partial<Settings>) => {
+    return true; // no-op
+  }, []);
 
-  const toggleWhatsapp = useCallback(async (enabled: boolean) => {
-    return await updateSettings({ whatsappEnabled: enabled });
-  }, [updateSettings]);
+  const toggleGmail = useCallback(async (_enabled: boolean) => true, []);
+  const toggleWhatsapp = useCallback(async (_enabled: boolean) => true, []);
 
   useEffect(() => {
     loadSettings();

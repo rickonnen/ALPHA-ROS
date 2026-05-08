@@ -1,5 +1,5 @@
 "use client";
-import { Settings } from "lucide-react";
+import { Settings, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 
 type Props = {
@@ -57,13 +57,21 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="bg-white rounded-b-2xl overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden">
+      {/* Header con botón de volver */}
       <div className="flex items-center gap-2 bg-slate-700 text-white px-4 py-3">
+        <button
+          onClick={onClose}
+          className="hover:bg-slate-600 p-1 rounded-md transition-colors"
+          title="Volver"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <Settings size={18} />
         <span className="font-semibold">Configuración de Notificaciones</span>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {/* Gmail */}
         <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
@@ -152,13 +160,6 @@ export function SettingsPanel({
             </div>
           )}
         </div>
-
-        <button
-          onClick={onClose}
-          className="text-blue-600 text-sm hover:underline mt-2 w-full text-center"
-        >
-          ← Volver
-        </button>
       </div>
     </div>
   );
