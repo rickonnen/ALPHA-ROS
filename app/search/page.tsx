@@ -1569,20 +1569,32 @@ function SearchPageContent() {
         </aside>
 
         {/* ── Results area ── */}
-        <main className="flex flex-col pt-6 px-4 flex-1 min-w-0">
+        <main
+          className={`flex flex-col pt-6 pl-4 flex-1 min-w-0 ${
+            isMapOpen ? "pr-2" : "pr-4"
+          }`}
+        >
           {appView === "listings" ? (
             <>
-              <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
-                <div>
+              <div
+                className={`mb-3 flex shrink-0 gap-3 ${
+                  isMapOpen
+                    ? "flex-col items-start"
+                    : "items-center justify-between"
+                }`}
+              >
+                <div className="min-w-0">
                   <nav className="mb-0.5 text-sm text-gray-500">
                     {breadcrumb}
                   </nav>
-                  <h1 className="text-base font-semibold">
+
+                  <h1 className="text-base font-semibold leading-snug">
                     {allProperties.length} inmuebles disponibles
                   </h1>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <SortSelect onSortChange={handleSort} />
+
+                <div className={isMapOpen ? "w-full" : "shrink-0"}>
+                  <SortSelect onSortChange={handleSort} isMapOpen={isMapOpen} />
                 </div>
               </div>
 
