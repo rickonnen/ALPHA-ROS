@@ -32,7 +32,7 @@ const arrAdminOptions = [
     strTitle: "Administrador de planes",
     strDescription:
       "Gestiona los planes de publicación y promoción, define precios, límites y vigencia.",
-    strHref: "/admin/planes", // <-- Esta será la ruta que crearemos para la HU1
+    strHref: "/admin/administradorPlanes", // <-- Esta será la ruta que crearemos para la HU1
     Icon: LayoutList, 
     strButtonText: "Inspeccionar",
   },
