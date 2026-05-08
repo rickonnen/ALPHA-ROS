@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
+// ==========
 
 interface updateActionRequest {
   action: string;
@@ -116,7 +117,10 @@ export async function PATCH(
     const ObjUpdatedBlogBlo = await prisma.blogs.update({
       where: { id_blog: IntIdBlo },
       data: ObjUpdateDataBlo,
+      // datos necesario para el envío del email
     });
+    // aquí el método de notificación aceptar/publicar  o  rechazar
+    // si gutan la accion "eliminar" que es cuando se da de baja una publicaion
 
     return NextResponse.json({ 
       success: true, 
