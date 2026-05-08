@@ -15,6 +15,15 @@ function fireAndForget(url: string, body: unknown): void {
   }).catch(() => {});
 }
 
+function notifyInteraction(tipo: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('tracking:interaction', { detail: { tipo } }));
+  } catch {
+    // ignore
+  }
+}
+
 
 export function useTracking() {
   const viewedCards = useRef<Set<number>>(new Set());
@@ -51,16 +60,19 @@ export function useTracking() {
         pagina_origen: typeof window !== 'undefined' ? window.location.pathname : undefined,
         ...extras,
       });
+      notifyInteraction(tipo_evento);
     },
     []
   );
 
   const trackSearch = useCallback((payload: TrackSearchPayload) => {
     fireAndForget('/api/tracking/search', payload);
+    notifyInteraction('search');
   }, []);
 
   const trackPlace = useCallback((payload: TrackPlacePayload) => {
     fireAndForget('/api/tracking/place', payload);
+    notifyInteraction('place');
   }, []);
 
   return { trackEvent, trackSearch, trackPlace };

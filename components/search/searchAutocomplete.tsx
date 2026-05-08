@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { useCitySearch } from "../hooks/useCitySearch";
+import { useTracking } from "@/components/hooks/useTracking";
 
 interface SearchAutocompleteProps {
   value: string;
@@ -13,6 +14,7 @@ export default function SearchAutocomplete({
   value,
   onChange,
 }: SearchAutocompleteProps) {
+  const { trackPlace } = useTracking();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const activeItemRef = useRef<HTMLLIElement>(null);
 
@@ -96,14 +98,23 @@ export default function SearchAutocomplete({
             const isSelected = index === intSelectedIndex;
 
             return (
-              <li
-                key={item.strId}
-                ref={isSelected ? activeItemRef : null}
-                onMouseDown={() => handleSelectSuggestion(item)}
-                className={`flex items-center gap-3 cursor-pointer rounded-[12px] px-3 py-2 text-sm transition-colors ${
-                  isSelected
-                    ? "bg-[#E7E1D7]"
-                    : "text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                <li
+                  key={item.strId}
+                  ref={isSelected ? activeItemRef : null}
+                  onMouseDown={() => {
+                    trackPlace({
+                      mapbox_id: item.strId,
+                      name: item.strName,
+                      full_name: item.strFullName,
+                      icon_url: item.strIcon,
+                      place_type: item.strTypePlace,
+                    });
+                    void handleSelectSuggestion(item);
+                  }}
+                  className={`flex items-center gap-3 cursor-pointer rounded-[12px] px-3 py-2 text-sm transition-colors ${
+                    isSelected
+                      ? "bg-[#E7E1D7]"
+                      : "text-[#2E2E2E] hover:bg-[#F4EFE6]"
                 }`}
               >
                 <img

@@ -23,6 +23,7 @@ import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/compo
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import { PropertyDetailTracking } from "@/features/publicacion/[id_publicacion]/components/PropertyDetailTracking";
 import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 //historial Inicio dev Luis
@@ -90,6 +91,7 @@ export default async function VistaInmueblePage({
 
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
+      <PropertyDetailTracking id_publicacion={intId} />
       <div className="max-w-6xl mx-auto">
         {/* Task 4.3: Título */}
         <header className="mb-10">
@@ -188,6 +190,7 @@ export default async function VistaInmueblePage({
           ).filter(Boolean) || [];
           return objPerfil.Usuario && (
             <ContactCard 
+              id_publicacion={intId}
               strTituloInmueble={objPerfil.titulo || "Inmueble"}
               objPropietario={{
                 strNombres: objPerfil.Usuario.nombres || "Usuario",

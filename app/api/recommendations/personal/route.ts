@@ -18,8 +18,10 @@ type TipoEvento =
 
 // Tope acumulativo: evita “burbuja” de repetir siempre lo mismo.
 // 30 puntos permite que el perfil siga diferenciando preferencias sin saturar tan rÃ¡pido como 20.
-const SCORE_CAP = 30;
-const ITEM_SCORE_CAP = 12;
+const SCORE_CAP = 10;
+const ITEM_SCORE_CAP = 10;
+const DECAY_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 dÃ­as
+const DECAY_STEP_POINTS = 1;
 
 const EVENT_WEIGHTS: Record<TipoEvento, number> = {
   // Prioridades acordadas:
@@ -79,6 +81,40 @@ function scaledPreference(map: Map<number, number>, key: number | null | undefin
   return raw / cap; // [-1..1]
 }
 
+function touchLast(map: Map<number, number>, key: number | null | undefined, atMs: number): void {
+  if (key == null) return;
+  const prev = map.get(key) ?? 0;
+  if (atMs > prev) map.set(key, atMs);
+}
+
+function applyStepDecay(
+  scoreMap: Map<number, number>,
+  lastMap: Map<number, number>,
+  nowMs: number,
+): Map<number, number> {
+  const decayed = new Map<number, number>();
+  for (const [key, value] of scoreMap.entries()) {
+    const lastAt = lastMap.get(key);
+    if (!lastAt) {
+      if (value !== 0) decayed.set(key, value);
+      continue;
+    }
+
+    const steps = Math.floor((nowMs - lastAt) / DECAY_INTERVAL_MS);
+    if (steps <= 0) {
+      if (value !== 0) decayed.set(key, value);
+      continue;
+    }
+
+    const delta = steps * DECAY_STEP_POINTS;
+    let next = value;
+    if (next > 0) next = Math.max(0, next - delta);
+    else if (next < 0) next = Math.min(0, next + delta);
+    if (next !== 0) decayed.set(key, next);
+  }
+  return decayed;
+}
+
 function topKeys(map: Map<number, number>, limit: number): number[] {
   return [...map.entries()]
     .filter(([, value]) => value > 0)
@@ -96,6 +132,18 @@ function mapToJson(map: Map<number, number>, limit: number): Record<string, numb
 
   return Object.fromEntries(entries);
 }
+
+type EventPublicationSnapshot = {
+  id_publicacion: number;
+  id_tipo_operacion: number | null;
+  id_tipo_inmueble: number | null;
+  habitaciones: number | null;
+  banos: number | null;
+  precio: Prisma.Decimal | number | null;
+  Ubicacion: {
+    id_ciudad: number | null;
+  } | null;
+};
 
 async function loadPreferences(request: NextRequest) {
   const userId = getUserIdFromToken(request);
@@ -124,20 +172,11 @@ async function loadPreferences(request: NextRequest) {
       orderBy: { creado_en: 'desc' },
       select: {
         tipo_evento: true,
+        id_publicacion: true,
         duracion_ms: true,
         scroll_depth_pct: true,
-          Publicacion: {
-            select: {
-              id_publicacion: true,
-              id_tipo_operacion: true,
-              id_tipo_inmueble: true,
-              habitaciones: true,
-              banos: true,
-              precio: true,
-              Ubicacion: { select: { id_ciudad: true } },
-            },
-          },
-        },
+        creado_en: true,
+      },
     }),
     prisma.busquedaLog.findMany({
       where: whereTracking,
@@ -151,9 +190,30 @@ async function loadPreferences(request: NextRequest) {
           precio_max: true,
           habitaciones: true,
           banos: true,
+          creado_en: true,
         },
       }),
     ]);
+
+  const eventPublicationIds = [...new Set(events.map((event) => event.id_publicacion))];
+  const eventPublications = eventPublicationIds.length
+    ? await prisma.publicacion.findMany({
+        where: { id_publicacion: { in: eventPublicationIds } },
+        select: {
+          id_publicacion: true,
+          id_tipo_operacion: true,
+          id_tipo_inmueble: true,
+          habitaciones: true,
+          banos: true,
+          precio: true,
+          Ubicacion: { select: { id_ciudad: true } },
+        },
+      })
+    : [];
+
+  const publicationById = new Map<number, EventPublicationSnapshot>(
+    eventPublications.map((publication) => [publication.id_publicacion, publication]),
+  );
 
   const scoreOperacion = new Map<number, number>();
   const scoreInmueble = new Map<number, number>();
@@ -162,7 +222,19 @@ async function loadPreferences(request: NextRequest) {
   const scoreBanos = new Map<number, number>();
   const scorePublicacion = new Map<number, number>();
 
+  const lastOperacion = new Map<number, number>();
+  const lastInmueble = new Map<number, number>();
+  const lastCiudad = new Map<number, number>();
+  const lastHabitaciones = new Map<number, number>();
+  const lastBanos = new Map<number, number>();
+  const lastPublicacion = new Map<number, number>();
+
+  const nowMs = Date.now();
+
   for (const event of events) {
+    const publication = publicationById.get(event.id_publicacion);
+    if (!publication) continue;
+
     const tipo = event.tipo_evento as TipoEvento;
     let base = EVENT_WEIGHTS[tipo] ?? 0;
 
@@ -179,23 +251,42 @@ async function loadPreferences(request: NextRequest) {
     const delta = base + (tipo === 'hover' ? durationBoost : 0) + (tipo === 'detalle' ? scrollBoost : 0);
     if (delta === 0) continue;
 
-    addScore(scoreOperacion, event.Publicacion.id_tipo_operacion, delta);
-    addScore(scoreInmueble, event.Publicacion.id_tipo_inmueble, delta);
-    addScore(scoreCiudad, event.Publicacion.Ubicacion?.id_ciudad, delta);
-    addScore(scoreHabitaciones, event.Publicacion.habitaciones, delta * 0.5);
-    addScore(scoreBanos, event.Publicacion.banos, delta * 0.4);
-    addScore(scorePublicacion, event.Publicacion.id_publicacion, delta * 1.1);
+    const atMs = event.creado_en ? event.creado_en.getTime() : nowMs;
+
+    addScore(scoreOperacion, publication.id_tipo_operacion, delta);
+    touchLast(lastOperacion, publication.id_tipo_operacion, atMs);
+
+    addScore(scoreInmueble, publication.id_tipo_inmueble, delta);
+    touchLast(lastInmueble, publication.id_tipo_inmueble, atMs);
+
+    addScore(scoreCiudad, publication.Ubicacion?.id_ciudad, delta);
+    touchLast(lastCiudad, publication.Ubicacion?.id_ciudad ?? null, atMs);
+
+    addScore(scoreHabitaciones, publication.habitaciones, delta * 0.5);
+    touchLast(lastHabitaciones, publication.habitaciones, atMs);
+
+    addScore(scoreBanos, publication.banos, delta * 0.4);
+    touchLast(lastBanos, publication.banos, atMs);
+
+    addScore(scorePublicacion, publication.id_publicacion, delta * 1.1);
+    touchLast(lastPublicacion, publication.id_publicacion, atMs);
   }
 
   let desiredMinPrice: number | null = null;
   let desiredMaxPrice: number | null = null;
 
   for (const search of searches) {
+    const atMs = search.creado_en ? search.creado_en.getTime() : nowMs;
     addScore(scoreOperacion, search.id_tipo_operacion, 0.25);
+    touchLast(lastOperacion, search.id_tipo_operacion, atMs);
     addScore(scoreInmueble, search.id_tipo_inmueble, 0.25);
+    touchLast(lastInmueble, search.id_tipo_inmueble, atMs);
     addScore(scoreCiudad, search.id_ciudad, 0.2);
+    touchLast(lastCiudad, search.id_ciudad, atMs);
     addScore(scoreHabitaciones, search.habitaciones, 0.1);
+    touchLast(lastHabitaciones, search.habitaciones, atMs);
     addScore(scoreBanos, search.banos, 0.08);
+    touchLast(lastBanos, search.banos, atMs);
 
     if (desiredMinPrice == null && search.precio_min != null) desiredMinPrice = toNumber(search.precio_min);
     if (desiredMaxPrice == null && search.precio_max != null) desiredMaxPrice = toNumber(search.precio_max);
@@ -203,12 +294,12 @@ async function loadPreferences(request: NextRequest) {
     if (desiredMinPrice != null && desiredMaxPrice != null) break;
   }
 
-  const prefOperacion = capScores(scoreOperacion, SCORE_CAP);
-  const prefInmueble = capScores(scoreInmueble, SCORE_CAP);
-  const prefCiudad = capScores(scoreCiudad, SCORE_CAP);
-  const prefHabitaciones = capScores(scoreHabitaciones, SCORE_CAP);
-  const prefBanos = capScores(scoreBanos, SCORE_CAP);
-  const prefPublicacion = capScores(scorePublicacion, ITEM_SCORE_CAP);
+  const prefOperacion = capScores(applyStepDecay(scoreOperacion, lastOperacion, nowMs), SCORE_CAP);
+  const prefInmueble = capScores(applyStepDecay(scoreInmueble, lastInmueble, nowMs), SCORE_CAP);
+  const prefCiudad = capScores(applyStepDecay(scoreCiudad, lastCiudad, nowMs), SCORE_CAP);
+  const prefHabitaciones = capScores(applyStepDecay(scoreHabitaciones, lastHabitaciones, nowMs), SCORE_CAP);
+  const prefBanos = capScores(applyStepDecay(scoreBanos, lastBanos, nowMs), SCORE_CAP);
+  const prefPublicacion = capScores(applyStepDecay(scorePublicacion, lastPublicacion, nowMs), ITEM_SCORE_CAP);
 
   const hasSignal =
     prefOperacion.size > 0 ||
@@ -314,59 +405,64 @@ async function scoreCandidates(
 }
 
 export async function GET(request: NextRequest) {
-  const prefs = await loadPreferences(request);
-  if (!prefs.hasSignal) {
-    return NextResponse.json([], { status: 200 });
+  try {
+    const prefs = await loadPreferences(request);
+    if (!prefs.hasSignal) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const topOperaciones = topKeys(prefs.prefOperacion, 3);
+    const topInmuebles = topKeys(prefs.prefInmueble, 3);
+    const topCiudades = topKeys(prefs.prefCiudad, 3);
+
+    const wherePublicacion: Prisma.PublicacionWhereInput = { id_estado: 1 };
+    const or: Prisma.PublicacionWhereInput[] = [];
+    if (topOperaciones.length > 0) or.push({ id_tipo_operacion: { in: topOperaciones } });
+    if (topInmuebles.length > 0) or.push({ id_tipo_inmueble: { in: topInmuebles } });
+    if (topCiudades.length > 0) or.push({ Ubicacion: { is: { id_ciudad: { in: topCiudades } } } });
+    if (or.length > 0) wherePublicacion.OR = or;
+
+    const candidateIds = (
+      await prisma.publicacion.findMany({
+        where: wherePublicacion,
+        take: 350,
+        orderBy: { fecha_creacion: 'desc' },
+        select: { id_publicacion: true },
+      })
+    ).map((row) => row.id_publicacion);
+
+    const scored = (await scoreCandidates(candidateIds, prefs)).slice(0, 200);
+
+    if (prefs.userId) {
+      await prisma.perfilPreferencias.upsert({
+        where: { id_usuario: prefs.userId },
+        create: {
+          id_usuario: prefs.userId,
+          pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
+          pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
+          pref_ciudades: mapToJson(prefs.prefCiudad, 10),
+          pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
+          total_interacciones: prefs.totalInteracciones,
+          ultimo_calculo: new Date(),
+          actualizado_en: new Date(),
+        },
+        update: {
+          pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
+          pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
+          pref_ciudades: mapToJson(prefs.prefCiudad, 10),
+          pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
+          total_interacciones: prefs.totalInteracciones,
+          ultimo_calculo: new Date(),
+          actualizado_en: new Date(),
+        },
+      });
+    }
+
+    return NextResponse.json(scored, { status: 200 });
+  } catch (error) {
+    console.error('[recommendations/personal][GET] Error:', error);
+    return NextResponse.json([], { status: 500 });
   }
-
-  const topOperaciones = topKeys(prefs.prefOperacion, 3);
-  const topInmuebles = topKeys(prefs.prefInmueble, 3);
-  const topCiudades = topKeys(prefs.prefCiudad, 3);
-
-  const wherePublicacion: Prisma.PublicacionWhereInput = { id_estado: 1 };
-  const or: Prisma.PublicacionWhereInput[] = [];
-  if (topOperaciones.length > 0) or.push({ id_tipo_operacion: { in: topOperaciones } });
-  if (topInmuebles.length > 0) or.push({ id_tipo_inmueble: { in: topInmuebles } });
-  if (topCiudades.length > 0) or.push({ Ubicacion: { is: { id_ciudad: { in: topCiudades } } } });
-  if (or.length > 0) wherePublicacion.OR = or;
-
-  const candidateIds = (
-    await prisma.publicacion.findMany({
-      where: wherePublicacion,
-      take: 350,
-      orderBy: { fecha_creacion: 'desc' },
-      select: { id_publicacion: true },
-    })
-  ).map((row) => row.id_publicacion);
-
-  const scored = (await scoreCandidates(candidateIds, prefs)).slice(0, 200);
-
-  if (prefs.userId) {
-    await prisma.perfilPreferencias.upsert({
-      where: { id_usuario: prefs.userId },
-      create: {
-        id_usuario: prefs.userId,
-        pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
-        pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
-        pref_ciudades: mapToJson(prefs.prefCiudad, 10),
-        pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
-        total_interacciones: prefs.totalInteracciones,
-        ultimo_calculo: new Date(),
-        actualizado_en: new Date(),
-      },
-      update: {
-        pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
-        pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
-        pref_ciudades: mapToJson(prefs.prefCiudad, 10),
-        pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
-        total_interacciones: prefs.totalInteracciones,
-        ultimo_calculo: new Date(),
-        actualizado_en: new Date(),
-      },
-    });
-  }
-
-  return NextResponse.json(scored, { status: 200 });
 }
 
 export async function POST(request: NextRequest) {
@@ -381,7 +477,8 @@ export async function POST(request: NextRequest) {
     const scored = await scoreCandidates(candidateIds, prefs);
 
     return NextResponse.json(scored, { status: 200 });
-  } catch {
-    return NextResponse.json([], { status: 200 });
+  } catch (error) {
+    console.error('[recommendations/personal][POST] Error:', error);
+    return NextResponse.json([], { status: 500 });
   }
 }

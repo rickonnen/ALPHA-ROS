@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -932,36 +932,61 @@ function SearchPageContent() {
     };
   }, [isMobileFiltersOpen]);
 
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      const response = await fetch("/api/recommendations/personal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ candidate_ids }),
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { id_publicacion: number }[];
+        setRecommendedIds(data.map((item) => item.id_publicacion));
+      } else {
+        const errorBody = await response.text();
+        console.error("Recommendations request failed:", response.status, errorBody);
+        setRecommendedIds([]);
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      setRecommendedIds([]);
+    }
+  }, [searchResults]);
+
   // Cargar recomendaciones cuando se selecciona ese sort (merge-sysinfosquad-bughunters)
   useEffect(() => {
     if (selectedSort === "mas-recomendados") {
-      const fetchRecommendations = async () => {
-        try {
-          const candidate_ids = searchResults.map((item) => item.id_publicacion);
-          const response = await fetch('/api/recommendations/personal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ candidate_ids }),
-          });
-          if (response.ok) {
-            const data = (await response.json()) as {
-              id_publicacion: number;
-            }[];
-            setRecommendedIds(data.map((item) => item.id_publicacion));
-          } else {
-            setRecommendedIds([]);
-          }
-        } catch (error) {
-          console.error('Error fetching recommendations:', error);
-          setRecommendedIds([]);
-        }
-      };
-      void fetchRecommendations();
+      const id = setTimeout(() => void fetchRecommendations(), 0);
+      return () => clearTimeout(id);
     } else {
-      setRecommendedIds([]);
+      const id = setTimeout(() => setRecommendedIds([]), 0);
+      return () => clearTimeout(id);
     }
-  }, [selectedSort, searchResults]);
+  }, [fetchRecommendations, selectedSort]);
+
+  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  useEffect(() => {
+    if (selectedSort !== "mas-recomendados") return;
+    if (typeof window === "undefined") return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const onInteraction = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        void fetchRecommendations();
+      }, 650);
+    };
+
+    window.addEventListener("tracking:interaction", onInteraction as EventListener);
+    return () => {
+      window.removeEventListener("tracking:interaction", onInteraction as EventListener);
+      if (timer) clearTimeout(timer);
+    };
+  }, [fetchRecommendations, selectedSort]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);
