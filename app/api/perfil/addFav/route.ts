@@ -30,6 +30,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    await prisma.interaccionEvento.create({
+      data: {
+        id_usuario,
+        session_id: id_usuario,
+        id_publicacion: Number(id_publicacion),
+        tipo_evento: "favorito",
+        creado_en: new Date(),
+      },
+    });
+
     return NextResponse.json(
       { message: "Publicación agregada a favoritos", data: favorito },
       { status: 201 }

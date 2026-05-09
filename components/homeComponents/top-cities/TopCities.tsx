@@ -3,16 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CityCard } from "./CityCard";
 import { CityCardSkeleton, EmptyCard } from "./CityCardStates";
-import { OPERATION_TABS, ANIMATION_DURATION } from "./constants";
-import type { CityData, OperationType } from "./types";
+import { ARR_TABS } from "./constants";
+import type { CityData, OperationTab, OperationType } from "./types";
  
 /**
  * @Dev: Rodrigo Chalco
- *
+ * @Dev: Maicol Ismael Nina Zarate
  */
  
-// Slot: decide si mostrar skeleton, tarjeta o vacío 
- 
+
 interface CitySlotProps {
   bolLoading:   boolean;
   objCity:      CityData | undefined;
@@ -40,7 +39,7 @@ function CitySlot({
   return <EmptyCard />;
 }
  
-// ─── Componente principal ─────────────────────────────────────────────────────
+// ── Componente principal ──────────────────────────────────────────────────────
  
 export default function TopCities(): React.ReactNode {
   const [strOperation,   setStrOperation]   = useState<OperationType>("venta");
@@ -51,7 +50,7 @@ export default function TopCities(): React.ReactNode {
  
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
  
-  // Limpiar timer al desmontar para evitar memory leak
+  // Limpiar timer al desmontar
   useEffect(() => {
     return () => {
       if (animTimerRef.current) clearTimeout(animTimerRef.current);
@@ -84,17 +83,11 @@ export default function TopCities(): React.ReactNode {
       animTimerRef.current = setTimeout(() => {
         setStrOperation(strNewOp);
         setBolIsAnimating(false);
-      }, ANIMATION_DURATION);
+      }, 260);
     },
     [bolIsAnimating, strOperation],
   );
  
-  const strCurrentLabel = useMemo(
-    () => OPERATION_TABS.find((t) => t.strType === strOperation)?.strLabel ?? "",
-    [strOperation],
-  );
- 
-  // Helper para no repetir props en cada slot
   const slotProps = (index: number, bolIsLarge: boolean): CitySlotProps => ({
     bolLoading,
     objCity:     arrCities[index],
@@ -105,26 +98,33 @@ export default function TopCities(): React.ReactNode {
  
   return (
     <section
-      className="w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10 font-sans"
+      className="w-full py-8 px-4 sm:px-6 md:px-8 lg:px-10"
       aria-label="Ciudades más buscadas"
     >
       {/* ── Encabezado + tabs ── */}
       <div className="mb-6">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-widest mb-0.5 text-muted-foreground">
+        <p
+          className="text-[11px] font-semibold uppercase tracking-widest mb-0.5"
+          style={{ color: "var(--muted-foreground)" }}
+        >
           Más buscados
         </p>
  
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <h2 className="font-sans text-2xl font-bold sm:text-3xl text-foreground">
+          <h2
+            className="text-2xl font-bold sm:text-3xl"
+            style={{ color: "var(--foreground)" }}
+          >
             ¿Dónde quieres vivir?
           </h2>
  
           <div
-            className="flex items-center rounded-xl p-1 gap-1 self-start sm:self-auto bg-muted"
+            className="flex items-center rounded-xl p-1 gap-1 self-start sm:self-auto"
+            style={{ background: "var(--muted)" }}
             role="tablist"
             aria-label="Tipo de oferta"
           >
-            {OPERATION_TABS.map((objTab) => {
+            {ARR_TABS.map((objTab: OperationTab) => {
               const bolActive = objTab.strType === strOperation;
               return (
                 <button
@@ -137,7 +137,7 @@ export default function TopCities(): React.ReactNode {
                     if (e.key === "Enter" || e.key === " ")
                       changeOperation(objTab.strType);
                   }}
-                  className="font-sans rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                  className="rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
                   style={{
                     background: bolActive ? "var(--primary)" : "transparent",
                     color:      bolActive ? "var(--primary-foreground)" : "var(--muted-foreground)",
@@ -155,8 +155,11 @@ export default function TopCities(): React.ReactNode {
  
       {/* ── Error ── */}
       {bolError && (
-        <div className="flex items-center justify-center rounded-2xl p-8 text-center bg-muted">
-          <p className="font-sans text-sm text-muted-foreground">
+        <div
+          className="flex items-center justify-center rounded-2xl p-8 text-center"
+          style={{ background: "var(--muted)" }}
+        >
+          <p style={{ color: "var(--muted-foreground)" }}>
             No se pudieron cargar las ciudades. Intenta de nuevo más tarde.
           </p>
         </div>

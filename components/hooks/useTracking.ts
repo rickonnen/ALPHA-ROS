@@ -11,6 +11,7 @@ function fireAndForget(url: string, body: unknown): void {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     keepalive: true,
+    credentials: 'same-origin',
   }).catch(() => {});
 }
 
@@ -69,7 +70,8 @@ export function useTracking() {
 
 export function useCardViewTracking(
   id_publicacion: number,
-  posicion_card?: number
+  posicion_card?: number,
+  onViewed?: (viewedAtMs: number) => void
 ) {
   const { trackEvent } = useTracking();
   const tracked = useRef(false);
@@ -84,6 +86,7 @@ export function useCardViewTracking(
           if (entry.isIntersecting && !tracked.current) {
             tracked.current = true;
             trackEvent(id_publicacion, 'view', { posicion_card });
+            onViewed?.(Date.now());
             observer.disconnect();
           }
         },
@@ -92,7 +95,7 @@ export function useCardViewTracking(
 
       observer.observe(node);
     },
-    [id_publicacion, posicion_card, trackEvent]
+    [id_publicacion, posicion_card, trackEvent, onViewed]
   );
 
   return refCallback;

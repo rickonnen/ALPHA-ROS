@@ -53,7 +53,7 @@ export default function CityListItem({
       }}
       className={`flex items-center justify-between px-3 py-2 mx-1 my-0.5 rounded-lg focus-visible:outline-none cursor-pointer transition-all ${
         bolIsSelected
-          ? "bg-secondary-fund border-border shadow-[0_4px_15px_rgba(0,0,0,0.1)] scale-[1.01]"
+          ? "bg-secondary-fund border-card-border shadow-[0_0.25rem_0.9375rem_rgba(0,0,0,0.1)] scale-[1.01]"
           : "hover:bg-secondary-fund/60 border-transparent"
       } ${strSuggestionHover}`}
     >
@@ -70,9 +70,9 @@ export default function CityListItem({
           </span>
 
           {(objItem.strTypePlace || strSecondary) && (
-            <span className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
+            <span className="text-xs text-foreground/60 truncate flex items-center gap-1.5 mt-0.5">
               {objItem.strTypePlace && (
-                <span className="font-semibold text-muted-foreground bg-secondary-fund px-1.5 py-0.5 rounded-md text-[10px] uppercase tracking-wider">
+                <span className="font-semibold text-foreground/60 bg-secondary-fund px-1.5 py-0.5 rounded-md text-[0.625rem] uppercase tracking-wider">
                   {objItem.strTypePlace}
                 </span>
               )}
@@ -99,14 +99,14 @@ export default function CityListItem({
             objEvent.stopPropagation();
             fnOnDelete(objEvent);
           }}
-          className="p-2 hover:bg-destructive/10 rounded-full flex-shrink-0 group transition-colors ml-2"
+          className="p-2 hover:bg-secondary/20 rounded-full flex-shrink-0 group transition-colors ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           title="Eliminar del historial"
           aria-label="Eliminar del historial"
         >
           <img
             src="/binDelete.svg"
             alt="Eliminar"
-            className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity filter group-hover:hue-rotate-180 svg-theme-invert"
+            className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity filter svg-theme-invert"
           />
         </button>
       )}
