@@ -100,6 +100,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
         iniciarPagoCrypto={iniciarPagoCrypto}
         idReferencia={datos.idReferencia}
         onTabChange={setTipoPagoSeleccionado}
+        setEstadoModal={setEstadoModal}
       />
 
       {verFoto && previewUrl && (
