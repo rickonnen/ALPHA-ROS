@@ -610,7 +610,7 @@ model DetallePago {
   razon_rechazo   String?          @db.VarChar(128)
   mes_pago        String?          @db.VarChar
   tiempo_pago     String?          @db.VarChar
-  id_cripto       String?          @db.VarChar
+  id_cripto       String?          @unique @db.VarChar
   id_publicacion  Int?
   Publicacion     Publicacion?     @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction)
   PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_detallepago_planpublicacion")
@@ -1128,6 +1128,7 @@ model Usuario {
   dos_fa_secreto               String?                 @db.VarChar(64)
   primary_provider             String?                 @db.VarChar(20)
   fecha_desactivacion          DateTime?               @db.Timestamptz(6)
+  EmailNotificacionesActivas   Boolean                 @default(true)
   Blogs                        Blogs[]
   ComentariosBlog              ComentariosBlog[]
   DetallePago                  DetallePago[]
