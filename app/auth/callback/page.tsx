@@ -3,193 +3,144 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Check, X } from "lucide-react";
+import { CircleEllipsis, CheckCircle2, XCircle, X } from "lucide-react";
 
 /**
- * Página a donde el usuario es redirigido tras hacer clic en el Magic Link
- * Sincroniza el token con la BD y crea sesión NextAuth
+ * Página a donde el usuario es redirigido tras hacer clic en el Magic Link.
  */
 export default function Callback() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus]   = useState<"loading" | "success" | "error">("loading");
+  const [errorMsg, setErrorMsg] = useState("Error al obtener usuario. Intenta nuevamente.");
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        setLoading(true);
-
-        // 1️ Extraer token y email de los query parameters
         const token = searchParams.get("token");
         const email = searchParams.get("email");
 
         console.log("[Callback] Parámetros recibidos:", { token: token?.substring(0, 10) + "...", email });
 
-        // 2️ Validar que ambos parámetros estén presentes
         if (!token || !email) {
           console.error("[Callback] Falta token o email en URL");
-          setError("Link inválido o incompleto. Solicita uno nuevo.");
-          setTimeout(() => router.push("/"), 2000);
+          setErrorMsg("Link inválido o incompleto. Solicita uno nuevo.");
+          setStatus("error");
           return;
         }
 
-        // 3️ Llamar a /api/auth/magic-link/verify para validar token y crear usuario
-        console.log("[Callback] Verificando token...");
         const verifyResponse = await fetch("/api/auth/magic-link/verify", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            token: token,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            email, 
+            token 
           }),
         });
 
         const verifyData = await verifyResponse.json();
 
-        // 4️ Manejar errores de verificación
         if (!verifyResponse.ok) {
           console.error("[Callback] Error en verify:", verifyData.error);
-          setError(verifyData.error || "Error al verificar el link. Intenta nuevamente.");
-          setTimeout(() => router.push("/"), 3000);
+          setErrorMsg(verifyData.error || "Tu enlace ha caducado. Solicita un nuevo enlace mágico.");
+          setStatus("error");
           return;
         }
 
-        // 5️ Token válido y usuario verificado/creado
-        console.log("[Callback] Token verificado para:", email);
-        console.log("[Callback] Usuario:", verifyData.usuario.id);
+        console.log("[Callback] Token verificado para:", email, "| Usuario:", verifyData.usuario.id);
 
-        // 6️ Crear sesión NextAuth con el Magic Link provider
-        console.log("[Callback] Creando sesión NextAuth...");
-        const result = await signIn("magic-link", {
-          email: email,
-          redirect: false,
-        });
+        const result = await signIn("magic-link", { email, redirect: false });
 
         if (!result?.ok) {
           console.error("[Callback] Error creando sesión NextAuth:", result?.error);
-          setError("Error al iniciar sesión. Intenta nuevamente.");
-          setTimeout(() => router.push("/"), 2000);
+          setErrorMsg("Error al iniciar sesión. Intenta nuevamente.");
+          setStatus("error");
           return;
         }
 
-        // 7️ Sesión creada exitosamente → Redirigir a /
         console.log("[Callback] Sesión NextAuth creada exitosamente");
-        window.location.href = "/";
+        setStatus("success");
+        // Auto-redirige tras 2 s si el usuario no pulsa Aceptar
+        setTimeout(() => { window.location.href = "/"; }, 2000);
 
       } catch (error) {
         console.error("[Callback] Error:", error);
-        setError("Error interno. Intenta nuevamente.");
-        setTimeout(() => router.push("/"), 2000);
-      } finally {
-        setLoading(false);
+        setErrorMsg("Error interno. Intenta nuevamente.");
+        setStatus("error");
       }
     };
 
     handleCallback();
   }, [router, searchParams]);
 
-  // Mostrar UI mientras se procesa
+  /* ─── Colores y textos por estado ─── */
+  const isLoading = status === "loading";
+  const isSuccess = status === "success";
+  const isError   = status === "error";
+
+  const cardBg    = isLoading ? "bg-[#F4EFE6]" : "bg-white";
+  const title     = isLoading ? "Procesando tu acceso"
+                  : isSuccess ? "¡Éxito!"
+                  :             "¡Ocurrió un error!";
+  const message   = isLoading ? "Verificando tu Magic Link..."
+                  : isSuccess ? "Se verificó tu sesión con Magic Link exitosamente."
+                  :             errorMsg;
+
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        {error ? (
-          <>
-            <div style={styles.iconWrapper}>
-              <div style={styles.errorIconCircle}>
-                <X size={32} color="#DC2626" />
-              </div>
-            </div>
-            <h2 style={styles.errorTitle}>Error</h2>
-            <p style={styles.errorText}>{error}</p>
-            <p style={styles.subtext}>Redirigiendo a login...</p>
-          </>
-        ) : (
-          <>
-            <div style={styles.iconWrapper}>
-              <div style={styles.successIconCircle}>
-                <Check size={32} color="#16A34A" />
-              </div>
-            </div>
-            <h2 style={styles.title}>Procesando tu acceso</h2>
-            <p style={styles.text}>Verificando tu Magic Link...</p>
-          </>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      {/*
+        Tarjeta: ancho y padding fijos para los 3 estados sean idénticos.
+        min-h garantiza la misma altura aunque un estado tenga menos contenido.
+      */}
+      <div
+        className={`
+          relative ${cardBg} rounded-2xl shadow-xl
+          w-full max-w-sm min-h-[300px]
+          px-8 pt-10 pb-8
+          flex flex-col items-center gap-4
+        `}
+      >
+        {/* Botón X — solo en success y error */}
+        {!isLoading && (
+          <button
+            onClick={() => router.push("/")}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Cerrar"
+          >
+            <X size={24} />
+          </button>
         )}
+
+        {/* Ícono circular de Lucide */}
+        {isLoading && <CircleEllipsis size={56} className="text-[#C26E5A]" strokeWidth={1.5} />}
+        {isSuccess && <CheckCircle2   size={56} className="text-[#16A34A]" strokeWidth={1.5} />}
+        {isError   && <XCircle        size={56} className="text-[#DC2626]" strokeWidth={1.5} />}
+
+        {/* Título */}
+        <h3 className="text-xl font-bold text-[#1F3A4D] text-center">{title}</h3>
+
+        {/* Mensaje */}
+        <p className="text-sm text-[#1F3A4D]/70 text-center leading-relaxed">{message}</p>
+
+        {/*
+          Botón de acción — siempre ocupa el mismo espacio.
+          En loading se renderiza invisible para mantener el alto igual.
+        */}
+        <button
+          onClick={() => {
+            if (isSuccess) window.location.href = "/";
+            else router.push("/");
+          }}
+          className={`
+            mt-auto w-full py-3 font-bold rounded-xl transition-colors text-white
+            ${isLoading ? "invisible pointer-events-none" : ""}
+            ${isSuccess ? "bg-[#1F3A4D] hover:bg-[#162d3d]" : ""}
+            ${isError   ? "bg-[#C26E5A] hover:bg-[#b05e4a]" : ""}
+          `}
+        >
+          {isSuccess ? "Aceptar" : "Reintentar"}
+        </button>
       </div>
     </div>
   );
 }
-
-// Estilos
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "100vh",
-    backgroundColor: "#f5f5f5",
-  },
-  card: {
-    backgroundColor: "#EAE3D9",
-    padding: "36px",
-    borderRadius: "28px",
-    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.12)",
-    textAlign: "center",
-    maxWidth: "420px",
-  },
-  title: {
-    color: "#0F172A",
-    fontSize: "26px",
-    marginBottom: "10px",
-    fontWeight: "700",
-  },
-  errorTitle: {
-    color: "#0F172A",
-    fontSize: "26px",
-    marginBottom: "10px",
-    fontWeight: "700",
-  },
-  text: {
-    color: "#475569",
-    fontSize: "16px",
-    marginTop: "4px",
-  },
-  errorText: {
-    color: "#991B1B",
-    fontSize: "16px",
-    marginBottom: "8px",
-  },
-  subtext: {
-    color: "#475569",
-    fontSize: "14px",
-    marginTop: "10px",
-  },
-  iconWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: "18px",
-  },
-  successIconCircle: {
-    width: "56px",
-    height: "56px",
-    borderRadius: "9999px",
-    backgroundColor: "#DCFCE7",
-    border: "2px solid #16A34A",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as React.CSSProperties,
-  errorIconCircle: {
-    width: "56px",
-    height: "56px",
-    borderRadius: "9999px",
-    backgroundColor: "#FEE2E2",
-    border: "2px solid #DC2626",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as React.CSSProperties,
-};
-
