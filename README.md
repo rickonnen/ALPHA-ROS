@@ -21,19 +21,19 @@ cd ALPHA-ROS
     npx prisma generate
 # 6. Equipos Listos Colocar Listo_nombre_epic
     1. Binary Brain -
-    2. OiDevs -  - Home Page
+    2. OiDevs - Listo - Home Page
     3. StackOverflow - Listo - Mi Perfil
     4. SysInfo Squad -
     5. Bug Hunters -
-    6. Digital Core -       - Pagina de Publicacion
-    7. ADA -
+    6. Digital Core - Listo - Pagina de Publicacion
+    7. ADA - Listo - Cobros dentro la plataforma
 
 
 
-
-
-
-
+# Cambios en la bd
+    1. Actualizar el supabase con los Querys mencionados
+    2. npx prisma db pull --force (cuidao)
+    3. npx prisma generate
 
 
 
@@ -73,6 +73,10 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-
-
-probando el git commit
+# Formato de actualizaciones
+/*  Dev: Nombre apellido - rama de push
+    Fecha: dd/mm/aaaa
+    Funcionalidad: lo que se hace en dicha actualizacion
+      - @param {lo que tiene que llegar} - descripcion
+      - @return {lo que tiene que devolver} - descripcion
+*/
