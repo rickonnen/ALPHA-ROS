@@ -449,7 +449,6 @@ model users {
   webauthn_challenges         webauthn_challenges[]
   webauthn_credentials        webauthn_credentials[]
   Usuario                     Usuario?
-  notificacion_campana        notificacion_campana[]
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -509,30 +508,29 @@ model Blogs {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model BusquedaLog {
-  id_busqueda       BigInt    @id(map: "busquedalog_pkey") @default(autoincrement())
+  id_busqueda       BigInt    @id(map: "BusquedaLog_pk") @default(autoincrement())
   id_usuario        String?   @db.Uuid
-  session_id        String    @db.VarChar
+  session_id        String    @db.VarChar(64)
   id_ciudad         Int?      @db.SmallInt
   id_zona           Int?      @db.SmallInt
-  texto_calle       String?   @db.VarChar
-  lat_centro        Decimal?  @db.Decimal
-  lng_centro        Decimal?  @db.Decimal
-  radio_km          Decimal?  @db.Decimal
+  texto_calle       String?   @db.VarChar(150)
+  lat_centro        Decimal?  @db.Decimal(9, 6)
+  lng_centro        Decimal?  @db.Decimal(9, 6)
+  radio_km          Decimal?  @db.Decimal(5, 2)
   id_tipo_operacion Int?      @db.SmallInt
   id_tipo_inmueble  Int?      @db.SmallInt
-  precio_min        Decimal?  @db.Decimal
-  precio_max        Decimal?  @db.Decimal
+  precio_min        Decimal?  @db.Decimal(25, 2)
+  precio_max        Decimal?  @db.Decimal(25, 2)
   id_moneda         Int?
-  superficie_min    Decimal?  @db.Decimal
-  superficie_max    Decimal?  @db.Decimal
+  superficie_min    Decimal?  @db.Decimal(10, 2)
+  superficie_max    Decimal?  @db.Decimal(10, 2)
   habitaciones      Int?      @db.SmallInt
   banos             Int?      @db.SmallInt
   garajes           Int?      @db.SmallInt
   cant_resultados   Int?
   cant_clicks       Int?      @default(0)
-  texto_busqueda    String?   @db.VarChar
+  texto_busqueda    String?   @db.VarChar(255)
   creado_en         DateTime? @default(now()) @db.Timestamptz(6)
 
   @@index([texto_calle], map: "idx_bl_calle")
@@ -563,7 +561,7 @@ model CategoriaNotificacion {
 model Ciudad {
   id_ciudad         Int            @id(map: "Ciudad_pk") @default(autoincrement()) @db.SmallInt
   nombre_ciudad     String?        @db.VarChar(128)
-  descripcion_corta String?        @map("descripcion-corta") @db.VarChar(128)
+  descripcion_corta String?        @map("descripcion-corta")
   url_banner        String?
   CiudadImagen      CiudadImagen[]
   Ubicacion         Ubicacion[]
@@ -583,18 +581,13 @@ model CiudadImagen {
 }
 
 model ComentariosBlog {
-  id_comentario         Int                @id @default(autoincrement())
-  id_blog               Int
-  id_usuario            String             @db.Uuid
-  contenido             String?
-  fecha_creacion        DateTime?          @default(now()) @db.Timestamptz(6)
-  deleted_at            DateTime?          @db.Timestamptz(6)
-  id_padre              Int?
-  ComentariosBlog       ComentariosBlog?   @relation("ComentariosBlogToComentariosBlog", fields: [id_padre], references: [id_comentario], onDelete: Cascade, onUpdate: NoAction)
-  other_ComentariosBlog ComentariosBlog[]  @relation("ComentariosBlogToComentariosBlog")
-  Blogs                 Blogs              @relation(fields: [id_blog], references: [id_blog], onDelete: Cascade, onUpdate: NoAction, map: "fk_comentario_blog")
-  Usuario               Usuario            @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_comentario_usuario")
-  LikesComentarios      LikesComentarios[]
+  id_comentario  Int       @id @default(autoincrement())
+  id_blog        Int
+  id_usuario     String    @db.Uuid
+  contenido      String?
+  fecha_creacion DateTime? @default(now()) @db.Timestamptz(6)
+  Blogs          Blogs     @relation(fields: [id_blog], references: [id_blog], onDelete: Cascade, onUpdate: NoAction, map: "fk_comentario_blog")
+  Usuario        Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_comentario_usuario")
 
   @@schema("public")
 }
@@ -643,7 +636,7 @@ model Etiquetas {
 
 model Favorito {
   id_publicacion Int
-  id_usuario     String      @db.Uuid
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fecha_add      DateTime?   @default(now()) @db.Timestamptz(6)
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_favorito_usuario")
@@ -670,14 +663,13 @@ model HistorialBusqueda {
   tiempo_en_resultados_ms Int?
   Usuario                 Usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_usuario")
 
-  @@unique([id_usuario, mapbox_id])
   @@schema("public")
 }
 
 model HistorialVistos {
   id_publicacion Int
   fecha          DateTime?   @db.Timestamptz(6)
-  id_usuario     String      @db.Uuid
+  id_usuario     String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_publicacion")
   Usuario        Usuario     @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_historial_usuario")
 
@@ -694,18 +686,17 @@ model Imagen {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model InteraccionEvento {
-  id_interaccion   BigInt    @id(map: "interaccionevento_pkey") @default(autoincrement())
+  id_interaccion   BigInt    @id(map: "InteraccionEvento_pk") @default(autoincrement())
   id_usuario       String?   @db.Uuid
-  session_id       String    @db.VarChar
+  session_id       String    @db.VarChar(64)
   id_publicacion   Int
-  tipo_evento      String    @db.VarChar
+  tipo_evento      String    @db.VarChar(20)
   duracion_ms      Int?
   scroll_depth_pct Int?      @db.SmallInt
   posicion_card    Int?      @db.SmallInt
-  dispositivo      String?   @db.VarChar
-  pagina_origen    String?   @db.VarChar
+  dispositivo      String?   @db.VarChar(10)
+  pagina_origen    String?   @db.VarChar(100)
   creado_en        DateTime? @default(now()) @db.Timestamptz(6)
 
   @@index([id_publicacion], map: "idx_ie_publicacion")
@@ -715,23 +706,10 @@ model InteraccionEvento {
   @@schema("public")
 }
 
-model LikesComentarios {
-  id_like         Int             @id @default(autoincrement())
-  id_comentario   Int
-  id_usuario      String          @db.Uuid
-  fecha_creacion  DateTime?       @default(now()) @db.Timestamptz(6)
-  ComentariosBlog ComentariosBlog @relation(fields: [id_comentario], references: [id_comentario], onDelete: Cascade, onUpdate: NoAction, map: "fk_like_comentario")
-  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_like_usuario")
-
-  @@unique([id_comentario, id_usuario])
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model MisZonas {
-  id_mi_zona     Int       @id(map: "miszonas_pkey") @default(autoincrement())
+  id_mi_zona     Int       @id @default(autoincrement())
   id_usuario     String    @db.Uuid
-  nombre_zona    String?   @db.VarChar
+  nombre_zona    String?   @db.VarChar(100)
   coordenadas    Json
   fecha_creacion DateTime? @default(now()) @db.Timestamptz(6)
 
@@ -755,15 +733,14 @@ model Notificacion {
   id_categoria          Int?
   leido                 Boolean?               @default(false)
   creado_en             DateTime?              @default(now()) @db.Timestamptz(6)
-  id_publicacion        Int?
+  id_publicacion        Int                    @default(autoincrement())
   id_usuario            String?                @db.Uuid
   email_enviado         Boolean?               @default(false)
   fecha_envio_email     DateTime?              @db.Timestamptz(6)
   estado_envio          String?                @db.VarChar(50)
   tipo                  String                 @default("sistema") @db.VarChar(50)
-  Publicacion           Publicacion?           @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
+  Publicacion           Publicacion            @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_publicacion(Notificacion)-id_publicacion(Publicacion)")
   CategoriaNotificacion CategoriaNotificacion? @relation(fields: [id_categoria], references: [id_categoria], onDelete: NoAction, onUpdate: NoAction, map: "fk_id_categoria(Notificacion)-id_categoria(CatPubli)")
-  Usuario               Usuario?               @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_notificacion_usuario")
 
   @@schema("public")
 }
@@ -778,10 +755,9 @@ model Pais {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PerfilPreferencias {
-  id_perfil            Int       @id(map: "perfilpreferencias_pkey") @default(autoincrement())
-  id_usuario           String    @db.Uuid
+  id_perfil            Int       @id(map: "PerfilPreferencias_pk") @default(autoincrement())
+  id_usuario           String    @unique(map: "PerfilPreferencias_uq") @db.Uuid
   pref_tipo_operacion  Json?
   pref_tipo_inmueble   Json?
   pref_zonas           Json?
@@ -791,7 +767,7 @@ model PerfilPreferencias {
   pref_rango_sup       Json?
   pref_habitaciones    Json?
   pref_caracteristicas Json?
-  score_confianza      Decimal?  @default(0.000) @db.Decimal
+  score_confianza      Decimal?  @default(0.000) @db.Decimal(4, 3)
   total_interacciones  Int?      @default(0)
   ultimo_calculo       DateTime? @db.Timestamptz(6)
   creado_en            DateTime? @default(now()) @db.Timestamptz(6)
@@ -808,7 +784,6 @@ model PlanPublicacion {
   cant_publicaciones Int?
   activo             Boolean?      @default(false)
   DetallePago        DetallePago[]
-  QrUrl              QrUrl[]
   Suscripcion        Suscripcion[]
 
   @@schema("public")
@@ -870,11 +845,10 @@ model PublicacionCaracteristica {
 }
 
 model QrUrl {
-  id_metodo       Int              @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
-  qr_URL          String?
-  id_plan         Int?             @db.SmallInt
-  modalidad       String?          @db.VarChar
-  PlanPublicacion PlanPublicacion? @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction)
+  id_metodo Int     @id(map: "MetodoPago_pk") @default(autoincrement()) @db.SmallInt
+  qr_URL    String?
+  id_plan   Int?    @db.SmallInt
+  modalidad String? @db.VarChar
 
   @@schema("public")
 }
@@ -903,10 +877,9 @@ model RedesVinculadas {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ReporteInmuebles {
-  id           Int    @id(map: "reporteinmuebles_pkey") @default(autoincrement())
-  departamento String @db.VarChar
+  id           Int    @id @default(autoincrement())
+  departamento String @db.VarChar(50)
   alquiler     Int?   @default(0)
   venta        Int?   @default(0)
   anticretico  Int?   @default(0)
@@ -914,7 +887,6 @@ model ReporteInmuebles {
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Rol {
   id_rol     Int       @id(map: "Rol_pk") @default(autoincrement())
   nombre_rol String?   @db.VarChar(30)
@@ -935,16 +907,15 @@ model Sesion {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model SnapshotInteraccion {
-  id_snapshot       BigInt   @id(map: "snapshotinteraccion_pkey") @default(autoincrement())
+  id_snapshot       BigInt   @id(map: "SnapshotInteraccion_pk") @default(autoincrement())
   id_interaccion    BigInt
   id_publicacion    Int
   id_tipo_operacion Int?     @db.SmallInt
   id_tipo_inmueble  Int?     @db.SmallInt
-  precio            Decimal? @db.Decimal
+  precio            Decimal? @db.Decimal(25, 2)
   id_moneda         Int?
-  superficie        Decimal? @db.Decimal
+  superficie        Decimal? @db.Decimal(10, 2)
   habitaciones      Int?     @db.SmallInt
   banos             Int?     @db.SmallInt
   garajes           Int?     @db.SmallInt
@@ -968,8 +939,8 @@ model Suscripcion {
   modalidad       String
   notificado_7d   Boolean         @default(false)
   notificado_48h  Boolean         @default(false)
-  PlanPublicacion PlanPublicacion @relation(fields: [id_plan], references: [id_plan], onDelete: NoAction, onUpdate: NoAction, map: "fk_suscripcion_plan")
-  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_suscripcion_usuario")
+  PlanPublicacion PlanPublicacion @relation(fields: [id_plan], references: [id_plan], onUpdate: NoAction, map: "fk_plan")
+  Usuario         Usuario         @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario")
 
   @@schema("public")
 }
@@ -1016,7 +987,6 @@ model Ubicacion {
 }
 
 model Usuario {
-  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   email                        String?                 @db.VarChar(320)
   nombres                      String?                 @db.VarChar(100)
   apellidos                    String?                 @db.VarChar(100)
@@ -1028,14 +998,14 @@ model Usuario {
   cant_publicaciones_restantes Int?
   url_foto_perfil              String?
   username                     String?                 @unique @db.VarChar(128)
+  id_usuario                   String                  @id(map: "Usuario_pk") @db.Uuid
   id_pais                      Int?                    @db.SmallInt
   fecha_nac                    DateTime?               @db.Date
   estado_civil                 String?                 @db.VarChar(128)
   genero                       String?                 @db.VarChar(1)
   publicaciones_hechas         Int?                    @default(0)
-  id_plan                      Int?                    @db.SmallInt
   dos_fa_habilitado            Boolean?                @default(false)
-  dos_fa_secreto               String?                 @db.VarChar(64)
+  dos_fa_secreto               String?                 @db.VarChar
   primary_provider             String?                 @db.VarChar(20)
   fecha_desactivacion          DateTime?               @db.Timestamptz(6)
   Blogs                        Blogs[]
@@ -1044,8 +1014,6 @@ model Usuario {
   Favorito                     Favorito[]
   HistorialBusqueda            HistorialBusqueda[]
   HistorialVistos              HistorialVistos[]
-  LikesComentarios             LikesComentarios[]
-  Notificacion                 Notificacion[]
   Publicacion                  Publicacion[]
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
@@ -1083,15 +1051,13 @@ model Video {
 model Zona {
   id_zona     Int     @id(map: "Zona_pk") @default(autoincrement()) @db.SmallInt
   nombre_zona String? @db.VarChar(128)
-  id_ciudad   Int?    @db.SmallInt
+  id_ciudad   Int     @db.SmallInt
   coordenadas String?
-  Ciudad      Ciudad? @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk-id_ciudad(Zona)-id_ciudad(Ciudad)")
+  Ciudad      Ciudad  @relation(fields: [id_ciudad], references: [id_ciudad], onDelete: NoAction, onUpdate: NoAction, map: "fk_zona_ciudad")
 
   @@schema("public")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model notificacion_campana {
   id         BigInt    @id(map: "notificacion_whatsapp_pkey") @default(autoincrement())
   title      String
@@ -1099,14 +1065,12 @@ model notificacion_campana {
   read       Boolean?  @default(false)
   type       String?
   created_at DateTime? @default(now()) @db.Timestamptz(6)
-  user_id    String?   @db.Uuid
-  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
 
 model otp_cambio_correo {
-  id_otp         String   @id(map: "otp_cambio_correo_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_otp         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   id_usuario     String   @db.Uuid
   nuevo_email    String   @db.VarChar(320)
   otp_hash       String
@@ -1117,7 +1081,7 @@ model otp_cambio_correo {
   consumido      Boolean  @default(false)
   creado_en      DateTime @default(now()) @db.Timestamptz(6)
   actualizado_en DateTime @default(now()) @db.Timestamptz(6)
-  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction, map: "fk_otp_cambio_correo_usuario")
+  Usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([nuevo_email], map: "idx_otp_cambio_correo_email")
   @@index([expira_en], map: "idx_otp_cambio_correo_expira")
