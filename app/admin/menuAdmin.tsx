@@ -32,12 +32,11 @@ const arrAdminOptions = [
     strTitle: "Administrador de planes",
     strDescription:
       "Gestiona los planes de publicación y promoción, define precios, límites y vigencia.",
-    strHref: "/admin/administradorPlanes", // <-- Esta será la ruta que crearemos para la HU1
+    strHref: "/admin/administradorPlanes", 
     Icon: LayoutList, 
     strButtonText: "Inspeccionar",
   },
 ];
-
 
 export default function MenuAdmin() {
   return (
@@ -51,7 +50,8 @@ export default function MenuAdmin() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* 👇 AQUÍ ESTÁ EL CAMBIO: md:grid-cols-2 lg:grid-cols-4 👇 */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {arrAdminOptions.map((objOption) => {
           const Icon = objOption.Icon;
 
