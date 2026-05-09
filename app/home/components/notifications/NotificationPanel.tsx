@@ -4,11 +4,13 @@ import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
 import { SettingsPanel } from "./SettingsPanel";
+////////////////////////
 import { ConfirmModal } from "./ConfirmModal";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 type Notification = {
   id: string;
@@ -36,19 +38,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Función helper para actualizar el badge
 const updateUnreadCountBadge = (count: number) => {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     localStorage.setItem("notification_unread_count", count.toString());
     window.dispatchEvent(new Event("refresh-notification-badge"));
   }
 };
 
-// ← NUEVO: recibe onClose y onVerTodas
 interface NotificationPanelProps {
   onClose?: () => void;
   onVerTodas?: () => void;
 }
-
 export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProps) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -59,9 +60,12 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const [showSettings, setShowSettings] = useState(false);
   const [gmailEnabled, setGmailEnabled] = useState(true);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [trash, setTrash] = useState<Notification[]>([]);
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+//////////////////////////////HU2//////////
+  const router = useRouter();
+
+  const [trash, setTrash] = useState<Notification[]>([]);
   useEffect(() => {
     const userId = user?.id ?? "guest";
     const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
@@ -90,7 +94,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
           read: n.leido,
           createdAt: n.creado_en ?? null,
           time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
-          type: n.tipo ?? "general",
+          type: "general",
         }));
 
         setNotifications(mapped);
@@ -120,7 +124,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
           read: n.leido,
           createdAt: n.creado_en ?? null,
           time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
-          type: n.tipo ?? "general",
+          type: "general",
         }, ...prev]);
       })
       .subscribe();
@@ -128,85 +132,52 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  // Sincronizar papelera con localStorage
- useEffect(() => {
-  if (!user?.id) return;
-const loadTrash = () => {
-  const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
-  const saved: { id: string; read: boolean }[] = raw ? JSON.parse(raw) : [];
-  setTrash((prev) => {
-    const todas = [...notifications, ...prev];
-    const unicas = Array.from(new Map(todas.map((n) => [n.id, n])).values());
-    return saved.map((s) => {
-      const notif = unicas.find((n) => n.id === s.id);
-      //  usa el read guardado en localStorage
-      return notif ? { ...notif, read: s.read } : null;
-    }).filter(Boolean) as typeof prev;
-  });
-};
-  window.addEventListener("trash-updated", loadTrash);
-  return () => window.removeEventListener("trash-updated", loadTrash);
-}, [user?.id, notifications]);
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
+  // Actualizar el badge cada vez que cambia el contador de no leídas
   useEffect(() => {
     updateUnreadCountBadge(unreadCount);
   }, [unreadCount]);
 
   const visibleNotifications = useMemo(() => {
-    if (activeTab === "trash") return trash;
-    let filtered = notifications.filter((n) => !trash.some((t) => t.id === n.id));
+  if (activeTab === "trash") return trash;
+  let filtered = notifications;
     if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
     else if (activeFilter === "whatsapp") filtered = filtered.filter((n) => n.type === 2 || n.type === "whatsapp");
     else if (activeTab === "unread") filtered = filtered.filter((n) => !n.read);
     return filtered;
-  }, [notifications, activeTab, activeFilter, trash]);
-
-const handleDelete = (id: string) => {
+}, [notifications, activeTab, activeFilter, trash]);
+///////////////////////HU2////////////
+  const handleDelete = (id: string) => {
   const notif = notifications.find((n) => n.id === id);
-  if (!notif) return;
- setTrash((prev) => {
-  if (prev.some((t) => t.id === id)) return prev;
-  const next = [notif, ...prev];
-  //  guarda objeto completo (con read) no solo el id
-  localStorage.setItem(`trash_notif_ids_${user?.id}`,
-    JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
-  window.dispatchEvent(new Event("trash-updated"));
-  return next;
-});
+  if (notif) setTrash((prev) => [notif, ...prev]);
   setNotifications((prev) => prev.filter((n) => n.id !== id));
 };
+
 const handleRestore = (id: string) => {
   const notif = trash.find((n) => n.id === id);
   if (notif) {
-    setNotifications((prev) => [notif, ...prev]); //  respeta el read original
+    setNotifications((prev) => [notif, ...prev]);
     setTrash((prev) => prev.filter((n) => n.id !== id));
-    const remaining = trash.filter((n) => n.id !== id);
-localStorage.setItem(`trash_notif_ids_${user?.id}`,
-  JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-    window.dispatchEvent(new Event("trash-updated"));
+    
   }
 };
 
-  const handleEmptyTrash = () => {
-    setTrash([]);
-    setShowConfirmModal(false);
-    localStorage.removeItem(`trash_notif_ids_${user?.id}`);
-    window.dispatchEvent(new Event("trash-updated"));
-  };
-
+const handleEmptyTrash = () => {
+  setTrash([]);
+  setShowConfirmModal(false);
+};
   const handleRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
+    // El badge se actualizará automáticamente cuando cambie unreadCount
   };
 
   const handleMarkAll = async () => {
     if (!user?.id) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_usuario", user.id);
+    // El badge se actualizará automáticamente cuando cambie unreadCount
   };
 
   const handleGmailToggle = (enabled: boolean) => {
@@ -221,8 +192,9 @@ localStorage.setItem(`trash_notif_ids_${user?.id}`,
 
   return (
     <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
-
+      
       {showSettings ? (
+        // Mostrar solo el panel de configuración
         <SettingsPanel
           onClose={() => setShowSettings(false)}
           gmailEnabled={gmailEnabled}
@@ -231,6 +203,7 @@ localStorage.setItem(`trash_notif_ids_${user?.id}`,
           onWhatsappToggle={handleWhatsappToggle}
         />
       ) : (
+        // Mostrar el panel de notificaciones completo
         <>
           <NotificationHeader unreadCount={unreadCount} />
 
@@ -242,23 +215,21 @@ localStorage.setItem(`trash_notif_ids_${user?.id}`,
                 setActiveFilter("all");
               }}
               unreadCount={unreadCount}
-              trashCount={trash.length}
+               trashCount={trash.length}
               onMarkAll={handleMarkAll}
               onOpenSettings={() => setShowSettings(true)}
             />
           </div>
-
-          {activeTab === "trash" && trash.length > 0 && (
-            <div className="flex justify-end px-3 pb-1">
-              <button
-                onClick={() => setShowConfirmModal(true)}
-                className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
-              >
-                Vaciar papelera
-              </button>
-            </div>
-          )}
-
+            {activeTab === "trash" && trash.length > 0 && (
+  <div className="flex justify-end px-3 pb-1">
+    <button
+      onClick={() => setShowConfirmModal(true)}
+      className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
+    >
+      Vaciar papelera
+    </button>
+  </div>
+)}
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
               Cargando notificaciones...
@@ -278,53 +249,58 @@ localStorage.setItem(`trash_notif_ids_${user?.id}`,
                 <BellOff size={22} />
               </div>
               <p className="text-gray-500 text-sm font-medium">
-                {activeTab === "unread"
+               {activeTab === "unread"
                   ? "No tienes notificaciones no leídas."
-                  : activeTab === "trash"
+                   : activeTab === "trash"
                   ? "La papelera está vacía."
-                  : "No tienes notificaciones por el momento."}
+                    : "No tienes notificaciones por el momento."}
               </p>
             </div>
           ) : (
             <ScrollArea className="flex-1 overflow-y-auto">
               <div className="p-2 space-y-2">
                 {visibleNotifications.map((n) => (
-                  <NotificationItem
-                    key={n.id}
-                    id={n.id}
-                    title={n.title}
-                    description={n.description}
-                    read={n.read}
-                    time={n.time}
-                    type={n.type}
-                    onDelete={handleDelete}
-                    onRead={handleRead}
-                    isInTrash={activeTab === "trash"}
-                    onRestore={handleRestore}
-                  />
-                ))}
+  <NotificationItem
+    key={n.id}
+    id={n.id}
+    title={n.title}
+    description={n.description}
+    read={n.read}
+    time={n.time}
+    type={n.type}
+    onDelete={handleDelete}
+    onRead={handleRead}
+    isInTrash={activeTab === "trash"}
+    onRestore={handleRestore}
+  />
+))}
               </div>
               <ScrollBar orientation="vertical" />
             </ScrollArea>
           )}
-
-          {/* ← NUEVO: botón Ver todas */}
-          <div className="p-3 border-t border-gray-100">
-            <button
-              onClick={() => onVerTodas?.()}
-              className="w-full py-2 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
-            >
-              Ver todas las notificaciones
-            </button>
-          </div>
         </>
       )}
+      {/* Botón Ver todas - HU-02 */}
+      {!showSettings && (
+        <div className="p-3 border-t border-gray-100">
+          <button
+            onClick={() => {
+              onVerTodas?.();
+            }}
+            className="w-full py-2 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
+          >
+            Ver todas las notificaciones
+          </button>
+        </div>
+      )}
 
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        onConfirm={handleEmptyTrash}
-        onCancel={() => setShowConfirmModal(false)}
-      />
+    <ConfirmModal
+  isOpen={showConfirmModal}
+  onConfirm={handleEmptyTrash}
+  onCancel={() => setShowConfirmModal(false)}
+/>
+
+
     </div>
   );
 }
