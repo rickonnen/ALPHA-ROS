@@ -52,7 +52,7 @@ export default function PagoCliente({ datos, backUrl, resumenPublicacionNode }: 
     datosCrypto,      
     cargandoCrypto,   
     iniciarPagoCrypto
-  } = usePagoCliente(datos.idReferencia, datos.modalidad);
+  } = usePagoCliente(datos.idReferencia, datos.modalidad, datos.idPublicacion);
 
   useEffect(() => {
     // Solo se dispara una vez cuando el usuario carga la página y está logueado

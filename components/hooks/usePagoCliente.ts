@@ -13,7 +13,7 @@ export type EstadoModal =
 
 
 
-export function usePagoCliente(planId: string, modalidad: string) {
+export function usePagoCliente(planId: string, modalidad: string, idPublicacionControlado: string | null) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -106,8 +106,8 @@ export function usePagoCliente(planId: string, modalidad: string) {
     formData.append("tiempo_pago", modalidad);
     const urlParams = new URLSearchParams(window.location.search);
     const idPub = urlParams.get('idPublicacion');
-    if (idPub) {
-      formData.append("id_publicacion", idPub);
+    if (idPublicacionControlado) {
+      formData.append("id_publicacion", idPublicacionControlado);
     }
     const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
     formData.append("mes_pago", nombreMes);
