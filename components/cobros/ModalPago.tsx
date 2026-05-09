@@ -11,13 +11,16 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useState, useRef } from "react";
-
+import { TriangleAlert } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 
 type EstadoModal =
   | "cerrado"
   | "confirmacion_pago" 
   | "verificando_pago" 
-  | "pendiente_pago"; 
+  | "pendiente_pago"
+  | "pago_completado" 
+  | "pago_rechazado";   
 
 interface Props {
   estadoModal: EstadoModal;
@@ -138,6 +141,40 @@ const [loading, setLoading] = useState(false);
                 <AlertDialogAction onClick={irAlPerfil}>
                   Ir a mi perfil
                 </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {estadoModal === "pago_completado" && (
+            <>
+              <AlertDialogHeader>
+                <BadgeCheck className="h-14 w-14 text-green-500 mb-2" />
+                <AlertDialogTitle>Pago confirmado</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Hemos recibido tu pago correctamente.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  Cerrar
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
+
+          {estadoModal === "pago_rechazado" && (
+            <>
+              <AlertDialogHeader>
+                <TriangleAlert className="h-14 w-14 text-red-500 mb-2" />
+                <AlertDialogTitle>Pago no completado</AlertDialogTitle>
+                <AlertDialogDescription>
+                  No hemos podido confirmar tu pago.                    
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  Cerrar
+                </AlertDialogCancel>
               </AlertDialogFooter>
             </>
           )}
