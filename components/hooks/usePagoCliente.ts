@@ -7,7 +7,9 @@ export type EstadoModal =
   | "cerrado"
   | "confirmacion_pago"
   | "verificando_pago"
-  | "pendiente_pago";
+  | "pendiente_pago"
+  | "pago_completado"
+  | "pago_rechazado";
 
 
 

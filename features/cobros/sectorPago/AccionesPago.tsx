@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { X, QrCode, Coins,XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
 import { useEffect, useState, useRef } from 'react';
 import ModalExito from "@/components/ModalExito";
 
@@ -95,10 +96,6 @@ useEffect(() => {
       {mostrarExito && <ModalExito onClose={() => setMostrarExito(false)} />}
       {mostrarRechazo && <ModalRechazo onClose={() => setMostrarRechazo(false)} />}
       <div className="flex flex-col items-center w-full max-w-sm">
-        <h2 className="text-2xl font-medium text-muted-foreground mb-2">Total a pagar</h2>
-        <div className="text-3xl mb-10 text-foreground font-semibold">
-          $ {Number(precio).toLocaleString("es-ES")}
-        </div>
 
         {/* para cambio de pestañas */}
         <Tabs 
@@ -106,14 +103,48 @@ useEffect(() => {
           className="w-full flex flex-col items-center"
           onValueChange={(value) => onTabChange(value === "crypto" ? "virtual" : "qr")}
         >
-          <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-            <TabsTrigger value="qr" className="gap-2">
-              <QrCode size={18} /> Pago QR
+          <TabsList className="grid w-full grid-cols-2 mb-8 h-12 p-1 rounded-xl gap-1">
+            <TabsTrigger value="qr" 
+              className="group gap-2 rounded-lg text-sm font-medium
+                transition-all duration-300
+                data-[state=active]:font-bold
+                data-[state=active]:shadow-sm
+                hover:opacity-80"
+            >
+              <Image
+                src="/banderaBolivia.svg"
+                alt="Bandera Bolivia"
+                width={24}
+                height={16}
+                className="rounded-sm object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              Pago Local (USD)
             </TabsTrigger>
-            <TabsTrigger value="crypto" className="gap-2">
-              <Coins size={18} /> Pago virtual
+
+            <TabsTrigger value="crypto" 
+              className="group gap-2 rounded-lg text-sm font-medium
+                transition-all duration-300
+                data-[state=active]:font-bold
+                data-[state=active]:shadow-sm
+                hover:opacity-80"
+            >
+              <Image
+                src="/simbolo_tron.png"
+                alt="Simbolo tron"
+                width={20}
+                height={20}
+                className="object-contain transition-transform duration-300 group-hover:scale-110"
+              />
+              TRON (TRX)
             </TabsTrigger>
           </TabsList>
+
+          {/* titulo y precio a pagar */}
+          <h2 className="text-2xl font-medium text-muted-foreground mb-2">Total a pagar</h2>
+          <div className="text-3xl mb-10 text-foreground font-semibold">
+            $ {Number(precio).toLocaleString("es-ES")}
+          </div>
+
 
           {/* Contenido Pago QR - Mantenemos igual */}
           <TabsContent value="qr" className="w-full flex flex-col items-center animate-in fade-in duration-300">

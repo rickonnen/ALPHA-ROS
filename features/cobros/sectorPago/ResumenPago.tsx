@@ -112,7 +112,7 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
                   <div className="pb-4">
                     <h3 className="font-bold text-foreground">Verifica el monto en TRX</h3>
                     <p className="text-sm text-muted-foreground">
-                      El sistema ha convertido el costo de tu plan al equivalente exacto en <span className="font-semibold text-foreground">TRON (TRX)</span> según la tasa de cambio actual.
+                      El sistema convierte automáticamente el valor de tu plan al equivalente exacto en <span className="font-semibold text-foreground">TRON (TRX)</span> usando la tasa actual.
                     </p>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
                     <div className="w-px flex-grow bg-border mt-2"></div>
                   </div>
                   <div className="pb-4">
-                    <h3 className="font-bold text-foreground">Realiza la transferencia</h3>
+                    <h3 className="font-bold text-foreground">Envía el pago</h3>
                     <p className="text-sm text-muted-foreground">
                       Envía el monto exacto a la dirección de la billetera indicada a la derecha. Puedes escanear el QR desde tu Wallet.
                     </p>
@@ -135,9 +135,9 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">3</div>
                   </div>
                   <div className="">
-                    <h3 className="font-bold text-foreground">Confirmación automática</h3>
+                    <h3 className="font-bold text-foreground">Espera la confirmación</h3>
                     <p className="text-sm text-muted-foreground">
-                      No cierres la ventana. Una vez que la blockchain confirme el envío, tu plan se activará <span className="font-semibold text-foreground">automáticamente</span>.
+                      Una vez que se confirme la transacción, tu plan se activará<span className="font-semibold text-foreground">automáticamente</span>.
                     </p>
                   </div>
                 </div>
