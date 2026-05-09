@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 export function useResetFlow() {
-  const [screen, setScreenState] = useState<"auth" | "forgot" | "code" | "newpass">(
+  const [screen, setScreenState] = useState<"auth" | "forgot" | "code" | "newpass" | "reactivacion">(
     () => (typeof window !== "undefined" && sessionStorage.getItem("reset_screen") as any) || "auth"
   );
   const [forgotEmail, setForgotEmailState] = useState(
@@ -18,7 +18,7 @@ export function useResetFlow() {
     }
   }, [screen, forgotEmail]);
 
-  function setScreen(s: "auth" | "forgot" | "code" | "newpass") {
+  function setScreen(s: "auth" | "forgot" | "code" | "newpass" | "reactivacion") {
     setScreenState(s);
   }
 
