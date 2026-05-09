@@ -1,16 +1,43 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useInformacionComercialForm } from "./Hooks/useInformacionComercialForm";
 import DropdownSelect    from "./Components/Dropdown.Select";
 import PrecioInput       from "./Components/PrecioInput";
+import { useAuth } from "@/app/frontend/auth/AuthContext";
 import {
   TIPOS_PROPIEDAD,
   TIPOS_OPERACION,
   TITULO_MAX,
   DESC_MAX,
 } from "./InformacionComercial.types";
+import {
+  LOGIN_ROUTE,
+  PUBLICACION_REQUISITOS_ROUTE,
+  PUBLICACION_REQUISITOS_SESSION_KEY,
+} from "../requisitos/requisitos.constants";
 
 export default function Page() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+  const bolHasRequisitos =
+    typeof window !== "undefined" &&
+    sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY) === "1";
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.push(LOGIN_ROUTE);
+      return;
+    }
+    const strFlag = sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY);
+    if (strFlag !== "1") {
+      router.push(PUBLICACION_REQUISITOS_ROUTE);
+      return;
+    }
+  }, [bolHasRequisitos, isLoading, router, user]);
+
   const {
     form,
     errors,
@@ -28,6 +55,19 @@ export default function Page() {
     submitStatus,
     submitMessage,
   } = useInformacionComercialForm();
+
+  if (isLoading || !user || !bolHasRequisitos) {
+    return (
+      <div
+        className="min-h-screen flex flex-col font-[family-name:var(--font-geist-sans)] px-4 py-6 sm:px-6 sm:py-8"
+        style={{ background: "linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)" }}
+      >
+        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl px-4 py-6 sm:p-8 mt-4 mb-8 shadow-md animate-pulse">
+          <div className="h-8 w-1/2 rounded-md bg-[#E5DED2]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -148,7 +148,7 @@ export default function PublicacionesView({
               Mis publicaciones
             </CardTitle>
             <Button
-              onClick={() => router.push("/frontend/publicacion/informacion-comercial")}
+              onClick={() => router.push("/frontend/publicacion/requisitos")}
               size="sm"
               className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
             >

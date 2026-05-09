@@ -61,7 +61,7 @@ export const PropertyActions = () => {
         sessionStorage.removeItem("informacionComercial");
         sessionStorage.removeItem("videoUrl");
         sessionStorage.removeItem("imageUploader_userInteracted");
-        router.push("/frontend/publicacion/informacion-comercial");
+        router.push("/frontend/publicacion/requisitos");
       }
     } catch {
       sessionStorage.removeItem("caracteristicasInmueble");
@@ -71,7 +71,7 @@ export const PropertyActions = () => {
         sessionStorage.removeItem("informacionComercial");
         sessionStorage.removeItem("videoUrl");
         sessionStorage.removeItem("imageUploader_userInteracted");
-      router.push("/frontend/publicacion/informacion-comercial");
+      router.push("/frontend/publicacion/requisitos");
     } finally {
       setBolChecking(false);
     }

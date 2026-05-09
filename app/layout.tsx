@@ -23,19 +23,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const bolPruebaSesion = false;
-  
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        
         <AuthProvider>
-          <Header bolIsLoggedIn={bolPruebaSesion} />
-          </AuthProvider>
-        <main className="flex-1 pt-16 flex flex-col">
-          {children}        
-        </main>
-        <Footer />
+          <Header />
+          <main className="flex-1 pt-16 flex flex-col">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

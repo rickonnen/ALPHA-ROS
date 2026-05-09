@@ -72,7 +72,7 @@ export const Header = () => {
 
   const handlePublicar = async () => {
     if (!user) {
-      router.push("/login");
+      router.push("/frontend/auth/sing-in-up");
       return;
     }
     setBolChecking(true);
@@ -81,10 +81,10 @@ export const Header = () => {
       if (objEstado.bolLimiteAlcanzado) {
         setBolShowModal(true);
       } else {
-        router.push("/frontend/publicacion/informacion-comercial");
+        router.push("/frontend/publicacion/requisitos");
       }
     } catch {
-      router.push("/frontend/publicacion/informacion-comercial");
+      router.push("/frontend/publicacion/requisitos");
     } finally {
       setBolChecking(false);
     }
