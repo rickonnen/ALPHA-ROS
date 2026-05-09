@@ -638,7 +638,6 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          marginBottom: "16px",
           pointerEvents: googleLoading ? "none" : "auto",
         }}
       >

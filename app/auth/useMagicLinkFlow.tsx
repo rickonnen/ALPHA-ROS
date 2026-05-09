@@ -20,7 +20,7 @@ export function useMagicLinkFlow() {
         onClick={close}
         className="text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline"
       >
-        <ArrowLeft size={15} /> LOGIN
+        <ArrowLeft size={15} /> Login
       </button>
     );
   }

@@ -70,7 +70,7 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid #e5e7eb" }} />
+      <hr style={{ border: "none", borderTop: "1px solid #1F3A4D" }} />
 
       <p style={{ fontSize: "14px", color: "#4b5563", textAlign: "center", lineHeight: "1.6" }}>
         Ingrese su correo electrónico y recibirá un Enlace Mágico seguro
