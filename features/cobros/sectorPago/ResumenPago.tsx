@@ -9,11 +9,13 @@ interface Props {
   monto: number;
   backUrl: string;
   tipoPago: "qr" | "virtual";
+  tipoPlan: number | null; 
+  resumenPublicacionNode?: React.ReactNode; 
 }
 
-export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tipoPago }: Props) => {
+export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tipoPago, resumenPublicacionNode }: Props) => {
   return (
-    <div className="flex w-full flex-col bg-muted/30 p-10 md:w-1/2 lg:p-16">
+    <div className="flex flex-col w-full h-full mt-6 bg-muted/30 p-6 md:p-8 rounded-xl">
       <div className="flex flex-col">
         
         <div className="md:hidden mb-6">
@@ -23,9 +25,9 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
             </Button>
           </Link>
         </div>
-
+        
         {/* Título Dinámico */}
-        <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
+        <h1 className="mb-6 text-4xl font-extrabold tracking-tight md:text-5xl uppercase text-foreground">
           {titulo}
         </h1>
 
@@ -43,15 +45,22 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
             <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-3">
               Detalles del plan
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {detalles.map((item, i) => (
                 <li key={i} className="flex items-center text-foreground font-medium">
-                  <span className="mr-2">•</span> {item}
+                  <div className="mr-3 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
+                  {item}
                 </li>
               ))}
             </ul>
           </div>
         </section>
+
+        {resumenPublicacionNode && (
+          <div className="mt-6 w-full animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {resumenPublicacionNode}
+          </div>
+        )}
 
         <section className="mt-8 space-y-6">
           <h2 className="text-xl font-bold text-foreground border-b border-border pb-2">
