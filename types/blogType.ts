@@ -29,7 +29,9 @@ export interface singleBlogData {
   StrContentBlo: string;
   StrImageUrlBlo: string;
   StrDateBlo: string;
+  StrCreationDateBlo: string; 
   StrAuthorBlo: string;
+  StrAuthorAvatarBlo?: string; 
 }
 
 // interface para la tabla de gestion del administrador

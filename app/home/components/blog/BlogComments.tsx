@@ -50,7 +50,7 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
   const topComment = comments[0];
 
   return (
-    <div className="w-full mt-10 pt-6 border-t border-card-border">
+    <div className="w-full pt-6 border-t border-card-border">
       <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
         Comentarios
       </h3>
