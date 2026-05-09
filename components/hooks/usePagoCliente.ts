@@ -104,6 +104,11 @@ export function usePagoCliente(planId: string, modalidad: string) {
     formData.append("id_usuario", user.id);
     formData.append("id_plan", planId);
     formData.append("tiempo_pago", modalidad);
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPub = urlParams.get('idPublicacion');
+    if (idPub) {
+      formData.append("id_publicacion", idPub);
+    }
     const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
     formData.append("mes_pago", nombreMes);
 
