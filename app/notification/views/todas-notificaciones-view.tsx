@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationItem } from "@/app/home/components/notifications/NotificationItem";
+import { ConfirmModal } from "@/app/home/components/notifications/ConfirmModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BellOff, Trash2 } from "lucide-react";
+import { BellOff } from "lucide-react";
 
 type Notificacion = {
   id: string;
@@ -14,7 +15,7 @@ type Notificacion = {
   description: string;
   read: boolean;
   time?: string;
-  type?: string;
+  type?: string | number;
 };
 
 function formatRelativeTime(isoString: string): string {
@@ -41,16 +42,18 @@ export function TodasNotificacionesView({ onClose }: Props) {
   const { user } = useAuth();
   const router = useRouter();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
-  const [activeTab, setActiveTab] = useState<"todas" | "no-leidas">("todas");
+  const [activeTab, setActiveTab] = useState<"todas" | "no-leidas" | "papelera">("todas");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [trash, setTrash] = useState<Notificacion[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Necesario para que createPortal funcione en Next.js
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // useEffect 1: fetch desde Supabase + realtime
   useEffect(() => {
     if (!user?.id) return;
 
@@ -106,10 +109,57 @@ export function TodasNotificacionesView({ onClose }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  const handleDelete = async (id: string) => {
-    setNotificaciones((prev) => prev.filter((n) => n.id !== id));
-    await supabase.from("Notificacion").delete().eq("id_notificacion", id);
-    window.dispatchEvent(new Event("refresh-notification-badge"));
+  // useEffect 2: sincronizar papelera con localStorage
+  useEffect(() => {
+  if (!user?.id) return;
+  const loadTrash = () => {
+    const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
+    if (!raw) { setTrash([]); return; }
+    const saved = JSON.parse(raw);
+    //  soporta formato nuevo {id, read} y formato viejo string[]
+    const items = saved.map((s: any) => {
+      const id = typeof s === "string" ? s : s.id;
+      const read = typeof s === "string" ? true : s.read;
+      const notif = notificaciones.find((n) => n.id === id);
+      return notif ? { ...notif, read } : null;
+    }).filter(Boolean);
+    setTrash(items);
+  };
+  loadTrash();
+  window.addEventListener("trash-updated", loadTrash);
+  return () => window.removeEventListener("trash-updated", loadTrash);
+}, [user?.id, notificaciones]);
+
+  // handleDelete: escribe en localStorage igual que el panel pequeño
+  const handleDelete = (id: string) => {
+    const notif = notificaciones.find((n) => n.id === id);
+    if (!notif) return;
+    const ids: string[] = trash.map((n) => n.id);
+    if (!ids.includes(id)) ids.push(id);
+    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(ids));
+    window.dispatchEvent(new Event("trash-updated"));
+  };
+
+  //  handleRestore: elimina del localStorage y dispara el evento
+  const handleRestore = (id: string) => {
+    const ids = trash.filter((n) => n.id !== id).map((n) => n.id);
+    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(ids));
+    window.dispatchEvent(new Event("trash-updated"));
+  };
+
+  //  handleEmptyTrash: limpia localStorage
+  const handleEmptyTrash = async () => {
+    const trashIds = trash.map((n) => n.id);
+    if (trashIds.length > 0) {
+      await Promise.all(
+        trashIds.map((id) =>
+          supabase.from("Notificacion").delete().eq("id_notificacion", id)
+        )
+      );
+    }
+    localStorage.removeItem(`trash_notif_ids_${user?.id}`);
+    window.dispatchEvent(new Event("trash-updated"));
+    setShowConfirmModal(false);
   };
 
   const handleRead = async (id: string) => {
@@ -139,11 +189,16 @@ export function TodasNotificacionesView({ onClose }: Props) {
   );
 
   const visibles = useMemo(() => {
-    if (activeTab === "no-leidas") return notificaciones.filter((n) => !n.read);
-    return notificaciones;
-  }, [notificaciones, activeTab]);
+    if (activeTab === "papelera") return trash;
+    const sinPapelera = notificaciones.filter(
+      (n) => !trash.some((t) => t.id === n.id)
+    );
+    if (activeTab === "no-leidas") return sinPapelera.filter((n) => !n.read);
+    return sinPapelera;
+  }, [notificaciones, activeTab, trash]);
 
   const mostrarMarcarTodas = activeTab === "no-leidas" && unreadCount > 0;
+  const trashCount = trash.length;
 
   if (!mounted) return null;
 
@@ -189,6 +244,16 @@ export function TodasNotificacionesView({ onClose }: Props) {
               >
                 NO LEÍDAS {unreadCount > 0 ? `(${unreadCount})` : ""}
               </button>
+              <button
+                onClick={() => setActiveTab("papelera")}
+                className={`px-5 py-1.5 rounded-full text-sm font-bold border-2 transition ${
+                  activeTab === "papelera"
+                    ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
+                    : "bg-white text-[#2C4A5A] border-[#2C4A5A] hover:bg-gray-50"
+                }`}
+              >
+                PAPELERA {trashCount > 0 ? `(${trashCount})` : ""}
+              </button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -200,15 +265,19 @@ export function TodasNotificacionesView({ onClose }: Props) {
                   MARCAR TODAS
                 </button>
               )}
-              <button
-                onClick={() => {/* papelera - próximo paso */}}
-                className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-bold border-2 border-[#2C4A5A] text-[#2C4A5A] rounded-full hover:bg-gray-50 transition"
-              >
-                <Trash2 size={14} />
-                PAPELERA
-              </button>
             </div>
           </div>
+
+          {activeTab === "papelera" && trash.length > 0 && (
+            <div className="flex justify-end px-3 pb-1 mb-2">
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                className="text-sm text-red-500 hover:text-red-700 hover:underline transition font-bold"
+              >
+                Vaciar papelera
+              </button>
+            </div>
+          )}
 
           {/* Lista */}
           <div className="rounded-2xl overflow-hidden">
@@ -233,6 +302,8 @@ export function TodasNotificacionesView({ onClose }: Props) {
                 <p className="text-gray-500 text-sm font-medium">
                   {activeTab === "no-leidas"
                     ? "No tienes notificaciones no leídas."
+                    : activeTab === "papelera"
+                    ? "La papelera está vacía."
                     : "No hay notificaciones disponibles."}
                 </p>
               </div>
@@ -250,6 +321,8 @@ export function TodasNotificacionesView({ onClose }: Props) {
                       type={n.type}
                       onDelete={handleDelete}
                       onRead={handleRead}
+                      isInTrash={activeTab === "papelera"}
+                      onRestore={handleRestore}
                     />
                   ))}
                 </div>
@@ -272,6 +345,12 @@ export function TodasNotificacionesView({ onClose }: Props) {
 
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onConfirm={handleEmptyTrash}
+        onCancel={() => setShowConfirmModal(false)}
+      />
     </div>,
     document.body
   );
