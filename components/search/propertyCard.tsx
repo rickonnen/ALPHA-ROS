@@ -173,7 +173,7 @@ function PropertyCard({
                 e.preventDefault();
                 onToggleCompare();
               }}
-              className={`absolute top-1 left-1 z-[60] p-1.5 shrink-0 
+              className={`absolute top-1 left-1 z-[30] p-1.5 shrink-0 
                 rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 
                 ${!isMapOpen ? 'flex sm:hidden' : 'flex'} 
                 ${
@@ -352,7 +352,7 @@ function PropertyCard({
               e.preventDefault();
               onToggleCompare();
             }}
-            className={`absolute top-2 left-2 z-[60] flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all shadow-md hover:scale-105 ${
+            className={`absolute top-2 left-2 z-[30] flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all shadow-md hover:scale-105 ${
               isSelected 
                 ? 'bg-[#1a2b4c] text-white border border-[#1a2b4c]' 
                 : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50'
