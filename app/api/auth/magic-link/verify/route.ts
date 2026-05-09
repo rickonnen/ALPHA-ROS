@@ -206,7 +206,16 @@ export async function POST(req: NextRequest) {
       console.log("[Magic Link] Usuario existente verificado:", usuario.id_usuario);
     }
 
-    // 9️ Marcar el intento como CONSUMIDO
+    // 9️ Limpiar intentos consumidos anteriores con este email para evitar conflicto de unique constraint
+    await prisma.magic_link_attempt.deleteMany({
+      where: {
+        email: emailLower,
+        status: "consumed",
+        id: { not: attempt.id },
+      },
+    });
+
+    // 10️ Marcar el intento como CONSUMIDO
     await prisma.magic_link_attempt.update({
       where: { id: attempt.id },
       data: {

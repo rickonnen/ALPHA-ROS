@@ -13,6 +13,7 @@ const ALLOWED_DOMAINS = [
   "live.com",
   "office365.com",
   "yahoo.com",
+  "edu",
 ];
 
 /**
@@ -109,6 +110,9 @@ export async function POST(req: NextRequest) {
     try {
       await prisma.magic_link_attempt.deleteMany({
         where: { email: emailLower, status: "pending" },
+      });
+      await prisma.magic_link_attempt.deleteMany({
+        where: { email: emailLower, status: "consumed" },
       });
       await prisma.magic_link_attempt.create({
         data: {
