@@ -37,7 +37,7 @@ export interface Property {
   constructionArea?: number;
   bedrooms: number;
   bathrooms: number;
-  garages?: number;
+  garajes?: number;
   floors?: number;
   price: number;
   currencySymbol: string;
@@ -45,6 +45,7 @@ export interface Property {
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
+  etiquetas?: { id: number; nombre: string; color: string }[];
 }
 
 interface PropertyCardProps {
@@ -140,7 +141,6 @@ function PropertyCard({
   const displayCurrencySymbol = selectedCurrency === 'USD' ? '$us' : 'Bs';
   const displayPrice = `${displayCurrencySymbol} ${convertedPrice.toLocaleString('es-BO')}`;
 
-  const isContactAvailable = !!property.whatsappContact;
   const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -165,10 +165,7 @@ function PropertyCard({
               : 'border-transparent'
         }`}
       >
-        
-
         <div className={`relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]`}>
-          {/* --- BOTÓN SOBRE LA IMAGEN (CUANDO EL MAPA ESTÁ ABIERTO) --- */}
           {onToggleCompare && (
             <button 
               onClick={(e) => {
@@ -221,11 +218,20 @@ function PropertyCard({
           <p className="truncate text-[10px] font-medium text-gray-400">
             {property.terrainArea.toLocaleString('es-BO')} m² Terreno / {property.bathrooms} Baños
           </p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {property.etiquetas?.map((tag: any) => (
+              <span 
+                 key={tag.id} 
+                 className="text-[8px] px-1.5 py-0.5 rounded-full text-white font-bold uppercase" 
+                 style={{ backgroundColor: tag.color }}
+              >
+                 #{tag.nombre}
+              </span>
+            ))}
+          </div>
         </div>
 
-          
         <div className="hidden min-w-0 flex-1 items-center overflow-hidden sm:flex">
-          {/*Columna precio y tipo */}
           <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
             ? 'w-[100px] xl:w-[130px] pr-2' 
             : 'w-[200px] pr-4'}`}>
@@ -252,7 +258,6 @@ function PropertyCard({
               <Square className="h-3.5 w-3.5 shrink-0 text-gray-400" />
               <span className="truncate">{property.terrainArea.toLocaleString('es-BO')} m² {isMapOpen ? '' : 'Terreno'}</span>
               
-              {/* Se ocultan datos extra si el mapa está abierto para ahorrar espacio */}
               {!isMapOpen && (
                 <>
                   <span className="mx-1">/</span>
@@ -264,9 +269,20 @@ function PropertyCard({
                 </>
               )}
             </p>
+
+            <div className="flex flex-wrap gap-1 mt-2">
+              {property.etiquetas?.map((tag: any) => (
+                <span 
+                  key={tag.id} 
+                  className="text-[9px] px-2 py-0.5 rounded-full text-white font-bold uppercase shadow-sm" 
+                  style={{ backgroundColor: tag.color }}
+                >
+                  #{tag.nombre}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* --- BOTÓN A UN LADO (SOLO EN VISTA LISTA Y SIN MAPA) --- */}
           {onToggleCompare && !isMapOpen && (
             <button 
               onClick={(e) => {
@@ -329,7 +345,6 @@ function PropertyCard({
       }`}
     >
       <div className="relative h-48 w-2/5 shrink-0 overflow-hidden sm:w-1/3">
-        {/* --- BOTÓN PILL DE SELECCIÓN (GRILLA) --- */}
         {onToggleCompare && (
           <button 
             onClick={(e) => {
@@ -383,51 +398,72 @@ function PropertyCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden p-3 sm:p-4">
+        {/* BLOQUE SUPERIOR: TÍTULO Y UBICACIÓN */}
         <div>
-          <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[#8c6c4c] sm:text-xs">
+          <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-[#8c6c4c] sm:text-[11px]">
             {property.type}
           </p>
           <h3 className="truncate text-sm font-semibold text-gray-900 transition-colors group-hover:text-[#a67c52] sm:text-base">
             {property.title}
           </h3>
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500 sm:text-xs">
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-gray-500 sm:text-[11px]">
             <MapPin className="h-3 w-3 shrink-0" />
             {property.location}
           </p>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-gray-700 sm:text-xs">
-          <div className="flex items-center gap-1.5 truncate">
-            <Square className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-            <span className="truncate">{property.terrainArea.toLocaleString('es-BO')} m² Terreno</span>
+        {/* BLOQUE MEDIO: ICONOS + ETIQUETAS AGRUPADOS */}
+        <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-gray-700 sm:text-[11px]">
+            <div className="flex items-center gap-1.5 truncate">
+              <Square className="h-3 w-3 shrink-0 text-gray-400" />
+              <span className="truncate">{property.terrainArea.toLocaleString('es-BO')} m²</span>
+            </div>
+            <div className="flex items-center gap-1.5 truncate">
+              <BedDouble className="h-3 w-3 shrink-0 text-gray-400" />
+              <span className="truncate">{property.bedrooms} Rec.</span>
+            </div>
+            <div className="flex items-center gap-1.5 truncate">
+              <Bath className="h-3 w-3 shrink-0 text-gray-400" />
+              <span className="truncate">{property.bathrooms} Baños</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 truncate">
-            <BedDouble className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-            <span className="truncate">{property.bedrooms} Rec.</span>
-          </div>
-          <div className="flex items-center gap-1.5 truncate">
-            <Bath className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-            <span className="truncate">{property.bathrooms} Baños</span>
-          </div>
+
+          {/* ETIQUETAS (Dentro del flujo medio para no empujar el footer) */}
+          {property.etiquetas && property.etiquetas.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {property.etiquetas.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase text-white shadow-sm"
+                  style={{ backgroundColor: tag.color || '#6B7280' }}
+                >
+                  #{tag.nombre}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-2 border-t pt-2 lg:flex-nowrap">
+        {/* BLOQUE INFERIOR: PRECIO, FECHA Y BOTÓN */}
+        <div className="mt-1 flex flex-wrap items-end justify-between gap-1 border-t pt-2 lg:flex-nowrap">
           <div className="flex min-w-0 flex-col">
-            <p className="truncate text-lg font-bold leading-tight text-gray-950 sm:text-xl">
+            <p className="truncate text-base font-bold leading-tight text-gray-950 sm:text-lg">
               {displayPrice}
             </p>
-            <div className="mt-1 flex items-center gap-1 truncate text-[10px] text-gray-500 sm:text-[11px]">
+            <div className="mt-0.5 flex items-center gap-1 truncate text-[9px] text-gray-400 sm:text-[10px]">
               <CalendarDays className="h-3 w-3 shrink-0" />
               <span className="truncate">{property.publishedDate}</span>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center">
             <Button
               variant="default"
               size="sm"
-              className="h-8 gap-1 px-2 text-[11px]"
-              onClick={() => {
+              className="h-7 gap-1 px-2 text-[10px] sm:h-8 sm:text-[11px]"
+              onClick={(e) => {
+                e.stopPropagation();
                 window.open(`/publicacion/Vista_del_Inmueble/${property.id}`, '_blank');
                 trackEvent(property.id, 'click');
                 onClick?.();
