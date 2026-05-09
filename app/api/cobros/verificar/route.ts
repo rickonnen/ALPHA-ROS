@@ -25,9 +25,12 @@ export async function POST(request: Request) {
     const data = await request.formData();
     const file = data.get("file") as File;
     
+    const idPublicacionRaw = data.get("id_publicacion");
+    const idPublicacion = idPublicacionRaw ? parseInt(idPublicacionRaw as string) : null;
+
     if (!process.env.CLOUDINARY_API_KEY_P) {
       console.log("VARIABLES DISPONIBLES:", Object.keys(process.env).filter(k => k.includes("CLOUDINARY")));
-      throw new Error("La API KEY no llegó al servidor. Revisa tu archivo .env");
+      throw new Error("La API KEY no llegÃ³ al servidor. Revisa tu archivo .env");
     }
 
     const bytes = await file.arrayBuffer();
@@ -52,6 +55,7 @@ export async function POST(request: Request) {
       data: {
         id_plan: parseInt(data.get("id_plan") as string),
         id_usuario: data.get("id_usuario") as string,
+        id_publicacion: idPublicacion,
         estado: 1, // Pendiente
         comprobante_url: uploadResponse.secure_url,
         mes_pago: data.get("mes_pago") as string,

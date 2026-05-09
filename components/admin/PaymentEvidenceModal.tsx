@@ -5,6 +5,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton"
 
 /**
  * Dev: Nicole Belen Arias Murillo
@@ -21,6 +23,13 @@ export function PaymentEvidenceModal({
   onOpenChange,
   strUrl
 }: PaymentEvidenceModalProps) {
+  const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (bolIsOpen) {
+      setBolIsLoading(true);
+    }
+  }, [bolIsOpen, strUrl]);
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
@@ -39,11 +48,18 @@ export function PaymentEvidenceModal({
           {/* Área de la Imagen */}
           <div className="w-full p-6 flex justify-center bg-white min-h-[300px]">
             {strUrl ? (
-              <img 
-                src={strUrl} 
-                alt="Comprobante de transferencia" 
-                className="w-auto h-auto max-w-full max-h-[50vh] md:max-h-[60vh] object-contain rounded-lg shadow-sm border border-gray-100"
-              />
+              <>
+                {/*Ya no es una rayita */}
+                {bolIsLoading && (
+                  <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg bg-gray-100" />
+                )}
+                <img 
+                  src={strUrl} 
+                  alt="Comprobante de transferencia" 
+                  onLoad={() => setBolIsLoading(false)}
+                  className={`w-auto h-auto max-w-full max-h-[50vh] md:max-h-[60vh] object-contain rounded-lg shadow-sm border border-gray-100 ${bolIsLoading ? 'hidden' : 'block'}`}
+                />
+              </>
             ) : (
               <div className="flex items-center justify-center text-muted-foreground italic">
                 No se pudo cargar la imagen del comprobante.
