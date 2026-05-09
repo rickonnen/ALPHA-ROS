@@ -274,7 +274,7 @@ export function NotificationPanel() {
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-//////////////////////////////HU2//////////
+  //////////////////////////////HU2//////////
 
   const [trash, setTrash] = useState<Notification[]>([]);
   useEffect(() => {
@@ -351,33 +351,33 @@ export function NotificationPanel() {
   }, [unreadCount]);
 
   const visibleNotifications = useMemo(() => {
-  if (activeTab === "trash") return trash;
-  let filtered = notifications;
+    if (activeTab === "trash") return trash;
+    let filtered = notifications;
     if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
     else if (activeFilter === "whatsapp") filtered = filtered.filter((n) => n.type === 2 || n.type === "whatsapp");
     else if (activeTab === "unread") filtered = filtered.filter((n) => !n.read);
     return filtered;
-}, [notifications, activeTab, activeFilter, trash]);
-///////////////////////HU2////////////
+  }, [notifications, activeTab, activeFilter, trash]);
+  ///////////////////////HU2////////////
   const handleDelete = (id: string) => {
-  const notif = notifications.find((n) => n.id === id);
-  if (notif) setTrash((prev) => [notif, ...prev]);
-  setNotifications((prev) => prev.filter((n) => n.id !== id));
-};
+    const notif = notifications.find((n) => n.id === id);
+    if (notif) setTrash((prev) => [notif, ...prev]);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
-const handleRestore = (id: string) => {
-  const notif = trash.find((n) => n.id === id);
-  if (notif) {
-    setNotifications((prev) => [notif, ...prev]);
-    setTrash((prev) => prev.filter((n) => n.id !== id));
-    
-  }
-};
+  const handleRestore = (id: string) => {
+    const notif = trash.find((n) => n.id === id);
+    if (notif) {
+      setNotifications((prev) => [notif, ...prev]);
+      setTrash((prev) => prev.filter((n) => n.id !== id));
 
-const handleEmptyTrash = () => {
-  setTrash([]);
-  setShowConfirmModal(false);
-};
+    }
+  };
+
+  const handleEmptyTrash = () => {
+    setTrash([]);
+    setShowConfirmModal(false);
+  };
   const handleRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
@@ -403,7 +403,7 @@ const handleEmptyTrash = () => {
 
   return (
     <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
-      
+
       {showSettings ? (
         // Mostrar solo el panel de configuración
         <SettingsPanel
@@ -426,21 +426,21 @@ const handleEmptyTrash = () => {
                 setActiveFilter("all");
               }}
               unreadCount={unreadCount}
-               trashCount={trash.length}
+              trashCount={trash.length}
               onMarkAll={handleMarkAll}
               onOpenSettings={() => setShowSettings(true)}
             />
           </div>
-            {activeTab === "trash" && trash.length > 0 && (
-  <div className="flex justify-end px-3 pb-1">
-    <button
-      onClick={() => setShowConfirmModal(true)}
-      className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
-    >
-      Vaciar papelera
-    </button>
-  </div>
-)}
+          {activeTab === "trash" && trash.length > 0 && (
+            <div className="flex justify-end px-3 pb-1">
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
+              >
+                Vaciar papelera
+              </button>
+            </div>
+          )}
           {isLoading ? (
             <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
               Cargando notificaciones...
@@ -460,10 +460,10 @@ const handleEmptyTrash = () => {
                 <BellOff size={22} />
               </div>
               <p className="text-gray-500 text-sm font-medium">
-               {activeTab === "unread"
+                {activeTab === "unread"
                   ? "No tienes notificaciones no leídas."
-                   : activeTab === "trash"
-                  ? "La papelera está vacía."
+                  : activeTab === "trash"
+                    ? "La papelera está vacía."
                     : "No tienes notificaciones por el momento."}
               </p>
             </div>
@@ -490,11 +490,11 @@ const handleEmptyTrash = () => {
         </>
       )}
 
-<ConfirmModal
-  isOpen={showConfirmModal}
-  onConfirm={handleEmptyTrash}
-  onCancel={() => setShowConfirmModal(false)}
-/>
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onConfirm={handleEmptyTrash}
+        onCancel={() => setShowConfirmModal(false)}
+      />
 
 
     </div>
