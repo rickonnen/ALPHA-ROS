@@ -19,6 +19,8 @@ export type SearchFiltersInput = {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
+  soloOfertas?: boolean;
+  sort?: string;
 };
 
 export type SearchPublicationResult = {
@@ -26,6 +28,7 @@ export type SearchPublicationResult = {
   titulo: string | null;
   descripcion: string | null;
   precio: number | null;
+  precio_anterior: number | null;
   superficie: number | null;
   habitaciones: number | null;
   banos: number | null;
@@ -355,12 +358,31 @@ function passesPriceFilter(
   return true;
 }
 
+function hasDiscount(publication: PublicationWithRelations): boolean {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = toNumber(publication.precio_anterior);
+
+  return (currentPrice !== null && previousPrice !== null && previousPrice > currentPrice);
+}
+
+function getDiscountPercent(publication: PublicationWithRelations): number {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = toNumber(publication.precio_anterior);
+
+  if (currentPrice === null || previousPrice === null || previousPrice <= currentPrice) {
+    return 0;
+  }
+
+  return Math.round(((previousPrice - currentPrice) / previousPrice) * 100);
+}
+
 function mapPublication(publication: PublicationWithRelations): SearchPublicationResult {
   return {
     id_publicacion: publication.id_publicacion,
     titulo: publication.titulo,
     descripcion: publication.descripcion,
     precio: toNumber(publication.precio),
+    precio_anterior: toNumber(publication.precio_anterior),
     superficie: toNumber(publication.superficie),
     habitaciones: publication.habitaciones,
     banos: publication.banos,
@@ -446,12 +468,27 @@ export async function searchPublicaciones(
       },
     },
   });
-
-  const priceFiltered = publications.filter((publication) =>
+  let filteredPublications = publications.filter((publication) =>
     passesPriceFilter(publication, filters, apiExchangeRate),
   );
 
-  return priceFiltered.map(mapPublication);
+  if (filters.soloOfertas) {
+    filteredPublications = filteredPublications.filter(hasDiscount);
+  }
+
+  if (filters.sort === "rebajas-desc") {
+    filteredPublications = filteredPublications
+      .filter(hasDiscount)
+      .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a));
+  }
+
+  return filteredPublications.map(mapPublication);
+
+  /*const priceFiltered = publications.filter((publication) =>
+    passesPriceFilter(publication, filters, apiExchangeRate),
+  );
+
+  return priceFiltered.map(mapPublication);*/
 }
 // con esto la llave es única y estable, no importa el orden de los filtros
 export async function getCachedPublicaciones(filters: SearchFiltersInput) {

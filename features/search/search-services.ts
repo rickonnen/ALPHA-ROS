@@ -1,4 +1,4 @@
-export type SearchCurrency = 'USD' | 'BS';
+export type SearchCurrency = "USD" | "BS";
 
 export interface FiltrosPublicacion {
   ubicacion?: string;
@@ -13,6 +13,8 @@ export interface FiltrosPublicacion {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
+  soloOfertas?: boolean;
+  sort?: string;
 }
 
 export interface PublicacionBusqueda {
@@ -20,6 +22,8 @@ export interface PublicacionBusqueda {
   titulo?: string | null;
   descripcion?: string | null;
   precio?: number | null;
+  precio_anterior?: number | null;
+
   superficie?: number | null;
   habitaciones?: number | null;
   banos?: number | null;
@@ -56,6 +60,7 @@ export interface PublicacionDetalleBusqueda {
   titulo?: string;
   descripcion?: string;
   precio?: number;
+  precio_anterior?: number;
   superficie?: number;
   habitaciones?: number;
   banos?: number;
@@ -100,10 +105,10 @@ type SearchResponse = {
 export async function buscarPublicaciones(
   filtros: FiltrosPublicacion,
 ): Promise<PublicacionBusqueda[]> {
-  const response = await fetch('/api/filter_search_page', {
-    method: 'POST',
+  const response = await fetch("/api/filter_search_page", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(filtros),
   });
@@ -111,7 +116,7 @@ export async function buscarPublicaciones(
   const payload = (await response.json()) as SearchResponse;
 
   if (!response.ok || !payload.success) {
-    throw new Error(payload.message ?? 'No se pudo consultar las publicaciones');
+    throw new Error(payload.message ?? "No se pudo consultar las publicaciones");
   }
 
   return payload.publications ?? [];

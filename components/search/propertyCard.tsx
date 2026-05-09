@@ -40,6 +40,8 @@ export interface Property {
   garages?: number;
   floors?: number;
   price: number;
+  previousPrice?: number | null;
+  discountPercent?: number;
   currencySymbol: string;
   publishedDate: string;
   whatsappContact: string;
@@ -139,6 +141,49 @@ function PropertyCard({
       : Math.round(property.price * exchangeRate * 100) / 100;
   const displayCurrencySymbol = selectedCurrency === 'USD' ? '$us' : 'Bs';
   const displayPrice = `${displayCurrencySymbol} ${convertedPrice.toLocaleString('es-BO')}`;
+  
+  const hasDiscount =
+    typeof property.previousPrice === "number" &&
+    property.previousPrice > property.price;
+
+  const convertedPreviousPrice =
+    hasDiscount && selectedCurrency === "USD"
+      ? property.previousPrice!
+      : hasDiscount
+        ? Math.round(property.previousPrice! * exchangeRate * 100) / 100
+        : null;
+
+  const discountPercent =
+    property.discountPercent ??
+    (hasDiscount
+      ? Math.round(
+          ((property.previousPrice! - property.price) / property.previousPrice!) * 100,
+        )
+      : 0);
+
+  const displayPreviousPrice = convertedPreviousPrice
+    ? `${displayCurrencySymbol} ${convertedPreviousPrice.toLocaleString("es-BO")}`
+    : null;
+
+  const DiscountBadge = () =>
+    hasDiscount ? (
+      <span className="absolute left-2 top-2 z-[70] rounded-md bg-red-600 px-2 py-1 text-xs font-bold text-white shadow">
+        -{discountPercent}%
+      </span>
+    ) : null;
+
+  const PriceBlock = ({ className = "" }: { className?: string }) => (
+    <div className="flex min-w-0 flex-col">
+      {hasDiscount && displayPreviousPrice && (
+        <span className="truncate text-xs text-gray-400 line-through">
+          {displayPreviousPrice}
+        </span>
+      )}
+
+      <span className={className}>{displayPrice}</span>
+    </div>
+  );
+
 
   const isContactAvailable = !!property.whatsappContact;
   const telefonoParaWhatsapp = property.usuarioTelefono || property.whatsappContact;
@@ -168,6 +213,7 @@ function PropertyCard({
         
 
         <div className={`relative h-[75px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-[85px] sm:w-[130px]`}>
+          <DiscountBadge />
           {/* --- BOTÓN SOBRE LA IMAGEN (CUANDO EL MAPA ESTÁ ABIERTO) --- */}
           {onToggleCompare && (
             <button 
@@ -203,9 +249,7 @@ function PropertyCard({
 
         <div className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden rounded-lg border-gray-200 p-1 sm:hidden">
           <div className="flex items-start justify-between">
-            <span className="truncate text-[17px] font-bold leading-tight text-gray-950">
-              {displayPrice}
-            </span>
+            <PriceBlock className="truncate text-[17px] font-bold leading-tight text-gray-950" />
             <ArrowRight className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={1.5} />
           </div>
           <span className="block truncate text-[13px] font-medium text-gray-500">
@@ -229,11 +273,12 @@ function PropertyCard({
           <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
             ? 'w-[100px] xl:w-[130px] pr-2' 
             : 'w-[200px] pr-4'}`}>
-            <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
-            ? 'text-[14px] xl:text-[15px]'
-            : 'text-[18px]'
-            }`}>{displayPrice}
-            </span>
+            <PriceBlock
+              className={`font-bold leading-tight text-gray-950 ${isMapOpen 
+                ? 'text-[14px] xl:text-[15px]'
+                : 'text-[18px]'
+              }`}
+            />
             <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
               ? 'text-[10px] xl:text-[11px]' 
               : 'text-[12px]'
@@ -357,6 +402,7 @@ function PropertyCard({
             )}
           </button>
         )}
+        <DiscountBadge />
 
         <Carousel className="h-full w-full">
           <CarouselContent className="-ml-0 h-full">
@@ -413,9 +459,7 @@ function PropertyCard({
 
         <div className="mt-2 flex flex-wrap items-end justify-between gap-2 border-t pt-2 lg:flex-nowrap">
           <div className="flex min-w-0 flex-col">
-            <p className="truncate text-lg font-bold leading-tight text-gray-950 sm:text-xl">
-              {displayPrice}
-            </p>
+            <PriceBlock className="truncate text-lg font-bold leading-tight text-gray-950 sm:text-xl" />
             <div className="mt-1 flex items-center gap-1 truncate text-[10px] text-gray-500 sm:text-[11px]">
               <CalendarDays className="h-3 w-3 shrink-0" />
               <span className="truncate">{property.publishedDate}</span>

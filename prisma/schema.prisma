@@ -819,6 +819,7 @@ model Publicacion {
   titulo                    String?                     @db.VarChar(256)
   descripcion               String?
   precio                    Decimal?                    @db.Decimal(25, 2)
+  precio_anterior           Decimal?                    @db.Decimal(25.2)
   superficie                Decimal?                    @db.Decimal(10, 2)
   habitaciones              Int?                        @db.SmallInt
   banos                     Int?                        @db.SmallInt
