@@ -15,14 +15,17 @@ interface DatosPago {
   precio: number;
   idReferencia: string;
   modalidad: string;
+  tipoPlan: number;
+  idPublicacion: string | null;
 }
 
 interface Props {
   datos: DatosPago;
   backUrl: string;
+  resumenPublicacionNode?: React.ReactNode; 
 }
 
-export default function PagoCliente({ datos, backUrl }: Props) {
+export default function PagoCliente({ datos, backUrl, resumenPublicacionNode }: Props) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [verFoto, setVerFoto] = useState(false);
@@ -68,11 +71,20 @@ export default function PagoCliente({ datos, backUrl }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <ResumenPago 
-        titulo={datos.titulo} descripcion={datos.descripcion} 
-        detalles={datos.detalleItems} monto={datos.precio} backUrl={backUrl} 
-        tipoPago={tipoPagoSeleccionado}
-      />
+      <div className="flex w-full flex-col bg-muted/30 md:w-1/2 border-r border-border/50">
+        <div className="p-10 lg:p-16 flex flex-col h-full w-full">
+           
+           {/* Eliminamos el card de aquí arriba y se lo pasamos como prop al ResumenPago */}
+           <ResumenPago 
+             titulo={datos.titulo} descripcion={datos.descripcion} 
+             detalles={datos.detalleItems} monto={datos.precio} backUrl={backUrl} 
+             tipoPago={tipoPagoSeleccionado}
+             tipoPlan={datos.tipoPlan}
+             resumenPublicacionNode={resumenPublicacionNode} 
+           />
+
+        </div>
+      </div>
 
       <AccionesPago 
         idUsuario={user.id}
