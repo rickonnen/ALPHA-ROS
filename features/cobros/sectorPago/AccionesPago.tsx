@@ -40,13 +40,22 @@ interface Props {
   iniciarPagoCrypto: (precio: number, planId: string) => void;
   idReferencia: string;
   onTabChange: (value: "qr" | "virtual") => void; 
+  setEstadoModal: (estado: EstadoModal) => void;
 }
+
+type EstadoModal =
+  | "cerrado"
+  | "confirmacion_pago"
+  | "verificando_pago"
+  | "pendiente_pago"
+  | "pago_completado"
+  | "pago_rechazado";
 
 export const AccionesPago = ({
   idUsuario, precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
   estaCargandoEstado, fileInputRef, onVerificar, onDescargar,
   onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, 
-  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange 
+  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange, setEstadoModal
 }: Props) => {
 
 // --- ESTADOS PARA LA SIMULACIÓN ---
@@ -77,8 +86,13 @@ useEffect(() => {
         clearInterval(intervalo);
         setFinalizado(true); 
 
-        if (data.estado === 2) setMostrarExito(true);
-        if (data.estado === 3) setMostrarRechazo(true);
+        if (data.estado === 2) {
+          setEstadoModal("pago_completado");
+        }
+
+        if (data.estado === 3) {
+          setEstadoModal("pago_rechazado");
+        }
       }
     } catch (error) {
       console.error("Error en polling:", error);

@@ -112,6 +112,7 @@ export default function PagoCliente({ datos, backUrl, resumenPublicacionNode }: 
         iniciarPagoCrypto={iniciarPagoCrypto}
         idReferencia={datos.idReferencia}
         onTabChange={setTipoPagoSeleccionado}
+        setEstadoModal={setEstadoModal}
       />
 
       {verFoto && previewUrl && (
