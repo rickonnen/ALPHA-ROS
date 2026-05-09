@@ -6,6 +6,7 @@ import { PaymentDataTable } from "@/components/admin/PaymentDataTable"
 import { PaymentRecord } from "@/components/admin/paymentTypes"
 import { AccessDenied } from "@/components/admin/AccessDenied"
 import { PaymentEvidenceModal } from "@/components/admin/PaymentEvidenceModal"
+import { calculateValidUntil } from "@/components/admin/paymentUtils"
 
 /**
  * Dev: René Gabriel Vera Portanda
@@ -28,8 +29,13 @@ export default function PaymentVerificationPage() {
   const formatData = useCallback((arrDatabaseData: any[]): PaymentRecord[] => {
 
     if (!arrDatabaseData || !Array.isArray(arrDatabaseData)) return [];
-    return arrDatabaseData.map(objPayment => ({
-      intId: objPayment.id_detalle,
+
+    return arrDatabaseData.map(objPayment => {
+      const bolEsPromocion = objPayment.PlanPublicacion?.tipo === false;
+      const intQuota = objPayment.PlanPublicacion?.cant_publicaciones || 0;
+      
+      return {
+        intId: objPayment.id_detalle,
       strClientName: objPayment.Usuario 
         ? `${objPayment.Usuario.nombres} ${objPayment.Usuario.apellidos ?? ""}`.trim() 
         : 'Sin nombre',
@@ -44,11 +50,20 @@ export default function PaymentVerificationPage() {
       hour12: false 
     }) 
   : 'Sin fecha',
+      strValidUntil: calculateValidUntil(
+        objPayment.fecha_detalle, 
+        objPayment.tiempo_pago, 
+        bolEsPromocion, 
+        intQuota,
+        objPayment.id_plan, 
+        objPayment.Usuario?.Suscripcion 
+      ),
       strPaymentMethod: objPayment.metodo_pago || 'No especificado',
       strReceiptUrl: objPayment.comprobante_url || null,
       strReason: objPayment.razon_rechazo || null,
       intStatus: objPayment.estado
-    }));
+      };
+    });
   }, []);
 
   /**
