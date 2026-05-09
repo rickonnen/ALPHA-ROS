@@ -127,8 +127,8 @@ function isValidZoneCoordinates(
       (point) =>
         Array.isArray(point) &&
         point.length === 2 &&
-        typeof point[0] === "number" &&
-        typeof point[1] === "number" &&
+        point[0] === "number" &&
+        point[1] === "number" &&
         Number.isFinite(point[0]) &&
         Number.isFinite(point[1]),
     )
@@ -345,6 +345,7 @@ function mapPublicationToProperty(
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono,
     caracteristicas: publication.caracteristicas || [],
+    etiquetas: publication.etiquetas || [],
   };
 }
 
@@ -423,16 +424,19 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+  const [etiquetasDB, setEtiquetasDB] = useState<any[]>([]);
   const [advancedFilterValues, setAdvancedFilterValues] = useState<{
     habitaciones?: string;
     banos?: string;
     piscina?: string;
     minSurface?: number;
     maxSurface?: number;
+    etiquetasIds?: number[];
   }>({
     habitaciones: "",
     banos: "",
     piscina: "",
+    etiquetasIds: [],
   });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -482,6 +486,28 @@ function SearchPageContent() {
       setIsSelectionLoaded(true);
     }
   }, []);
+
+  useEffect(() => {
+  const fetchTags = async () => {
+    try {
+      const res = await fetch("/api/etiquetas");
+      const payload = await res.json();
+      
+      // Intentamos buscar las etiquetas en diferentes propiedades comunes
+      const rawTags = Array.isArray(payload) 
+        ? payload 
+        : (payload.data || payload.etiquetas || payload.tags || []);
+        
+      setEtiquetasDB(rawTags);
+      
+      // LOG PARA DEBUG (Borralo después de verificar):
+      console.log("Etiquetas cargadas:", rawTags);
+    } catch (error) {
+      console.error("Error cargando etiquetas de la DB:", error);
+    }
+  };
+  fetchTags();
+}, []);
 
   useEffect(() => {
     if (isSelectionLoaded && typeof window !== "undefined") {
@@ -807,6 +833,9 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (advancedFilterValues.etiquetasIds && advancedFilterValues.etiquetasIds.length > 0) {
+        urlParams.set("tags", advancedFilterValues.etiquetasIds.join(","));
+    }
     window.history.pushState(null, "", `/search?${urlParams.toString()}`);
   };
 
@@ -838,6 +867,7 @@ function SearchPageContent() {
         minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
         currency: selectedCurrency,
+        etiquetasIds: advancedFilterValues.etiquetasIds,
         ...overrides,
       };
 
@@ -929,6 +959,9 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    // --- PASO 2: Leer las etiquetas (tags) de la URL (NUEVO) ---
+    const tagsParam = searchParams.get("tags");
+    const nextTags = tagsParam ? tagsParam.split(",").map(Number).filter(n => !isNaN(n)) : [];
 
     const nextMinPrice =
       minPriceParam !== null && minPriceParam.trim() !== ""
@@ -950,6 +983,12 @@ function SearchPageContent() {
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
 
+    // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
+    setAdvancedFilterValues(prev => ({
+      ...prev,
+      etiquetasIds: nextTags
+    }));
+
     void runSearch({
       ubicacion: nextLocation,
       operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
@@ -957,6 +996,7 @@ function SearchPageContent() {
         nextPropertyLabels.join(",") || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
+      etiquetasIds: nextTags, // PASAMOS LOS TAGS A LA BÚSQUEDA
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -1052,6 +1092,7 @@ function SearchPageContent() {
       piscina: "",
       minSurface: undefined,
       maxSurface: undefined,
+      etiquetasIds: [],
     } as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
@@ -1070,6 +1111,7 @@ function SearchPageContent() {
       maxPrice: undefined,
       minSurface: undefined,
       maxSurface: undefined,
+      etiquetasIds: [], 
     });
   };
 
@@ -1215,8 +1257,10 @@ function SearchPageContent() {
                   onChange={setSelectedPropertyTypes}
                 />
                 <AdvancedFilters
+                  allTags={etiquetasDB}           // <--- ACTIVADO PARA MÓVIL
+                  value={advancedFilterValues}    // <--- ACTIVADO PARA MÓVIL
                   key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
+                  onChange={(v: any) => setAdvancedFilterValues(v)}
                 />
                 <div className="my-4 h-px bg-[#D8D2C8]" />
                 <PriceDropdown
@@ -1280,7 +1324,8 @@ function SearchPageContent() {
                     }}
                   />
                 </>
-              )}
+              )
+              }
             </>
           )
         ) : (
@@ -1550,10 +1595,11 @@ function SearchPageContent() {
                       selected={selectedPropertyTypes}
                       onChange={setSelectedPropertyTypes}
                     />
-
-                    <AdvancedFilters
-                      key={advancedFiltersKey}
-                      onChange={setAdvancedFilterValues}
+                    <AdvancedFilters 
+                       allTags={etiquetasDB}           // <--- ACTIVADO PARA DESKTOP
+                       value={advancedFilterValues}    // <--- ACTIVADO PARA DESKTOP
+                       key={advancedFiltersKey}
+                       onChange={(v: any) => setAdvancedFilterValues(v)} 
                     />
 
                     <div className="my-3 h-px bg-[#F4EFE6]" />
