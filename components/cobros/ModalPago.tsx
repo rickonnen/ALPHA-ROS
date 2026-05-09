@@ -147,36 +147,46 @@ const [loading, setLoading] = useState(false);
 
           {estadoModal === "pago_completado" && (
             <>
-              <AlertDialogHeader>
-                <BadgeCheck className="h-14 w-14 text-green-500 mb-2" />
-                <AlertDialogTitle>Pago confirmado</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Hemos recibido tu pago correctamente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  Cerrar
-                </AlertDialogCancel>
-              </AlertDialogFooter>
-            </>
+    <div className="flex flex-col items-center text-center gap-2 pt-2">
+      <BadgeCheck className="h-12 w-12 text-green-500" />
+      <AlertDialogTitle className="text-lg font-semibold">
+        Pago confirmado
+      </AlertDialogTitle>
+      <AlertDialogDescription className="text-sm text-muted-foreground">
+        Hemos recibido tu pago correctamente.
+      </AlertDialogDescription>
+    </div>
+    <AlertDialogFooter className="flex justify-center mt-2">
+      <AlertDialogCancel
+        onClick={() => setEstadoModal("cerrado")}
+        className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
+      >
+        salir
+      </AlertDialogCancel>
+    </AlertDialogFooter>
+  </>
           )}
 
           {estadoModal === "pago_rechazado" && (
             <>
-              <AlertDialogHeader>
-                <TriangleAlert className="h-14 w-14 text-red-500 mb-2" />
-                <AlertDialogTitle>Pago no completado</AlertDialogTitle>
-                <AlertDialogDescription>
-                  No hemos podido confirmar tu pago.                    
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  Cerrar
-                </AlertDialogCancel>
-              </AlertDialogFooter>
-            </>
+    <div className="flex flex-col items-center text-center gap-2 pt-2">
+      <TriangleAlert className="h-12 w-12 text-red-500" />
+      <AlertDialogTitle className="text-lg font-semibold">
+        Pago no completado
+      </AlertDialogTitle>
+      <AlertDialogDescription className="text-sm text-muted-foreground">
+        No hemos podido confirmar tu pago.
+      </AlertDialogDescription>
+    </div>
+    <AlertDialogFooter className="flex justify-center mt-2">
+      <AlertDialogCancel
+        onClick={() => setEstadoModal("cerrado")}
+        className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
+      >
+        Salir
+      </AlertDialogCancel>
+    </AlertDialogFooter>
+  </>
           )}
 
         </AlertDialogContent>
