@@ -1,9 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X, QrCode, Coins } from "lucide-react";
+import { X, QrCode, Coins,XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState, useRef } from 'react';
+import ModalExito from "@/components/ModalExito";
+
+const ModalRechazo = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm border-t-8 border-red-500 animate-in zoom-in duration-300">
+      <div className="mb-4 text-red-500 bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+        <XCircle size={48} />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2">Pago Fallido</h2>
+      <p className="text-gray-600 mb-6">Lo sentimos, la transacción no pudo ser validada. Por favor, intenta de nuevo.</p>
+      <button onClick={onClose} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+        CERRAR
+      </button>
+    </div>
+  </div>
+);
 
 interface Props {
+  idUsuario: string;
   precio: number;
   generandoQr: boolean;
   qrUrl: string | null;
@@ -24,13 +42,58 @@ interface Props {
 }
 
 export const AccionesPago = ({
-  precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
+  idUsuario, precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
   estaCargandoEstado, fileInputRef, onVerificar, onDescargar,
   onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, 
-  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange // Desestructuramos aquí
+  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange 
 }: Props) => {
+
+// --- ESTADOS PARA LA SIMULACIÓN ---
+const [mostrarExito, setMostrarExito] = useState(false);
+const [mostrarRechazo, setMostrarRechazo] = useState(false);
+const [finalizado, setFinalizado] = useState(false);
+
+// Guardamos el momento exacto en que el usuario entró a la página
+const horaEntradaRef = useRef(new Date().toISOString());
+
+useEffect(() => {
+  // Si no hay ID o ya terminamos, no hacemos NADA
+  if (!idUsuario || finalizado) return;
+
+  console.log("🚀 Iniciando monitoreo de pago desde:", horaEntradaRef.current);
+
+  const intervalo = setInterval(async () => {
+    try {
+      // Enviamos el userId y la hora de entrada
+      const res = await fetch(`/api/cobros/poolingCripto?userId=${idUsuario}&desde=${horaEntradaRef.current}`);
+      const data = await res.json();
+      
+      console.log("⏱️ Revisando... Estado:", data.estado);
+
+      if (data.estado === 2 || data.estado === 3) {
+        console.log("🎯 ¡Cambio detectado! Deteniendo reloj.");
+        
+        clearInterval(intervalo);
+        setFinalizado(true); 
+
+        if (data.estado === 2) setMostrarExito(true);
+        if (data.estado === 3) setMostrarRechazo(true);
+      }
+    } catch (error) {
+      console.error("Error en polling:", error);
+    }
+  }, 3000);
+
+  return () => {
+    console.log("🧹 Limpiando intervalo");
+    clearInterval(intervalo);
+  };
+}, [idUsuario, finalizado]); 
+
   return (
     <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
+      {mostrarExito && <ModalExito onClose={() => setMostrarExito(false)} />}
+      {mostrarRechazo && <ModalRechazo onClose={() => setMostrarRechazo(false)} />}
       <div className="flex flex-col items-center w-full max-w-sm">
         <h2 className="text-2xl font-medium text-muted-foreground mb-2">Total a pagar</h2>
         <div className="text-3xl mb-10 text-foreground font-semibold">

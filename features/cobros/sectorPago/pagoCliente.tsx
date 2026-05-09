@@ -56,13 +56,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
     if (user?.id && !datosCrypto && !cargandoCrypto) {
       iniciarPagoCrypto(datos.precio, datos.idReferencia);
     }
-    // 💡 NOTA: Quitamos datosCrypto y cargandoCrypto de aquí
-    // para que si falla, no intente re-ejecutarse infinitamente.
   }, [user?.id, datos.idReferencia]);
-
-
-
-
 
 
   if (isLoading || !user) return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
@@ -81,6 +75,7 @@ export default function PagoCliente({ datos, backUrl }: Props) {
       />
 
       <AccionesPago 
+        idUsuario={user.id}
         precio={datos.precio} 
         generandoQr={generandoQr} 
         qrUrl={qrUrl}

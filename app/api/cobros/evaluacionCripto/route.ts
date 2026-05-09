@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const { paymentId, nuevoEstado } = await req.json();
+    const { paymentId, userId, nuevoEstado, planId } = await req.json();
 
     // Aceptado = 2, Rechazado = 3
     let estadocrip = 1; 
@@ -17,34 +17,27 @@ export async function POST(req: Request) {
       estadocrip = 3;
     }
 
-    const resultado = await prisma.detallePago.updateMany({
-      where: {
-        id_cripto: paymentId, 
-      },
+    const resultado = await prisma.detallePago.create({
       data: {
+        id_plan: planId,
+        id_cripto: paymentId,
+        id_usuario: userId,
         estado: estadocrip,
+        metodo_pago: "Transferencia virtual",
+        fecha_detalle: new Date(),
       },
     });
-
-    // Verificamos si realmente se actualizó algo
-    if (resultado.count === 0) {
-      return NextResponse.json(
-        { error: "No se encontró ningún pago con ese id_cripto" }, 
-        { status: 404 }
-      );
-    }
 
     return NextResponse.json({
       success: true,
-      mensaje: `Simulación completada: Se actualizaron ${resultado.count} registro(s) al estado ${estadocrip}`,
-      // Nota: updateMany devuelve { count: X }, no el objeto actualizado
-      data: resultado 
+      mensaje: "Registro creado y validado exitosamente",
+      data: resultado
     });
 
   } catch (error) {
-    console.error("Error en la simulación con updateMany:", error);
+    console.error("Error al crear detalle de pago:", error);
     return NextResponse.json(
-      { error: "Error interno al intentar actualizar" }, 
+      { error: "No se pudo crear el registro. Verifica que el userId sea válido." }, 
       { status: 500 }
     );
   }
