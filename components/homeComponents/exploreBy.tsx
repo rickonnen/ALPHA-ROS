@@ -29,8 +29,6 @@ interface ExploreCategory {
 const GetTotalCount = (items: CategoryItem[]) =>
   items.reduce((sum, item) => sum + item.IntCount, 0);
 
-const ToQueryParam = (StrValue: string) =>
-  StrValue.replace(/ /g, "+");
 const ToQueryParam = (value: string) => value.replace(/ /g, "+");
 
 const DisplayNames: Record<string, string> = {
