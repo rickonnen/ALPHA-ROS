@@ -1,126 +1,87 @@
-"use client";
-
-import React, { Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+//import { db } from "@/lib/db"; // Asegúrate de que esta ruta a tu prisma client sea la correcta
+import { prisma as db } from "../../../lib/prisma";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-function PlanesPromocionContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const idPublicacion = searchParams.get('pubId'); 
+// 1. Cambiamos la definición para que acepte una Promesa (Next.js 15+)
+export default async function PlanesPromocionPage(props: {
+  searchParams: Promise<{ pubId: string }>
+}) {
+  // 2. "Esperamos" a que los parámetros se resuelvan
+  const searchParams = await props.searchParams;
+  
+  // 3. Ahora sí podemos usar .pubId sin que falle
+  const idPublicacion = searchParams.pubId
+  // 3. CONSULTA A LA BD: Traemos solo los planes donde tipo es "false" (Promociones)
+  const planesBD = await db.planPublicacion.findMany({
+    where: { 
+      tipo: false,
+      activo: true 
+    },
+    orderBy: { cant_publicaciones: 'asc' } // Los ordenamos por días (3, 7, 14, 30)
+  });
 
-  // Configuración final de los 5 planes con los colores de marca exactos
-  const planesPromocion = [
-    { 
-      id: '1', 
-      nombre: 'Básico', 
-      precio: '1.99', 
-      dias: 7, 
-      prioridad: 'Prioridad Media', 
-      visibilidad: 'Visibilidad Estándar',
-      color: 'bg-[#1e3a5f]' // Azul Marino Propbol
-    },
-    { 
-      id: '2', 
-      nombre: 'Avanzado', 
-      precio: '4.99', 
-      dias: 15, 
-      prioridad: 'Prioridad Alta', 
-      visibilidad: 'Visibilidad Destacada',
-      color: 'bg-[#bf735c]' // Tono Terracota/Naranja del botón "PUBLICAR"
-    },
-    { 
-      id: '3', 
-      nombre: 'Premium', 
-      precio: '9.99', 
-      dias: 30, 
-      prioridad: 'Prioridad Muy Alta', 
-      visibilidad: 'Visibilidad Superior',
-      color: 'bg-[#1e3a5f]' 
-    },
-    { 
-      id: '4', 
-      nombre: 'Elite', 
-      precio: '19.99', 
-      dias: 60, 
-      prioridad: 'Prioridad Máxima (Sobre las demás)', 
-      visibilidad: 'Visibilidad Premium',
-      color: 'bg-[#bf735c]' 
-    },
-    
-  ];
-
-  const handleSelectPlan = (planId: string) => {
-    const url = `/cobros?planId=${planId}&idPublicacion=${idPublicacion}&tipo=0`;
-    router.push(url);
+  // Función auxiliar para asignar colores según el nombre (para mantener el diseño)
+  const getColorPorNombre = (nombre: string) => {
+    if (nombre.includes("EXPRESS")) return "bg-slate-600";
+    if (nombre.includes("BRONCE")) return "bg-[#bf735c]";
+    if (nombre.includes("PLATA")) return "bg-gray-400";
+    if (nombre.includes("ORO")) return "bg-[#1e3a5f]";
+    return "bg-slate-800";
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-[#1e3a5f] font-sans">
-      {/* max-w-5xl es la clave para juntarlos en el centro */}
-        <main className="max-w-5xl mx-auto px-4 pt-10 pb-12">
+    <div className="min-h-screen bg-[#f4f1ea] p-8 font-sans text-[#1e3a5f]">
+      <div className="max-w-6xl mx-auto">
         
-        {/* CABECERA */}
-        <div className="relative mb-12 flex flex-col items-center justify-center">
-          <div className="md:absolute md:left-0 mb-4 md:mb-0">
-            <Button variant="outline" asChild className="border-[#1e3a5f] text-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white font-bold">
-              <Link href="/perfil/publicacion" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4 stroke-[3]" />
-                <span className="uppercase text-xs tracking-widest">Volver</span>
-              </Link>
-            </Button>
-          </div>
+        {/* Navegación - Criterio 1 */}
+        <Button variant="outline" asChild className="mb-6 border-[#1e3a5f]">
+          <Link href="/perfil/publicacion">
+            <ArrowLeft className="mr-2 h-4 w-4" /> VOLVER
+          </Link>
+        </Button>
 
-          <h1 className="text-4xl md:text-5xl font-black text-[#1e3a5f] uppercase tracking-tighter text-center italic">
-            Planes de Promoción
-          </h1>
-        </div>
+        <h1 className="text-4xl font-black text-center mb-10 uppercase italic">
+          Planes de Promoción
+        </h1>
 
-        {/* GRID DE 5 COLUMNAS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {planesPromocion.map((plan) => (
-            <div 
-              key={plan.id} 
-              className="w-full h-full border border-gray-300 rounded-lg p-5 flex flex-col items-center text-center bg-white/60 shadow-sm hover:shadow-xl transition-all"
-            >
-              <span className="text-gray-400 text-xs mb-4 font-bold tracking-[0.3em]">X-----------X</span>
+        {/* Grilla Dinámica - Criterio 11 (Responsivo) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {planesBD.map((plan) => (
+            <div key={plan.id_plan} className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col hover:shadow-2xl transition-shadow">
               
-              <h2 className="text-xl font-extrabold uppercase mb-6 tracking-tight">Plan {plan.nombre}</h2>
-              
-              <div className="flex-grow space-y-3 mb-8 text-[#1e3a5f]/80">
-                <p className="text-sm font-semibold">{plan.dias} días de promoción</p>
-                <p className="text-sm font-semibold">{plan.prioridad}</p>
-                <p className="text-sm font-semibold">{plan.visibilidad}</p>
-                {plan.id === '3' && <p className="text-sm font-bold italic">Soporte Prioritario</p>}
-                {plan.id === '4' && <p className="text-sm font-bold italic">Soporte Exclusivo</p>}
-              
+              {/* Encabezado dinámico con el nombre de la BD */}
+              <div className={`${getColorPorNombre(plan.nombre_plan ?? "")} text-white p-4 text-center font-bold`}>
+                {plan.nombre_plan}
               </div>
-              
-              <div className="mb-6">
-                <span className="text-3xl font-black text-[#1e3a5f]">${plan.precio}</span>
-                <span className="text-xs font-bold text-gray-500 uppercase"> / {plan.dias} días</span>
+
+              <div className="p-8 flex-grow text-center">
+                <p className="text-5xl font-black mb-2">${Number(plan.precio_plan)}</p>
+                <p className="text-[#bf735c] font-bold uppercase text-xs tracking-widest">
+                  {plan.cant_publicaciones} DÍAS DE DURACIÓN
+                </p>
+                
+                <ul className="mt-6 text-sm text-left space-y-2 border-t pt-4 text-gray-600">
+                  <li>• Mayor visibilidad en lista</li>
+                  <li>• Prioridad en filtros</li>
+                  <li>• Etiqueta destacada</li>
+                </ul>
               </div>
-              
-              <Button 
-                onClick={() => handleSelectPlan(plan.id)}
-                className={`w-full py-7 text-sm font-black rounded-md uppercase text-white shadow-lg hover:brightness-110 active:scale-95 transition-all ${plan.color}`}
-              >
-                Continuar
-              </Button>
+
+              <div className="p-6">
+                {/* REDIRECCIÓN FINAL - Criterio 6 y 8 */}
+                {/* Enviamos el id_plan y el pubId a la siguiente pantalla de cobros */}
+                <Button asChild className="w-full bg-[#1e3a5f] hover:bg-[#2a5288] py-6 text-lg font-bold">
+                <Link href={`/cobros/sector-pagos?planId=${plan.id_plan}&pubId=${idPublicacion}`}>
+                    CONTINUAR
+                  </Link>
+                </Button>
+              </div>
             </div>
           ))}
         </div>
-      </main>
+      </div>
     </div>
-  );
-}
-
-export default function PlanesPromocionPage() {
-  return (
-    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-[#1e3a5f]" /></div>}>
-      <PlanesPromocionContent />
-    </Suspense>
   );
 }
