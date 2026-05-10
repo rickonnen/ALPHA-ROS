@@ -235,6 +235,11 @@ function PropertyCard({
           <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
             ? 'w-[100px] xl:w-[130px] pr-2' 
             : 'w-[200px] pr-4'}`}>
+            {property.price === 993000 && (
+            <span className="mb-2 inline-block rounded-full bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+              MAS VISTO
+             </span>
+             )}
             <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
             ? 'text-[14px] xl:text-[15px]'
             : 'text-[18px]'
