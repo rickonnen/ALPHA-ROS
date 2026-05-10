@@ -103,7 +103,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
               }}
             />
           ) : (
-            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} />
+            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} onMagicLink={magicLink.open} />
           )}
         </div>
          </>
