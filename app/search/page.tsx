@@ -345,7 +345,6 @@ function mapPublicationToProperty(
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono,
     caracteristicas: publication.caracteristicas || [],
-    etiquetas: publication.etiquetas || [],
   };
 }
 
@@ -424,19 +423,19 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [etiquetasDB, setEtiquetasDB] = useState<any[]>([]);
+  const [caracteristicasDB, setCaracteristicasDB] = useState<any[]>([]);
   const [advancedFilterValues, setAdvancedFilterValues] = useState<{
     habitaciones?: string;
     banos?: string;
     piscina?: string;
     minSurface?: number;
     maxSurface?: number;
-    etiquetasIds?: number[];
+    caracteristicasIds?: number[];
   }>({
     habitaciones: "",
     banos: "",
     piscina: "",
-    etiquetasIds: [],
+    caracteristicasIds: [],
   });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -488,25 +487,24 @@ function SearchPageContent() {
   }, []);
 
   useEffect(() => {
-  const fetchTags = async () => {
+  const fetchCaracteristicas = async () => {
     try {
       const res = await fetch("/api/etiquetas");
       const payload = await res.json();
-      
-      // Intentamos buscar las etiquetas en diferentes propiedades comunes
-      const rawTags = Array.isArray(payload) 
-        ? payload 
-        : (payload.data || payload.etiquetas || payload.tags || []);
-        
-      setEtiquetasDB(rawTags);
-      
-      // LOG PARA DEBUG (Borralo después de verificar):
-      console.log("Etiquetas cargadas:", rawTags);
+
+      const rawCaracteristicas = Array.isArray(payload)
+        ? payload
+        : payload.caracteristicas || payload.data || [];
+
+      setCaracteristicasDB(rawCaracteristicas);
+
+      console.log("Características cargadas:", rawCaracteristicas);
     } catch (error) {
-      console.error("Error cargando etiquetas de la DB:", error);
+      console.error("Error cargando características de la DB:", error);
     }
   };
-  fetchTags();
+
+  fetchCaracteristicas();
 }, []);
 
   useEffect(() => {
@@ -602,14 +600,15 @@ function SearchPageContent() {
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      searchLocation.trim() ||
-        selectedOperation.length > 0 ||
+      selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
         advancedFilterValues.minSurface !== undefined ||
         advancedFilterValues.maxSurface !== undefined ||
+        (advancedFilterValues.caracteristicasIds &&
+          advancedFilterValues.caracteristicasIds.length > 0) ||
         appliedPriceFilter?.minPrice !== undefined ||
         appliedPriceFilter?.maxPrice !== undefined,
     );
@@ -617,11 +616,11 @@ function SearchPageContent() {
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
-    appliedPriceFilter?.maxPrice,
-    appliedPriceFilter?.minPrice,
     advancedFilterValues.minSurface,
     advancedFilterValues.maxSurface,
-    searchLocation,
+    advancedFilterValues.caracteristicasIds,
+    appliedPriceFilter?.maxPrice,
+    appliedPriceFilter?.minPrice,
     selectedOperation,
     selectedPropertyTypes,
   ]);
@@ -833,8 +832,11 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
-    if (advancedFilterValues.etiquetasIds && advancedFilterValues.etiquetasIds.length > 0) {
-        urlParams.set("tags", advancedFilterValues.etiquetasIds.join(","));
+    if (
+      advancedFilterValues.caracteristicasIds &&
+      advancedFilterValues.caracteristicasIds.length > 0
+    ) {
+      urlParams.set("caracteristicas", advancedFilterValues.caracteristicasIds.join(","));
     }
     window.history.pushState(null, "", `/search?${urlParams.toString()}`);
   };
@@ -867,7 +869,7 @@ function SearchPageContent() {
         minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
         currency: selectedCurrency,
-        etiquetasIds: advancedFilterValues.etiquetasIds,
+        caracteristicasIds: advancedFilterValues.caracteristicasIds,
         ...overrides,
       };
 
@@ -959,9 +961,11 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
-    // --- PASO 2: Leer las etiquetas (tags) de la URL (NUEVO) ---
-    const tagsParam = searchParams.get("tags");
-    const nextTags = tagsParam ? tagsParam.split(",").map(Number).filter(n => !isNaN(n)) : [];
+    // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
+    const caracteristicasParam = searchParams.get("caracteristicas");
+    const nextCaracteristicas = caracteristicasParam
+      ? caracteristicasParam.split(",").map(Number).filter((n) => !isNaN(n))
+      : [];
 
     const nextMinPrice =
       minPriceParam !== null && minPriceParam.trim() !== ""
@@ -986,7 +990,7 @@ function SearchPageContent() {
     // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
     setAdvancedFilterValues(prev => ({
       ...prev,
-      etiquetasIds: nextTags
+      caracteristicasIds: nextCaracteristicas
     }));
 
     void runSearch({
@@ -996,7 +1000,7 @@ function SearchPageContent() {
         nextPropertyLabels.join(",") || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
-      etiquetasIds: nextTags, // PASAMOS LOS TAGS A LA BÚSQUEDA
+      caracteristicasIds: nextCaracteristicas,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -1092,7 +1096,7 @@ function SearchPageContent() {
       piscina: "",
       minSurface: undefined,
       maxSurface: undefined,
-      etiquetasIds: [],
+      caracteristicasIds: [],
     } as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
@@ -1111,7 +1115,7 @@ function SearchPageContent() {
       maxPrice: undefined,
       minSurface: undefined,
       maxSurface: undefined,
-      etiquetasIds: [], 
+      caracteristicasIds: [], 
     });
   };
 
@@ -1257,7 +1261,7 @@ function SearchPageContent() {
                   onChange={setSelectedPropertyTypes}
                 />
                 <AdvancedFilters
-                  allTags={etiquetasDB}           // <--- ACTIVADO PARA MÓVIL
+                  allTags={caracteristicasDB}           // <--- ACTIVADO PARA MÓVIL
                   value={advancedFilterValues}    // <--- ACTIVADO PARA MÓVIL
                   key={advancedFiltersKey}
                   onChange={(v: any) => setAdvancedFilterValues(v)}
@@ -1596,7 +1600,7 @@ function SearchPageContent() {
                       onChange={setSelectedPropertyTypes}
                     />
                     <AdvancedFilters 
-                       allTags={etiquetasDB}           // <--- ACTIVADO PARA DESKTOP
+                       allTags={caracteristicasDB}           // <--- ACTIVADO PARA DESKTOP
                        value={advancedFilterValues}    // <--- ACTIVADO PARA DESKTOP
                        key={advancedFiltersKey}
                        onChange={(v: any) => setAdvancedFilterValues(v)} 

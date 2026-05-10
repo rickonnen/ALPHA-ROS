@@ -99,7 +99,7 @@ function SubDropdown({
   const handleOptionKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
     index: number,
-    optionValue: string
+    optionValue: string,
   ) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -206,7 +206,7 @@ function SubDropdown({
                     "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                     checked
                       ? "bg-[#E7E3DD] text-[#2E2E2E]"
-                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]",
                   )}
                 >
                   <span
@@ -214,13 +214,13 @@ function SubDropdown({
                       "flex h-[18px] w-[18px] items-center justify-center rounded-lg border transition",
                       checked
                         ? "border-[#6B6B6B] bg-white"
-                        : "border-[#8A847C] bg-white"
+                        : "border-[#8A847C] bg-white",
                     )}
                   >
                     <span
                       className={cn(
                         "h-[8px] w-[8px] rounded-lg bg-[#1F3A4D] transition",
-                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0",
                       )}
                     />
                   </span>
@@ -237,17 +237,20 @@ function SubDropdown({
 }
 
 interface AdvancedFiltersValues {
-  habitaciones?: string;   // <--- AGREGÁ EL ?
-  banos?: string;          // <--- AGREGÁ EL ?
-  piscina?: string;        // <--- AGREGÁ EL ?
-  minSurface?: number;     
-  maxSurface?: number;     
-  etiquetasIds?: number[]; // <--- AGREGÁ EL ?
+  habitaciones?: string;
+  banos?: string;
+  piscina?: string;
+  minSurface?: number;
+  maxSurface?: number;
+  caracteristicasIds?: number[];
 }
 
 interface Props {
   onChange: (valores: AdvancedFiltersValues) => void;
   value?: AdvancedFiltersValues;
+
+  // Se mantiene allTags para no tocar search/page.tsx,
+  // pero internamente estos datos son Caracteristicas.
   allTags: any[];
 }
 
@@ -257,10 +260,13 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
   const [banos, setBanos] = useState(value?.banos ?? "");
   const [piscina, setPiscina] = useState(value?.piscina ?? "");
-  
-  // Manejamos localmente como string para el input, pero convertimos al enviar
-  const [minSurface, setMinSurface] = useState(value?.minSurface?.toString() ?? "");
-  const [maxSurface, setMaxSurface] = useState(value?.maxSurface?.toString() ?? "");
+
+  const [minSurface, setMinSurface] = useState(
+    value?.minSurface?.toString() ?? "",
+  );
+  const [maxSurface, setMaxSurface] = useState(
+    value?.maxSurface?.toString() ?? "",
+  );
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -281,17 +287,19 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
 
   const actualizar = (
     campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
-    nuevoValor: string 
+    nuevoValor: string,
   ) => {
-    const parseSurface = (val: string) => val === "" ? undefined : Number(val);
+    const parseSurface = (val: string) => (val === "" ? undefined : Number(val));
 
     onChange({
       habitaciones: campo === "habitaciones" ? nuevoValor : habitaciones,
       banos: campo === "banos" ? nuevoValor : banos,
       piscina: campo === "piscina" ? nuevoValor : piscina,
-      minSurface: campo === "minSurface" ? parseSurface(nuevoValor) : parseSurface(minSurface),
-      maxSurface: campo === "maxSurface" ? parseSurface(nuevoValor) : parseSurface(maxSurface),
-      etiquetasIds: value?.etiquetasIds ?? [],
+      minSurface:
+        campo === "minSurface" ? parseSurface(nuevoValor) : parseSurface(minSurface),
+      maxSurface:
+        campo === "maxSurface" ? parseSurface(nuevoValor) : parseSurface(maxSurface),
+      caracteristicasIds: value?.caracteristicasIds ?? [],
     });
   };
 
@@ -337,17 +345,17 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       piscina,
       minSurface: undefined,
       maxSurface: undefined,
-      etiquetasIds: value?.etiquetasIds ?? [],
+      caracteristicasIds: value?.caracteristicasIds ?? [],
     });
   };
 
-  const toggleTag = (id: number) => {
-    const actuales = value?.etiquetasIds ?? [];
+  const toggleCaracteristica = (id: number) => {
+    const actuales = value?.caracteristicasIds ?? [];
     const nuevos = actuales.includes(id)
-      ? actuales.filter((t) => t !== id)
+      ? actuales.filter((caracteristicaId) => caracteristicaId !== id)
       : [...actuales, id];
 
-    const parseSurface = (val: string) => val === "" ? undefined : Number(val);
+    const parseSurface = (val: string) => (val === "" ? undefined : Number(val));
 
     onChange({
       habitaciones,
@@ -355,7 +363,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       piscina,
       minSurface: parseSurface(minSurface),
       maxSurface: parseSurface(maxSurface),
-      etiquetasIds: nuevos,
+      caracteristicasIds: nuevos,
     });
   };
 
@@ -373,7 +381,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
             <AccordionTrigger
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
-                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]",
               )}
             >
               Avanzado
@@ -428,24 +436,35 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
               </div>
 
               <div className="mt-4 border-t border-[#C8C0B5] pt-4">
-                <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">Etiquetas Especiales</h3>
+                <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">
+                  Características
+                </h3>
+
                 <div className="flex flex-wrap gap-2">
-                  {allTags?.map((tag) => {
-                    const isSelected = value?.etiquetasIds?.includes(tag.id_etiqueta);
+                  {allTags?.map((caracteristica) => {
+                    const isSelected = value?.caracteristicasIds?.includes(
+                      caracteristica.id_caracteristica,
+                    );
+
                     return (
                       <button
-                        key={tag.id_etiqueta}
+                        key={caracteristica.id_caracteristica}
                         type="button"
-                        onClick={() => toggleTag(tag.id_etiqueta)}
+                        onClick={() =>
+                          toggleCaracteristica(caracteristica.id_caracteristica)
+                        }
                         className={cn(
                           "rounded-md px-3 py-1.5 text-[10px] font-bold uppercase transition-all border-2",
-                          isSelected 
-                            ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]" 
-                            : "border-transparent opacity-70 hover:opacity-100"
+                          isSelected
+                            ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]"
+                            : "border-transparent opacity-70 hover:opacity-100",
                         )}
-                        style={{ backgroundColor: tag.color || '#6B7280', color: 'white' }}
+                        style={{
+                          backgroundColor: "#6B7280",
+                          color: "white",
+                        }}
                       >
-                        {tag.nombre_etiqueta}
+                        {caracteristica.nombre_caracteristica}
                       </button>
                     );
                   })}
