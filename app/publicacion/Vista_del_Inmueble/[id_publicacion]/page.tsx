@@ -39,6 +39,14 @@
  * @Fecha: 10/05/2026
  * @Funcionalidad: Se añadió botón y modal para reportar la publicación (ReportModal).
  */
+/**
+ * Modificacion
+ * @Dev: Gabriel Paredes 
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Se habilita mostrarShare={true} en <MediaGallery /> para mostrar
+ *                 el botón de compartir superpuesto sobre la galería (igual que FavButton).
+ *                 El estado y el modal son manejados internamente por MediaGallery.
+ */
 
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";    
@@ -127,6 +135,13 @@ export default async function VistaInmueblePage({
         </header>
 
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
+        {/*
+          mostrarShare={true} → habilita el botón de compartir superpuesto en la galería.
+          mostrarFav={false}  → el FavButton se sigue mostrando desde el bloque absoluto
+                                de abajo (comportamiento original de HU2).
+          Si en el futuro se quiere mover el FavButton también dentro de MediaGallery,
+          basta con pasar mostrarFav={true} aquí y quitar el bloque absoluto de abajo.
+        */}
         <div className="relative rounded-3xl overflow-hidden">
           <MediaGallery
             id_publicacion={intId.toString()}
@@ -134,8 +149,9 @@ export default async function VistaInmueblePage({
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
             mostrarFav={false}
-          />         
-          {/* BOTÓN SUPERPUESTO (Solo visible en HU2) */}
+            mostrarShare={true}
+          />
+          {/* BOTÓN FAV SUPERPUESTO (Solo visible en HU2) */}
           <div className="absolute bottom-14 right-8 z-20">
             <FavButton id_publicacion={intId.toString()} />
           </div>
