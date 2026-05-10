@@ -236,11 +236,35 @@ function PropertyCard({
           <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
             ? 'w-[100px] xl:w-[130px] pr-2' 
             : 'w-[200px] pr-4'}`}>
-            <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
-            ? 'text-[14px] xl:text-[15px]'
-            : 'text-[18px]'
-            }`}>{displayPrice}
-            </span>
+            <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
+  ? 'w-[100px] xl:w-[130px] pr-2' 
+  : 'w-[200px] pr-4'}`}>
+
+  {(displayPrice.includes("100.000") ||
+  displayPrice.includes("993")
+) && (
+    <span className="mb-2 inline-block w-fit rounded-full bg-orange-500 px-2 py-1 text-[10px] font-bold text-white">
+      MAS VISTO
+    </span>
+  )}
+
+  <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
+    ? 'text-[14px] xl:text-[15px]'
+    : 'text-[18px]'
+  }`}>
+    {displayPrice}
+  </span>
+
+  <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
+    ? 'text-[10px] xl:text-[11px]' 
+    : 'text-[12px]'
+  }`}>
+    {property.type}
+  </span>
+
+</div>
+             
+            
             <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
               ? 'text-[10px] xl:text-[11px]' 
               : 'text-[12px]'
