@@ -21,6 +21,14 @@
 * @return Objeto con los campos nombres, apellidos, username, email, 
 *                url_foto_perfil y el primer número de teléfono registrado.
 */
+/**
+ * Modificacion
+ * Dev: [tu nombre]
+ * Date: 09/05/2026
+ * Funcionalidad: Inclusión de PromocionPublicacion para detectar si la publicación
+ *                tiene una promoción vigente (fecha_fin > now()). Solo se trae 1 registro
+ *                activo — si el array viene con length > 0, la publicación está destacada.
+ */
 import { prisma } from "@/lib/prisma";
 
 export async function getPerfilInmueble(intIdPublicacion: number) {
@@ -73,7 +81,15 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       },
       Video: { select: { url_video: true } },
       Imagen: { select: { url_imagen: true } },
-      //Parte para el ContactCard
+      // Promoción vigente — si fecha_fin > now(), la publicación está destacada
+      PromocionPublicacion: {
+        where: {
+          fecha_fin: { gt: new Date() },
+        },
+        select: { id_promocion: true },
+        take: 1,
+      },
+      // Parte para el ContactCard
       Usuario: {
         select: {
           id_usuario: true,

@@ -1,4 +1,3 @@
-
 /**
  * @Dev: Gustavo Montaño
  * @Fecha: 18/04/2026
@@ -29,19 +28,27 @@
  * @param {Promise<{ id_publicacion: string }>} params - Promesa con el ID dinámico de la URL.
  * @return {JSX.Element} Interfaz completa privada del inmueble.
  */
+/**
+ * Modificacion
+ * Dev: [tu nombre]
+ * Fecha: 09/05/2026
+ * Update: Agrega etiqueta "Propiedad Destacada" en el header cuando la publicación
+ *         tiene una PromocionPublicacion vigente (fecha_fin > now()). Solo visible
+ *         para el propietario en esta vista privada.
+ */
 
 import { notFound, redirect }     from "next/navigation";
-import { cookies }           from "next/headers";
-import { verify }            from "jsonwebtoken";
-import { getServerSession }  from "next-auth";
-import { Tag, Ruler }        from "lucide-react";
-import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
-import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
-import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
-import { PropertyActions }   from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
-import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
-import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
-import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
+import { cookies }                from "next/headers";
+import { verify }                 from "jsonwebtoken";
+import { getServerSession }       from "next-auth";
+import { Tag, Ruler }             from "lucide-react";
+import { MediaGallery }           from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
+import { PropertyDetails }        from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
+import { getPerfilInmueble }      from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
+import { PropertyActions }        from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
+import { ContactCard }            from "@/features/publicacion/[id_publicacion]/components/ContactCard";
+import { LocationMapClient }      from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import { PublicationStatusBadge, DestacadaBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 
 export default async function PerfilInmueblePage({
   params,
@@ -53,7 +60,6 @@ export default async function PerfilInmueblePage({
   if (isNaN(intId)) return notFound();
   const objPerfil = await getPerfilInmueble(intId);
   if (!objPerfil) return notFound();
- if (!objPerfil) return notFound();
   // --- VALIDACIÓN DE SEGURIDAD MULTI-MÉTODO ---
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
@@ -114,6 +120,9 @@ export default async function PerfilInmueblePage({
   const lat = objPerfil.Ubicacion?.latitud ? Number(objPerfil.Ubicacion.latitud) : null;
   const lng = objPerfil.Ubicacion?.longitud ? Number(objPerfil.Ubicacion.longitud) : null;
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
+  // Promoción vigente: existe al menos 1 PromocionPublicacion con fecha_fin > now()
+  const bolEsDestacada = (objPerfil.PromocionPublicacion?.length ?? 0) > 0;
+
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <div className="max-w-6xl mx-auto">
@@ -122,9 +131,12 @@ export default async function PerfilInmueblePage({
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
-          <PublicationStatusBadge
-            strEstado={objPerfil.EstadoPublicacion?.nombre_estado}
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <PublicationStatusBadge
+              strEstado={objPerfil.EstadoPublicacion?.nombre_estado}
+            />
+            {bolEsDestacada && <DestacadaBadge />}
+          </div>
         </header>
         {/* Task 4.4 + 4.5 + 4.11: Galería */}
         <div className="relative rounded-3xl overflow-hidden">
@@ -142,11 +154,11 @@ export default async function PerfilInmueblePage({
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
             <Tag className="w-5 h-5 md:w-6 md:h-6 text-[#2E2E2E] opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-subtitle min-[811px]:text-[24px]">
-          <span className="font-bold text-[#1F3A4D]">Precio:</span>
-          <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
-            {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
-          </span>
-        </div>
+              <span className="font-bold text-[#1F3A4D]">Precio:</span>
+              <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
+                {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
+              </span>
+            </div>
           </div>
           {/* Bloque Superficie */}
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
@@ -186,9 +198,9 @@ export default async function PerfilInmueblePage({
             arrCaracteristicas:    (objPerfil.PublicacionCaracteristica ?? []).map((item) => ({
               strNombre:  item.Caracteristica.nombre_caracteristica ?? "",
               strDetalle: item.detalle_caracteristica ?? null,
-    })),
-  }}
-/>
+            })),
+          }}
+        />
         {/* Task 4.8: Descripción */}
         <section className="mt-6 mb-6">
           <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
@@ -222,7 +234,6 @@ export default async function PerfilInmueblePage({
         })()}
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
         <PropertyActions />
-
       </div>
     </main>
   );
