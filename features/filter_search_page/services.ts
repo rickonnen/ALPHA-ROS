@@ -38,6 +38,7 @@ export type SearchPublicationResult = {
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
   fecha_creacion: string | null;
+  es_promocionada: boolean;
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -200,7 +201,8 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     caracteristicas: publication.PublicacionCaracteristica.map(
       (item) => item.Caracteristica?.nombre_caracteristica,
     ).filter((name): name is string => Boolean(name)),
-    
+    es_promocionada: publication.prioridad ?? false,
+
     etiquetas: (publication.PublicacionEtiquetas || []).map((pe) => ({
        id: pe.Etiquetas?.id_etiqueta ?? 0, // <--- Etiquetas con S
        nombre: pe.Etiquetas?.nombre_etiqueta ?? "", 
@@ -242,7 +244,11 @@ export async function searchPublicaciones(filters: SearchFiltersInput): Promise<
   });
 
   const priceFiltered = publications.filter((publication) => passesPriceFilter(publication, filters, apiExchangeRate));
-  return priceFiltered.map(mapPublication);
+  const mapped = priceFiltered.map(mapPublication);
+
+  const promoted = mapped.filter((p) => p.es_promocionada);
+  const regular = mapped.filter((p) => !p.es_promocionada);
+  return [...promoted, ...regular];
 }
 
 export async function getCachedPublicaciones(filters: SearchFiltersInput) {

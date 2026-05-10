@@ -254,8 +254,9 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
         return first.id - second.id;
-      case "fecha-reciente":
       default:
+        if (first.isPromoted && !second.isPromoted) return -1;
+        if (!first.isPromoted && second.isPromoted) return 1;
         return second.id - first.id;
     }
   });
@@ -346,6 +347,7 @@ function mapPublicationToProperty(
     usuarioTelefono: publication.usuario?.telefono,
     caracteristicas: publication.caracteristicas || [],
     etiquetas: publication.etiquetas || [],
+    isPromoted: publication.es_promocionada ?? false,
   };
 }
 

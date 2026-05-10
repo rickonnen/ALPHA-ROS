@@ -46,6 +46,7 @@ export interface Property {
   images: string[];
   usuarioTelefono?: string;
   etiquetas?: { id: number; nombre: string; color: string }[];
+  isPromoted?: boolean;
 }
 
 interface PropertyCardProps {
@@ -485,6 +486,7 @@ export default memo(PropertyCard, (prevProps, nextProps) => {
     prevProps.isMapOpen === nextProps.isMapOpen &&
     prevProps.isHovered === nextProps.isHovered &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.selectedCurrency === nextProps.selectedCurrency
+    prevProps.selectedCurrency === nextProps.selectedCurrency &&
+    prevProps.property.isPromoted === nextProps.property.isPromoted
   );
 });
