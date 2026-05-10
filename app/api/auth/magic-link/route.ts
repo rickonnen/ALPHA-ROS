@@ -73,7 +73,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4️ Aplicar Rate Limit (máx 3 intentos por hora)
+    // 4️ Obtener IP del request
+    const ipAddress =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+
+    // 5️ Aplicar Rate Limit por email (máx 3 intentos por hora)
     const hace1Hora = new Date(Date.now() - 60 * 60 * 1000);
     let recentAttempts = 0;
 
@@ -91,7 +97,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (recentAttempts >= 3) {
-      console.warn("[Magic Link] Rate limit excedido para:", emailLower);
+      console.warn("[Magic Link] Rate limit por email excedido para:", emailLower);
       return NextResponse.json(
         {
           error: "Demasiados intentos. Espera 1 hora antes de solicitar otro Magic Link",
@@ -100,7 +106,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5️ Generar token seguro (32 bytes)
+    // Rate limit por IP (máx 10 intentos por hora, sin importar el email)
+    if (ipAddress !== "unknown") {
+      let attemptsFromIP = 0;
+      try {
+        attemptsFromIP = await prisma.magic_link_attempt.count({
+          where: {
+            ip_address: ipAddress,
+            sent_at: { gte: hace1Hora },
+          },
+        });
+      } catch {
+        console.warn("[Magic Link] Rate limit por IP deshabilitado - error al contar intentos");
+      }
+
+      if (attemptsFromIP >= 10) {
+        console.warn("[Magic Link] Rate limit por IP excedido para:", ipAddress);
+        return NextResponse.json(
+          {
+            error: "Demasiados intentos desde esta dirección. Espera 1 hora.",
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    // 6️ Generar token seguro (32 bytes)
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -121,6 +152,7 @@ export async function POST(req: NextRequest) {
           sent_at: new Date(),
           expires_at: expiresAt,
           status: "pending",
+          ip_address: ipAddress,
         },
       });
       console.log("[Magic Link] Intento guardado para:", emailLower);
@@ -129,7 +161,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 7️ Construir URL del Magic Link
-    const magicLinkUrl = `${process.env.NEXTAUTH_URL}/auth/callback?token=${token}&email=${encodeURIComponent(emailLower)}`;
+    const magicLinkUrl = `${process.env.NEXTAUTH_URL}/auth/callback#token=${token}`;
 
     // 8️ Obtener nombre del usuario (si existe) o usar parte del email
     let nombre = emailLower.split("@")[0];

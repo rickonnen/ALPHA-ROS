@@ -21,6 +21,20 @@ export const MagicLinkProvider = CredentialsProvider({
     try {
       const { prisma } = await import("@/lib/prisma");
 
+      // Verificar que existe un token consumido recientemente (últimos 60 segundos)
+      const attempt = await prisma.magic_link_attempt.findFirst({
+        where: {
+          email: credentials.email.toLowerCase(),
+          status: "consumed",
+          consumed_at: { gte: new Date(Date.now() - 60 * 1000) },
+        },
+      });
+
+      if (!attempt) {
+        console.error("[Magic Link Auth] No hay token válido consumido para:", credentials.email);
+        return null;
+      }
+
       // Buscar usuario en Prisma por email
       const usuario = await prisma.usuario.findFirst({
         where: { email: credentials.email.toLowerCase() },

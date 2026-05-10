@@ -20,16 +20,9 @@ import crypto from "crypto";
 export async function POST(req: NextRequest) {
   try {
     // 1️ Obtener datos del request
-    const { email, token } = await req.json();
+    const { token } = await req.json();
 
-    // 2️ Validar que email y token no estén vacíos
-    if (!email || email.trim() === "") {
-      return NextResponse.json(
-        { error: "Email requerido" },
-        { status: 400 }
-      );
-    }
-
+    // 2️ Validar que el token no esté vacío
     if (!token || token.trim() === "") {
       return NextResponse.json(
         { error: "Token requerido" },
@@ -37,29 +30,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const emailLower = email.toLowerCase();
-
     // 3️ Hacer hash del token recibido para comparar con BD
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    // 4️ Validar que existe un intento pending con email Y token correcto
+    // 4️ Buscar intento pending por token — el email se recupera de la BD
     const attempt = await prisma.magic_link_attempt.findFirst({
       where: {
-        email: emailLower,
         token: tokenHash,
         status: "pending",
       },
     });
 
     if (!attempt) {
-      console.error("[Magic Link Verify] Token inválido o no coincide para:", emailLower);
+      console.error("[Magic Link Verify] Token inválido o ya consumido");
       return NextResponse.json(
-        { 
-          error: "Link inválido o expirado. Solicita uno nuevo." 
+        {
+          error: "Link inválido o expirado. Solicita uno nuevo."
         },
         { status: 400 }
       );
     }
+
+    // El email se obtiene directamente del registro en BD
+    const emailLower = attempt.email.toLowerCase();
 
     // 5️ Validar que NO esté expirado (15 minutos)
     const ahora = new Date();

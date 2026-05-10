@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { CircleEllipsis, CheckCircle2, XCircle, X } from "lucide-react";
 
@@ -10,20 +10,18 @@ import { CircleEllipsis, CheckCircle2, XCircle, X } from "lucide-react";
  */
 export default function Callback() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [status, setStatus]   = useState<"loading" | "success" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("Error al obtener usuario. Intenta nuevamente.");
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const token = searchParams.get("token");
-        const email = searchParams.get("email");
+        const token = new URLSearchParams(window.location.hash.slice(1)).get("token");
 
-        console.log("[Callback] Parámetros recibidos:", { token: token?.substring(0, 10) + "...", email });
+        console.log("[Callback] Parámetros recibidos:", { token: token?.substring(0, 10) + "..." });
 
-        if (!token || !email) {
-          console.error("[Callback] Falta token o email en URL");
+        if (!token) {
+          console.error("[Callback] Falta token en URL");
           setErrorMsg("Link inválido o incompleto. Solicita uno nuevo.");
           setStatus("error");
           return;
@@ -32,10 +30,7 @@ export default function Callback() {
         const verifyResponse = await fetch("/api/auth/magic-link/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            email, 
-            token 
-          }),
+          body: JSON.stringify({ token }),
         });
 
         const verifyData = await verifyResponse.json();
@@ -47,6 +42,7 @@ export default function Callback() {
           return;
         }
 
+        const email = verifyData.usuario.email;
         console.log("[Callback] Token verificado para:", email, "| Usuario:", verifyData.usuario.id);
 
         const result = await signIn("magic-link", { email, redirect: false });
@@ -71,7 +67,7 @@ export default function Callback() {
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router]);
 
   /* ─── Colores y textos por estado ─── */
   const isLoading = status === "loading";
