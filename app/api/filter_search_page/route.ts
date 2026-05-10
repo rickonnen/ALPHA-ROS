@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
     // Armamos el objeto de filtros para enviarlo al service
     const filters: SearchFiltersInput = {
       ...body,
-      // CAPTURAMOS LOS TAGS: Convertimos a número para evitar errores de tipo
-      etiquetasIds: body.etiquetasIds ? body.etiquetasIds.map(Number) : undefined,
+      // CAPTURAMOS LAS CARACTERÍSTICAS: Convertimos a número para evitar errores de tipo
+      caracteristicasIds: body.caracteristicasIds ? body.caracteristicasIds.map(Number) : undefined,
       
       // Mantenemos el arreglo de superficies
       minSurface: body.minSurface ? Number(body.minSurface) : (body.superficieMin ? Number(body.superficieMin) : undefined),
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      publications, // Aquí ya vienen mapeados los tags desde el service
+      publications, 
       total: publications.length,
     });
   } catch (error) {

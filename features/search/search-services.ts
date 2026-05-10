@@ -13,7 +13,7 @@ export interface FiltrosPublicacion {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
-  etiquetasIds?: number[];
+  caracteristicasIds?: number[];
 }
 
 export interface PublicacionBusqueda {
@@ -34,6 +34,7 @@ export interface PublicacionBusqueda {
   moneda_simbolo?: string | null;
   moneda_tasa_cambio?: number | null;
   fecha_creacion?: Date | string | null;
+
   ubicacion?: {
     direccion?: string | null;
     zona?: string | null;
@@ -42,15 +43,21 @@ export interface PublicacionBusqueda {
     latitud?: number | null;
     longitud?: number | null;
   } | null;
+
   imagenes?: string[];
-  caracteristicas?: string[];
+
+  caracteristicas?: {
+    id: number;
+    nombre: string;
+    detalle: string | null;
+  }[];
+
   usuario?: {
     nombres?: string | null;
     apellidos?: string | null;
     email?: string | null;
     telefono?: string | null;
   } | null;
-  etiquetas?: { id: number; nombre: string; color: string }[];
 }
 
 export interface PublicacionDetalleBusqueda {

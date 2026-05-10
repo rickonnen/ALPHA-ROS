@@ -45,7 +45,7 @@ export interface Property {
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
-  etiquetas?: { id: number; nombre: string; color: string }[];
+  caracteristicas?: { id: number; nombre: string; detalle?: string | null; }[];
 }
 
 interface PropertyCardProps {
@@ -218,14 +218,13 @@ function PropertyCard({
           <p className="truncate text-[10px] font-medium text-gray-400">
             {property.terrainArea.toLocaleString('es-BO')} m² Terreno / {property.bathrooms} Baños
           </p>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {property.etiquetas?.map((tag: any) => (
-              <span 
-                 key={tag.id} 
-                 className="text-[8px] px-1.5 py-0.5 rounded-full text-white font-bold uppercase" 
-                 style={{ backgroundColor: tag.color }}
+          <div className="mt-1 flex flex-wrap gap-1">
+            {property.caracteristicas?.map((caracteristica) => (
+              <span
+                key={caracteristica.id}
+                className="rounded-full bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white"
               >
-                 #{tag.nombre}
+                {caracteristica.nombre}
               </span>
             ))}
           </div>
@@ -270,14 +269,13 @@ function PropertyCard({
               )}
             </p>
 
-            <div className="flex flex-wrap gap-1 mt-2">
-              {property.etiquetas?.map((tag: any) => (
-                <span 
-                  key={tag.id} 
-                  className="text-[9px] px-2 py-0.5 rounded-full text-white font-bold uppercase shadow-sm" 
-                  style={{ backgroundColor: tag.color }}
+            <div className="mt-2 flex flex-wrap gap-1">
+              {property.caracteristicas?.map((caracteristica) => (
+                <span
+                  key={caracteristica.id}
+                  className="rounded-full bg-[#6B7280] px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm"
                 >
-                  #{tag.nombre}
+                  {caracteristica.nombre}
                 </span>
               ))}
             </div>
@@ -429,16 +427,15 @@ function PropertyCard({
             </div>
           </div>
 
-          {/* ETIQUETAS (Dentro del flujo medio para no empujar el footer) */}
-          {property.etiquetas && property.etiquetas.length > 0 && (
+          {/* CARACTERÍSTICAS (Dentro del flujo medio para no empujar el footer) */}
+          {property.caracteristicas && property.caracteristicas.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {property.etiquetas.map((tag) => (
+              {property.caracteristicas.map((caracteristica) => (
                 <span
-                  key={tag.id}
-                  className="rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase text-white shadow-sm"
-                  style={{ backgroundColor: tag.color || '#6B7280' }}
+                  key={caracteristica.id}
+                  className="rounded-md bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white shadow-sm"
                 >
-                  #{tag.nombre}
+                  {caracteristica.nombre}
                 </span>
               ))}
             </div>

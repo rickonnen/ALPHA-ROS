@@ -18,11 +18,8 @@ export type SearchFiltersInput = {
   minSurface?: number;
   maxSurface?: number;
 
-  // Ahora se filtra por Caracteristica / PublicacionCaracteristica
+  // Filtro por características de publicación
   caracteristicasIds?: number[];
-
-  // Compatibilidad temporal por si el frontend todavía manda etiquetasIds
-  etiquetasIds?: number[];
 };
 
 export type SearchPublicationResult = {
@@ -43,6 +40,7 @@ export type SearchPublicationResult = {
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
   fecha_creacion: string | null;
+
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -51,13 +49,14 @@ export type SearchPublicationResult = {
     latitud: number | null;
     longitud: number | null;
   } | null;
+
   imagenes: string[];
 
-  // Lista simple de características
-  caracteristicas: string[];
-
-  // Alias visual para que las cards sigan usando property.etiquetas
-  etiquetas: { id: number; nombre: string; color: string }[];
+  caracteristicas: {
+    id: number;
+    nombre: string;
+    detalle: string | null;
+  }[];
 };
 
 type PublicationWithRelations = Prisma.PublicacionGetPayload<{
@@ -322,19 +321,12 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
     ];
   }
 
-  const selectedCaracteristicasIds =
-    filters.caracteristicasIds && filters.caracteristicasIds.length > 0
-      ? filters.caracteristicasIds
-      : filters.etiquetasIds && filters.etiquetasIds.length > 0
-        ? filters.etiquetasIds
-        : [];
-
-  if (selectedCaracteristicasIds.length > 0) {
+  if (filters.caracteristicasIds && filters.caracteristicasIds.length > 0) {
     addAndCondition(where, {
       PublicacionCaracteristica: {
         some: {
           id_caracteristica: {
-            in: selectedCaracteristicasIds,
+            in: filters.caracteristicasIds,
           },
         },
       },
@@ -409,14 +401,10 @@ function passesPriceFilter(
 }
 
 function mapPublication(publication: PublicationWithRelations): SearchPublicationResult {
-  const caracteristicas = publication.PublicacionCaracteristica.map((item) =>
-    item.Caracteristica?.nombre_caracteristica,
-  ).filter((name): name is string => Boolean(name));
-
-  const etiquetasAlias = publication.PublicacionCaracteristica.map((item) => ({
+  const caracteristicas = publication.PublicacionCaracteristica.map((item) => ({
     id: item.id_caracteristica,
     nombre: item.Caracteristica?.nombre_caracteristica ?? "",
-    color: "#6B7280",
+    detalle: item.detalle_caracteristica ?? null,
   })).filter((item) => Boolean(item.nombre));
 
   return {
@@ -454,7 +442,6 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
       (url): url is string => Boolean(url),
     ),
     caracteristicas,
-    etiquetas: etiquetasAlias,
   };
 }
 
@@ -465,7 +452,9 @@ export async function searchPublicaciones(
 
   try {
     const exchangeRateResponse = await fetch(
-      `${process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"}/v1/dolares/binance`,
+      `${
+        process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"
+      }/v1/dolares/binance`,
       {
         cache: "no-store",
       },
