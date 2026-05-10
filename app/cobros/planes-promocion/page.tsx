@@ -73,7 +73,7 @@ export default async function PlanesPromocionPage(props: {
                 {/* REDIRECCIÓN FINAL - Criterio 6 y 8 */}
                 {/* Enviamos el id_plan y el pubId a la siguiente pantalla de cobros */}
                 <Button asChild className="w-full bg-[#1e3a5f] hover:bg-[#2a5288] py-6 text-lg font-bold">
-                <Link href={`/cobros/sector-pagos?planId=${plan.id_plan}&idPublicaciones=${idPublicacion}`}>
+                <Link href={`/cobros/sector-pagos?planId=${plan.id_plan}&idPublicacion=${idPublicacion}`}>
                     CONTINUAR
                   </Link>
                 </Button>
