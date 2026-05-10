@@ -42,17 +42,29 @@ export async function POST(req: NextRequest) {
     // 3️ Hacer hash del token recibido para comparar con BD
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    // 4️ Validar que existe un intento pending con email Y token correcto
-    const attempt = await prisma.magic_link_attempt.findFirst({
+    // 4️ ATOMIC UPDATE: Buscar y marcar como consumed en UNA operación
+    // Esto previene race condition donde dos peticiones usen el mismo token
+    const ahora = new Date();
+    const attemptUpdated = await prisma.magic_link_attempt.updateMany({
       where: {
-        email: emailLower,
         token: tokenHash,
         status: "pending",
+        expires_at: {
+          gt: ahora, // Token no expirado
+        },
+      },
+      data: {
+        status: "consumed",
+        consumed_at: ahora,
       },
     });
 
-    if (!attempt) {
-      console.error("[Magic Link Verify] Token inválido o no coincide para:", emailLower);
+    // Si no se actualizó ningún registro, significa que:
+    // - El token ya fue consumido por otra petición
+    // - El token expiró
+    // - El token no existe
+    if (attemptUpdated.count === 0) {
+      console.error("[Magic Link Verify] Token inválido, expirado o ya consumido para:", emailLower);
       return NextResponse.json(
         { 
           error: "Link inválido o expirado. Solicita uno nuevo." 
@@ -61,19 +73,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5️ Validar que NO esté expirado (15 minutos)
-    const ahora = new Date();
-    if (ahora > attempt.expires_at) {
-      console.error("[Magic Link Verify] Link expirado para:", emailLower);
+    console.log("[Magic Link] Token marcado como consumido de forma atómica para:", emailLower);
 
-      await prisma.magic_link_attempt.update({
-        where: { id: attempt.id },
-        data: { status: "expired" },
-      });
+    // 5️ Obtener el intento que acabamos de consumir para validaciones posteriores
+    const attempt = await prisma.magic_link_attempt.findFirst({
+      where: {
+        token: tokenHash,
+        status: "consumed",
+      },
+    });
 
+    if (!attempt) {
+      console.error("[Magic Link Verify] No se encontró intento consumido para:", emailLower);
       return NextResponse.json(
         { 
-          error: "El magic link expiró. Los links son válidos por 15 minutos. Solicita uno nuevo." 
+          error: "Error al procesar el link. Intenta nuevamente." 
         },
         { status: 400 }
       );
@@ -99,8 +113,12 @@ export async function POST(req: NextRequest) {
         console.log("[Magic Link] Usuario ya existe en Auth, obteniendo ID...");
         
         try {
-          // Obtener usuario existente de Supabase usando Admin API
-          const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
+          //  Usar listUsers() con búsqueda optimizada
+          // getUserByEmail() no existe en esta versión de Supabase
+          const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+            page: 1,
+            perPage: 1000, // Buscar en los primeros 1000 usuarios
+          });
           
           if (listError) {
             console.error("[Magic Link Verify] Error listando usuarios:", listError);
@@ -110,7 +128,9 @@ export async function POST(req: NextRequest) {
             );
           }
 
-          const existingAuthUser = existingUsers.users.find(u => u.email?.toLowerCase() === emailLower);
+          const existingAuthUser = usersData.users.find(u => 
+            u.email?.toLowerCase() === emailLower
+          );
           
           if (!existingAuthUser) {
             console.error("[Magic Link Verify] Usuario no encontrado en Auth");
@@ -214,17 +234,6 @@ export async function POST(req: NextRequest) {
         id: { not: attempt.id },
       },
     });
-
-    // 10️ Marcar el intento como CONSUMIDO
-    await prisma.magic_link_attempt.update({
-      where: { id: attempt.id },
-      data: {
-        status: "consumed",
-        consumed_at: new Date(),
-      },
-    });
-
-    console.log("[Magic Link] Token marcado como consumido para:", emailLower);
 
     // 10️ Retornar datos del usuario para NextAuth
     return NextResponse.json(
