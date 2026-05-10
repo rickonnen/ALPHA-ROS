@@ -702,19 +702,28 @@ function SearchPageContent() {
       const savedMapState = localStorage.getItem("searchMapOpen");
       if (savedMapState !== null) setIsMapOpen(JSON.parse(savedMapState));
 
-      // team-bugHunters: cargar zona desde perfil
+     // team-bugHunters: cargar zona desde perfil
       const loadedZona = localStorage.getItem("loadedZona");
-      if (loadedZona) {
-        try {
-          const coordenadas = JSON.parse(loadedZona);
-          setDrawnPolygon(coordenadas);
-          setIsDrawingMode(false);
-          setIsMapOpen(true);
-          localStorage.removeItem("loadedZona");
-        } catch (error) {
-          console.error("Error al cargar zona:", error);
-        }
-      }
+      const loadedZonaName = localStorage.getItem("loadedZonaName");
+      const loadedZonaId = localStorage.getItem("loadedZonaId");
+
+    if (loadedZona) {
+     try {
+      const coordenadas = JSON.parse(loadedZona);
+
+    setDrawnPolygon(coordenadas);
+    setCurrentZoneName(loadedZonaName || "Zona guardada");
+    setCurrentZoneId(loadedZonaId ? Number(loadedZonaId) : null);
+    setIsDrawingMode(false);
+    setIsMapOpen(true);
+
+    localStorage.removeItem("loadedZona");
+    localStorage.removeItem("loadedZonaName");
+    localStorage.removeItem("loadedZonaId");
+  } catch (error) {
+    console.error("Error al cargar zona:", error);
+  }
+}
     }
   }, []);
 

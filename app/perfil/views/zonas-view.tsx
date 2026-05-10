@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Map, AlertCircle } from "lucide-react";
+import { Trash2, Map, AlertCircle, MapPin, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -54,7 +54,8 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
         setZonas(zonas.filter(z => z.id_mi_zona !== deleteModal.zona!.id_mi_zona));
         setDeleteModal({ show: false, zona: null });
       } else {
-        alert("Error al eliminar la zona");
+        const data = await res.json();
+        alert(data.error || "Error al eliminar la zona");
       }
     } catch (err) {
       console.error("Error:", err);
@@ -62,8 +63,11 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
     }
   };
 
-  const handleLoadZona = (coordenadas: [number, number][]) => {
-    localStorage.setItem("loadedZona", JSON.stringify(coordenadas));
+  const handleLoadZona = (zona: Zona) => {
+    localStorage.setItem("loadedZona", JSON.stringify(zona.coordenadas));
+    localStorage.setItem("loadedZonaName", zona.nombre_zona);
+    localStorage.setItem("loadedZonaId", String(zona.id_mi_zona));
+
     router.push("/search");
   };
 
@@ -109,6 +113,9 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
                   key={zona.id_mi_zona}
                   className="group flex gap-4 rounded-lg border border-slate-600/40 bg-slate-900/50 hover:bg-slate-900/80 backdrop-blur-sm p-4 transition-all duration-200 items-stretch hover:border-[#C26E5A]/60"
                 >
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#C26E5A]/15 text-[#C26E5A]">
+                   <MapPin className="h-5 w-5" />
+                  </div>
                   {/* Información a la izquierda */}
                   <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div>
@@ -122,14 +129,18 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
                           day: 'numeric'
                         })}
                       </p>
+                       <p className="text-xs text-slate-500 mt-1">
+                       {zona.coordenadas?.length || 0} puntos registrados
+                      </p>
                     </div>
-                    <button
+                   <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleLoadZona(zona.coordenadas);
+                        handleLoadZona(zona);
                       }}
-                      className="mt-3 w-fit px-3 py-1.5 rounded-lg bg-[var(--secondary)] text-white text-xs font-semibold hover:bg-[var(--secondary)]/80 transition-colors border-none"
+                      className="mt-3 inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--secondary)] text-white text-xs font-semibold hover:bg-[var(--secondary)]/80 transition-colors border-none"
                     >
+                      <Eye className="h-3.5 w-3.5" />
                       Cargar zona
                     </button>
                   </div>
