@@ -21,27 +21,36 @@ export async function GET(
     if (isNaN(IntIdBlo)) {
       return NextResponse.json({ error: "id invalido" }, { status: 400 });
     }
-
-    // Buscamos el blog por ID incluyendo el nombre del autor
     const ObjDbBlogBlo = await prisma.blogs.findUnique({
       where: { id_blog: IntIdBlo },
-      include: {
-        Usuario: {
-          select: { nombres: true } 
-        }
-      }
     });
 
     if (!ObjDbBlogBlo) {
       return NextResponse.json({ error: "blog no encontrado" }, { status: 404 });
     }
 
-    // Formateamos la fecha
-    const StrDateBlo = ObjDbBlogBlo.fecha_creacion
+    const ObjDbAuthorBlo = await prisma.usuario.findUnique({
+      where: { id_usuario: ObjDbBlogBlo.id_user }, 
+      select: { 
+        nombres: true,
+        apellidos: true,
+        url_foto_perfil: true
+      }
+    });
+
+    const StrFullNameBlo = ObjDbAuthorBlo
+      ? `${ObjDbAuthorBlo.nombres || ''} ${ObjDbAuthorBlo.apellidos || ''}`.trim() || "Nombre no disponible"
+      : "Autor no disponible";
+
+    const StrDateBlo = ObjDbBlogBlo.fecha_publicacion
+      ? new Date(ObjDbBlogBlo.fecha_publicacion).toLocaleDateString("es-ES", {
+          day: "numeric", month: "short", year: "numeric"
+        })
+      : "fecha desconocida";
+
+    const StrCreationDateBlo = ObjDbBlogBlo.fecha_creacion
       ? new Date(ObjDbBlogBlo.fecha_creacion).toLocaleDateString("es-ES", {
-          day: "numeric",
-          month: "long",
-          year: "numeric"
+          day: "numeric", month: "short", year: "numeric"
         })
       : "fecha desconocida";
 
@@ -58,7 +67,9 @@ export async function GET(
       StrContentBlo: ObjDbBlogBlo.contenido || "No hay contenido para mostrar.",
       StrImageUrlBlo: ObjDbBlogBlo.imagen_url || "",
       StrDateBlo: StrDateBlo,
-      StrAuthorBlo: ObjDbBlogBlo.Usuario?.nombres || "Anónimo",
+      StrCreationDateBlo: StrCreationDateBlo,
+      StrAuthorBlo: StrFullNameBlo,
+      StrAuthorAvatarBlo: ObjDbAuthorBlo?.url_foto_perfil || undefined,
       StrStateBlo: StrStateValueBlo,
       BolIsDeletedBlo: ObjDbBlogBlo.deleted_at !== null,
     };

@@ -34,6 +34,20 @@ export interface singleBlogData {
   StrAuthorAvatarBlo?: string; 
 }
 
+export interface singleAdminBlogData {
+  IntIdBlo: number;
+  StrTitleBlo: string;
+  StrDescriptionBlo: string;
+  StrContentBlo: string;
+  StrImageUrlBlo: string;
+  StrDateBlo: string;
+  StrCreationDateBlo: string;
+  StrAuthorBlo: string;
+  StrAuthorAvatarBlo?: string;
+  StrStateBlo: blogState;
+  BolIsDeletedBlo: boolean;
+}
+
 // interface para la tabla de gestion del administrador
 export interface adminBlogListResponse {
   IntIdBlo: number;
