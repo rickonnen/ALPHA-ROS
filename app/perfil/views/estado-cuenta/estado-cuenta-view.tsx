@@ -76,7 +76,9 @@ export default function EstadoCuentaView({
       // CA-4 / CA-17: logout, limpiar sesión completamente y redirigir
       setTimeout(async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        // window.location.href fuerza recarga completa — limpia todo el estado de auth
+        // limpia todo el estado de auth
+        const { signOut } = await import("next-auth/react");
+        await signOut({ redirect: false });
         window.location.href = "/";
       }, 2500);
     } catch {
