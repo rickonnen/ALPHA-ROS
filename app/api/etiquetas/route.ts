@@ -1,18 +1,20 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/features/filter_search_page/prismaClient';
+import { NextResponse } from "next/server";
+import { prisma } from "@/features/filter_search_page/prismaClient";
 
 export async function GET() {
   try {
-    // Buscamos todas las etiquetas de la tabla Etiquetas
-    const etiquetas = await prisma.etiquetas.findMany({
+    const caracteristicas = await prisma.caracteristica.findMany({
       orderBy: {
-        nombre_etiqueta: 'asc'
-      }
+        nombre_caracteristica: "asc",
+      },
     });
 
-    return NextResponse.json(etiquetas);
+    return NextResponse.json(caracteristicas);
   } catch (error) {
-    console.error("Error al obtener etiquetas:", error);
-    return NextResponse.json({ error: "Error al cargar etiquetas" }, { status: 500 });
+    console.error("Error al obtener características:", error);
+    return NextResponse.json(
+      { error: "Error al cargar características" },
+      { status: 500 }
+    );
   }
 }
