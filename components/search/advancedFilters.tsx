@@ -237,26 +237,30 @@ function SubDropdown({
 }
 
 interface AdvancedFiltersValues {
-  habitaciones: string;
-  banos: string;
-  piscina: string;
-  minSurface?: string;
-  maxSurface?: string;
+  habitaciones?: string;   // <--- AGREGÁ EL ?
+  banos?: string;          // <--- AGREGÁ EL ?
+  piscina?: string;        // <--- AGREGÁ EL ?
+  minSurface?: number;     
+  maxSurface?: number;     
+  etiquetasIds?: number[]; // <--- AGREGÁ EL ?
 }
 
 interface Props {
   onChange: (valores: AdvancedFiltersValues) => void;
   value?: AdvancedFiltersValues;
+  allTags: any[];
 }
 
-export default function FiltrosAvanzado({ onChange, value }: Props) {
+export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
   const [abierto, setAbierto] = useState(false);
 
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
   const [banos, setBanos] = useState(value?.banos ?? "");
   const [piscina, setPiscina] = useState(value?.piscina ?? "");
-  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
-  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
+  
+  // Manejamos localmente como string para el input, pero convertimos al enviar
+  const [minSurface, setMinSurface] = useState(value?.minSurface?.toString() ?? "");
+  const [maxSurface, setMaxSurface] = useState(value?.maxSurface?.toString() ?? "");
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -265,8 +269,8 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
     setHabitaciones(value?.habitaciones ?? "");
     setBanos(value?.banos ?? "");
     setPiscina(value?.piscina ?? "");
-    setMinSurface(value?.minSurface ?? "");
-    setMaxSurface(value?.maxSurface ?? "");
+    setMinSurface(value?.minSurface?.toString() ?? "");
+    setMaxSurface(value?.maxSurface?.toString() ?? "");
   }, [
     value?.habitaciones,
     value?.banos,
@@ -277,14 +281,17 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
   const actualizar = (
     campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
-    valor: string | undefined
+    nuevoValor: string 
   ) => {
+    const parseSurface = (val: string) => val === "" ? undefined : Number(val);
+
     onChange({
-      habitaciones: campo === "habitaciones" ? valor ?? "" : habitaciones,
-      banos: campo === "banos" ? valor ?? "" : banos,
-      piscina: campo === "piscina" ? valor ?? "" : piscina,
-      minSurface: campo === "minSurface" ? valor : minSurface || undefined,
-      maxSurface: campo === "maxSurface" ? valor : maxSurface || undefined,
+      habitaciones: campo === "habitaciones" ? nuevoValor : habitaciones,
+      banos: campo === "banos" ? nuevoValor : banos,
+      piscina: campo === "piscina" ? nuevoValor : piscina,
+      minSurface: campo === "minSurface" ? parseSurface(nuevoValor) : parseSurface(minSurface),
+      maxSurface: campo === "maxSurface" ? parseSurface(nuevoValor) : parseSurface(maxSurface),
+      etiquetasIds: value?.etiquetasIds ?? [],
     });
   };
 
@@ -294,27 +301,23 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
 
       if (inputValue === "") {
         setSurfaceError(null);
-
         if (field === "minSurface") {
           setMinSurface("");
-          actualizar("minSurface", undefined);
+          actualizar("minSurface", "");
         } else {
           setMaxSurface("");
-          actualizar("maxSurface", undefined);
+          actualizar("maxSurface", "");
         }
-
         return;
       }
 
       const validSurface = /^\d*\.?\d*$/.test(inputValue);
-
       if (!validSurface) {
         setSurfaceError("Solo se permiten números");
         return;
       }
 
       setSurfaceError(null);
-
       if (field === "minSurface") {
         setMinSurface(inputValue);
         actualizar("minSurface", inputValue);
@@ -324,19 +327,37 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       }
     };
 
-    const clearSurfaceRange = () => {
-      setSurfaceError(null);
-      setMinSurface("");
-      setMaxSurface("");
+  const clearSurfaceRange = () => {
+    setSurfaceError(null);
+    setMinSurface("");
+    setMaxSurface("");
+    onChange({
+      habitaciones,
+      banos,
+      piscina,
+      minSurface: undefined,
+      maxSurface: undefined,
+      etiquetasIds: value?.etiquetasIds ?? [],
+    });
+  };
 
-      onChange({
-        habitaciones,
-        banos,
-        piscina,
-        minSurface: undefined,
-        maxSurface: undefined,
-      });
-    };
+  const toggleTag = (id: number) => {
+    const actuales = value?.etiquetasIds ?? [];
+    const nuevos = actuales.includes(id)
+      ? actuales.filter((t) => t !== id)
+      : [...actuales, id];
+
+    const parseSurface = (val: string) => val === "" ? undefined : Number(val);
+
+    onChange({
+      habitaciones,
+      banos,
+      piscina,
+      minSurface: parseSurface(minSurface),
+      maxSurface: parseSurface(maxSurface),
+      etiquetasIds: nuevos,
+    });
+  };
 
   return (
     <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
@@ -344,7 +365,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
         type="single"
         collapsible
         value={abierto ? "advanced" : ""}
-        onValueChange={(value) => setAbierto(value === "advanced")}
+        onValueChange={(val) => setAbierto(val === "advanced")}
         className="w-full"
       >
         <AccordionItem value="advanced" className="border-none">
@@ -404,6 +425,31 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                 <p className="text-center text-sm text-red-600">
                   {surfaceError}
                 </p>
+              </div>
+
+              <div className="mt-4 border-t border-[#C8C0B5] pt-4">
+                <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">Etiquetas Especiales</h3>
+                <div className="flex flex-wrap gap-2">
+                  {allTags?.map((tag) => {
+                    const isSelected = value?.etiquetasIds?.includes(tag.id_etiqueta);
+                    return (
+                      <button
+                        key={tag.id_etiqueta}
+                        type="button"
+                        onClick={() => toggleTag(tag.id_etiqueta)}
+                        className={cn(
+                          "rounded-md px-3 py-1.5 text-[10px] font-bold uppercase transition-all border-2",
+                          isSelected 
+                            ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]" 
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        )}
+                        style={{ backgroundColor: tag.color || '#6B7280', color: 'white' }}
+                      >
+                        {tag.nombre_etiqueta}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </AccordionContent>

@@ -13,6 +13,7 @@ export interface FiltrosPublicacion {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
+  etiquetasIds?: number[];
 }
 
 export interface PublicacionBusqueda {
@@ -49,6 +50,7 @@ export interface PublicacionBusqueda {
     email?: string | null;
     telefono?: string | null;
   } | null;
+  etiquetas?: { id: number; nombre: string; color: string }[];
 }
 
 export interface PublicacionDetalleBusqueda {
