@@ -33,6 +33,12 @@
  *                 para que aparezca delante del número, no detrás.
  *                 Se modifica el renderizado del precio en la vista pública.
  */
+/**
+ * Modificacion
+ * @Dev: Stefany S.
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Se añadió botón y modal para reportar la publicación (ReportModal).
+ */
 
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";    
@@ -47,6 +53,7 @@ import CloseTabButton from "./CloseTabButton";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
 import { ViewTracker } from "@/features/publicacion/[id_publicacion]/components/ViewTracker";
+import ReportModal from "@/features/publicacion/[id_publicacion]/components/ReportModal";
 
 export default async function VistaInmueblePage({
   params,
@@ -223,10 +230,11 @@ export default async function VistaInmueblePage({
         })()}
 
         {/* Botón Volver al final (Reemplaza a PropertyActions)*/}
-        <div className="mt-12 flex justify-start">
+        <div className="mt-12 flex items-center justify-between">
           <CloseTabButton className="px-10 py-3 border-2 border-[#C26E5A] text-[#C26E5A] rounded-xl font-bold hover:bg-[#C26E5A]/10 transition-colors">
             Volver
           </CloseTabButton>
+          <ReportModal id_publicacion={intId} />
         </div>
 
       </div>
