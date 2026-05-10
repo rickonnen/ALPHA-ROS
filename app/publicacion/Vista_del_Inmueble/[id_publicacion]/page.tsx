@@ -25,6 +25,15 @@
  * Esto permite que cualquier visitante (registrado o anónimo) dispare de 
  * forma silenciosa el registro de la visita (+1 vista) hacia la base de datos.
  */
+/**
+ * Modificacion
+ * @Dev: Marcela C.
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Corrección de posición del símbolo de moneda (Bs.) 
+ *                 para que aparezca delante del número, no detrás.
+ *                 Se modifica el renderizado del precio en la vista pública.
+ */
+
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";    
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
@@ -133,7 +142,7 @@ export default async function VistaInmueblePage({
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
               <span className="font-bold text-[#1F3A4D]">Precio:</span>
               <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
-                {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
+                {(objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs."))} {Number(objPerfil.precio).toLocaleString("de-DE")}
               </span>
             </div>
           </div>
