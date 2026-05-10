@@ -45,7 +45,8 @@ export interface Property {
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
-  caracteristicas?: { id: number; nombre: string; detalle?: string | null; }[];
+  etiquetas?: { id: number; nombre: string; color: string }[];
+  isPromoted?: boolean;
 }
 
 interface PropertyCardProps {
@@ -234,10 +235,16 @@ function PropertyCard({
           <div className={`flex shrink-0 flex-col justify-center overflow-hidden ${isMapOpen 
             ? 'w-[100px] xl:w-[130px] pr-2' 
             : 'w-[200px] pr-4'}`}>
+            {property.isPromoted && (
+              <span className="mb-2 inline-block w-fit rounded-full bg-amber-400 px-2 py-1 text-[10px] font-bold text-white">
+                DESTACADO
+              </span>
+            )}
             <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
-            ? 'text-[14px] xl:text-[15px]'
-            : 'text-[18px]'
-            }`}>{displayPrice}
+              ? 'text-[14px] xl:text-[15px]'
+              : 'text-[18px]'
+            }`}>
+              {displayPrice}
             </span>
             <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
               ? 'text-[10px] xl:text-[11px]' 
@@ -482,6 +489,7 @@ export default memo(PropertyCard, (prevProps, nextProps) => {
     prevProps.isMapOpen === nextProps.isMapOpen &&
     prevProps.isHovered === nextProps.isHovered &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.selectedCurrency === nextProps.selectedCurrency
+    prevProps.selectedCurrency === nextProps.selectedCurrency &&
+    prevProps.property.isPromoted === nextProps.property.isPromoted
   );
 });

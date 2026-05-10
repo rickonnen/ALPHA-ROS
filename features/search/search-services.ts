@@ -34,7 +34,7 @@ export interface PublicacionBusqueda {
   moneda_simbolo?: string | null;
   moneda_tasa_cambio?: number | null;
   fecha_creacion?: Date | string | null;
-
+  es_promocionada?: boolean;
   ubicacion?: {
     direccion?: string | null;
     zona?: string | null;

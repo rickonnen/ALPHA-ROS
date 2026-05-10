@@ -40,7 +40,7 @@ export type SearchPublicationResult = {
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
   fecha_creacion: string | null;
-
+  es_promocionada: boolean;
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -441,7 +441,16 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     imagenes: publication.Imagen.map((image) => image.url_imagen).filter(
       (url): url is string => Boolean(url),
     ),
-    caracteristicas,
+    caracteristicas: publication.PublicacionCaracteristica.map(
+      (item) => item.Caracteristica?.nombre_caracteristica,
+    ).filter((name): name is string => Boolean(name)),
+    es_promocionada: publication.prioridad ?? false,
+
+    etiquetas: (publication.PublicacionEtiquetas || []).map((pe) => ({
+       id: pe.Etiquetas?.id_etiqueta ?? 0, // <--- Etiquetas con S
+       nombre: pe.Etiquetas?.nombre_etiqueta ?? "", 
+       color: pe.Etiquetas?.color ?? '#6B7280'
+    })),
   };
 }
 
@@ -502,11 +511,12 @@ export async function searchPublicaciones(
     },
   });
 
-  const priceFiltered = publications.filter((publication) =>
-    passesPriceFilter(publication, filters, apiExchangeRate),
-  );
+  const priceFiltered = publications.filter((publication) => passesPriceFilter(publication, filters, apiExchangeRate));
+  const mapped = priceFiltered.map(mapPublication);
 
-  return priceFiltered.map(mapPublication);
+  const promoted = mapped.filter((p) => p.es_promocionada);
+  const regular = mapped.filter((p) => !p.es_promocionada);
+  return [...promoted, ...regular];
 }
 
 export async function getCachedPublicaciones(filters: SearchFiltersInput) {
