@@ -35,6 +35,11 @@ import {
   Map,
   ChevronLeft,
   ChevronRight,
+  MoreVertical,
+  Pencil,
+  Type,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import SearchMapClient from "./SearchMapClient";
 import { convertPublicacionesToLocations } from "@/lib/locations";
@@ -343,11 +348,22 @@ function SearchPageContent() {
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
 
-  // Modales para zonas (team-bugHunters)
+    // Modales para zonas (team-bugHunters)
   const [showZoneNameModal, setShowZoneNameModal] = useState(false);
   const [zoneName, setZoneName] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // HU-7: menú de acciones sobre la zona dibujada
+  const [showZoneActions, setShowZoneActions] = useState(false);
+  const [showDeleteZoneModal, setShowDeleteZoneModal] = useState(false);
+  const [zoneModalMode, setZoneModalMode] = useState<"create" | "rename">(
+    "create",
+  );
+  const [currentZoneId, setCurrentZoneId] = useState<number | null>(null);
+  const [currentZoneName, setCurrentZoneName] = useState("");
+  const [successMessage, setSuccessMessage] = useState(
+    "Se guardó la zona correctamente en tu perfil.",
+  );
   // Reset page when filters/sort/view change (merge-sysinfosquad-bughunters)
   useEffect(() => {
     setCurrentPage(1);
@@ -448,22 +464,77 @@ function SearchPageContent() {
 
   const handleCloseAuth = () => setBolShowAuth(false);
 
+  const handleOpenCreateZoneModal = () => {
+    if (!objUser) {
+      setBolShowProtected(true);
+      return;
+    }
+
+    if (!drawnPolygon || drawnPolygon.length < 3) {
+      alert("Primero debes dibujar una zona válida.");
+      return;
+    }
+
+    setZoneModalMode("create");
+    setZoneName(currentZoneName || "");
+    setShowZoneNameModal(true);
+  };
+
+  const handleOpenRenameZoneModal = () => {
+    if (!drawnPolygon) {
+      alert("Primero debes dibujar o cargar una zona.");
+      return;
+    }
+
+    setZoneModalMode("rename");
+    setZoneName(currentZoneName || "Mi zona");
+    setShowZoneActions(false);
+    setShowZoneNameModal(true);
+  };
+
   const handleSaveZone = async () => {
-    if (!zoneName.trim() || !drawnPolygon) return;
+    const cleanName = zoneName.trim();
+
+    if (!cleanName) {
+      alert("El nombre de la zona no puede estar vacío.");
+      return;
+    }
+
+    // Cambiar nombre visualmente en el mapa.
+    // La actualización real en BD se hace después tocando route.ts.
+    if (zoneModalMode === "rename") {
+      setCurrentZoneName(cleanName);
+      setShowZoneNameModal(false);
+      setZoneName("");
+      setSuccessMessage("El nombre de la zona se actualizó en el mapa.");
+      setShowSuccessModal(true);
+      return;
+    }
+
+    if (!drawnPolygon || drawnPolygon.length < 3) {
+      alert("Primero debes dibujar una zona válida.");
+      return;
+    }
+
     try {
       const response = await fetch("/api/perfil/mis-zonas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          nombre_zona: zoneName.trim(),
+          nombre_zona: cleanName,
           coordenadas: drawnPolygon,
         }),
       });
+
       const data = await response.json();
+
       if (response.ok) {
+        setCurrentZoneId(data.data?.id_mi_zona ?? null);
+        setCurrentZoneName(data.data?.nombre_zona ?? cleanName);
         setShowZoneNameModal(false);
         setZoneName("");
+        setSuccessMessage("Se guardó la zona correctamente en tu perfil.");
         setShowSuccessModal(true);
       } else {
         console.error("Error from API:", data);
@@ -472,7 +543,9 @@ function SearchPageContent() {
     } catch (error) {
       console.error("Error:", error);
       alert(
-        `Error al guardar la zona: ${error instanceof Error ? error.message : "Error desconocido"}`,
+        `Error al guardar la zona: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`,
       );
     }
   };
@@ -482,6 +555,52 @@ function SearchPageContent() {
     setZoneName("");
   };
 
+  const handleStartEditZone = () => {
+    if (!drawnPolygon) {
+      alert("Primero debes dibujar o cargar una zona.");
+      return;
+    }
+
+    setShowZoneActions(false);
+    setDrawnPolygon(null);
+    setIsDrawingMode(true);
+    setSuccessMessage(
+      "Vuelve a dibujar los límites de la zona para actualizarla en el mapa.",
+    );
+    setShowSuccessModal(true);
+  };
+
+  const handleDeleteZoneFromMap = async () => {
+    try {
+      if (currentZoneId) {
+        const response = await fetch(
+          `/api/perfil/mis-zonas?id_mi_zona=${currentZoneId}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          alert(`Error al eliminar zona: ${data.error || "Error desconocido"}`);
+          return;
+        }
+      }
+
+      setDrawnPolygon(null);
+      setCurrentZoneId(null);
+      setCurrentZoneName("");
+      setShowZoneActions(false);
+      setShowDeleteZoneModal(false);
+      setIsDrawingMode(false);
+      setSuccessMessage("La zona se eliminó correctamente del mapa.");
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error al eliminar zona:", error);
+      alert("No se pudo eliminar la zona.");
+    }
+  };
   const breadcrumbPropertyLabel =
     getPropertyTypeLabelsFromIds(
       selectedPropertyTypes,
@@ -976,13 +1095,7 @@ function SearchPageContent() {
                   Zona aplicada: {allProperties.length} inmuebles
                 </span>
                 <button
-                  onClick={() => {
-                    if (!objUser) {
-                      setBolShowProtected(true);
-                      return;
-                    }
-                    setShowZoneNameModal(true);
-                  }}
+                  onClick={handleOpenCreateZoneModal}
                   className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
                 >
                   Guardar en mi Perfil
@@ -1062,14 +1175,8 @@ function SearchPageContent() {
                   <span className="text-sm font-medium text-slate-900 text-center">
                     Zona aplicada: {allProperties.length} inmuebles
                   </span>
-                  <button
-                    onClick={() => {
-                      if (!objUser) {
-                        setBolShowProtected(true);
-                        return;
-                      }
-                      setShowZoneNameModal(true);
-                    }}
+                   <button
+                    onClick={handleOpenCreateZoneModal}
                     className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
                   >
                     Guardar en mi Perfil
@@ -1289,7 +1396,55 @@ function SearchPageContent() {
                 </svg>
               )}
             </button>
+            {/* HU-7: menú contextual de zona en el mapa */}
+            {drawnPolygon && (
+              <div className="absolute top-14 right-3 z-[999] flex flex-col items-end gap-2">
+                <button
+                  onClick={() => setShowZoneActions((prev) => !prev)}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md hover:bg-slate-800 transition-colors"
+                  title="Opciones de zona"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </button>
 
+                {showZoneActions && (
+                  <div className="w-48 overflow-hidden rounded-xl bg-white shadow-xl border border-slate-200">
+                    <button
+                      onClick={handleStartEditZone}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Editar zona
+                    </button>
+
+                    <button
+                      onClick={handleOpenRenameZoneModal}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      <Type className="h-4 w-4" />
+                      Cambiar nombre
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowZoneActions(false);
+                        setShowDeleteZoneModal(true);
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar zona
+                    </button>
+                  </div>
+                )}
+
+                {currentZoneName && (
+                  <div className="rounded-full bg-[#8B4423] px-3 py-1 text-xs font-semibold text-white shadow-md">
+                    {currentZoneName}
+                  </div>
+                )}
+              </div>
+            )}
             <SearchMapClient
               key={isMapFullscreen ? "fullscreen" : "normal"}
               locations={
@@ -1339,7 +1494,7 @@ function SearchPageContent() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold mb-4 text-slate-800 uppercase tracking-tight">
-              Nombre de la zona
+          {zoneModalMode === "rename" ? "Cambiar nombre" : "Nombre de la zona"}
             </h3>
             <input
               type="text"
@@ -1360,13 +1515,49 @@ function SearchPageContent() {
                 className="flex-1 px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary)]/90 transition-colors"
                 disabled={!zoneName.trim()}
               >
-                Guardar
+              {zoneModalMode === "rename" ? "Actualizar" : "Guardar"}
               </button>
             </div>
           </div>
         </div>
       )}
+      {showDeleteZoneModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[120] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
+            <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
 
+            <h3 className="text-lg font-bold mb-2 text-slate-800 uppercase tracking-tight">
+              ¿Eliminar zona?
+            </h3>
+
+            <p className="text-slate-500 text-sm mb-6">
+              ¿Estás seguro de eliminar la zona{" "}
+              <span className="font-semibold text-red-500">
+                {currentZoneName || "seleccionada"}
+              </span>
+              ? Esta acción no se puede deshacer.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteZoneModal(false)}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={handleDeleteZoneFromMap}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
@@ -1389,7 +1580,7 @@ function SearchPageContent() {
               Zona guardada
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              Se guardó la zona correctamente en tu perfil.
+               {successMessage}
             </p>
             <button
               onClick={() => setShowSuccessModal(false)}
