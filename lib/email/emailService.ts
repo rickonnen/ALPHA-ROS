@@ -7,7 +7,9 @@ import { templateCambioContrasena } from "./templates/cambioContrasena";
 import { templateRecuperacionContrasena } from "./templates/recuperacionContrasena";
 import { templatePagoProcesado } from "./templates/pagoProcesado"
 import { templateMagicLink } from "./templates/magicLink";
-
+import { templateBlogAceptado } from "./templates/blogAceptado";
+import { templateBlogRechazado } from "./templates/blogRechazado";
+import { templatePublicacionCreada } from "./templates/publicacionCreada";
 export interface SendEmailResult {
   success: boolean;
   messageId?: string;
@@ -204,9 +206,6 @@ export async function enviarConfirmacionPago(
   );
 }
 
-
-///AREGLARRRRRRRRR DE COBROS 
-
 export async function enviarNotificacionDeGrupo(
   email: string,
   nombre: string,
@@ -238,6 +237,7 @@ export async function enviarNotificacionDeGrupo(
   return sendEmail(email, `[${grupo.toUpperCase()}] ${titulo}`, html);
 }
 /////////////////////hasta aqui 
+ 
 
 /** Magic Link para autenticación sin contraseña */
 export async function enviarMagicLink(
@@ -249,5 +249,46 @@ export async function enviarMagicLink(
     email,
     "Tu Magic Link de PROPBOL - Acceso Seguro",
     templateMagicLink(nombre, magicLinkUrl)
+  );
+}
+export async function enviarBlogAceptado(
+  email: string,
+  nombre: string,
+  tituloBlog: string
+): Promise<SendEmailResult> {
+  const fecha = new Date().toLocaleDateString("es-BO", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  return sendEmail(
+    email,
+    "¡Tu publicación fue aprobada! - PROPBOL",
+    templateBlogAceptado(nombre, tituloBlog)
+  );
+}
+
+export async function enviarBlogRechazado(
+  email: string,
+  nombre: string,
+  tituloBlog: string
+): Promise<SendEmailResult> {
+  const fecha = new Date().toLocaleDateString("es-BO", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  return sendEmail(
+    email,
+    "Tu publicación requiere revisión - PROPBOL",
+    templateBlogRechazado(nombre, tituloBlog)
+  );
+}
+export async function enviarPublicacionCreada(
+  email: string,
+  nombre: string,
+  titulo: string,
+  idPublicacion: number
+): Promise<SendEmailResult> {
+  return sendEmail(
+    email,
+    "¡Tu publicación fue registrada! - PROPBOL",
+    templatePublicacionCreada(nombre, titulo, idPublicacion)
   );
 }
