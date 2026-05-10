@@ -1,8 +1,3 @@
-/**
- * Dev: Gabriel Paredes
- * Date: 17/04/2026
- * Funcionalidad: Paso Ubicación — dirección via mapa, departamento y zona.
- */
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
@@ -19,8 +14,7 @@ const LocationPicker = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ height: 260, background: '#F4EFE6', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: '#6B7280', borderRadius: 8, fontSize: 13 }}>
+      <div className="h-[260px] flex items-center justify-center bg-muted text-muted-foreground rounded-lg text-sm">
         Cargando mapa...
       </div>
     ),
@@ -33,26 +27,10 @@ interface UbicacionFormProps {
   submitRef?: React.MutableRefObject<(() => void) | null>
 }
 
-const C = {
-  crema:          '#F4EFE6',
-  terracota:      '#C26E5A',
-  terracotaClaro: '#D4B8AE',
-  marino:         '#1F3A4D',
-  borde:          '#D4CFC6',
-  texto:          '#1A1714',
-  gris:           '#2E2E2E',
-  grisClaro:      '#E5E7EB',
-}
-
 export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps) {
   const {
-    values,
-    errors,
-    touched,
-    handleChange,
-    handleUbicacion,
-    handleBlur,
-    handleSubmit,
+    values, errors, touched,
+    handleChange, handleUbicacion, handleBlur, handleSubmit,
   } = useUbicacionForm()
 
   useEffect(() => {
@@ -62,7 +40,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   useEffect(() => {
     if (!submitRef) return
     return () => { submitRef.current = null }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitRef])
 
   const [mapaAbierto,     setMapaAbierto]     = useState(false)
@@ -72,8 +50,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
   const [pendingLocation, setPendingLocation] = useState<LocationData | null>(null)
   const [deptoEnMapa,     setDeptoEnMapa]     = useState<string>(values.departamento)
-
-
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -130,60 +106,30 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   const zonaLen     = values.zona.length
   const zonaInvalid = touched.zona && !!errors.zona
 
-  // ─── Modal del mapa (via Portal para evitar que overflow:hidden / transform lo rompa) ───
+  // ─── Modal via Portal ─────────────────────────────────────────────────────
   const modalContent = mapaAbierto ? (
     <div
-      style={{
-        position:        'fixed',
-        inset:           0,
-        zIndex:          99999,
-        display:         'flex',
-        alignItems:      'center',
-        justifyContent:  'center',
-        padding:         '12px 16px',
-        backgroundColor: 'rgba(31,58,77,0.55)',
-        overflow:        'auto',
-      }}
+      className="fixed inset-0 z-[99999] flex items-center justify-center px-4 py-3 overflow-auto"
+      style={{ backgroundColor: 'rgba(31,58,77,0.55)' }}
       onClick={handleCerrar}
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{
-          background:    C.crema,
-          borderRadius:  16,
-          boxShadow:     '0 8px 40px rgba(31,58,77,0.25)',
-          width:         '100%',
-          maxWidth:      620,
-          overflow:      'visible',
-          display:       'flex',
-          flexDirection: 'column',
-        }}
+        className="bg-background rounded-2xl shadow-2xl w-full max-w-[620px] flex flex-col overflow-visible"
       >
         {/* Header */}
-        <div style={{
-          display:        'flex',
-          alignItems:     'center',
-          justifyContent: 'space-between',
-          padding:        '12px 16px',
-          background:     C.marino,
-          borderRadius:   '16px 16px 0 0',
-          gap:            8,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%',
-              backgroundColor: C.terracota, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
+        <div className="flex items-center justify-between px-4 py-3 bg-primary rounded-t-2xl gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-secondary flex-shrink-0 flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--primary-foreground)">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
               </svg>
             </div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#ffffff', whiteSpace: 'nowrap' }}>
+            <div className="min-w-0">
+              <p className="m-0 text-base font-semibold text-primary-foreground whitespace-nowrap">
                 Selecciona la ubicación
               </p>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p className="m-0 text-[11px] text-primary-foreground/65 whitespace-nowrap overflow-hidden text-ellipsis">
                 Busca una calle o haz clic en el mapa
               </p>
             </div>
@@ -191,47 +137,23 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           <button
             type="button"
             onClick={handleCerrar}
-            style={{
-              width: 26, height: 26, borderRadius: '50%', border: 'none',
-              background: 'rgba(255,255,255,0.15)', color: '#ffffff', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontWeight: 600, flexShrink: 0,
-            }}
+            className="w-[26px] h-[26px] rounded-full border-none bg-white/15 text-primary-foreground cursor-pointer flex items-center justify-center text-sm font-semibold flex-shrink-0 hover:bg-white/25 transition-colors"
           >
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '12px 14px', overflow: 'visible' }}>
-          <LocationPicker
-            deptoActual={deptoEnMapa}
-            onChange={handleLocationChange}
-          />
+        <div className="px-3.5 py-3 overflow-visible">
+          <LocationPicker deptoActual={deptoEnMapa} onChange={handleLocationChange} />
         </div>
 
         {/* Footer */}
-        <div style={{
-          display:        'flex',
-          justifyContent: 'flex-end',
-          alignItems:     'center',
-          gap:            8,
-          padding:        '10px 14px 14px',
-          borderTop:      `1.5px solid ${C.borde}`,
-        }}>
+        <div className="flex justify-end items-center gap-2 px-3.5 pb-3.5 pt-2.5 border-t border-border">
           <button
             type="button"
             onClick={handleCerrar}
-            style={{
-              backgroundColor: C.crema,
-              border:          `1.5px solid ${C.terracota}`,
-              color:           C.terracota,
-              borderRadius:    6,
-              padding:         '6px 18px',
-              fontSize:        14,
-              fontWeight:      600,
-              cursor:          'pointer',
-            }}
+            className="bg-background border-[1.5px] border-secondary text-secondary rounded-md px-[18px] py-1.5 text-sm font-semibold cursor-pointer hover:opacity-80 transition-opacity"
           >
             Regresar
           </button>
@@ -239,17 +161,11 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             type="button"
             onClick={handleConfirmar}
             disabled={!pendingLocation}
-            style={{
-              backgroundColor: pendingLocation ? C.terracota : C.terracotaClaro,
-              border:          `1.5px solid ${pendingLocation ? C.terracota : C.terracotaClaro}`,
-              color:           '#ffffff',
-              borderRadius:    6,
-              padding:         '6px 18px',
-              fontSize:        14,
-              fontWeight:      600,
-              cursor:          pendingLocation ? 'pointer' : 'not-allowed',
-              transition:      'background-color 0.2s',
-            }}
+            className={`border-[1.5px] text-secondary-foreground rounded-md px-[18px] py-1.5 text-sm font-semibold transition-all ${
+              pendingLocation
+                ? 'bg-secondary border-secondary cursor-pointer hover:opacity-90'
+                : 'bg-muted border-border text-muted-foreground cursor-not-allowed'
+            }`}
           >
             Confirmar
           </button>
@@ -260,16 +176,14 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
   return (
     <>
-      {/* Portal: el modal se monta en document.body, fuera de cualquier contenedor
-          con overflow:hidden o transform, así position:fixed funciona correctamente */}
       {typeof window !== 'undefined' && createPortal(modalContent, document.body)}
 
-      {/* ─── Formulario principal ────────────────────────────────── */}
-      <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px', minWidth: 0, width: '100%' }}>
+      {/* ─── Formulario principal ─────────────────────────────────────────── */}
+      <div className="flex flex-col gap-5 h-full pt-3 min-w-0 w-full">
 
         {/* 1 — Departamento */}
         <div className="flex flex-col gap-1.5" ref={dropdownRef}>
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+          <Label className="text-base font-medium text-foreground break-words">
             ¿Cual es el departamento en el que se encuentra la propiedad?
           </Label>
           <button
@@ -283,14 +197,14 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                 setDropdownOpen(false); handleBlur('departamento')
               }
             }}
-            className={`w-full h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between transition-colors ${
-              touched.departamento && errors.departamento
-                ? 'border-red-400' : dropdownOpen ? 'border-gray-500' : 'border-[#D4CFC6]'
-            } ${values.departamento ? 'text-[#1A1714]' : 'text-gray-400'}`}
+            className={`w-full h-[40px] px-3 text-base bg-background rounded-md border outline-none flex items-center justify-between transition-colors
+              ${touched.departamento && errors.departamento ? 'border-destructive' : dropdownOpen ? 'border-primary' : 'border-border'}
+              ${values.departamento ? 'text-foreground' : 'text-muted-foreground'}
+            `}
           >
             <span>{values.departamento || 'Seleccione una opción'}</span>
             <svg
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
               viewBox="0 0 20 20" fill="currentColor"
             >
               <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
@@ -301,7 +215,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             <div className="relative z-50">
               <ul
                 role="listbox"
-                className="absolute top-1 left-0 w-full bg-white border border-[#D4CFC6] rounded-md shadow-md py-1 max-h-48 overflow-auto"
+                className="absolute top-1 left-0 w-full bg-background border border-border rounded-md shadow-md py-1 max-h-48 overflow-auto"
               >
                 {DEPARTAMENTOS.map((depto: string) => (
                   <li
@@ -309,11 +223,11 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                     role="option"
                     aria-selected={depto === values.departamento}
                     onClick={() => handleSelectDepto(depto)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#1A1714] hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 text-base text-foreground hover:bg-muted cursor-pointer"
                   >
                     <span className="w-4 flex-shrink-0">
                       {depto === values.departamento && (
-                        <svg className="w-4 h-4 text-[#1A1714]" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className="w-4 h-4 text-foreground" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
                         </svg>
                       )}
@@ -325,59 +239,47 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             </div>
           )}
 
-          <span className="text-red-500 text-xs h-4 block">
+          <span className="text-destructive text-xs h-4 block">
             {touched.departamento && errors.departamento ? errors.departamento : ''}
           </span>
         </div>
 
         {/* 2 — Dirección */}
-        <div className="flex flex-col gap-1.5" style={{ width: '100%', maxWidth: '100%' }}>
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+        <div className="flex flex-col gap-1.5 w-full max-w-full">
+          <Label className="text-base font-medium text-foreground break-words">
             ¿Cual es la dirección de la propiedad?
           </Label>
           <button
             type="button"
             onClick={handleAbrirMapa}
             onBlur={() => handleBlur('direccion')}
-            className={`h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
-              touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
+            className={`h-[40px] px-3 text-base bg-background rounded-md border outline-none flex items-center justify-between w-full overflow-hidden transition-colors ${
+              touched.direccion && errors.direccion ? 'border-destructive' : 'border-border hover:border-primary'
             }`}
-            style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}
           >
-            <span style={{
-              flex: 1,
-              minWidth: 0,
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              color: values.direccion ? '#1A1714' : '#9CA3AF',
-              textAlign: 'left',
-            }}>
+            <span className={`flex-1 min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-left ${
+              values.direccion ? 'text-foreground' : 'text-muted-foreground'
+            }`}>
               {values.direccion || 'Seleccione en el mapa'}
             </span>
 
-            <div style={{
-              width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
-              background: values.direccion
-                ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
-                : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.2s',
-            }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#ffffff">
+            <div className={`w-[26px] h-[26px] rounded-md flex-shrink-0 ml-2 flex items-center justify-center transition-colors ${
+              values.direccion ? 'bg-secondary' : 'bg-muted'
+            }`}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--secondary-foreground)">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
               </svg>
             </div>
           </button>
 
-          <span className="text-red-500 text-xs h-4 block">
+          <span className="text-destructive text-xs h-4 block">
             {touched.direccion && errors.direccion ? errors.direccion : ''}
           </span>
         </div>
 
         {/* 3 — Zona */}
         <div className="flex flex-col gap-1.5">
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
+          <Label className="text-base font-medium text-foreground">
             Especifique Zona
           </Label>
           <input
@@ -390,16 +292,15 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             }}
             onBlur={() => handleBlur('zona')}
             placeholder="Escriba una zona"
-            className={`w-full border rounded-md px-3 py-2 text-sm outline-none bg-white focus:border-gray-500 ${
-              zonaInvalid ? 'border-red-400' : 'border-[#D4CFC6]'
+            className={`w-full border rounded-md px-3 py-2 text-base outline-none bg-background text-foreground placeholder:text-muted-foreground focus:border-primary transition-colors ${
+              zonaInvalid ? 'border-destructive' : 'border-border'
             }`}
           />
-
           <div className="flex items-center justify-between">
-            <span className="text-red-500 text-xs">
+            <span className="text-destructive text-xs">
               {zonaInvalid ? errors.zona : ''}
             </span>
-            <span style={{ fontSize: 11, color: '#9CA3AF', flexShrink: 0, marginLeft: 8 }}>
+            <span className="text-[11px] text-muted-foreground flex-shrink-0 ml-2">
               {zonaLen}/{MAX_ZONA}
             </span>
           </div>

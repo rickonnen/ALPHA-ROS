@@ -1,16 +1,3 @@
-/**
- * Dev: Gabriel Paredes
- * Date: 19/04/2026
- * Funcionalidad: Descripción de la propiedad e integración de Características Extras
- *
- * FIXES v5:
- *  1. Auto-selecciona la primera etiqueta al montar (modo edición con características ya cargadas).
- *  2. Sin autoFocus en el input de detalle — seleccionar etiqueta no entra al campo de texto.
- *  3. Dropdown usa createPortal — escapa de overflow:hidden del contenedor padre.
- *  4. Posición del dropdown via ref DOM directo (sin setState en useEffect).
- *  5. Contador del detalle ENCIMA del input.
- *  6. Sin ícono lápiz en modo lectura del título.
- */
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -60,22 +47,7 @@ function PortalDropdown({ anchorRef, open, children }: PortalDropdownProps) {
   return createPortal(
     <ul
       ref={listRef}
-      style={{
-        position:        'fixed',
-        top:             0,
-        left:            0,
-        width:           0,
-        maxHeight:       200,
-        zIndex:          9999,
-        overflowY:       'auto',
-        backgroundColor: '#ffffff',
-        border:          '1px solid #e5e7eb',
-        borderRadius:    '0.375rem',
-        boxShadow:       '0 4px 16px rgba(0,0,0,0.14)',
-        margin:          0,
-        padding:         0,
-        listStyle:       'none',
-      }}
+      className="fixed top-0 left-0 w-0 max-h-[200px] z-[9999] overflow-y-auto bg-background border border-border rounded-md shadow-lg m-0 p-0 list-none"
     >
       {children}
     </ul>,
@@ -111,11 +83,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   const [titleSearchTerm, setTitleSearchTerm] = useState('')
   const [detalleError,    setDetalleError]    = useState<string | null>(null)
 
-  // Refs de anchors para los portales
   const addInputRef   = useRef<HTMLInputElement | null>(null)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
 
-  // submitRef
   useEffect(() => {
     if (!submitRef) return
     submitRef.current = () => handleSubmit(() => onNext())
@@ -126,7 +96,6 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitRef])
 
-  // ── FIX 1: Auto-seleccionar la primera etiqueta al montar o cuando cambia la lista ──
   useEffect(() => {
     const lista = values.caracteristicas || []
     if (lista.length === 0) {
@@ -138,7 +107,6 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
     }
   }, [values.caracteristicas, isAdding])
 
-  // Sugerencias para edición de título (derivado puro)
   const titleSugs = (() => {
     if (!titleSearchTerm.trim()) return []
     const term = titleSearchTerm.toLowerCase()
@@ -205,13 +173,16 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
 
   const activeCaracteristica = caracteristicas.find(c => c.titulo === activeTag)
 
-  // ── Render ─────────────────────────────────────────────────────
+  // Clases reutilizables para items del dropdown
+  const dropdownItemBase = 'px-4 py-2 text-sm cursor-pointer text-foreground'
+  const dropdownItemDisabled = 'bg-muted text-muted-foreground cursor-not-allowed'
+
   return (
-    <div className="flex flex-col h-full" style={{ gap: '2px' }}>
+    <div className="flex flex-col h-full gap-0.5">
 
       {/* ── Descripción libre ── */}
       <div className="flex flex-col gap-1 flex-shrink-0">
-        <Label htmlFor="descripcion" className="text-sm font-medium text-[#1A1714]">
+        <Label htmlFor="descripcion" className="text-base font-medium text-foreground">
           Añada una descripción de su propiedad
         </Label>
         <textarea
@@ -222,13 +193,13 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
           onBlur={handleBlur}
           placeholder="Escribe una descripción"
           rows={3}
-          className={`w-full resize-none rounded-md border px-3 py-2 text-sm outline-none bg-white transition-colors focus:border-gray-400 ${
-            showError ? 'border-red-400' : 'border-[#D4CFC6]'
+          className={`w-full resize-none rounded-md border px-3 py-2 text-base outline-none bg-background text-foreground placeholder:text-muted-foreground transition-colors focus:border-primary ${
+            showError ? 'border-destructive' : 'border-border'
           }`}
         />
-        <div className="flex justify-between items-center" style={{ minHeight: '16px' }}>
-          <span className="text-red-500 text-xs">{showError ? errors.descripcion : ''}</span>
-          <span className="text-xs text-gray-400">{charCount}/{MAX_DESCRIPCION}</span>
+        <div className="flex justify-between items-center min-h-[16px]">
+          <span className="text-destructive text-xs">{showError ? errors.descripcion : ''}</span>
+          <span className="text-xs text-muted-foreground">{charCount}/{MAX_DESCRIPCION}</span>
         </div>
       </div>
 
@@ -237,12 +208,16 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
 
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[#1A1714]">Caracteristicas Extras</span>
-            <span className="text-sm font-normal text-[#C26E5A]">-Opcional</span>
+            <span className="text-base font-semibold text-foreground">Caracteristicas Extras</span>
+            <span className="text-base font-normal text-secondary">-Opcional</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
-            {isLimitReached && <span className="text-red-500 text-xs font-semibold">Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras</span>}
+            <span className="text-xs text-muted-foreground font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
+            {isLimitReached && (
+              <span className="text-destructive text-xs font-semibold">
+                Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras
+              </span>
+            )}
           </div>
         </div>
 
@@ -252,7 +227,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             type="button"
             disabled={isLimitReached}
             onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
-            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent transition-colors focus:outline-none flex-shrink-0 ${isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#C26E5A]/10'}`}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-secondary text-secondary bg-transparent transition-colors focus:outline-none flex-shrink-0 ${
+              isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary/10'
+            }`}
             title="Añadir característica"
           >
             <span className="text-xl font-bold leading-none mb-0.5">+</span>
@@ -272,15 +249,17 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                 }}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold border transition-colors cursor-pointer ${
                   isVisuallyActive
-                    ? 'bg-[#C26E5A] text-white border-[#C26E5A]'
-                    : 'bg-transparent text-[#C26E5A] border-[#C26E5A] hover:bg-[#C26E5A]/10'
+                    ? 'bg-secondary text-secondary-foreground border-secondary'
+                    : 'bg-transparent text-secondary border-secondary hover:bg-secondary/10'
                 }`}
               >
                 {c.titulo}
                 <button
                   type="button"
                   onClick={(e) => handleRemove(c.titulo, e)}
-                  className={`${isVisuallyActive ? 'hover:text-white/70' : 'hover:text-red-700'} focus:outline-none transition-colors`}
+                  className={`focus:outline-none transition-colors ${
+                    isVisuallyActive ? 'hover:text-secondary-foreground/70' : 'hover:text-destructive'
+                  }`}
                 >
                   ✕
                 </button>
@@ -292,7 +271,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
         {/* Texto de ayuda */}
         {caracteristicas.length === 0 && !isAdding && (
           <div className="flex items-center justify-center py-6">
-            <p className="text-sm text-gray-500 text-center leading-relaxed">
+            <p className="text-base text-muted-foreground text-center leading-relaxed">
               En caso de necesitar ingresar más<br />
               detalles del inmueble, añada una<br />
               característica especifica de su<br />
@@ -305,10 +284,9 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
         {isAdding && (
           <div className="flex flex-col gap-2 mt-2 animate-in fade-in duration-200">
             <div>
-              <Label className="block text-xs font-bold text-gray-700 mb-1">
+              <Label className="block text-xs font-bold text-foreground mb-1">
                 ¿Qué título de característica desea colocar? *
               </Label>
-
               <Input
                 ref={addInputRef}
                 value={searchTerm}
@@ -317,14 +295,11 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                   if (e.key === 'Escape') { setIsAdding(false); setSearchTerm('') }
                 }}
                 placeholder="Ej. Piscina, Balcón"
-                className="border-gray-300 w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-gray-400"
+                className="border-border w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary bg-background text-foreground placeholder:text-muted-foreground"
                 autoFocus
               />
 
-              <PortalDropdown
-                anchorRef={addInputRef}
-                open={searchTerm.trim().length > 0}
-              >
+              <PortalDropdown anchorRef={addInputRef} open={searchTerm.trim().length > 0}>
                 {sugerencias.length > 0 ? (
                   sugerencias.map((sug) => {
                     const yaAgregada = caracteristicas.some(
@@ -334,22 +309,15 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                       <li
                         key={sug}
                         onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleAgregarClick(sug) }}
-                        style={{
-                          padding:         '8px 16px',
-                          fontSize:        14,
-                          cursor:          yaAgregada ? 'not-allowed' : 'pointer',
-                          backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
-                          color:           yaAgregada ? '#9ca3af'    : undefined,
-                        }}
-                        onMouseEnter={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
-                        onMouseLeave={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
+                        className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
                       >
-                        {sug}{yaAgregada && <span style={{ fontSize: 12, marginLeft: 6 }}>(Ya agregada)</span>}
+                        {sug}
+                        {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
                       </li>
                     )
                   })
                 ) : (
-                  <li style={{ padding: '8px 16px', fontSize: 14, color: '#9ca3af' }}>
+                  <li className={`${dropdownItemBase} text-muted-foreground`}>
                     Sin sugerencias para &quot;{searchTerm.trim()}&quot;
                   </li>
                 )}
@@ -357,7 +325,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             </div>
 
             {caracteristicaError && (
-              <p className="text-red-500 text-xs font-semibold">{caracteristicaError}</p>
+              <p className="text-destructive text-xs font-semibold">{caracteristicaError}</p>
             )}
           </div>
         )}
@@ -368,7 +336,7 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
 
             {/* Título */}
             <div>
-              <Label className="block text-xs font-bold text-gray-700 mb-1">
+              <Label className="block text-xs font-bold text-foreground mb-1">
                 Título de la característica
               </Label>
 
@@ -379,26 +347,17 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                     value={titleSearchTerm}
                     onChange={(e) => setTitleSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setEditingTitle(false)
-                        setTitleSearchTerm('')
-                      }
+                      if (e.key === 'Escape') { setEditingTitle(false); setTitleSearchTerm('') }
                     }}
                     onBlur={() => {
-                      setTimeout(() => {
-                        setEditingTitle(false)
-                        setTitleSearchTerm('')
-                      }, 150)
+                      setTimeout(() => { setEditingTitle(false); setTitleSearchTerm('') }, 150)
                     }}
                     placeholder={`Cambiar "${activeCaracteristica.titulo}"...`}
-                    className="border-[#C26E5A] w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#C26E5A] text-sm"
+                    className="border-secondary w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-secondary text-base bg-background text-foreground"
                     autoFocus
                   />
 
-                  <PortalDropdown
-                    anchorRef={titleInputRef}
-                    open={titleSearchTerm.trim().length > 0}
-                  >
+                  <PortalDropdown anchorRef={titleInputRef} open={titleSearchTerm.trim().length > 0}>
                     {titleSugs.length > 0 ? (
                       titleSugs.map((sug) => {
                         const yaAgregada = sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
@@ -407,53 +366,47 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                           <li
                             key={sug}
                             onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleTitleSelect(sug) }}
-                            style={{
-                              padding:         '8px 16px',
-                              fontSize:        14,
-                              cursor:          yaAgregada ? 'not-allowed' : 'pointer',
-                              backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
-                              color:           yaAgregada ? '#9ca3af'    : undefined,
-                            }}
-                            onMouseEnter={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)' }}
-                            onMouseLeave={e => { if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = '' }}
+                            className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
                           >
-                            {sug}{yaAgregada && <span style={{ fontSize: 12, marginLeft: 6 }}>(Ya agregada)</span>}
+                            {sug}
+                            {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
                           </li>
                         )
                       })
                     ) : (
-                      <li style={{ padding: '8px 16px', fontSize: 14, color: '#9ca3af' }}>
+                      <li className={`${dropdownItemBase} text-muted-foreground`}>
                         Sin sugerencias para &quot;{titleSearchTerm.trim()}&quot;
                       </li>
                     )}
                   </PortalDropdown>
 
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Solo se aceptan valores de la lista.
                   </p>
                 </div>
               ) : (
-                /* Modo lectura — sin ícono lápiz */
                 <div
-                  className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 cursor-pointer hover:border-[#C26E5A]/50 hover:bg-[#C26E5A]/5 transition-colors group"
+                  className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-base text-foreground cursor-pointer hover:border-secondary/50 hover:bg-secondary/5 transition-colors group"
                   onClick={() => { setEditingTitle(true); setTitleSearchTerm('') }}
                 >
                   <span className="font-medium">{activeCaracteristica.titulo}</span>
-                  <span className="text-xs text-gray-400 group-hover:text-[#C26E5A] transition-colors">
+                  <span className="text-xs text-muted-foreground group-hover:text-secondary transition-colors">
                     Cambiar
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Detalle — FIX 2: sin autoFocus para no entrar al campo al seleccionar etiqueta */}
+            {/* Detalle */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <Label className="text-xs font-bold text-gray-700">
+                <Label className="text-xs font-bold text-foreground">
                   Ingrese una descripción (Opcional)
                 </Label>
                 <span className={`text-xs ${
-                  activeCaracteristica.detalle.length >= MAX_DETALLE ? 'text-red-400' : 'text-gray-400'
+                  activeCaracteristica.detalle.length >= MAX_DETALLE
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
                 }`}>
                   {activeCaracteristica.detalle.length}/{MAX_DETALLE}
                 </span>
@@ -463,12 +416,12 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                 onChange={(e) => handleDetalleChange(activeCaracteristica.titulo, e.target.value)}
                 placeholder="Ej. Amplio con vista a la calle..."
                 maxLength={MAX_DETALLE}
-                className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-gray-400 border-gray-300 text-sm w-full ${
-                  detalleError ? 'border-red-400' : ''
+                className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary border-border text-base w-full bg-background text-foreground placeholder:text-muted-foreground ${
+                  detalleError ? 'border-destructive' : ''
                 }`}
               />
               {detalleError && (
-                <p className="text-red-500 text-xs mt-1">{detalleError}</p>
+                <p className="text-destructive text-xs mt-1">{detalleError}</p>
               )}
             </div>
 

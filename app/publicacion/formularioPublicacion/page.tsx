@@ -60,64 +60,40 @@ function FormularioDinamicoInner() {
     sessionKey,
   }
 
-  // ─── Handler para el botón Regresar ──────────────────────────────────────
   const handleBackOrCancel = () => {
-    if (isFirstStep) {
-      setShowCancelarModal(true)
-    } else {
-      handleBack()
-    }
+    if (isFirstStep) setShowCancelarModal(true)
+    else handleBack()
   }
 
   // ─── Modal cancelar ───────────────────────────────────────────────────────
   const CancelarModal = (
     <div
       onClick={() => setShowCancelarModal(false)}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
+      className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center"
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{
-          backgroundColor: '#ffffff', borderRadius: 16,
-          padding: '36px 32px', maxWidth: 420, width: '90%',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
-          textAlign: 'center',
-        }}
+        className="bg-background rounded-2xl p-8 max-w-[420px] w-[90%] flex flex-col items-center gap-4 shadow-2xl text-center"
       >
-        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.marino }}>
+        <h3 className="text-xl font-bold text-primary m-0">
           ¿Cancelar formulario?
         </h3>
-        <p style={{ margin: 0, fontSize: 15, color: '#6b7280', lineHeight: 1.5 }}>
+        <p className="text-base text-muted-foreground leading-relaxed m-0">
           Si cancelas ahora perderás todo el progreso.<br />
           Esta acción no se puede deshacer.
         </p>
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, width: '100%', justifyContent: 'center' }}>
+        <div className="flex gap-3 mt-2 w-full justify-center">
           <button
             type="button"
             onClick={() => setShowCancelarModal(false)}
-            style={{
-              flex: 1, maxWidth: 160,
-              backgroundColor: '#ffffff', border: `1.5px solid ${C.terracota}`,
-              color: C.terracota, borderRadius: 8, padding: '11px 0',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
-            }}
+            className="flex-1 max-w-[160px] bg-background border-[1.5px] border-secondary text-secondary rounded-lg py-[11px] text-base font-semibold cursor-pointer hover:opacity-80 transition-opacity"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={() => { setShowCancelarModal(false); router.push('/') }}
-            style={{
-              flex: 1, maxWidth: 160,
-              backgroundColor: C.terracota, border: 'none',
-              color: '#ffffff', borderRadius: 8, padding: '11px 0',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
-            }}
+            className="flex-1 max-w-[160px] bg-secondary text-secondary-foreground rounded-lg py-[11px] text-base font-semibold cursor-pointer hover:opacity-90 transition-opacity"
           >
             Confirmar
           </button>
@@ -129,103 +105,76 @@ function FormularioDinamicoInner() {
   // ─── MOBILE ───────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <main style={{
-        backgroundColor: C.crema, display: 'flex', flexDirection: 'column',
-        fontFamily: 'var(--font-geist-sans)', padding: '16px 12px', gap: 0,
-      }}>
-        <style>{`
-          @keyframes stepIn {
-            from { opacity: 0; transform: translateX(18px); }
-            to   { opacity: 1; transform: translateX(0); }
-          }
-        `}</style>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: C.marino, margin: '0 0 12px' }}>
+      <main className="bg-background flex flex-col font-sans p-3 gap-0">
+
+        <h1 className="text-3xl font-bold text-primary mb-3 mt-0">
           {tituloPagina}
         </h1>
 
-        {/* ── Contenedor marino altura fija: flex:1 en contenido lo distribuye bien ── */}
-        <div style={{
-          backgroundColor: C.marino, borderRadius: 12, display: 'flex',
-          flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
-          height: 650,
-        }}>
+        <div className="bg-primary rounded-xl flex flex-col p-4 gap-4">
 
-          {/* Barra de progreso — flexShrink: 0 para que nunca se comprima */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
+          {/* Barra de progreso */}
+          <div className="flex flex-col gap-1">
+            <p className="m-0 text-xs text-primary-foreground/75 text-center">
               Completa el proceso para {modoEdicion ? 'guardar' : 'publicar'} tu propiedad
             </p>
-            <div style={{ height: 18, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.2)' }}>
-              <div style={{
-                height: '100%', borderRadius: 99, backgroundColor: C.terracota,
-                width: `${Math.round((completedSteps.size / STEPS.length) * 100)}%`,
-                transition: 'width 0.4s ease',
-              }} />
+            <div className="h-[18px] rounded-full bg-white/20">
+              <div
+                className="h-full rounded-full bg-secondary transition-[width] duration-400 ease-in-out"
+                style={{ width: `${Math.round((completedSteps.size / STEPS.length) * 100)}%` }}
+              />
             </div>
-            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
+            <p className="m-0 text-xs text-primary-foreground/75 text-center">
               {completedSteps.size}/{STEPS.length} pasos completados
             </p>
           </div>
 
-          {/* Título del paso + botón X — minHeight reserva espacio para 2 líneas siempre */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, minHeight: 46 }}>
-            <h2 style={{
-              fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
-              textTransform: 'uppercase', letterSpacing: '0.06em', flex: 1,
-            }}>
+          {/* Título del paso + botón X */}
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-bold text-primary-foreground m-0 uppercase tracking-[0.06em] flex-1">
               {STEPS[currentStep].title}
               {STEPS[currentStep].opcional && (
-                <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: C.terracota }}>-Opcional</span>
+                <span className="text-xs font-normal ml-1.5 text-secondary">-Opcional</span>
               )}
             </h2>
             <button
               type="button"
               onClick={() => setShowCancelarModal(true)}
-              style={{
-                background: 'none', border: 'none',
-                color: '#ffffff', fontSize: 24, fontWeight: 700,
-                cursor: 'pointer', lineHeight: 1, padding: 0,
-                flexShrink: 0,
-              }}
+              className="bg-transparent border-none text-primary-foreground text-2xl font-bold cursor-pointer leading-none p-0 flex-shrink-0"
             >
               ✕
             </button>
           </div>
 
+          {/* Error / bloqueo */}
           {(blockMsg || publishError) && (
-            <div style={{
-              backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-              padding: '8px 12px', fontSize: 13, color: '#991b1b', flexShrink: 0,
-            }}>
+            <div className="bg-red-100 border border-red-300 rounded-md px-3 py-2 text-sm text-red-800">
               {blockMsg ?? publishError}
             </div>
           )}
 
-          {/* Área de contenido — height fijo siempre, scroll si desborda */}
-          <div key={currentStep} style={{
-            backgroundColor: C.crema, borderRadius: 10, padding: 14,
-            height: 430, flexShrink: 0, overflowY: 'auto',
-            animation: 'stepIn 0.3s ease forwards',
-          }}>
+          {/* Contenido del paso */}
+          <div
+            key={currentStep}
+            className="bg-background rounded-lg p-3"
+            style={{ animation: 'stepIn 0.3s ease forwards' }}
+          >
             <StepContent step={currentStep} {...stepContentProps} />
           </div>
 
-          {/* Botones de pasos circulares — flexShrink: 0 */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Indicadores de paso */}
+          <div className="flex justify-center gap-2">
             {STEPS.map((_, i) => {
               const isActive    = i === currentStep
               const isCompleted = completedSteps.has(i)
               return (
                 <button
                   key={i} type="button" onClick={() => handleSidebarClick(i)}
-                  style={{
-                    width: 34, height: 34, borderRadius: '50%',
-                    border: isActive ? '3px solid #ffffff' : 'none',
-                    backgroundColor: isCompleted ? C.terracota : isActive ? 'transparent' : 'rgba(255,255,255,0.15)',
-                    color: '#ffffff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, transition: 'all 0.2s',
-                  }}
+                  className={`w-[34px] h-[34px] rounded-full text-primary-foreground text-sm font-bold cursor-pointer flex items-center justify-center flex-shrink-0 transition-all duration-200
+                    ${isActive    ? 'border-[3px] border-primary-foreground bg-transparent' : ''}
+                    ${isCompleted ? 'bg-secondary border-none' : ''}
+                    ${!isActive && !isCompleted ? 'bg-white/15 border-none' : ''}
+                  `}
                 >
                   {isCompleted ? '✓' : i + 1}
                 </button>
@@ -234,28 +183,17 @@ function FormularioDinamicoInner() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '12px 0 0' }}>
+        {/* Botones Regresar / Siguiente */}
+        <div className="flex gap-2.5 pt-3">
           <button
             type="button" onClick={handleBackOrCancel} disabled={isPublishing}
-            style={{
-              flex: 1, backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
-              color: C.terracota, borderRadius: 8, padding: '11px 0',
-              fontSize: 15, fontWeight: 600,
-              cursor: isPublishing ? 'not-allowed' : 'pointer',
-              opacity: isPublishing ? 0.6 : 1,
-            }}
+            className="flex-1 bg-background border-[1.5px] border-secondary text-secondary rounded-lg py-[11px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Regresar
           </button>
           <button
             type="button" onClick={handleNext} disabled={isPublishing}
-            style={{
-              flex: 1, backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-              color: '#ffffff', borderRadius: 8, padding: '11px 0',
-              fontSize: 15, fontWeight: 600,
-              cursor: isPublishing ? 'not-allowed' : 'pointer',
-              opacity: isPublishing ? 0.6 : 1,
-            }}
+            className="flex-1 bg-secondary text-secondary-foreground rounded-lg py-[11px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isPublishing ? textoGuardando : isLastStep ? textoPublicar : 'Siguiente'}
           </button>
@@ -276,11 +214,7 @@ function FormularioDinamicoInner() {
 
   // ─── DESKTOP ──────────────────────────────────────────────────────────────
   return (
-    <main style={{
-      backgroundColor: C.crema, display: 'flex',
-      flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      padding: '8px 16px', fontFamily: 'var(--font-geist-sans)',
-    }}>
+    <main className="bg-background flex flex-col items-center justify-start px-4 py-2 font-sans">
       <style>{`
         @keyframes stepIn {
           from { opacity: 0; transform: translateX(18px); }
@@ -297,25 +231,19 @@ function FormularioDinamicoInner() {
         }
       `}</style>
 
-      <div className="desktop-zoom-container" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 1000 }}>
+      <div className="desktop-zoom-container w-full flex flex-col items-center">
+        <div className="w-full max-w-[1000px]">
           <h1
-            className="titulo-publicacion"
-            style={{
-              fontSize: 60, fontWeight: 700, color: C.marino,
-              marginBottom: 20, marginTop: 10, marginLeft: -9,
-            }}
+            className="titulo-publicacion font-bold text-primary mb-5 mt-2.5 -ml-[9px]"
+            style={{ fontSize: 60 }}
           >
             {tituloPagina}
           </h1>
         </div>
 
-        <div style={{
-          width: '100%', maxWidth: 1000, height: 560,
-          display: 'flex', borderRadius: 12, overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-          position: 'relative',
-        }}>
+        {/* Contenedor principal */}
+        <div className="w-full max-w-[1000px] h-[560px] flex rounded-xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.12)] relative">
+
           <StepsSidebar
             currentStep={currentStep}
             completedSteps={completedSteps}
@@ -323,74 +251,56 @@ function FormularioDinamicoInner() {
             onStepClick={handleSidebarClick}
           />
 
-          <div style={{
-            flex: 1, backgroundColor: C.marino,
-            padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
-          }}>
-            {/* Título del paso + botón X alineados */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
-              <h2 key={`title-${currentStep}`} style={{
-                fontSize: 20, fontWeight: 600, color: '#ffffff', margin: 0,
-                textTransform: 'uppercase', letterSpacing: '0.05em',
-                animation: 'stepIn 0.3s ease forwards',
-              }}>
+          <div className="flex-1 bg-primary px-[50px] pt-[50px] pb-5 flex flex-col">
+
+            {/* Título del paso + botón X */}
+            <div className="flex items-center justify-between mb-5 flex-shrink-0">
+              <h2
+                key={`title-${currentStep}`}
+                className="text-xl font-semibold text-primary-foreground m-0 uppercase tracking-[0.05em]"
+                style={{ animation: 'stepIn 0.3s ease forwards' }}
+              >
                 {STEPS[currentStep].title}
                 {STEPS[currentStep].opcional && (
-                  <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
+                  <span className="text-xl font-semibold ml-2 text-secondary">-Opcional</span>
                 )}
               </h2>
               <button
                 type="button"
                 onClick={() => setShowCancelarModal(true)}
-                style={{
-                  background: 'none', border: 'none',
-                  color: '#ffffff', fontSize: 28, fontWeight: 700,
-                  cursor: 'pointer', lineHeight: 1, padding: 0,
-                  flexShrink: 0,
-                }}
+                className="bg-transparent border-none text-primary-foreground text-[28px] font-bold cursor-pointer leading-none p-0 flex-shrink-0"
               >
                 ✕
               </button>
             </div>
 
+            {/* Error / bloqueo */}
             {(blockMsg || publishError) && (
-              <div style={{
-                backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-                padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#991b1b', flexShrink: 0,
-              }}>
+              <div className="bg-red-100 border border-red-300 rounded-md px-3 py-2 mb-2.5 text-sm text-red-800 flex-shrink-0">
                 {blockMsg ?? publishError}
               </div>
             )}
 
-            <div key={currentStep} style={{
-              backgroundColor: C.crema, borderRadius: 12, padding: 15,
-              flex: 1, overflowY: 'auto', animation: 'stepIn 0.3s ease forwards',
-            }}>
+            {/* Contenido del paso */}
+            <div
+              key={currentStep}
+              className="bg-background rounded-xl p-[15px] flex-1 overflow-y-auto"
+              style={{ animation: 'stepIn 0.3s ease forwards' }}
+            >
               <StepContent step={currentStep} {...stepContentProps} />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
+            {/* Botones Regresar / Siguiente */}
+            <div className="flex justify-end gap-3 mt-[15px] flex-shrink-0">
               <button
                 type="button" onClick={handleBackOrCancel} disabled={isPublishing}
-                style={{
-                  backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
-                  color: C.terracota, borderRadius: 6, padding: '5px 20px',
-                  fontSize: 16, fontWeight: 600,
-                  cursor: isPublishing ? 'not-allowed' : 'pointer',
-                  opacity: isPublishing ? 0.6 : 1,
-                }}
+                className="bg-background border-[1.5px] border-secondary text-secondary rounded-md px-5 py-[5px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-80 transition-opacity"
               >
                 Regresar
               </button>
               <button
                 type="button" onClick={handleNext} disabled={isPublishing}
-                style={{
-                  backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-                  color: '#ffffff', borderRadius: 6, padding: '5px 20px',
-                  fontSize: 16, fontWeight: 600,
-                  cursor: isPublishing ? 'not-allowed' : 'pointer',
-                  opacity: isPublishing ? 0.6 : 1,
-                }}
+                className="bg-secondary text-secondary-foreground rounded-md px-5 py-[5px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
               >
                 {isPublishing ? textoGuardando : isLastStep ? textoPublicar : 'Siguiente'}
               </button>
@@ -412,7 +322,6 @@ function FormularioDinamicoInner() {
   )
 }
 
-// ─── Export con Suspense ──────────────────────────────────────────────────────
 export default function CrearPublicacionPage() {
   return (
     <Suspense fallback={null}>

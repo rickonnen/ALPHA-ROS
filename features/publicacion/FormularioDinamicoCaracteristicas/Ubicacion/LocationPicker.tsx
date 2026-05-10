@@ -70,16 +70,10 @@ function MapController({ cmd }: { cmd: MapCommand }) {
   useEffect(() => {
     if (cmd.trigger === prev.current) return
     prev.current = cmd.trigger
-
     if (cmd.type === "flyTo") {
       map.flyTo(cmd.center, cmd.zoom, { animate: true, duration: 0.8 })
     } else if (cmd.type === "fitBounds") {
-      map.flyToBounds(cmd.bounds, {
-        animate:  true,
-        duration: 0.8,
-        maxZoom:  15,
-        padding:  [30, 30],
-      })
+      map.flyToBounds(cmd.bounds, { animate: true, duration: 0.8, maxZoom: 15, padding: [30, 30] })
     }
   }, [cmd, map])
 
@@ -100,24 +94,13 @@ export interface LocationData {
   departamento: string
 }
 
-interface MapboxContext {
-  id:   string
-  text: string
-}
-
-interface MapboxFeature {
-  id:         string
-  place_name: string
-  text:       string
-  center:     [number, number]
-  bbox?:      [number, number, number, number]
-  context?:   MapboxContext[]
+interface MapboxContext  { id: string; text: string }
+interface MapboxFeature  {
+  id: string; place_name: string; text: string; center: [number, number]
+  bbox?: [number, number, number, number]; context?: MapboxContext[]
   properties: Record<string, unknown>
 }
-
-interface MapboxResponse {
-  features: MapboxFeature[]
-}
+interface MapboxResponse { features: MapboxFeature[] }
 
 interface LocationPickerProps {
   deptoActual?: string
@@ -130,7 +113,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     type: "flyTo", center: getCenter(deptoActual), zoom: 13, trigger: 0,
   })
   const [isLoading,       setIsLoading]       = useState(true)
-  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isGeocoding,     setIsGeocoding]     = useState(false)
   const [isSearching,     setIsSearching]     = useState(false)
   const [direccion,       setDireccion]       = useState("")
@@ -138,19 +120,20 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const [query,           setQuery]           = useState("")
   const [suggestions,     setSuggestions]     = useState<MapboxFeature[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const searchTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const prevDepto    = useRef(deptoActual)
-  const seleccionado = useRef(false)
-  const markerPosRef = useRef<[number, number] | null>(null)
 
-  const initialCenter = useRef<[number, number]>(getCenter(deptoActual))
-  const initialZoom   = useRef(13)
+  // ✅ Fix: useState con inicializador en lugar de useRef para valores usados en render
+  const [initialCenter] = useState<[number, number]>(() => getCenter(deptoActual))
+  const [initialZoom]   = useState(13)
+
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevDepto       = useRef(deptoActual)
+  const seleccionado    = useRef(false)
+  const markerPosRef    = useRef<[number, number] | null>(null)
 
   useEffect(() => {
     loadingTimerRef.current = setTimeout(() => setIsLoading(false), 800)
-    return () => {
-      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current)
-    }
+    return () => { if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current) }
   }, [])
 
   const handleMapReady = useCallback(() => {
@@ -162,12 +145,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     if (deptoActual === prevDepto.current) return
     prevDepto.current = deptoActual
     if (markerPosRef.current) return
-    setMapCmd(prev => ({
-      type: "flyTo", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1,
-    }))
+    setMapCmd(prev => ({ type: "flyTo", center: getCenter(deptoActual), zoom: 12, trigger: prev.trigger + 1 }))
   }, [deptoActual])
 
-  // ─── Autocompletado con Mapbox ──────────────────────────────────────────────
   useEffect(() => {
     if (seleccionado.current) return
     if (query.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
@@ -175,21 +155,11 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     searchTimer.current = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const center  = getCenter(deptoActual)
-        const bbox    = deptoActual && DEPTO_BBOX[deptoActual]
-          ? DEPTO_BBOX[deptoActual].join(",")
-          : "-69.6,-22.9,-57.5,-9.7"
+        const center    = getCenter(deptoActual)
+        const bbox      = deptoActual && DEPTO_BBOX[deptoActual] ? DEPTO_BBOX[deptoActual].join(",") : "-69.6,-22.9,-57.5,-9.7"
         const proximity = `${center[1]},${center[0]}`
-
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
-          `${encodeURIComponent(query)}.json` +
-          `?access_token=${MAPBOX_TOKEN}` +
-          `&country=bo` +
-          `&language=es` +
-          `&limit=6` +
-          `&proximity=${proximity}` +
-          `&bbox=${bbox}`
-
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json` +
+          `?access_token=${MAPBOX_TOKEN}&country=bo&language=es&limit=6&proximity=${proximity}&bbox=${bbox}`
         const res  = await fetch(url)
         const data = await res.json() as MapboxResponse
         setSuggestions(Array.isArray(data.features) ? data.features : [])
@@ -202,11 +172,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }, 350)
   }, [query, deptoActual])
 
-  // ─── Click en el mapa → reverse geocoding con Mapbox ──────────────────────
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
-
     markerPosRef.current = [lat, lng]
     setMarkerPos([lat, lng])
     setShowSuggestions(false)
@@ -215,18 +183,13 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     setIsGeocoding(true)
     try {
-      const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
-        `?access_token=${MAPBOX_TOKEN}&language=es`
+      const url  = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=es`
       const res  = await fetch(url)
       const data = await res.json() as MapboxResponse
-
-      const feature      = data.features?.[0]
-      const direccionStr = feature?.text ?? ""
-      const ciudadStr    = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-
-      // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+      const feature        = data.features?.[0]
+      const direccionStr   = feature?.text ?? ""
+      const ciudadStr      = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
       const deptoDetectado = detectarDepartamento(lat, lng)
-
       setDireccion(direccionStr)
       setCiudad(ciudadStr)
       setQuery(feature?.place_name?.split(",")[0] ?? direccionStr)
@@ -238,29 +201,20 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }
   }, [onChange])
 
-  // ─── Seleccionar sugerencia ────────────────────────────────────────────────
   const handleSuggestionClick = useCallback((f: MapboxFeature) => {
-    const lng = f.center[0]
-    const lat = f.center[1]
-
-    const direccionStr = f.text ?? f.place_name.split(",")[0]
-    const ciudadStr    = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-
-    // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+    const lng = f.center[0]; const lat = f.center[1]
+    const direccionStr   = f.text ?? f.place_name.split(",")[0]
+    const ciudadStr      = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
     const deptoDetectado = detectarDepartamento(lat, lng)
-
     seleccionado.current = true
     markerPosRef.current = [lat, lng]
-    setShowSuggestions(false)
-    setSuggestions([])
+    setShowSuggestions(false); setSuggestions([])
     setMarkerPos([lat, lng])
-
     if (f.bbox) {
       const [minLng, minLat, maxLng, maxLat] = f.bbox
-      const latSpan = Math.abs(maxLat - minLat)
-      const lngSpan = Math.abs(maxLng - minLng)
+      const latSpan = Math.abs(maxLat - minLat); const lngSpan = Math.abs(maxLng - minLng)
       if (latSpan > 0.02 || lngSpan > 0.02) {
-        const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]]
+        const bounds: [[number,number],[number,number]] = [[minLat, minLng], [maxLat, maxLng]]
         setMapCmd(prev => ({ type: "fitBounds", bounds, trigger: prev.trigger + 1 }))
       } else {
         setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
@@ -268,10 +222,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     } else {
       setMapCmd(prev => ({ type: "flyTo", center: [lat, lng], zoom: 15, trigger: prev.trigger + 1 }))
     }
-
-    setQuery(f.place_name.split(",")[0])
-    setDireccion(direccionStr)
-    setCiudad(ciudadStr)
+    setQuery(f.place_name.split(",")[0]); setDireccion(direccionStr); setCiudad(ciudadStr)
     onChange({ lat, lng, direccion: direccionStr, ciudad: ciudadStr, pais: "Bolivia", departamento: deptoDetectado })
   }, [onChange])
 
@@ -280,76 +231,44 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     setQuery(e.target.value)
   }
 
-  const C = {
-    crema:     "#F4EFE6",
-    terracota: "#C26E5A",
-    marino:    "#1F3A4D",
-    borde:     "#D4CFC6",
-    texto:     "#2E2E2E",
-    subtexto:  "#2E2E2E",
-  }
-
-  const inputStyle: React.CSSProperties = {
-    height: 36, padding: "0 12px", fontSize: 13, borderRadius: 6,
-    border: `1px solid ${C.borde}`, background: "#ffffff",
-    color: C.texto, outline: "none", width: "100%", boxSizing: "border-box",
-  }
-  const labelStyle: React.CSSProperties = {
-    fontSize: 12, fontWeight: 500, color: C.subtexto, marginBottom: 2, display: "block",
-  }
+  const inputClass        = "h-9 px-3 text-sm rounded-md border border-border bg-background text-foreground outline-none w-full placeholder:text-muted-foreground focus:border-primary transition-colors"
+  const inputReadonlyClass = "h-9 px-3 text-sm rounded-md border border-border bg-muted outline-none w-full overflow-hidden text-ellipsis whitespace-nowrap"
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="flex flex-col gap-2.5">
 
       {/* Buscador */}
-      <div style={{ position: "relative", zIndex: 10000 }}>
-        <label style={labelStyle}>
+      <div className="relative z-[10000]">
+        <label className="text-xs font-medium text-foreground mb-0.5 block">
           Buscar dirección
-          {isGeocoding  && <span style={{ color: "#888", fontWeight: 400 }}> — obteniendo dirección...</span>}
-          {isSearching && !isGeocoding && <span style={{ color: "#888", fontWeight: 400 }}> — buscando...</span>}
+          {isGeocoding && <span className="text-muted-foreground font-normal"> — obteniendo dirección...</span>}
+          {isSearching && !isGeocoding && <span className="text-muted-foreground font-normal"> — buscando...</span>}
         </label>
         <input
           value={query}
           onChange={handleQueryChange}
-          onFocus={() => {
-            if (!seleccionado.current && suggestions.length > 0) setShowSuggestions(true)
-          }}
+          onFocus={() => { if (!seleccionado.current && suggestions.length > 0) setShowSuggestions(true) }}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           placeholder="Ej: Av. Blanco Galindo"
-          style={inputStyle}
+          className={inputClass}
         />
 
         {showSuggestions && suggestions.length > 0 && (
-          <div style={{
-            position: "absolute", top: "100%", left: 0, right: 0,
-            background: "#ffffff", border: `1px solid ${C.borde}`,
-            borderRadius: 6, zIndex: 99999,
-            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            marginTop: 3, maxHeight: 220, overflowY: "auto",
-          }}>
+          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md z-[99999] shadow-lg mt-0.5 max-h-[220px] overflow-y-auto">
             {suggestions.map((f, i) => (
               <div
                 key={f.id}
                 onMouseDown={(e) => { e.preventDefault(); handleSuggestionClick(f) }}
-                style={{
-                  padding: "10px 12px", fontSize: 13, color: C.texto, cursor: "pointer",
-                  borderBottom: i < suggestions.length - 1 ? `1px solid ${C.crema}` : "none",
-                  display: "flex", alignItems: "flex-start", gap: 8,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = C.crema }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#ffffff" }}
+                className={`flex items-start gap-2 px-3 py-2.5 text-sm text-foreground cursor-pointer hover:bg-muted transition-colors ${
+                  i < suggestions.length - 1 ? 'border-b border-border' : ''
+                }`}
               >
-                <svg width="12" height="14" viewBox="0 0 24 24" fill={C.terracota}
-                  style={{ flexShrink: 0, marginTop: 2 }}>
+                <svg width="12" height="14" viewBox="0 0 24 24" fill="var(--secondary)" className="flex-shrink-0 mt-0.5">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {f.text}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {f.place_name}
-                  </div>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{f.text}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{f.place_name}</div>
                 </div>
               </div>
             ))}
@@ -357,35 +276,22 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         )}
 
         {showSuggestions && suggestions.length === 0 && query.length >= 2 && !isSearching && (
-          <div style={{
-            position: "absolute", top: "100%", left: 0, right: 0,
-            background: "#ffffff", border: `1px solid ${C.borde}`,
-            borderRadius: 6, zIndex: 99999, marginTop: 3,
-            padding: "12px", fontSize: 13, color: "#888", textAlign: "center",
-          }}>
+          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md z-[99999] mt-0.5 px-3 py-3 text-sm text-muted-foreground text-center">
             Sin resultados. Intenta hacer clic directamente en el mapa.
           </div>
         )}
       </div>
 
       {/* Mapa */}
-      <div style={{
-        height: 230, borderRadius: 8, overflow: "hidden",
-        border: `1.5px solid ${C.borde}`, position: "relative", zIndex: 1,
-      }}>
+      <div className="relative rounded-lg overflow-hidden border border-border z-[1]" style={{ height: 230 }}>
         {isLoading && (
-          <div style={{
-            position: "absolute", inset: 0, zIndex: 999,
-            background: C.crema, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            fontSize: 13, color: C.subtexto, borderRadius: 8,
-          }}>
+          <div className="absolute inset-0 z-[999] bg-background flex items-center justify-center text-sm text-foreground rounded-lg">
             Cargando mapa...
           </div>
         )}
         <MapContainer
-          center={initialCenter.current}
-          zoom={initialZoom.current}
+          center={initialCenter}
+          zoom={initialZoom}
           zoomSnap={0.25}
           zoomDelta={0.5}
           wheelPxPerZoomLevel={60}
@@ -406,28 +312,25 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         </MapContainer>
       </div>
 
-      <p style={{ fontSize: 11, color: C.subtexto, margin: 0 }}>
+      <p className="text-[11px] text-muted-foreground m-0">
         Busca una dirección arriba o haz clic directamente en el mapa
       </p>
 
       {/* Dirección y ciudad */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}
-        className="sm:grid-cols-2"
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <label style={labelStyle}>Dirección seleccionada</label>
-          <input readOnly value={direccion} placeholder="—" style={{
-            ...inputStyle, background: C.crema,
-            color: direccion ? C.texto : C.subtexto,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-foreground block">Dirección seleccionada</label>
+          <input
+            readOnly value={direccion} placeholder="—"
+            className={`${inputReadonlyClass} ${direccion ? 'text-foreground' : 'text-muted-foreground'}`}
+          />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <label style={labelStyle}>Ciudad</label>
-          <input readOnly value={ciudad} placeholder="—" style={{
-            ...inputStyle, background: C.crema,
-            color: ciudad ? C.texto : C.subtexto,
-          }} />
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-foreground block">Ciudad</label>
+          <input
+            readOnly value={ciudad} placeholder="—"
+            className={`${inputReadonlyClass} ${ciudad ? 'text-foreground' : 'text-muted-foreground'}`}
+          />
         </div>
       </div>
 
