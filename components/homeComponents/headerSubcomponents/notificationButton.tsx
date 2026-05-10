@@ -15,6 +15,7 @@ import { NotificationBadge } from "@/app/home/components/notifications/Notificat
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 import { useClickOutside } from "../../hooks/useClickOutside"; // Ajusta la ruta relativa a tus hooks
 import { TodasNotificacionesView } from "@/app/notification/views/todas-notificaciones-view";
+import { useRouter } from "next/navigation";
 
 interface NotificationButtonProps {
   objUser: any;
@@ -31,6 +32,7 @@ export const NotificationButton = ({
 }: NotificationButtonProps) => {
   const [bolShowNotifications, setBolShowNotifications] = useState(false);
   const [showTodasNotif, setShowTodasNotif] = useState(false);
+  const router = useRouter();
   const refContainer = useRef<HTMLDivElement | null>(null);
 
   useClickOutside(
@@ -72,13 +74,10 @@ export const NotificationButton = ({
             onClose={() => setBolShowNotifications(false)}
             onVerTodas={() => {
               setBolShowNotifications(false);
-              setShowTodasNotif(true);
+              router.push("/notification");
             }}
           />
         </div>
-      )}
-      {showTodasNotif && (
-        <TodasNotificacionesView onClose={() => setShowTodasNotif(false)} />
       )}
     </div>
   );

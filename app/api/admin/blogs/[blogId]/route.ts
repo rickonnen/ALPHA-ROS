@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 
 interface updateActionRequest {
   action: string;
@@ -116,7 +117,22 @@ export async function PATCH(
     const ObjUpdatedBlogBlo = await prisma.blogs.update({
       where: { id_blog: IntIdBlo },
       data: ObjUpdateDataBlo,
+      include: { Usuario: { select: { id_usuario: true } } }
     });
+
+    if (action === "ACEPTAR" || action === "PUBLICAR" || action === "RECHAZAR") {
+      const titulo = action === "RECHAZAR" ? "Blog Rechazado" : "Blog Publicado";
+      const mensaje = action === "RECHAZAR"
+        ? `Tu blog fue revisado y no fue aprobado para su publicación.`
+        : `¡Tu blog fue aprobado y ya está publicado en la plataforma!`;
+
+      await crearNotificacion({
+        id_usuario: ObjUpdatedBlogBlo.id_user,
+        titulo,
+        mensaje,
+        id_categoria: 2,
+      });
+   }
 
     return NextResponse.json({ 
       success: true, 
