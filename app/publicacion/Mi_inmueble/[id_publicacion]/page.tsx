@@ -30,13 +30,20 @@
  */
 /**
  * Modificacion
- * Dev: [tu nombre]
+ * Dev: Oliver Garcia
  * Fecha: 09/05/2026
  * Update: Agrega etiqueta "Propiedad Destacada" en el header cuando la publicación
  *         tiene una PromocionPublicacion vigente (fecha_fin > now()). Solo visible
  *         para el propietario en esta vista privada.
  */
-
+/**
+ * Modificacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 09/05/2026
+ * @Funcionalidad: Se integró el componente <EstadisticasInmueble /> dentro de la vista.
+ * El componente se sitúa antes de los botones de acción, pasando los datos 
+ * del historial de rendimiento recuperados directamente desde el backend.
+ */
 import { notFound, redirect }     from "next/navigation";
 import { cookies }                from "next/headers";
 import { verify }                 from "jsonwebtoken";
@@ -49,6 +56,7 @@ import { PropertyActions }        from "@/features/publicacion/[id_publicacion]/
 import { ContactCard }            from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient }      from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
 import { PublicationStatusBadge, DestacadaBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
+import { EstadisticasInmueble } from "@/features/publicacion/[id_publicacion]/components/EstadisticasInmueble";
 
 export default async function PerfilInmueblePage({
   params,
@@ -232,6 +240,10 @@ export default async function PerfilInmueblePage({
             />
           );
         })()}
+        {/* Sección de Estadísticas renderizada antes de las acciones */}
+        <section className="mt-8 mb-8">
+          <EstadisticasInmueble estadisticas={objPerfil.EstadisticaPublicacion ?? []} />
+        </section>
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
         <PropertyActions />
       </div>
