@@ -28,10 +28,6 @@ export interface TrackSearchPayload {
   texto_busqueda?: string;
 }
 
-function getSessionId(request: NextRequest): string | null {
-  return request.cookies.get('session_id')?.value ?? null;
-}
-
 function getUserIdFromToken(request: NextRequest): string | null {
   try {
     const token = request.cookies.get('auth_token')?.value;
@@ -46,16 +42,15 @@ function getUserIdFromToken(request: NextRequest): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackSearchPayload;
-    const session_id = getSessionId(request);
     const id_usuario = getUserIdFromToken(request);
 
-    if (!session_id) {
-      return NextResponse.json({ success: false, message: 'session_id requerido' }, { status: 400 });
+    if (!id_usuario) {
+      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
     }
 
     const { error } = await supabaseAdmin.from('BusquedaLog').insert({
-      id_usuario: id_usuario ?? null,
-      session_id,
+      id_usuario,
+      session_id: id_usuario,
       id_ciudad: body.id_ciudad ?? null,
       id_zona: body.id_zona ?? null,
       texto_calle: body.texto_calle ?? null,

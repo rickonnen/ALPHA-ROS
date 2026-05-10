@@ -6,7 +6,15 @@
     },
     {
       "path": "/api/cron/suspend-expired",
-      "schedule": "10 0 * * *"
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/recordatorio7D",
+      "schedule": "0 4 * * *" 
+    },
+    {
+      "path": "/api/cron/recordatorio48H",
+      "schedule": "0 4 * * *"
     }
   ]
 }

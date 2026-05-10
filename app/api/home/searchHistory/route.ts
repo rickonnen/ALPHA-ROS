@@ -1,20 +1,42 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
+import { cookies } from "next/headers";
+import { verify } from "jsonwebtoken";
 /**
- * dev: Rodrigo Saul Zarate Villarroel      fecha: 18/04/2026
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 18/04/2026
  * funcionalidad: recupera el historial completo de la BD para el usuario autenticado
  */
-export async function GET(req: Request) {
+export const dynamic = 'force-dynamic';
+
+async function getUserIdFromCookies(): Promise<string | null> {
   try {
-    // ID extraído de tus logs de sesión activa
-    const id_usuario = "fbea52b7-78c7-44a2-a3c7-703f52010a2d"; 
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth_token")?.value;
+
+    if (!authToken) {
+      return null;
+    }
+
+    // Descifra el token
+    const decoded = verify(authToken, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
+
+    return decoded?.userId || null;
+  } catch (error) {
+    console.error("[AUTH_ERROR] Error al descifrar token en historial:", error);
+    return null;
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const id_usuario = await getUserIdFromCookies();
 
     if (!id_usuario) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // Acceso correcto al modelo generado por Prisma
     const arrDbHistory = await prisma.historialBusqueda.findMany({
       where: { id_usuario },
       orderBy: { created_at: "desc" },
@@ -29,58 +51,62 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json(arrFormattedHistory);
-  } catch (error) {
-    console.error("[HISTORIAL_GET_ERROR]", error);
+  } catch (error: any) {
+    console.error("[HISTORIAL_GET_ERROR]", error.message || error);
     return NextResponse.json({ error: "Error al obtener historial" }, { status: 500 });
   }
 }
 
-/**
- * funcionalidad: guarda una nueva búsqueda eliminando duplicados previos
- */
-export async function POST(req: Request) {
+// funcionalidad: guarda una nueva búsqueda o actualiza la fecha si ya existe (Upsert)
+export async function POST(request: Request) {
   try {
-    const id_usuario = "fbea52b7-78c7-44a2-a3c7-703f52010a2d";
-    const objData = await req.json();
+    const id_usuario = await getUserIdFromCookies();
+    const objData = await request.json();
 
     if (!id_usuario) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // 1. Eliminamos el registro previo de esta misma ciudad para evitar duplicados
-    await prisma.historialBusqueda.deleteMany({
+    await prisma.historialBusqueda.upsert({
       where: {
-        id_usuario,
-        mapbox_id: objData.strId,
+        id_usuario_mapbox_id: {
+          id_usuario: id_usuario,
+          mapbox_id: objData.strId,
+        },
       },
-    });
-
-    // 2. Insertamos la nueva búsqueda
-    await prisma.historialBusqueda.create({
-      data: {
+      update: {
+        // SI EXISTE: Actualiza la fecha a la hora exacta en que se hace la petición
+        created_at: new Date(),
+        name: objData.strName,
+        full_name: objData.strFullName,
+        icon_url: objData.strIcon,
+        place_type: objData.strTypePlace,
+      },
+      create: {
+        // SI NO EXISTE: Crea el registro nuevo
         id_usuario,
         mapbox_id: objData.strId,
         name: objData.strName,
         full_name: objData.strFullName,
         icon_url: objData.strIcon,
         place_type: objData.strTypePlace,
+        created_at: new Date(),
       },
     });
 
-    return GET(req);
-  } catch (error) {
-    console.error("[HISTORIAL_POST_ERROR]", error);
-    return NextResponse.json({ error: "Error al guardar historial" }, { status: 500 });
+    // Retorna el historial ya ordenado con la nueva fecha de primera
+    return GET(request);
+  } catch (error: any) {
+    console.error("[HISTORIAL_POST_ERROR] Código Prisma:", error.code);
+    return NextResponse.json({ error: "Error al guardar historial", detalle: error.message }, { status: 500 });
   }
 }
 
-/**
- * funcionalidad: elimina una búsqueda específica del historial
- */
-export async function DELETE(req: Request) {
+// funcionalidad: elimina una búsqueda específica del historial
+export async function DELETE(request: Request) {
   try {
-    const id_usuario = "fbea52b7-78c7-44a2-a3c7-703f52010a2d";
-    const { searchParams } = new URL(req.url);
+    const id_usuario = await getUserIdFromCookies();
+    const { searchParams } = new URL(request.url);
     const strId = searchParams.get("strId");
 
     if (!strId || !id_usuario) {
@@ -94,9 +120,9 @@ export async function DELETE(req: Request) {
       },
     });
 
-    return GET(req);
-  } catch (error) {
-    console.error("[HISTORIAL_DELETE_ERROR]", error);
+    return GET(request);
+  } catch (error: any) {
+    console.error("[HISTORIAL_DELETE_ERROR]", error.message || error);
     return NextResponse.json({ error: "Error al eliminar historial" }, { status: 500 });
   }
 }

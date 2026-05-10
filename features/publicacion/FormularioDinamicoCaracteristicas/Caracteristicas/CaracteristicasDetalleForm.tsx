@@ -31,16 +31,11 @@ const IconBox = ({ icon, disabled }: { icon: React.ReactNode; disabled?: boolean
     style={{
       width: '42px',
       height: '42px',
-      borderRadius: '8px',
-      border: '1px solid',
-      borderColor: disabled ? '#E0DDD6' : '#D4CFC6',
-      backgroundColor: disabled ? '#F1EFE8' : '#ffffff',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       flexShrink: 0,
       opacity: disabled ? 0.5 : 1,
-      transition: 'background-color 0.2s, opacity 0.2s',
     }}
   >
     {icon}
@@ -94,7 +89,7 @@ export function CaracteristicasDetalleForm({
 
         {/* Habitaciones */}
         <div className="flex flex-col gap-1">
-          <label className={`text-sm font-medium flex items-end ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
             Nro de Habitaciones
           </label>
           <div className="flex items-center gap-2">

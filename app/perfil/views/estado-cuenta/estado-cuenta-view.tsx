@@ -1,10 +1,11 @@
-/* Dev: [Tu nombre] - HU-04
-   Fecha: [fecha]
+/* Dev: HU-04
    Funcionalidad: Vista "Estado de Cuenta" dentro de Seguridad
    Paleta: El panel de perfil tiene fondo oscuro (#1F3A4D-ish) con texto blanco,
            igual que contrasena-view y cambiar-correo.
            El modal interno usa fondo claro #F4EFE6.
    CAs: CA-2, CA-4, CA-5, CA-6, CA-8, CA-9, CA-11, CA-14, CA-17, CA-18, CA-24
+   FIX: Al confirmar desactivación, se limpia el estado local del historial
+        en el UI antes de redirigir, para que no queden datos visibles en pantalla.
 */
 "use client";
 import { useState } from "react";
@@ -15,12 +16,14 @@ interface EstadoCuentaViewProps {
   id_usuario: string;
   estadoCuenta: number | null; // 1 = activa, 0 = desactivada
   onBack: () => void;
+  onLimpiarDatos?: () => void; // callback para limpiar historial/favoritos en el padre
 }
 
 export default function EstadoCuentaView({
   id_usuario,
   estadoCuenta,
   onBack,
+  onLimpiarDatos,
 }: EstadoCuentaViewProps) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +43,7 @@ export default function EstadoCuentaView({
     if (!isLoading) setModalAbierto(false);
   };
 
-  // CA-2, CA-4, CA-8, CA-9, CA-11, CA-17
+  // CA-2, CA-4, CA-5, CA-8, CA-9, CA-11, CA-17
   const handleConfirmar = async () => {
     setIsLoading(true);
     setMensajeError("");
@@ -62,6 +65,10 @@ export default function EstadoCuentaView({
         return;
       }
 
+      // CA-5: limpiar datos del historial en el UI inmediatamente,
+      // antes de redirigir, para que no queden visibles en pantalla
+      onLimpiarDatos?.();
+
       setModalAbierto(false);
       setIsLoading(false);
       setExitosa(true); // CA-24
@@ -69,7 +76,9 @@ export default function EstadoCuentaView({
       // CA-4 / CA-17: logout, limpiar sesión completamente y redirigir
       setTimeout(async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        // window.location.href fuerza recarga completa — limpia todo el estado de auth
+        // limpia todo el estado de auth
+        const { signOut } = await import("next-auth/react");
+        await signOut({ redirect: false });
         window.location.href = "/";
       }, 2500);
     } catch {

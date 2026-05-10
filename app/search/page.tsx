@@ -11,7 +11,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
-import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
+// import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -52,6 +52,11 @@ type AppliedPriceFilter = {
   maxPrice?: number;
 };
 
+interface FiltrosBusquedaParams extends FiltrosPublicacion{
+  page?:number;
+  limit?:number;
+  currency?: undefined;
+}
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -60,7 +65,12 @@ const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 5, nombre_inmueble: "Espacio de cementerio" },
 ];
 
-const LOCAL_FALLBACK_IMAGES = ["/casa1.jpg", "/casa2.jpg", "/casa3.jpg"];
+const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
+const ZONE_NAME_PATTERN = /^[A-Za-z0-9]+$/;
+const ZONE_NAME_MAX_LENGTH = 50;
+const POST_AUTH_REDIRECT_KEY = 'postAuthRedirect';
+const POST_AUTH_LOADED_ZONE_KEY = 'loadedZona';
+const POST_AUTH_MAP_OPEN_KEY = 'searchMapOpen';
 
 // ── Pagination config ──
 const ITEMS_PER_PAGE_GRID = 6;
@@ -97,6 +107,80 @@ function getQueryValues(value: string | null): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeZoneName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isValidZoneCoordinates(
+  coordinates: unknown,
+): coordinates is [number, number][] {
+  return (
+    Array.isArray(coordinates) &&
+    coordinates.length >= 3 &&
+    coordinates.every(
+      (point) =>
+        Array.isArray(point) &&
+        point.length === 2 &&
+        typeof point[0] === 'number' &&
+        typeof point[1] === 'number' &&
+        Number.isFinite(point[0]) &&
+        Number.isFinite(point[1]),
+    )
+  );
+}
+
+function getPolygonSignature(coordinates: [number, number][]): string {
+  return JSON.stringify(
+    coordinates.map(([lat, lng]) => [
+      Number(lat.toFixed(6)),
+      Number(lng.toFixed(6)),
+    ]),
+  );
+}
+
+function getZoneNameError(value: string, savedZones: SavedZone[]): string | null {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return 'Ingresa un nombre para la zona.';
+  }
+
+  if (trimmedValue.length > ZONE_NAME_MAX_LENGTH) {
+    return `El nombre no puede superar ${ZONE_NAME_MAX_LENGTH} caracteres.`;
+  }
+
+  if (!ZONE_NAME_PATTERN.test(trimmedValue)) {
+    return 'Usa solo letras y números, sin espacios ni caracteres especiales.';
+  }
+
+  const normalizedValue = normalizeZoneName(trimmedValue);
+  const hasDuplicateName = savedZones.some(
+    (zone) =>
+      typeof zone.nombre_zona === 'string' &&
+      normalizeZoneName(zone.nombre_zona) === normalizedValue,
+  );
+
+  if (hasDuplicateName) {
+    return 'Ya tienes una zona guardada con ese nombre.';
+  }
+
+  return null;
+}
+
+function persistSearchStateForAuth(drawnPolygon: [number, number][] | null) {
+  if (typeof window === 'undefined') return;
+
+  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, '/search');
+  localStorage.setItem(POST_AUTH_MAP_OPEN_KEY, JSON.stringify(true));
+
+  if (drawnPolygon && isValidZoneCoordinates(drawnPolygon)) {
+    localStorage.setItem(
+      POST_AUTH_LOADED_ZONE_KEY,
+      JSON.stringify(drawnPolygon),
+    );
+  }
 }
 
 function mapQueryOperationToValue(value: string | null): OperationTypeValue {
@@ -202,6 +286,42 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
   return [LOCAL_FALLBACK_IMAGES[fallbackIndex]];
 }
 
+function formatPublishedDate(date: Date | string | null | undefined): string {
+  if (!date) return "Reciente";
+  
+  try {
+    const publishedDate = typeof date === "string" ? new Date(date) : date;
+    if (isNaN(publishedDate.getTime())) return "Reciente";
+    
+    const now = new Date();
+    const diffMs = now.getTime() - publishedDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    // Mostrar hace cuánto tiempo fue publicado
+    if (diffDays === 0) return "Hoy";
+    if (diffDays === 1) return "Ayer";
+    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `Hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
+    }
+    if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `Hace ${months} ${months === 1 ? "mes" : "meses"}`;
+    }
+    
+    // Para fechas más antiguas, mostrar la fecha formateada
+    const formatter = new Intl.DateTimeFormat("es-BO", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    return formatter.format(publishedDate);
+  } catch {
+    return "Reciente";
+  }
+}
+
 function mapPublicationToProperty(
   publication: PublicacionBusqueda,
   selectedOperation: OperationTypeValue,
@@ -225,9 +345,10 @@ function mapPublicationToProperty(
     bathrooms: publication.banos ?? 0,
     price: toNumber(publication.precio),
     currencySymbol: publication.moneda_simbolo ?? "$us",
-    publishedDate: "Reciente",
-    whatsappContact: "",
+    publishedDate: formatPublishedDate(publication.fecha_creacion),
+    whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
+    usuarioTelefono: publication.usuario?.telefono,
   };
 }
 
@@ -254,7 +375,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página anterior"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -264,9 +384,7 @@ function Pagination({
         const showEllipsis = prev !== undefined && page - prev > 1;
         return (
           <span key={page} className="flex items-center gap-1">
-            {showEllipsis && (
-              <span className="px-1 text-gray-400 text-sm">…</span>
-            )}
+            {showEllipsis && <span className="px-1 text-gray-400 text-sm">…</span>}
             <button
               onClick={() => onPageChange(page)}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
@@ -285,7 +403,6 @@ function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-30"
-        aria-label="Página siguiente"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
@@ -298,6 +415,7 @@ function SearchPageContent() {
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
 
+  const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -307,7 +425,13 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [advancedFilterValues, setAdvancedFilterValues] = useState({
+  const [advancedFilterValues, setAdvancedFilterValues] = useState<{
+    habitaciones?: string;
+    banos?: string;
+    piscina?: string;
+    minSurface?: number;
+    maxSurface?: number;
+  }>({
     habitaciones: "",
     banos: "",
     piscina: "",
@@ -346,12 +470,47 @@ function SearchPageContent() {
   // Modales para zonas (team-bugHunters)
   const [showZoneNameModal, setShowZoneNameModal] = useState(false);
   const [zoneName, setZoneName] = useState("");
+  const [savedZones, setSavedZones] = useState<SavedZone[]>([]);
+  const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Reset page when filters/sort/view change (merge-sysinfosquad-bughunters)
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSort, viewMode, isMapOpen, searchResults]);
+  }, [selectedSort, viewMode, isMapOpen]);
+
+  useEffect(() => {
+    if (!objUser) return;
+
+    let isMounted = true;
+
+    const fetchSavedZones = async () => {
+      try {
+        const response = await fetch('/api/perfil/mis-zonas', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!isMounted || !Array.isArray(payload.data)) return;
+
+        setSavedZones(
+          payload.data.filter(
+            (zone: SavedZone) => isValidZoneCoordinates(zone.coordenadas),
+          ),
+        );
+      } catch (error) {
+        console.error('Error al cargar zonas guardadas:', error);
+      }
+    };
+
+    void fetchSavedZones();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [objUser]);
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
@@ -361,6 +520,8 @@ function SearchPageContent() {
       advancedFilterValues.habitaciones ||
       advancedFilterValues.banos ||
       advancedFilterValues.piscina ||
+      advancedFilterValues.minSurface !== undefined ||
+      advancedFilterValues.maxSurface !== undefined ||
       appliedPriceFilter?.minPrice !== undefined ||
       appliedPriceFilter?.maxPrice !== undefined ||
       selectedSort !== "fecha-reciente",
@@ -371,11 +532,31 @@ function SearchPageContent() {
     advancedFilterValues.piscina,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
+    advancedFilterValues?.minSurface,
+    advancedFilterValues?.maxSurface,
     searchLocation,
     selectedOperation,
     selectedPropertyTypes.length,
     selectedSort,
   ]);
+
+  const currentPolygonSignature = useMemo(
+    () => (drawnPolygon ? getPolygonSignature(drawnPolygon) : null),
+    [drawnPolygon],
+  );
+
+  const isCurrentPolygonSaved = useMemo(
+    () =>
+      currentPolygonSignature !== null &&
+      savedZones.some(
+        (zone) =>
+          isValidZoneCoordinates(zone.coordenadas) &&
+          getPolygonSignature(zone.coordenadas) === currentPolygonSignature,
+      ),
+    [currentPolygonSignature, savedZones],
+  );
+
+  const currentZoneNameError = getZoneNameError(zoneName, savedZones);
 
   // 1. Filtrar por zona dibujada con Turf.js (team-bugHunters)
   const filteredSearchResults = useMemo(() => {
@@ -435,12 +616,14 @@ function SearchPageContent() {
 
   // Manejadores de autenticación (team-bugHunters)
   const handleOpenLogin = () => {
+    persistSearchStateForAuth(drawnPolygon);
     setStrAuthMode("login");
     setBolShowAuth(true);
     setBolShowProtected(false);
   };
 
   const handleOpenRegister = () => {
+    persistSearchStateForAuth(drawnPolygon);
     setStrAuthMode("register");
     setBolShowAuth(true);
     setBolShowProtected(false);
@@ -449,30 +632,53 @@ function SearchPageContent() {
   const handleCloseAuth = () => setBolShowAuth(false);
 
   const handleSaveZone = async () => {
-    if (!zoneName.trim() || !drawnPolygon) return;
+    if (!drawnPolygon) return;
+
+    if (isCurrentPolygonSaved) {
+      setZoneNameError('Esta zona ya está guardada en tu perfil.');
+      return;
+    }
+
+    if (currentZoneNameError) {
+      setZoneNameError(currentZoneNameError);
+      return;
+    }
+
     try {
+      const cleanZoneName = zoneName.trim();
       const response = await fetch("/api/perfil/mis-zonas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          nombre_zona: zoneName.trim(),
+          nombre_zona: cleanZoneName,
           coordenadas: drawnPolygon,
         }),
       });
       const data = await response.json();
       if (response.ok) {
+        setSavedZones((current) => [
+          {
+            id_mi_zona: data.data.id_mi_zona,
+            nombre_zona: data.data.nombre_zona,
+            coordenadas: data.data.coordenadas,
+          },
+          ...current,
+        ]);
         setShowZoneNameModal(false);
         setZoneName("");
+        setZoneNameError(null);
         setShowSuccessModal(true);
       } else {
         console.error("Error from API:", data);
-        alert(`Error al guardar la zona: ${data.error || "Error desconocido"}`);
+        setZoneNameError(data.error || "No se pudo guardar la zona.");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert(
-        `Error al guardar la zona: ${error instanceof Error ? error.message : "Error desconocido"}`,
+      setZoneNameError(
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al guardar la zona.",
       );
     }
   };
@@ -480,6 +686,7 @@ function SearchPageContent() {
   const handleCloseZoneNameModal = () => {
     setShowZoneNameModal(false);
     setZoneName("");
+    setZoneNameError(null);
   };
 
   const breadcrumbPropertyLabel =
@@ -537,6 +744,43 @@ function SearchPageContent() {
         selectedPropertyTypes,
         PROPERTY_TYPE_OPTIONS,
       );
+      // Mínimas modificaciones para llamar a la API con paginación
+    //   const response = await fetch("/api/filter_search_page", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       ubicacion: searchLocation,
+    //       operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
+    //       tipoInmueble: selectedPropertyLabels.join(","),
+    //       habitaciones: advancedFilterValues.habitaciones,
+    //       banos: advancedFilterValues.banos,
+    //       piscina: advancedFilterValues.piscina,
+    //       minPrice: appliedPriceFilter?.minPrice,
+    //       maxPrice: appliedPriceFilter?.maxPrice,
+    //       currency: selectedCurrency,
+    //       page: currentPage,
+    //       limit: itemsPerPage,
+    //       ...overrides,
+    //     }),
+    //   });
+
+    //   const data = await response.json();
+    //   if (data.success) {
+    //     setSearchResults(data.publications);
+    //     setTotalCount(data.total);
+    //   }
+    //   setHasSearched(true);
+
+    //   trackSearch({
+    //     texto_busqueda: searchLocation,
+    //     cant_resultados: data.total,
+    //   });
+    // } catch (error) {
+    //   console.error("Search error:", error);
+    //   setSearchResults([]);
+    // } finally {
+    //   setIsApplyingFilters(false);
+    // }
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion:
@@ -549,20 +793,31 @@ function SearchPageContent() {
         piscina: advancedFilterValues.piscina,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
+        minSurface: advancedFilterValues.minSurface, 
+        maxSurface: advancedFilterValues.maxSurface,
+        currency: selectedCurrency,
         ...overrides,
       };
+
+      
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
       setHasSearched(true);
 
+      const OPERACION_ID: Record<string, number> = {
+        alquiler: 1,
+        venta: 2,
+        anticretico: 3,
+      };
+
       const trackPayload = {
         texto_busqueda: searchLocation,
-        habitaciones: advancedFilterValues.habitaciones
-          ? parseInt(advancedFilterValues.habitaciones)
-          : undefined,
-        banos: advancedFilterValues.banos
-          ? parseInt(advancedFilterValues.banos)
-          : undefined,
+        id_tipo_operacion:
+          selectedOperation.length === 1 ? OPERACION_ID[selectedOperation[0]] : undefined,
+        id_tipo_inmueble:
+          selectedPropertyTypes.length === 1 ? selectedPropertyTypes[0] : undefined,
+        habitaciones: advancedFilterValues.habitaciones ? parseInt(advancedFilterValues.habitaciones) : undefined,
+        banos: advancedFilterValues.banos ? parseInt(advancedFilterValues.banos) : undefined,
         precio_min: appliedPriceFilter?.minPrice,
         precio_max: appliedPriceFilter?.maxPrice,
         cant_resultados: resultados.length,
@@ -588,10 +843,12 @@ function SearchPageContent() {
       if (loadedZona) {
         try {
           const coordenadas = JSON.parse(loadedZona);
-          setDrawnPolygon(coordenadas);
-          setIsDrawingMode(false);
-          setIsMapOpen(true);
-          localStorage.removeItem("loadedZona");
+          if (isValidZoneCoordinates(coordenadas)) {
+            setDrawnPolygon(coordenadas);
+            setIsDrawingMode(false);
+            setIsMapOpen(true);
+          }
+          localStorage.removeItem('loadedZona');
         } catch (error) {
           console.error("Error al cargar zona:", error);
         }
@@ -676,22 +933,31 @@ function SearchPageContent() {
     if (selectedSort === "mas-recomendados") {
       const fetchRecommendations = async () => {
         try {
-          const response = await fetch("/api/recommendations/personal");
+          const candidate_ids = searchResults.map((item) => item.id_publicacion);
+          const response = await fetch('/api/recommendations/personal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ candidate_ids }),
+          });
           if (response.ok) {
             const data = (await response.json()) as {
               id_publicacion: number;
             }[];
             setRecommendedIds(data.map((item) => item.id_publicacion));
+          } else {
+            setRecommendedIds([]);
           }
         } catch (error) {
-          console.error("Error fetching recommendations:", error);
+          console.error('Error fetching recommendations:', error);
+          setRecommendedIds([]);
         }
       };
       void fetchRecommendations();
     } else {
       setRecommendedIds([]);
     }
-  }, [selectedSort]);
+  }, [selectedSort, searchResults]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);
@@ -707,7 +973,13 @@ function SearchPageContent() {
     setSearchLocation("");
     setSelectedOperation([]);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({ habitaciones: "", banos: "", piscina: "" });
+    setAdvancedFilterValues({ 
+      habitaciones: "", 
+      banos: "", 
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined 
+    }as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
@@ -723,18 +995,40 @@ function SearchPageContent() {
       piscina: "",
       minPrice: undefined,
       maxPrice: undefined,
+      minSurface: undefined, 
+      maxSurface: undefined  
     });
   };
 
   const handleSort = (sortOption: string) => setSelectedSort(sortOption);
 
+  useEffect(() => {
+    // Si el usuario escribe o hace clic, esperamos 200ms antes de buscar
+    // para no saturar la base de datos (debounce)
+    const timer = setTimeout(() => {
+      // Solo ejecutamos si ya se hizo una busqueda inicial o hay filtros
+      if (hasSearched || hasActiveFilters) {
+        saveFiltersToUrl(); // Actualiza la URL arriba en el navegador
+        void runSearch();   // Llama a tu función de Prisma/API
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    searchLocation,       // Escucha cambios en el buscador de texto
+    selectedOperation,    // Escucha cambios en Venta/Alquiler
+    selectedPropertyTypes,// Escucha cambios en Casa/Dpto
+    appliedPriceFilter,   // Escucha cambios en el precio
+    advancedFilterValues, // Escucha cambios en habitaciones/baños
+    selectedSort,         // Escucha cambios en el ordenamiento
+    selectedCurrency,      // Escucha cambios en la moneda
+  ]);
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div className="w-full py-3">
       {/* ══════════════════ MOBILE BAR ══════════════════ */}
-      <div className="relative z-[60] mb-4 flex items-center justify-between gap-3 border-b pb-3 px-4 md:hidden">
+      <div className="relative z-[60] mb-4 flex items-center justify-between gap-3 border-b pb-3 px-4 lg:hidden">
         <Button
           variant="secondary"
           onClick={openMobileFilters}
@@ -762,29 +1056,6 @@ function SearchPageContent() {
         />
 
         <div className="flex items-center gap-2 shrink-0">
-          {isMapOpen && (
-            <button
-              onClick={() => setIsDrawingMode(!isDrawingMode)}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-white transition-colors ${
-                isDrawingMode ? "bg-slate-800" : "bg-[#C26E5A]"
-              }`}
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                />
-              </svg>
-              {isDrawingMode ? "Cancelar" : "Zona"}
-            </button>
-          )}
           <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
@@ -799,7 +1070,7 @@ function SearchPageContent() {
       </div>
 
       {/* ══════════════════ MOBILE INFO + SORT ══════════════════ */}
-      <div className="block md:hidden px-4 mb-3">
+      <div className="block lg:hidden px-4 mb-3">
         <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
         <h1 className="text-base font-semibold mb-2">
           {allProperties.length} inmuebles disponibles
@@ -829,7 +1100,7 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE FILTERS DRAWER ══════════════════ */}
       {isMobileFiltersOpen && (
-        <div className="fixed inset-0 z-[100] md:hidden">
+        <div className="fixed inset-0 z-[100] lg:hidden">
           <div
             className={`absolute inset-0 bg-black/45 transition-opacity duration-250 ease-out ${isMobileFiltersVisible ? "opacity-100" : "opacity-0"}`}
           />
@@ -850,14 +1121,14 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                   closeMobileFilters();
                 }}
-              />
+              /> */}
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -876,15 +1147,18 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
+                <AdvancedFilters
+                  key={advancedFiltersKey}
+                  onChange={setAdvancedFilterValues}
+                />
+
+                <div className="my-4 h-px bg-[#D8D2C8]" />
+
                 <PriceDropdown
                   selectedCurrency={selectedCurrency}
                   appliedPriceFilter={appliedPriceFilter}
                   onCurrencyChange={handleCurrencyChange}
                   onApplyRange={handleApplyRange}
-                />
-                <AdvancedFilters
-                  key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
                 />
               </div>
               <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -900,7 +1174,7 @@ function SearchPageContent() {
       )}
 
       {/* ══════════════════ MOBILE RESULTS ══════════════════ */}
-      <div className="block md:hidden px-4">
+      <div className="block lg:hidden px-4">
         {!isMapOpen && (
           <>
             {!hasSearched && isApplyingFilters ? (
@@ -922,7 +1196,7 @@ function SearchPageContent() {
                       viewMode={viewMode}
                       isHovered={hoveredId === property.id}
                       onMouseEnter={() => setHoveredId(property.id)}
-                      onMouseLeave={() => setHoveredId(null)}
+                      onMouseLeave={() => {}}
                       onClick={() => {}}
                     />
                   ))}
@@ -943,7 +1217,7 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE MAP ══════════════════ */}
       {isMapOpen && (
-        <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 md:hidden">
+        <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 lg:hidden">
           {/* Controles de dibujo flotantes en móvil */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[998]">
             {!drawnPolygon ? (
@@ -981,11 +1255,17 @@ function SearchPageContent() {
                       setBolShowProtected(true);
                       return;
                     }
+                    if (isCurrentPolygonSaved) return;
                     setShowZoneNameModal(true);
                   }}
-                  className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                  className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                    isCurrentPolygonSaved
+                      ? 'cursor-not-allowed bg-slate-400'
+                      : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                  }`}
+                  disabled={isCurrentPolygonSaved}
                 >
-                  Guardar en mi Perfil
+                  {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
                 </button>
                 <button
                   onClick={() => {
@@ -1024,7 +1304,7 @@ function SearchPageContent() {
       )}
 
       {/* ══════════════════ DESKTOP LAYOUT ══════════════════ */}
-      <div className="hidden md:flex items-stretch min-h-screen">
+      <div className="hidden lg:flex items-stretch min-h-screen">
         {/* ── Sidebar filtros ── */}
         <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
           <div className="sticky top-6">
@@ -1068,11 +1348,17 @@ function SearchPageContent() {
                         setBolShowProtected(true);
                         return;
                       }
+                      if (isCurrentPolygonSaved) return;
                       setShowZoneNameModal(true);
                     }}
-                    className="w-full rounded-lg bg-[#C26E5A] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b05e4a] transition-colors"
+                    className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                      isCurrentPolygonSaved
+                        ? 'cursor-not-allowed bg-slate-400'
+                        : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                    }`}
+                    disabled={isCurrentPolygonSaved}
                   >
-                    Guardar en mi Perfil
+                    {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
                   </button>
                   <button
                     onClick={() => {
@@ -1087,7 +1373,7 @@ function SearchPageContent() {
               )}
             </div>
 
-            <div className="flex h-[calc(95vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
 
               <div className="flex mb-4 items-center justify-between">
@@ -1123,13 +1409,13 @@ function SearchPageContent() {
                 </div>
               </div>
 
-              <ApplyFiltersButton
+              {/* <ApplyFiltersButton
                 isLoading={isApplyingFilters}
                 onClick={() => {
                   saveFiltersToUrl();
                   void runSearch();
                 }}
-              />
+              /> */}
               <div className="my-3 h-px bg-[#F4EFE6]" />
               <SearchAutocomplete
                 value={searchLocation}
@@ -1148,16 +1434,16 @@ function SearchPageContent() {
                     selected={selectedPropertyTypes}
                     onChange={setSelectedPropertyTypes}
                   />
+                  <AdvancedFilters
+                    key={advancedFiltersKey}
+                    onChange={setAdvancedFilterValues}
+                  />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <PriceDropdown
                     selectedCurrency={selectedCurrency}
                     appliedPriceFilter={appliedPriceFilter}
                     onCurrencyChange={handleCurrencyChange}
                     onApplyRange={handleApplyRange}
-                  />
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
                   />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <div className="pb-2">
@@ -1222,17 +1508,18 @@ function SearchPageContent() {
                         const lng = Number(loc?.longitud);
                         if (isValidLatLng(lat, lng)) setHoveredPos([lat, lng]);
                       }}
-                      onMouseLeave={() => {
-                        setHoveredId(null);
-                        setHoveredPos(null);
-                      }}
+                      onMouseLeave={() => {}}
                       onClick={() => {
+                        setHoveredId(property.id);
                         const loc = searchResults.find(
                           (p) => p.id_publicacion === property.id,
                         )?.ubicacion;
                         const lat = Number(loc?.latitud);
                         const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) setSelectedPos([lat, lng]);
+                        if (isValidLatLng(lat, lng)) {
+                          setHoveredPos([lat, lng]);
+                          setSelectedPos([lat, lng]);
+                        }
                       }}
                     />
                   ))}
@@ -1344,10 +1631,20 @@ function SearchPageContent() {
             <input
               type="text"
               value={zoneName}
-              onChange={(e) => setZoneName(e.target.value)}
+              onChange={(e) => {
+                setZoneName(e.target.value);
+                setZoneNameError(getZoneNameError(e.target.value, savedZones));
+              }}
               placeholder="Ingresa el nombre de la zona"
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${
+                zoneNameError ? 'mb-2 border-red-400' : 'mb-6 border-slate-300'
+              }`}
             />
+            {zoneNameError && (
+              <p className="mb-4 text-left text-sm font-medium text-red-500">
+                {zoneNameError}
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={handleCloseZoneNameModal}
@@ -1357,8 +1654,12 @@ function SearchPageContent() {
               </button>
               <button
                 onClick={handleSaveZone}
-                className="flex-1 px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-sm font-semibold hover:bg-[var(--primary)]/90 transition-colors"
-                disabled={!zoneName.trim()}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors ${
+                  currentZoneNameError || isCurrentPolygonSaved
+                    ? 'cursor-not-allowed bg-slate-400'
+                    : 'bg-[var(--primary)] hover:bg-[var(--primary)]/90'
+                }`}
+                disabled={Boolean(currentZoneNameError) || isCurrentPolygonSaved}
               >
                 Guardar
               </button>

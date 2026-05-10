@@ -10,6 +10,7 @@ export default function ExchangeRateBubble() {
   const { compra, venta, loading, error, lastUpdate } = useDollarRate();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Cierra al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -18,6 +19,22 @@ export default function ExchangeRateBubble() {
     };
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // Cierra con ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  // Auto-cierre luego de 10 segundos
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => setOpen(false), 10000);
+    return () => clearTimeout(timer);
   }, [open]);
 
   const formatDate = (dateStr: string | null) => {
@@ -41,13 +58,13 @@ export default function ExchangeRateBubble() {
       {open && (
         <div className="
           w-64 rounded-2xl overflow-hidden
-          border border-[#E7E1D7]
+          border border-secondary-fund
           shadow-xl shadow-neutral-900/15
-          bg-[#F4EFE6]
+          bg-background
           animate-in fade-in slide-in-from-bottom-2 duration-200
         ">
           {/* Cabecera */}
-          <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-[#E7E1D7]">
+          <div className="flex items-center justify-between px-4 py-3 bg-card-bg border-b border-secondary-fund">
             <div className="flex items-center gap-2">
               <Image
                 src="/banderaUSA.svg"
@@ -56,7 +73,7 @@ export default function ExchangeRateBubble() {
                 height={14}
                 className="rounded-sm object-cover"
               />
-              <TrendingUp size={13} className="text-[#C26E5A]" />
+              <TrendingUp size={13} className="text-secondary" />
               <Image
                 src="/banderaBolivia.svg"
                 alt="Bolivia"
@@ -64,13 +81,13 @@ export default function ExchangeRateBubble() {
                 height={14}
                 className="rounded-sm object-cover"
               />
-              <span className="text-xs font-semibold tracking-widest text-[#1F3A4D] uppercase ml-1">
+              <span className="text-xs font-semibold tracking-widest text-primary uppercase ml-1">
                 Paralelo
               </span>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-[#2E2E2E]/40 hover:text-[#2E2E2E]/70 transition-colors text-lg leading-none"
+              className="text-foreground/40 hover:text-foreground/70 transition-colors text-lg leading-none"
               aria-label="Cerrar"
             >
               ✕
@@ -81,8 +98,8 @@ export default function ExchangeRateBubble() {
           <div className="px-4 py-4">
             {loading && (
               <div className="flex flex-col gap-2">
-                <div className="h-4 w-3/4 rounded bg-[#E7E1D7] animate-pulse" />
-                <div className="h-4 w-1/2 rounded bg-[#E7E1D7] animate-pulse" />
+                <div className="h-4 w-3/4 rounded bg-secondary-fund animate-pulse" />
+                <div className="h-4 w-1/2 rounded bg-secondary-fund animate-pulse" />
               </div>
             )}
 
@@ -93,29 +110,29 @@ export default function ExchangeRateBubble() {
             {!loading && !error && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#2E2E2E]/60 font-medium">Compra</span>
+                  <span className="text-xs text-foreground/60 font-medium">Compra</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xs text-[#2E2E2E]/40">Bs.</span>
-                    <span className="text-lg font-bold text-[#2E2E2E] tabular-nums">
+                    <span className="text-xs text-foreground/40">Bs.</span>
+                    <span className="text-lg font-bold text-foreground tabular-nums">
                       {compra !== null ? compra.toFixed(2) : "—"}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#2E2E2E]/60 font-medium">Venta</span>
+                  <span className="text-xs text-foreground/60 font-medium">Venta</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xs text-[#2E2E2E]/40">Bs.</span>
-                    <span className="text-lg font-bold text-[#2E2E2E] tabular-nums">
+                    <span className="text-xs text-foreground/40">Bs.</span>
+                    <span className="text-lg font-bold text-foreground tabular-nums">
                       {venta !== null ? venta.toFixed(2) : "—"}
                     </span>
                   </div>
                 </div>
 
-                <div className="my-1 border-t border-dashed border-[#E7E1D7]" />
-                <p className="text-center text-[11px] text-[#2E2E2E]/40">
+                <div className="my-1 border-t border-dashed border-secondary-fund" />
+                <p className="text-center text-[11px] text-foreground/40">
                   1.00 USD = Bs.{" "}
-                  <span className="font-semibold text-[#1F3A4D]">
+                  <span className="font-semibold text-primary">
                     {venta !== null ? venta.toFixed(2) : "—"}
                   </span>
                 </p>
@@ -124,8 +141,8 @@ export default function ExchangeRateBubble() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2 bg-white border-t border-[#E7E1D7]">
-            <p className="text-[10px] text-[#2E2E2E]/40 text-center">
+          <div className="px-4 py-2 bg-card-bg border-t border-secondary-fund">
+            <p className="text-[10px] text-foreground/40 text-center">
               Fuente: DolarAPI · Bolivia
               {lastUpdate && <span className="block">{formatDate(lastUpdate)}</span>}
             </p>
@@ -133,7 +150,7 @@ export default function ExchangeRateBubble() {
         </div>
       )}
 
-      {/* Botón burbuja — azul petróleo */}
+      {/* Botón burbuja */}
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="
@@ -141,12 +158,12 @@ export default function ExchangeRateBubble() {
           flex items-center justify-center
           w-14 h-14
           rounded-full
-          bg-[#1F3A4D] text-white
-          shadow-lg shadow-[#1F3A4D]/40
-          hover:bg-[#16303f] hover:scale-110
+          bg-primary text-primary-foreground
+          shadow-lg shadow-primary/40
+          hover:bg-primary hover:brightness-90 hover:scale-110
           active:scale-95
           transition-all duration-200 ease-out
-          focus:outline-none focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2
+          focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
         "
         aria-label="Ver tipo de cambio USD / BOB"
       >

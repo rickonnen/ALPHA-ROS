@@ -63,6 +63,19 @@
  * Fecha: 22/04/2026
  * Fix: No permite mismo username en dos personas
  */
+/** Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Corrección de validación de mayoría de edad:
+ *      strFechaMax apunta a exactamente hace 18 años en hora local
+ *      en vez de la fecha de hoy, bloqueando fechas inválidas desde el calendario,
+ *      parseo de fecha con split("-") para evitar desfase UTC-4 de Bolivia
+ *      que hacía que new Date("YYYY-MM-DD") retrocediera un día al interpretar UTC medianoche,
+ *      reubicación del isNaN antes del cálculo de intAnios para no operar sobre fecha inválida,
+ *      reemplazo de resta simple de años por cálculo preciso con bolCumplio considerando
+ *      mes y día exactos, separación de los casos menor de 18 y mayor de 120
+ *      en bloques independientes con mensajes de error distintos
+ */
+
 "use client";
 import { useState, useEffect } from "react";
 import ResultModal from "@/components/ui/ResultModal";
@@ -295,9 +308,10 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
     }
 
     if (strFechaNac) {
-      const dtFecha  = new Date(strFechaNac);
-      const dtHoy    = new Date();
-      const intAnios = dtHoy.getFullYear() - dtFecha.getFullYear();
+      const [strAnio, strMes, strDia] = strFechaNac.split("-");
+      const dtFecha = new Date(Number(strAnio), Number(strMes) - 1, Number(strDia));
+      const dtHoy   = new Date();
+
       if (isNaN(dtFecha.getTime())) {
         setObjModal({
           type: "error",
@@ -306,11 +320,27 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
         });
         return;
       }
-      if (intAnios < 18 || intAnios > 120) {
+
+      let intAnios     = dtHoy.getFullYear() - dtFecha.getFullYear();
+      const bolCumplio = (
+        dtHoy.getMonth() > dtFecha.getMonth() ||
+        (dtHoy.getMonth() === dtFecha.getMonth() && dtHoy.getDate() >= dtFecha.getDate())
+      );
+      if (!bolCumplio) intAnios--;
+
+      if (intAnios < 18) {
         setObjModal({
           type: "error",
           title: "Campos inválidos",
           message: "Debes tener al menos 18 años para registrar una fecha de nacimiento.",
+        });
+        return;
+      }
+      if (intAnios > 120) {
+        setObjModal({
+          type: "error",
+          title: "Campos inválidos",
+          message: "La fecha de nacimiento no es válida.",
         });
         return;
       }
@@ -413,8 +443,12 @@ export default function EditProfile({ usuario, onGuardar, onCancelar }: EditProf
 
   const intLetrasUsername = (strUsername.match(/[a-zA-Z]/g) ?? []).length;
 
-  const strFechaMax = new Date().toISOString().slice(0, 10);
-  const strFechaMin = `${new Date().getFullYear() - 120}-01-01`;
+  const dtMaxNac    = new Date();
+  dtMaxNac.setFullYear(dtMaxNac.getFullYear() - 18);
+  const strFechaMax = `${dtMaxNac.getFullYear()}-${String(dtMaxNac.getMonth() + 1).padStart(2, "0")}-${String(dtMaxNac.getDate()).padStart(2, "0")}`;
+  const dtMinNac    = new Date();
+  dtMinNac.setFullYear(dtMinNac.getFullYear() - 120);
+  const strFechaMin = `${dtMinNac.getFullYear()}-01-01`;
 
   const clsSelect    = "bg-white/10 border border-white/20 text-white text-sm rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-white/30 disabled:opacity-50 w-full";
   const clsOptionBg  = "bg-[#1e1e2e]";

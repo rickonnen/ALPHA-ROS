@@ -1,15 +1,11 @@
 import nodemailer from "nodemailer";
 
-/**
- * TAREA 6: Crear método único para enviar correos reutilizable
- * Configuración de Nodemailer con Gmail SMTP
- */
+
 
 // Validar variables de entorno requeridas
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "PROBOL Notificaciones";
-
 if (!GMAIL_USER || !GMAIL_PASSWORD) {
   console.warn(
     "⚠️ [EMAIL CONFIG] Variables GMAIL_USER o GMAIL_PASSWORD no configuradas. Los emails no se enviarán."
@@ -55,12 +51,12 @@ export async function verifyEmailConnection(): Promise<{
     }
 
     await transporter.verify();
-    console.log("✅ [EMAIL] Conexión SMTP verificada correctamente");
+    console.log(" [EMAIL] Conexión SMTP verificada correctamente");
     return { connected: true };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Error desconocido";
-    console.error("❌ [EMAIL] Error verificando conexión SMTP:", errorMsg);
+    console.error("[EMAIL] Error verificando conexión SMTP:", errorMsg);
     return { connected: false, error: errorMsg };
   }
 }
@@ -71,8 +67,8 @@ export async function verifyEmailConnection(): Promise<{
 export async function closeEmailConnection(): Promise<void> {
   try {
     await transporter.close();
-    console.log("✅ [EMAIL] Conexión SMTP cerrada");
+    console.log(" [EMAIL] Conexión SMTP cerrada");
   } catch (error) {
-    console.error("❌ [EMAIL] Error cerrando conexión SMTP:", error);
+    console.error(" [EMAIL] Error cerrando conexión SMTP:", error);
   }
 }

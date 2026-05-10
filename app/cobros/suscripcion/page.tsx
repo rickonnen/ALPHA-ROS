@@ -40,6 +40,7 @@ export default function SuscripcionPage() {
             }
             console.log("User ID:", user?.id);
             const res = await fetch(`/api/cobros/getSuscripcion?id_usuario=${user.id}`, {
+                cache: "no-store",
                 method: "GET"
             });
 
