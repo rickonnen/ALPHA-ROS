@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/app/auth/AuthContext";
 import { maskPhone, validatePhoneE164 } from "@/lib/phone/validate-phone";
 import { Settings, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,8 +25,10 @@ export function SettingsPanel({
   const [isPhoneSaved, setIsPhoneSaved] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [isChangingPhone, setIsChangingPhone] = useState(false);
+  const { user: objUser } = useAuth();
 
-  const USER_ID = "0fe0a2fb-633b-44f6-855f-ccb7592a2452";
+  const USER_ID = objUser?.id;
+  console.log(USER_ID)
 
   useEffect(() => {
     const loadWhatsappStatus = async () => {

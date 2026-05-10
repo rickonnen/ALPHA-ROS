@@ -74,7 +74,7 @@ export default function Callback() {
   const isSuccess = status === "success";
   const isError   = status === "error";
 
-  const cardBg    = isLoading ? "bg-[#F4EFE6]" : "bg-white";
+  const cardBg    = "bg-white";
   const title     = isLoading ? "Procesando tu acceso"
                   : isSuccess ? "¡Éxito!"
                   :             "¡Ocurrió un error!";
@@ -91,9 +91,9 @@ export default function Callback() {
       <div
         className={`
           relative ${cardBg} rounded-2xl shadow-xl
-          w-full max-w-sm min-h-[300px]
-          px-8 pt-10 pb-8
-          flex flex-col items-center gap-4
+          w-full max-w-sm h-[300px]
+          px-8 py-8
+          flex flex-col items-center justify-center gap-4
         `}
       >
         {/* Botón X — solo en success y error */}
@@ -122,20 +122,21 @@ export default function Callback() {
           Botón de acción — siempre ocupa el mismo espacio.
           En loading se renderiza invisible para mantener el alto igual.
         */}
+        {!isLoading && (
         <button
           onClick={() => {
             if (isSuccess) window.location.href = "/";
             else router.push("/");
           }}
           className={`
-            mt-auto w-full py-3 font-bold rounded-xl transition-colors text-white
-            ${isLoading ? "invisible pointer-events-none" : ""}
+            w-full py-3 font-bold rounded-xl transition-colors text-white mt-2
             ${isSuccess ? "bg-[#1F3A4D] hover:bg-[#162d3d]" : ""}
             ${isError   ? "bg-[#C26E5A] hover:bg-[#b05e4a]" : ""}
           `}
         >
           {isSuccess ? "Aceptar" : "Reintentar"}
         </button>
+        )}
       </div>
     </div>
   );

@@ -132,6 +132,25 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
+  useEffect(() => {
+  if (!user?.id) return;
+  const loadTrash = () => {
+    const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
+    const saved: { id: string; read: boolean }[] = raw ? JSON.parse(raw) : [];
+    setTrash((prev) => {
+      const todas = [...notifications, ...prev];
+      const unicas = Array.from(new Map(todas.map((n) => [n.id, n])).values());
+      return saved.map((s) => {
+        const notif = unicas.find((n) => n.id === s.id);
+        return notif ? { ...notif, read: s.read } : null;
+      }).filter(Boolean) as Notification[];
+    });
+  };
+  window.addEventListener("trash-updated", loadTrash);
+  return () => window.removeEventListener("trash-updated", loadTrash);
+}, [user?.id, notifications]);
+
+
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   // Actualizar el badge cada vez que cambia el contador de no leídas
@@ -149,20 +168,29 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   }, [notifications, activeTab, activeFilter, trash]);
   ///////////////////////HU2////////////
   const handleDelete = (id: string) => {
-    const notif = notifications.find((n) => n.id === id);
-    if (notif) setTrash((prev) => [notif, ...prev]);
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  const handleRestore = (id: string) => {
-    const notif = trash.find((n) => n.id === id);
-    if (notif) {
-      setNotifications((prev) => [notif, ...prev]);
-      setTrash((prev) => prev.filter((n) => n.id !== id));
-
-    }
-  };
-
+  const notif = notifications.find((n) => n.id === id);
+  if (!notif) return;
+  setTrash((prev) => {
+    if (prev.some((t) => t.id === id)) return prev;
+    const next = [notif, ...prev];
+    localStorage.setItem(`trash_notif_ids_${user?.id}`,
+      JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
+    window.dispatchEvent(new Event("trash-updated"));
+    return next;
+  });
+  setNotifications((prev) => prev.filter((n) => n.id !== id));
+};
+const handleRestore = (id: string) => {
+  const notif = trash.find((n) => n.id === id);
+  if (notif) {
+    setNotifications((prev) => [notif, ...prev]);
+    setTrash((prev) => prev.filter((n) => n.id !== id));
+    const remaining = trash.filter((n) => n.id !== id);
+    localStorage.setItem(`trash_notif_ids_${user?.id}`,
+      JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
+    window.dispatchEvent(new Event("trash-updated"));
+  }
+};
   const handleEmptyTrash = () => {
     setTrash([]);
     setShowConfirmModal(false);
