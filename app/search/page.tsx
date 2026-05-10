@@ -600,14 +600,15 @@ function SearchPageContent() {
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      searchLocation.trim() ||
-        selectedOperation.length > 0 ||
+      selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
         advancedFilterValues.minSurface !== undefined ||
         advancedFilterValues.maxSurface !== undefined ||
+        (advancedFilterValues.caracteristicasIds &&
+          advancedFilterValues.caracteristicasIds.length > 0) ||
         appliedPriceFilter?.minPrice !== undefined ||
         appliedPriceFilter?.maxPrice !== undefined,
     );
@@ -615,11 +616,11 @@ function SearchPageContent() {
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
-    appliedPriceFilter?.maxPrice,
-    appliedPriceFilter?.minPrice,
     advancedFilterValues.minSurface,
     advancedFilterValues.maxSurface,
-    searchLocation,
+    advancedFilterValues.caracteristicasIds,
+    appliedPriceFilter?.maxPrice,
+    appliedPriceFilter?.minPrice,
     selectedOperation,
     selectedPropertyTypes,
   ]);
