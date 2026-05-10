@@ -10,11 +10,20 @@
  * @return {JSX.Element} Interfaz completa de la vista del inmueble renderizada desde el servidor.
  */
 /**
+ * Modificacion
  * Dev: Gustavo Montaño
  * Fecha: 25/04/2026
  * Update: Fix Modificación de "Compra" a "Venta" en frontend antes de pasar a PropertyDetails.
  * @param {Promise<{ id_publicacion: string }>} params - Promesa con el ID dinámico de la URL.
  * @return {JSX.Element} Interfaz completa pública del inmueble.
+ */
+/**
+ * Modificacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 09/05/2026
+ * @Funcionalidad: Se integró el componente invisible <ViewTracker /> en la estructura principal.
+ * Esto permite que cualquier visitante (registrado o anónimo) dispare de 
+ * forma silenciosa el registro de la visita (+1 vista) hacia la base de datos.
  */
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";    
@@ -25,10 +34,10 @@ import { ContactCard }       from "@/features/publicacion/[id_publicacion]/compo
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
 import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
-//historial Inicio dev Luis
 import CloseTabButton from "./CloseTabButton";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
+import { ViewTracker } from "@/features/publicacion/[id_publicacion]/components/ViewTracker";
 
 export default async function VistaInmueblePage({
   params,
@@ -90,6 +99,8 @@ export default async function VistaInmueblePage({
 
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
+      {/* SPRINT 3: Colocamos el rastreador aquí. No renderiza nada, solo ejecuta la API */}
+      <ViewTracker id_publicacion={intId} />
       <div className="max-w-6xl mx-auto">
         {/* Task 4.3: Título */}
         <header className="mb-10">
