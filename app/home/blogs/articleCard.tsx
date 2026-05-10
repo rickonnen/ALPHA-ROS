@@ -18,7 +18,6 @@ interface articleCardProps {
   StrReadTimeBlo?: string;
   className?: string;
 }
-
 /**
  * dev: Rodrigo Saul Zarate Villarroel  fecha: 03/05/2026
  * funcionalidad: renderiza una tarjeta de blog
@@ -81,7 +80,7 @@ export default function GlassArticleCard(ObjPropsBlo: articleCardProps) {
           </div>
 
           {/* Footer de la tarjeta: Autor y Fecha */}
-          <div className="flex items-center justify-between border-t border-card-border/60 pt-4 mt-auto">
+          <div className="flex items-center justify-between border-t border-card-border pt-4 mt-auto">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8 border border-border/50 bg-secondary-fund">
                 {ObjAuthorBlo.avatar && <AvatarImage src={ObjAuthorBlo.avatar} alt={ObjAuthorBlo.name} />}
@@ -102,8 +101,17 @@ export default function GlassArticleCard(ObjPropsBlo: articleCardProps) {
               <span>{StrReadTimeBlo}</span>
             </div>
           </div>
-        </div>
 
+          {/* Botón de texto para dispositivos móviles y tablets */}
+          <div className="flex w-full justify-center lg:hidden">
+            <Link 
+              href={`/home/blogs/${IntIdBlo}`} 
+              className="text-sm font-bold text-primary active:scale-95 transition-transform"
+            >
+              Leer Artículo
+            </Link>
+          </div>
+        </div>
       </Card>
     </div>
   );

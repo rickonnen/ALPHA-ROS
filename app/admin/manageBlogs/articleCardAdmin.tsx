@@ -167,7 +167,15 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
               <span>{StrReadTimeBlo}</span>
             </div>
           </div>
-          
+          {/* Botón de texto para dispositivos móviles y tablets */}
+          <div className="flex w-full justify-center lg:hidden">
+            <Link 
+              href={`/home/blogs/${IntIdBlo}`} 
+              className="text-sm font-bold text-primary active:scale-95 transition-transform"
+            >
+              Leer Artículo
+            </Link>
+          </div>
           {/* --- BOTONES DE ACCIÓN ADMIN --- */}
           <div className="w-full flex flex-row justify-end flex-wrap gap-2 pt-3 border-t border-card-border/60">
             {FnRenderButtonsBlo()}
