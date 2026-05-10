@@ -16,7 +16,7 @@ export default function LinkedInDesvinculado() {
           LinkedIn desvinculado
         </h3>
         <p className="text-slate-500 text-sm mb-6">
-          Este LinkedIn estuvo vinculado a una cuenta anteriormente.
+          Esta cuenta de LinkedIn estuvo vinculado a una cuenta anteriormente.
           Inicia sesion con tu cuenta principal (Google o correo)
           y reactiva la vinculacion desde tu perfil.
         </p>
