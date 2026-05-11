@@ -48,6 +48,9 @@ interface PerfilViewProps {
     apellidos?: string | null;
     email?: string | null;
     direccion?: string | null;
+    estado_civil?: string | null;
+    genero?: string | null;
+    fecha_nac?: string | null;
     url_foto_perfil?: string | null;
     Pais?: {
       nombre_pais?: string | null;
@@ -65,6 +68,23 @@ interface PerfilViewProps {
 }
 
 export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
+  const getGenero = (sigla: string | null | undefined) => {
+    const mapa: Record<string, string> = {
+      'M': 'Masculino',
+      'F': 'Femenino',
+      'O': 'Otro'
+    }
+    return sigla ? (mapa[sigla.toUpperCase()] || 'No registrado') : 'No registrado';
+  }
+  const formatFecha = (fechaISO: string | null | undefined) => {
+    if (!fechaISO) return "Sin fecha";
+
+    const soloFecha = fechaISO.split('T')[0]; 
+    const partes = soloFecha.split('-'); 
+    if (partes.length !== 3) return fechaISO;
+    const [anio, mes, dia] = partes;
+    return `${dia}/${mes}/${anio}`;
+  };
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="px-6 md:px-8">
@@ -98,12 +118,15 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
             value={`${usuario.nombres ?? ""} ${usuario.apellidos ?? ""}`.trim() || "-"}
           />
           <DetailBlock label="Dirección" value={usuario.direccion ?? "-"} />
+          <DetailBlock label="Género" value={getGenero(usuario.genero)} />
+          <DetailBlock label="Fecha de Nacimiento" value={formatFecha(usuario.fecha_nac)} />
         </div>
         <div className="flex flex-col gap-6">
           <DetailBlock label="Email" value={usuario.email ?? "-"} />
           <DetailBlock label="Teléfono 1" value={telefonos[0] ?? "No registrado"} />
           <DetailBlock label="Teléfono 2" value={telefonos[1] ?? "No registrado"} />
           <DetailBlock label="Teléfono 3" value={telefonos[2] ?? "No registrado"} />
+          <DetailBlock label="Estado Civil" value={usuario.estado_civil ?? "No registrado"} />
         </div>
       </CardContent>
     </Card>

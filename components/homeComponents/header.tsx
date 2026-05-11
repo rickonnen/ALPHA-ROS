@@ -23,6 +23,7 @@ import { useAuth } from "@/app/auth/AuthContext";
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
+import PlanLimitModal from "@/features/publicacion/components/PlanLimitModal";
 import { useUnreadCount } from "@/components/hooks/useUnreadCount";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -71,6 +72,7 @@ export const Header = () => {
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
   const [bolShowLimitModal, setBolShowLimitModal] = useState(false);
+  const [bolShowLimitPlanModal, setBolShowLimitPlanModal] = useState(false);
 
   const refMobileMenuPanel = useRef<HTMLDivElement | null>(null);
   const refMobileMenuButton = useRef<HTMLDivElement | null>(null);
@@ -118,17 +120,19 @@ export const Header = () => {
   const { handlePublicar, bolIsChecking: bolIsCheckingLimit } = usePublicarAccion({
     objUser,
     onShowProtected: handleShowProtected,
-    onShowLimit: () => setBolShowLimitModal(true),
+    onShowLimit: () => setBolShowLimitModal(true),         // HU5 — ya existía
+    onShowLimitPlan: () => setBolShowLimitPlanModal(true), // HU7 — nuevo
     onCloseMobileMenu: handleCloseMobileMenu,
     bolIsAuthLoading,
   });
 
-  useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, bolIsMobileMenuOpen);
+  useClickOutside([refMobileMenuPanel, refMobileMenuButton], handleCloseMobileMenu, { enabled: bolIsMobileMenuOpen });
 
   // renderizado optimizado del logo
   const objLogoElement = useMemo(() => (
     <Link href={APP_PATHS.home} aria-label="ir a inicio" className={`inline-flex items-center gap-2 rounded-md shrink-0 ${clsFocusBase} ${strHoverAnim}`}>
-      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14" priority />
+      <Image src="/logo-principal.svg" alt="logo probol" width={40} height={40} priority
+      style={{ width: 'auto' }} className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
       <span className="text-subtitle lg:text-body-info xl:text-subtitle 2xl:text-main-title font-heading font-black tracking-tighter leading-none">
         <span className="text-primary">PROP</span>
         <span className="text-secondary">BOL</span>
@@ -140,7 +144,7 @@ export const Header = () => {
     <>
       <header className={`fixed top-0 w-full z-[100] bg-secondary-fund text-foreground shadow-sm border-b border-border transition-transform duration-300 ${bolHideHeader ? "-translate-y-full" : "translate-y-0"}`}>
         <div className="w-full px-4 lg:px-[40px] h-18 flex items-center justify-between gap-4 lg:gap-8">
-          
+
           {/* móvil izquierda logo */}
           <div className="flex lg:hidden shrink-0">{objLogoElement}</div>
 
@@ -171,16 +175,14 @@ export const Header = () => {
             {arrNavLinks.map((objLink) => (
               <button key={objLink.strLabel} onClick={() => handleFilterNavigation(objLink)} className={strLinkClassesDesktop}>{objLink.strLabel}</button>
             ))}
-            
+
             <Link href={APP_PATHS.plans} className={`${strLinkClassesDesktop} text-center leading-[1.1] uppercase whitespace-nowrap`}>planes de<br />publicacion</Link>
             
-            {/* mejora: botón publicar sin borde gris y texto en mayúsculas para mejor alineación */}
             <button onClick={handlePublicar} disabled={bolIsCheckingLimit}
               className={`text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] px-6 h-10 font-bold rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-60 whitespace-nowrap ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
               {bolIsCheckingLimit ? "VERIFICANDO..." : "PUBLICAR"}
             </button>
 
-            {/* solo muestra skeletons mientras auth carga */}
             {bolIsAuthLoading ? (
               <div className="flex items-center gap-3">
                 <Skeleton className="w-10 h-10 rounded-full" />
@@ -194,10 +196,10 @@ export const Header = () => {
                   onRequireAuth={handleShowProtected}
                   strButtonClasses={`relative w-10 h-10 bg-background border border-border rounded-full flex items-center justify-center ${clsFocusBase} ${strHoverAnimNoTextColor}`}
                 />
-                <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}?id=${objUser.id}`)} 
+                <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}`)}
                   className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
-                  <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className="w-7 h-7 object-cover rounded-full bg-muted" 
-                  unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; }} />
+                  <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className="w-7 h-7 object-cover rounded-full bg-muted"
+                    unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; }} />
                   <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">{strNombreHeader}</span>
                 </button>
               </>
@@ -237,6 +239,7 @@ export const Header = () => {
       <ProtectedFeatureModal isOpen={bolShowProtected} onClose={() => setBolShowProtected(false)} onLoginClick={handleOpenLogin} onRegisterClick={handleOpenRegister} />
       <AuthModal isOpen={bolShowAuth} onClose={() => setBolShowAuth(false)} initialMode={strAuthMode} />
       <FreePublicationLimitModal bolOpen={bolShowLimitModal} onBack={() => setBolShowLimitModal(false)} />
+      <PlanLimitModal bolOpen={bolShowLimitPlanModal} onBack={() => setBolShowLimitPlanModal(false)} />
     </>
   );
 };

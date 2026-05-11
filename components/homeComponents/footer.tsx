@@ -19,9 +19,9 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import { Skeleton } from "@/components/ui/skeleton";
 
 const arrExploreLinks = [
-  { strHref: "/busqueda", strLabel: "En venta", strValue: "Venta" },
-  { strHref: "/busqueda", strLabel: "Alquiler", strValue: "Alquiler" },
-  { strHref: "/busqueda", strLabel: "Anticrético", strValue: "Anticrético" },
+  { strHref: "/search?operaciones=compra", strLabel: "Compra" },
+  { strHref: "/search?operaciones=alquiler", strLabel: "Alquiler" },
+  { strHref: "/search?operaciones=anticretico", strLabel: "Anticrético" },
 ];
 
 const arrInfoLinks = [
@@ -78,8 +78,9 @@ export default function Footer() {
             <Skeleton className="h-10 w-32" />
           ) : (
             <Link href="/" className={`inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-fund ${strHoverIconAnim}`}>
-              <img src="/logo-principal.svg" alt="Logo" className="h-10 w-auto" />
-              <span className="text-[0.83rem] lg:text-[0.95rem] xl:text-[1.07rem] 2xl:text-[1.5rem] font-heading font-black tracking-tighter leading-none">
+              <img src="/logo-principal.svg" alt="Logo" width={40} height={40} style={{ width: 'auto' }}
+              className="h-10 w-auto object-contain lg:h-8 xl:h-10 2xl:h-14"/>
+              <span className="text-[0.83rem] lg:text-[0.95rem] xl:text-[1.30rem] 2xl:text-[1.5rem] font-heading font-black tracking-tighter leading-none">
                 <span className="text-primary">PROP</span>
                 <span className="text-secondary">BOL</span>
               </span>
@@ -88,7 +89,7 @@ export default function Footer() {
         </div>
 
         <div className="md:pl-6 lg:pl-10 xl:pl-16">
-          <h3 className="mb-4 text-[1.07rem] font-heading font-semibold text-primary cursor-default">Explorar</h3>
+          <h3 className="mb-4 text-[1.30rem] font-heading font-semibold text-primary cursor-default">Explorar</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>
@@ -116,7 +117,7 @@ export default function Footer() {
         </div>
 
         <div className="md:pl-4 lg:pl-8 xl:pl-12">
-          <h3 className="mb-4 text-[1.07rem] font-heading font-semibold text-primary cursor-default">Información</h3>
+          <h3 className="mb-4 text-[1.30rem] font-heading font-semibold text-primary cursor-default">Información</h3>
           <ul className="space-y-3">
             {bolIsAuthLoading ? (
               <>

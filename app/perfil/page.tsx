@@ -28,6 +28,10 @@
          cambios en editar perfil el header (foto, nombre) se actualice
          inmediatamente sin necesidad de hacer refresh manual de la pagina
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 23/04/2026
+    Fix: Reubicación de la pestaña 'ZONAS' a la penúltima posición y corrección de nomenclatura según Mockup.
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -41,7 +45,9 @@ import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
+import ZonasView from "./views/zonas-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
+import SuscripcionView from "@/app/cobros/suscripcion/page";
 import { useAuth } from "../auth/AuthContext";
 /*  Dev: David Chavez Totora - sow-davidc 
     Fecha: 05/04/2026
@@ -60,6 +66,7 @@ import ConfirmModal from "@/components/ui/confirmModal";
 
 function PerfilContent() {
   const { user, logout } = useAuth();
+  const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
@@ -72,46 +79,52 @@ function PerfilContent() {
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [telefonos, setTelefonos] = useState<string[]>([]);
+  
   const [intRefreshKey, setIntRefreshKey] = useState(0);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setAuthReady(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    if (!userId) {
-      setError("No se proporcionó un ID de usuario.");
-      setUsuario(null);
-      setLoading(false);
-      return;
-    }
-
-    setError(null);
-
-    const fetchUsuario = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
-        if (!res.ok) throw new Error("No se pudo cargar el perfil");
-        const json = await res.json();
-        setUsuario(json.data);
-        setError(null);
-        //miguel cambio para actualizacion de telefonos
-        const tels =
-          json.data?.UsuarioTelefono?.filter((ut: any) =>
-            Boolean(ut.estado),
-          ).map(
-            (ut: any) =>
-              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`,
+    if (!authReady) return;
+    
+    if (userId) {
+      setError(null);
+      const fetchUsuario = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
+          if (!res.ok) throw new Error("No se pudo cargar el perfil");
+          const json = await res.json();
+          setUsuario(json.data);
+          const tels = json.data?.UsuarioTelefono?.filter((ut: any) =>
+            Boolean(ut.estado)
+          ).map((ut: any) =>
+            `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
           ) ?? [];
-        setTelefonos(tels);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsuario();
-  }, [userId, intRefreshKey]);
+          setTelefonos(tels);
+        } catch (err: any) {
+          setError("Usuario no encontrado.");
+          await logout();
+          setTimeout(() => router.push("/"), 2000);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUsuario();
+    } else {
+      const timer = setTimeout(() => {
+        setError("Sesión no válida. Redirigiendo...");
+        router.push("/");
+      }, 8000);
+    
+      return () => clearTimeout(timer);
+    }
+  }, [userId, authReady, intRefreshKey, router]);
 
   const handleTelefonosChange = (nuevosTelefonos: string[]) => {
     setTelefonos(nuevosTelefonos);
@@ -123,6 +136,8 @@ function PerfilContent() {
     { id: "favoritos", name: "FAVORITOS" },
     { id: "historial", name: "HISTORIAL" },
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
+    { id: "planes", name: "PLAN ACTUAL" },
+    { id: "zonas", name: "ZONAS" },
   ];
 
   //miguel actualizacion telefonos
@@ -149,10 +164,13 @@ function PerfilContent() {
     favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
+    zonas: usuario ? <ZonasView id_usuario={userId} /> : null,
+    planes: <SuscripcionView />,
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const handleLogout = () => {
+    setIsMenuOpen(false);
     setShowLogoutConfirm(true);
   };
   const handleConfirmLogout = async () => {
@@ -160,6 +178,16 @@ function PerfilContent() {
     await logout();
     router.push("/");
   };
+
+  const truncate = (str: string, limit: number): string => {
+    if (!str) return "";
+    return str.length > limit ? str.substring(0, limit) + "." : str;
+  };
+
+  const nombresCortos = truncate(usuario?.nombres, 15);
+  const apellidosCortos = truncate(usuario?.apellidos, 15);
+
+  const nombreCompleto = `${nombresCortos} ${apellidosCortos}`.trim();
 
   return (
     <>
@@ -172,7 +200,8 @@ function PerfilContent() {
 
       {error && (
         <div className="text-center py-20 text-red-500 font-semibold">
-          {error}
+          <div className="text-red-500 font-semibold text-lg">{error}</div>
+          <p className="text-slate-400 text-sm">Regresando al inicio...</p>
         </div>
       )}
 
@@ -182,7 +211,7 @@ function PerfilContent() {
             id="info"
             className="flex items-center justify-between gap-6 mb-5 md:mb-5"
           >
-            <div className="flex items-center gap-4 md:gap-6">
+            <div className="flex mx-auto items-center gap-4 md:gap-6">
               <img
                 src={
                   usuario.url_foto_perfil?.trim() ||
@@ -196,7 +225,7 @@ function PerfilContent() {
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
-                  {usuario.nombres} {usuario.apellidos}
+                  {nombreCompleto}
                 </h1>
                 <h2 className="text-slate-500 text-sm md:text-2xl font-medium">
                   {usuario.email}
@@ -249,9 +278,8 @@ function PerfilContent() {
                   <hr className="my-4" />
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 text-red-500 px-4 py-3 text-xs font-bold hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <LogOut className="h-4 w-4" />
+                    className="flex items-center gap-2 text-xs font-black font-bold px-4 py-3 rounded-lg text-white bg-[var(--secondary)]"
+                  >                    
                     CERRAR SESIÓN
                   </button>
                 </nav>
@@ -262,7 +290,7 @@ function PerfilContent() {
           <div className="flex flex-col md:flex-row gap-0 items-stretch">
             <nav
               id="btns"
-              className="hidden md:flex flex-col w-64 z-10 relative"
+              className="bg-white md:rounded-l-2xl hidden md:flex flex-col w-64 h-full z-10 relative"
             >
               {menuItems.map((btn, index) => {
                 const isSelected = view === btn.id;
@@ -301,7 +329,7 @@ function PerfilContent() {
                     className={`text-left px-6 py-4 transition-all duration-300 text-xs font-black tracking-widest focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline ${
                       isSelected
                         ? "bg-[var(--primary)] text-white md:rounded-l-2xl md:-mr-[1px] z-20 focus-visible:outline-white"
-                        : "bg-white text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10 focus-visible:outline-[var(--primary)]"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[var(--primary)] hover:pl-8 border-transparent z-10 focus-visible:outline-[var(--primary)]"
                     }`}
                   >
                     {btn.name}
@@ -310,9 +338,8 @@ function PerfilContent() {
               })}
               <button
                 onClick={handleLogout}
-                className="mt-4 flex items-center gap-2 text-xs font-black tracking-widest text-red-400 hover:text-red-600 px-6 py-4 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
+                className="mt-3 flex items-center gap-2 text-xs font-black tracking-widest px-6 py-4 transition-all duration-300 text-white bg-[var(--secondary)] hover:pl-8 md:rounded-l-2xl"
+              >                
                 CERRAR SESION
               </button>
             </nav>
@@ -320,7 +347,7 @@ function PerfilContent() {
             <div
               id="dinamic"
               tabIndex={-1}
-              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[400px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
+              className="flex-grow bg-[var(--primary)] text-white rounded-[5px] md:rounded-tl-none md:rounded-r-2xl md:rounded-bl-2xl overflow-hidden border border-white/10 min-h-[420px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
             >
               {VIEWS_COMPONENTS[view] ?? VIEWS_COMPONENTS.perfil}
             </div>
@@ -328,14 +355,37 @@ function PerfilContent() {
         </>
       )}
       {showLogoutConfirm && (
-        <ConfirmModal
-          title="¿Cerrar sesión?"
-          message="¿Estás seguro de que deseas cerrar sesión?"
-          confirmLabel="Cerrar sesión"
-          cancelLabel="Cancelar"
-          onConfirm={handleConfirmLogout}
-          onCancel={() => setShowLogoutConfirm(false)}
-        />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
+            {/* Icono de Salir en Rojo */}
+            <div className="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut size={32} className="text-red-500" />
+            </div>
+
+            <h3 className="text-lg font-bold mb-2 text-slate-800 uppercase tracking-tight">
+              ¿Cerrar sesión?
+            </h3>
+
+            <p className="text-slate-500 text-sm mb-6">
+              Estás a punto de salir de tu cuenta. ¿Deseas continuar?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 shadow-md shadow-red-200 transition-colors"
+              >
+                Sí, salir
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
@@ -343,8 +393,8 @@ function PerfilContent() {
 
 export default function PerfilPage() {
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      <main className="mx-auto max-w-5xl px-4 py-6 md:pt-5">
+    <div className="bg-[var(--background)]">
+      <main className="mx-auto max-w-7xl px-4 md:pt-5">
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
