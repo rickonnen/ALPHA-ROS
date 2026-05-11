@@ -7,9 +7,10 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import { PUBLICACION_REQUISITOS_ROUTE } from "@/app/publicacion/requisitos/requisitos.constants";
 
 interface UsePublicarAccionProps {
-  objUser: any;
+  objUser: { id?: string | null } | null;
   onShowProtected: () => void;
   onShowLimit: () => void;
   onShowLimitPlan: () => void;
@@ -50,14 +51,14 @@ export const usePublicarAccion = ({
           onShowLimit();
         }
       } else {
-        objRouter.push("/publicacion/formularioPublicacion");
+        objRouter.push(PUBLICACION_REQUISITOS_ROUTE);
       }
     } catch (error) {
       console.error("Error en validación:", error);
       if (!objUser?.id) {
         onShowProtected();
       } else {
-        objRouter.push("/publicacion/formularioPublicacion");
+        objRouter.push(PUBLICACION_REQUISITOS_ROUTE);
       }
     } finally {
       setBolIsChecking(false);
