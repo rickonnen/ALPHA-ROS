@@ -21,6 +21,14 @@
  *   - disponible   (boolean): indica si la publicación sigue activa.
  *   El estado bolShareAbierto y el <ShareModal> son manejados internamente.
  */
+/**
+ * Modificacion
+ * @Dev: Gabriel Paredes
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Botón de compartir posicionado a la izquierda en mobile
+ *   (Mobile S 320px / Mobile M 375px / Mobile L 425px).
+ *   En md+ (tablet/desktop) permanece a la derecha como antes.
+ */
 "use client";
 import React, { useState }           from "react";
 import { Share2 }                     from "lucide-react";
@@ -99,9 +107,11 @@ export const MediaGallery = ({
     <>
       <div className="space-y-6 mb-8 relative">
 
-        {/* Botones superpuestos: Share (arriba) + Fav (abajo) */}
+        {/* Botones superpuestos: Share (arriba) + Fav (abajo)
+            Mobile  → izquierda (left-6)
+            md+     → derecha   (md:left-auto md:right-8) */}
         {(mostrarFav || mostrarShare) && (
-          <div className="absolute bottom-6 right-6 md:bottom-14 md:right-8 z-20 flex flex-col items-center gap-2">
+          <div className="absolute bottom-0 left-6 md:left-auto md:right-8 md:bottom-14 z-20 flex flex-col items-center gap-2">
             {mostrarShare && (
               <button
                 onClick={() => setBolShareAbierto(true)}
