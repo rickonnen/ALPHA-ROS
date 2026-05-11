@@ -54,7 +54,12 @@ interface MapProps {
   isDrawingMode?: boolean;
   drawnPolygon?: [number, number][] | null;
   onPolygonComplete?: (points: [number, number][]) => void;
+  isEditingPolygon?: boolean;
+  onPolygonEdit?: (points: [number, number][]) => void;
 }
+
+const MIN_POLYGON_POINTS = 4;
+const MAX_POLYGON_POINTS = 10;
 
 function MarkerPropertyPopup({ location }: { location: Location }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -184,9 +189,11 @@ function MapDrawingLogic({
   useEffect(() => {
     if (isDrawingMode) {
       map.dragging.disable();
+      map.doubleClickZoom.disable();
       map.getContainer().style.cursor = "crosshair";
     } else {
       map.dragging.enable();
+      map.doubleClickZoom.enable();
       map.getContainer().style.cursor = "";
       if (resetTimeoutRef.current !== null) {
         window.clearTimeout(resetTimeoutRef.current);
@@ -201,21 +208,51 @@ function MapDrawingLogic({
         window.clearTimeout(resetTimeoutRef.current);
         resetTimeoutRef.current = null;
       }
+      map.doubleClickZoom.enable();
+      map.getContainer().style.cursor = "";
     };
   }, [isDrawingMode, map]);
 
   useMapEvents({
     click(e) {
       if (!isDrawingMode || !onPolygonComplete) return;
+      if ((e.originalEvent as MouseEvent | undefined)?.detail === 2) return;
+
+      if (points.length >= MAX_POLYGON_POINTS) {
+        onPolygonComplete(points);
+        setPoints([]);
+        return;
+      }
+
+      if (points.length >= MIN_POLYGON_POINTS) {
+        const firstPoint = L.latLng(points[0][0], points[0][1]);
+        const firstPointPixel = map.latLngToContainerPoint(firstPoint);
+        const clickedPointPixel = map.latLngToContainerPoint(e.latlng);
+
+        if (firstPointPixel.distanceTo(clickedPointPixel) <= 14) {
+          onPolygonComplete(points);
+          setPoints([]);
+          return;
+        }
+      }
+
       const newPoints: [number, number][] = [
         ...points,
         [e.latlng.lat, e.latlng.lng],
       ];
+
       setPoints(newPoints);
-      if (newPoints.length === 4) {
+
+      if (newPoints.length === MAX_POLYGON_POINTS) {
         onPolygonComplete(newPoints);
         setPoints([]);
       }
+    },
+    dblclick() {
+      if (!isDrawingMode || !onPolygonComplete) return;
+      if (points.length < MIN_POLYGON_POINTS) return;
+      onPolygonComplete(points);
+      setPoints([]);
     },
   });
 
@@ -235,7 +272,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       ))}
-      {points.length > 1 && points.length < 4 && (
+      {points.length > 1 && points.length < MAX_POLYGON_POINTS && (
         <Polyline
           positions={points}
           color="#C26E5A"
@@ -244,7 +281,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       )}
-      {points.length === 4 && (
+      {points.length >= MIN_POLYGON_POINTS && (
         <Polygon
           positions={points}
           color="#C26E5A"
@@ -265,6 +302,8 @@ export default function PropertyMap({
   isDrawingMode,
   drawnPolygon,
   onPolygonComplete,
+  isEditingPolygon,
+  onPolygonEdit,
 }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const popupRef = useRef<L.Popup | null>(null);
@@ -302,6 +341,11 @@ export default function PropertyMap({
 
   const validHoveredPos = isValidPos(hoveredPos) ? hoveredPos : null;
   const validSelectedPos = isValidPos(selectedPos) ? selectedPos : null;
+  const editPointIcon = L.divIcon({
+    className:
+      "flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#8B4423] shadow-md",
+    iconSize: [16, 16],
+  });
 
   return (
     <>
@@ -348,6 +392,27 @@ export default function PropertyMap({
             weight={2}
           />
         )}
+
+        {isEditingPolygon &&
+          drawnPolygon?.map((point, index) => (
+            <Marker
+              key={`edit-point-${index}`}
+              position={point}
+              icon={editPointIcon}
+              draggable
+              eventHandlers={{
+                dragend: (event) => {
+                  if (!onPolygonEdit || !drawnPolygon) return;
+                  const marker = event.target as L.Marker;
+                  const { lat, lng } = marker.getLatLng();
+                  const updatedPolygon = drawnPolygon.map((currentPoint, currentIndex) =>
+                    currentIndex === index ? [lat, lng] : currentPoint,
+                  ) as [number, number][];
+                  onPolygonEdit(updatedPolygon);
+                },
+              }}
+            />
+          ))}
 
         <MarkerClusterGroup
           disableClusteringAtZoom={17}
