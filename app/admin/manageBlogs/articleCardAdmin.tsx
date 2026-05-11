@@ -4,7 +4,6 @@ import { BookOpen, Clock, X as ObjXIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button"; // Importamos el botón de Shadcn
-import { FnFormatLongWords } from "@/app/utils/textUtils";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,7 +18,6 @@ export interface articleCardAdminProps {
   StrImageUrlBlo: string;
   StrCurrentTabBlo: string;
   FnOnActionBlo: (IntId: number, StrAction: string) => void;
-  // Añadimos las props opcionales del diseño Glass por si la API admin también las trae
   ObjAuthorBlo?: {
     name: string;
     avatar?: string;
@@ -125,7 +123,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
              </div>
           )}
 
-          {/* Botón Overlay que aparece al hacer hover (Adaptado para Admin) */}
+          {/* Botón Overlay que aparece al hacer hover */}
           <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[2px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
             <Link href={`/admin/manageBlogs/${IntIdBlo}`}>
               <button className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -137,13 +135,13 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
         </div>
 
         {/* --- SECCIÓN DE CONTENIDO --- */}
-        <div className="flex flex-col flex-1 gap-4 p-5">
+        <div className="flex flex-col flex-1 gap-4 p-5 overflow-hidden">
           <div className="space-y-2 flex-1">
-            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase">
-              {FnFormatLongWords(StrTitleBlo)}
+            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase break-words">
+              {StrTitleBlo}
             </h3>
-            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug">
-              {FnFormatLongWords(StrDescriptionBlo)}
+            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug break-words">
+              {StrDescriptionBlo}
             </p>
           </div>
 

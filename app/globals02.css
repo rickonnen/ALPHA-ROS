@@ -24,6 +24,13 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
   /* Valores básicos necesarios para evitar errores en componentes base */
   --radius: 0.5rem;
   --color-border: var(--card-border); /* Sincronizado con el nuevo borde */
@@ -61,6 +68,18 @@
 
   --destructive: #ff193f;
   --destructive-foreground: #F4EFE6;
+  /* ESTADOS (Gestión de comentarios y alertas) */
+  /* boton/badge de éxito (Aprobado): Verde oliva/bosque suave */
+  --success: #4A7C59;
+  --success-foreground: #F4EFE6;
+
+  /* boton/badge de advertencia (Pendiente): Mostaza/Ámbar apagado */
+  --warning: #D4A373;
+  --warning-foreground: #2E2E2E;
+
+  /* elementos inactivos o texto secundario */
+  --muted: #E7E1D7;
+  --muted-foreground: #7A756D;
 
   /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
@@ -96,6 +115,18 @@
   /* boton secundario: Terracota suave (#C26E5A)*/
   --secondary: #C26E5A;
   --secondary-foreground: #333333;
+
+  --destructive: #EF4444; /* Un rojo un poco más suave para no lastimar la vista en oscuro */
+  --destructive-foreground: #FFFFFF;
+
+  --success: #528A63; /* Verde ligeramente más claro para contrastar con el fondo oscuro */
+  --success-foreground: #FFFFFF;
+
+  --warning: #E2B07E; /* Mostaza ligeramente más brillante */
+  --warning-foreground: #1A1A1A;
+
+  --muted: #3D3D3D;
+  --muted-foreground: #A3A3A3;
 
   /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
