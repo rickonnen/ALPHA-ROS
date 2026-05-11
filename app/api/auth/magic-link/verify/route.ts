@@ -197,17 +197,9 @@ export async function POST(req: NextRequest) {
 
       console.log("[Magic Link] Nuevo usuario creado en Prisma:", usuario.id_usuario);
     } else {
-      // 9️ Si EXISTE → Actualizar estado a 1 si es necesario
-      if (usuario.estado !== 1) {
-        usuario = await prisma.usuario.update({
-          where: { id_usuario: userId },
-          data: { estado: 1 },
-        });
-        console.log("[Magic Link] Usuario reactivado:", usuario.id_usuario);
-      }
-
-      // Validar que no esté desactivado (soft delete)
+      // 9️ Si EXISTE → Primero validar soft-delete ANTES de modificar cualquier dato
       if (usuario.fecha_desactivacion !== null) {
+        console.warn("[Magic Link] Intento de login con cuenta desactivada:", usuario.id_usuario);
         return NextResponse.json(
           { 
             error: "Tu cuenta ha sido desactivada. Contacta con soporte.",
@@ -215,7 +207,16 @@ export async function POST(req: NextRequest) {
           { status: 403 }
         );
       }
-
+ 
+      // Solo reactivar estado si el usuario NO está soft-deleted
+      if (usuario.estado !== 1) {
+        usuario = await prisma.usuario.update({
+          where: { id_usuario: userId },
+          data: { estado: 1 },
+        });
+        console.log("[Magic Link] Usuario reactivado:", usuario.id_usuario);
+      }
+ 
       console.log("[Magic Link] Usuario existente verificado:", usuario.id_usuario);
     }
 

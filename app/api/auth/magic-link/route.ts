@@ -145,6 +145,9 @@ export async function POST(req: NextRequest) {
       await prisma.magic_link_attempt.deleteMany({
         where: { email: emailLower, status: "consumed" },
       });
+      await prisma.magic_link_attempt.deleteMany({
+        where: { email: emailLower, status: "expired" },
+      });
       await prisma.magic_link_attempt.create({
         data: {
           email: emailLower,
