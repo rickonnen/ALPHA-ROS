@@ -471,7 +471,7 @@ export default function ShareModal({
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {arrRedes.map((red) => (
             <button
               key={red.nombre}
