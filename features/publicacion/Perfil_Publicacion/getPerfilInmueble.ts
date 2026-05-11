@@ -21,8 +21,6 @@
 * @return Objeto con los campos nombres, apellidos, username, email, 
 *                url_foto_perfil y el primer número de teléfono registrado.
 */
-<<<<<<< HEAD
-=======
 /**
  * Modificacion
  * Dev: Oliver Garcia
@@ -39,7 +37,6 @@
  * Trae la relación 'EstadisticaPublicacion' ordenada cronológicamente de 
  * forma ascendente para inyectarla en los componentes gráficos del frontend.
  */
->>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
 import { prisma } from "@/lib/prisma";
 export async function getPerfilInmueble(intIdPublicacion: number) {
   // Verificación de seguridad
@@ -90,9 +87,6 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       },
       Video: { select: { url_video: true } },
       Imagen: { select: { url_imagen: true } },
-<<<<<<< HEAD
-      //Parte para el ContactCard
-=======
       // SPRINT 3: Selección de estadísticas para el gráfico
       EstadisticaPublicacion: {
         select: {
@@ -113,7 +107,6 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
         take: 1,
       },
       // Parte para el ContactCard
->>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
       Usuario: {
         select: {
           id_usuario: true,

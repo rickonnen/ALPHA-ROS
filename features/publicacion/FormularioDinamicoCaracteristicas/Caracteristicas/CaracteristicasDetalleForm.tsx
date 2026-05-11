@@ -21,16 +21,13 @@ const soloEnteroPositivo = (value: string): string =>
   value.replace(/[^0-9]/g, '').slice(0, 2)
 
 const ErrorMsg = ({ visible, message }: { visible: boolean; message?: string }) => (
-  <span className="text-destructive text-xs h-4 block">
+  <span className="text-red-500 text-xs h-4 block">
     {visible ? message : ''}
   </span>
 )
 
 const IconBox = ({ icon, disabled }: { icon: React.ReactNode; disabled?: boolean }) => (
   <div
-<<<<<<< HEAD
-    className={`w-[42px] h-[42px] flex items-center justify-center flex-shrink-0 ${disabled ? 'opacity-50' : ''}`}
-=======
     style={{
       width: '42px',
       height: '42px',
@@ -40,20 +37,18 @@ const IconBox = ({ icon, disabled }: { icon: React.ReactNode; disabled?: boolean
       flexShrink: 0,
       opacity: disabled ? 0.5 : 1,
     }}
->>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
   >
     {icon}
   </div>
 )
 
-const inputBase =
-  'w-full border rounded-md px-3 py-2 text-base outline-none transition-colors bg-background text-foreground placeholder:text-muted-foreground'
-
 const inputClass = (error: boolean) =>
-  `${inputBase} border-border focus:border-primary ${error ? 'border-destructive' : ''}`
+  `w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-gray-500 bg-white ${
+    error ? 'border-red-400' : 'border-[#D4CFC6]'
+  }`
 
 const inputDisabledClass =
-  `${inputBase} bg-muted text-muted-foreground border-border cursor-not-allowed`
+  'w-full border rounded-md px-3 py-2 text-sm outline-none bg-[#F1EFE8] text-[#B4B2A9] border-[#E0DDD6] cursor-not-allowed'
 
 export function CaracteristicasDetalleForm({
   values,
@@ -83,48 +78,15 @@ export function CaracteristicasDetalleForm({
     onChange('superficie', onlyNums.replace(/\B(?=(\d{3})+(?!\d))/g, '.'))
   }
 
-  // Color del ícono según estado
-  const iconColor = (disabled?: boolean) =>
-    disabled ? 'var(--muted-foreground)' : 'var(--foreground)'
-
-  const fields = [
-    { key: 'habitaciones', label: 'Nro de Habitaciones', icon: <BedDouble size={20} strokeWidth={1.5} color={iconColor(isTerreno)} /> },
-    { key: 'banios',       label: 'Nro de Baños',        icon: <Bath      size={20} strokeWidth={1.5} color={iconColor(isTerreno)} /> },
-    { key: 'garajes',      label: 'Nro de Garajes',      icon: <Car       size={20} strokeWidth={1.5} color={iconColor(isTerreno)} /> },
-    { key: 'plantas',      label: 'Nro de Plantas',      icon: <Building2 size={20} strokeWidth={1.5} color={iconColor(isTerreno)} /> },
-  ] as const
-
   return (
-    <div className="flex flex-col gap-5 pt-3">
+    <div className="flex flex-col gap-5" style={{ paddingTop: '12px' }}>
 
-      <p className="text-base font-semibold text-foreground">
+      <p className="text-sm font-semibold text-[#1A1714]">
         Detalle las Características de su propiedad
       </p>
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
 
-<<<<<<< HEAD
-        {/* Campos numéricos (habitaciones, baños, garajes, plantas) */}
-        {fields.map(({ key, label, icon }) => (
-          <div key={key} className="flex flex-col gap-1">
-            <label className={`text-base font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-muted-foreground' : 'text-foreground'}`}>
-              {label}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={2}
-                value={values[key]}
-                disabled={isTerreno}
-                onChange={makeChangeHandler(key)}
-                onBlur={() => onBlur(key)}
-                className={isTerreno ? inputDisabledClass : inputClass(hasError(key))}
-              />
-              <IconBox disabled={isTerreno} icon={icon} />
-            </div>
-            <ErrorMsg visible={!isTerreno && hasError(key)} message={errors[key]} />
-=======
         {/* Habitaciones */}
         <div className="flex flex-col gap-1">
           <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
@@ -145,13 +107,85 @@ export function CaracteristicasDetalleForm({
               disabled={isTerreno}
               icon={<BedDouble size={20} strokeWidth={1.5} color={isTerreno ? '#B4B2A9' : '#5A5A5A'} />}
             />
->>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
           </div>
-        ))}
+          <ErrorMsg visible={!isTerreno && hasError('habitaciones')} message={errors.habitaciones} />
+        </div>
+
+        {/* Baños */}
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+            Nro de Baños
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              value={values.banios}
+              disabled={isTerreno}
+              onChange={makeChangeHandler('banios')}
+              onBlur={() => onBlur('banios')}
+              className={isTerreno ? inputDisabledClass : inputClass(hasError('banios'))}
+            />
+            <IconBox
+              disabled={isTerreno}
+              icon={<Bath size={20} strokeWidth={1.5} color={isTerreno ? '#B4B2A9' : '#5A5A5A'} />}
+            />
+          </div>
+          <ErrorMsg visible={!isTerreno && hasError('banios')} message={errors.banios} />
+        </div>
+
+        {/* Garajes */}
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+            Nro de Garajes
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              value={values.garajes}
+              disabled={isTerreno}
+              onChange={makeChangeHandler('garajes')}
+              onBlur={() => onBlur('garajes')}
+              className={isTerreno ? inputDisabledClass : inputClass(hasError('garajes'))}
+            />
+            <IconBox
+              disabled={isTerreno}
+              icon={<Car size={20} strokeWidth={1.5} color={isTerreno ? '#B4B2A9' : '#5A5A5A'} />}
+            />
+          </div>
+          <ErrorMsg visible={!isTerreno && hasError('garajes')} message={errors.garajes} />
+        </div>
+
+        {/* Plantas */}
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+            Nro de Plantas
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              value={values.plantas}
+              disabled={isTerreno}
+              onChange={makeChangeHandler('plantas')}
+              onBlur={() => onBlur('plantas')}
+              className={isTerreno ? inputDisabledClass : inputClass(hasError('plantas'))}
+            />
+            <IconBox
+              disabled={isTerreno}
+              icon={<Building2 size={20} strokeWidth={1.5} color={isTerreno ? '#B4B2A9' : '#5A5A5A'} />}
+            />
+          </div>
+          <ErrorMsg visible={!isTerreno && hasError('plantas')} message={errors.plantas} />
+        </div>
 
         {/* Superficie */}
         <div className="flex flex-col gap-1 col-span-2">
-          <label className="text-base font-medium min-h-[40px] md:min-h-0 flex items-end md:block text-foreground">
+          <label className="text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block text-[#2E2E2E]">
             Superficie
           </label>
           <div className="flex items-center gap-2">
@@ -166,16 +200,11 @@ export function CaracteristicasDetalleForm({
                 className={inputClass(!!(superficieError ?? (touched.superficie && errors.superficie)))}
                 style={{ paddingRight: '36px' }}
               />
-              <span className="absolute right-3 top-2 text-base text-muted-foreground pointer-events-none">
-                m²
-              </span>
+              <span className="absolute right-3 top-2 text-sm text-gray-400 pointer-events-none">m²</span>
             </div>
             <IconBox
               icon={
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="var(--foreground)" strokeWidth="1.5"
-                  strokeLinecap="round" strokeLinejoin="round"
-                >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5A5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="6" width="18" height="14" rx="1" />
                   <path d="M3 6l3-3h12l3 3" />
                   <path d="M8 3h8" />
@@ -190,6 +219,7 @@ export function CaracteristicasDetalleForm({
         </div>
 
       </div>
+
     </div>
   )
 }
