@@ -106,8 +106,10 @@ export default function RedesView({ onBack }: RedesViewProps) {
     const success = searchParams.get("success")
     const error   = searchParams.get("error")
     if (success === "discord" || success === "linkedin") {
+      setTimeout(() => {
       setRedNueva(success)
       setModalActivo("success-vincular")
+      }, 700)
     } else if (success) {
       setMensaje({ texto: `${success} vinculado correctamente.`, tipo: "ok" })
     }
