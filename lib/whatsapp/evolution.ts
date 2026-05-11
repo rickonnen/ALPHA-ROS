@@ -12,6 +12,50 @@ function removePlus(phoneE164: string) {
   return phoneE164.replace("+", "").replace(/\D/g, "");
 }
 
+export async function checkEvolutionWhatsappNumber({
+  phoneE164,
+}: {
+  phoneE164: string;
+}) {
+  try {
+    const response = await fetch(
+      `${process.env.EVOLUTION_API_URL}/chat/whatsappNumbers/${process.env.EVOLUTION_INSTANCE_NAME}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: process.env.EVOLUTION_API_KEY!,
+        },
+        body: JSON.stringify({
+          numbers: [phoneE164.replace("+", "")],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Evolution API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const exists =
+      Array.isArray(data) &&
+      data.length > 0 &&
+      data[0]?.exists === true;
+
+    return {
+      exists,
+      raw: data,
+    };
+  } catch (error) {
+    console.error("checkEvolutionWhatsappNumber error:", error);
+
+    return {
+      exists: false,
+    };
+  }
+}
+
 export async function sendEvolutionText(input: {
   to: string;
   text: string;
