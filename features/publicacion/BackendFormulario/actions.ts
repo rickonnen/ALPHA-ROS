@@ -7,7 +7,8 @@ import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
 import { subirImagen } from './cloudinary'
 import { SK } from './sessionKeys'
-
+import { enviarPublicacionCreada } from "@/lib/email/emailService";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 type ActionResult =
   | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
@@ -267,7 +268,29 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
       return pub
     })
+      try {
+  const objUsuarioEmail = await prisma.usuario.findUnique({
+    where: { id_usuario: d.id_usuario },
+    select: { email: true, nombres: true }
+  });
 
+  if (objUsuarioEmail?.email) {
+    await enviarPublicacionCreada(
+      objUsuarioEmail.email,
+      objUsuarioEmail.nombres ?? "Usuario",
+      d.titulo,
+      resultado.id_publicacion
+    );
+    await crearNotificacion({
+      id_usuario: d.id_usuario,
+      titulo: "Publicación Registrada",
+      mensaje: `Tu publicación "${d.titulo}" fue registrada exitosamente.`,
+      id_categoria: 3
+    });
+  }
+} catch (emailErr) {
+  console.error("[EMAIL_PUBLICACION_ERROR]", emailErr);
+}
     return { success: true, idPublicacion: resultado.id_publicacion }
 
   } catch (err) {

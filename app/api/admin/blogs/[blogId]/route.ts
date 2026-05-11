@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
+import { transporter, getFormattedSender } from "@/lib/email/config";
+import { templateBlogAceptado } from "@/lib/email/templates/blogAceptado";
+import { templateBlogRechazado } from "@/lib/email/templates/blogRechazado";
 import { crearNotificacion } from "@/lib/notifications/notificationService";
-
 interface updateActionRequest {
   action: string;
 }
@@ -114,26 +116,55 @@ export async function PATCH(
         return NextResponse.json({ error: "acción no permitida" }, { status: 400 });
     }
 
-    const ObjUpdatedBlogBlo = await prisma.blogs.update({
-      where: { id_blog: IntIdBlo },
-      data: ObjUpdateDataBlo,
-      include: { Usuario: { select: { id_usuario: true } } }
-    });
+   const ObjBlogConUsuario = await prisma.blogs.findUnique({
+  where: { id_blog: IntIdBlo },
+  include: { Usuario: { select: { nombres: true, email: true } } }
+});
 
-    if (action === "ACEPTAR" || action === "PUBLICAR" || action === "RECHAZAR") {
-      const titulo = action === "RECHAZAR" ? "Blog Rechazado" : "Blog Publicado";
-      const mensaje = action === "RECHAZAR"
-        ? `Tu blog fue revisado y no fue aprobado para su publicación.`
-        : `¡Tu blog fue aprobado y ya está publicado en la plataforma!`;
+const ObjUpdatedBlogBlo = await prisma.blogs.update({
+  where: { id_blog: IntIdBlo },
+  data: ObjUpdateDataBlo,
+});
 
-      await crearNotificacion({
-        id_usuario: ObjUpdatedBlogBlo.id_user,
-        titulo,
-        mensaje,
-        id_categoria: 2,
+if (ObjBlogConUsuario?.Usuario?.email) {
+  const strEmail = ObjBlogConUsuario.Usuario.email;
+  const strNombre = ObjBlogConUsuario.Usuario.nombres ?? "Usuario";
+  const strTitulo = ObjBlogConUsuario.titulo ?? "Tu publicación";
+
+  try {
+    if (action === "ACEPTAR" || action === "PUBLICAR") {
+      await transporter.sendMail({
+        from: getFormattedSender(),
+        to: strEmail,
+        subject: "¡Tu blog fue aprobado! - PROPBOL",
+        html: templateBlogAceptado(strNombre, strTitulo)
       });
-   }
+      await crearNotificacion({
+        id_usuario: ObjBlogConUsuario.id_user,
+        titulo: "¡Publicación Aprobada!",
+        mensaje: `Tu blog "${strTitulo}" fue aprobado por el administrador.`,
+        id_categoria: 3
+      });
+    }
 
+    if (action === "RECHAZAR") {
+      await transporter.sendMail({
+        from: getFormattedSender(),
+        to: strEmail,
+        subject: "Tu blog no fue aprobado - PROPBOL",
+        html: templateBlogRechazado(strNombre, strTitulo)
+      });
+      await crearNotificacion({
+        id_usuario: ObjBlogConUsuario.id_user,
+        titulo: "Publicación No Aprobada",
+        mensaje: `Tu blog "${strTitulo}" no fue aprobado. Puedes corregirlo y volver a enviarlo.`,
+        id_categoria: 3
+      });
+    }
+  } catch (err) {
+    console.error("[EMAIL_BLOG_ERROR]", err);
+  }
+}
     return NextResponse.json({ 
       success: true, 
       StrCurrentStateBlo: ObjUpdatedBlogBlo.estado 

@@ -2,7 +2,6 @@
 import { prisma } from '@/lib/prisma';
 import { syncUserPublicationsAndQuota } from './services/publicationService';
 import { upsertUserSubscription } from './services/subscriptionService';
-
 // Mapeo de estados según la lógica acordada
 const objStatuses = {
   intPending: 1,
