@@ -65,9 +65,17 @@ export default function PagoCliente({ datos, backUrl, resumenPublicacionNode }: 
   if (isLoading || !user) return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
 
   const manejarSeleccionYAbrir = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    if (file && file.size > 10 * 1024 * 1024) { // Límite de 10MB
+      alert("La imagen es muy pesada. Por favor, sube una menor a 10MB o toma una captura de pantalla.");
+      e.target.value = ""; 
+      return;
+    }
+
     manejarSeleccionArchivo(e);
     setVerFoto(true); 
-  };
+};
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
