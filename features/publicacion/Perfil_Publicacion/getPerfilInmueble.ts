@@ -30,6 +30,7 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
   const objPerfilInmueble = await prisma.publicacion.findUnique({
     where: { id_publicacion: intIdPublicacion },
     select: {
+      id_estado: true,
       id_usuario: true,
       titulo: true,
       descripcion: true,
@@ -73,6 +74,24 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       },
       Video: { select: { url_video: true } },
       Imagen: { select: { url_imagen: true } },
+      PuntoInteres: {
+        select: {
+          id_punto_interes: true,
+          nombre: true,
+          descripcion: true,
+          latitud: true,
+          longitud: true,
+          distancia_metros: true,
+          TipoPuntoInteres: {
+            select: {
+              nombre: true,
+              icono: true,
+              color: true,
+            },
+          },
+        },
+        orderBy: { orden: 'asc' },
+      },
       //Parte para el ContactCard
       Usuario: {
         select: {

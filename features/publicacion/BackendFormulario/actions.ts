@@ -1,16 +1,25 @@
 'use server'
 
+import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { verify }  from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
 import { subirImagen } from './cloudinary'
-import { SK } from './sessionKeys'
 
 type ActionResult =
   | { success: true; idPublicacion: number }
   | { success: false; errors: Record<string, string[]>; reason?: string }
+
+type PuntoInteresPayload = {
+  id_tipo_poi: number
+  nombre: string
+  descripcion: string | null
+  lat: number
+  lng: number
+  orden: number
+}
 
 async function getUserIdSeguro(): Promise<string | null> {
   try {
@@ -45,6 +54,87 @@ function parseIntNullable(raw: FormDataEntryValue | null): number | null {
   if (!raw || raw === 'null' || raw === '') return null
   const n = parseInt(raw as string, 10)
   return isNaN(n) ? null : n
+}
+
+function calculateDistanceMeters(
+  originLat: number,
+  originLng: number,
+  destinationLat: number,
+  destinationLng: number,
+): number {
+  const earthRadius = 6371000
+  const toRadians = (value: number) => (value * Math.PI) / 180
+  const deltaLat = toRadians(destinationLat - originLat)
+  const deltaLng = toRadians(destinationLng - originLng)
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(originLat)) *
+      Math.cos(toRadians(destinationLat)) *
+      Math.sin(deltaLng / 2) ** 2
+
+  return Math.round(earthRadius * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))))
+}
+
+function parsePuntosInteres(raw: FormDataEntryValue | null): {
+  puntosInteres: PuntoInteresPayload[]
+  error?: string
+} {
+  if (!raw) return { puntosInteres: [] }
+
+  try {
+    const parsed = JSON.parse(raw as string)
+    if (!Array.isArray(parsed)) {
+      return { puntosInteres: [], error: 'El formato de puntos de interés es inválido.' }
+    }
+
+    if (parsed.length > 10) {
+      return { puntosInteres: [], error: 'Solo puedes registrar hasta 10 puntos de interés.' }
+    }
+
+    const puntosInteres = parsed.map((point, index) => {
+      const idTipoPoi = Number(point?.id_tipo_poi)
+      const nombre = typeof point?.nombre === 'string' ? point.nombre.trim() : ''
+      const descripcion =
+        typeof point?.descripcion === 'string' ? point.descripcion.trim() : ''
+      const lat = Number(point?.lat)
+      const lng = Number(point?.lng)
+
+      if (!Number.isInteger(idTipoPoi) || idTipoPoi <= 0) {
+        throw new Error('Cada punto de interés debe tener un tipo válido.')
+      }
+
+      if (!nombre || nombre.length > 128) {
+        throw new Error('Cada punto de interés debe tener un nombre válido.')
+      }
+
+      if (descripcion.length > 300) {
+        throw new Error('La descripción de un punto de interés no puede superar 300 caracteres.')
+      }
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new Error('Cada punto de interés debe tener coordenadas válidas.')
+      }
+
+      return {
+        id_tipo_poi: idTipoPoi,
+        nombre,
+        descripcion: descripcion || null,
+        lat,
+        lng,
+        orden: index,
+      }
+    })
+
+    return { puntosInteres }
+  } catch (error) {
+    return {
+      puntosInteres: [],
+      error:
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron interpretar los puntos de interés.',
+    }
+  }
 }
 
 // Helper: determina si la publicación es gratuita o de plan
@@ -103,6 +193,13 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     }
   } catch {
     caracteristicasExtras = []
+  }
+
+  const { puntosInteres, error: puntosInteresError } = parsePuntosInteres(
+    formData.get('puntosInteres'),
+  )
+  if (puntosInteresError) {
+    return { success: false, errors: { puntosInteres: [puntosInteresError] } }
   }
 
   // 3. Armar payload
@@ -188,7 +285,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               habitaciones, banos, garajes, plantas,
               id_tipo_inmueble, id_tipo_operacion,
               id_estado_construccion,
-              id_ubicacion, id_moneda, id_usuario,
+              id_ubicacion, id_moneda, id_usuario, id_estado,
               gratuito
             ) VALUES (
               ${d.titulo},
@@ -205,6 +302,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               ${ubicacion.id_ubicacion},
               ${idMoneda},
               ${d.id_usuario}::uuid,
+              1,
               ${bolGratuito}
             )
             RETURNING id_publicacion
@@ -215,7 +313,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               habitaciones, banos, garajes, plantas,
               id_tipo_inmueble, id_tipo_operacion,
               id_estado_construccion,
-              id_ubicacion, id_moneda,
+              id_ubicacion, id_moneda, id_estado,
               gratuito
             ) VALUES (
               ${d.titulo},
@@ -231,6 +329,7 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
               ${d.estadoConstruccion},
               ${ubicacion.id_ubicacion},
               ${idMoneda},
+              1,
               ${bolGratuito}
             )
             RETURNING id_publicacion
@@ -262,12 +361,33 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         }
       }
 
+      if (puntosInteres.length > 0 && d.lat !== undefined && d.lng !== undefined) {
+        await tx.puntoInteres.createMany({
+          data: puntosInteres.map((point) => ({
+            id_publicacion: pub.id_publicacion,
+            id_tipo_poi: point.id_tipo_poi,
+            nombre: point.nombre,
+            descripcion: point.descripcion,
+            latitud: point.lat,
+            longitud: point.lng,
+            orden: point.orden,
+            distancia_metros: calculateDistanceMeters(
+              d.lat,
+              d.lng,
+              point.lat,
+              point.lng,
+            ),
+          })),
+        })
+      }
+
       // 6f. El descuento de publicaciones restantes y el incremento de
       //     publicaciones_hechas lo maneja el trigger en la base de datos.
 
       return pub
     })
 
+    revalidateTag('publicaciones')
     return { success: true, idPublicacion: resultado.id_publicacion }
 
   } catch (err) {

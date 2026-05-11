@@ -10,9 +10,14 @@ import { createPortal }                from 'react-dom'
 import dynamic                         from 'next/dynamic'
 import { Label }                       from '@/components/ui/label'
 import { useUbicacionForm }            from './useUbicacionForm'
-import { DEPARTAMENTOS, MAX_ZONA }     from './useUbicacionTypes'
-import { MIN_ZONA }                    from './useUbicacionValidacion'
+import {
+  DEPARTAMENTOS,
+  MAX_ZONA,
+  type PuntoInteresForm,
+  type PuntoInteresTipoOption,
+} from './useUbicacionTypes'
 import type { LocationData }           from './LocationPicker'
+import PointOfInterestModal            from './PointOfInterestModal'
 
 const LocationPicker = dynamic(
   () => import('./LocationPicker'),
@@ -44,7 +49,7 @@ const C = {
   grisClaro:      '#E5E7EB',
 }
 
-export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps) {
+export function UbicacionForm({ onNext, submitRef }: UbicacionFormProps) {
   const {
     values,
     errors,
@@ -53,6 +58,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
     handleUbicacion,
     handleBlur,
     handleSubmit,
+    setPuntosInteres,
   } = useUbicacionForm()
 
   useEffect(() => {
@@ -62,7 +68,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   useEffect(() => {
     if (!submitRef) return
     return () => { submitRef.current = null }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitRef])
 
   const [mapaAbierto,     setMapaAbierto]     = useState(false)
@@ -72,6 +77,11 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
   const [pendingLocation, setPendingLocation] = useState<LocationData | null>(null)
   const [deptoEnMapa,     setDeptoEnMapa]     = useState<string>(values.departamento)
+  const [poiTypes,        setPoiTypes]        = useState<PuntoInteresTipoOption[]>([])
+  const [poiLoading,      setPoiLoading]      = useState(false)
+  const [poiError,        setPoiError]        = useState<string | null>(null)
+  const [poiModalOpen,    setPoiModalOpen]    = useState(false)
+  const [poiEditing,      setPoiEditing]      = useState<PuntoInteresForm | null>(null)
 
 
 
@@ -85,6 +95,44 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownTouched, handleBlur])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadPoiTypes = async () => {
+      setPoiLoading(true)
+      setPoiError(null)
+
+      try {
+        const response = await fetch('/api/publicacion/tipos-punto-interes')
+        const payload = await response.json()
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? 'No se pudieron cargar los tipos.')
+        }
+
+        if (isMounted) {
+          setPoiTypes(Array.isArray(payload.data) ? payload.data : [])
+        }
+      } catch (error) {
+        if (isMounted) {
+          setPoiError(
+            error instanceof Error
+              ? error.message
+              : 'No se pudieron cargar los tipos de referencia.',
+          )
+        }
+      } finally {
+        if (isMounted) setPoiLoading(false)
+      }
+    }
+
+    void loadPoiTypes()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleSelectDepto = (opcion: string) => {
     if (values.direccion && opcion !== values.departamento) {
@@ -127,8 +175,46 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
     setMapaAbierto(false)
   }
 
+  const handleOpenPoiModal = (point: PuntoInteresForm | null = null) => {
+    setPoiEditing(point)
+    setPoiModalOpen(true)
+  }
+
+  const handleClosePoiModal = () => {
+    setPoiEditing(null)
+    setPoiModalOpen(false)
+  }
+
+  const handleSavePoi = (point: PuntoInteresForm) => {
+    const nextPoints = poiEditing
+      ? values.puntosInteres.map((current) =>
+          current.tempId === poiEditing.tempId ? point : current,
+        )
+      : [...values.puntosInteres, point]
+
+    setPuntosInteres(nextPoints)
+    handleClosePoiModal()
+  }
+
+  const handleDeletePoi = (tempId: string) => {
+    setPuntosInteres(
+      values.puntosInteres.filter((point) => point.tempId !== tempId),
+    )
+  }
+
   const zonaLen     = values.zona.length
   const zonaInvalid = touched.zona && !!errors.zona
+  const currentLocation =
+    values.lat && values.lng && values.direccion
+      ? {
+          lat: Number(values.lat),
+          lng: Number(values.lng),
+          direccion: values.direccion,
+          ciudad: '',
+          pais: 'Bolivia',
+          departamento: values.departamento,
+        }
+      : null
 
   // ─── Modal del mapa (via Portal para evitar que overflow:hidden / transform lo rompa) ───
   const modalContent = mapaAbierto ? (
@@ -207,6 +293,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           <LocationPicker
             deptoActual={deptoEnMapa}
             onChange={handleLocationChange}
+            initialLocation={currentLocation}
           />
         </div>
 
@@ -263,6 +350,20 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
       {/* Portal: el modal se monta en document.body, fuera de cualquier contenedor
           con overflow:hidden o transform, así position:fixed funciona correctamente */}
       {typeof window !== 'undefined' && createPortal(modalContent, document.body)}
+      {poiModalOpen && (
+        <PointOfInterestModal
+          key={poiEditing?.tempId ?? 'new-poi'}
+          onClose={handleClosePoiModal}
+          onSave={handleSavePoi}
+          types={poiTypes}
+          departamentoActual={values.departamento}
+          initialValue={poiEditing}
+          propertyLocation={currentLocation}
+          existingPoints={values.puntosInteres.filter(
+            (point) => point.tempId !== poiEditing?.tempId,
+          )}
+        />
+      )}
 
       {/* ─── Formulario principal ────────────────────────────────── */}
       <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px', minWidth: 0, width: '100%' }}>
@@ -275,6 +376,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           <button
             type="button"
             role="combobox"
+            aria-controls="departamento-listbox"
             aria-haspopup="listbox"
             aria-expanded={dropdownOpen}
             onClick={() => { setDropdownOpen(prev => !prev); setDropdownTouched(true) }}
@@ -300,6 +402,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
           {dropdownOpen && (
             <div className="relative z-50">
               <ul
+                id="departamento-listbox"
                 role="listbox"
                 className="absolute top-1 left-0 w-full bg-white border border-[#D4CFC6] rounded-md shadow-md py-1 max-h-48 overflow-auto"
               >
@@ -403,6 +506,103 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               {zonaLen}/{MAX_ZONA}
             </span>
           </div>
+        </div>
+
+        {/* 4 — Puntos de interés */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
+              Puntos de interés (opcional)
+            </Label>
+            <button
+              type="button"
+              onClick={() => handleOpenPoiModal()}
+              disabled={
+                !values.direccion.trim() ||
+                poiLoading ||
+                poiTypes.length === 0 ||
+                values.puntosInteres.length >= 10
+              }
+              className="rounded-md border border-[#C26E5A] px-3 py-1.5 text-xs font-semibold text-[#C26E5A] transition-colors hover:bg-[#C26E5A]/10 disabled:cursor-not-allowed disabled:border-[#D4B8AE] disabled:text-[#D4B8AE]"
+            >
+              Agregar punto
+            </button>
+          </div>
+
+          <p className="text-xs text-[#6B7280]">
+            Agrega referencias cercanas a la propiedad como surtidores, colegios o farmacias.
+          </p>
+
+          {!values.direccion.trim() && (
+            <span className="text-xs text-[#C26E5A]">
+              Primero selecciona la ubicación principal de la propiedad.
+            </span>
+          )}
+
+          {poiError && (
+            <span className="text-xs text-red-500">{poiError}</span>
+          )}
+
+          {values.puntosInteres.length >= 10 && (
+            <span className="text-xs text-[#C26E5A]">
+              Alcanzaste el mÃ¡ximo de 10 puntos de interÃ©s por publicaciÃ³n.
+            </span>
+          )}
+
+          {values.puntosInteres.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {values.puntosInteres.map((point) => (
+                <div
+                  key={point.tempId}
+                  className="rounded-xl border border-[#D4CFC6] bg-white px-3 py-3 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className="rounded-full px-2 py-1 text-[11px] font-semibold text-white"
+                          style={{ backgroundColor: point.tipo_color || '#C26E5A' }}
+                        >
+                          {point.tipo_nombre}
+                        </span>
+                        <p className="text-sm font-semibold text-[#1A1714] break-words">
+                          {point.nombre}
+                        </p>
+                      </div>
+                      {point.descripcion && (
+                        <p className="mt-1 text-xs text-[#6B7280] break-words">
+                          {point.descripcion}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-[#8B867E] break-words">
+                        {point.direccion || `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPoiModal(point)}
+                        className="text-xs font-semibold text-[#1F3A4D] underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePoi(point.tempId)}
+                        className="text-xs font-semibold text-red-500 underline"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-[#D4CFC6] bg-white/60 px-4 py-4 text-sm text-[#7B7771]">
+              Aún no agregaste puntos de interés.
+            </div>
+          )}
         </div>
 
       </div>

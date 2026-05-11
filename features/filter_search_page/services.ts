@@ -143,25 +143,41 @@ function getOperationIds(value: string | undefined): number[] {
 }
 
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
+  const andClauses: Prisma.PublicacionWhereInput[] = [
+    {
+      OR: [
+        { id_estado: null },
+        { id_estado: 0 },
+        { id_estado: 1 },
+        { id_estado: 2 },
+        { id_estado: 3 },
+      ],
+    },
+  ];
+
   const where: Prisma.PublicacionWhereInput = {
-   id_estado: 1,
+    AND: andClauses,
   };
 
   // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    where.precio = {
+    andClauses.push({
+      precio: {
       ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
       ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
-    };
+      },
+    });
   }
 
   const operationIds = getOperationIds(filters.operacion);
   if (operationIds.length === 1) {
-    where.id_tipo_operacion = operationIds[0];
+    andClauses.push({ id_tipo_operacion: operationIds[0] });
   } else if (operationIds.length > 1) {
-    where.id_tipo_operacion = {
-      in: operationIds,
-    };
+    andClauses.push({
+      id_tipo_operacion: {
+        in: operationIds,
+      },
+    });
   }
 
   const propertyTypeNames = getPropertyTypeNames(filters.tipoInmueble);
@@ -176,121 +192,132 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
       .filter((id): id is number => Boolean(id));
 
     if (mappedIds.length === propertyTypeNames.length) {
-      where.id_tipo_inmueble = mappedIds.length === 1 ? mappedIds[0] : { in: mappedIds };
+      andClauses.push({
+        id_tipo_inmueble:
+          mappedIds.length === 1 ? mappedIds[0] : { in: mappedIds },
+      });
     } else {
-      where.TipoInmueble = {
-        is: {
-          OR: propertyTypeNames.map((name) => ({
-            nombre_inmueble: {
-              equals: name,
-              mode: 'insensitive',
-            },
-          })),
+      andClauses.push({
+        TipoInmueble: {
+          is: {
+            OR: propertyTypeNames.map((name) => ({
+              nombre_inmueble: {
+                equals: name,
+                mode: 'insensitive',
+              },
+            })),
+          },
         },
-      };
+      });
     }
   }
 
   if (filters.habitaciones && filters.habitaciones !== 'Sin ambientes') {
     const minimum = parseMinimum(filters.habitaciones);
     if (minimum !== null) {
-      where.habitaciones = { gte: minimum };
+      andClauses.push({ habitaciones: { gte: minimum } });
     }
   } else if (filters.habitaciones === 'Sin ambientes') {
-    where.habitaciones = 0;
+    andClauses.push({ habitaciones: 0 });
   }
 
   if (filters.banos) {
     const minimum = parseMinimum(filters.banos);
     if (minimum !== null) {
-      where.banos = { gte: minimum };
+      andClauses.push({ banos: { gte: minimum } });
     }
   }
 
   if (filters.piscina) {
     const wantsPool = normalizeText(filters.piscina) === 'si';
-    where.PublicacionCaracteristica = wantsPool
-      ? {
-          some: {
-            Caracteristica: {
-              nombre_caracteristica: {
-                equals: 'Piscina',
-                mode: 'insensitive',
+    andClauses.push({
+      PublicacionCaracteristica: wantsPool
+        ? {
+            some: {
+              Caracteristica: {
+                nombre_caracteristica: {
+                  equals: 'Piscina',
+                  mode: 'insensitive',
+                },
+              },
+            },
+          }
+        : {
+            none: {
+              Caracteristica: {
+                nombre_caracteristica: {
+                  equals: 'Piscina',
+                  mode: 'insensitive',
+                },
               },
             },
           },
-        }
-      : {
-          none: {
-            Caracteristica: {
-              nombre_caracteristica: {
-                equals: 'Piscina',
-                mode: 'insensitive',
-              },
-            },
-          },
-        };
+    });
   }
 
   if (filters.minSurface !== undefined || filters.maxSurface !== undefined) {
-    where.superficie = {
+    andClauses.push({
+      superficie: {
       ...(filters.minSurface !== undefined ? { gte: filters.minSurface } : {}),
       ...(filters.maxSurface !== undefined ? { lte: filters.maxSurface } : {}),
-    };
+      },
+    });
   }
 
   if (filters.ubicacion?.trim()) {
     const search = filters.ubicacion.trim();
-    where.OR = [
-      {
-        Ubicacion: {
-          is: {
-            direccion: {
-              contains: search,
-              mode: 'insensitive',
+    andClauses.push({
+      OR: [
+        {
+          Ubicacion: {
+            is: {
+              direccion: {
+                contains: search,
+                mode: 'insensitive',
+              },
             },
           },
         },
-      },
-      {
-        Ubicacion: {
-          is: {
-            zona: {
-              contains: search,
-              mode: 'insensitive',
+        {
+          Ubicacion: {
+            is: {
+              zona: {
+                contains: search,
+                mode: 'insensitive',
+              },
             },
           },
         },
-      },
-      {
-        Ubicacion: {
-          is: {
-            Ciudad: {
-              is: {
-                nombre_ciudad: {
-                  contains: search,
-                  mode: 'insensitive',
+        {
+          Ubicacion: {
+            is: {
+              Ciudad: {
+                is: {
+                  nombre_ciudad: {
+                    contains: search,
+                    mode: 'insensitive',
+                  },
                 },
               },
             },
           },
         },
-      },
-      {
-        Ubicacion: {
-          is: {
-            Pais: {
-              is: {
-                nombre_pais: {
-                  contains: search,
-                  mode: 'insensitive',
+        {
+          Ubicacion: {
+            is: {
+              Pais: {
+                is: {
+                  nombre_pais: {
+                    contains: search,
+                    mode: 'insensitive',
+                  },
                 },
               },
             },
           },
         },
-      },
-    ];
+      ],
+    });
   }
 
   return where;
@@ -369,7 +396,11 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     tipo_inmueble: publication.TipoInmueble?.nombre_inmueble ?? null,
     tipo_operacion: publication.TipoOperacion?.nombre_operacion ?? null,
     estado_construccion: publication.EstadoConstruccion?.nombre_estado_construccion ?? null,
-    estado_publicacion: publication.EstadoPublicacion?.nombre_estado ?? null,
+    estado_publicacion:
+      publication.EstadoPublicacion?.nombre_estado ??
+      (publication.id_estado == null || [0, 1, 2, 3].includes(publication.id_estado)
+        ? 'Activa'
+        : null),
     moneda_nombre: publication.Moneda?.nombre ?? null,
     moneda_simbolo: publication.Moneda?.simbolo ?? null,
     moneda_tasa_cambio: toNumber(publication.Moneda?.tasa_cambio),

@@ -37,7 +37,7 @@ export function usePublicar({
   router, modoEdicion, idPublicacion,
   currentStep, completedSteps, isFirstStep, isLastStep,
   setCurrentStep, setCompletedSteps,
-  setBlockMsg, setPublishError, setIsPublishing, setBolShowSumario,
+  setBlockMsg, setPublishError, setIsPublishing,
   setBolShowFreeModal, setBolShowPlanLimitModal,
   imagenesRef, urlsQueQuedanRef, urlsABorrarRef, pendingStepRef,
   triggerRefs,
@@ -82,6 +82,28 @@ export function usePublicar({
       formData.append('zona',               ubicacion.zona                 ?? '')
       if (ubicacion.lat) formData.append('lat', String(ubicacion.lat))
       if (ubicacion.lng) formData.append('lng', String(ubicacion.lng))
+      formData.append(
+        'puntosInteres',
+        JSON.stringify(
+          Array.isArray(ubicacion.puntosInteres)
+            ? ubicacion.puntosInteres.map(
+                (point: {
+                  id_tipo_poi: number
+                  nombre: string
+                  descripcion?: string
+                  lat: number
+                  lng: number
+                }) => ({
+                  id_tipo_poi: point.id_tipo_poi,
+                  nombre: point.nombre,
+                  descripcion: point.descripcion ?? '',
+                  lat: point.lat,
+                  lng: point.lng,
+                }),
+              )
+            : [],
+        ),
+      )
 
       const toNullableStr = (val: string | undefined | null): string => {
         if (esTerreno) return 'null'
