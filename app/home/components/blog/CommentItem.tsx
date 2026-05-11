@@ -18,7 +18,7 @@ export interface CommentData {
   isOptimistic?: boolean;
 }
 
-export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId, isAuthenticated }: any) {
+export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess, isReply = false, latestReply, rootId, isAuthenticated, isPreview = false }: any) {
   const [isVisible, setIsVisible] = useState(true);
   const [isLiked, setIsLiked] = useState(!!comment.BolCurrentUserLiked);
   const [likesCount, setLikesCount] = useState(comment.IntLikesCount);
@@ -147,13 +147,13 @@ export default function CommentItem({ comment, blogId, onReply, onDeleteSuccess,
             <p className="text-[15px] text-foreground leading-snug break-words">{comment.StrContentCom}</p>
             <div className="flex items-center gap-4 mt-1 text-[12px] text-foreground/50 font-bold">
               <span>{comment.StrDateCom}</span>
-              {isAuthenticated && (
+              {isAuthenticated && !isPreview && (
                 <button onClick={() => onReply(comment, currentRootId)}
                 className="hover:text-foreground">Responder</button>
               )}
             </div>
 
-            {!isReply && comment.IntRepliesCount > 0 && (
+            {!isReply && comment.IntRepliesCount > 0 && !isPreview && (
               <button onClick={() => {setShowReplies(!showReplies); if(!showReplies) fetchReplies();}}
               className="flex items-center gap-2 mt-3 text-[12px] text-foreground/50 font-bold hover:text-foreground w-fit">
                 <span className="w-6 border-t border-card-border"></span>
