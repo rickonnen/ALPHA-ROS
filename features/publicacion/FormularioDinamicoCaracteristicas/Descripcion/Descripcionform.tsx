@@ -1,0 +1,441 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import {
+  useDescripcionForm,
+  MAX_DESCRIPCION,
+  MAX_CARACTERISTICAS,
+  PREDEFINED_FEATURES,
+} from './usedescripcionform'
+
+const MAX_DETALLE = 100
+
+// ── PortalDropdown ─────────────────────────────────────────────
+interface PortalDropdownProps {
+  anchorRef: React.RefObject<HTMLElement | null>
+  open:      boolean
+  children:  React.ReactNode
+}
+
+function PortalDropdown({ anchorRef, open, children }: PortalDropdownProps) {
+  const listRef = useRef<HTMLUListElement>(null)
+
+  const reposition = useCallback(() => {
+    if (!listRef.current || !anchorRef.current) return
+    const r = anchorRef.current.getBoundingClientRect()
+    listRef.current.style.top   = `${r.bottom + 4}px`
+    listRef.current.style.left  = `${r.left}px`
+    listRef.current.style.width = `${r.width}px`
+  }, [anchorRef])
+
+  useEffect(() => {
+    if (!open) return
+    reposition()
+    window.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    return () => {
+      window.removeEventListener('scroll', reposition, true)
+      window.removeEventListener('resize', reposition)
+    }
+  }, [open, reposition])
+
+  if (!open) return null
+
+  return createPortal(
+    <ul
+      ref={listRef}
+      className="fixed top-0 left-0 w-0 max-h-[200px] z-[9999] overflow-y-auto bg-background border border-border rounded-md shadow-lg m-0 p-0 list-none"
+    >
+      {children}
+    </ul>,
+    document.body,
+  )
+}
+
+// ── Props ──────────────────────────────────────────────────────
+interface DescripcionFormProps {
+  onNext:     () => void
+  onBack:     () => void
+  submitRef?: React.MutableRefObject<(() => void) | null>
+}
+
+// ── Componente principal ───────────────────────────────────────
+export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormProps) {
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    searchTerm, setSearchTerm,
+    sugerencias, caracteristicaError,
+    agregarCaracteristica, eliminarCaracteristica, actualizarDetalle, actualizarTitulo,
+  } = useDescripcionForm()
+
+  const [isAdding,  setIsAdding]  = useState(false)
+  const [activeTag, setActiveTag] = useState<string | null>(null)
+
+  const [editingTitle,    setEditingTitle]    = useState(false)
+  const [titleSearchTerm, setTitleSearchTerm] = useState('')
+  const [detalleError,    setDetalleError]    = useState<string | null>(null)
+
+  const addInputRef   = useRef<HTMLInputElement | null>(null)
+  const titleInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (!submitRef) return
+    submitRef.current = () => {
+      setSearchTerm('')
+      setIsAdding(false)
+      setEditingTitle(false)
+      setTitleSearchTerm('')
+      handleSubmit(() => onNext())
+    }
+  })
+  useEffect(() => {
+    if (!submitRef) return
+    return () => { submitRef.current = null }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitRef])
+
+  useEffect(() => {
+    const lista = values.caracteristicas || []
+    if (lista.length === 0) {
+      setActiveTag(null)
+    } else if (!isAdding) {
+      setActiveTag(prev =>
+        prev && lista.some(c => c.titulo === prev) ? prev : lista[0].titulo
+      )
+    }
+  }, [values.caracteristicas, isAdding])
+
+  const titleSugs = (() => {
+    if (!titleSearchTerm.trim()) return []
+    const term = titleSearchTerm.toLowerCase()
+    return PREDEFINED_FEATURES
+      .filter(f => f.nombre.toLowerCase().startsWith(term))
+      .map(f => f.nombre)
+  })()
+
+  const charCount       = values.descripcion.length
+  const showError       = touched && !!errors.descripcion
+  const caracteristicas = values.caracteristicas || []
+  const isLimitReached  = caracteristicas.length >= MAX_CARACTERISTICAS
+
+  const handleAgregarClick = (nombreSugerido: string) => {
+    const t = nombreSugerido.trim()
+    if (!t) return
+    const existe = caracteristicas.some(c => c.titulo.toLowerCase() === t.toLowerCase())
+    if (existe || isLimitReached) return
+    agregarCaracteristica(t)
+    setActiveTag(t)
+    setIsAdding(false)
+    setSearchTerm('')
+  }
+
+  const handleRemove = (titulo: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    eliminarCaracteristica(titulo)
+    if (activeTag === titulo) {
+      const idx       = caracteristicas.findIndex(c => c.titulo === titulo)
+      const restantes = caracteristicas.filter(c => c.titulo !== titulo)
+      if (restantes.length === 0) {
+        setActiveTag(null)
+      } else {
+        const nextIdx = idx < restantes.length ? idx : restantes.length - 1
+        setActiveTag(restantes[nextIdx].titulo)
+      }
+    }
+    setEditingTitle(false)
+    setTitleSearchTerm('')
+    setDetalleError(null)
+  }
+
+  const handleDetalleChange = (titulo: string, value: string) => {
+    if (value.length > MAX_DETALLE) {
+      setDetalleError(`Máximo ${MAX_DETALLE} caracteres.`)
+      return
+    }
+    setDetalleError(null)
+    actualizarDetalle(titulo, value)
+  }
+
+  const handleTitleSelect = (nuevoTitulo: string) => {
+    if (!activeTag) return
+    const yaExiste = caracteristicas.some(
+      c => c.titulo.toLowerCase() === nuevoTitulo.toLowerCase() &&
+           c.titulo.toLowerCase() !== activeTag.toLowerCase()
+    )
+    if (yaExiste) return
+    actualizarTitulo(activeTag, nuevoTitulo)
+    setActiveTag(nuevoTitulo)
+    setEditingTitle(false)
+    setTitleSearchTerm('')
+  }
+
+  const activeCaracteristica = caracteristicas.find(c => c.titulo === activeTag)
+
+  // Clases reutilizables para items del dropdown
+  const dropdownItemBase = 'px-4 py-2 text-sm cursor-pointer text-foreground'
+  const dropdownItemDisabled = 'bg-muted text-muted-foreground cursor-not-allowed'
+
+  return (
+    <div className="flex flex-col h-full gap-0.5">
+
+      {/* ── Descripción libre ── */}
+      <div className="flex flex-col gap-1 flex-shrink-0">
+        <Label htmlFor="descripcion" className="text-base font-medium text-foreground">
+          Añada una descripción de su propiedad
+        </Label>
+        <textarea
+          id="descripcion"
+          value={values.descripcion}
+          maxLength={MAX_DESCRIPCION}
+          onChange={e => handleChange(e.target.value)}
+          onBlur={handleBlur}
+          placeholder="Escribe una descripción"
+          rows={3}
+          className={`w-full resize-none rounded-md border px-3 py-2 text-base outline-none bg-background text-foreground placeholder:text-muted-foreground transition-colors focus:border-primary ${
+            showError ? 'border-destructive' : 'border-border'
+          }`}
+        />
+        <div className="flex justify-between items-center min-h-[16px]">
+          <span className="text-destructive text-xs">{showError ? errors.descripcion : ''}</span>
+          <span className="text-xs text-muted-foreground">{charCount}/{MAX_DESCRIPCION}</span>
+        </div>
+      </div>
+
+      {/* ── Características Extras ── */}
+      <div className="flex flex-col gap-2 flex-1 min-h-0 mt-2">
+
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold text-foreground">Caracteristicas Extras</span>
+            <span className="text-base font-normal text-secondary">-Opcional</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
+            {isLimitReached && (
+              <span className="text-destructive text-xs font-semibold">
+                Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Botón "+" y Etiquetas */}
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          <button
+            type="button"
+            disabled={isLimitReached}
+            onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-secondary text-secondary bg-transparent transition-colors focus:outline-none flex-shrink-0 ${
+              isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary/10'
+            }`}
+            title="Añadir característica"
+          >
+            <span className="text-xl font-bold leading-none mb-0.5">+</span>
+          </button>
+
+          {caracteristicas.map((c) => {
+            const isVisuallyActive = activeTag === c.titulo && !isAdding
+            return (
+              <span
+                key={c.id_caracteristica}
+                onClick={() => {
+                  setActiveTag(c.titulo)
+                  setIsAdding(false)
+                  setEditingTitle(false)
+                  setTitleSearchTerm('')
+                  setDetalleError(null)
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold border transition-colors cursor-pointer ${
+                  isVisuallyActive
+                    ? 'bg-secondary text-secondary-foreground border-secondary'
+                    : 'bg-transparent text-secondary border-secondary hover:bg-secondary/10'
+                }`}
+              >
+                {c.titulo}
+                <button
+                  type="button"
+                  onClick={(e) => handleRemove(c.titulo, e)}
+                  className={`focus:outline-none transition-colors ${
+                    isVisuallyActive ? 'hover:text-secondary-foreground/70' : 'hover:text-destructive'
+                  }`}
+                >
+                  ✕
+                </button>
+              </span>
+            )
+          })}
+        </div>
+
+        {/* Texto de ayuda */}
+        {caracteristicas.length === 0 && !isAdding && (
+          <div className="flex items-center justify-center py-6">
+            <p className="text-base text-muted-foreground text-center leading-relaxed">
+              En caso de necesitar ingresar más<br />
+              detalles del inmueble, añada una<br />
+              característica especifica de su<br />
+              inmueble
+            </p>
+          </div>
+         )}
+
+        {/* ── Modo Añadir ── */}
+        {isAdding && (
+          <div className="flex flex-col gap-2 mt-2 animate-in fade-in duration-200">
+            <div>
+              <Label className="block text-xs font-bold text-foreground mb-1">
+                ¿Qué título de característica desea colocar? *
+              </Label>
+              <Input
+                ref={addInputRef}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setIsAdding(false); setSearchTerm('') }
+                }}
+                placeholder="Ej. Piscina, Balcón"
+                className="border-border w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary bg-background text-foreground placeholder:text-muted-foreground"
+                autoFocus
+              />
+
+              <PortalDropdown anchorRef={addInputRef} open={searchTerm.trim().length > 0}>
+                {sugerencias.length > 0 ? (
+                  sugerencias.map((sug) => {
+                    const yaAgregada = caracteristicas.some(
+                      c => c.titulo.toLowerCase() === sug.toLowerCase()
+                    )
+                    return (
+                      <li
+                        key={sug}
+                        onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleAgregarClick(sug) }}
+                        className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
+                      >
+                        {sug}
+                        {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
+                      </li>
+                    )
+                  })
+                ) : (
+                  <li className={`${dropdownItemBase} text-muted-foreground`}>
+                    Sin sugerencias para &quot;{searchTerm.trim()}&quot;
+                  </li>
+                )}
+              </PortalDropdown>
+            </div>
+
+            {caracteristicaError && (
+              <p className="text-destructive text-xs font-semibold">{caracteristicaError}</p>
+            )}
+          </div>
+        )}
+
+        {/* ── Modo Edición de etiqueta seleccionada ── */}
+        {caracteristicas.length > 0 && activeTag && activeCaracteristica && !isAdding && (
+          <div className="flex flex-col gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+
+            {/* Título */}
+            <div>
+              <Label className="block text-xs font-bold text-foreground mb-1">
+                Título de la característica
+              </Label>
+
+              {editingTitle ? (
+                <div>
+                  <Input
+                    ref={titleInputRef}
+                    value={titleSearchTerm}
+                    onChange={(e) => setTitleSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') { setEditingTitle(false); setTitleSearchTerm('') }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => { setEditingTitle(false); setTitleSearchTerm('') }, 150)
+                    }}
+                    placeholder={`Cambiar "${activeCaracteristica.titulo}"...`}
+                    className="border-secondary w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-secondary text-base bg-background text-foreground"
+                    autoFocus
+                  />
+
+                  <PortalDropdown anchorRef={titleInputRef} open={titleSearchTerm.trim().length > 0}>
+                    {titleSugs.length > 0 ? (
+                      titleSugs.map((sug) => {
+                        const yaAgregada =
+                          sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
+                          caracteristicas.some(c => c.titulo.toLowerCase() === sug.toLowerCase())
+                        return (
+                          <li
+                            key={sug}
+                            onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleTitleSelect(sug) }}
+                            className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
+                          >
+                            {sug}
+                            {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
+                          </li>
+                        )
+                      })
+                    ) : (
+                      <li className={`${dropdownItemBase} text-muted-foreground`}>
+                        Sin sugerencias para &quot;{titleSearchTerm.trim()}&quot;
+                      </li>
+                    )}
+                  </PortalDropdown>
+
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Solo se aceptan valores de la lista.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-base text-foreground cursor-pointer hover:border-secondary/50 hover:bg-secondary/5 transition-colors group"
+                  onClick={() => { setEditingTitle(true); setTitleSearchTerm('') }}
+                >
+                  <span className="font-medium">{activeCaracteristica.titulo}</span>
+                  <span className="text-xs text-muted-foreground group-hover:text-secondary transition-colors">
+                    Cambiar
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Detalle */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <Label className="text-xs font-bold text-foreground">
+                  Ingrese una descripción (Opcional)
+                </Label>
+                <span className={`text-xs ${
+                  activeCaracteristica.detalle.length >= MAX_DETALLE
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
+                }`}>
+                  {activeCaracteristica.detalle.length}/{MAX_DETALLE}
+                </span>
+              </div>
+              <Input
+                value={activeCaracteristica.detalle}
+                onChange={(e) => handleDetalleChange(activeCaracteristica.titulo, e.target.value)}
+                placeholder="Ej. Amplio con vista a la calle..."
+                maxLength={MAX_DETALLE}
+                className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary border-border text-base w-full bg-background text-foreground placeholder:text-muted-foreground ${
+                  detalleError ? 'border-destructive' : ''
+                }`}
+              />
+              {detalleError && (
+                <p className="text-destructive text-xs mt-1">{detalleError}</p>
+              )}
+            </div>
+
+          </div>
+        )}
+
+      </div>
+    </div>
+  )
+}
