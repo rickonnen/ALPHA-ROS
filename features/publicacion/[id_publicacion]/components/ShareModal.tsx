@@ -16,6 +16,12 @@
  *  4. id_publicacion se mantiene para otros usos (analytics, etc.) pero
  *     ya NO se usa para reconstruir la URL manualmente.
  */
+/**
+ * @Dev: Marcela C.
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Llamado de API para registrar la compartida
+ */
+
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -178,6 +184,12 @@ export default function ShareModal({
    *   cuadro de texto del sharer.)
    */
   const strUrlLimpia = fnBuildUrlLimpia();
+  //llamado a API para registrar la compartida
+  const fnRegistrarCompartida = () => {
+  fetch(`/api/publicacion/${id_publicacion}/compartir`, {
+    method: "POST",
+  }).catch((error) => console.error("Error registrando compartida:", error));
+  };
   const strUrlUtm = fnBuildUrlUtm();
 
   // Para Facebook usamos la URL limpia encodeada (sin UTM) — evita doble encoding
@@ -242,6 +254,7 @@ export default function ShareModal({
       return;
     }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     fnOpenWindow(href);
   };
 
@@ -256,6 +269,7 @@ export default function ShareModal({
     if (sinConexion) { setMsgError("Sin conexión a Internet. Verifica tu red e intenta de nuevo."); return; }
     if (!disponible) { setMsgError("Esta publicación ya no está disponible y no puede ser difundida."); return; }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(strUrlLimpia);
@@ -283,6 +297,7 @@ export default function ShareModal({
       return;
     }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(strUrlLimpia);
