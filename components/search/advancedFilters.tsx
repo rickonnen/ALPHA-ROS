@@ -261,8 +261,14 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
   const [banos, setBanos] = useState(value?.banos ?? "");
   const [piscina, setPiscina] = useState(value?.piscina ?? "");
-  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
-  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
+
+  const [minSurface, setMinSurface] = useState(
+    value?.minSurface?.toString() ?? "",
+  );
+  const [maxSurface, setMaxSurface] = useState(
+    value?.maxSurface?.toString() ?? "",
+  );
+  const [soloOfertas, setSoloOfertas] = useState(value?.soloOfertas ?? false);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -298,6 +304,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       maxSurface:
         campo === "maxSurface" ? parseSurface(nuevoValor) : parseSurface(maxSurface),
       caracteristicasIds: value?.caracteristicasIds ?? [],
+      soloOfertas: campo === "soloOfertas" ? Boolean(valor) : soloOfertas,
     });
   };
 
