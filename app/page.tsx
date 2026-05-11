@@ -6,7 +6,9 @@ import TopCities from "@/components/homeComponents/top-cities/TopCities";
 import ExploreBy from "@/components/homeComponents/exploreBy";
 import BlogSection from "@/components/homeComponents/blogSection";
 import AdminRedirect from "./auth/AdminRedirect";
+import TestimoniosCarousel from '@/components/homeComponents/testimonios/testimoniosCarousel';
 import { useAuth, isAdminUser } from "./auth/AuthContext";
+
 
 export default function HomePage() {
   const { user: objUser, isLoading } = useAuth();
@@ -48,6 +50,10 @@ export default function HomePage() {
 
         <section className="w-full mx-auto px-4 mt-5">
           <BlogSection />
+        </section>
+
+        <section className="w-full mx-auto px-4 mt-16 mb-16">
+          <TestimoniosCarousel />
         </section>
       </main>
     </>

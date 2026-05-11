@@ -19,7 +19,7 @@ interface CommentInputProps {
 export default function CommentInput({ blogId, onCommentAdded, replyingTo, onCancelReply, onOptimisticSubmit }: CommentInputProps) {
   const [comentario, setComentario] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (replyingTo && inputRef.current) {
@@ -27,8 +27,8 @@ export default function CommentInput({ blogId, onCommentAdded, replyingTo, onCan
     }
   }, [replyingTo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
     if (!comentario.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -78,8 +78,15 @@ export default function CommentInput({ blogId, onCommentAdded, replyingTo, onCan
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   return (
-    <div className="border-t border-card-border bg-card-bg sm:rounded-b-2xl flex flex-col">
+    <div className="border-t border-card-border bg-card-bg sm:rounded-b-2xl flex flex-col w-full">
       {replyingTo && (
         <div className="px-4 pt-3 pb-1 flex items-center animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex-1 bg-secondary-fund/50 border-l-4 border-primary rounded-r-lg p-2.5 relative flex items-start justify-between">
@@ -102,21 +109,24 @@ export default function CommentInput({ blogId, onCommentAdded, replyingTo, onCan
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-4 flex items-center gap-3">
+      <div className="p-4 flex items-center gap-3">
         <div className="flex-1 flex items-center gap-3 bg-secondary-fund rounded-full px-4 py-2 border border-card-border/50 focus-within:border-primary/50 transition-colors">
-          <input 
+          
+          <textarea 
             ref={inputRef}
-            type="text" 
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
+            onKeyDown={handleKeyDown}
             maxLength={300}
+            rows={1}
             placeholder={replyingTo ? `Respondiendo a ${replyingTo.ObjAuthorCom.name.split(' ')[0]}...` : "Añadir comentario..."} 
             disabled={isSubmitting}
-            className="bg-transparent text-foreground placeholder:text-foreground/50 border-none outline-none w-full text-[14px] disabled:opacity-50"
+            autoComplete="off"
+            data-form-type="other"
+            className="bg-transparent text-foreground placeholder:text-foreground/50 border-none outline-none w-full text-[14px] disabled:opacity-50 resize-none overflow-hidden h-[20px] pt-[1px]"
           />
           
-          {/* Contador de caracteres */}
-          <span className={`text-[10px] whitespace-nowrap transition-colors ${
+          <span className={`text-[10px] whitespace-nowrap transition-colors flex-shrink-0 ${
             comentario.length >= 300 ? 'text-destructive font-bold' : 'text-foreground/40'
           }`}>
             {comentario.length}/300
@@ -124,13 +134,14 @@ export default function CommentInput({ blogId, onCommentAdded, replyingTo, onCan
         </div>
         
         <button 
-          type="submit" 
+          type="button" 
+          onClick={handleSubmit}
           disabled={!comentario.trim() || isSubmitting}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground disabled:bg-card-border disabled:text-foreground/40 transition-colors flex-shrink-0"
         >
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
         </button>
-      </form>
+      </div>
     </div>
   );
 }
