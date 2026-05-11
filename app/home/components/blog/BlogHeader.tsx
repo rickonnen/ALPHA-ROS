@@ -9,6 +9,11 @@ export default function BlogHeader({ objBlogBlo }: { objBlogBlo: singleBlogData 
   const intWordCountBlo = objBlogBlo.StrContentBlo?.split(/\s+/).length || 0;
   const intReadTimeBlo = Math.max(1, Math.ceil(intWordCountBlo / 200));
 
+  const handlePrintBlog = () => {
+    if (typeof window === "undefined") return;
+    window.print();
+  };
+
   return (
     <header className="flex justify-between items-center mb-8 border-b border-card-border pb-6">
       <div className="flex items-center gap-4">
@@ -33,11 +38,11 @@ export default function BlogHeader({ objBlogBlo }: { objBlogBlo: singleBlogData 
       </div>
       
       <button 
-        onClick={() => {
-          // aqui la logica para imprimir Erick
-        }}
-        className="inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-card-border bg-background hover:bg-secondary-fund hover:text-primary h-10 px-4 py-2 shadow-sm"
+        type="button"
+        onClick={handlePrintBlog}
+        className="inline-flex items-center gap-2 justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-card-border bg-background hover:bg-secondary-fund hover:text-primary h-10 px-4 py-2 shadow-sm no-print"
         title="Imprimir artículo"
+        aria-label="Imprimir artículo"
       >
         <Printer className="w-4 h-4" />
         Imprimir
