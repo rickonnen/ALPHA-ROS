@@ -20,24 +20,15 @@ import crypto from "crypto";
 export async function POST(req: NextRequest) {
   try {
     // 1️ Obtener datos del request
-    const { email, token } = await req.json();
+    const { token } = await req.json();
 
-    // 2️ Validar que email y token no estén vacíos
-    if (!email || email.trim() === "") {
-      return NextResponse.json(
-        { error: "Email requerido" },
-        { status: 400 }
-      );
-    }
-
+    // 2️ Validar que token no esté vacío
     if (!token || token.trim() === "") {
       return NextResponse.json(
         { error: "Token requerido" },
         { status: 400 }
       );
     }
-
-    const emailLower = email.toLowerCase();
 
     // 3️ Hacer hash del token recibido para comparar con BD
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -64,7 +55,7 @@ export async function POST(req: NextRequest) {
     // - El token expiró
     // - El token no existe
     if (attemptUpdated.count === 0) {
-      console.error("[Magic Link Verify] Token inválido, expirado o ya consumido para:", emailLower);
+      console.error("[Magic Link Verify] Token inválido, expirado o ya consumido");
       return NextResponse.json(
         { 
           error: "Link inválido o expirado. Solicita uno nuevo." 
@@ -73,7 +64,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("[Magic Link] Token marcado como consumido de forma atómica para:", emailLower);
+    console.log("[Magic Link] Token marcado como consumido de forma atómica");
 
     // 5️ Obtener el intento que acabamos de consumir para validaciones posteriores
     const attempt = await prisma.magic_link_attempt.findFirst({
@@ -84,14 +75,16 @@ export async function POST(req: NextRequest) {
     });
 
     if (!attempt) {
-      console.error("[Magic Link Verify] No se encontró intento consumido para:", emailLower);
+      console.error("[Magic Link Verify] No se encontró intento consumido");
       return NextResponse.json(
-        { 
-          error: "Error al procesar el link. Intenta nuevamente." 
+        {
+          error: "Error al procesar el link. Intenta nuevamente."
         },
         { status: 400 }
       );
     }
+
+    const emailLower = attempt.email.toLowerCase();
 
     // 6️ IMPORTANTE: Crear/obtener usuario en Supabase Auth PRIMERO
     const supabase = createClient(

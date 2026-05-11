@@ -85,7 +85,21 @@ export const authOptions: NextAuthOptions = {
         try {
           const { createClient } = await import("@supabase/supabase-js");
           const prisma = (await import("@/lib/prisma")).prisma;
-          
+
+          // Bug 3: verificar que el usuario realmente consumió un token en los últimos 60 s
+          const recentAttempt = await prisma.magic_link_attempt.findFirst({
+            where: {
+              email: credentials.email.toLowerCase(),
+              status: "consumed",
+              consumed_at: { gte: new Date(Date.now() - 60_000) },
+            },
+          });
+
+          if (!recentAttempt) {
+            console.error("[Magic Link Auth] No hay token consumido reciente para:", credentials.email);
+            return null;
+          }
+
           const supabase = createClient(
             process.env.SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
