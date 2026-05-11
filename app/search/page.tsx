@@ -240,6 +240,21 @@ function getPropertyTypeLabelsFromIds(
     .map((option) => option.nombre_inmueble as string);
 }
 
+function hasPropertyDiscount(property: Property): boolean {
+  return (
+    typeof property.previousPrice === "number" &&
+    property.previousPrice > property.price
+  );
+}
+
+function getPropertyDiscountPercent(property: Property): number {
+  if (!hasPropertyDiscount(property)) return 0;
+
+  return Math.round(
+    ((property.previousPrice! - property.price) / property.previousPrice!) * 100,
+  );
+}
+
 function sortProperties(properties: Property[], sortBy: string): Property[] {
   const sorted = [...properties];
   sorted.sort((first, second) => {
@@ -248,6 +263,8 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
         return first.price - second.price;
       case "precio-des":
         return second.price - first.price;
+      case "rebajas-desc":
+        return getPropertyDiscountPercent(second) - getPropertyDiscountPercent(first);
       case "m2-menor":
         return first.terrainArea - second.terrainArea;
       case "m2-mayor":
@@ -330,6 +347,12 @@ function mapPublicationToProperty(
   ]
     .filter(Boolean)
     .join(", ");
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = toNumber(publication.precio_anterior);
+  const discountPercent =
+    previousPrice > currentPrice
+      ? Math.round(((previousPrice - currentPrice) / previousPrice) * 100)
+      : 0;
 
   return {
     id: publication.id_publicacion,
@@ -339,7 +362,10 @@ function mapPublicationToProperty(
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
-    price: toNumber(publication.precio),
+    price: currentPrice,
+    previousPrice: previousPrice,
+    discountPercent: discountPercent,
+    /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
     whatsappContact: publication.usuario?.telefono ?? "",
@@ -433,12 +459,12 @@ function SearchPageContent() {
     piscina?: string;
     minSurface?: number;
     maxSurface?: number;
+    soloOfertas?: boolean;
     caracteristicasIds?: number[];
   }>({
     habitaciones: "",
     banos: "",
     piscina: "",
-    caracteristicasIds: [],
   });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -613,7 +639,8 @@ function SearchPageContent() {
         (advancedFilterValues.caracteristicasIds &&
           advancedFilterValues.caracteristicasIds.length > 0) ||
         appliedPriceFilter?.minPrice !== undefined ||
-        appliedPriceFilter?.maxPrice !== undefined,
+        appliedPriceFilter?.maxPrice !== undefined ||
+        advancedFilterValues.soloOfertas,
     );
   }, [
     advancedFilterValues.banos,
@@ -621,6 +648,7 @@ function SearchPageContent() {
     advancedFilterValues.piscina,
     advancedFilterValues.minSurface,
     advancedFilterValues.maxSurface,
+    advancedFilterValues.soloOfertas,
     advancedFilterValues.caracteristicasIds,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
@@ -681,25 +709,31 @@ function SearchPageContent() {
 
   // Mapear, ordenar y paginar
   const allProperties = useMemo(() => {
-    const mapped = filteredSearchResults.map((publication) =>
+    let mapped = filteredSearchResults.map((publication) =>
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
+      mapped = mapped.filter(hasPropertyDiscount);
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.sort((a, b) => {
+      return mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
+
         if (indexA !== -1 && indexB === -1) return -1;
         if (indexA === -1 && indexB !== -1) return 1;
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
         return 0;
       });
     }
 
     return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults, selectedOperation, selectedSort, recommendedIds]);
+  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
 
-  // Paginación con soporte de sidebar colapsado (v2)
+// Paginación con soporte de sidebar colapsado (v2)
   const itemsPerPage = isMapOpen
     ? viewMode === "grid"
       ? ITEMS_PER_PAGE_MAP_GRID
@@ -871,6 +905,8 @@ function SearchPageContent() {
         maxPrice: appliedPriceFilter?.maxPrice,
         minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
+        soloOfertas: advancedFilterValues.soloOfertas,
+        sort: selectedSort,
         currency: selectedCurrency,
         caracteristicasIds: advancedFilterValues.caracteristicasIds,
         ...overrides,
@@ -1099,6 +1135,7 @@ function SearchPageContent() {
       piscina: "",
       minSurface: undefined,
       maxSurface: undefined,
+      soloOfertas: false,
       caracteristicasIds: [],
     } as any);
     setAppliedPriceFilter(null);
@@ -1267,6 +1304,7 @@ function SearchPageContent() {
                   allTags={caracteristicasDB}           // <--- ACTIVADO PARA MÓVIL
                   value={advancedFilterValues}    // <--- ACTIVADO PARA MÓVIL
                   key={advancedFiltersKey}
+                  value={advancedFilterValues}
                   onChange={(v: any) => setAdvancedFilterValues(v)}
                 />
                 <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1301,7 +1339,9 @@ function SearchPageContent() {
                 </div>
               ) : allProperties.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                  No se encontraron inmuebles con los filtros aplicados.
+                  {advancedFilterValues.soloOfertas
+                    ? "No hay propiedades en oferta disponibles por el momento."
+                    : "No se encontraron inmuebles con los filtros aplicados."}
                 </div>
               ) : (
                 <>

@@ -17,6 +17,8 @@ export type SearchFiltersInput = {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
+  soloOfertas?: boolean;
+  sort?: string;
 
   // Filtro por características de publicación
   caracteristicasIds?: number[];
@@ -27,6 +29,7 @@ export type SearchPublicationResult = {
   titulo: string | null;
   descripcion: string | null;
   precio: number | null;
+  precio_anterior: number | null;
   superficie: number | null;
   habitaciones: number | null;
   banos: number | null;
@@ -400,6 +403,24 @@ function passesPriceFilter(
   return true;
 }
 
+function hasDiscount(publication: PublicationWithRelations): boolean {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = toNumber(publication.precio_anterior);
+
+  return (currentPrice !== null && previousPrice !== null && previousPrice > currentPrice);
+}
+
+function getDiscountPercent(publication: PublicationWithRelations): number {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = toNumber(publication.precio_anterior);
+
+  if (currentPrice === null || previousPrice === null || previousPrice <= currentPrice) {
+    return 0;
+  }
+
+  return Math.round(((previousPrice - currentPrice) / previousPrice) * 100);
+}
+
 function mapPublication(publication: PublicationWithRelations): SearchPublicationResult {
   const caracteristicas = publication.PublicacionCaracteristica.map((item) => ({
     id: item.id_caracteristica,
@@ -412,6 +433,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     titulo: publication.titulo,
     descripcion: publication.descripcion,
     precio: toNumber(publication.precio),
+    precio_anterior: toNumber(publication.precio_anterior),
     superficie: toNumber(publication.superficie),
     habitaciones: publication.habitaciones,
     banos: publication.banos,
@@ -510,13 +532,28 @@ export async function searchPublicaciones(
       },
     },
   });
+  let filteredPublications = publications.filter((publication) =>
+    passesPriceFilter(publication, filters, apiExchangeRate),
+  );
 
-  const priceFiltered = publications.filter((publication) => passesPriceFilter(publication, filters, apiExchangeRate));
+  if (filters.soloOfertas) {
+    filteredPublications = filteredPublications.filter(hasDiscount);
+  }
+
+  if (filters.sort === "rebajas-desc") {
+    filteredPublications = filteredPublications
+      .filter(hasDiscount)
+      .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a));
+  }
+
+  return filteredPublications.map(mapPublication);
+
+  /*const priceFiltered = publications.filter((publication) => passesPriceFilter(publication, filters, apiExchangeRate));
   const mapped = priceFiltered.map(mapPublication);
 
   const promoted = mapped.filter((p) => p.es_promocionada);
   const regular = mapped.filter((p) => !p.es_promocionada);
-  return [...promoted, ...regular];
+  return [...promoted, ...regular];*/
 }
 
 export async function getCachedPublicaciones(filters: SearchFiltersInput) {

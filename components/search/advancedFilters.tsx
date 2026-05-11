@@ -243,6 +243,7 @@ interface AdvancedFiltersValues {
   minSurface?: number;
   maxSurface?: number;
   caracteristicasIds?: number[];
+  soloOfertas?:boolean;
 }
 
 interface Props {
@@ -260,13 +261,8 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
   const [banos, setBanos] = useState(value?.banos ?? "");
   const [piscina, setPiscina] = useState(value?.piscina ?? "");
-
-  const [minSurface, setMinSurface] = useState(
-    value?.minSurface?.toString() ?? "",
-  );
-  const [maxSurface, setMaxSurface] = useState(
-    value?.maxSurface?.toString() ?? "",
-  );
+  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
+  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -277,12 +273,14 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
     setPiscina(value?.piscina ?? "");
     setMinSurface(value?.minSurface?.toString() ?? "");
     setMaxSurface(value?.maxSurface?.toString() ?? "");
+    setSoloOfertas(value?.soloOfertas ?? false);
   }, [
     value?.habitaciones,
     value?.banos,
     value?.piscina,
     value?.minSurface,
     value?.maxSurface,
+    value?.soloOfertas,
   ]);
 
   const actualizar = (
@@ -428,6 +426,42 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
                 onMaxChange={handleSurfaceInputChange("maxSurface")}
                 onClear={clearSurfaceRange}
               />
+
+              
+              <div className="rounded-lg border border-[#C8C0B5] bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#2E2E2E]">
+                      Solo ofertas
+                    </p>
+                    <p className="text-xs text-[#6B6258]">
+                      Mostrar propiedades con precio rebajado
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soloOfertas}
+                    onClick={() => {
+                      const nextValue = !soloOfertas;
+                      setSoloOfertas(nextValue);
+                      actualizar("soloOfertas", nextValue);
+                    }}
+                    className={cn(
+                      "relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#C26E5A] focus:ring-offset-2",
+                      soloOfertas ? "bg-[#C26E5A]" : "bg-gray-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        soloOfertas ? "translate-x-[22px]" : "translate-x-[2px]",
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
 
               <div className={surfaceError ? "block" : "hidden"}>
                 <p className="text-center text-sm text-red-600">
