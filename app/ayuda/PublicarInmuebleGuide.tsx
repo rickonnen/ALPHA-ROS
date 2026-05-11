@@ -3,6 +3,7 @@
 /**
  * @Dev: Rodrigo Chalco-Daniel Condarco
  * Componente: PublicarInmuebleGuide
+ * @Update: Refactorizado para soportar colores globales, Dark Mode y Tipografía Geist.
  */
 
 import { useState, useCallback, useEffect } from "react";
@@ -121,8 +122,8 @@ function StepTag({ tag }: { tag: string }) {
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
         bolOptional
-          ? "bg-transparent text-[#8b8276] border border-[#C4BAA8]"
-          : "bg-transparent text-[#1F3A4D] border border-[#1F3A4D]/30"
+          ? "bg-transparent text-muted-foreground border border-card-border"
+          : "bg-transparent text-primary border border-primary/30"
       }`}
     >
       {tag}
@@ -132,14 +133,14 @@ function StepTag({ tag }: { tag: string }) {
 
 function TipProBlock() {
   return (
-    <div className="bg-[#C26E5A] text-white rounded-[24px] p-6 flex items-start gap-4 w-full">
-      <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-        <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
+    <div className="bg-secondary text-secondary-foreground rounded-[24px] p-6 flex items-start gap-4 w-full">
+      <div className="bg-secondary-foreground/20 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+        <svg className="w-5 h-5 fill-secondary-foreground" viewBox="0 0 24 24">
           <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
         </svg>
       </div>
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-white/90 mb-1.5">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-secondary-foreground/90 mb-1.5">
           TIP PRO
         </p>
         <p className="text-[15px] leading-relaxed font-medium">
@@ -156,7 +157,7 @@ function ActionButton({ isLastStep, onNext }: { isLastStep: boolean; onNext: () 
       <button
         type="button"
         onClick={onNext}
-        className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-[#1F3A4D] text-white text-[15px] font-bold hover:bg-[#152a38] active:scale-[0.98] transition-all"
+        className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-primary text-primary-foreground text-[15px] font-bold hover:bg-primary/90 active:scale-[0.98] transition-all"
       >
         Ver siguiente paso
         <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -167,8 +168,8 @@ function ActionButton({ isLastStep, onNext }: { isLastStep: boolean; onNext: () 
   }
 
   return (
-    <div className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-transparent border-2 border-[#1F3A4D] text-[#1F3A4D] text-[15px] font-bold">
-      <svg className="w-5 h-5 text-[#C26E5A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-transparent border-2 border-primary text-primary text-[15px] font-bold">
+      <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
       </svg>
       ¡Guía completa! Ya estás listo para publicar.
@@ -196,10 +197,10 @@ function StepCard({
     <div
       className={`w-full transition-all duration-300 rounded-[24px] border overflow-hidden ${
         bolActive
-          ? "bg-[#1F3A4D] border-[#1F3A4D] shadow-xl shadow-[#1F3A4D]/20"
+          ? "bg-primary border-primary shadow-xl shadow-primary/20"
           : bolCompleted
-          ? "bg-white border-transparent cursor-pointer hover:border-[#E0D9CE]"
-          : "bg-white border-transparent cursor-pointer hover:border-[#E0D9CE]"
+          ? "bg-card-bg border-transparent cursor-pointer hover:border-card-border"
+          : "bg-card-bg border-transparent cursor-pointer hover:border-card-border"
       }`}
     >
       <button
@@ -211,10 +212,10 @@ function StepCard({
         <div
           className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-bold text-base transition-colors ${
             bolActive
-              ? "bg-white/10 text-white"
+              ? "bg-primary-foreground/10 text-primary-foreground"
               : bolCompleted
-              ? "bg-[#1F3A4D] text-white"
-              : "bg-[#F4EFE6] text-[#1F3A4D]"
+              ? "bg-primary text-primary-foreground"
+              : "bg-background text-primary"
           }`}
         >
           {bolCompleted && !bolActive ? (
@@ -229,19 +230,19 @@ function StepCard({
         {/* Texto principal */}
         <div className="flex-1 min-w-0 pt-1">
           <div className="flex items-center gap-3 mb-1 flex-wrap">
-            <span className={`font-bold text-[17px] ${bolActive ? "text-white" : "text-[#1F3A4D]"}`}>
+            <span className={`font-bold text-[17px] ${bolActive ? "text-primary-foreground" : "text-primary"}`}>
               {step.title}
             </span>
             {!bolActive && <StepTag tag={step.tag} />}
           </div>
-          <p className={`text-[15px] ${bolActive ? "text-white/70" : "text-[#8b8276]"}`}>
+          <p className={`text-[15px] ${bolActive ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
             {step.description}
           </p>
         </div>
 
         {/* Flecha */}
         <div className={`flex-shrink-0 mt-3 transition-transform duration-300 ${bolActive ? "rotate-90" : ""}`}>
-          <svg className={`w-5 h-5 ${bolActive ? "text-white/40" : "text-[#C4BAA8]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-5 h-5 ${bolActive ? "text-primary-foreground/40" : "text-muted"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
@@ -251,19 +252,19 @@ function StepCard({
       {bolActive && (
         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="px-5 sm:px-6 pb-6">
-            <div className="w-full h-[1px] bg-white/10 mb-5"></div>
-            <p className="text-[15px] text-white/90 leading-relaxed mb-6">
+            <div className="w-full h-[1px] bg-primary-foreground/10 mb-5"></div>
+            <p className="text-[15px] text-primary-foreground/90 leading-relaxed mb-6">
               {step.detail}
             </p>
           </div>
           
-          <div className="lg:hidden w-full relative bg-[#F4EFE6] border-t border-[#E0D9CE]">
+          <div className="lg:hidden w-full relative bg-background border-t border-card-border">
             {/* Encabezado visual de dos líneas para evitar cortes */}
-            <div className="absolute top-0 left-0 w-full px-4 py-3 bg-white border-b border-[#E0D9CE] z-10 shadow-sm flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-[#1F3A4D] uppercase tracking-widest block w-full">
+            <div className="absolute top-0 left-0 w-full px-4 py-3 bg-card-bg border-b border-card-border z-10 shadow-sm flex flex-col gap-1">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest block w-full">
                 REFERENCIA VISUAL — PASO {step.number}
               </span>
-              <span className="text-[10px] text-[#8b8276] block w-full">
+              <span className="text-[10px] text-muted-foreground block w-full">
                 {step.title}
               </span>
             </div>
@@ -304,18 +305,18 @@ function StepGallery({
   };
 
   return (
-    <div className="rounded-[24px] overflow-hidden border border-[#E0D9CE] bg-white flex flex-col w-full shadow-sm">
-      <div className="px-6 py-4 flex items-center justify-between gap-2 bg-white border-b border-[#E0D9CE]">
-        <span className="text-[11px] font-bold text-[#1F3A4D] uppercase tracking-widest truncate">
+    <div className="rounded-[24px] overflow-hidden border border-card-border bg-card-bg flex flex-col w-full shadow-sm">
+      <div className="px-6 py-4 flex items-center justify-between gap-2 bg-card-bg border-b border-card-border">
+        <span className="text-[11px] font-bold text-primary uppercase tracking-widest truncate">
           REFERENCIA VISUAL — PASO {String(intActiveStep + 1).padStart(2, "0")}
         </span>
-        <span className="text-[13px] text-[#8b8276] shrink-0">
+        <span className="text-[13px] text-muted-foreground shrink-0">
           {objImage.label}
         </span>
       </div>
 
       <div
-        className="relative w-full aspect-[4/3] overflow-hidden group bg-[#F4EFE6]"
+        className="relative w-full aspect-[4/3] overflow-hidden group bg-background"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -324,7 +325,7 @@ function StepGallery({
           style={{ transform: `translateX(-${intActiveStep * 100}%)` }}
         >
           {ARR_GALLERY.map((img, idx) => (
-                <div key={idx} className="min-w-full h-full flex items-center justify-center p-6 bg-[#F4EFE6]">
+                <div key={idx} className="min-w-full h-full flex items-center justify-center p-6 bg-background">
                 {/* Usamos object-contain para no cortar nada y agregamos una sombra suave */}
                 <img
                 src={img.url}
@@ -340,7 +341,7 @@ function StepGallery({
           <button
             type="button"
             onClick={() => onChangeStep(intActiveStep - 1)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#1F3A4D] hover:bg-[#152a38] text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md z-10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md z-10"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -351,7 +352,7 @@ function StepGallery({
           <button
             type="button"
             onClick={() => onChangeStep(intActiveStep + 1)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#1F3A4D] hover:bg-[#152a38] text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md z-10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md z-10"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -360,7 +361,7 @@ function StepGallery({
         )}
       </div>
 
-      <div className="px-6 py-4 flex items-center gap-2 border-t border-[#E0D9CE] bg-white">
+      <div className="px-6 py-4 flex items-center gap-2 border-t border-card-border bg-card-bg">
         <div className="flex gap-1.5">
           {ARR_GALLERY.map((img, idx) => (
             <button
@@ -368,13 +369,13 @@ function StepGallery({
               type="button"
               onClick={() => onChangeStep(idx)}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                intActiveStep === idx ? "bg-[#1F3A4D] w-6" : "bg-[#C4BAA8] w-2 hover:bg-[#1F3A4D]/40"
+                intActiveStep === idx ? "bg-primary w-6" : "bg-muted w-2 hover:bg-primary/40"
               }`}
               aria-label={`Ver ${img.label}`}
             />
           ))}
         </div>
-        <span className="ml-auto text-[11px] font-bold text-[#8b8276] uppercase tracking-wider">
+        <span className="ml-auto text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
           {intActiveStep + 1} DE {ARR_GALLERY.length}
         </span>
       </div>
@@ -408,24 +409,23 @@ export default function PublicarInmuebleGuide() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-  // ────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-8 max-w-[1200px] w-full">
+    <div className="font-sans flex flex-col gap-8 max-w-[1200px] w-full">
       
       {/* ── Header ── */}
-      <div className="flex justify-between items-end border-b border-[#E0D9CE] pb-3 mb-2 relative">
+      <div className="flex justify-between items-end border-b border-card-border pb-3 mb-2 relative">
         <div className="flex flex-col gap-2">
-          <span className="text-[13px] font-bold text-[#8b8276] uppercase tracking-widest">
+          <span className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest">
             Progreso de la guía
           </span>
         </div>
-        <span className="text-[12px] font-bold text-[#8b8276] uppercase tracking-widest">
+        <span className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest">
           {intActiveStep + 1} DE {ARR_STEPS.length} PASOS
         </span>
-        <div className="absolute bottom-[-1px] left-0 h-[2px] w-32 bg-[#E0D9CE]">
+        <div className="absolute bottom-[-1px] left-0 h-[2px] w-32 bg-card-border">
           <div
-            className="h-full bg-[#1F3A4D] transition-all duration-500 ease-out"
+            className="h-full bg-primary transition-all duration-500 ease-out"
             style={{ width: `${((intActiveStep + 1) / ARR_STEPS.length) * 100}%` }}
           />
         </div>
