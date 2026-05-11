@@ -337,7 +337,17 @@ export async function actualizarPublicacion(
       await tx.$executeRaw`
         DELETE FROM "PuntoInteres" WHERE id_publicacion = ${idPublicacion}
       `
-      if (puntosInteres.length > 0 && d.lat !== undefined && d.lng !== undefined) {
+      const propertyLat = d.lat
+      const propertyLng = d.lng
+
+      if (
+        puntosInteres.length > 0 &&
+        typeof propertyLat === 'number' &&
+        Number.isFinite(propertyLat) &&
+        typeof propertyLng === 'number' &&
+        Number.isFinite(propertyLng)
+      ) {
+
         await tx.puntoInteres.createMany({
           data: puntosInteres.map((point) => ({
             id_publicacion: idPublicacion,
@@ -348,8 +358,8 @@ export async function actualizarPublicacion(
             longitud: point.lng,
             orden: point.orden,
             distancia_metros: calculateDistanceMeters(
-              d.lat,
-              d.lng,
+              propertyLat,
+              propertyLng,
               point.lat,
               point.lng,
             ),

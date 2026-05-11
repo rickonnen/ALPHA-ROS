@@ -70,6 +70,7 @@ interface FiltrosBusquedaParams extends FiltrosPublicacion{
   limit?:number;
   currency?: undefined;
 }
+
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -370,7 +371,7 @@ function mapPublicationToProperty(
     publishedDate: formatPublishedDate(publication.fecha_creacion),
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
-    usuarioTelefono: publication.usuario?.telefono,
+    usuarioTelefono: publication.usuario?.telefono ?? undefined,
   };
 }
 
@@ -911,6 +912,23 @@ function SearchPageContent() {
     setAppliedPriceFilter(priceFilter);
   const handleCurrencyChange = (currency: Currency) =>
     setSelectedCurrency(currency);
+  const handleAdvancedFiltersChange = (values: {
+    habitaciones: string;
+    banos: string;
+    piscina: string;
+    minSurface: string;
+    maxSurface: string;
+  }) => {
+    setAdvancedFilterValues({
+      habitaciones: values.habitaciones,
+      banos: values.banos,
+      piscina: values.piscina,
+      minSurface:
+        values.minSurface.trim() === "" ? undefined : Number(values.minSurface),
+      maxSurface:
+        values.maxSurface.trim() === "" ? undefined : Number(values.maxSurface),
+    });
+  };
 
   const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
     setIsApplyingFilters(true);
@@ -1327,7 +1345,7 @@ function SearchPageContent() {
                 />
                 <AdvancedFilters
                   key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
+                  onChange={handleAdvancedFiltersChange}
                 />
 
                 <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1638,7 +1656,7 @@ function SearchPageContent() {
                   />
                   <AdvancedFilters
                     key={advancedFiltersKey}
-                    onChange={setAdvancedFilterValues}
+                    onChange={handleAdvancedFiltersChange}
                   />
                   <div className="my-3 h-px bg-[#F4EFE6]" />
                   <PriceDropdown
