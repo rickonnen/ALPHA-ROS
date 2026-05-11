@@ -24,7 +24,6 @@ export interface PublicacionBusqueda {
   descripcion?: string | null;
   precio?: number | null;
   precio_anterior?: number | null;
-
   superficie?: number | null;
   habitaciones?: number | null;
   banos?: number | null;

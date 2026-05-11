@@ -169,7 +169,7 @@ function PropertyCard({
 
   const DiscountBadge = () =>
     hasDiscount ? (
-      <span className="absolute left-2 top-2 z-[70] rounded-md bg-red-600 px-2 py-1 text-xs font-bold text-white shadow">
+      <span className="absolute left-2 top-2 z-[70] rounded-md bg-red-600 px-2 py-1 text-xs font-bold leading-none text-white shadow">
         -{discountPercent}%
       </span>
     ) : null;
@@ -284,12 +284,12 @@ function PropertyCard({
                 DESTACADO
               </span>
             )}
-            <span className={`font-bold leading-tight text-gray-950 ${isMapOpen 
-              ? 'text-[14px] xl:text-[15px]'
-              : 'text-[18px]'
-            }`}>
-              {displayPrice}
-            </span>
+            <PriceBlock
+              className={`font-bold leading-tight text-gray-950 ${isMapOpen 
+                ? 'text-[14px] xl:text-[15px]'
+                : 'text-[18px]'
+              }`}
+            />
             <span className={`mt-0.5 font-medium text-gray-500 ${isMapOpen 
               ? 'text-[10px] xl:text-[11px]' 
               : 'text-[12px]'
@@ -394,6 +394,7 @@ function PropertyCard({
       }`}
     >
       <div className="relative h-48 w-2/5 shrink-0 overflow-hidden sm:w-1/3">
+        <DiscountBadge />
         {onToggleCompare && (
           <button 
             onClick={(e) => {

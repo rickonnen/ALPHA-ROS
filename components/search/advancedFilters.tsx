@@ -426,15 +426,6 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
                 }}
               />
 
-              <SurfaceRangeDropdown
-                minValue={minSurface}
-                maxValue={maxSurface}
-                onMinChange={handleSurfaceInputChange("minSurface")}
-                onMaxChange={handleSurfaceInputChange("maxSurface")}
-                onClear={clearSurfaceRange}
-              />
-
-              
               <div className="rounded-lg border border-[#C8C0B5] bg-white px-4 py-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -469,6 +460,14 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
                   </button>
                 </div>
               </div>
+
+              <SurfaceRangeDropdown
+                minValue={minSurface}
+                maxValue={maxSurface}
+                onMinChange={handleSurfaceInputChange("minSurface")}
+                onMaxChange={handleSurfaceInputChange("maxSurface")}
+                onClear={clearSurfaceRange}
+              />
 
               <div className={surfaceError ? "block" : "hidden"}>
                 <p className="text-center text-sm text-red-600">

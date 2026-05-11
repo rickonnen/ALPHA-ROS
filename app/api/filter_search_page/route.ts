@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
       // Mantenemos el arreglo de superficies
       minSurface: body.minSurface ? Number(body.minSurface) : (body.superficieMin ? Number(body.superficieMin) : undefined),
       maxSurface: body.maxSurface ? Number(body.maxSurface) : (body.superficieMax ? Number(body.superficieMax) : undefined),
+      soloOfertas: Boolean(body.soloOfertas),
+      sort: typeof body.sort === "string" ? body.sort : undefined,
     };
 
     // Llamamos al servicio 

@@ -347,9 +347,9 @@ function mapPublicationToProperty(
   ]
     .filter(Boolean)
     .join(", ");
-  const currentPrice = toNumber(publication.precio);
-  const previousPrice = toNumber(publication.precio_anterior);
-  const discountPercent =
+ const currentPrice = toNumber(publication.precio);
+ const previousPrice = toNumber(publication.precio_anterior);
+ const discountPercent =
     previousPrice > currentPrice
       ? Math.round(((previousPrice - currentPrice) / previousPrice) * 100)
       : 0;
@@ -905,7 +905,7 @@ function SearchPageContent() {
         maxPrice: appliedPriceFilter?.maxPrice,
         minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
-        soloOfertas: advancedFilterValues.soloOfertas,
+        soloOfertas: Boolean(advancedFilterValues.soloOfertas),
         sort: selectedSort,
         currency: selectedCurrency,
         caracteristicasIds: advancedFilterValues.caracteristicasIds,
