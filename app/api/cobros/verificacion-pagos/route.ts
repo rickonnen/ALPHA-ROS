@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPaymentsByStatus, updatePaymentStatus } from '@/features/cobros/verificacion-pagos/paymentController';
 import { verify } from "jsonwebtoken";
 import { prisma } from '@/lib/prisma';
-
+ 
 /**
  * Dev: Gabriel
  * Funcionalidad: Valida si el usuario es Administrador (Rol 1) .

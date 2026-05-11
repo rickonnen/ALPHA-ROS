@@ -6,6 +6,7 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { NextAuthOptions } from "next-auth"
 import { createClient } from "@supabase/supabase-js";
+import { MagicLinkProvider } from "@/lib/auth/magicLinkProvider";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -36,6 +37,21 @@ export const authOptions: NextAuthOptions = {
     LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID!,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+      issuer: "https://www.linkedin.com/oauth",
+      jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
+      authorization: {
+        params: {
+          scope: "openid profile email",
+        },
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: `${profile.given_name} ${profile.family_name}`,
+          email: profile.email,
+          image: profile.picture,
+        }
+      },
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -80,6 +96,7 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    MagicLinkProvider,
   ],
 
   callbacks: {
@@ -200,7 +217,8 @@ export const authOptions: NextAuthOptions = {
           .maybeSingle();
     
         if (data?.estado === 0) {
-          return null; // invalida la sesión
+          console.log("[Session] Usuario bloqueado:", token.id);
+          return { ...session, error: "ACCOUNT_BLOCKED" };
         }
       }
       return session

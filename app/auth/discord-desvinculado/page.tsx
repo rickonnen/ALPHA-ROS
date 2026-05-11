@@ -20,7 +20,7 @@ export default function DiscordDesvinculado() {
         </h3>
 
         <p className="text-slate-500 text-sm mb-6">
-          Este Discord estuvo vinculado a una cuenta anteriormente. 
+          Esta cuenta de Discord estuvo vinculado a una cuenta anteriormente. 
           Inicia sesión con tu cuenta principal (Google o correo) 
           y reactiva la vinculación desde tu perfil.
         </p>

@@ -15,7 +15,7 @@ export async function handleLinkedInSignIn(user: any, account: any) {
   if (redExistente) {
     if (redExistente.estado === true) return true
     if (redExistente.estado === false) {
-      return "/auth/linkedin-desvinculado"
+      return "/auth/linkedIn-desvinculado"
     }
   }
 
