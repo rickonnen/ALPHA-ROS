@@ -147,7 +147,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
           {/* Footer de la tarjeta: Autor, Fecha y Reloj */}
           <div className="flex items-center justify-between border-t border-card-border/60 pt-4 mt-auto">
             <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8 border border-border/50 bg-secondary-fund">
+              <Avatar className="h-8 w-8 border border-border bg-secondary-fund">
                 {ObjAuthorBlo.avatar && <AvatarImage src={ObjAuthorBlo.avatar} alt={ObjAuthorBlo.name} />}
                 <AvatarFallback className="text-xs font-bold text-primary">
                   {ObjAuthorBlo.name.substring(0, 2).toUpperCase()}
@@ -169,7 +169,7 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
           {/* Botón de texto para dispositivos táctiles */}
           <div className="hidden w-full justify-center pointer-coarse:flex">
             <Link 
-              href={`/home/blogs/${IntIdBlo}`} 
+              href={`admin/manageBlogs/${IntIdBlo}`} 
               className="text-sm font-bold text-primary active:scale-95 transition-transform"
             >
               Leer Artículo
