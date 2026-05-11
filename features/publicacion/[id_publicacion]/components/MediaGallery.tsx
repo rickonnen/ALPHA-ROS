@@ -6,7 +6,7 @@
  */
 /**
  * Modicacion
- * @Dev: Gustavo Montaño
+ * @Dev: Gustavo Montaño.
  * @Fecha: 18/04/2026
  * @Funcionalidad: Integración de renderizado condicional para el botón "Favoritos" (HU2/HU6).
  * @param {boolean} [mostrarFav=false] - Bandera para mostrar FavButton sobre la galería.

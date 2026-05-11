@@ -1,5 +1,5 @@
 /**
- * @Dev: Gustavo Montaño
+ * @Dev: Gustavo Montaño.
  * @Fecha: 18/04/2026
  * @Funcionalidad: Vista pública del inmueble (HU2).
  */

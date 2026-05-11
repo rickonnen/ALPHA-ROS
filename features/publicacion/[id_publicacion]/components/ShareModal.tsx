@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * @Dev: Gabriel Paredes
+ * @Dev: Gabriel Paredes.
  * @Fecha: 10/05/2026
  * @Funcionalidad: Modal para compartir la publicación del inmueble.
  *
@@ -16,6 +16,12 @@
  *  4. id_publicacion se mantiene para otros usos (analytics, etc.) pero
  *     ya NO se usa para reconstruir la URL manualmente.
  */
+/**
+ * @Dev: Marcela C.
+ * @Fecha: 10/05/2026.
+ * @Funcionalidad: Llamado de API para registrar la compartida
+ */
+
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -136,22 +142,22 @@ export default function ShareModal({
   const [estadoCopia, setEstadoCopia] = useState<EstadoCopia>("idle");
   const [estadoFb, setEstadoFb] = useState<"idle" | "copiado">("idle");
   const [msgError, setMsgError] = useState<string | null>(null);
-  const [sinConexion, setSinConexion] = useState(false);
+  const [sinConexion, setSinConexion] = useState(
+  () => typeof navigator !== "undefined" && !navigator.onLine
+);
   const refOverlay = useRef<HTMLDivElement>(null);
 
   /* Detectar conexión */
   useEffect(() => {
-    if (typeof navigator !== "undefined" && !navigator.onLine)
-      setSinConexion(true);
-    const fnOn = () => setSinConexion(false);
-    const fnOff = () => setSinConexion(true);
-    window.addEventListener("online", fnOn);
-    window.addEventListener("offline", fnOff);
-    return () => {
-      window.removeEventListener("online", fnOn);
-      window.removeEventListener("offline", fnOff);
-    };
-  }, []);
+  const fnOn = () => setSinConexion(false);
+  const fnOff = () => setSinConexion(true);
+  window.addEventListener("online", fnOn);
+  window.addEventListener("offline", fnOff);
+  return () => {
+    window.removeEventListener("online", fnOn);
+    window.removeEventListener("offline", fnOff);
+  };
+}, []);
 
   /* Cerrar con Escape */
   useEffect(() => {
@@ -178,6 +184,12 @@ export default function ShareModal({
    *   cuadro de texto del sharer.)
    */
   const strUrlLimpia = fnBuildUrlLimpia();
+  //llamado a API para registrar la compartida
+  const fnRegistrarCompartida = () => {
+  fetch(`/api/publicacion/${id_publicacion}/compartir`, {
+    method: "POST",
+  }).catch((error) => console.error("Error registrando compartida:", error));
+  };
   const strUrlUtm = fnBuildUrlUtm();
 
   // Para Facebook usamos la URL limpia encodeada (sin UTM) — evita doble encoding
@@ -242,6 +254,7 @@ export default function ShareModal({
       return;
     }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     fnOpenWindow(href);
   };
 
@@ -256,6 +269,7 @@ export default function ShareModal({
     if (sinConexion) { setMsgError("Sin conexión a Internet. Verifica tu red e intenta de nuevo."); return; }
     if (!disponible) { setMsgError("Esta publicación ya no está disponible y no puede ser difundida."); return; }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(strUrlLimpia);
@@ -283,6 +297,7 @@ export default function ShareModal({
       return;
     }
     setMsgError(null);
+    fnRegistrarCompartida(); // Llamado a API para registrar la compartida
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(strUrlLimpia);
