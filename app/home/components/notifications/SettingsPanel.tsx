@@ -25,10 +25,26 @@ export function SettingsPanel({
   const [isPhoneSaved, setIsPhoneSaved] = useState(false);
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [isChangingPhone, setIsChangingPhone] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackType, setFeedbackType] = useState<
+    "success" | "error" | "warning" | ""
+  >("");
   const { user: objUser } = useAuth();
 
   const USER_ID = objUser?.id;
-  console.log(USER_ID)
+
+  const showMessage = (
+    type: "success" | "error" | "warning",
+    message: string
+  ) => {
+    setFeedbackType(type);
+    setFeedbackMessage(message);
+
+    setTimeout(() => {
+      setFeedbackMessage("");
+      setFeedbackType("");
+    }, 4000);
+  };
 
   useEffect(() => {
     const loadWhatsappStatus = async () => {
@@ -81,7 +97,10 @@ export function SettingsPanel({
 
   const handleWhatsappToggle = async (enabled: boolean) => {
     if (enabled && !isPhoneSaved) {
-      alert("Primero debes registrar y verificar tu número de WhatsApp.");
+      showMessage(
+        "warning",
+        "Primero debes registrar y verificar tu número de WhatsApp."
+      );
       return;
     }
 
@@ -102,16 +121,19 @@ export function SettingsPanel({
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        alert(`❌ ${data.message}`);
+        showMessage("error", data.message);
         return;
       }
 
       await onWhatsappToggle(enabled);
 
-      alert(`✅ ${data.message}`);
+      showMessage("success", data.message);
     } catch (error) {
       console.error(error);
-      alert("❌ Error al actualizar WhatsApp.");
+      showMessage(
+        "error",
+        "No se pudo actualizar WhatsApp."
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -124,7 +146,10 @@ export function SettingsPanel({
       const result = validatePhoneE164(phoneNumber);
 
       if (!result.valid || !result.phoneE164) {
-        alert(`❌ ${result.error}`);
+        showMessage(
+          "error",
+          result.error ?? "Número inválido."
+        );
         return;
       }
 
@@ -143,7 +168,7 @@ export function SettingsPanel({
 
       if (!response.ok || !data.ok) {
         setIsPhoneSaved(false);
-        alert(`❌ ${data.message}`);
+        showMessage("error", data.message ?? "No se pudo verificar el número.");
         return;
       }
 
@@ -154,10 +179,16 @@ export function SettingsPanel({
 
       await onWhatsappToggle(true);
 
-      alert("✅ Número verificado. WhatsApp fue activado correctamente.");
+      showMessage(
+        "success",
+        "Número verificado. WhatsApp fue activado correctamente."
+      );
     } catch (error) {
       console.error(error);
-      alert("❌ Error de red. Intenta nuevamente.");
+      showMessage(
+        "error",
+        "Error de red. Intenta nuevamente."
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -186,6 +217,18 @@ export function SettingsPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {feedbackMessage && (
+          <div
+            className={`rounded-lg px-4 py-3 text-sm font-medium border ${feedbackType === "success"
+              ? "bg-green-50 text-green-700 border-green-200"
+              : feedbackType === "error"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-yellow-50 text-yellow-700 border-yellow-200"
+              }`}
+          >
+            {feedbackMessage}
+          </div>
+        )}
         <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
@@ -212,9 +255,8 @@ export function SettingsPanel({
             />
 
             <div
-              className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${
-                isUpdating ? "opacity-50" : ""
-              }`}
+              className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""
+                }`}
             />
 
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
@@ -242,11 +284,10 @@ export function SettingsPanel({
             </div>
 
             <label
-              className={`relative inline-flex items-center ${
-                isPhoneSaved
-                  ? "cursor-pointer"
-                  : "cursor-not-allowed opacity-60"
-              }`}
+              className={`relative inline-flex items-center ${isPhoneSaved
+                ? "cursor-pointer"
+                : "cursor-not-allowed opacity-60"
+                }`}
             >
               <input
                 type="checkbox"
@@ -259,9 +300,8 @@ export function SettingsPanel({
               />
 
               <div
-                className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition ${
-                  isUpdating ? "opacity-50" : ""
-                }`}
+                className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition ${isUpdating ? "opacity-50" : ""
+                  }`}
               />
 
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
