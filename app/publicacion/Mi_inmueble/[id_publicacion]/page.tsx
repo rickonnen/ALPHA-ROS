@@ -51,6 +51,14 @@
  * @Funcionalidad: Corrección de posición del símbolo de moneda (Bs.) 
  *                 para que aparezca delante del número, no detrás.
  */
+/**
+ * Modificacion
+ * @Dev: Gabriel Paredes
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Se habilita mostrarShare={true} en <MediaGallery /> para mostrar
+ *   el botón de compartir sobre la galería. Se pasan tituloShare y disponible.
+ *   mostrarFav se mantiene en false (vista privada del propietario).
+ */
 import { notFound, redirect }     from "next/navigation";
 import { cookies }                from "next/headers";
 import { verify }                 from "jsonwebtoken";
@@ -137,6 +145,9 @@ export default async function PerfilInmueblePage({
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
   // Promoción vigente: existe al menos 1 PromocionPublicacion con fecha_fin > now()
   const bolEsDestacada = (objPerfil.PromocionPublicacion?.length ?? 0) > 0;
+  // Determinar si la publicación sigue activa (para ShareModal)
+  const strEstado     = objPerfil.EstadoPublicacion?.nombre_estado ?? "";
+  const bolDisponible = !["Pausada", "Eliminada", "Inactiva"].includes(strEstado);
 
   return (
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
@@ -153,7 +164,8 @@ export default async function PerfilInmueblePage({
             {bolEsDestacada && <DestacadaBadge />}
           </div>
         </header>
-        {/* Task 4.4 + 4.5 + 4.11: Galería */}
+
+        {/* Task 4.4 + 4.5 + 4.11: Galería con botón compartir */}
         <div className="relative rounded-3xl overflow-hidden">
           <MediaGallery
             id_publicacion={intId.toString()}
@@ -161,8 +173,12 @@ export default async function PerfilInmueblePage({
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
             mostrarFav={false}
-          />         
+            mostrarShare={true}
+            tituloShare={objPerfil.titulo ?? "Propiedad en venta"}
+            disponible={bolDisponible}
+          />
         </div>
+
         {/* Task 4.3: Precio y Superficie */}
         <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">
           {/* Bloque Precio */}
@@ -186,6 +202,7 @@ export default async function PerfilInmueblePage({
             </div>
           </div>
         </div>
+
         {/* Task 4.8: Dirección y Mapa */}
         <div className="mb-12">
           <p className="text-xl mb-6">
@@ -198,6 +215,7 @@ export default async function PerfilInmueblePage({
             <p className="text-sm italic text-gray-500">Ubicación exacta en el mapa no disponible.</p>
           )}
         </div>
+
         {/* Task 4.6 + 4.7: Detalles */}
         <PropertyDetails
           objInfo={{
@@ -216,6 +234,7 @@ export default async function PerfilInmueblePage({
             })),
           }}
         />
+
         {/* Task 4.8: Descripción */}
         <section className="mt-6 mb-6">
           <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
@@ -227,6 +246,7 @@ export default async function PerfilInmueblePage({
             </p>
           </div>
         </section>
+
         {/* ContactCard */}
         {(() => {
           const arrTelefonos = objPerfil.Usuario?.UsuarioTelefono?.map(
@@ -247,10 +267,12 @@ export default async function PerfilInmueblePage({
             />
           );
         })()}
+
         {/* Sección de Estadísticas renderizada antes de las acciones */}
         <section className="mt-8 mb-8">
           <EstadisticasInmueble estadisticas={objPerfil.EstadisticaPublicacion ?? []} />
         </section>
+
         {/* Task 4.10: Botones — verificación ocurre al hacer click en PropertyActions */}
         <PropertyActions />
       </div>
