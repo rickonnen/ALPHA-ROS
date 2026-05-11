@@ -28,20 +28,26 @@
          cambios en editar perfil el header (foto, nombre) se actualice
          inmediatamente sin necesidad de hacer refresh manual de la pagina
 */
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 23/04/2026
+    Fix: Reubicación de la pestaña 'ZONAS' a la penúltima posición y corrección de nomenclatura según Mockup.
+*/
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, Loader2 } from "lucide-react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import PerfilView from "./views/perfil-view";
 import SeguridadView from "./views/seguridad-view";
 import PublicacionesView from "./views/publicaciones-view";
 import FavoritoView from "./views/favorito-view";
 import HistorialView from "./views/historial-view";
+import ZonasView from "./views/zonas-view";
 import HistorialPagosView from "@/app/cobros/historial-pagos/page";
+import SuscripcionView from "@/app/cobros/suscripcion/page";
 import { useAuth } from "../auth/AuthContext";
 /*  Dev: David Chavez Totora - sow-davidc 
     Fecha: 05/04/2026
@@ -60,59 +66,67 @@ import ConfirmModal from "@/components/ui/confirmModal";
 
 function PerfilContent() {
   const { user, logout } = useAuth();
+  const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showAuth, setShowAuth] = useState(false);
   console.log("Usuario autenticado en PerfilContent:", user);
   const userId = user?.id ?? "";
   console.log("Tipo de Usuario:", typeof userId);
   console.log("Usuario:", userId);
 
-  const [view, setView] = useState("perfil");
+  const seccionInicial = searchParams.get("seccion") === "redes-vinculadas" ? "seguridad" : (searchParams.get("seccion") ?? "perfil");
+  const [view, setView] = useState(seccionInicial);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [usuario, setUsuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [telefonos, setTelefonos] = useState<string[]>([]);
+  
   const [intRefreshKey, setIntRefreshKey] = useState(0);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setAuthReady(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-  if (userId) {
-    setError(null);
-    const fetchUsuario = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
-        if (!res.ok) throw new Error("No se pudo cargar el perfil");
-        const json = await res.json();
-        setUsuario(json.data);
-        
-        const tels = json.data?.UsuarioTelefono?.filter((ut: any) =>
+    if (!authReady) return;
+    
+    if (userId) {
+      setError(null);
+      const fetchUsuario = async () => {
+        try {
+          setLoading(true);
+          const res = await fetch(`/api/perfil/getUsuario?id_usuario=${userId}`);
+          if (!res.ok) throw new Error("No se pudo cargar el perfil");
+          const json = await res.json();
+          setUsuario(json.data);
+          const tels = json.data?.UsuarioTelefono?.filter((ut: any) =>
             Boolean(ut.estado)
           ).map((ut: any) =>
-              `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
+            `+${ut.Telefono?.codigo_pais} ${ut.Telefono?.nro_telefono}`
           ) ?? [];
-        setTelefonos(tels);
-      } catch (err: any) {
-        setError("Usuario no encontrado en la base de datos.");
-        setTimeout(() => router.push("/"), 2000);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsuario();
-  } 
-  
-  else {
-    const timer = setTimeout(() => {
-      if (!userId) {
+          setTelefonos(tels);
+        } catch (err: any) {
+          setError("Usuario no encontrado.");
+          await logout();
+          setTimeout(() => router.push("/"), 2000);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUsuario();
+    } else {
+      const timer = setTimeout(() => {
         setError("Sesión no válida. Redirigiendo...");
         router.push("/");
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }
-}, [userId, intRefreshKey, router]);
+      }, 8000);
+    
+      return () => clearTimeout(timer);
+    }
+  }, [userId, authReady, intRefreshKey, router]);
 
   const handleTelefonosChange = (nuevosTelefonos: string[]) => {
     setTelefonos(nuevosTelefonos);
@@ -124,6 +138,7 @@ function PerfilContent() {
     { id: "favoritos", name: "FAVORITOS" },
     { id: "historial", name: "HISTORIAL" },
     { id: "historialPagos", name: "HISTORIAL PAGOS" },
+    { id: "planes", name: "PLAN ACTUAL" },
     { id: "zonas", name: "ZONAS" },
   ];
 
@@ -146,12 +161,14 @@ function PerfilContent() {
         onSuccess={() => setView("perfil")}
         onTelefonosChange={handleTelefonosChange}
         onPerfilActualizado={() => setIntRefreshKey((k) => k + 1)}
+        initialSubView={searchParams.get("seccion") === "redes-vinculadas" ? "redes" : undefined}
       />
     ),
     favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
-    zonas: <div className="p-6 text-center text-slate-500">En proceso de Team-Bug Hunters/Mapas</div>,
+    zonas: usuario ? <ZonasView id_usuario={userId} /> : null,
+    planes: <SuscripcionView />,
   };
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -164,6 +181,16 @@ function PerfilContent() {
     await logout();
     router.push("/");
   };
+
+  const truncate = (str: string, limit: number): string => {
+    if (!str) return "";
+    return str.length > limit ? str.substring(0, limit) + "." : str;
+  };
+
+  const nombresCortos = truncate(usuario?.nombres, 15);
+  const apellidosCortos = truncate(usuario?.apellidos, 15);
+
+  const nombreCompleto = `${nombresCortos} ${apellidosCortos}`.trim();
 
   return (
     <>
@@ -201,7 +228,7 @@ function PerfilContent() {
               />
               <div className="text-left">
                 <h1 className="font-[900] text-2xl md:text-5xl text-[var(--foreground)] tracking-tight uppercase">
-                  {usuario.nombres} {usuario.apellidos}
+                  {nombreCompleto}
                 </h1>
                 <h2 className="text-slate-500 text-sm md:text-2xl font-medium">
                   {usuario.email}

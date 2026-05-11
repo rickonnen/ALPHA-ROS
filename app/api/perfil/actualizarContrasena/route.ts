@@ -8,6 +8,10 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { PrismaClient } from "@prisma/client";
+import { sendPasswordChangeEmail } from "@/lib/email/emailService";
+
+const prisma = new PrismaClient();
 
 export async function PUT(req: NextRequest) {
   try {
@@ -58,6 +62,31 @@ export async function PUT(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Obtener datos del usuario para enviar email
+    const usuario = await prisma.usuario.findUnique({
+      where: { id_usuario },
+      select: { email: true, nombres: true },
+    });
+
+    // Enviar email de cambio de contraseña con medición de tiempo
+    if (usuario?.email) {
+      const emailResult = await sendPasswordChangeEmail(
+        usuario.email,
+        usuario.nombres || "Usuario"
+      );
+
+      // Verificar que el email se envió en menos de 10 segundos
+      if (emailResult.timeTakenMs > 10000) {
+        console.warn(
+          `⚠️ Email enviado pero tardó ${emailResult.timeTakenMs}ms (límite: 10000ms)`
+        );
+      } else {
+        console.log(
+          `✅ Email enviado dentro del límite: ${emailResult.timeTakenMs}ms / 10000ms`
+        );
+      }
     }
 
     return NextResponse.json(

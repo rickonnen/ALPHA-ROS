@@ -23,6 +23,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PublicacionDetalleBusqueda } from '@/features/search/search-services';
+import { useTracking } from '@/components/hooks/useTracking';
 
 type Currency = "USD" | "BS";
 
@@ -50,12 +51,14 @@ export default function SearchDetailModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { trackEvent } = useTracking();
 
   useEffect(() => {
     if (isOpen && publicacionId) {
+      trackEvent(publicacionId, 'detalle');
       cargarDatos();
     }
-  }, [isOpen, publicacionId]);
+  }, [isOpen, publicacionId, trackEvent]);
 
   const cargarDatos = async () => {
     try {

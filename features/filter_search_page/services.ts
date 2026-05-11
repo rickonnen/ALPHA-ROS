@@ -1,7 +1,8 @@
 import { Prisma } from '@prisma/client';
 
-import { convertBsToUsd } from './currencyConverter';
 import { prisma } from './prismaClient';
+
+import { unstable_cache } from 'next/cache';
 
 export type SearchCurrency = 'USD' | 'BS';
 
@@ -16,6 +17,8 @@ export type SearchFiltersInput = {
   currency?: SearchCurrency;
   minPrice?: number;
   maxPrice?: number;
+  minSurface?: number;
+  maxSurface?: number;
 };
 
 export type SearchPublicationResult = {
@@ -35,6 +38,7 @@ export type SearchPublicationResult = {
   moneda_nombre: string | null;
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
+  fecha_creacion: string | null;
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -84,6 +88,8 @@ const TIPO_INMUEBLE_ID: Record<string, number> = {
   terreno: 3,
 };
 
+const BS_EXCHANGE_RATE = 6.96;
+
 function normalizeText(value: string): string {
   return value
     .trim()
@@ -105,6 +111,14 @@ function parseMinimum(value: string): number | null {
   return match ? Number.parseInt(match[1], 10) : null;
 }
 
+function roundToTwo(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function convertBsToUsd(amount: number, exchangeRate: number = BS_EXCHANGE_RATE): number {
+  return roundToTwo(amount / exchangeRate);
+}
+
 function getPropertyTypeNames(value: string | undefined): string[] {
   if (!value) {
     return [];
@@ -116,16 +130,38 @@ function getPropertyTypeNames(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function getOperationIds(value: string | undefined): number[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => OPERACION_ID[normalizeText(item)])
+    .filter((id): id is number => Boolean(id))
+    .filter((id, index, array) => array.indexOf(id) === index);
+}
+
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   const where: Prisma.PublicacionWhereInput = {
-    id_estado: 1,
+   id_estado: 1,
   };
 
-  if (filters.operacion) {
-    const operationId = OPERACION_ID[normalizeText(filters.operacion)];
-    if (operationId) {
-      where.id_tipo_operacion = operationId;
-    }
+  // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    where.precio = {
+      ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
+      ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
+    };
+  }
+
+  const operationIds = getOperationIds(filters.operacion);
+  if (operationIds.length === 1) {
+    where.id_tipo_operacion = operationIds[0];
+  } else if (operationIds.length > 1) {
+    where.id_tipo_operacion = {
+      in: operationIds,
+    };
   }
 
   const propertyTypeNames = getPropertyTypeNames(filters.tipoInmueble);
@@ -196,6 +232,13 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
         };
   }
 
+  if (filters.minSurface !== undefined || filters.maxSurface !== undefined) {
+    where.superficie = {
+      ...(filters.minSurface !== undefined ? { gte: filters.minSurface } : {}),
+      ...(filters.maxSurface !== undefined ? { lte: filters.maxSurface } : {}),
+    };
+  }
+
   if (filters.ubicacion?.trim()) {
     const search = filters.ubicacion.trim();
     where.OR = [
@@ -253,7 +296,7 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
   return where;
 }
 
-function convertPublicationPriceToUsd(publication: PublicationWithRelations): number | null {
+function convertPublicationPriceToUsd(publication: PublicationWithRelations, apiExchangeRate: number = BS_EXCHANGE_RATE): number | null {
   const rawPrice = toNumber(publication.precio);
   if (rawPrice === null) {
     return null;
@@ -266,12 +309,8 @@ function convertPublicationPriceToUsd(publication: PublicationWithRelations): nu
   }
 
   if (currencyName === 'bs' || currencyName.includes('boliv')) {
-    const exchangeRate = toNumber(publication.Moneda?.tasa_cambio);
-    if (exchangeRate && exchangeRate > 0) {
-      return rawPrice / exchangeRate;
-    }
-
-    return convertBsToUsd(rawPrice);
+    // Usar el tipo de cambio de venta de DolarAPI
+    return convertBsToUsd(rawPrice, apiExchangeRate);
   }
 
   return rawPrice;
@@ -280,12 +319,13 @@ function convertPublicationPriceToUsd(publication: PublicationWithRelations): nu
 function passesPriceFilter(
   publication: PublicationWithRelations,
   filters: SearchFiltersInput,
+  apiExchangeRate: number = BS_EXCHANGE_RATE,
 ): boolean {
   if (filters.minPrice === undefined && filters.maxPrice === undefined) {
     return true;
   }
 
-  const publicationPriceInUsd = convertPublicationPriceToUsd(publication);
+  const publicationPriceInUsd = convertPublicationPriceToUsd(publication, apiExchangeRate);
   if (publicationPriceInUsd === null) {
     return false;
   }
@@ -294,14 +334,14 @@ function passesPriceFilter(
     filters.minPrice === undefined
       ? undefined
       : filters.currency === 'BS'
-        ? convertBsToUsd(filters.minPrice)
+        ? convertBsToUsd(filters.minPrice, apiExchangeRate)
         : filters.minPrice;
 
   const maxPriceInUsd =
     filters.maxPrice === undefined
       ? undefined
       : filters.currency === 'BS'
-        ? convertBsToUsd(filters.maxPrice)
+        ? convertBsToUsd(filters.maxPrice, apiExchangeRate)
         : filters.maxPrice;
 
   if (minPriceInUsd !== undefined && publicationPriceInUsd < minPriceInUsd) {
@@ -333,6 +373,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     moneda_nombre: publication.Moneda?.nombre ?? null,
     moneda_simbolo: publication.Moneda?.simbolo ?? null,
     moneda_tasa_cambio: toNumber(publication.Moneda?.tasa_cambio),
+    fecha_creacion: publication.fecha_creacion ? publication.fecha_creacion.toISOString() : null,
     ubicacion: publication.Ubicacion
       ? {
           direccion: publication.Ubicacion.direccion,
@@ -355,6 +396,27 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
 export async function searchPublicaciones(
   filters: SearchFiltersInput,
 ): Promise<SearchPublicationResult[]> {
+  // Obtener el tipo de cambio de venta directamente desde DolarAPI Bolivia
+  let apiExchangeRate = BS_EXCHANGE_RATE;
+
+  try {
+    const exchangeRateResponse = await fetch(
+      `${process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"}/v1/dolares/binance`,
+      { cache: "no-store" }
+    );
+
+    if (exchangeRateResponse.ok) {
+      const exchangeData = await exchangeRateResponse.json();
+      const venta = Number(exchangeData.venta);
+
+      if (!Number.isNaN(venta) && venta > 0) {
+        apiExchangeRate = venta;
+      }
+    }
+  } catch {
+    apiExchangeRate = BS_EXCHANGE_RATE;
+  }
+
   const publications = await prisma.publicacion.findMany({
     where: buildWhere(filters),
     orderBy: {
@@ -386,8 +448,22 @@ export async function searchPublicaciones(
   });
 
   const priceFiltered = publications.filter((publication) =>
-    passesPriceFilter(publication, filters),
+    passesPriceFilter(publication, filters, apiExchangeRate),
   );
 
   return priceFiltered.map(mapPublication);
+}
+// con esto la llave es única y estable, no importa el orden de los filtros
+export async function getCachedPublicaciones(filters: SearchFiltersInput) {
+  // Ordenamos las llaves para que {a:1, b:2} sea igual a {b:2, a:1}
+  const stableKey = JSON.stringify(filters, Object.keys(filters).sort());
+
+  return unstable_cache(
+    async () => searchPublicaciones(filters),
+    ['search-results', stableKey], 
+    { 
+      revalidate: 60, 
+      tags: ['publicaciones'] 
+    }
+  )();
 }

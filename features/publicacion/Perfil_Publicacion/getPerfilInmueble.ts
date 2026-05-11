@@ -21,12 +21,29 @@
 * @return Objeto con los campos nombres, apellidos, username, email, 
 *                url_foto_perfil y el primer número de teléfono registrado.
 */
+<<<<<<< HEAD
+=======
+/**
+ * Modificacion
+ * Dev: Oliver Garcia
+ * Date: 09/05/2026
+ * Funcionalidad: Inclusión de PromocionPublicacion para detectar si la publicación
+ *                tiene una promoción vigente (fecha_fin > now()). Solo se trae 1 registro
+ *                activo — si el array viene con length > 0, la publicación está destacada.
+ */
+/**
+ * Modificacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 09/05/2026
+ * @Funcionalidad: Se integró la extracción del historial de rendimiento en el query principal.
+ * Trae la relación 'EstadisticaPublicacion' ordenada cronológicamente de 
+ * forma ascendente para inyectarla en los componentes gráficos del frontend.
+ */
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
 import { prisma } from "@/lib/prisma";
-
 export async function getPerfilInmueble(intIdPublicacion: number) {
   // Verificación de seguridad
   if (isNaN(intIdPublicacion)) return null;
-
   const objPerfilInmueble = await prisma.publicacion.findUnique({
     where: { id_publicacion: intIdPublicacion },
     select: {
@@ -73,7 +90,30 @@ export async function getPerfilInmueble(intIdPublicacion: number) {
       },
       Video: { select: { url_video: true } },
       Imagen: { select: { url_imagen: true } },
+<<<<<<< HEAD
       //Parte para el ContactCard
+=======
+      // SPRINT 3: Selección de estadísticas para el gráfico
+      EstadisticaPublicacion: {
+        select: {
+          fecha: true,
+          vistas: true,
+          compartidas: true,
+        },
+        orderBy: {
+          fecha: 'asc',
+        },
+      },
+      // Promoción vigente — si fecha_fin > now(), la publicación está destacada
+      PromocionPublicacion: {
+        where: {
+          fecha_fin: { gt: new Date() },
+        },
+        select: { id_promocion: true },
+        take: 1,
+      },
+      // Parte para el ContactCard
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
       Usuario: {
         select: {
           id_usuario: true,

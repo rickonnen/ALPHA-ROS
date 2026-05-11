@@ -31,7 +31,27 @@
       - Botón "+ Agregar" en el header redirige a /publicaciones/nueva
       - @param {id_usuario} - ID del usuario autenticado pasado desde page.tsx
 */
-
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 17/04/2026
+    Fix: Actualización del título de la sección principal a "Publicaciones".
+    Feat: Implementación de estados focus-visible para navegación por teclado en el botón "+ Agregar".
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 18/04/2026
+    Feat: Integración del modal de límite de publicaciones (Criterio 11).
+*/
+/* Dev: Camila Magne Hinojosa - xdev/sow-camilaM
+    Fecha: 22/04/2026
+    Fix: Se aplicó estado visual "disabled" (grisáceo y cursor bloqueado) en el botón "+ Agregar" cuando el límite de publicaciones llega a 0.
+*/
+/*
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix de modales(gratuitos y de planes) y adición de limpieza de sessionStorage en botón "Agregar".
+ * Funcionalidad: Vista de modales segun el plan
+ - @param {PublicacionesViewProps} id_usuario - ID del usuario actual autenticado.
+ - @return {JSX.Element} Interfaz de lista de publicaciones y modales.
+ */
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +62,7 @@ import PublicacionCard, { Publicacion } from "./publicacion-card";
 import { useAuth } from "@/app/auth/AuthContext";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
 import FreePublicationLimitModal from "@/features/publicacion/components/FreePublicationLimitModal";
-
+import PlanLimitModal from "@/features/publicacion/components/PlanLimitModal";
 interface PublicacionesViewProps {
   id_usuario: string;
 }
@@ -62,23 +82,34 @@ export default function PublicacionesView({
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [bolShowModal, setBolShowModal] = useState(false);
-  const [bolChecking,  setBolChecking]  = useState(false);
+  const [bolShowModalGratuito, setBolShowModalGratuito] = useState(false);
+  const [bolShowModalPlan, setBolShowModalPlan] = useState(false);
+  const [bolChecking, setBolChecking] = useState(false);
 
   useEffect(() => {
     let activo = true;
     const cargarPublicaciones = async () => {
       try {
         setCargando(true);
-        const res = await fetch(
-          `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
-        );
-        if (!res.ok) throw new Error("No se pudieron cargar las publicaciones");
-        const json = await res.json();
+        const [resPubs, resRestantes] = await Promise.all([
+          fetch(
+            `/api/perfil/getPublicacion?id_usuario=${id_usuario}&page=${paginaActual}&limit=${ITEMS_POR_PAGINA}`,
+          ),
+          fetch(`/api/perfil/publicaciones-restantes?id_usuario=${id_usuario}`),
+        ]);
+
+        if (!resPubs.ok)
+          throw new Error("No se pudieron cargar las publicaciones");
+
+        const jsonPubs = await resPubs.json();
+        const jsonRestantes = await resRestantes.json();
+
         if (activo) {
-          setPublicaciones(json.data);
-          setTotalPaginas(Math.ceil(json.total / ITEMS_POR_PAGINA));
-          setPublicacionesRestantes(json.cant_publicaciones_restantes ?? 0);
+          setPublicaciones(jsonPubs.data);
+          setTotalPaginas(Math.ceil(jsonPubs.total / ITEMS_POR_PAGINA));
+          setPublicacionesRestantes(
+            jsonRestantes.cant_publicaciones_restantes ?? 0,
+          );
         }
       } catch (err) {
         console.error("Error al cargar publicaciones:", err);
@@ -115,6 +146,7 @@ export default function PublicacionesView({
 
       const nuevas = publicaciones.filter((p) => p.id !== idAEliminar);
       setPublicaciones(nuevas);
+      setPublicacionesRestantes((prev) => prev + 1);
       setIdAEliminar(null);
 
       const nuevoTotal = Math.ceil(nuevas.length / ITEMS_POR_PAGINA);
@@ -132,6 +164,42 @@ export default function PublicacionesView({
     }
   };
 
+  const handleCambiarEstado = async (id_pub: string, nuevoEstado: number): Promise<boolean> => {
+    try {
+      setError(null);
+      // Construimos la URL con los parámetros necesarios para tu nueva ruta PATCH
+      const url = `/api/perfil/updateEstadoPublicacion?id_publicacion=${id_pub}&id_estado=${nuevoEstado}&id_usuario=${id_usuario}`;
+
+      const res = await fetch(url, { method: "PATCH" });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Actualización local: buscamos la publicación en el array y cambiamos su id_estado
+        setPublicaciones((prev) =>
+          prev.map((p) =>
+            p.id === id_pub ? { ...p, id_estado: nuevoEstado } : p,
+          ),
+        );
+        return true; 
+
+      } else {
+        const errorData = await res.json();
+
+        //console.error("Error desde el servidor:", errorData.error);
+        if (res.status === 400) {
+           setBolShowModalPlan(true); 
+        } else {
+           setError(errorData.error || "No se pudo actualizar el estado de la publicación.");
+        }
+        return false;
+      }
+    } catch (err) {
+      console.error("Error de red:", err);
+      setError("Error de conexión al intentar cambiar el estado.");
+      return false;
+    }
+  };
+  
   const handleAgregar = async () => {
     if (!user) {
       router.push("/login");
@@ -141,11 +209,46 @@ export default function PublicacionesView({
     try {
       const objEstado = await verificarEstadoPublicacion(user.id);
       if (objEstado.bolLimiteAlcanzado) {
-        setBolShowModal(true);
-      } else {
-        router.push("/publicacion/formularioPublicacion");
+        if (objEstado.strTipoLimite === "plan") {
+          setBolShowModalPlan(true);
+        } else {
+          setBolShowModalGratuito(true);
+        }
+        return; // Salimos de la función si alcanzó el límite
       }
+      // FIX: Limpiar las llaves del sessionStorage del Formulario Dinámico
+      const KEYS_TO_CLEAN = [
+        'publicacion_currentStep', 
+        'publicacion_completedSteps', 
+        'datosAviso', 
+        'categoriaYEstado', 
+        'ubicacion', 
+        'caracteristicasDetalle', 
+        'imagenesPropiedad_interacted', 
+        'caracteristicasImagenesPreview', 
+        'caracteristicasImagenesNombres', 
+        'videoPropiedad', 
+        'descripcionPropiedad', 
+        'imagenesIniciales'
+      ];
+      KEYS_TO_CLEAN.forEach(k => { 
+        try { sessionStorage.removeItem(k) } catch { } 
+      });
+
+      router.push("/publicacion/formularioPublicacion");
     } catch {
+      // FIX: Limpiamos también en caso de error por seguridad antes de redirigir
+      const KEYS_TO_CLEAN = [
+        'publicacion_currentStep', 'publicacion_completedSteps', 'datosAviso', 
+        'categoriaYEstado', 'ubicacion', 'caracteristicasDetalle', 
+        'imagenesPropiedad_interacted', 'caracteristicasImagenesPreview', 
+        'caracteristicasImagenesNombres', 'videoPropiedad', 
+        'descripcionPropiedad', 'imagenesIniciales'
+      ];
+      KEYS_TO_CLEAN.forEach(k => { 
+        try { sessionStorage.removeItem(k) } catch { } 
+      });
+      
       router.push("/publicacion/formularioPublicacion");
     } finally {
       setBolChecking(false);
@@ -158,17 +261,22 @@ export default function PublicacionesView({
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
-              Mis publicaciones
-            </CardTitle> 
+              PUBLICACIONES
+            </CardTitle>
             <div className="flex items-center justify-center gap-2">
               <span className="text-white/60 text-sm whitespace-nowrap">
-                {publicacionesRestantes} publicaciones restantes
+                {publicacionesRestantes} publicaciones disponibles
               </span>
+  
               <Button
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className="flex-shrink-0 bg-[var(--secondary)] hover:bg-[var(--secondary)]/80 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-60"
+                className={`flex-shrink-0 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)] ${
+                  publicacionesRestantes <= 0
+                    ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80" 
+                    : "bg-[var(--secondary)] hover:bg-[var(--secondary)]/80"
+                }`}
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
@@ -204,12 +312,13 @@ export default function PublicacionesView({
 
           {/* Lista de publicaciones paginadas */}
           {!cargando && publicaciones.length > 0 && (
-            <div className="block gap-2 overflow-y-auto pr-1 max-h-[50vh] md:max-h-[300px]">
+            <div className="flex flex-col gap-3 overflow-y-auto pr-1">
               {publicaciones.map((pub) => (
                 <PublicacionCard
                   key={pub.id}
                   publicacion={pub}
                   onEliminar={handleEliminar}
+                  onCambiarEstado={handleCambiarEstado}
                 />
               ))}
             </div>
@@ -313,9 +422,16 @@ export default function PublicacionesView({
 
       {/* Modal límite de publicaciones gratuitas */}
       <FreePublicationLimitModal
-        bolOpen={bolShowModal}
-        onBack={() => setBolShowModal(false)}
+        bolOpen={bolShowModalGratuito}
+        onBack={() => setBolShowModalGratuito(false)}
+      />
+
+      {/* Modal límite de plan activo excedido */}
+      <PlanLimitModal
+        bolOpen={bolShowModalPlan}
+        onBack={() => setBolShowModalPlan(false)}
       />
     </>
   );
 }
+

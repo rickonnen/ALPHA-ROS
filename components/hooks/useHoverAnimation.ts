@@ -8,7 +8,7 @@
 export const useHoverAnimation = (
   includeColor: boolean = true, 
   includeGlow: boolean = true, 
-  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' = 'pointer',
+  cursorType: 'pointer' | 'text' | 'help' | 'not-allowed' | 'grab' | 'zoom-in' | 'default' = 'pointer',
   isAnimated: boolean = true,  
   includeScale: boolean = true 
 ) => {
@@ -19,6 +19,7 @@ export const useHoverAnimation = (
     'not-allowed': 'cursor-not-allowed',
     'grab': 'cursor-grab',
     'zoom-in': 'cursor-zoom-in',
+    'default': 'cursor-default',
   };
 
   const strCursorClass = cursorClasses[cursorType];
@@ -32,10 +33,12 @@ export const useHoverAnimation = (
   const strBaseAnimation = `${strTransition} ${strCursorClass} ${strScaleClass}`;
   
   // Resplandor: Se activa con el ratón O con el teclado
-  const strGlow = includeGlow ? "hover:drop-shadow-[0_0_0.75rem_rgba(194,110,90,0.8)] data-[active=true]:drop-shadow-[0_0_0.75rem_rgba(194,110,90,0.8)]" : "";
+  const strGlow = includeGlow 
+  ? "drop-shadow-[0_0_0_var(--secondary)] hover:drop-shadow-[0_0_0.75rem_var(--secondary)] data-[active=true]:drop-shadow-[0_0_0.75rem_var(--secondary)]" : "";
   
   // Color de texto: Se activa con el ratón O con el teclado
-  const strTextColor = includeColor ? "hover:text-[oklch(0.63_0.11_34)] data-[active=true]:text-[oklch(0.63_0.11_34)]" : "";
+  const strTextColor = includeColor 
+  ? "hover:text-secondary data-[active=true]:text-secondary" : "";
 
   return `${strBaseAnimation} ${strGlow} ${strTextColor}`.trim();
 };

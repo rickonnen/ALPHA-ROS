@@ -11,6 +11,8 @@ export interface FiltrosPublicacion {
   currency?: SearchCurrency;
   minPrice?: number;
   maxPrice?: number;
+  minSurface?: number;
+  maxSurface?: number;
 }
 
 export interface PublicacionBusqueda {
@@ -30,6 +32,7 @@ export interface PublicacionBusqueda {
   moneda_nombre?: string | null;
   moneda_simbolo?: string | null;
   moneda_tasa_cambio?: number | null;
+  fecha_creacion?: Date | string | null;
   ubicacion?: {
     direccion?: string | null;
     zona?: string | null;

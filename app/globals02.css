@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Variación adaptada para que Tailwind reconozca tu atributo data-theme como modo oscuro */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme inline {
+  /* Mapeo de fuentes para conectarlas con el layout.tsx */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+
+  /* Mapeo exclusivo de tus colores personalizados a las clases utilitarias de Tailwind */
+  --color-background: var(--background);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border); /* Mapeo del nuevo color de borde */
+  --color-secondary-fund: var(--secondary-fund);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Valores básicos necesarios para evitar errores en componentes base */
+  --radius: 0.5rem;
+  --color-border: var(--card-border); /* Sincronizado con el nuevo borde */
+  --color-ring: var(--primary);
+
+  /* Escala tipográfica personalizada */
+  --text-main-title: var(--text-3xl);
+  --text-subtitle: var(--text-xl);
+  --text-body-info: var(--text-base);
+}
+
+:root {
+    /* fondo principal: Beige arena suave (#F4EFE6)*/
+  --background: #F4EFE6;
+
+  /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
+  --card-bg: #F9F5F1;
+
+  /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
+  --card-border: #D6CFC3;
+
+  /* fondo secundario: Gris cálido claro (#E7E1D7)*/
+  --secondary-fund: #E7E1D7;
+
+  /* texto principal: Gris profundo (#2E2E2E)*/
+  --foreground: #2E2E2E;
+
+  /* boton primario: Azul petróleo (#1F3A4D)*/
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
+
+  /* boton secundario: Terracota suave (#C26E5A)*/
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
+
+  --destructive: #ff193f;
+  --destructive-foreground: #F4EFE6;
+  /* ESTADOS (Gestión de comentarios y alertas) */
+  /* boton/badge de éxito (Aprobado): Verde oliva/bosque suave */
+  --success: #4A7C59;
+  --success-foreground: #F4EFE6;
+
+  /* boton/badge de advertencia (Pendiente): Mostaza/Ámbar apagado */
+  --warning: #D4A373;
+  --warning-foreground: #2E2E2E;
+
+  /* elementos inactivos o texto secundario */
+  --muted: #E7E1D7;
+  --muted-foreground: #7A756D;
+
+  /* Título Principal (Hero/Propiedad) */
+  --text-3xl: 1.80rem; 
+  /* Subtítulos (Secciones destacadas) */
+  --text-xl: 1.30rem;
+  /* Cuerpo e Información general */
+  --text-base: 1rem;
+}
+
+/* MODO OSCURO ("Noche Moderna") */
+/* Activa el modo oscuro si el sistema lo pide Y el usuario NO ha forzado el claro */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      /* fondo principal: Beige arena suave (#F4EFE6)*/
+  --background: #333333;
+
+  /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
+  --card-bg: #474747;
+
+  /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
+  --card-border: #1F1F1F;
+
+  /* fondo secundario: Gris cálido claro (#E7E1D7)*/
+  --secondary-fund: #292929;
+
+  /* texto principal: Gris profundo (#2E2E2E)*/
+  --foreground: #EBEBEB;
+
+  /* boton primario: Azul petróleo (#1F3A4D)*/
+  --primary: #294D66;
+  --primary-foreground: #EBEBEB;
+
+  /* boton secundario: Terracota suave (#C26E5A)*/
+  --secondary: #C26E5A;
+  --secondary-foreground: #333333;
+
+  --destructive: #EF4444; /* Un rojo un poco más suave para no lastimar la vista en oscuro */
+  --destructive-foreground: #FFFFFF;
+
+  --success: #528A63; /* Verde ligeramente más claro para contrastar con el fondo oscuro */
+  --success-foreground: #FFFFFF;
+
+  --warning: #E2B07E; /* Mostaza ligeramente más brillante */
+  --warning-foreground: #1A1A1A;
+
+  --muted: #3D3D3D;
+  --muted-foreground: #A3A3A3;
+
+  /* Título Principal (Hero/Propiedad) */
+  --text-3xl: 1.80rem; 
+  /* Subtítulos (Secciones destacadas) */
+  --text-xl: 1.30rem;
+  /* Cuerpo e Información general */
+  --text-base: 1rem;
+  }
+}
+
+/* 2. Activa el modo oscuro si el usuario lo fuerza con el botón */
+[data-theme="dark"] {
+  --background: #1A1A1A;
+  --card-bg: #242424;
+  --card-border: #333333;
+  --secondary-fund: #2A2A2A;
+  --foreground: #F4EFE6;
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
+}
+
+/* ==========================================
+   APLICACIÓN GLOBAL Y UTILIDADES
+   ========================================== */
+@layer base {
+  * {
+    @apply border-card-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: var(--text-base);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-card-border) transparent; 
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-card-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+
+  /* Inversión a blanco de los SVG en Modo Oscuro (Por sistema o forzado) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .svg-theme-invert {
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  [data-theme="dark"] .svg-theme-invert {
+    filter: brightness(0) invert(1);
+  }
+}

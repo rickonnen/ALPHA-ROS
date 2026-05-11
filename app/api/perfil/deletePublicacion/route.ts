@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest) {
   if (!id_usuario || !id_publicacion) {
     return NextResponse.json(
       { error: "Faltan parámetros: id_usuario o id_publicacion" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -40,32 +40,35 @@ export async function DELETE(req: NextRequest) {
     if (!publicacion) {
       return NextResponse.json(
         { error: "Publicación no encontrada" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (publicacion.id_usuario !== id_usuario) {
       return NextResponse.json(
         { error: "No tienes permiso para eliminar esta publicación" },
-        { status: 403 }
+        { status: 403 },
       );
-    }
-
+    }  
     await prisma.$transaction([
       prisma.imagen.deleteMany({ where: { id_publicacion: idPub } }),
       prisma.favorito.deleteMany({ where: { id_publicacion: idPub } }),
       prisma.publicacion.delete({ where: { id_publicacion: idPub } }),
+      prisma.usuario.update({
+        where: { id_usuario },
+        data: { cant_publicaciones_restantes: { increment: 1 } },
+      }),
     ]);
 
     return NextResponse.json(
       { message: "Publicación eliminada correctamente" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error al eliminar publicación:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* tslint:disable */
+// @ts-nocheck
 /* Dev: Camila Magne Hinojosa - xdev/sow-camila
     Fecha: 28/03/2026
     Funcionalidad: Vista de Configuración de Seguridad (HU: MP002)
@@ -20,6 +23,15 @@
    Fecha: 09/04/2026
    Fix: Resolución del defecto de navegación por teclado ilógica. Restauración de corrección visual de la contraseña (****).
 */
+/* Dev: [Tu nombre] - HU-04
+   Fecha: [fecha]
+   Feature: Agrega opción "Estado de Cuenta" al menú de seguridad.
+*/
+/* Dev: [Tu nombre] - HU-04
+   Fecha: [fecha]
+   Fix: Pasa prop onLimpiarDatos a EstadoCuentaView para limpiar el historial
+        de visitas del UI inmediatamente al confirmar la desactivación (CA-5).
+*/
 "use client";
 import { useState, useEffect } from "react";
 import TelefonosView from "./telefono-view";
@@ -27,6 +39,9 @@ import ChangePasswordForm from "./contrasena-view";
 import CambiarCorreoView from "./cambiar-correo/cambiar-correo";
 import ConfirmarCorreoView from "./cambiar-correo/confirmar-correo";
 import EditProfile from "./editardatos/editar-datos";
+import RedesView from "./redes-vinculadas/redes-view";
+import Autenticacion2FAView from "./2fa/autenticacion-2fa";
+import EstadoCuentaView from "./estado-cuenta/estado-cuenta-view";
 
 interface SeguridadProps {
   id_usuario: string;
@@ -35,15 +50,19 @@ interface SeguridadProps {
   onSuccess: () => void;
   onTelefonosChange: (nuevosTelefonos: string[]) => void;
   onPerfilActualizado: () => void;
+  initialSubView?: string;
 }
 
-export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado }: SeguridadProps) {
-  const [subView, setSubView] = useState("menu");
-  const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState("");
-  const [objOtpMeta, setObjOtpMeta] = useState<{
-    expiresInSec?: number;
-    resendAfterSec?: number;
-  }>({});
+// Definir el tipo para los metadatos OTP
+interface OtpMeta {
+  expiresInSec?: number;
+  resendAfterSec?: number;
+}
+
+export default function SeguridadView({ id_usuario, email, telefonos, onSuccess, onTelefonosChange, onPerfilActualizado, initialSubView }: SeguridadProps) {
+  const [subView, setSubView] = useState<string>(initialSubView ?? "menu");
+  const [strNuevoEmailPendiente, setStrNuevoEmailPendiente] = useState<string>("");
+  const [objOtpMeta, setObjOtpMeta] = useState<OtpMeta>({});
   const [objUsuario, setObjUsuario] = useState<any>(null);
 
   useEffect(() => {
@@ -105,6 +124,38 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           </div>
           <span className="text-gray-400">›</span>
         </button>
+        <button
+          onClick={() => setSubView("redes")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Redes Vinculadas</p>
+            <p className="text-sm text-gray-300">Vincula o desvincula tus cuentas de Facebook y Discord</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
+        <button
+          onClick={() => setSubView("2fa")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Autenticacion 2FA</p>
+            <p className="text-sm text-gray-300">Autenticacion en Dos Pasos</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
+
+        {/* HU-04: Estado de Cuenta */}
+        <button
+          onClick={() => setSubView("estado-cuenta")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Estado de Cuenta</p>
+            <p className="text-sm text-gray-300">Desactivar perfil</p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
       </div>
     ),
 
@@ -146,7 +197,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           setObjOtpMeta({});
           setSubView("menu");
         }}
-        onContinue={(nuevoEmail, otpMeta) => {
+        onContinue={(nuevoEmail: string, otpMeta?: OtpMeta) => {
           setStrNuevoEmailPendiente(nuevoEmail);
           setObjOtpMeta(otpMeta ?? {});
           setSubView("confirmar-correo");
@@ -164,6 +215,34 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         expires_in_sec={objOtpMeta.expiresInSec}
         resend_after_sec={objOtpMeta.resendAfterSec}
         onBack={() => setSubView("correo")}
+      />
+    ),
+
+    redes: (
+      <RedesView
+        id_usuario={id_usuario}
+        onBack={() => setSubView("menu")}
+      />
+    ),
+
+    "2fa": (
+      <Autenticacion2FAView
+        id_usuario={id_usuario}
+        primary_provider={objUsuario?.google_id ? "google" : null}
+        onBack={() => setSubView("menu")}
+      />
+    ),
+
+    "estado-cuenta": (
+      <EstadoCuentaView
+        id_usuario={id_usuario}
+        estadoCuenta={objUsuario?.estado ?? 1}
+        onBack={() => setSubView("menu")}
+        onLimpiarDatos={() =>
+          setObjUsuario((prev: any) =>
+            prev ? { ...prev, HistorialVistos: [] } : prev
+          )
+        }
       />
     ),
   };

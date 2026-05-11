@@ -14,6 +14,7 @@ import Image from "next/image";
 import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
 import { useClickOutside } from "../../hooks/useClickOutside"; // Ajusta la ruta relativa a tus hooks
+import { TodasNotificacionesView } from "@/app/notification/views/todas-notificaciones-view";
 
 interface NotificationButtonProps {
   objUser: any;
@@ -29,12 +30,13 @@ export const NotificationButton = ({
   strButtonClasses,
 }: NotificationButtonProps) => {
   const [bolShowNotifications, setBolShowNotifications] = useState(false);
+  const [showTodasNotif, setShowTodasNotif] = useState(false);
   const refContainer = useRef<HTMLDivElement | null>(null);
 
   useClickOutside(
     [refContainer],
     () => setBolShowNotifications(false),
-    bolShowNotifications
+    { enabled:bolShowNotifications }
   );
 
   const handleToggleNotifications = () => {
@@ -58,7 +60,7 @@ export const NotificationButton = ({
           alt="Notificaciones"
           width={24}
           height={24}
-          className="w-6 h-6 object-contain"
+          className="w-6 h-6 object-contain svg-theme-invert"
         />
         <NotificationBadge count={unreadCount} />
       </button>
@@ -66,8 +68,17 @@ export const NotificationButton = ({
       {/* renderizado condicional del panel solo si está abierto y hay sesión */}
       {objUser && bolShowNotifications && (
         <div className="absolute right-[-15px] top-full mt-0 z-50">
-          <NotificationPanel />
+          <NotificationPanel 
+            onClose={() => setBolShowNotifications(false)}
+            onVerTodas={() => {
+              setBolShowNotifications(false);
+              setShowTodasNotif(true);
+            }}
+          />
         </div>
+      )}
+      {showTodasNotif && (
+        <TodasNotificacionesView onClose={() => setShowTodasNotif(false)} />
       )}
     </div>
   );

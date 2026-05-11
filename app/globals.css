@@ -9,6 +9,8 @@
   * Fix: corrección de font-sans para usar Geist desde layout.tsx
   */
   --color-background: var(--background);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border); 
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -28,7 +30,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
-  --color-border: var(--border);
+  --color-border: var(--card-border); /* Sincronizado con el nuevo borde */
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -49,6 +51,16 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /*alertas y estados (destructive ya de encontraba en este globals)*/
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  
+  /* Nota: En el menú anterior usaste 'text-muted-foreground', 
+     te sugiero mapearlo también para evitar que shadcn use el gris por defecto */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
   /* ------ */
   --color-secondary-fund: var(--secondary-fund);
@@ -75,7 +87,6 @@
   --muted-foreground: oklch(0.45 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.898 0.018 84.5);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -101,7 +112,8 @@
   --muted-foreground: oklch(0.45 0 0);
   --accent: var(--secondary-fund);
   --accent-foreground: var(--primary);
-  --destructive: oklch(0.577 0.245 27.3);
+  --destructive: #ff1038;
+  --destructive-foreground: #F4EFE6;
   --border: oklch(0.85 0.015 83);
   --input: oklch(0.85 0.015 83);
   --ring: var(--primary);
@@ -113,32 +125,52 @@
   --sidebar-primary-foreground: var(--secondary-foreground);
 
   /* fondo principal: Beige arena suave (#F4EFE6)*/
-  --background: oklch(0.95 0.01 82);
+  --background: #F4EFE6;
+
+  /* fondo de tarjeta: Beige muy claro (#F5F1EA) */
+  --card-bg: #F9F5F1;
+
+  /* borde de tarjeta: Gris/Beige oscuro (#D6CFC3) */
+  --card-border: #D6CFC3;
 
   /* fondo secundario: Gris cálido claro (#E7E1D7)*/
-  --secondary-fund: oklch(0.91 0.01 81);
+  --secondary-fund: #E7E1D7;
 
   /* texto principal: Gris profundo (#2E2E2E)*/
-  --foreground: oklch(0.30 0.00 0);
+  --foreground: #2E2E2E;
 
   /* boton primario: Azul petróleo (#1F3A4D)*/
-  --primary: oklch(0.34 0.05 241);
-  --primary-foreground: oklch(0.952 0.01 84.8);
+  --primary: #1F3A4D;
+  --primary-foreground: #F4EFE6;
 
   /* boton secundario: Terracota suave (#C26E5A)*/
-  --secondary: oklch(0.63 0.11 34);
-  --secondary-foreground: oklch(0.952 0.01 84.8);
+  --secondary: #C26E5A;
+  --secondary-foreground: #F4EFE6;
+  /* ESTADOS (Gestión de comentarios y alertas) */
+  /* boton/badge de éxito: Verde oliva/bosque suave */
+  --success: #4A7C59;
+  --success-foreground: #F4EFE6;
+
+  /* boton/badge de advertencia: Mostaza/Ámbar apagado */
+  --warning: #D4A373;
+  --warning-foreground: #2E2E2E;
+
+  /* elementos inactivos o texto secundario */
+  --muted: #E7E1D7;
+  --muted-foreground: #7A756D;
 
   /* Título Principal (Hero/Propiedad) */
-  --text-3xl: 1.875rem; 
+  --text-3xl: 1.80rem; 
   /* Subtítulos (Secciones destacadas) */
-  --text-xl: 1.25rem;
+  --text-xl: 1.30rem;
   /* Cuerpo e Información general */
   --text-base: 1rem;
 }
 
 .dark {
   --background: oklch(0.145 0 0);
+  --card-bg: oklch(0.205 0 0);
+  --card-border: oklch(1 0 0 / 10%);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -169,7 +201,18 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --destructive: oklch(0.704 0.191 22.2);
+  /* Ajuste de estados para Modo Oscuro */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  --success: #528A63;
+  --success-foreground: #FFFFFF;
+
+  --warning: #E2B07E;
+  --warning-foreground: #1A1A1A;
+
+  --muted: #3D3D3D;
+  --muted-foreground: #A3A3A3;
 
   /* jerarquía visual en modo oscuro */
   --text-3xl: 1.875rem;
@@ -190,5 +233,30 @@
 
   body {
     @apply antialiased;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar personalizado moderno */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent; 
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
   }
 }

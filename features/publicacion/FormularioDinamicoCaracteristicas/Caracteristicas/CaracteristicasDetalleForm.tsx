@@ -28,7 +28,19 @@ const ErrorMsg = ({ visible, message }: { visible: boolean; message?: string }) 
 
 const IconBox = ({ icon, disabled }: { icon: React.ReactNode; disabled?: boolean }) => (
   <div
+<<<<<<< HEAD
     className={`w-[42px] h-[42px] flex items-center justify-center flex-shrink-0 ${disabled ? 'opacity-50' : ''}`}
+=======
+    style={{
+      width: '42px',
+      height: '42px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      opacity: disabled ? 0.5 : 1,
+    }}
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
   >
     {icon}
   </div>
@@ -91,6 +103,7 @@ export function CaracteristicasDetalleForm({
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
 
+<<<<<<< HEAD
         {/* Campos numéricos (habitaciones, baños, garajes, plantas) */}
         {fields.map(({ key, label, icon }) => (
           <div key={key} className="flex flex-col gap-1">
@@ -111,6 +124,28 @@ export function CaracteristicasDetalleForm({
               <IconBox disabled={isTerreno} icon={icon} />
             </div>
             <ErrorMsg visible={!isTerreno && hasError(key)} message={errors[key]} />
+=======
+        {/* Habitaciones */}
+        <div className="flex flex-col gap-1">
+          <label className={`text-sm font-medium min-h-[40px] md:min-h-0 flex items-end md:block ${isTerreno ? 'text-[#B4B2A9]' : 'text-[#2E2E2E]'}`}>
+            Nro de Habitaciones
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={2}
+              value={values.habitaciones}
+              disabled={isTerreno}
+              onChange={makeChangeHandler('habitaciones')}
+              onBlur={() => onBlur('habitaciones')}
+              className={isTerreno ? inputDisabledClass : inputClass(hasError('habitaciones'))}
+            />
+            <IconBox
+              disabled={isTerreno}
+              icon={<BedDouble size={20} strokeWidth={1.5} color={isTerreno ? '#B4B2A9' : '#5A5A5A'} />}
+            />
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
           </div>
         ))}
 

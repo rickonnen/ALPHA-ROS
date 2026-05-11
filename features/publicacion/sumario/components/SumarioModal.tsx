@@ -153,10 +153,14 @@ function getInitialStorageData(): SumarioStorageData {
     const arrNombres = parseJSON<string[]>(sessionStorage.getItem('caracteristicasImagenesNombres'), [])
         .filter((item) => typeof item === 'string' && item.trim().length > 0)
 
-    const arrPreviewFinal = arrPreview.length > 0
-        ? arrPreview
-        : parseJSON<string[]>(sessionStorage.getItem('imagenesIniciales'), [])
-            .filter((item) => typeof item === 'string' && item.trim().length > 0)
+    const arrImagenesIniciales = parseJSON<string[]>(
+        sessionStorage.getItem('imagenesIniciales'), []
+    ).filter((item) => typeof item === 'string' && item.trim().length > 0)
+
+    const arrPreviewFinal = [
+        ...arrImagenesIniciales,
+        ...arrPreview,
+    ].filter((url, index, self) => self.indexOf(url) === index)
 
     return {
         titulo:          datosAviso.titulo           ?? '',
@@ -174,7 +178,10 @@ function getInitialStorageData(): SumarioStorageData {
         plantas:         String(caracteristicas.plantas      ?? ''),
         superficie:      String(caracteristicas.superficie   ?? ''),
         imagenesPreview: arrPreviewFinal,
-        imagenesNombres: arrNombres,
+        imagenesNombres: [
+            ...arrImagenesIniciales.map((_, i) => `Imagen original ${i + 1}`),
+            ...arrNombres,
+        ],
         videoUrl:        video.url                              ?? '',
         descripcion:     descripcionRaw.descripcion             ?? '',
         caracteristicas: Array.isArray(descripcionRaw.caracteristicas)
@@ -229,21 +236,28 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
 
     const strVideoEmbed = useMemo(() => getVideoEmbedUrl(data.videoUrl), [data.videoUrl])
 
-    const intTotalImagenes = data.imagenesPreview.length
-    const bolTieneImagenes = intTotalImagenes > 0
-    const intImagenSafe    = bolTieneImagenes ? intImagenActual % intTotalImagenes : 0
+    const intTotalImagenes     = data.imagenesPreview.length
+    const bolTieneImagenes     = intTotalImagenes > 0
+    // En mobile el video cuenta como un slide extra al final
+    const intTotalSlidesMobile = intTotalImagenes + (strVideoEmbed ? 1 : 0)
+    const intImagenSafe        = bolTieneImagenes
+        ? intImagenActual % intTotalImagenes
+        : 0
 
     const onPrevImagen = () => {
-        if (intTotalImagenes <= 1) return
-        setIntImagenActual((prev) => (prev - 1 + intTotalImagenes) % intTotalImagenes)
+        if (intTotalSlidesMobile <= 1) return
+        setIntImagenActual((prev) => (prev - 1 + intTotalSlidesMobile) % intTotalSlidesMobile)
     }
     const onNextImagen = () => {
-        if (intTotalImagenes <= 1) return
-        setIntImagenActual((prev) => (prev + 1) % intTotalImagenes)
+        if (intTotalSlidesMobile <= 1) return
+        setIntImagenActual((prev) => (prev + 1) % intTotalSlidesMobile)
     }
     const onImageError = (index: number) => {
         setArrImagenesError((prev) => (prev.includes(index) ? prev : [...prev, index]))
     }
+
+    // Slide actual en mobile: ¿es el slide de video?
+    const bolEsSlideVideo = strVideoEmbed !== null && intImagenActual === intTotalImagenes
 
     // Campos comunes a ambos layouts
     const camposCol1 = [
@@ -276,11 +290,11 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                     {/* Desktop: título izq, badge der */}
                     <div className="hidden md:flex items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Resumen de Publicacion</h2>
+                            <h2 className="text-2xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                             <p className="text-sm text-[#6C6761] mt-0.5">
                                 {modoEdicion
                                     ? 'Revisa la información de tu inmueble antes de guardarlo.'
-                                    : 'Revisa la informacion de tu inmueble antes de publicarlo'}
+                                    : 'Revisa la información de tu inmueble antes de publicarlo.'}
                             </p>
                         </div>
                         {data.estadoPropiedad && (
@@ -294,11 +308,11 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                     </div>
                     {/* Mobile: centrado */}
                     <div className="md:hidden text-center">
-                        <h2 className="text-lg font-bold text-[#1F3A4D]">Sumario de Publicacion</h2>
+                        <h2 className="text-xl font-bold text-[#1F3A4D]">Resumen de Publicación</h2>
                         <p className="text-xs text-[#6C6761] mt-0.5">
                             {modoEdicion
                                 ? 'Revisa la información antes de guardar.'
-                                : 'Revisa la informacion de tu inmueble antes de publicarlo'}
+                                : 'Revisa la información de tu inmueble antes de publicarlo.'}
                         </p>
                     </div>
                 </div>
@@ -307,13 +321,13 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
 
                     {/* ── Galería ────────────────────────────────────────
                         Desktop: 2/3 imagen + 1/3 video y thumbnail
-                        Mobile:  imagen full width apilada
+                        Mobile:  carrusel con imágenes + video como último slide
                     ─────────────────────────────────────────────────── */}
 
                     {/* DESKTOP galería */}
-                    <div className="hidden md:grid grid-cols-3 gap-3 rounded-xl overflow-hidden">
+                    <div className="hidden md:grid grid-cols-3 gap-3">
                         {/* Imagen principal — 2/3 */}
-                        <div className="col-span-2 relative bg-[#EDE8DF] min-h-[240px]">
+                        <div className="col-span-2 relative bg-[#EDE8DF] min-h-[240px] rounded-xl overflow-hidden">
                             {bolTieneImagenes && !arrImagenesError.includes(intImagenSafe) ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -386,30 +400,44 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                                         </div>
                                     )
                                 })() : (
-                                    // 1 imagen o ninguna → cuadro vacío
                                     <div className="min-h-[100px]" />
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* MOBILE galería */}
+                    {/* MOBILE galería — imágenes + video como último slide */}
                     <div className="md:hidden">
                         <div className="relative bg-[#EDE8DF] rounded-xl overflow-hidden min-h-[200px]">
-                            {bolTieneImagenes && !arrImagenesError.includes(intImagenSafe) ? (
+
+                            {bolEsSlideVideo ? (
+                                /* Slide de video — último */
+                                <iframe
+                                    src={strVideoEmbed!}
+                                    title="Vista previa video"
+                                    className="w-full border-0"
+                                    style={{ height: '200px' }}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    loading="lazy"
+                                />
+                            ) : bolTieneImagenes && !arrImagenesError.includes(intImagenActual) ? (
+                                /* Slide de imagen */
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
-                                    src={data.imagenesPreview[intImagenSafe]}
-                                    alt={data.imagenesNombres[intImagenSafe] ?? `Imagen ${intImagenSafe + 1}`}
+                                    src={data.imagenesPreview[intImagenActual]}
+                                    alt={data.imagenesNombres[intImagenActual] ?? `Imagen ${intImagenActual + 1}`}
                                     className="w-full object-cover min-h-[200px]"
-                                    onError={() => onImageError(intImagenSafe)}
+                                    onError={() => onImageError(intImagenActual)}
                                 />
                             ) : (
                                 <div className="min-h-[200px] grid place-items-center text-sm text-[#7B7771]">
                                     Sin imágenes
                                 </div>
                             )}
-                            {intTotalImagenes > 1 && (
+
+                            {/* Flechas — aparecen si hay más de 1 slide (imágenes + video) */}
+                            {intTotalSlidesMobile > 1 && (
                                 <>
                                     <button type="button" onClick={onPrevImagen}
                                         className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 rounded-full p-1.5 shadow">
@@ -420,6 +448,22 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                                         <ChevronRight className="w-4 h-4 text-[#4A4A4A]" />
                                     </button>
                                 </>
+                            )}
+
+                            {/* Indicador de slide — puntos */}
+                            {intTotalSlidesMobile > 1 && (
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                                    {Array.from({ length: intTotalSlidesMobile }).map((_, i) => (
+                                        <span
+                                            key={i}
+                                            className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                                i === intImagenActual
+                                                    ? 'bg-white scale-125'
+                                                    : 'bg-white/50'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -441,7 +485,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
 
                     {/* ── Campos de datos ───────────────────────────────
                         Desktop: 3 columnas (col1 + col2 + descripción)
-                        Mobile:  2 columnas de cajas + descripción debajo
+                        Mobile:  cuadros uno debajo del otro + descripción
                     ─────────────────────────────────────────────────── */}
 
                     {/* DESKTOP campos */}
@@ -454,19 +498,19 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                         </div>
                         {/* Columna 3: descripción con overflow controlado */}
                         <div className="bg-[#EDE8DF] rounded-md px-3 py-2 min-h-[200px] overflow-hidden">
-                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripcion</p>
+                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripción</p>
                             <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere">{toText(data.descripcion)}</p>
                         </div>
                     </div>
 
-                    {/* MOBILE campos: una columna, cuadros uno debajo del otro */}
+                    {/* MOBILE campos */}
                     <div className="md:hidden space-y-2">
                         {[...camposCol1, ...camposCol2].map(f => (
                             <FieldDesktop key={f.label} label={f.label} value={f.value} />
                         ))}
                         {/* Descripción full width */}
                         <div className="bg-[#EDE8DF] rounded-md px-3 py-2 overflow-hidden">
-                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripcion</p>
+                            <p className="text-[0.65rem] uppercase tracking-wide text-[#7B7771] font-bold">Descripción</p>
                             <p className="text-sm text-[#2E2E2E] mt-1 whitespace-pre-wrap break-words overflow-wrap-anywhere">{toText(data.descripcion)}</p>
                         </div>
                     </div>
@@ -483,7 +527,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                                         <p className="text-white text-sm font-bold">{c.titulo}</p>
                                     </div>
                                     <div className="bg-[#EDE8DF] px-3 py-2 min-h-[56px]">
-                                        <p className="text-[0.65rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripcion</p>
+                                        <p className="text-[0.65rem] font-bold text-[#7B7771] uppercase tracking-wide mb-1">Descripción</p>
                                         <p className="text-sm text-[#2E2E2E]">{c.detalle || 'No especificado'}</p>
                                     </div>
                                 </div>
@@ -500,7 +544,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                             type="button"
                             variant="outline"
                             onClick={onClose}
-                            className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold"
+                            className="border-[#C26E5A] text-[#C26E5A] hover:bg-[#C26E5A]/10 px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold w-32 md:w-40"
                         >
                             Regresar
                         </Button>
@@ -508,7 +552,7 @@ export function SumarioModal({ onClose, onConfirmarPublicar, modoEdicion }: Suma
                         <Button
                             type="button"
                             onClick={() => onConfirmarPublicar?.()}
-                            className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold"
+                            className="bg-[#C26E5A] hover:bg-[#a85a48] text-white px-5 md:px-8 py-2.5 text-sm md:text-base font-semibold w-32 md:w-40"
                         >
                             {modoEdicion ? 'Guardar' : 'Publicar'}
                         </Button>

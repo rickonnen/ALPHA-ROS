@@ -74,18 +74,13 @@ export const MobileMenu = ({
 
   return (
     <>
-      {/* permite cerrar el menú al tocar cualquier área fuera del panel */}
-      <div 
-        className="lg:hidden fixed inset-0 z-40" 
-        onClick={onClose} 
-        aria-hidden="true" 
-      />
+      {/* SE ELIMINÓ EL DIV INVISIBLE: El hook useClickOutside del Header ahora gestiona esto sin interferencias */}
 
       {/* panel de navegación movil posición derecha rectangulares */}
       <nav
         ref={menuRef}
         aria-label="menú móvil"
-        className="lg:hidden absolute top-18 right-0 w-full landscape:w-[35%] max-h-[calc(100vh-4.5rem)] overflow-y-auto bg-primary text-primary-foreground shadow-2xl flex flex-col px-8 py-8 z-50 animate-in slide-in-from-right-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
+        className="lg:hidden absolute top-[4.5rem] right-0 w-full landscape:w-[35%] h-[calc(100vh-4.5rem)] overflow-y-auto bg-primary text-primary-foreground shadow-2xl flex flex-col px-8 py-8 z-50 animate-in slide-in-from-right-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-primary-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-primary-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -93,7 +88,7 @@ export const MobileMenu = ({
         {objUser ? (
           <button 
             onClick={onProfileClick} 
-            className={`flex flex-col items-center justify-center gap-2 w-full pb-8 ${optionHover}`}
+            className={`flex flex-col items-center justify-center gap-2 w-full pb-8 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
             <div className="p-1 bg-primary-foreground/10 rounded-full">
               <Image 
@@ -117,7 +112,7 @@ export const MobileMenu = ({
         ) : (
           <button 
             onClick={onLoginClick} 
-            className={`flex flex-col items-center justify-center gap-2 w-full pb-8 ${optionHover}`}
+            className={`flex flex-col items-center justify-center gap-2 w-full pb-8 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
             <div className="p-1 bg-primary-foreground/10 rounded-full">
               <div className="relative flex items-center justify-center w-20 h-20 bg-primary-foreground/10 rounded-full">
@@ -128,7 +123,7 @@ export const MobileMenu = ({
                   height={40} 
                   className="w-10 h-10 object-contain brightness-0 invert opacity-80" 
                 />
-                <div className="absolute w-[110%] h-[2px] bg-primary-foreground rotate-45 rounded-full opacity-80" />
+                <div className="absolute w-[110%] h-[0.125rem] bg-primary-foreground rotate-45 rounded-full opacity-80" />
               </div>
             </div>
             <div className="flex flex-col items-center gap-1 mt-2">
@@ -145,7 +140,7 @@ export const MobileMenu = ({
           <button 
             onClick={onPublicarClick} 
             disabled={bolIsCheckingLimit || bolIsAuthLoading} 
-            className={`flex items-center gap-4 py-3 w-full text-left uppercase font-medium disabled:opacity-60 transition-colors ${optionHover}`}
+            className={`flex items-center gap-4 py-3 px-2 w-full text-left uppercase font-medium disabled:opacity-60 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
             <Image 
               src="/plus.svg" 
@@ -160,7 +155,7 @@ export const MobileMenu = ({
           {/* planes */}
           <button 
             onClick={onPlansClick} 
-            className={`flex items-center gap-4 py-3 w-full text-left uppercase font-medium transition-colors ${optionHover}`}
+            className={`flex items-center gap-4 py-3 px-2 w-full text-left uppercase font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
             <Image 
               src="/dollar.svg" 
@@ -178,7 +173,7 @@ export const MobileMenu = ({
             <button 
               key={objLink.strLabel} 
               onClick={() => onNavigate(objLink)} 
-              className={`flex items-center gap-4 py-3 w-full text-left uppercase font-medium transition-colors ${optionHover}`}
+              className={`flex items-center gap-4 py-3 px-2 w-full text-left uppercase font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
             >
               <Image 
                 src="/house.svg" 

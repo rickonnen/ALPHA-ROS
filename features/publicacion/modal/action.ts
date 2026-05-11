@@ -1,12 +1,5 @@
 "use server";
 
-/**
- * @Dev: jimmyP / Oliver
- * @Fecha: 18/04/2026
- * @Funcionalidad: Server Actions para verificar el contador de publicaciones
- * del usuario. Maneja tanto el flujo gratuito (HU5) como el de plan activo (HU7).
- */
-
 import { prisma } from "@/lib/prisma";
 
 const INT_LIMITE_GRATUITO = 2;
@@ -22,7 +15,6 @@ export interface EstadoPublicacionUsuario {
 export async function verificarEstadoPublicacion(
   strUserId: string,
 ): Promise<EstadoPublicacionUsuario> {
-
   if (!strUserId || strUserId.trim() === "") {
     return { intPublicacionesRestantes: 0, bolLimiteAlcanzado: true, strTipoLimite: "gratuito" };
   }
@@ -35,9 +27,11 @@ export async function verificarEstadoPublicacion(
       Suscripcion: {
         select: {
           fecha_fin: true,
+          id_plan: true,
           PlanPublicacion: {
             select: {
               cant_publicaciones: true,
+              nombre_plan: true,
             },
           },
         },
@@ -52,29 +46,45 @@ export async function verificarEstadoPublicacion(
   const hoy = new Date();
   const objSuscripcion = objUsuario.Suscripcion;
 
-  // ── RAMA 1: Tiene plan activo vigente (fecha_fin > hoy) ──────────────────
-  if (objSuscripcion && objSuscripcion.fecha_fin > hoy) {
-    const intPermitidas = objSuscripcion.PlanPublicacion?.cant_publicaciones ?? 0;
-    const intHechas     = objUsuario.publicaciones_hechas ?? 0;
-    const intRestantes  = intPermitidas - intHechas;
+  // ── RAMA 1: Tiene suscripción con plan activo vigente ──────────────────
+  if (
+    objSuscripcion &&
+    objSuscripcion.fecha_fin > hoy &&
+    objSuscripcion.PlanPublicacion !== null &&
+    objSuscripcion.PlanPublicacion.cant_publicaciones !== null
+  ) {
+    const intPermitidas = objSuscripcion.PlanPublicacion.cant_publicaciones!;
 
-    if (intRestantes <= 0) {
-      // Excedió el límite del plan activo → modal HU7
+    // Contar solo publicaciones de pago, igual que el trigger
+    const intPublisDePlan = await prisma.publicacion.count({
+      where: {
+        id_usuario: strUserId,
+        gratuito: false,
+      },
+    });
+
+    const intRestantesPlan = intPermitidas - intPublisDePlan;
+
+    if (intRestantesPlan > 0) {
+      // Aún tiene cupo en el plan
       return {
-        intPublicacionesRestantes: 0,
-        bolLimiteAlcanzado: true,
-        strTipoLimite: "plan",
+        intPublicacionesRestantes: intRestantesPlan,
+        bolLimiteAlcanzado: false,
+        strTipoLimite: "ninguno",
       };
     }
 
+    // Plan agotado → revisar colchón gratuito
+    const intRestantesGratuitos = objUsuario.cant_publicaciones_restantes ?? 0;
+
     return {
-      intPublicacionesRestantes: intRestantes,
-      bolLimiteAlcanzado: false,
-      strTipoLimite: "ninguno",
+      intPublicacionesRestantes: intRestantesGratuitos,
+      bolLimiteAlcanzado: intRestantesGratuitos <= 0,
+      strTipoLimite: intRestantesGratuitos <= 0 ? "plan" : "ninguno",
     };
   }
 
-  // ── RAMA 2: Sin plan activo → flujo gratuito original HU5 (sin cambios) ──
+  // ── RAMA 2: Sin plan activo → flujo gratuito ──────────────────────────
   const intRestantesGratuitos = objUsuario.cant_publicaciones_restantes ?? INT_LIMITE_GRATUITO;
 
   return {

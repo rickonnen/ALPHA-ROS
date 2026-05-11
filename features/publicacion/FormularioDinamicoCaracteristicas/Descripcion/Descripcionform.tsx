@@ -1,3 +1,22 @@
+<<<<<<< HEAD
+=======
+/**
+ * Dev: Gabriel Paredes
+ * Date: 19/04/2026
+ * Funcionalidad: Descripción de la propiedad e integración de Características Extras
+ *
+ * FIXES v6:
+ *  1. Auto-selecciona la primera etiqueta al montar (modo edición con características ya cargadas).
+ *  2. Sin autoFocus en el input de detalle — seleccionar etiqueta no entra al campo de texto.
+ *  3. Dropdown usa createPortal — escapa de overflow:hidden del contenedor padre.
+ *  4. Posición del dropdown via ref DOM directo (sin setState en useEffect).
+ *  5. Contador del detalle ENCIMA del input.
+ *  6. Sin ícono lápiz en modo lectura del título.
+ *  7. FIX: submitRef.current ahora cierra todos los dropdowns antes de avanzar
+ *     (corrige bug donde setIsAdding/setEditingTitle se ejecutaban en cada render
+ *     por falta de llaves {} en la arrow function).
+ */
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -86,9 +105,22 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
   const addInputRef   = useRef<HTMLInputElement | null>(null)
   const titleInputRef = useRef<HTMLInputElement | null>(null)
 
+<<<<<<< HEAD
+=======
+  // ── submitRef ──────────────────────────────────────────────────
+  // IMPORTANTE: las llaves {} son obligatorias para que todas las
+  // líneas queden DENTRO de la arrow function y no se ejecuten
+  // en cada render.
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
   useEffect(() => {
     if (!submitRef) return
-    submitRef.current = () => handleSubmit(() => onNext())
+    submitRef.current = () => {
+      setSearchTerm('')
+      setIsAdding(false)
+      setEditingTitle(false)
+      setTitleSearchTerm('')
+      handleSubmit(() => onNext())
+    }
   })
   useEffect(() => {
     if (!submitRef) return
@@ -212,9 +244,15 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             <span className="text-base font-normal text-secondary">-Opcional</span>
           </div>
           <div className="flex items-center gap-3">
+<<<<<<< HEAD
             <span className="text-xs text-muted-foreground font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
             {isLimitReached && (
               <span className="text-destructive text-xs font-semibold">
+=======
+            <span className="text-xs text-gray-500 font-medium">{caracteristicas.length}/{MAX_CARACTERISTICAS}</span>
+            {isLimitReached && (
+              <span className="text-red-500 text-xs font-semibold">
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
                 Alcanzaste el límite de {MAX_CARACTERISTICAS} características extras
               </span>
             )}
@@ -227,8 +265,13 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
             type="button"
             disabled={isLimitReached}
             onClick={() => { setIsAdding(true); setActiveTag(null); setEditingTitle(false) }}
+<<<<<<< HEAD
             className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-secondary text-secondary bg-transparent transition-colors focus:outline-none flex-shrink-0 ${
               isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary/10'
+=======
+            className={`flex items-center justify-center w-8 h-8 rounded-md border-2 border-[#C26E5A] text-[#C26E5A] bg-transparent transition-colors focus:outline-none flex-shrink-0 ${
+              isLimitReached ? 'opacity-40 cursor-not-allowed' : 'hover:bg-[#C26E5A]/10'
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
             }`}
             title="Añadir característica"
           >
@@ -257,9 +300,15 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                 <button
                   type="button"
                   onClick={(e) => handleRemove(c.titulo, e)}
+<<<<<<< HEAD
                   className={`focus:outline-none transition-colors ${
                     isVisuallyActive ? 'hover:text-secondary-foreground/70' : 'hover:text-destructive'
                   }`}
+=======
+                  className={`${
+                    isVisuallyActive ? 'hover:text-white/70' : 'hover:text-red-700'
+                  } focus:outline-none transition-colors`}
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
                 >
                   ✕
                 </button>
@@ -271,14 +320,24 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
         {/* Texto de ayuda */}
         {caracteristicas.length === 0 && !isAdding && (
           <div className="flex items-center justify-center py-6">
+<<<<<<< HEAD
             <p className="text-base text-muted-foreground text-center leading-relaxed">
               En caso de necesitar ingresar más<br />
               detalles del inmueble, añada una<br />
               característica especifica de su<br />
               inmueble
+=======
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              En caso de necesitar ingresar más detalles del inmueble,
+              haga click en{' '}
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-400 text-gray-600 font-bold text-xs">
+                +
+              </span>
+              {' '}y añada una característica específica de su inmueble.
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
             </p>
           </div>
-        )}
+         )}
 
         {/* ── Modo Añadir ── */}
         {isAdding && (
@@ -309,7 +368,23 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                       <li
                         key={sug}
                         onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleAgregarClick(sug) }}
+<<<<<<< HEAD
                         className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
+=======
+                        style={{
+                          padding:         '8px 16px',
+                          fontSize:        14,
+                          cursor:          yaAgregada ? 'not-allowed' : 'pointer',
+                          backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
+                          color:           yaAgregada ? '#9ca3af'    : undefined,
+                        }}
+                        onMouseEnter={e => {
+                          if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)'
+                        }}
+                        onMouseLeave={e => {
+                          if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = ''
+                        }}
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
                       >
                         {sug}
                         {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
@@ -360,13 +435,30 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
                   <PortalDropdown anchorRef={titleInputRef} open={titleSearchTerm.trim().length > 0}>
                     {titleSugs.length > 0 ? (
                       titleSugs.map((sug) => {
-                        const yaAgregada = sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
+                        const yaAgregada =
+                          sug.toLowerCase() !== activeCaracteristica.titulo.toLowerCase() &&
                           caracteristicas.some(c => c.titulo.toLowerCase() === sug.toLowerCase())
                         return (
                           <li
                             key={sug}
                             onMouseDown={(e) => { e.preventDefault(); if (!yaAgregada) handleTitleSelect(sug) }}
+<<<<<<< HEAD
                             className={`${dropdownItemBase} ${yaAgregada ? dropdownItemDisabled : 'hover:bg-secondary/10'}`}
+=======
+                            style={{
+                              padding:         '8px 16px',
+                              fontSize:        14,
+                              cursor:          yaAgregada ? 'not-allowed' : 'pointer',
+                              backgroundColor: yaAgregada ? '#f3f4f6'    : undefined,
+                              color:           yaAgregada ? '#9ca3af'    : undefined,
+                            }}
+                            onMouseEnter={e => {
+                              if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = 'rgba(194,110,90,0.1)'
+                            }}
+                            onMouseLeave={e => {
+                              if (!yaAgregada) (e.currentTarget as HTMLLIElement).style.backgroundColor = ''
+                            }}
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
                           >
                             {sug}
                             {yaAgregada && <span className="text-xs ml-1.5">(Ya agregada)</span>}
@@ -397,7 +489,11 @@ export function DescripcionForm({ onNext, onBack, submitRef }: DescripcionFormPr
               )}
             </div>
 
+<<<<<<< HEAD
             {/* Detalle */}
+=======
+            {/* Detalle — sin autoFocus para no entrar al campo al seleccionar etiqueta */}
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
             <div>
               <div className="flex justify-between items-center mb-1">
                 <Label className="text-xs font-bold text-foreground">

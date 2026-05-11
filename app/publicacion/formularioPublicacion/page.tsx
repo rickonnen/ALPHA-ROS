@@ -12,7 +12,8 @@ type TriggerRef = React.MutableRefObject<(() => void) | null>
 
 function FormularioDinamicoInner() {
   const state = useFormularioState()
-
+  const [bolShowFreeModal, setBolShowFreeModal] = useState(false)
+  const [bolShowPlanLimitModal, setBolShowPlanLimitModal] = useState(false)
   const {
     modoEdicion, router,
     currentStep, completedSteps,
@@ -42,7 +43,7 @@ function FormularioDinamicoInner() {
     handleNext,
     handleBack,
     handleSidebarClick,
-  } = usePublicar({ ...state, triggerRefs })
+  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal, setBolShowPlanLimitModal, })
 
   if (!hydrated || !datosListos || !sessionKey) return null
 
@@ -60,6 +61,10 @@ function FormularioDinamicoInner() {
     sessionKey,
   }
 
+<<<<<<< HEAD
+=======
+  // ─── Handler para el botón Regresar ──────────────────────────────────────
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
   const handleBackOrCancel = () => {
     if (isFirstStep) setShowCancelarModal(true)
     else handleBack()
@@ -105,6 +110,7 @@ function FormularioDinamicoInner() {
   // ─── MOBILE ───────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
+<<<<<<< HEAD
       <main className="bg-background flex flex-col font-sans p-3 gap-0">
 
         <h1 className="text-3xl font-bold text-primary mb-3 mt-0">
@@ -116,6 +122,32 @@ function FormularioDinamicoInner() {
           {/* Barra de progreso */}
           <div className="flex flex-col gap-1">
             <p className="m-0 text-xs text-primary-foreground/75 text-center">
+=======
+      <main style={{
+        backgroundColor: C.crema, display: 'flex', flexDirection: 'column',
+        fontFamily: 'var(--font-geist-sans)', padding: '16px 12px', gap: 0,
+      }}>
+        <style>{`
+          @keyframes stepIn {
+            from { opacity: 0; transform: translateX(18px); }
+            to   { opacity: 1; transform: translateX(0); }
+          }
+        `}</style>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: C.marino, margin: '0 0 12px' }}>
+          {tituloPagina}
+        </h1>
+
+        {/* ── Contenedor marino altura fija: flex:1 en contenido lo distribuye bien ── */}
+        <div style={{
+          backgroundColor: C.marino, borderRadius: 12, display: 'flex',
+          flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
+          height: 650,
+        }}>
+
+          {/* Barra de progreso — flexShrink: 0 para que nunca se comprima */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
               Completa el proceso para {modoEdicion ? 'guardar' : 'publicar'} tu propiedad
             </p>
             <div className="h-[18px] rounded-full bg-white/20">
@@ -129,9 +161,18 @@ function FormularioDinamicoInner() {
             </p>
           </div>
 
+<<<<<<< HEAD
           {/* Título del paso + botón X */}
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base font-bold text-primary-foreground m-0 uppercase tracking-[0.06em] flex-1">
+=======
+          {/* Título del paso + botón X — minHeight reserva espacio para 2 líneas siempre */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, minHeight: 46 }}>
+            <h2 style={{
+              fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
+              textTransform: 'uppercase', letterSpacing: '0.06em', flex: 1,
+            }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
               {STEPS[currentStep].title}
               {STEPS[currentStep].opcional && (
                 <span className="text-xs font-normal ml-1.5 text-secondary">-Opcional</span>
@@ -148,11 +189,19 @@ function FormularioDinamicoInner() {
 
           {/* Error / bloqueo */}
           {(blockMsg || publishError) && (
+<<<<<<< HEAD
             <div className="bg-red-100 border border-red-300 rounded-md px-3 py-2 text-sm text-red-800">
+=======
+            <div style={{
+              backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
+              padding: '8px 12px', fontSize: 13, color: '#991b1b', flexShrink: 0,
+            }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
               {blockMsg ?? publishError}
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Contenido del paso */}
           <div
             key={currentStep}
@@ -164,6 +213,19 @@ function FormularioDinamicoInner() {
 
           {/* Indicadores de paso */}
           <div className="flex justify-center gap-2">
+=======
+          {/* Área de contenido — height fijo siempre, scroll si desborda */}
+          <div key={currentStep} style={{
+            backgroundColor: C.crema, borderRadius: 10, padding: 14,
+            height: 430, flexShrink: 0, overflowY: 'auto',
+            animation: 'stepIn 0.3s ease forwards',
+          }}>
+            <StepContent step={currentStep} {...stepContentProps} />
+          </div>
+
+          {/* Botones de pasos circulares — flexShrink: 0 */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
             {STEPS.map((_, i) => {
               const isActive    = i === currentStep
               const isCompleted = completedSteps.has(i)
@@ -183,8 +245,12 @@ function FormularioDinamicoInner() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* Botones Regresar / Siguiente */}
         <div className="flex gap-2.5 pt-3">
+=======
+        <div style={{ display: 'flex', gap: 10, padding: '12px 0 0' }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
           <button
             type="button" onClick={handleBackOrCancel} disabled={isPublishing}
             className="flex-1 bg-background border-[1.5px] border-secondary text-secondary rounded-lg py-[11px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
@@ -290,8 +356,12 @@ function FormularioDinamicoInner() {
               <StepContent step={currentStep} {...stepContentProps} />
             </div>
 
+<<<<<<< HEAD
             {/* Botones Regresar / Siguiente */}
             <div className="flex justify-end gap-3 mt-[15px] flex-shrink-0">
+=======
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 15, flexShrink: 0 }}>
+>>>>>>> 479d263c69a0f0518df1c2e1e1bee02dcc9ec4cc
               <button
                 type="button" onClick={handleBackOrCancel} disabled={isPublishing}
                 className="bg-background border-[1.5px] border-secondary text-secondary rounded-md px-5 py-[5px] text-base font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-80 transition-opacity"
