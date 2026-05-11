@@ -236,7 +236,7 @@ export default function PublicacionCard({
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() =>
-                  router.push(`/publicacion/promocionar?id=${publicacion.id}`)
+                  router.push(`/cobros/planes-promocion`)
                 }
               >
                 Promocionar
