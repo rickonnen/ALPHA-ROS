@@ -40,7 +40,7 @@ export default function RequisitosPublicacionPage() {
   const [strTipoSeleccionado, setStrTipoSeleccionado] = useState<TipoInmueble | null>(null);
   const [bolConfirmado, setBolConfirmado] = useState(false);
 
-  const strVideoUrl = "https://www.youtube.com/embed/f_WuRfuMXQw";
+  const strVideoUrl = "" // video explicativo
 
   useEffect(() => {
     if (isLoading) return;
