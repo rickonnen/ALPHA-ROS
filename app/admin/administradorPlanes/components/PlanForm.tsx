@@ -12,10 +12,12 @@ interface PlanFormProps {
 
 export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }: PlanFormProps) {
   const [isSaving, setIsSaving] = useState(false);
+  
+  // CORRECCIÓN 1: Dejamos los tipos numéricos abiertos para aceptar strings vacíos ("")
   const [formData, setFormData] = useState({
     nombre_plan: "",
-    precio_plan: 0,
-    cant_publicaciones: 0,
+    precio_plan: "" as string | number,
+    cant_publicaciones: "" as string | number,
   });
 
   const fileInputMensualRef = useRef<HTMLInputElement>(null);
@@ -34,8 +36,8 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
         cant_publicaciones: planToEdit.cant_publicaciones,
       });
     } else {
-      // Inicializamos con valores numéricos
-      setFormData({ nombre_plan: "", precio_plan: 0, cant_publicaciones: 0 });
+      // CORRECCIÓN 2: Inicializar con comillas vacías en vez de ceros
+      setFormData({ nombre_plan: "", precio_plan: "", cant_publicaciones: "" });
     }
   }, [planToEdit]);
 
@@ -80,6 +82,12 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
 
   const labelDinamica = activeTab === "publicacion" ? "Publicaciones" : "Días";
 
+  const isFormValid = 
+    formData.nombre_plan.trim().length > 0 && 
+    Number(formData.precio_plan) >= 0 && 
+    String(formData.precio_plan) !== "" &&
+    Number(formData.cant_publicaciones) > 0;
+
   return (
     <div className="mb-12 p-8 border border-border rounded-[2.5rem] bg-card/50 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
       <h3 className="text-center font-black mb-8 uppercase opacity-30 tracking-[0.2em] text-sm">
@@ -98,7 +106,6 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
             className="w-full bg-muted/50 border-2 border-transparent focus:border-primary/20 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold uppercase placeholder:normal-case"
             value={formData.nombre_plan}
             onChange={(e) => {
-              // Solo permite letras, números, espacios, guiones y paréntesis
               const filtrado = e.target.value.replace(/[^a-zA-Z0-9\s\-()]/g, "").toUpperCase();
               setFormData({ ...formData, nombre_plan: filtrado });
             }}
@@ -116,7 +123,15 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
             placeholder="0.00"
             className="w-full bg-muted/50 border-2 border-transparent p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
             value={formData.precio_plan}
-            onChange={(e) => setFormData({ ...formData, precio_plan: parseFloat(e.target.value) || 0 })}
+            onKeyDown={(e) => { if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault(); }}
+            onChange={(e) => {
+              let val = e.target.value;
+              // CORRECCIÓN 3: Si empieza con 0 pero no es decimal (ej: "05"), quitamos el 0.
+              if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+                val = val.replace(/^0+/, "");
+              }
+              setFormData({ ...formData, precio_plan: val });
+            }}
           />
         </div>
 
@@ -130,7 +145,15 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
             placeholder="1"
             className="w-full bg-muted/50 border-2 border-transparent p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
             value={formData.cant_publicaciones}
-            onChange={(e) => setFormData({ ...formData, cant_publicaciones: parseInt(e.target.value) || 0 })}
+            onKeyDown={(e) => { if (["-", "e", "E", "+", ".", ","].includes(e.key)) e.preventDefault(); }}
+            onChange={(e) => {
+              let val = e.target.value;
+              // CORRECCIÓN 4: Quita los ceros a la izquierda en números enteros
+              if (val.length > 1 && val.startsWith("0")) {
+                val = val.replace(/^0+/, "");
+              }
+              setFormData({ ...formData, cant_publicaciones: val });
+            }}
           />
         </div>
 
@@ -157,7 +180,7 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
       <div className="flex flex-col sm:flex-row justify-center gap-4">
         <Button 
           onClick={handleSave} 
-          disabled={isSaving}
+          disabled={isSaving || !isFormValid}
           className="px-14 py-7 rounded-2xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
