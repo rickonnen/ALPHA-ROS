@@ -202,6 +202,7 @@ useEffect(() => {
               {!archivoSeleccionado ? (
                 <Button 
                   variant="outline" 
+                  disabled={tienePagoPendiente || estaCargandoEstado}
                   className="w-full font-medium text-lg py-6 cursor-pointer border-dashed border-2" 
                   onClick={() => fileInputRef.current?.click()}
                 >
