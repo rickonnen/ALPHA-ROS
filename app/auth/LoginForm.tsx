@@ -336,7 +336,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
       <div>
-        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>
+        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "var(--auth-text)", marginBottom: "4px" }}>
           Bienvenido de vuelta
         </h2>
       </div>
@@ -344,8 +344,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       {/* HU-04 CA-3: Banner cuenta desactivada */}
       {cuentaDesactivada && (
         <div style={{
-          backgroundColor: "#FDF0ED",
-          border: "1px solid #C26E5A55",
+          backgroundColor: "var(--auth-secondary-soft)",
+          border: "1px solid color-mix(in srgb, var(--auth-secondary) 45%, transparent)",
           borderRadius: "10px",
           padding: "14px 16px",
           display: "flex",
@@ -353,7 +353,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           alignItems: "flex-start",
         }}>
           <div style={{
-            backgroundColor: "#C26E5A22",
+            backgroundColor: "color-mix(in srgb, var(--auth-secondary) 18%, transparent)",
             borderRadius: "50%",
             width: "32px",
             height: "32px",
@@ -363,17 +363,17 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
             flexShrink: 0,
             marginTop: "2px",
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C26E5A" strokeWidth="2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--auth-secondary)" strokeWidth="2.5">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <p style={{ fontSize: "13px", fontWeight: "700", color: "#C26E5A", margin: 0 }}>
+            <p style={{ fontSize: "13px", fontWeight: "700", color: "var(--auth-secondary)", margin: 0 }}>
               Tu cuenta está desactivada
             </p>
-            <p style={{ fontSize: "12px", color: "#2E2E2E", margin: 0, lineHeight: "1.5" }}>
+            <p style={{ fontSize: "12px", color: "var(--auth-text-soft)", margin: 0, lineHeight: "1.5" }}>
               No puedes iniciar sesión porque tu cuenta fue desactivada.
               Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.
             </p>
@@ -383,7 +383,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
               onClick={() => onReactivarCuenta ? onReactivarCuenta(email) : setModalReactivar(true)}
               style={{
                 fontSize: "12px",
-                color: "#1F3A4D",
+                color: "var(--auth-primary-strong)",
                 backgroundColor: "transparent",
                 border: "none",
                 padding: "4px 0 0 0",
@@ -416,7 +416,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         >
           <div
             style={{
-              backgroundColor: "#F4EFE6",
+              backgroundColor: "var(--auth-card-soft)",
               borderRadius: "16px",
               padding: "28px 24px",
               width: "100%",
@@ -439,7 +439,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                   border: "none",
                   fontSize: "18px",
                   cursor: "pointer",
-                  color: "#2E2E2E",
+                  color: "var(--auth-text)",
                   lineHeight: 1,
                 }}
               >
@@ -452,7 +452,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
               <>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
                   <div style={{
-                    backgroundColor: "#4CAF5022",
+                    backgroundColor: "var(--auth-success-soft)",
                     borderRadius: "50%",
                     width: "52px",
                     height: "52px",
@@ -460,7 +460,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                     alignItems: "center",
                     justifyContent: "center",
                   }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="2.5">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--auth-success)" strokeWidth="2.5">
                       <path d="M20 6L9 17L4 12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
@@ -468,7 +468,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "800",
-                  color: "#2E2E2E",
+                  color: "var(--auth-text)",
                   textAlign: "center",
                   margin: "0 0 8px 0",
                 }}>
@@ -476,7 +476,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 </h3>
                 <p style={{
                   fontSize: "13px",
-                  color: "#2E2E2E99",
+                  color: "var(--auth-muted)",
                   textAlign: "center",
                   margin: "0 0 16px 0",
                   lineHeight: "1.6",
@@ -489,7 +489,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 {/* Ícono */}
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
                   <div style={{
-                    backgroundColor: "#1F3A4D22",
+                    backgroundColor: "var(--auth-primary-soft)",
                     borderRadius: "50%",
                     width: "52px",
                     height: "52px",
@@ -497,7 +497,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                     alignItems: "center",
                     justifyContent: "center",
                   }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F3A4D" strokeWidth="2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--auth-primary-strong)" strokeWidth="2">
                       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                       <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -508,7 +508,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 <h3 style={{
                   fontSize: "18px",
                   fontWeight: "800",
-                  color: "#2E2E2E",
+                  color: "var(--auth-text)",
                   textAlign: "center",
                   margin: "0 0 8px 0",
                 }}>
@@ -518,7 +518,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 {/* Descripción */}
                 <p style={{
                   fontSize: "13px",
-                  color: "#2E2E2E99",
+                  color: "var(--auth-muted)",
                   textAlign: "center",
                   margin: "0 0 16px 0",
                   lineHeight: "1.6",
@@ -528,12 +528,12 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
 
                 {/* Info del correo */}
                 <div style={{
-                  backgroundColor: "#E7E1D7",
+                  backgroundColor: "var(--auth-segment)",
                   borderRadius: "10px",
                   padding: "12px 14px",
                   marginBottom: "20px",
                   fontSize: "12px",
-                  color: "#2E2E2E",
+                  color: "var(--auth-text-soft)",
                   lineHeight: "1.6",
                 }}>
                   <strong>Correo:</strong> {email}
@@ -544,12 +544,12 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 {/* Mensaje de error */}
                 {reactivateError && (
                   <p style={{
-                    color: "#ef4444",
+                    color: "var(--auth-danger)",
                     fontSize: "12px",
                     textAlign: "center",
                     marginBottom: "16px",
                     padding: "8px",
-                    backgroundColor: "#fee2e2",
+                    backgroundColor: "var(--auth-danger-soft)",
                     borderRadius: "6px",
                   }}>
                     {reactivateError}
@@ -565,9 +565,9 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                       flex: 1,
                       padding: "11px",
                       borderRadius: "8px",
-                      border: "1px solid #1F3A4D44",
+                      border: "1px solid color-mix(in srgb, var(--auth-primary-strong) 35%, transparent)",
                       backgroundColor: "transparent",
-                      color: "#1F3A4D",
+                      color: "var(--auth-primary-strong)",
                       fontWeight: "700",
                       fontSize: "13px",
                       cursor: reactivating ? "not-allowed" : "pointer",
@@ -584,8 +584,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                       padding: "11px",
                       borderRadius: "8px",
                       border: "none",
-                      backgroundColor: "#4CAF50",
-                      color: "white",
+                      backgroundColor: "var(--auth-success)",
+                      color: "var(--auth-primary-foreground)",
                       fontWeight: "700",
                       fontSize: "13px",
                       cursor: reactivating ? "not-allowed" : "pointer",
@@ -626,10 +626,10 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#1C3445",
+          backgroundColor: blockedByConnection || googleLoading ? "var(--auth-muted)" : "var(--auth-primary)",
           cursor: blockedByConnection || googleLoading ? "not-allowed" : "pointer",
           opacity: blockedByConnection ? 0.5 : googleLoading ? 0.6 : 1,
-          color: "white",
+          color: "var(--auth-primary-foreground)",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
@@ -666,8 +666,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           onClick={onMagicLink}
           style={{
             width: "100%",
-            backgroundColor: "#1C3445",
-            color: "white",
+            backgroundColor: "var(--auth-primary)",
+            color: "var(--auth-primary-foreground)",
             fontWeight: "bold",
             padding: "12px",
             borderRadius: "8px",
@@ -702,16 +702,16 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
+          <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>
             Correo electrónico
           </label>
           <div style={{
             display: "flex", alignItems: "center",
-            border: `1px solid ${errors.email ? "#ef4444" : "#d1d5db"}`,
+            border: `1px solid ${errors.email ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`,
             borderRadius: "6px", padding: "10px 12px", gap: "10px",
-            backgroundColor: errors.email ? "#fee2e2" : "white",
+            backgroundColor: errors.email ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)",
           }}>
-            <Mail size={18} style={{ color: "#9ca3af" }} />
+            <Mail size={18} style={{ color: "var(--auth-icon)" }} />
             <input
               type="email"
               placeholder="ejemplo@correo.com"
@@ -721,23 +721,23 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 validateField("email", e.target.value);
                 if (cuentaDesactivada) setCuentaDesactivada(false);
               }}
-              style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+              style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }}
             />
           </div>
-          {errors.email && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.email}</p>}
+          {errors.email && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.email}</p>}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
+          <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>
             Contraseña
           </label>
           <div style={{
             display: "flex", alignItems: "center",
-            border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`,
+            border: `1px solid ${errors.password ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`,
             borderRadius: "6px", padding: "10px 12px", gap: "10px",
-            backgroundColor: errors.password ? "#fee2e2" : "white",
+            backgroundColor: errors.password ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)",
           }}>
-            <Lock size={18} style={{ color: "#9ca3af" }} />
+            <Lock size={18} style={{ color: "var(--auth-icon)" }} />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Tu contraseña"
@@ -747,19 +747,19 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 validateField("password", e.target.value);
                 if (cuentaDesactivada) setCuentaDesactivada(false);
               }}
-              style={{ flex: 1, fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+              style={{ flex: 1, fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{ backgroundColor: "transparent", border: "none", padding: "0", cursor: "pointer", color: "#9ca3af", display: "flex", alignItems: "center" }}
+              style={{ backgroundColor: "transparent", border: "none", padding: "0", cursor: "pointer", color: "var(--auth-icon)", display: "flex", alignItems: "center" }}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-         {errors.password && errors.password !== "incorrect" && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.password}</p>}
+         {errors.password && errors.password !== "incorrect" && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.password}</p>}
          {generalError && (
-           <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "left" }}>{generalError}</p>
+           <p style={{ color: "var(--auth-danger)", fontSize: "12px", textAlign: "left" }}>{generalError}</p>
          )}
         </div>
 
@@ -769,7 +769,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
             <button
               type="button"
               onClick={() => onReactivarCuenta(email)}
-              style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline", display: "block", marginBottom: "4px", marginLeft: "auto" }}
+              style={{ fontSize: "12px", color: "var(--auth-muted)", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline", display: "block", marginBottom: "4px", marginLeft: "auto" }}
             >
               ¿Deseas reactivar tu cuenta?
             </button>
@@ -777,7 +777,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           <button
             type="button"
              onClick={onForgotPassword}
-            style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            style={{ fontSize: "12px", color: "var(--auth-muted)", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline" }}
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -788,8 +788,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           disabled={loading || !isFormValid()}
           style={{
             width: "100%",
-            backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C26E5A",
-            color: "white",
+            backgroundColor: loading || !isFormValid() ? "var(--auth-disabled)" : "var(--auth-secondary-action)",
+            color: "var(--auth-primary-foreground)",
             fontWeight: "bold",
             padding: "12px",
             borderRadius: "6px",
@@ -803,7 +803,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         </button>
 
            <div style={{ textAlign: "center", marginTop: "16px" }}>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "12px" }}>
+              <p style={{ fontSize: "14px", color: "var(--auth-muted)", marginBottom: "12px" }}>
                   Acceso rápido con
               </p>
 
