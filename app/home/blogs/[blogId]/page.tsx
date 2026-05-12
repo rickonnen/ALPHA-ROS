@@ -43,18 +43,27 @@ export default function BlogPostPage({ params }: { params: Promise<{ blogId: str
   }
 
   return (
-    <main className="w-full max-w-3xl mx-auto px-4 py-12 flex flex-col overflow-hidden font-sans">
+  <main className="w-full max-w-3xl mx-auto px-4 py-12 flex flex-col overflow-hidden font-sans">
+    <div id="blog-print-area">
       <BlogHeader objBlogBlo={objBlogBlo} />
-      
-      <BlogHero objBlogBlo={objBlogBlo} />
-      
-      <ShareBlog />
-      
-      <div className="mb-12">
-        <BlogComments blogId={resolvedParamsBlo.blogId} isAuthenticated={!!objUser} />
-      </div>
 
+      <BlogHero objBlogBlo={objBlogBlo} />
+    </div>
+
+    <div className="no-print">
+      <ShareBlog />
+    </div>
+
+    <div className="mb-12 no-print">
+      <BlogComments
+        blogId={resolvedParamsBlo.blogId}
+        isAuthenticated={!!objUser}
+      />
+    </div>
+
+    <div className="no-print">
       <BlogNavigationLinks />
-    </main>
-  );
+    </div>
+  </main>
+);
 }
