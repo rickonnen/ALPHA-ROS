@@ -260,3 +260,67 @@
     @apply bg-muted-foreground;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #blog-print-area,
+  #blog-print-area * {
+    visibility: visible !important;
+  }
+
+  #blog-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  #blog-print-area img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  #blog-print-area h1,
+  #blog-print-area h2,
+  #blog-print-area h3 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  #blog-print-area p {
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  a::after {
+    content: "";
+  }
+}

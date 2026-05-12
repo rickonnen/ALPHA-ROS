@@ -141,7 +141,7 @@ export async function actualizarPublicacion(
     zona:               formData.get('zona')               as string,
     lat:  formData.get('lat')  ? parseFloat(formData.get('lat')  as string) : undefined,
     lng:  formData.get('lng')  ? parseFloat(formData.get('lng')  as string) : undefined,
-    // ✅ Cambiado: parseInt → parseIntNullable para soportar Terrenos (valores null)
+    //  Cambiado: parseInt → parseIntNullable para soportar Terrenos (valores null)
     habitaciones: parseIntNullable(formData.get('habitaciones')),
     banios:       parseIntNullable(formData.get('banios')),
     garajes:      parseIntNullable(formData.get('garajes')),
