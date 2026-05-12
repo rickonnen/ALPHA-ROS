@@ -26,7 +26,6 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
   const [qrAnual, setQrAnual] = useState<{ file: File | null; preview: string | null }>({ file: null, preview: null });
   const [qrPromo, setQrPromo] = useState<{ file: File | null; preview: string | null }>({ file: null, preview: null });
 
-  // Si hay un plan para editar, llenamos el formulario. Si no, lo limpiamos.
   useEffect(() => {
     if (planToEdit) {
       setFormData({
@@ -35,6 +34,7 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
         cant_publicaciones: planToEdit.cant_publicaciones,
       });
     } else {
+      // Inicializamos con valores numéricos
       setFormData({ nombre_plan: "", precio_plan: 0, cant_publicaciones: 0 });
     }
   }, [planToEdit]);
@@ -69,7 +69,7 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
         body: data,
       });
       if (res.ok) {
-        onSuccess(); // Le avisa al page.tsx que debe recargar la lista
+        onSuccess(); 
       }
     } catch (error) {
       console.error("Error al guardar:", error);
@@ -87,30 +87,50 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        
+        {/* INPUT: NOMBRE DEL PLAN */}
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase opacity-50 ml-2 tracking-widest">Nombre del Plan</label>
           <input
-            className="w-full bg-muted/50 border-2 border-transparent focus:border-primary/20 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
+            type="text"
+            maxLength={30}
+            placeholder="EJ: PLAN AVANZADO"
+            className="w-full bg-muted/50 border-2 border-transparent focus:border-primary/20 p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold uppercase placeholder:normal-case"
             value={formData.nombre_plan}
-            onChange={(e) => setFormData({ ...formData, nombre_plan: e.target.value })}
+            onChange={(e) => {
+              // Solo permite letras, números, espacios, guiones y paréntesis
+              const filtrado = e.target.value.replace(/[^a-zA-Z0-9\s\-()]/g, "").toUpperCase();
+              setFormData({ ...formData, nombre_plan: filtrado });
+            }}
           />
+          <span className="text-[9px] text-muted-foreground ml-2">{formData.nombre_plan.length}/30 caracteres</span>
         </div>
+
+        {/* INPUT: PRECIO */}
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase opacity-50 ml-2 tracking-widest">Precio ($)</label>
           <input
             type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
             className="w-full bg-muted/50 border-2 border-transparent p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
             value={formData.precio_plan}
-            onChange={(e) => setFormData({ ...formData, precio_plan: Number(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, precio_plan: parseFloat(e.target.value) || 0 })}
           />
         </div>
+
+        {/* INPUT: PUBLICACIONES / DÍAS */}
         <div className="space-y-3">
           <label className="text-[10px] font-black uppercase opacity-50 ml-2 tracking-widest">{labelDinamica}</label>
           <input
             type="number"
+            min="1"
+            step="1"
+            placeholder="1"
             className="w-full bg-muted/50 border-2 border-transparent p-4 rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 transition-all font-semibold"
             value={formData.cant_publicaciones}
-            onChange={(e) => setFormData({ ...formData, cant_publicaciones: Number(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, cant_publicaciones: parseInt(e.target.value) || 0 })}
           />
         </div>
 
@@ -135,7 +155,11 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
       <input type="file" hidden ref={fileInputPromoRef} accept="image/*" onChange={(e) => handleFileChange(e, setQrPromo)} />
 
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button onClick={handleSave} disabled={isSaving} className="px-14 py-7 rounded-2xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-lg shadow-primary/20">
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="px-14 py-7 rounded-2xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           {isSaving ? <Loader2 className="animate-spin w-5 h-5" /> : <Save className="w-5 h-5" />}
           Guardar Cambios
         </Button>
@@ -147,7 +171,6 @@ export default function PlanForm({ activeTab, planToEdit, onCancel, onSuccess }:
   );
 }
 
-// QRBox ahora vive únicamente aquí adentro
 const QRBox = ({ title, preview, onClick }: any) => (
   <div className="flex flex-col items-center gap-5">
     <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{title}</span>
