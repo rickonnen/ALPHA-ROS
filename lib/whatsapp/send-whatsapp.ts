@@ -1,4 +1,7 @@
-import { sendEvolutionText } from "@/lib/whatsapp/evolution";
+import {
+  sendEvolutionText,
+  sendEvolutionUrlButton,
+} from "@/lib/whatsapp/evolution";
 
 export async function sendWhatsAppMessage(input: {
   to: string;
@@ -18,5 +21,21 @@ export async function sendWhatsAppNotification(input: {
   return sendWhatsAppMessage({
     to: input.to,
     text: `${input.title}\n\n${input.body}`,
+  });
+}
+
+export async function sendWhatsAppUrlButtonNotification(input: {
+  to: string;
+  title: string;
+  body: string;
+  buttonText: string;
+  url: string;
+}) {
+  return sendEvolutionUrlButton({
+    to: input.to,
+    text: `${input.title}\n\n${input.body}`,
+    footerText: "PropBol",
+    buttonText: input.buttonText,
+    url: input.url,
   });
 }

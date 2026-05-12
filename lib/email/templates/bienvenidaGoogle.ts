@@ -36,7 +36,7 @@ export function templateBienvenidaGoogle(nombre: string): string {
 
           <p style="margin:24px 0 0 0;font-size:13px;color:#666;line-height:1.6">
             Si no creaste esta cuenta o tienes dudas, contacta a soporte:
-            <a href="mailto:soporte@propbol.com" style="color:#1F3A4D">soporte@propbol.com</a>
+            <a href="mailto:soportepropbol@gmail.com" style="color:#1F3A4D">soportepropbol@gmail.com</a>
           </p>
         </div>
 

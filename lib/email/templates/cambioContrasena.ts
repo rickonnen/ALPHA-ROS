@@ -36,7 +36,7 @@ export function templateCambioContrasena(nombre: string, fecha: string): string 
           <p style="margin:0 0 6px 0;font-size:13px;color:#333;font-weight:700">ALERTA DE SEGURIDAD</p>
           <p style="margin:0;font-size:13px;color:#333;line-height:1.6">
             Si no realizaste este cambio, contacta a nuestro equipo de soporte inmediatamente en:
-            <a href="mailto:soporte@propbol.com" style="color:#C85A4F">soporte@propbol.com</a>
+            <a href="mailto:soportepropbol@gmail.com" style="color:#C85A4F">soportepropbol@gmail.com</a>
           </p>
 
         </div>

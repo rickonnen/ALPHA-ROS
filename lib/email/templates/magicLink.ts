@@ -8,21 +8,22 @@ export function templateMagicLink(nombre: string, magicLinkUrl: string): string 
     <html lang="es" style="margin:0;padding:0">
     <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
     <body style="margin:0;padding:0;background-color:#f9fafb;font-family:'Segoe UI',Arial,sans-serif">
+      <!-- Logo Section (Above the panel) -->
+      <div style="text-align:center;padding:30px 24px 20px 24px">
+        <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja" 
+             alt="PROPBOL" style="height:60px;vertical-align:middle" />
+             <span style="font-size:26px;font-weight:800;color:#1F3A4D;vertical-align:middle;margin-left:10px;font-family:'Segoe UI',Arial,sans-serif">Propbol</span>
+      </div>
+
       <div style="max-width:600px;margin:0 auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08)">
 
-        <!-- Logo Header -->
+        <!-- Blue Header Panel -->
         <div style="background:linear-gradient(135deg,#1F3A4D 0%,#2d5a6f 100%);padding:30px 24px;text-align:center">
-          <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja" 
-               alt="PROPBOL" style="height:50px;vertical-align:middle" />
-          <span style="font-size:24px;font-weight:800;color:white;vertical-align:middle;margin-left:10px">Propbol</span>
+          <span style="font-size:20px;font-weight:700;color:white">¡Tu Magic Link está listo!</span>
         </div>
 
         <!-- Main Content -->
         <div style="padding:40px 32px">
-          <h1 style="margin:0 0 16px 0;font-size:24px;font-weight:700;color:#1F3A4D">
-            ¡Tu Magic Link está listo! ✨
-          </h1>
-          
           <p style="margin:0 0 24px 0;font-size:15px;color:#4b5563;line-height:1.6">
             Hola ${nombre},
           </p>
@@ -34,7 +35,7 @@ export function templateMagicLink(nombre: string, magicLinkUrl: string): string 
           <!-- CTA Button -->
           <div style="text-align:center;margin:32px 0">
             <a href="${magicLinkUrl}"
-               style="display:inline-block;background:linear-gradient(135deg,#C85A4F 0%,#B47B65 100%);color:white;padding:16px 48px;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(200,90,79,0.3)">
+               style="display:inline-block;background:linear-gradient(135deg,#1F3A4D 0%,#2d5a6f 100%);color:white;padding:16px 48px;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(31,58,77,0.3)">
               Iniciar Sesión Seguro
             </a>
           </div>
@@ -64,7 +65,7 @@ export function templateMagicLink(nombre: string, magicLinkUrl: string): string 
             © 2026 PROPBOL. Todos los derechos reservados.
           </p>
           <p style="margin:0;font-size:11px;color:#9ca3af">
-            <a href="mailto:soporte@propbol.com" style="color:#1F3A4D;text-decoration:none">Contactar Soporte</a>
+            <a href="mailto:soportepropbol@gmail.com" style="color:#1F3A4D;text-decoration:none">Contactar Soporte</a>
           </p>
         </div>
 
