@@ -136,22 +136,35 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   if (!user?.id) return;
   const loadTrash = () => {
     const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
-    const saved: { id: string; read: boolean }[] = raw ? JSON.parse(raw) : [];
-    setTrash((prev) => {
-      const todas = [...notifications, ...prev];
-      const unicas = Array.from(new Map(todas.map((n) => [n.id, n])).values());
+    if (!raw) {
+      setTrash([]);
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    const saved: { id: string; read: boolean }[] = Array.isArray(parsed)
+      ? parsed.map((s) => (typeof s === "string" ? { id: s, read: true } : s))
+      : [];
+    setTrash(() => {
+      const todas = [...notifications];
       return saved.map((s) => {
-        const notif = unicas.find((n) => n.id === s.id);
+        const notif = todas.find((n) => n.id === s.id);
         return notif ? { ...notif, read: s.read } : null;
       }).filter(Boolean) as Notification[];
     });
   };
+  loadTrash();
   window.addEventListener("trash-updated", loadTrash);
   return () => window.removeEventListener("trash-updated", loadTrash);
 }, [user?.id, notifications]);
 
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+  const notInTrash = useMemo(() => 
+    notifications.filter((n) => !trash.some((t) => t.id === n.id)), 
+    [notifications, trash]
+  );
+  
+  const unreadCount = useMemo(() => notInTrash.filter((n) => !n.read).length, [notInTrash]);
+  const totalCount = useMemo(() => notInTrash.length, [notInTrash]);
 
   // Actualizar el badge cada vez que cambia el contador de no leídas
   useEffect(() => {
@@ -160,12 +173,12 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
 
   const visibleNotifications = useMemo(() => {
     if (activeTab === "trash") return trash;
-    let filtered = notifications;
+    let filtered = notInTrash;
     if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
     else if (activeFilter === "whatsapp") filtered = filtered.filter((n) => n.type === 2 || n.type === "whatsapp");
     else if (activeTab === "unread") filtered = filtered.filter((n) => !n.read);
     return filtered;
-  }, [notifications, activeTab, activeFilter, trash]);
+  }, [notInTrash, activeTab, activeFilter, trash]);
   ///////////////////////HU2////////////
   const handleDelete = (id: string) => {
   const notif = notifications.find((n) => n.id === id);
@@ -175,24 +188,31 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
     const next = [notif, ...prev];
     localStorage.setItem(`trash_notif_ids_${user?.id}`,
       JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
-    window.dispatchEvent(new Event("trash-updated"));
+    const evt = new Event("trash-updated");
+    (evt as any).detail = { type: "delete", id };
+    window.dispatchEvent(evt);
     return next;
   });
-  setNotifications((prev) => prev.filter((n) => n.id !== id));
 };
 const handleRestore = (id: string) => {
-  const notif = trash.find((n) => n.id === id);
-  if (notif) {
-    setNotifications((prev) => [notif, ...prev]);
-    setTrash((prev) => prev.filter((n) => n.id !== id));
-    const remaining = trash.filter((n) => n.id !== id);
+  setTrash((prevTrash) => {
+    const notif = prevTrash.find((n) => n.id === id);
+    if (!notif) return prevTrash;
+    const remaining = prevTrash.filter((n) => n.id !== id);
     localStorage.setItem(`trash_notif_ids_${user?.id}`,
       JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-    window.dispatchEvent(new Event("trash-updated"));
-  }
+    const evt = new Event("trash-updated");
+    (evt as any).detail = { type: "restore", id };
+    window.dispatchEvent(evt);
+    return remaining;
+  });
 };
   const handleEmptyTrash = () => {
     setTrash([]);
+    localStorage.removeItem(`trash_notif_ids_${user?.id}`);
+    const evt = new Event("trash-updated");
+    (evt as any).detail = { type: "empty" };
+    window.dispatchEvent(evt);
     setShowConfirmModal(false);
   };
   const handleRead = async (id: string) => {
@@ -233,7 +253,7 @@ const handleRestore = (id: string) => {
       ) : (
         // Mostrar el panel de notificaciones completo
         <>
-          <NotificationHeader unreadCount={unreadCount} />
+          <NotificationHeader totalCount={totalCount} />
 
           <div className="p-2">
             <NotificationTabs
