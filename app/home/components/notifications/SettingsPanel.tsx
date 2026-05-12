@@ -1,6 +1,9 @@
 "use client";
+
+import { useAuth } from "@/app/auth/AuthContext";
+import { maskPhone, validatePhoneE164 } from "@/lib/phone/validate-phone";
 import { Settings, ArrowLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   onClose: () => void;
@@ -10,55 +13,163 @@ type Props = {
   onWhatsappToggle: (enabled: boolean) => void;
 };
 
-export function SettingsPanel({ 
-  onClose, 
-  gmailEnabled, 
+export function SettingsPanel({
+  onClose,
+  gmailEnabled,
   whatsappEnabled,
   onGmailToggle,
-  onWhatsappToggle 
+  onWhatsappToggle,
 }: Props) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState<string>("");
-  const [isPhoneSaved, setIsPhoneSaved] = useState<boolean>(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isPhoneSaved, setIsPhoneSaved] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [isChangingPhone, setIsChangingPhone] = useState(false);
+  const { user: objUser } = useAuth();
+
+  const USER_ID = objUser?.id;
+  console.log(USER_ID)
 
   useEffect(() => {
-    const saved = localStorage.getItem("user_whatsapp_number");
-    if (saved !== null && saved !== "") {
-      setPhoneNumber(saved);
-      setIsPhoneSaved(true);
-    }
+    const loadWhatsappStatus = async () => {
+      setIsUpdating(true);
+
+      try {
+        const response = await fetch("/api/whatsapp/status", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: USER_ID,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          return;
+        }
+
+        if (data.exists && data.isVerified && data.phoneE164) {
+          setPhoneNumber(data.phoneE164);
+          setVerifiedPhone(data.phoneE164);
+          setIsPhoneSaved(true);
+          setIsChangingPhone(false);
+
+          await onWhatsappToggle(Boolean(data.isActive));
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsUpdating(false);
+      }
+    };
+
+    loadWhatsappStatus();
   }, []);
 
   const handleGmailToggle = async (enabled: boolean) => {
     setIsUpdating(true);
-    await onGmailToggle(enabled);
-    setIsUpdating(false);
+
+    try {
+      await onGmailToggle(enabled);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleWhatsappToggle = async (enabled: boolean) => {
+    if (enabled && !isPhoneSaved) {
+      alert("Primero debes registrar y verificar tu número de WhatsApp.");
+      return;
+    }
+
     setIsUpdating(true);
-    await onWhatsappToggle(enabled);
-    setIsUpdating(false);
+
+    try {
+      const response = await fetch("/api/whatsapp/toggle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: USER_ID,
+          enabled,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert(`❌ ${data.message}`);
+        return;
+      }
+
+      await onWhatsappToggle(enabled);
+
+      alert(`✅ ${data.message}`);
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error al actualizar WhatsApp.");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleSavePhoneNumber = () => {
-    if (phoneNumber && phoneNumber.length > 8) {
-      localStorage.setItem("user_whatsapp_number", phoneNumber);
+  const handleSavePhoneNumber = async () => {
+    setIsUpdating(true);
+
+    try {
+      const result = validatePhoneE164(phoneNumber);
+
+      if (!result.valid || !result.phoneE164) {
+        alert(`❌ ${result.error}`);
+        return;
+      }
+
+      const response = await fetch("/api/whatsapp/verify-phone", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: USER_ID,
+          phone: result.phoneE164,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        setIsPhoneSaved(false);
+        alert(`❌ ${data.message}`);
+        return;
+      }
+
+      setPhoneNumber(data.phoneE164);
+      setVerifiedPhone(data.phoneE164);
       setIsPhoneSaved(true);
-      alert("✅ Número de WhatsApp guardado correctamente");
-    } else {
-      alert("❌ Por favor ingresa un número válido (ej: +59171234567)");
+      setIsChangingPhone(false);
+
+      await onWhatsappToggle(true);
+
+      alert("✅ Número verificado. WhatsApp fue activado correctamente.");
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error de red. Intenta nuevamente.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleEditPhoneNumber = () => {
-    setIsPhoneSaved(false);
+    setIsChangingPhone(true);
     setPhoneNumber("");
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden">
-      {/* Header con botón de volver */}
       <div className="flex items-center gap-2 bg-slate-700 text-white px-4 py-3">
         <button
           onClick={onClose}
@@ -67,12 +178,14 @@ export function SettingsPanel({
         >
           <ArrowLeft size={18} />
         </button>
+
         <Settings size={18} />
-        <span className="font-semibold">Configuración de Notificaciones</span>
+        <span className="font-semibold">
+          Configuración de Notificaciones
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {/* Gmail */}
         <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
@@ -80,11 +193,15 @@ export function SettingsPanel({
               className="w-9 h-9"
               alt="Gmail"
             />
+
             <div>
               <p className="font-semibold">Gmail</p>
-              <p className="text-sm text-gray-500">usuario@gmail.com</p>
+              <p className="text-sm text-gray-500">
+                usuario@gmail.com
+              </p>
             </div>
           </div>
+
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -93,12 +210,17 @@ export function SettingsPanel({
               disabled={isUpdating}
               className="sr-only peer"
             />
-            <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""}`}></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+
+            <div
+              className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${
+                isUpdating ? "opacity-50" : ""
+              }`}
+            />
+
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
           </label>
         </div>
 
-        {/* WhatsApp */}
         <div className="bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -107,28 +229,54 @@ export function SettingsPanel({
                 className="w-9 h-9"
                 alt="WhatsApp"
               />
+
               <div>
                 <p className="font-semibold">WhatsApp</p>
+
+                {isPhoneSaved && verifiedPhone && (
+                  <p className="text-sm text-gray-500">
+                    {maskPhone(verifiedPhone)}
+                  </p>
+                )}
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+
+            <label
+              className={`relative inline-flex items-center ${
+                isPhoneSaved
+                  ? "cursor-pointer"
+                  : "cursor-not-allowed opacity-60"
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={whatsappEnabled}
-                onChange={(e) => handleWhatsappToggle(e.target.checked)}
-                disabled={isUpdating}
+                onChange={(e) =>
+                  handleWhatsappToggle(e.target.checked)
+                }
+                disabled={isUpdating || !isPhoneSaved}
                 className="sr-only peer"
               />
-              <div className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""}`}></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+
+              <div
+                className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition ${
+                  isUpdating ? "opacity-50" : ""
+                }`}
+              />
+
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
             </label>
           </div>
 
-          {isPhoneSaved ? (
-            <div className="flex items-center justify-between mt-2">
-              <p className="text-sm text-gray-500 ml-10">{phoneNumber}</p>
+          {isPhoneSaved && !isChangingPhone ? (
+            <div className="flex items-center justify-between mt-3 ml-12">
+              <p className="text-xs text-green-700">
+                Número verificado y WhatsApp activado.
+              </p>
+
               <button
                 onClick={handleEditPhoneNumber}
+                disabled={isUpdating}
                 className="text-xs text-blue-600 hover:text-blue-700 hover:underline px-2 py-1"
               >
                 Cambiar
@@ -139,23 +287,29 @@ export function SettingsPanel({
               <p className="text-xs text-yellow-700 mb-2">
                 Ingresa tu número para recibir notificaciones de WhatsApp:
               </p>
-              <div className="flex gap-2">
+
+              <div className="flex flex-col gap-2">
                 <input
                   type="tel"
                   placeholder="Ej: +59171234567"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={isUpdating}
+                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
+
                 <button
                   onClick={handleSavePhoneNumber}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition"
+                  disabled={isUpdating}
+                  className="w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition disabled:opacity-60"
                 >
-                  Guardar
+                  {isUpdating ? "Verificando..." : "Guardar"}
                 </button>
               </div>
+
               <p className="text-xs text-gray-500 mt-2">
-                Formato: Código de país + número (ej: +59171234567)
+                Formato: Código de país + número. Ej:
+                +59171234567
               </p>
             </div>
           )}

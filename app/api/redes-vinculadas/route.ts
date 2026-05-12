@@ -63,8 +63,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Construir respuesta con los 3 proveedores siempre presentes
-    const proveedores = ["google", "discord", "facebook"]
-
+    const proveedores = usuario.google_id
+      ? ["google", "discord", "facebook", "linkedin"]
+      : ["discord", "facebook", "linkedin"]
     // Para cuentas credentials, primary_provider puede ser null
     const primaryProvider = usuario.primary_provider ?? "credentials"
 
@@ -82,6 +83,8 @@ export async function GET(request: NextRequest) {
           : red?.estado === true,
         puedeDesvincular: esGoogle
           ? false
+              : primaryProvider === "credentials"
+              ? true
           : (primaryProvider !== "credentials" || !!usuario.google_id) && proveedor !== primaryProvider,
       }
     })
