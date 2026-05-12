@@ -17,6 +17,7 @@ function HistorialPagosContent() {
   const [activeTab, setActiveTab] = useState("pendientes");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [fechaFiltro, setFechaFiltro] = useState<Date | undefined>(undefined);
+  
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader>
@@ -55,25 +56,29 @@ function HistorialPagosContent() {
                 </TabsTrigger>
               </TabsList>
             </div>
-            <div className="bg-[#F4EFE6] text-[#6B7280] text-sm px-3 py-1.5 inline-flex gap-3 items-center rounded-sm w-full md:w-auto justify-between md:justify-start">
+            <div className="bg-[#F4EFE6] text-[#6B7280] text-sm px-3 py-1.5 inline-flex gap-3 items-center rounded-md w-full md:w-auto justify-between md:justify-start transition-all duration-300">
               <span className="font-medium text-[#2E2E2E]">Filtrar:</span>
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-[130px] justify-between text-left font-normal bg-white border-[#E5E0D8] text-[#2E2E2E] h-8 px-2 hover:bg-gray-50 text-xs">
-                      <div className="flex items-center gap-1.5">
+                    <Button variant={"outline"} className="w-135px justify-between text-left font-normal bg-white border-[#E5E0D8] text-[#2E2E2E] h-8 px-3 hover:bg-gray-50 text-xs rounded-md transition-colors">
+                      <div className="flex items-center gap-2">
                         <CalendarIcon className="h-3.5 w-3.5 text-gray-600" />
                         {fechaFiltro ? format(fechaFiltro, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar</span>}
                       </div>
                       <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-white border border-[#E5E0D8]" align="end">
+                  <PopoverContent
+                    className="w-auto p-0 bg-white border border-[#E5E0D8] rounded-xl shadow-lg translate-x-2"
+                    align="end"
+                    sideOffset={8}
+                  >
                     <Calendar mode="single" selected={fechaFiltro} onSelect={setFechaFiltro} locale={es} initialFocus captionLayout="dropdown" fromYear={2024} toYear={2030} />
                   </PopoverContent>
                 </Popover>
                 {fechaFiltro && (
-                  <button onClick={() => setFechaFiltro(undefined)} className="text-xs font-bold text-[#C26E5A] hover:text-red-700 underline underline-offset-2 transition-colors">
+                  <button onClick={() => setFechaFiltro(undefined)} className="text-xs font-semibold text-[#C26E5A] hover:text-[#a65d4c] hover:underline underline-offset-2 px-1 transition-all animate-in fade-in">
                     Limpiar
                   </button>
                 )}
@@ -94,6 +99,7 @@ function HistorialPagosContent() {
     </Card>
   );
 }
+
 export default function HistorialPagosPage() {
   return (
     <Suspense fallback={<p className="text-sm text-white/50 p-6">Cargando historial...</p>}>

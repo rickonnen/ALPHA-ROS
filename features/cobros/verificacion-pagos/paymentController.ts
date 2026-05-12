@@ -2,6 +2,8 @@
 import { prisma } from '@/lib/prisma';
 import { syncUserPublicationsAndQuota } from './services/publicationService';
 import { upsertUserSubscription } from './services/subscriptionService';
+import { activatePromotion } from './services/promotionService';
+
 // Mapeo de estados según la lógica acordada
 const objStatuses = {
   intPending: 1,
@@ -37,10 +39,11 @@ export const getPaymentsByStatus = async (
       where: { estado: intStatusId },
       include: {
         Usuario: {
-          select: { nombres: true, apellidos: true, email: true }
+          select: { nombres: true, apellidos: true, email: true, Suscripcion: {
+              select: { id_plan: true, fecha_fin: true } }}
         },
         PlanPublicacion: {
-          select: { nombre_plan: true }
+          select: { nombre_plan: true, tipo: true, cant_publicaciones: true }
         }
       },
       skip: intSkip,
@@ -104,11 +107,21 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         const strUserId = objCurrentPayment.id_usuario;
         const intPlanId = objCurrentPayment.id_plan;
 
+        const bolEsPromocion = objCurrentPayment.PlanPublicacion?.tipo === false;
         if (strUserId && intPlanId) {
-          // lo de la hu6 (suspender publicaciones) y el cambio de cantidad de publicaciones
-          await syncUserPublicationsAndQuota(tx, strUserId, intNewQuota);
-          // lo de la creación o actualización de la tabla suscripción
-          await upsertUserSubscription(tx, strUserId, intPlanId, objCurrentPayment.tiempo_pago);
+         if (bolEsPromocion) {
+            const intPublicacionId = objCurrentPayment.id_publicacion;
+            
+            if (!intPublicacionId) {
+              throw new Error("No se puede activar la promoción porque el pago no tiene un id_publicacion asociado.");
+            }
+            await activatePromotion(tx, strUserId, intPublicacionId, intNewQuota);
+          } else {
+            // lo de la hu6 (suspender publicaciones) y el cambio de cantidad de publicaciones
+            await syncUserPublicationsAndQuota(tx, strUserId, intNewQuota);
+            // lo de la creación o actualización de la tabla suscripción
+            await upsertUserSubscription(tx, strUserId, intPlanId, objCurrentPayment.tiempo_pago);
+          } 
         }
       }
       return objPaymentResult;

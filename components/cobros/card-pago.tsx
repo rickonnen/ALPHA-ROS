@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { useDollarRate } from "@/components/hooks/getDollarRate";
+
 export interface Pago {
   id: number;
   fecha: string;
@@ -8,10 +10,14 @@ export interface Pago {
   monto: number;
   estado: "pendiente" | "realizado" | "rechazado";
 }
+
 export default function CardPago({ pago }: { pago: Pago }) {
   const [openModal, setOpenModal] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { venta } = useDollarRate();
+  const tipoDeCambio = venta !== null ? venta : 6.96;
+
   const getHeaderText = () => {
     switch (pago.estado) {
       case "realizado": return "TRANSACCIÓN REALIZADA";
@@ -19,6 +25,7 @@ export default function CardPago({ pago }: { pago: Pago }) {
       default: return "TRANSACCIÓN PENDIENTE";
     }
   };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -32,19 +39,23 @@ export default function CardPago({ pago }: { pago: Pago }) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [openModal]);
+
   const handleCopiarCorreo = () => {
     navigator.clipboard.writeText("propBol.support.payments@gmail.com");
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   };
+
   return (
     <>
-      <div className="bg-[#F4EFE6] border border-[#E5E0D8] p-4 space-y-3">
+      <div className="bg-white border border-black/10 p-5 space-y-3 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
         <div className="flex justify-between items-center">
-          <h2 className="font-bold text-sm uppercase text-[#2E2E2E]">{getHeaderText()}</h2>
-          {pago.estado === "pendiente" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">VERIFICANDO PAGO</span>}
-          {pago.estado === "rechazado" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">PAGO RECHAZADO</span>}
-          {pago.estado === "realizado" && <span className="bg-[#bac2c8] text-[#313131] text-xs px-3 py-1 rounded-sm">PAGO EXITOSO</span>}
+          <h2 className="font-bold text-sm uppercase text-[#2E2E2E] leading-snug tracking-tight">
+            {getHeaderText()}
+          </h2>
+          {pago.estado === "pendiente" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">VERIFICANDO PAGO</span>}
+          {pago.estado === "rechazado" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">PAGO RECHAZADO</span>}
+          {pago.estado === "realizado" && <span className="bg-[#bac2c8] text-[#313131] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">PAGO EXITOSO</span>}
         </div>
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
@@ -58,18 +69,19 @@ export default function CardPago({ pago }: { pago: Pago }) {
           <div className="flex justify-between">
             <span className="text-[#6B7280]">{pago.estado === "realizado" ? "Total pagado:" : "Monto:"}</span>
             <span className="text-[#2E2E2E]">
-              ${Number(pago.monto).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-gray-400">(≈ Bs {(pago.monto * 6.96).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+              ${Number(pago.monto).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
+              <span className="text-sm font-medium text-secondary ml-1">(≈ Bs {(pago.monto * tipoDeCambio).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
             </span>
           </div>
         </div>
         {pago.estado === "rechazado" && (
           <div className="flex justify-end">
-            <Button onClick={() => setOpenModal(true)} className="bg-[#1F3A4D] hover:bg-[#162c3a] text-white text-xs">CONTACTAR CON SOPORTE</Button>
+            <Button onClick={() => setOpenModal(true)} className="bg-[#1F3A4D] hover:bg-[#162c3a] text-white text-xs rounded-md shadow-sm transition-all">CONTACTAR CON SOPORTE</Button>
           </div>
         )}
       </div>
       {openModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm min-h-[100dvh] w-screen">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm min-h-dvh w-screen">
           <div ref={modalRef} className="bg-[#F4EFE6] border border-[#E5E0D8] w-full max-w-md p-6 rounded-md space-y-5 text-center relative shadow-xl">
             <button onClick={() => setOpenModal(false)} className="absolute top-2 right-3 text-gray-400 hover:text-[#2E2E2E] text-2xl font-light transition-colors">&times;</button>
             <h2 className="text-lg font-bold text-[#1F3A4D]">¿Problema con tu pago?</h2>
