@@ -490,7 +490,7 @@ export default function FiltrosAvanzado({
                   >
                     <span
                       className={cn(
-                        "absolute top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        "absolute top-[2px] left-[1px] h-5 w-5 rounded-full bg-white shadow transition-transform",
                         soloOfertas
                           ? "translate-x-[22px]"
                           : "translate-x-[2px]",

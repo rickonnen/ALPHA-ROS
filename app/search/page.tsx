@@ -1581,12 +1581,12 @@ function SearchPageContent() {
                   <h2 className="text-xl font-bold text-[#2E2E2E]">Filtros</h2>
                   <button
                     onClick={() => setIsSidebarCollapsed(true)}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold  border  text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
                     title="Ocultar filtros"
                     aria-label="Ocultar filtros"
                   >
-                    <ChevronLeft className="h-4 w-4" />
                     Ocultar
+                    <ChevronLeft className="h-4 w-4" />
                   </button>
                 </div>
 
