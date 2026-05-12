@@ -22,7 +22,7 @@ export function CategoriaYEstadoForm({
   <div className="flex flex-col gap-3" style={{ paddingTop: '12px' }}>
 
     <div className="flex flex-col gap-1.5">
-      <p className="text-sm font-medium text-[#1A1714]">
+      <p className="text-sm font-medium text-foreground">
         ¿Qué tipo de propiedad desea publicar?
       </p>
       <DropdownSelect
@@ -38,7 +38,7 @@ export function CategoriaYEstadoForm({
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <p className="text-sm font-medium text-[#1A1714]">
+      <p className="text-sm font-medium text-foreground">
         ¿En qué estado se encuentra tu propiedad?
       </p>
       <DropdownSelect

@@ -1,8 +1,3 @@
-/**
- * Dev: Gabriel Paredes
- * Date: 17/04/2026
- * Funcionalidad: Paso Ubicación — dirección via mapa, departamento y zona.
- */
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
@@ -19,8 +14,11 @@ const LocationPicker = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ height: 260, background: '#F4EFE6', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', color: '#6B7280', borderRadius: 8, fontSize: 13 }}>
+      <div style={{
+        height: 260, background: 'var(--background)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        color: 'var(--muted-foreground)', borderRadius: 8, fontSize: 13,
+      }}>
         Cargando mapa...
       </div>
     ),
@@ -34,14 +32,14 @@ interface UbicacionFormProps {
 }
 
 const C = {
-  crema:          '#F4EFE6',
-  terracota:      '#C26E5A',
-  terracotaClaro: '#D4B8AE',
-  marino:         '#1F3A4D',
-  borde:          '#D4CFC6',
-  texto:          '#1A1714',
-  gris:           '#2E2E2E',
-  grisClaro:      '#E5E7EB',
+  crema:          'var(--background)',
+  terracota:      'var(--secondary)',
+  terracotaClaro: 'var(--muted-foreground)',
+  marino:         'var(--primary)',
+  borde:          'var(--card-border)',
+  texto:          'var(--foreground)',
+  gris:           'var(--foreground)',
+  grisClaro:      'var(--muted)',
 }
 
 export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps) {
@@ -72,8 +70,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
   const [pendingLocation, setPendingLocation] = useState<LocationData | null>(null)
   const [deptoEnMapa,     setDeptoEnMapa]     = useState<string>(values.departamento)
-
-
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -130,7 +126,6 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
   const zonaLen     = values.zona.length
   const zonaInvalid = touched.zona && !!errors.zona
 
-  // ─── Modal del mapa (via Portal para evitar que overflow:hidden / transform lo rompa) ───
   const modalContent = mapaAbierto ? (
     <div
       style={{
@@ -260,16 +255,13 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
   return (
     <>
-      {/* Portal: el modal se monta en document.body, fuera de cualquier contenedor
-          con overflow:hidden o transform, así position:fixed funciona correctamente */}
       {typeof window !== 'undefined' && createPortal(modalContent, document.body)}
 
-      {/* ─── Formulario principal ────────────────────────────────── */}
       <div className="flex flex-col gap-5 h-full" style={{ paddingTop: '12px', minWidth: 0, width: '100%' }}>
 
         {/* 1 — Departamento */}
         <div className="flex flex-col gap-1.5" ref={dropdownRef}>
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+          <Label className="text-sm font-medium text-foreground" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             ¿Cual es el departamento en el que se encuentra la propiedad?
           </Label>
           <button
@@ -283,14 +275,15 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                 setDropdownOpen(false); handleBlur('departamento')
               }
             }}
-            className={`w-full h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between transition-colors ${
+            className={`w-full h-[40px] px-3 text-sm bg-card-bg rounded-md border outline-none flex items-center justify-between transition-colors ${
               touched.departamento && errors.departamento
-                ? 'border-red-400' : dropdownOpen ? 'border-gray-500' : 'border-[#D4CFC6]'
-            } ${values.departamento ? 'text-[#1A1714]' : 'text-gray-400'}`}
+                ? 'border-destructive'
+                : dropdownOpen ? 'border-primary' : 'border-card-border'
+            } ${values.departamento ? 'text-foreground' : 'text-muted-foreground'}`}
           >
             <span>{values.departamento || 'Seleccione una opción'}</span>
             <svg
-              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
               viewBox="0 0 20 20" fill="currentColor"
             >
               <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
@@ -301,7 +294,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             <div className="relative z-50">
               <ul
                 role="listbox"
-                className="absolute top-1 left-0 w-full bg-white border border-[#D4CFC6] rounded-md shadow-md py-1 max-h-48 overflow-auto"
+                className="absolute top-1 left-0 w-full bg-card-bg border border-card-border rounded-md shadow-md py-1 max-h-48 overflow-auto"
               >
                 {DEPARTAMENTOS.map((depto: string) => (
                   <li
@@ -309,11 +302,11 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
                     role="option"
                     aria-selected={depto === values.departamento}
                     onClick={() => handleSelectDepto(depto)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-[#1A1714] hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted cursor-pointer"
                   >
                     <span className="w-4 flex-shrink-0">
                       {depto === values.departamento && (
-                        <svg className="w-4 h-4 text-[#1A1714]" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className="w-4 h-4 text-foreground" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
                         </svg>
                       )}
@@ -325,22 +318,22 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             </div>
           )}
 
-          <span className="text-red-500 text-xs h-4 block">
+          <span className="text-destructive text-xs h-4 block">
             {touched.departamento && errors.departamento ? errors.departamento : ''}
           </span>
         </div>
 
         {/* 2 — Dirección */}
         <div className="flex flex-col gap-1.5" style={{ width: '100%', maxWidth: '100%' }}>
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+          <Label className="text-sm font-medium text-foreground" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
             ¿Cual es la dirección de la propiedad?
           </Label>
           <button
             type="button"
             onClick={handleAbrirMapa}
             onBlur={() => handleBlur('direccion')}
-            className={`h-[40px] px-3 text-sm bg-white rounded-md border outline-none flex items-center justify-between ${
-              touched.direccion && errors.direccion ? 'border-red-400' : 'border-[#D4CFC6]'
+            className={`h-[40px] px-3 text-sm bg-card-bg rounded-md border outline-none flex items-center justify-between ${
+              touched.direccion && errors.direccion ? 'border-destructive' : 'border-card-border'
             }`}
             style={{ width: '100%', maxWidth: '100%', overflow: 'hidden', boxSizing: 'border-box' }}
           >
@@ -350,7 +343,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
               overflow: 'hidden',
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
-              color: values.direccion ? '#1A1714' : '#9CA3AF',
+              color: values.direccion ? 'var(--foreground)' : 'var(--muted-foreground)',
               textAlign: 'left',
             }}>
               {values.direccion || 'Seleccione en el mapa'}
@@ -358,9 +351,7 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
 
             <div style={{
               width: 26, height: 26, borderRadius: 6, flexShrink: 0, marginLeft: 8,
-              background: values.direccion
-                ? 'linear-gradient(135deg, #C26E5A 0%, #A85543 100%)'
-                : 'linear-gradient(135deg, #D4CFC6 0%, #BFB9B0 100%)',
+              background: values.direccion ? 'var(--secondary)' : 'var(--muted-foreground)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'background 0.2s',
             }}>
@@ -370,14 +361,14 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             </div>
           </button>
 
-          <span className="text-red-500 text-xs h-4 block">
+          <span className="text-destructive text-xs h-4 block">
             {touched.direccion && errors.direccion ? errors.direccion : ''}
           </span>
         </div>
 
         {/* 3 — Zona */}
         <div className="flex flex-col gap-1.5">
-          <Label className="text-sm font-medium" style={{ color: '#2E2E2E' }}>
+          <Label className="text-sm font-medium text-foreground">
             Especifique Zona
           </Label>
           <input
@@ -390,16 +381,16 @@ export function UbicacionForm({ onNext, onBack, submitRef }: UbicacionFormProps)
             }}
             onBlur={() => handleBlur('zona')}
             placeholder="Escriba una zona"
-            className={`w-full border rounded-md px-3 py-2 text-sm outline-none bg-white focus:border-gray-500 ${
-              zonaInvalid ? 'border-red-400' : 'border-[#D4CFC6]'
+            className={`w-full border rounded-md px-3 py-2 text-sm outline-none bg-card-bg focus:border-primary ${
+              zonaInvalid ? 'border-destructive' : 'border-card-border'
             }`}
           />
 
           <div className="flex items-center justify-between">
-            <span className="text-red-500 text-xs">
+            <span className="text-destructive text-xs">
               {zonaInvalid ? errors.zona : ''}
             </span>
-            <span style={{ fontSize: 11, color: '#9CA3AF', flexShrink: 0, marginLeft: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--muted-foreground)', flexShrink: 0, marginLeft: 8 }}>
               {zonaLen}/{MAX_ZONA}
             </span>
           </div>
