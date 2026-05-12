@@ -3,9 +3,8 @@ import Link from "next/link";
 import { BookOpen, Clock, X as ObjXIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button"; // Importamos el botón de Shadcn
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026 (Refactor Glassmorphism)
  * funcionalidad: card estilo glass para gestionar estados de los blogs en admin
@@ -169,17 +168,12 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
           {/* Botón de texto para dispositivos táctiles */}
           <div className="hidden w-full justify-center pointer-coarse:flex">
             <Link 
-              href={`admin/manageBlogs/${IntIdBlo}`} 
+              href={`/admin/manageBlogs/${IntIdBlo}`} // ✅ "/" agregado
               className="text-sm font-bold text-primary active:scale-95 transition-transform"
             >
-              Leer Artículo
+              Revisar Blog
             </Link>
           </div>
-          {/* --- BOTONES DE ACCIÓN ADMIN --- */}
-          <div className="w-full flex flex-row justify-end flex-wrap gap-2 pt-3 border-t border-card-border/60">
-            {FnRenderButtonsBlo()}
-          </div>
-
         </div>
       </Card>
     </div>
