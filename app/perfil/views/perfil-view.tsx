@@ -27,6 +27,8 @@
     Funcionalidad: FIX bd y cambios en Telefono
 */
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 
 function DetailBlock({ label, value }: { label: string; value: string }) {
   return (
@@ -68,6 +70,8 @@ interface PerfilViewProps {
 }
 
 export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
+  const { user, logout } = useAuth();
+  const userId = user?.id ?? "";
   const getGenero = (sigla: string | null | undefined) => {
     const mapa: Record<string, string> = {
       'M': 'Masculino',
@@ -84,6 +88,24 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
     if (partes.length !== 3) return fechaISO;
     const [anio, mes, dia] = partes;
     return `${dia}/${mes}/${anio}`;
+  };
+  const [privacidad, setPrivacidad] = useState({
+    direccion: false, genero: false, fecha_nacimiento: false, estado_civil: false,
+  });
+  useEffect(() => {
+    fetch(`/api/perfil/getPrivacidad?id_usuario=${userId}`)
+      .then(r => r.json())
+      .then(j => setPrivacidad(j.data ?? {}))
+      .catch(() => {});
+  }, [userId]);
+  
+  const toggleCampo = async (campo: string, valor: boolean) => {
+    setPrivacidad(prev => ({ ...prev, [campo]: valor }));
+    await fetch("/api/perfil/getPrivacidad", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_usuario: userId, [campo]: valor }),
+    });
   };
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -130,5 +152,25 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function PrivSwitch({ campo, valor, onChange }: {
+  campo: string; valor: boolean; onChange: (campo: string, v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 ml-auto">
+      <span className="text-[10px] text-slate-400">{valor ? "Público" : "Privado"}</span>
+      <button
+        onClick={() => onChange(campo, !valor)}
+        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+          valor ? "bg-[var(--primary)]" : "bg-slate-200"
+        }`}
+      >
+        <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ${
+          valor ? "translate-x-4" : "translate-x-0"
+        }`} />
+      </button>
+    </div>
   );
 }

@@ -865,6 +865,20 @@ model PreferenciaNotificacionCanal {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Privacidad {
+  id_priv          Int     @id @default(autoincrement())
+  id_usuario       String  @unique(map: "uq_privacidad_usuario") @db.Uuid
+  favorito         Boolean @default(false)
+  direccion        Boolean @default(false)
+  genero           Boolean @default(false)
+  fecha_nacimiento Boolean @default(false)
+  estado_civil     Boolean @default(false)
+  Usuario          Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PromocionPublicacion {
   id_promocion   Int          @id @default(autoincrement())
   id_usuario     String?      @db.Uuid
@@ -1165,6 +1179,7 @@ model Usuario {
   HistorialVistos              HistorialVistos[]
   LikesComentarios             LikesComentarios[]
   Notificacion                 Notificacion[]
+  Privacidad                   Privacidad?
   PromocionPublicacion         PromocionPublicacion[]
   Publicacion                  Publicacion[]
   Recuperacion_password        Recuperacion_password[]

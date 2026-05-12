@@ -30,6 +30,8 @@ import CloseTabButton from "./CloseTabButton";
 import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
 
+import Link from "next/link";
+
 export default async function VistaInmueblePage({
   params,
 }: {
@@ -93,6 +95,22 @@ export default async function VistaInmueblePage({
       <div className="max-w-6xl mx-auto">
         {/* Task 4.3: Título */}
         <header className="mb-10">
+          {/* Mini-perfil del propietario → link a otroPerfil */}
+          {objPerfil.Usuario && (
+            <Link
+              href={`/otroPerfil?id=${objPerfil.Usuario.id_usuario}`}
+              className="inline-flex items-center gap-3 mb-6 group"
+            >
+              <img
+                src={objPerfil.Usuario.url_foto_perfil?.trim() || "https://i.imgur.com/WxNkK7J.png"}
+                className="w-10 h-10 rounded-full border-2 border-[#1F3A4D]/20 object-cover group-hover:border-[#C26E5A] transition-colors"
+                onError={(e) => { e.currentTarget.src = "https://i.imgur.com/WxNkK7J.png"; }}
+              />
+              <span className="text-[#1F3A4D] font-semibold text-sm group-hover:text-[#C26E5A] transition-colors">
+                @{objPerfil.Usuario.username}
+              </span>
+            </Link>
+          )}
           <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
