@@ -9,12 +9,11 @@
  */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
-import { useClickOutside } from "../../hooks/useClickOutside"; // Ajusta la ruta relativa a tus hooks
-import { TodasNotificacionesView } from "@/app/notification/views/todas-notificaciones-view";
+import { useClickOutside } from "../../hooks/useClickOutside";
 import { useRouter } from "next/navigation";
 
 interface NotificationButtonProps {
@@ -38,8 +37,19 @@ export const NotificationButton = ({
   useClickOutside(
     [refContainer],
     () => setBolShowNotifications(false),
-    { enabled:bolShowNotifications }
+    { enabled: bolShowNotifications }
   );
+
+ // Carga el conteo inicial al montar (sin canal realtime extra)
+useEffect(() => {
+  if (!objUser?.id) return;
+
+  const stored = localStorage.getItem("notification_unread_count");
+  if (!stored) {
+    // Si no hay nada en localStorage, fuerza una carga inicial
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+  }
+}, [objUser?.id]);
 
   const handleToggleNotifications = () => {
     // si hay usuario logueado alternamos el panel, sino mostramos el modal de Auth
@@ -70,7 +80,7 @@ export const NotificationButton = ({
       {/* renderizado condicional del panel solo si está abierto y hay sesión */}
       {objUser && bolShowNotifications && (
         <div className="absolute right-[-15px] top-full mt-0 z-50">
-          <NotificationPanel 
+          <NotificationPanel
             onClose={() => setBolShowNotifications(false)}
             onVerTodas={() => {
               setBolShowNotifications(false);

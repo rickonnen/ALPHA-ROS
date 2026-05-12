@@ -16,9 +16,15 @@ export function NotificationBadge({ count }: { count: number }) {
 
     updateCount();
 
+    // Escucha cuando NotificationPanel actualiza el badge
     window.addEventListener("refresh-notification-badge", updateCount);
+
+    // Polling cada 30 segundos como respaldo
+    const interval = setInterval(updateCount, 30000);
+
     return () => {
       window.removeEventListener("refresh-notification-badge", updateCount);
+      clearInterval(interval);
     };
   }, [count]);
 
