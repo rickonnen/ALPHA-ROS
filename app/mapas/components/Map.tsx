@@ -157,18 +157,37 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
           <p className="text-center text-xl font-bold leading-tight text-gray-950">
             {location.precio}
           </p>
-          <button
-            type="button"
-            onClick={() =>
-              window.open(
-                `/publicacion/Vista_del_Inmueble/${location.id}`,
-                `tab_mi_inmueble_${location.id}`,
-              )
-            }
-            className="mt-3 flex w-full items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--primary)]/90"
-          >
-            Ver Detalle
-          </button>
+          <div className="mt-3 space-y-2">
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
+
+                    window.open(
+                      googleMapsUrl,
+                      "_blank"
+                    );
+                  }}
+                 className="flex w-full items-center justify-center rounded-lg bg-[#c26e5a] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                Cómo llegar
+            </button>
+
+                 <button
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `/publicacion/Vista_del_Inmueble/${location.id}`,
+                      `tab_mi_inmueble_${location.id}`,
+                    )
+                  }
+                  className="flex w-full items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--primary)]/90"
+                >
+                  Ver Detalle
+                </button>
+
+          </div>
         </div>
       </div>
     </div>
