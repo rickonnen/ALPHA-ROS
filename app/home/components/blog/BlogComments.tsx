@@ -40,6 +40,7 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
       fetchTopComment();
     }
   }, [blogId, isDrawerOpen, userForcedPreview]);
+
   const handleNewUserComment = (newComment: CommentData) => {
     setComments([newComment]);
     setUserForcedPreview(true);
@@ -50,18 +51,23 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
   const topComment = comments[0];
 
   return (
-    <div className="w-full mt-10 pt-6 border-t border-card-border">
+    <div className="w-full mt-5 pt-6 border-t border-card-border">
       <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
         Comentarios
       </h3>
       {topComment ? (
-        <CommentItem comment={topComment} blogId={blogId} isAuthenticated={isAuthenticated} />
+        <CommentItem 
+          comment={topComment} 
+          blogId={blogId} 
+          isAuthenticated={isAuthenticated} 
+          isPreview={true}
+        />
       ) : (
         <p className="text-foreground/60 mt-4 mb-4 italic text-sm">Sé el primero en comentar.</p>
       )}
       <button 
         onClick={() => setIsDrawerOpen(true)}
-        className="w-full py-3 bg-secondary-fund hover:bg-card-border/50 text-foreground font-semibold rounded-xl transition-colors mt-2"
+        className="w-full py-3 bg-secondary-fund hover:bg-card-border text-foreground font-semibold rounded-xl transition-colors mt-2"
       >
         Ver comentarios y opinar
       </button>

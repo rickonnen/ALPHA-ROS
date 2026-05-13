@@ -18,8 +18,12 @@ import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/get
 import { PropertyActions } from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
 import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
-import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
+import {
+  PublicationStatusBadge,
+  DestacadaBadge,
+} from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import { ReferencePointsSection } from "@/features/publicacion/[id_publicacion]/components/ReferencePointsSection";
+import { EstadisticasInmueble } from "@/features/publicacion/[id_publicacion]/components/EstadisticasInmueble";
 
 export default async function PerfilInmueblePage({
   params,
@@ -99,6 +103,11 @@ export default async function PerfilInmueblePage({
   const lat = objPerfil.Ubicacion?.latitud ? Number(objPerfil.Ubicacion.latitud) : null;
   const lng = objPerfil.Ubicacion?.longitud ? Number(objPerfil.Ubicacion.longitud) : null;
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
+  const bolEsDestacada = (objPerfil.PromocionPublicacion?.length ?? 0) > 0;
+  const strEstado =
+    objPerfil.EstadoPublicacion?.nombre_estado ??
+    (objPerfil.id_estado == null || [0, 1, 2, 3].includes(objPerfil.id_estado) ? "Activa" : null);
+  const bolDisponible = !["Pausada", "Eliminada", "Inactiva"].includes(strEstado ?? "");
   const puntosInteres = (objPerfil.PuntoInteres ?? []).map((point) => ({
     id: point.id_punto_interes,
     nombre: point.nombre,
@@ -117,14 +126,10 @@ export default async function PerfilInmueblePage({
           <h1 className="mb-4 break-words text-3xl font-bold tracking-tight text-[#1F3A4D] md:text-5xl">
             {objPerfil.titulo}
           </h1>
-          <PublicationStatusBadge
-            strEstado={
-              objPerfil.EstadoPublicacion?.nombre_estado ??
-              (objPerfil.id_estado == null || [0, 1, 2, 3].includes(objPerfil.id_estado)
-                ? "Activa"
-                : null)
-            }
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <PublicationStatusBadge strEstado={strEstado} />
+            {bolEsDestacada && <DestacadaBadge />}
+          </div>
         </header>
 
         <div className="relative overflow-hidden rounded-3xl">
@@ -134,6 +139,9 @@ export default async function PerfilInmueblePage({
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
             mostrarFav={false}
+            mostrarShare={true}
+            tituloShare={objPerfil.titulo ?? "Propiedad en venta"}
+            disponible={bolDisponible}
           />
         </div>
 
@@ -143,8 +151,8 @@ export default async function PerfilInmueblePage({
             <div className="flex flex-col gap-x-1.5 text-subtitle min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
               <span className="font-bold text-[#1F3A4D]">Precio:</span>
               <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
-                {Number(objPerfil.precio).toLocaleString("de-DE")}{" "}
-                {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}
+                {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}{" "}
+                {Number(objPerfil.precio).toLocaleString("de-DE")}
               </span>
             </div>
           </div>
@@ -226,6 +234,10 @@ export default async function PerfilInmueblePage({
             />
           ) : null;
         })()}
+
+        <section className="mb-8 mt-8">
+          <EstadisticasInmueble estadisticas={objPerfil.EstadisticaPublicacion ?? []} />
+        </section>
 
         <PropertyActions />
       </div>

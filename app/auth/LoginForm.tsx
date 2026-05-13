@@ -20,6 +20,7 @@ interface LoginFormProps {
   onClose?: () => void;
   onForgotPassword?: () => void;
   onMagicLink?: () => void;
+  onReactivarCuenta?: (email: string) => void;
 }
 
 interface LoginTelemetry {
@@ -57,7 +58,7 @@ async function checkInternetConnection() {
   }
 }
 
-export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword, onMagicLink }: LoginFormProps) {
+export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword, onMagicLink, onReactivarCuenta }: LoginFormProps) {
   const router = useRouter();
   const { login, fetchUserFromServer } = useAuth();
   const [email, setEmail] = useState("");
@@ -191,7 +192,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       }
       setShowSuccess(true);
     } catch (err: any) {
-      // NUEVO: Detectar error de 2FA requerido
+      // ✅ NUEVO: Detectar error de 2FA requerido
       if (err.requiresOTP && err.userId) {
         setPending2FAUserId(err.userId);
         setShow2FAModal(true);
@@ -307,7 +308,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // NUEVO: Manejo de 2FA exitoso
+  // ✅ NUEVO: Manejo de 2FA exitoso
   async function handle2FASuccess() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -325,7 +326,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     }
   }
 
-  // NUEVO: Cancelar modal 2FA
+  // ✅ NUEVO: Cancelar modal 2FA
   function handle2FACancel() {
     setShow2FAModal(false);
     setPending2FAUserId("");
@@ -376,10 +377,10 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
               No puedes iniciar sesión porque tu cuenta fue desactivada.
               Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.
             </p>
-            {/* CA-24: enlace para abrir modal de reactivación */}
+            {/* CA-24 / HU-05 CA-3: abre el panel de reactivación */}
             <button
               type="button"
-              onClick={() => setModalReactivar(true)}
+              onClick={() => onReactivarCuenta ? onReactivarCuenta(email) : setModalReactivar(true)}
               style={{
                 fontSize: "12px",
                 color: "#1F3A4D",
@@ -637,7 +638,6 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          marginBottom: "16px",
           pointerEvents: googleLoading ? "none" : "auto",
         }}
       >
@@ -657,8 +657,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         )}
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
-
-      {/* Magic Link button */}
+      
+       {/* Magic Link button */}
       {onMagicLink && (
         <button
           type="button"
@@ -687,6 +687,15 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           Continuar con Magic Link
         </button>
       )}
+
+
+
+
+
+
+
+
+
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -755,6 +764,16 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         </div>
 
         <div style={{ textAlign: "right" }}>
+          {/* HU-05 CA-3: enlace siempre visible para ir al panel de reactivación */}
+          {onReactivarCuenta && (
+            <button
+              type="button"
+              onClick={() => onReactivarCuenta(email)}
+              style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline", display: "block", marginBottom: "4px", marginLeft: "auto" }}
+            >
+              ¿Deseas reactivar tu cuenta?
+            </button>
+          )}
           <button
             type="button"
              onClick={onForgotPassword}
@@ -803,7 +822,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         autoCloseDuration={2000}
       />
 
-      {/* NUEVO: Modal 2FA */}
+      {/* ✅ NUEVO: Modal 2FA */}
       {show2FAModal && (
         <OTP2FAModal
           userId={pending2FAUserId}

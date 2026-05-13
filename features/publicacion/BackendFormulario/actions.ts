@@ -3,10 +3,12 @@
 import { revalidateTag } from 'next/cache'
 import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
-import { verify }  from 'jsonwebtoken'
+import { verify } from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from './schema'
 import { subirImagen } from './cloudinary'
+import { enviarPublicacionCreada } from "@/lib/email/emailService";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 
 type ActionResult =
   | { success: true; idPublicacion: number }
@@ -27,27 +29,27 @@ async function getUserIdSeguro(): Promise<string | null> {
     const token = cookieStore.get('auth_token')?.value
     if (token) {
       const decoded = verify(token, process.env.JWT_SECRET!) as { userId?: string; id?: string; sub?: string }
-      const id = decoded.userId || decoded.id || decoded.sub;
-      if (id) return id;
+      const id = decoded.userId || decoded.id || decoded.sub
+      if (id) return id
     }
   } catch (error) {
-    console.error("Error JWT:", error);
+    console.error("Error JWT:", error)
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession()
   if (session?.user?.email) {
     try {
       const usuarioBd = await prisma.usuario.findFirst({
         where: { email: session.user.email as string },
         select: { id_usuario: true }
-      });
-      if (usuarioBd) return usuarioBd.id_usuario;
+      })
+      if (usuarioBd) return usuarioBd.id_usuario
     } catch (error) {
-      console.error("Error buscando usuario por email:", error);
+      console.error("Error buscando usuario por email:", error)
     }
   }
 
-  return null;
+  return null
 }
 
 function parseIntNullable(raw: FormDataEntryValue | null): number | null {
@@ -137,7 +139,6 @@ function parsePuntosInteres(raw: FormDataEntryValue | null): {
   }
 }
 
-// Helper: determina si la publicación es gratuita o de plan
 async function determinarGratuito(strUserId: string): Promise<boolean> {
   const objSuscripcion = await prisma.suscripcion.findUnique({
     where: { id_usuario: strUserId },
@@ -145,32 +146,27 @@ async function determinarGratuito(strUserId: string): Promise<boolean> {
       fecha_fin: true,
       PlanPublicacion: { select: { cant_publicaciones: true } },
     },
-  });
+  })
 
-  const hoy = new Date();
+  const hoy = new Date()
   const tienePlanActivo =
     objSuscripcion !== null &&
     objSuscripcion.fecha_fin > hoy &&
-    objSuscripcion.PlanPublicacion?.cant_publicaciones !== null;
+    objSuscripcion.PlanPublicacion?.cant_publicaciones !== null
 
   if (!tienePlanActivo) {
-    // Sin plan → siempre gratuita
-    return true;
+    return true
   }
 
-  const intPermitidas = objSuscripcion!.PlanPublicacion!.cant_publicaciones!;
+  const intPermitidas = objSuscripcion!.PlanPublicacion!.cant_publicaciones!
   const intUsadas = await prisma.publicacion.count({
     where: { id_usuario: strUserId, gratuito: false },
-  });
+  })
 
-  // Si aún tiene cupo en el plan → es de pago (gratuito = false)
-  // Si el plan está agotado → usa colchón gratuito (gratuito = true)
-  return intUsadas >= intPermitidas;
+  return intUsadas >= intPermitidas
 }
 
 export async function publicarInmueble(formData: FormData): Promise<ActionResult> {
-
-  // 1. Subir imágenes a Cloudinary
   const files = formData.getAll('imagenes') as File[]
   if (!files.length) {
     return { success: false, errors: { imagenes: ['Debes subir al menos 1 imagen.'] } }
@@ -178,13 +174,12 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
 
   let imagenesUrl: string[]
   try {
-    imagenesUrl = await Promise.all(files.map(f => subirImagen(f)))
+    imagenesUrl = await Promise.all(files.map((f) => subirImagen(f)))
   } catch (err) {
     console.error('[publicarInmueble] Error Cloudinary:', err)
     return { success: false, errors: { imagenes: ['Error al subir imágenes. Intenta de nuevo.'] } }
   }
 
-  // 2. Parsear características extras
   let caracteristicasExtras: { id_caracteristica: number; detalle?: string | null }[] = []
   try {
     const rawCaract = formData.get('caracteristicasExtras') as string
@@ -202,7 +197,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: { puntosInteres: [puntosInteresError] } }
   }
 
-  // 3. Armar payload
   const rawIdUsuario = await getUserIdSeguro()
 
   const payload = {
@@ -229,7 +223,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     id_usuario: rawIdUsuario,
   }
 
-  // 4. Validar con Zod
   const parsed = publicacionSchema.safeParse(payload)
   if (!parsed.success) {
     return {
@@ -243,7 +236,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: { general: ['Debes iniciar sesión para publicar.'] } }
   }
 
-  // 5. Verificación de límite + determinar si es gratuita o de plan
   const usuario = await prisma.usuario.findUnique({
     where: { id_usuario: d.id_usuario },
     select: { cant_publicaciones_restantes: true },
@@ -253,19 +245,15 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
     return { success: false, errors: {}, reason: 'LIMITE_ALCANZADO' }
   }
 
-  // Determinar gratuito ANTES del INSERT para pasárselo al trigger
   const bolGratuito = await determinarGratuito(d.id_usuario)
 
-  // 6. Insertar en BD (transacción atómica)
   try {
-    const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
-    const idMoneda  = MONEDA_IDS[d.tipoMoneda]
+    const idCiudad = DEPARTAMENTO_CIUDAD[d.departamento]
+    const idMoneda = MONEDA_IDS[d.tipoMoneda]
     const idTipoInm = TIPO_INMUEBLE_IDS[d.tipoInmueble]
-    const idTipoOp  = TIPO_OPERACION_IDS[d.tipoOperacion]
+    const idTipoOp = TIPO_OPERACION_IDS[d.tipoOperacion]
 
     const resultado = await prisma.$transaction(async (tx) => {
-
-      // 6a. Ubicacion
       const ubicacion = await tx.ubicacion.create({
         data: {
           direccion: d.direccion,
@@ -277,7 +265,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         },
       })
 
-      // 6b. Publicacion — ahora incluye gratuito
       const [pub] = d.id_usuario
         ? await tx.$queryRaw<{ id_publicacion: number }[]>`
             INSERT INTO "Publicacion" (
@@ -335,7 +322,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
             RETURNING id_publicacion
           `
 
-      // 6c. Imagenes
       for (const url of d.imagenesUrl) {
         await tx.$executeRaw`
           INSERT INTO "Imagen" (id_publicacion, url_imagen)
@@ -343,7 +329,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 6d. Video (opcional)
       if (d.videoUrl) {
         await tx.$executeRaw`
           INSERT INTO "Video" (id_publicacion, url_video)
@@ -351,7 +336,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         `
       }
 
-      // 6e. Características Extras
       if (d.caracteristicasExtras && d.caracteristicasExtras.length > 0) {
         for (const caract of d.caracteristicasExtras) {
           await tx.$executeRaw`
@@ -371,7 +355,6 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         typeof propertyLng === 'number' &&
         Number.isFinite(propertyLng)
       ) {
-
         await tx.puntoInteres.createMany({
           data: puntosInteres.map((point) => ({
             id_publicacion: pub.id_publicacion,
@@ -391,15 +374,35 @@ export async function publicarInmueble(formData: FormData): Promise<ActionResult
         })
       }
 
-      // 6f. El descuento de publicaciones restantes y el incremento de
-      //     publicaciones_hechas lo maneja el trigger en la base de datos.
-
       return pub
     })
 
+    try {
+      const objUsuarioEmail = await prisma.usuario.findUnique({
+        where: { id_usuario: d.id_usuario },
+        select: { email: true, nombres: true }
+      })
+
+      if (objUsuarioEmail?.email) {
+        await enviarPublicacionCreada(
+          objUsuarioEmail.email,
+          objUsuarioEmail.nombres ?? "Usuario",
+          d.titulo,
+          resultado.id_publicacion
+        )
+        await crearNotificacion({
+          id_usuario: d.id_usuario,
+          titulo: "Publicación Registrada",
+          mensaje: `Tu publicación "${d.titulo}" fue registrada exitosamente.`,
+          id_categoria: 3
+        })
+      }
+    } catch (emailErr) {
+      console.error("[EMAIL_PUBLICACION_ERROR]", emailErr)
+    }
+
     revalidateTag('publicaciones')
     return { success: true, idPublicacion: resultado.id_publicacion }
-
   } catch (err) {
     console.error('[publicarInmueble] Error BD:', err)
     return { success: false, errors: { general: ['Error al guardar. Intenta de nuevo.'] } }

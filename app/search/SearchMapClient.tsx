@@ -14,6 +14,13 @@ const PropertyMap = dynamic(() => import('@/app/mapas/components/Map'), {
 
 interface SearchMapClientProps {
   locations: Location[];
+  defaultZones?: {
+    id_zona: number;
+    nombre_zona: string;
+    coordenadas: [number, number][];
+  }[];
+  showDefaultZones?: boolean;
+  onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
   selectedPos: [number, number] | null;
   hoveredPos: [number, number] | null;
@@ -27,6 +34,9 @@ interface SearchMapClientProps {
 
 export default function SearchMapClient({
   locations,
+  defaultZones = [],
+  showDefaultZones = true,
+  onToggleDefaultZones,
   hoveredId,
   selectedPos,
   hoveredPos,
@@ -41,6 +51,9 @@ export default function SearchMapClient({
     <div className="h-full w-full z-0 relative">
       <PropertyMap
         locations={locations}
+        defaultZones={defaultZones}
+        showDefaultZones={showDefaultZones}
+        onToggleDefaultZones={onToggleDefaultZones}
         hoveredId={hoveredId}
         selectedPos={selectedPos}
         hoveredPos={hoveredPos}

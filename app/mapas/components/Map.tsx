@@ -9,6 +9,7 @@ import {
   Polyline,
   Popup,
   TileLayer,
+  Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -20,6 +21,8 @@ import {
   BedDouble,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   MapPin,
   Square,
   X,
@@ -47,6 +50,13 @@ const DEFAULT_ZOOM = 15;
 
 interface MapProps {
   locations: Location[];
+  defaultZones?: {
+    id_zona: number;
+    nombre_zona: string;
+    coordenadas: [number, number][];
+  }[];
+  showDefaultZones?: boolean;
+  onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
   selectedPos: [number, number] | null;
   hoveredPos: [number, number] | null;
@@ -314,6 +324,9 @@ function MapDrawingLogic({
 
 export default function PropertyMap({
   locations,
+  defaultZones = [],
+  showDefaultZones = true,
+  onToggleDefaultZones,
   hoveredId,
   selectedPos,
   hoveredPos,
@@ -383,6 +396,66 @@ export default function PropertyMap({
         .property-marker-popup .leaflet-popup-tip-container {
           margin-top: -1px;
         }
+
+        .default-zones-toggle {
+          position: absolute;
+          left: 10px;
+          top: 90px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          border-radius: 12px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+        }
+
+        .default-zones-toggle__button {
+          display: flex;
+          height: 40px;
+          width: 40px;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          background: transparent;
+          color: #475569;
+          transition:
+            background-color 0.2s ease,
+            color 0.2s ease;
+        }
+
+        .default-zones-toggle__button + .default-zones-toggle__button {
+          border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .default-zones-toggle__button:hover {
+          background: rgba(31, 58, 77, 0.08);
+          color: #1f3a4d;
+        }
+
+        .default-zones-toggle__button--active {
+          background: #1f3a4d;
+          color: #f8fafc;
+        }
+
+        .default-zone-label {
+          border: none;
+          background: rgba(31, 58, 77, 0.9);
+          color: #f8fafc;
+          border-radius: 999px;
+          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
+          padding: 0;
+        }
+
+        .default-zone-label .leaflet-tooltip-content {
+          margin: 0;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
       `}</style>
 
       <MapContainer
@@ -390,6 +463,33 @@ export default function PropertyMap({
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
       >
+        {defaultZones.length > 0 && (
+          <div className="default-zones-toggle">
+            <button
+              type="button"
+              className={`default-zones-toggle__button ${
+                showDefaultZones ? "default-zones-toggle__button--active" : ""
+              }`}
+              aria-label="Mostrar zonas predeterminadas"
+              title="Mostrar zonas predeterminadas"
+              onClick={() => onToggleDefaultZones?.(true)}
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className={`default-zones-toggle__button ${
+                !showDefaultZones ? "default-zones-toggle__button--active" : ""
+              }`}
+              aria-label="Ocultar zonas predeterminadas"
+              title="Ocultar zonas predeterminadas"
+              onClick={() => onToggleDefaultZones?.(false)}
+            >
+              <EyeOff className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {validHoveredPos && <ChangeView center={validHoveredPos} />}
         {!validHoveredPos && validSelectedPos && (
           <ChangeView center={validSelectedPos} />
@@ -411,6 +511,36 @@ export default function PropertyMap({
             weight={2}
           />
         )}
+
+        {showDefaultZones &&
+          defaultZones.map((zone) => (
+            <Polygon
+              key={`default-zone-${zone.id_zona}`}
+              positions={zone.coordenadas}
+              color="#1F3A4D"
+              fillColor="#3E6B87"
+              fillOpacity={0.16}
+              weight={2}
+            >
+              <Tooltip
+                permanent
+                direction="center"
+                className="default-zone-label"
+              >
+                {zone.nombre_zona}
+              </Tooltip>
+              <Popup>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[#1F3A4D]">
+                    {zone.nombre_zona}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Zona predeterminada del sitio
+                  </p>
+                </div>
+              </Popup>
+            </Polygon>
+          ))}
 
         {isEditingPolygon &&
           drawnPolygon?.map((point, index) => (

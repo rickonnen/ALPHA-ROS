@@ -63,6 +63,13 @@ interface SavedZone {
   fecha_creacion?: string;
 }
 
+interface DefaultZone {
+  id_zona: number;
+  nombre_zona: string;
+  id_ciudad: number | null;
+  coordenadas: [number, number][];
+}
+
 type ZoneModalMode = "create" | "rename";
 
 interface FiltrosBusquedaParams extends FiltrosPublicacion{
@@ -495,6 +502,8 @@ function SearchPageContent() {
   const [zoneModalMode, setZoneModalMode] = useState<ZoneModalMode>("create");
   const [zoneName, setZoneName] = useState("");
   const [savedZones, setSavedZones] = useState<SavedZone[]>([]);
+  const [defaultZones, setDefaultZones] = useState<DefaultZone[]>([]);
+  const [showDefaultZones, setShowDefaultZones] = useState(true);
   const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isZoneMenuOpen, setIsZoneMenuOpen] = useState(false);
@@ -509,6 +518,34 @@ function SearchPageContent() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedSort, viewMode, isMapOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchDefaultZones = async () => {
+      try {
+        const response = await fetch("/api/zonas");
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!isMounted || !Array.isArray(payload.data)) return;
+
+        setDefaultZones(
+          payload.data.filter(
+            (zone: DefaultZone) => isValidZoneCoordinates(zone.coordenadas),
+          ),
+        );
+      } catch (error) {
+        console.error("Error al cargar zonas predeterminadas:", error);
+      }
+    };
+
+    void fetchDefaultZones();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!objUser) return;
@@ -1497,6 +1534,9 @@ function SearchPageContent() {
                     selectedCurrency,
                   )
             }
+            defaultZones={defaultZones}
+            showDefaultZones={showDefaultZones}
+            onToggleDefaultZones={setShowDefaultZones}
             hoveredId={hoveredId}
             selectedPos={selectedPos}
             hoveredPos={hoveredPos}
@@ -1857,6 +1897,8 @@ function SearchPageContent() {
                       selectedCurrency,
                     )
               }
+              defaultZones={defaultZones}
+              showDefaultZones={showDefaultZones}
               hoveredId={hoveredId}
               selectedPos={selectedPos}
               hoveredPos={hoveredPos}
@@ -1869,6 +1911,7 @@ function SearchPageContent() {
                 setDrawnPolygon(points);
                 setIsDrawingMode(false);
               }}
+              onToggleDefaultZones={setShowDefaultZones}
             />
           </div>
         )}

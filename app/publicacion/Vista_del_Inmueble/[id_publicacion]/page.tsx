@@ -27,6 +27,8 @@ import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import { ReferencePointsSection } from "@/features/publicacion/[id_publicacion]/components/ReferencePointsSection";
+import { ViewTracker } from "@/features/publicacion/[id_publicacion]/components/ViewTracker";
+import ReportModal from "@/features/publicacion/[id_publicacion]/components/ReportModal";
 import FavButton from "@/components/ui/fav";
 import CloseTabButton from "./CloseTabButton";
 
@@ -93,6 +95,10 @@ export default async function VistaInmueblePage({
   const lat = objPerfil.Ubicacion?.latitud ? Number(objPerfil.Ubicacion.latitud) : null;
   const lng = objPerfil.Ubicacion?.longitud ? Number(objPerfil.Ubicacion.longitud) : null;
   const arrImagenes = objPerfil.Imagen?.map((img) => img.url_imagen ?? "") ?? [];
+  const strEstado =
+    objPerfil.EstadoPublicacion?.nombre_estado ??
+    (objPerfil.id_estado == null || [0, 1, 2, 3].includes(objPerfil.id_estado) ? "Activa" : null);
+  const bolDisponible = !["Pausada", "Eliminada", "Inactiva"].includes(strEstado ?? "");
   const puntosInteres = (objPerfil.PuntoInteres ?? []).map((point) => ({
     id: point.id_punto_interes,
     nombre: point.nombre,
@@ -106,19 +112,13 @@ export default async function VistaInmueblePage({
 
   return (
     <main className="min-h-screen bg-[#F4EFE6] p-4 font-[family-name:var(--font-geist-sans)] text-[#2E2E2E] md:p-12">
+      <ViewTracker id_publicacion={intId} />
       <div className="mx-auto max-w-6xl">
         <header className="mb-10">
           <h1 className="mb-4 break-words text-3xl font-bold tracking-tight text-[#1F3A4D] md:text-5xl">
             {objPerfil.titulo}
           </h1>
-          <PublicationStatusBadge
-            strEstado={
-              objPerfil.EstadoPublicacion?.nombre_estado ??
-              (objPerfil.id_estado == null || [0, 1, 2, 3].includes(objPerfil.id_estado)
-                ? "Activa"
-                : null)
-            }
-          />
+          <PublicationStatusBadge strEstado={strEstado} />
         </header>
 
         <div className="relative overflow-hidden rounded-3xl">
@@ -128,6 +128,9 @@ export default async function VistaInmueblePage({
             strVideoId={strVideoId ?? undefined}
             strReelId={strReelId ?? undefined}
             mostrarFav={false}
+            mostrarShare={true}
+            tituloShare={objPerfil.titulo ?? "Propiedad en venta"}
+            disponible={bolDisponible}
           />
           <div className="absolute bottom-14 right-8 z-20">
             <FavButton id_publicacion={intId.toString()} />
@@ -140,8 +143,8 @@ export default async function VistaInmueblePage({
             <div className="flex flex-col gap-x-1.5 text-[20px] min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
               <span className="font-bold text-[#1F3A4D]">Precio:</span>
               <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
-                {Number(objPerfil.precio).toLocaleString("de-DE")}{" "}
-                {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}
+                {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}{" "}
+                {Number(objPerfil.precio).toLocaleString("de-DE")}
               </span>
             </div>
           </div>
@@ -224,10 +227,11 @@ export default async function VistaInmueblePage({
           ) : null;
         })()}
 
-        <div className="mt-12 flex justify-start">
+        <div className="mt-12 flex items-center justify-between gap-4">
           <CloseTabButton className="rounded-xl border-2 border-[#C26E5A] px-10 py-3 font-bold text-[#C26E5A] transition-colors hover:bg-[#C26E5A]/10">
             Volver
           </CloseTabButton>
+          <ReportModal id_publicacion={intId} />
         </div>
       </div>
     </main>
