@@ -112,16 +112,23 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
  const handleDelete = (id: string) => {
     const notif = notificaciones.find((n) => n.id === id);
     if (!notif) return;
-    const ids: string[] = trash.map((n) => n.id);
-    if (!ids.includes(id)) ids.push(id);
-    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(ids));
-    window.dispatchEvent(new Event("trash-updated"));
+    const trashData: { id: string; read: boolean }[] = trash.map((n) => ({ id: n.id, read: n.read }));
+    if (!trashData.find((t) => t.id === id)) {
+      trashData.push({ id, read: notif.read });
+    }
+    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(trashData));
+    const evt = new Event("trash-updated");
+    (evt as any).detail = { type: "delete", id };
+    window.dispatchEvent(evt);
   };
 
   const handleRestore = (id: string) => {
-    const ids = trash.filter((n) => n.id !== id).map((n) => n.id);
-    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(ids));
-    window.dispatchEvent(new Event("trash-updated"));
+    const remaining = trash.filter((n) => n.id !== id);
+    const trashData = remaining.map((n) => ({ id: n.id, read: n.read }));
+    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(trashData));
+    const evt = new Event("trash-updated");
+    (evt as any).detail = { type: "restore", id };
+    window.dispatchEvent(evt);
   };
 
   const handleEmptyTrash = async () => {
@@ -151,15 +158,17 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
     window.dispatchEvent(new Event("refresh-notification-badge"));
   };
 
-  const unreadCount = useMemo(() => notificaciones.filter((n) => !n.read).length, [notificaciones]);
- const visibles = useMemo(() => {
+  const sinPapelera = useMemo(() => notificaciones.filter(
+    (n) => !trash.some((t) => t.id === n.id)
+  ), [notificaciones, trash]);
+
+  const unreadCount = useMemo(() => sinPapelera.filter((n) => !n.read).length, [sinPapelera]);
+  
+  const visibles = useMemo(() => {
     if (activeTab === "papelera") return trash;
-    const sinPapelera = notificaciones.filter(
-      (n) => !trash.some((t) => t.id === n.id)
-    );
     if (activeTab === "no-leidas") return sinPapelera.filter((n) => !n.read);
     return sinPapelera;
-  }, [notificaciones, activeTab, trash]);
+  }, [sinPapelera, activeTab, trash]);
 
   const mostrarMarcarTodas = activeTab === "no-leidas" && unreadCount > 0;
 const trashCount = trash.length;

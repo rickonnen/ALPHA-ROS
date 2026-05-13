@@ -132,9 +132,9 @@ export async function PATCH(
   include: { Usuario: { select: { nombres: true, email: true } } }
 });
 
-const ObjUpdatedBlogBlo = await prisma.blogs.update({
-  where: { id_blog: IntIdBlo },
-  data: ObjUpdateDataBlo,
+    const ObjUpdatedBlogBlo = await prisma.blogs.update({
+      where: { id_blog: IntIdBlo },
+      data: ObjUpdateDataBlo,
 });
 
 if (ObjBlogConUsuario?.Usuario?.email) {

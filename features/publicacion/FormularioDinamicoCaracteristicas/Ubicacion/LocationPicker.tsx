@@ -143,8 +143,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
   const seleccionado = useRef(false)
   const markerPosRef = useRef<[number, number] | null>(null)
 
-  const initialCenter = useRef<[number, number]>(getCenter(deptoActual))
-  const initialZoom   = useRef(13)
+  // FIX: useState con inicializador en lugar de useRef para valores usados en render
+  const [initialCenter] = useState<[number, number]>(() => getCenter(deptoActual))
+  const initialZoom = 13
 
   useEffect(() => {
     loadingTimerRef.current = setTimeout(() => setIsLoading(false), 800)
@@ -167,10 +168,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }))
   }, [deptoActual])
 
-  // ─── Autocompletado con Mapbox ──────────────────────────────────────────────
   useEffect(() => {
     if (seleccionado.current) return
-    if (query.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
+    if (query.length < 2) return
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(async () => {
       setIsSearching(true)
@@ -202,7 +202,6 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }, 350)
   }, [query, deptoActual])
 
-  // ─── Click en el mapa → reverse geocoding con Mapbox ──────────────────────
   const handleMapClick = useCallback(async (latVal: number, lngVal: number) => {
     const lat = parseFloat(latVal.toFixed(6))
     const lng = parseFloat(lngVal.toFixed(6))
@@ -220,11 +219,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
       const res  = await fetch(url)
       const data = await res.json() as MapboxResponse
 
-      const feature      = data.features?.[0]
-      const direccionStr = feature?.text ?? ""
-      const ciudadStr    = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-
-      // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+      const feature        = data.features?.[0]
+      const direccionStr   = feature?.text ?? ""
+      const ciudadStr      = feature?.context?.find(c => c.id.startsWith("place"))?.text ?? ""
       const deptoDetectado = detectarDepartamento(lat, lng)
 
       setDireccion(direccionStr)
@@ -238,15 +235,12 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
     }
   }, [onChange])
 
-  // ─── Seleccionar sugerencia ────────────────────────────────────────────────
   const handleSuggestionClick = useCallback((f: MapboxFeature) => {
     const lng = f.center[0]
     const lat = f.center[1]
 
-    const direccionStr = f.text ?? f.place_name.split(",")[0]
-    const ciudadStr    = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
-
-    // ── FIX: siempre detectar por coordenadas reales, nunca usar deptoActual ──
+    const direccionStr   = f.text ?? f.place_name.split(",")[0]
+    const ciudadStr      = f.context?.find(c => c.id.startsWith("place"))?.text ?? ""
     const deptoDetectado = detectarDepartamento(lat, lng)
 
     seleccionado.current = true
@@ -277,21 +271,26 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     seleccionado.current = false
-    setQuery(e.target.value)
+    const val = e.target.value
+    setQuery(val)
+    if (val.length < 2) {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
   }
 
   const C = {
-    crema:     "#F4EFE6",
-    terracota: "#C26E5A",
-    marino:    "#1F3A4D",
-    borde:     "#D4CFC6",
-    texto:     "#2E2E2E",
-    subtexto:  "#2E2E2E",
+    crema:     "var(--background)",
+    terracota: "var(--secondary)",
+    marino:    "var(--primary)",
+    borde:     "var(--card-border)",
+    texto:     "var(--foreground)",
+    subtexto:  "var(--foreground)",
   }
 
   const inputStyle: React.CSSProperties = {
     height: 36, padding: "0 12px", fontSize: 13, borderRadius: 6,
-    border: `1px solid ${C.borde}`, background: "#ffffff",
+    border: `1px solid ${C.borde}`, background: "var(--card-bg)",
     color: C.texto, outline: "none", width: "100%", boxSizing: "border-box",
   }
   const labelStyle: React.CSSProperties = {
@@ -305,8 +304,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
       <div style={{ position: "relative", zIndex: 10000 }}>
         <label style={labelStyle}>
           Buscar dirección
-          {isGeocoding  && <span style={{ color: "#888", fontWeight: 400 }}> — obteniendo dirección...</span>}
-          {isSearching && !isGeocoding && <span style={{ color: "#888", fontWeight: 400 }}> — buscando...</span>}
+          {isGeocoding && <span style={{ color: "var(--muted-foreground)", fontWeight: 400 }}> — obteniendo dirección...</span>}
+          {isSearching && !isGeocoding && <span style={{ color: "var(--muted-foreground)", fontWeight: 400 }}> — buscando...</span>}
         </label>
         <input
           value={query}
@@ -322,7 +321,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         {showSuggestions && suggestions.length > 0 && (
           <div style={{
             position: "absolute", top: "100%", left: 0, right: 0,
-            background: "#ffffff", border: `1px solid ${C.borde}`,
+            background: "var(--card-bg)", border: `1px solid ${C.borde}`,
             borderRadius: 6, zIndex: 99999,
             boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
             marginTop: 3, maxHeight: 220, overflowY: "auto",
@@ -337,7 +336,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
                   display: "flex", alignItems: "flex-start", gap: 8,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.crema }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#ffffff" }}
+                onMouseLeave={e => { e.currentTarget.style.background = "var(--card-bg)" }}
               >
                 <svg width="12" height="14" viewBox="0 0 24 24" fill={C.terracota}
                   style={{ flexShrink: 0, marginTop: 2 }}>
@@ -347,7 +346,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
                   <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {f.text}
                   </div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {f.place_name}
                   </div>
                 </div>
@@ -359,9 +358,9 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         {showSuggestions && suggestions.length === 0 && query.length >= 2 && !isSearching && (
           <div style={{
             position: "absolute", top: "100%", left: 0, right: 0,
-            background: "#ffffff", border: `1px solid ${C.borde}`,
+            background: "var(--card-bg)", border: `1px solid ${C.borde}`,
             borderRadius: 6, zIndex: 99999, marginTop: 3,
-            padding: "12px", fontSize: 13, color: "#888", textAlign: "center",
+            padding: "12px", fontSize: 13, color: "var(--muted-foreground)", textAlign: "center",
           }}>
             Sin resultados. Intenta hacer clic directamente en el mapa.
           </div>
@@ -384,8 +383,8 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
           </div>
         )}
         <MapContainer
-          center={initialCenter.current}
-          zoom={initialZoom.current}
+          center={initialCenter}
+          zoom={initialZoom}
           zoomSnap={0.25}
           zoomDelta={0.5}
           wheelPxPerZoomLevel={60}
@@ -406,7 +405,7 @@ export default function LocationPicker({ deptoActual, onChange }: LocationPicker
         </MapContainer>
       </div>
 
-      <p style={{ fontSize: 11, color: C.subtexto, margin: 0 }}>
+      <p style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0 }}>
         Busca una dirección arriba o haz clic directamente en el mapa
       </p>
 
