@@ -84,6 +84,7 @@ const MAX_POLYGON_POINTS = 10;
 
 function MarkerPropertyPopup({ location }: { location: Location }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isOpeningDirections, setIsOpeningDirections] = useState(false);
   const images = location.images.length > 0 ? location.images : ["/casa1.jpg"];
   const map = useMap();
 
@@ -96,6 +97,61 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
   const goToNextImage = () => {
     setActiveImageIndex((current) =>
       current === images.length - 1 ? 0 : current + 1,
+    );
+  };
+
+  const openDirectionsWithUserLocation = () => {
+    if (isOpeningDirections) return;
+
+    const fallbackUrl =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${location.lat},${location.lng}` +
+      `&travelmode=driving`;
+    const openedWindow = window.open("", "_blank");
+
+    if (openedWindow) {
+      openedWindow.document.write(
+        "<!doctype html><title>Abriendo ruta...</title><body style=\"font-family:sans-serif;padding:24px;color:#1f3a4d\">Abriendo Google Maps...</body>",
+      );
+      openedWindow.document.close();
+    }
+
+    const navigateTo = (url: string) => {
+      if (openedWindow) {
+        openedWindow.location.href = url;
+        return;
+      }
+
+      window.open(url, "_blank");
+    };
+
+    if (!("geolocation" in navigator)) {
+      navigateTo(fallbackUrl);
+      return;
+    }
+
+    setIsOpeningDirections(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const directionsUrl =
+          `https://www.google.com/maps/dir/?api=1` +
+          `&origin=${position.coords.latitude},${position.coords.longitude}` +
+          `&destination=${location.lat},${location.lng}` +
+          `&travelmode=driving`;
+
+        navigateTo(directionsUrl);
+        setIsOpeningDirections(false);
+      },
+      () => {
+        navigateTo(fallbackUrl);
+        setIsOpeningDirections(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
     );
   };
 
@@ -182,17 +238,11 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
-
-                    window.open(
-                      googleMapsUrl,
-                      "_blank"
-                    );
-                  }}
-                 className="flex w-full items-center justify-center rounded-lg bg-[#c26e5a] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                  onClick={openDirectionsWithUserLocation}
+                  disabled={isOpeningDirections}
+                 className="flex w-full items-center justify-center rounded-lg bg-[#c26e5a] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-80"
                 >
-                Cómo llegar
+                {isOpeningDirections ? "Abriendo ruta..." : "Cómo llegar"}
             </button>
 
                  <button
@@ -700,3 +750,4 @@ export default function PropertyMap({
     </>
   );
 }
+
