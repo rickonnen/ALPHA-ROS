@@ -17,11 +17,10 @@ type TipoEvento =
   | 'descartar';
 
 // Tope acumulativo: evita “burbuja” de repetir siempre lo mismo.
-// 30 puntos permite que el perfil siga diferenciando preferencias sin saturar tan rÃ¡pido como 20.
 const SCORE_CAP = 10;
 const ITEM_SCORE_CAP = 10;
-const DECAY_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 dÃ­as
-const DECAY_STEP_POINTS = 1;
+const DECAY_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000; // 3 días para cada punto de vencimiento
+const DECAY_STEP_POINTS = 1; // Cada 3 días sin interacción, baja 1 punto (puede ser fraccional, se aplica al resultado final)
 
 const EVENT_WEIGHTS: Record<TipoEvento, number> = {
   // Prioridades acordadas:
@@ -145,9 +144,7 @@ type EventPublicationSnapshot = {
   } | null;
 };
 
-async function loadPreferences(request: NextRequest) {
-  const userId = getUserIdFromToken(request);
-
+async function loadPreferences(userId: string | null) {
   if (!userId) {
     return {
       userId: null,
@@ -160,6 +157,7 @@ async function loadPreferences(request: NextRequest) {
       desiredMinPrice: null as number | null,
       desiredMaxPrice: null as number | null,
       totalInteracciones: 0,
+      hasSignal: false,
     };
   }
 
@@ -406,7 +404,10 @@ async function scoreCandidates(
 
 export async function GET(request: NextRequest) {
   try {
-    const prefs = await loadPreferences(request);
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('id_usuario');
+
+    const prefs = await loadPreferences(userId);
     if (!prefs.hasSignal) {
       return NextResponse.json([], { status: 200 });
     }
@@ -467,10 +468,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { candidate_ids?: number[] };
+    const body = (await request.json()) as { candidate_ids?: number[]; id_usuario?: string };
     const candidateIds = Array.isArray(body.candidate_ids) ? body.candidate_ids : [];
+    const userId = typeof body.id_usuario === 'string' ? body.id_usuario : null;
 
-    const prefs = await loadPreferences(request);
+    const prefs = await loadPreferences(userId);
     if (!prefs.hasSignal) {
       return NextResponse.json([], { status: 200 });
     }

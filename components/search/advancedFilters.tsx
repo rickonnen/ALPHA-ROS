@@ -243,18 +243,25 @@ interface AdvancedFiltersValues {
   minSurface?: number;
   maxSurface?: number;
   caracteristicasIds?: number[];
+  soloOfertas?: boolean;
+}
+
+interface CaracteristicaOption {
+  id_caracteristica: number;
+  nombre_caracteristica: string;
 }
 
 interface Props {
   onChange: (valores: AdvancedFiltersValues) => void;
   value?: AdvancedFiltersValues;
-
-  // Se mantiene allTags para no tocar search/page.tsx,
-  // pero internamente estos datos son Caracteristicas.
-  allTags: any[];
+  allTags?: CaracteristicaOption[];
 }
 
-export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
+export default function FiltrosAvanzado({
+  onChange,
+  value,
+  allTags = [],
+}: Props) {
   const [abierto, setAbierto] = useState(false);
 
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
@@ -267,6 +274,8 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
   const [maxSurface, setMaxSurface] = useState(
     value?.maxSurface?.toString() ?? "",
   );
+
+  const [soloOfertas, setSoloOfertas] = useState(value?.soloOfertas ?? false);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -277,29 +286,57 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
     setPiscina(value?.piscina ?? "");
     setMinSurface(value?.minSurface?.toString() ?? "");
     setMaxSurface(value?.maxSurface?.toString() ?? "");
+    setSoloOfertas(value?.soloOfertas ?? false);
   }, [
     value?.habitaciones,
     value?.banos,
     value?.piscina,
     value?.minSurface,
     value?.maxSurface,
+    value?.soloOfertas,
   ]);
 
+  const parseSurface = (val: string) => {
+    if (val === "") return undefined;
+
+    const parsed = Number(val);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
   const actualizar = (
-    campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
-    nuevoValor: string,
+    campo:
+      | "habitaciones"
+      | "banos"
+      | "piscina"
+      | "minSurface"
+      | "maxSurface"
+      | "soloOfertas",
+    nuevoValor: string | boolean,
   ) => {
-    const parseSurface = (val: string) => (val === "" ? undefined : Number(val));
+    const nextHabitaciones =
+      campo === "habitaciones" ? String(nuevoValor) : habitaciones;
+
+    const nextBanos = campo === "banos" ? String(nuevoValor) : banos;
+
+    const nextPiscina = campo === "piscina" ? String(nuevoValor) : piscina;
+
+    const nextMinSurface =
+      campo === "minSurface" ? String(nuevoValor) : minSurface;
+
+    const nextMaxSurface =
+      campo === "maxSurface" ? String(nuevoValor) : maxSurface;
+
+    const nextSoloOfertas =
+      campo === "soloOfertas" ? Boolean(nuevoValor) : soloOfertas;
 
     onChange({
-      habitaciones: campo === "habitaciones" ? nuevoValor : habitaciones,
-      banos: campo === "banos" ? nuevoValor : banos,
-      piscina: campo === "piscina" ? nuevoValor : piscina,
-      minSurface:
-        campo === "minSurface" ? parseSurface(nuevoValor) : parseSurface(minSurface),
-      maxSurface:
-        campo === "maxSurface" ? parseSurface(nuevoValor) : parseSurface(maxSurface),
+      habitaciones: nextHabitaciones,
+      banos: nextBanos,
+      piscina: nextPiscina,
+      minSurface: parseSurface(nextMinSurface),
+      maxSurface: parseSurface(nextMaxSurface),
       caracteristicasIds: value?.caracteristicasIds ?? [],
+      soloOfertas: nextSoloOfertas,
     });
   };
 
@@ -309,6 +346,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
 
       if (inputValue === "") {
         setSurfaceError(null);
+
         if (field === "minSurface") {
           setMinSurface("");
           actualizar("minSurface", "");
@@ -316,16 +354,19 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
           setMaxSurface("");
           actualizar("maxSurface", "");
         }
+
         return;
       }
 
       const validSurface = /^\d*\.?\d*$/.test(inputValue);
+
       if (!validSurface) {
         setSurfaceError("Solo se permiten números");
         return;
       }
 
       setSurfaceError(null);
+
       if (field === "minSurface") {
         setMinSurface(inputValue);
         actualizar("minSurface", inputValue);
@@ -339,6 +380,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
     setSurfaceError(null);
     setMinSurface("");
     setMaxSurface("");
+
     onChange({
       habitaciones,
       banos,
@@ -346,6 +388,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       minSurface: undefined,
       maxSurface: undefined,
       caracteristicasIds: value?.caracteristicasIds ?? [],
+      soloOfertas,
     });
   };
 
@@ -355,8 +398,6 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       ? actuales.filter((caracteristicaId) => caracteristicaId !== id)
       : [...actuales, id];
 
-    const parseSurface = (val: string) => (val === "" ? undefined : Number(val));
-
     onChange({
       habitaciones,
       banos,
@@ -364,6 +405,7 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
       minSurface: parseSurface(minSurface),
       maxSurface: parseSurface(maxSurface),
       caracteristicasIds: nuevos,
+      soloOfertas,
     });
   };
 
@@ -421,6 +463,43 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
                 }}
               />
 
+              <div className="rounded-lg border border-[#C8C0B5] bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#2E2E2E]">
+                      Solo ofertas
+                    </p>
+                    <p className="text-xs text-[#6B6258]">
+                      Mostrar propiedades con precio rebajado
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soloOfertas}
+                    onClick={() => {
+                      const nextValue = !soloOfertas;
+                      setSoloOfertas(nextValue);
+                      actualizar("soloOfertas", nextValue);
+                    }}
+                    className={cn(
+                      "relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#C26E5A] focus:ring-offset-2",
+                      soloOfertas ? "bg-[#C26E5A]" : "bg-gray-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-[2px] left-[1px] h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        soloOfertas
+                          ? "translate-x-[22px]"
+                          : "translate-x-[2px]",
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
               <SurfaceRangeDropdown
                 minValue={minSurface}
                 maxValue={maxSurface}
@@ -435,41 +514,45 @@ export default function FiltrosAvanzado({ onChange, value, allTags }: Props) {
                 </p>
               </div>
 
-              <div className="mt-4 border-t border-[#C8C0B5] pt-4">
-                <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">
-                  Características
-                </h3>
+              {allTags.length > 0 && (
+                <div className="mt-4 border-t border-[#C8C0B5] pt-4">
+                  <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">
+                    Características
+                  </h3>
 
-                <div className="flex flex-wrap gap-2">
-                  {allTags?.map((caracteristica) => {
-                    const isSelected = value?.caracteristicasIds?.includes(
-                      caracteristica.id_caracteristica,
-                    );
+                  <div className="flex flex-wrap gap-2">
+                    {allTags.map((caracteristica) => {
+                      const isSelected = value?.caracteristicasIds?.includes(
+                        caracteristica.id_caracteristica,
+                      );
 
-                    return (
-                      <button
-                        key={caracteristica.id_caracteristica}
-                        type="button"
-                        onClick={() =>
-                          toggleCaracteristica(caracteristica.id_caracteristica)
-                        }
-                        className={cn(
-                          "rounded-md px-3 py-1.5 text-[10px] font-bold uppercase transition-all border-2",
-                          isSelected
-                            ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]"
-                            : "border-transparent opacity-70 hover:opacity-100",
-                        )}
-                        style={{
-                          backgroundColor: "#6B7280",
-                          color: "white",
-                        }}
-                      >
-                        {caracteristica.nombre_caracteristica}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={caracteristica.id_caracteristica}
+                          type="button"
+                          onClick={() =>
+                            toggleCaracteristica(
+                              caracteristica.id_caracteristica,
+                            )
+                          }
+                          className={cn(
+                            "rounded-md px-3 py-1.5 text-[10px] font-bold uppercase transition-all border-2",
+                            isSelected
+                              ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]"
+                              : "border-transparent opacity-70 hover:opacity-100",
+                          )}
+                          style={{
+                            backgroundColor: "#6B7280",
+                            color: "white",
+                          }}
+                        >
+                          {caracteristica.nombre_caracteristica}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </AccordionContent>
         </AccordionItem>
