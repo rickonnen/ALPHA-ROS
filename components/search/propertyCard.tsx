@@ -326,12 +326,12 @@ function PropertyCard({
           </p>
 
           <div className="mt-1 flex flex-wrap gap-1">
-            {property.caracteristicas?.map((caracteristica) => (
+            {property.caracteristicas?.map((caracteristica: any, index: number) => (
               <span
-                key={caracteristica.id}
+                key={caracteristica?.id || `carac-${index}`}
                 className="rounded-full bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white"
               >
-                {caracteristica.nombre}
+                {caracteristica?.nombre|| caracteristica}
               </span>
             ))}
           </div>
@@ -417,12 +417,12 @@ function PropertyCard({
             </p>
 
             <div className="mt-2 flex flex-wrap gap-1">
-              {property.caracteristicas?.map((caracteristica) => (
+              {property.caracteristicas?.map((caracteristica: any, index: number) => (
                 <span
-                  key={caracteristica.id}
+                  key={caracteristica?.id || `caract-${index}`}
                   className="rounded-full bg-[#6B7280] px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm"
                 >
-                  {caracteristica.nombre}
+                  {caracteristica?.nombre|| caracteristica}
                 </span>
               ))}
             </div>
@@ -603,12 +603,12 @@ function PropertyCard({
 
           {property.caracteristicas && property.caracteristicas.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {property.caracteristicas.map((caracteristica) => (
+              {property.caracteristicas.map((caracteristica: any, index: number) => (
                 <span
-                  key={caracteristica.id}
+                  key={caracteristica?.id || `caract-${index}`}
                   className="rounded-md bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white shadow-sm"
                 >
-                  {caracteristica.nombre}
+                  {caracteristica?.nombre|| caracteristica}
                 </span>
               ))}
             </div>
