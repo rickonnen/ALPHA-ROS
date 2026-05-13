@@ -18,7 +18,18 @@ interface SearchMapClientProps {
     id_zona: number;
     nombre_zona: string;
     coordenadas: [number, number][];
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
   }[];
+  drawnZoneSummary?: {
+    nombre: string;
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  } | null;
   showDefaultZones?: boolean;
   onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
@@ -35,6 +46,7 @@ interface SearchMapClientProps {
 export default function SearchMapClient({
   locations,
   defaultZones = [],
+  drawnZoneSummary = null,
   showDefaultZones = true,
   onToggleDefaultZones,
   hoveredId,
@@ -52,6 +64,7 @@ export default function SearchMapClient({
       <PropertyMap
         locations={locations}
         defaultZones={defaultZones}
+        drawnZoneSummary={drawnZoneSummary}
         showDefaultZones={showDefaultZones}
         onToggleDefaultZones={onToggleDefaultZones}
         hoveredId={hoveredId}

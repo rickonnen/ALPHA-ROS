@@ -41,7 +41,7 @@ import {
   Type,
 } from "lucide-react";
 import SearchMapClient from "./SearchMapClient";
-import { convertPublicacionesToLocations } from "@/lib/locations";
+import { convertPublicacionesToLocations, formatPropertyPrice } from "@/lib/locations";
 import CurrencySwitch from "@/components/search/currencySwitch";
 
 /* hooks y ui para autenticación */
@@ -68,6 +68,11 @@ interface DefaultZone {
   nombre_zona: string;
   id_ciudad: number | null;
   coordenadas: [number, number][];
+}
+
+interface ZoneStats {
+  propertyCount: number;
+  averagePriceLabel: string | null;
 }
 
 type ZoneModalMode = "create" | "rename";
@@ -197,6 +202,50 @@ function getZoneNameError(
   }
 
   return null;
+}
+
+function getZoneStats(
+  coordinates: [number, number][],
+  publications: PublicacionBusqueda[],
+  currency: Currency,
+): ZoneStats {
+  if (!isValidZoneCoordinates(coordinates)) {
+    return { propertyCount: 0, averagePriceLabel: null };
+  }
+
+  const turfCoords = coordinates.map(([lat, lng]) => [lng, lat]);
+  turfCoords.push(turfCoords[0]);
+  const area = turf.polygon([turfCoords]);
+
+  let propertyCount = 0;
+  let totalPrice = 0;
+
+  publications.forEach((publication) => {
+    const lat = Number(publication.ubicacion?.latitud);
+    const lng = Number(publication.ubicacion?.longitud);
+    const price = Number(publication.precio);
+
+    if (!isValidLatLng(lat, lng) || !Number.isFinite(price) || price <= 0) {
+      return;
+    }
+
+    const point = turf.point([lng, lat]);
+    if (!turf.booleanPointInPolygon(point, area)) {
+      return;
+    }
+
+    propertyCount += 1;
+    totalPrice += price;
+  });
+
+  if (propertyCount === 0) {
+    return { propertyCount: 0, averagePriceLabel: null };
+  }
+
+  return {
+    propertyCount,
+    averagePriceLabel: formatPropertyPrice(totalPrice / propertyCount, currency),
+  };
 }
 
 function persistSearchStateForAuth(drawnPolygon: [number, number][] | null) {
@@ -676,6 +725,27 @@ function SearchPageContent() {
 
     return sortProperties(mapped, selectedSort);
   }, [filteredSearchResults, selectedOperation, selectedSort, recommendedIds]);
+
+  const defaultZonesWithStats = useMemo(
+    () =>
+      defaultZones.map((zone) => ({
+        ...zone,
+        stats: getZoneStats(zone.coordenadas, searchResults, selectedCurrency),
+      })),
+    [defaultZones, searchResults, selectedCurrency],
+  );
+
+  const activeDrawnZoneSummary = useMemo(() => {
+    if (!drawnPolygon) return null;
+
+    return {
+      nombre:
+        currentSavedZone?.nombre_zona?.trim() && currentSavedZone.nombre_zona.trim().length > 0
+          ? currentSavedZone.nombre_zona.trim()
+          : "Zona dibujada",
+      stats: getZoneStats(drawnPolygon, searchResults, selectedCurrency),
+    };
+  }, [currentSavedZone, drawnPolygon, searchResults, selectedCurrency]);
 
   // Paginación (merge-sysinfosquad-bughunters)
   const itemsPerPage = isMapOpen
@@ -1534,7 +1604,8 @@ function SearchPageContent() {
                     selectedCurrency,
                   )
             }
-            defaultZones={defaultZones}
+            defaultZones={defaultZonesWithStats}
+            drawnZoneSummary={activeDrawnZoneSummary}
             showDefaultZones={showDefaultZones}
             onToggleDefaultZones={setShowDefaultZones}
             hoveredId={hoveredId}
@@ -1897,7 +1968,8 @@ function SearchPageContent() {
                       selectedCurrency,
                     )
               }
-              defaultZones={defaultZones}
+              defaultZones={defaultZonesWithStats}
+              drawnZoneSummary={activeDrawnZoneSummary}
               showDefaultZones={showDefaultZones}
               hoveredId={hoveredId}
               selectedPos={selectedPos}

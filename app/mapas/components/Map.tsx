@@ -54,7 +54,18 @@ interface MapProps {
     id_zona: number;
     nombre_zona: string;
     coordenadas: [number, number][];
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
   }[];
+  drawnZoneSummary?: {
+    nombre: string;
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  } | null;
   showDefaultZones?: boolean;
   onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
@@ -325,6 +336,7 @@ function MapDrawingLogic({
 export default function PropertyMap({
   locations,
   defaultZones = [],
+  drawnZoneSummary = null,
   showDefaultZones = true,
   onToggleDefaultZones,
   hoveredId,
@@ -456,6 +468,24 @@ export default function PropertyMap({
           letter-spacing: 0.01em;
           white-space: nowrap;
         }
+
+        .user-zone-label {
+          border: none;
+          background: rgba(194, 110, 90, 0.92);
+          color: #fffaf7;
+          border-radius: 999px;
+          box-shadow: 0 6px 18px rgba(139, 68, 35, 0.25);
+          padding: 0;
+        }
+
+        .user-zone-label .leaflet-tooltip-content {
+          margin: 0;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
       `}</style>
 
       <MapContainer
@@ -509,7 +539,34 @@ export default function PropertyMap({
             fillColor="#C26E5A"
             fillOpacity={0.25}
             weight={2}
-          />
+          >
+            {drawnZoneSummary && (
+              <>
+                <Tooltip
+                  permanent
+                  direction="center"
+                  className="user-zone-label"
+                >
+                  {drawnZoneSummary.nombre}
+                </Tooltip>
+                <Popup>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-[#8B4423]">
+                      {drawnZoneSummary.nombre}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {drawnZoneSummary.stats.propertyCount} inmuebles con los filtros actuales
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {drawnZoneSummary.stats.averagePriceLabel
+                        ? `Promedio: ${drawnZoneSummary.stats.averagePriceLabel}`
+                        : "Sin datos de precio para calcular promedio"}
+                    </p>
+                  </div>
+                </Popup>
+              </>
+            )}
+          </Polygon>
         )}
 
         {showDefaultZones &&
@@ -536,6 +593,14 @@ export default function PropertyMap({
                   </p>
                   <p className="text-xs text-slate-500">
                     Zona predeterminada del sitio
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {zone.stats.propertyCount} inmuebles con los filtros actuales
+                  </p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {zone.stats.averagePriceLabel
+                      ? `Promedio: ${zone.stats.averagePriceLabel}`
+                      : "Sin datos de precio para calcular promedio"}
                   </p>
                 </div>
               </Popup>
