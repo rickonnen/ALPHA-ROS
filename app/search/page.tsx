@@ -1,6 +1,5 @@
 "use client";
-// version combinada (v1 + v2)
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -11,6 +10,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
+import CharacteristicsFilter from "@/components/search/characteristicsFilter";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -47,7 +47,7 @@ import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 /* Para comparacion de propiedades */
 import { CompareTable } from "@/components/search/compareTable";
 import { CompareFloatingBar } from "@/components/search/floatBar";
-import { countActiveFilters } from "@/features/filter_search_page/countActiveFilters"
+import { countActiveFilters } from "@/features/filter_search_page/countActiveFilters";
 
 type Currency = "USD" | "BS";
 
@@ -128,8 +128,8 @@ function isValidZoneCoordinates(
       (point) =>
         Array.isArray(point) &&
         point.length === 2 &&
-        typeof point[0] === "number" &&
-        typeof point[1] === "number" &&
+        point[0] === "number" &&
+        point[1] === "number" &&
         Number.isFinite(point[0]) &&
         Number.isFinite(point[1]),
     )
@@ -241,6 +241,21 @@ function getPropertyTypeLabelsFromIds(
     .map((option) => option.nombre_inmueble as string);
 }
 
+function hasPropertyDiscount(property: Property): boolean {
+  return (
+    typeof property.previousPrice === "number" &&
+    property.previousPrice > property.price
+  );
+}
+
+function getPropertyDiscountPercent(property: Property): number {
+  if (!hasPropertyDiscount(property)) return 0;
+
+  return Math.round(
+    ((property.previousPrice! - property.price) / property.previousPrice!) * 100,
+  );
+}
+
 function sortProperties(properties: Property[], sortBy: string): Property[] {
   const sorted = [...properties];
   sorted.sort((first, second) => {
@@ -249,14 +264,17 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
         return first.price - second.price;
       case "precio-des":
         return second.price - first.price;
+      case "rebajas-desc":
+        return getPropertyDiscountPercent(second) - getPropertyDiscountPercent(first);
       case "m2-menor":
         return first.terrainArea - second.terrainArea;
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
         return first.id - second.id;
-      case "fecha-reciente":
       default:
+        if (first.isPromoted && !second.isPromoted) return -1;
+        if (!first.isPromoted && second.isPromoted) return 1;
         return second.id - first.id;
     }
   });
@@ -330,6 +348,12 @@ function mapPublicationToProperty(
   ]
     .filter(Boolean)
     .join(", ");
+ const currentPrice = toNumber(publication.precio);
+ const previousPrice = toNumber(publication.precio_anterior);
+ const discountPercent =
+    previousPrice > currentPrice
+      ? Math.round(((previousPrice - currentPrice) / previousPrice) * 100)
+      : 0;
 
   return {
     id: publication.id_publicacion,
@@ -339,13 +363,18 @@ function mapPublicationToProperty(
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
-    price: toNumber(publication.precio),
+    price: currentPrice,
+    previousPrice: previousPrice,
+    discountPercent: discountPercent,
+    /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono,
     caracteristicas: publication.caracteristicas || [],
+    etiquetas: publication.etiquetas || [],
+    isPromoted: publication.es_promocionada ?? false,
   };
 }
 
@@ -424,12 +453,15 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+  const [caracteristicasDB, setCaracteristicasDB] = useState<any[]>([]);
   const [advancedFilterValues, setAdvancedFilterValues] = useState<{
     habitaciones?: string;
     banos?: string;
     piscina?: string;
     minSurface?: number;
     maxSurface?: number;
+    soloOfertas?: boolean;
+    caracteristicasIds?: number[];
   }>({
     habitaciones: "",
     banos: "",
@@ -483,6 +515,27 @@ function SearchPageContent() {
       setIsSelectionLoaded(true);
     }
   }, []);
+
+  useEffect(() => {
+  const fetchCaracteristicas = async () => {
+    try {
+      const res = await fetch("/api/etiquetas");
+      const payload = await res.json();
+
+      const rawCaracteristicas = Array.isArray(payload)
+        ? payload
+        : payload.caracteristicas || payload.data || [];
+
+      setCaracteristicasDB(rawCaracteristicas);
+
+      console.log("Características cargadas:", rawCaracteristicas);
+    } catch (error) {
+      console.error("Error cargando características de la DB:", error);
+    }
+  };
+
+  fetchCaracteristicas();
+}, []);
 
   useEffect(() => {
     if (isSelectionLoaded && typeof window !== "undefined") {
@@ -554,51 +607,33 @@ function SearchPageContent() {
       };
     }, [objUser]);
 
-    useEffect(() => {
-    console.table({
-      ubicacion: searchLocation,
-      operaciones: selectedOperation.length,
-      tipos: selectedPropertyTypes.length,
-      habitaciones: advancedFilterValues.habitaciones,
-      banos: advancedFilterValues.banos,
-      piscina: advancedFilterValues.piscina,
-      minSurface: advancedFilterValues.minSurface,
-      maxSurface: advancedFilterValues.maxSurface,
-      minPrice: appliedPriceFilter?.minPrice,
-      maxPrice: appliedPriceFilter?.maxPrice,
-    });
-  }, [
-    searchLocation,
-    selectedOperation,
-    selectedPropertyTypes,
-    advancedFilterValues,
-    appliedPriceFilter,
-  ]);
-
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      searchLocation.trim() ||
-        selectedOperation.length > 0 ||
+      selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
         advancedFilterValues.minSurface !== undefined ||
         advancedFilterValues.maxSurface !== undefined ||
+        (advancedFilterValues.caracteristicasIds &&
+          advancedFilterValues.caracteristicasIds.length > 0) ||
         appliedPriceFilter?.minPrice !== undefined ||
-        appliedPriceFilter?.maxPrice !== undefined,
+        appliedPriceFilter?.maxPrice !== undefined ||
+        advancedFilterValues.soloOfertas,
     );
   }, [
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
+    advancedFilterValues.minSurface,
+    advancedFilterValues.maxSurface,
+    advancedFilterValues.soloOfertas,
+    advancedFilterValues.caracteristicasIds,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
-    advancedFilterValues?.minSurface,
-    advancedFilterValues?.maxSurface,
-    searchLocation,
     selectedOperation,
-    selectedPropertyTypes.length,
+    selectedPropertyTypes,
   ]);
 
   const activeFiltersCount = useMemo(() => {
@@ -615,7 +650,6 @@ function SearchPageContent() {
     selectedPropertyTypes,
     advancedFilterValues,
     appliedPriceFilter,
-    selectedSort,
   ]);
 
   const currentPolygonSignature = useMemo(
@@ -655,25 +689,31 @@ function SearchPageContent() {
 
   // Mapear, ordenar y paginar
   const allProperties = useMemo(() => {
-    const mapped = filteredSearchResults.map((publication) =>
+    let mapped = filteredSearchResults.map((publication) =>
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
+      mapped = mapped.filter(hasPropertyDiscount);
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.sort((a, b) => {
+      return mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
+
         if (indexA !== -1 && indexB === -1) return -1;
         if (indexA === -1 && indexB !== -1) return 1;
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
         return 0;
       });
     }
 
     return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults, selectedOperation, selectedSort, recommendedIds]);
+  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
 
-  // Paginación con soporte de sidebar colapsado (v2)
+// Paginación con soporte de sidebar colapsado (v2)
   const itemsPerPage = isMapOpen
     ? viewMode === "grid"
       ? ITEMS_PER_PAGE_MAP_GRID
@@ -809,6 +849,12 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (
+      advancedFilterValues.caracteristicasIds &&
+      advancedFilterValues.caracteristicasIds.length > 0
+    ) {
+      urlParams.set("caracteristicas", advancedFilterValues.caracteristicasIds.join(","));
+    }
     window.history.pushState(null, "", `/search?${urlParams.toString()}`);
   };
 
@@ -839,7 +885,10 @@ function SearchPageContent() {
         maxPrice: appliedPriceFilter?.maxPrice,
         minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
+        soloOfertas: Boolean(advancedFilterValues.soloOfertas),
+        sort: selectedSort,
         currency: selectedCurrency,
+        caracteristicasIds: advancedFilterValues.caracteristicasIds,
         ...overrides,
       };
 
@@ -931,6 +980,11 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
+    const caracteristicasParam = searchParams.get("caracteristicas");
+    const nextCaracteristicas = caracteristicasParam
+      ? caracteristicasParam.split(",").map(Number).filter((n) => !isNaN(n))
+      : [];
 
     const nextMinPrice =
       minPriceParam !== null && minPriceParam.trim() !== ""
@@ -952,6 +1006,12 @@ function SearchPageContent() {
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
 
+    // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
+    setAdvancedFilterValues(prev => ({
+      ...prev,
+      caracteristicasIds: nextCaracteristicas
+    }));
+
     void runSearch({
       ubicacion: nextLocation,
       operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
@@ -959,6 +1019,7 @@ function SearchPageContent() {
         nextPropertyLabels.join(",") || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
+      caracteristicasIds: nextCaracteristicas,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -978,38 +1039,61 @@ function SearchPageContent() {
     };
   }, [isMobileFiltersOpen]);
 
-  // Cargar recomendaciones cuando se selecciona ese sort
-  useEffect(() => {
-    if (selectedSort === "mas-recomendados") {
-      const fetchRecommendations = async () => {
-        try {
-          const candidate_ids = searchResults.map(
-            (item) => item.id_publicacion,
-          );
-          const response = await fetch("/api/recommendations/personal", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ candidate_ids }),
-          });
-          if (response.ok) {
-            const data = (await response.json()) as {
-              id_publicacion: number;
-            }[];
-            setRecommendedIds(data.map((item) => item.id_publicacion));
-          } else {
-            setRecommendedIds([]);
-          }
-        } catch (error) {
-          console.error("Error fetching recommendations:", error);
-          setRecommendedIds([]);
-        }
-      };
-      void fetchRecommendations();
-    } else {
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      const response = await fetch("/api/recommendations/personal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ candidate_ids }),
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { id_publicacion: number }[];
+        setRecommendedIds(data.map((item) => item.id_publicacion));
+      } else {
+        const errorBody = await response.text();
+        console.error("Recommendations request failed:", response.status, errorBody);
+        setRecommendedIds([]);
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
       setRecommendedIds([]);
     }
-  }, [selectedSort, searchResults]);
+  }, [searchResults]);
+
+  // Cargar recomendaciones cuando se selecciona ese sort.
+  useEffect(() => {
+    if (selectedSort === "mas-recomendados") {
+      const id = setTimeout(() => void fetchRecommendations(), 0);
+      return () => clearTimeout(id);
+    } else {
+      const id = setTimeout(() => setRecommendedIds([]), 0);
+      return () => clearTimeout(id);
+    }
+  }, [fetchRecommendations, selectedSort]);
+
+  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  useEffect(() => {
+    if (selectedSort !== "mas-recomendados") return;
+    if (typeof window === "undefined") return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const onInteraction = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        void fetchRecommendations();
+      }, 650);
+    };
+
+    window.addEventListener("tracking:interaction", onInteraction as EventListener);
+    return () => {
+      window.removeEventListener("tracking:interaction", onInteraction as EventListener);
+      if (timer) clearTimeout(timer);
+    };
+  }, [fetchRecommendations, selectedSort]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);
@@ -1031,6 +1115,8 @@ function SearchPageContent() {
       piscina: "",
       minSurface: undefined,
       maxSurface: undefined,
+      soloOfertas: false,
+      caracteristicasIds: [],
     } as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
@@ -1049,6 +1135,7 @@ function SearchPageContent() {
       maxPrice: undefined,
       minSurface: undefined,
       maxSurface: undefined,
+      caracteristicasIds: [], 
     });
   };
 
@@ -1193,9 +1280,17 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
+
+                <CharacteristicsFilter
+                  allTags={caracteristicasDB}
+                  value={advancedFilterValues}
+                  onChange={(v: any) => setAdvancedFilterValues(v)}
+                />
+
                 <AdvancedFilters
+                  value={advancedFilterValues}
                   key={advancedFiltersKey}
-                  onChange={setAdvancedFilterValues}
+                  onChange={(v: any) => setAdvancedFilterValues(v)}
                 />
                 <div className="my-4 h-px bg-[#D8D2C8]" />
                 <PriceDropdown
@@ -1229,7 +1324,9 @@ function SearchPageContent() {
                 </div>
               ) : allProperties.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                  No se encontraron inmuebles con los filtros aplicados.
+                  {advancedFilterValues.soloOfertas
+                    ? "No hay propiedades en oferta disponibles por el momento."
+                    : "No se encontraron inmuebles con los filtros aplicados."}
                 </div>
               ) : (
                 <>
@@ -1259,7 +1356,8 @@ function SearchPageContent() {
                     }}
                   />
                 </>
-              )}
+              )
+              }
             </>
           )
         ) : (
@@ -1468,12 +1566,12 @@ function SearchPageContent() {
                   <h2 className="text-xl font-bold text-[#2E2E2E]">Filtros</h2>
                   <button
                     onClick={() => setIsSidebarCollapsed(true)}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold  border  text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
                     title="Ocultar filtros"
                     aria-label="Ocultar filtros"
                   >
-                    <ChevronLeft className="h-4 w-4" />
                     Ocultar
+                    <ChevronLeft className="h-4 w-4" />
                   </button>
                 </div>
 
@@ -1530,9 +1628,16 @@ function SearchPageContent() {
                       onChange={setSelectedPropertyTypes}
                     />
 
+                    <CharacteristicsFilter
+                      allTags={caracteristicasDB}
+                      value={advancedFilterValues}
+                      onChange={(v: any) => setAdvancedFilterValues(v)}
+                    />
+
                     <AdvancedFilters
+                      value={advancedFilterValues}
                       key={advancedFiltersKey}
-                      onChange={setAdvancedFilterValues}
+                      onChange={(v: any) => setAdvancedFilterValues(v)}
                     />
 
                     <div className="my-3 h-px bg-[#F4EFE6]" />
@@ -1584,7 +1689,7 @@ function SearchPageContent() {
                 </div>
 
                 <div className={isMapOpen ? "w-full" : "shrink-0"}>
-                  <SortSelect onSortChange={handleSort} isMapOpen={isMapOpen} />
+                  <SortSelect onSortChange={handleSort} />
                 </div>
               </div>
 

@@ -9,6 +9,7 @@ type AdvancedFilterValues = {
   piscina?: string;
   minSurface?: number;
   maxSurface?: number;
+  caracteristicasIds?: number[];
 };
 
 type CountActiveFiltersParams = {
@@ -43,7 +44,9 @@ export function countActiveFilters({
 }: CountActiveFiltersParams): number {
   let count = 0;
 
-  if (searchLocation.trim()) count += 1;
+  // No contamos searchLocation porque el buscador no es un filtro como tal.
+  // Se mantiene en los parámetros porque search/page.tsx todavía lo envía.
+  void searchLocation;
 
   if (selectedOperation.length > 0) {
     count += selectedOperation.length;
@@ -70,6 +73,13 @@ export function countActiveFilters({
     advancedFilterValues.maxSurface !== undefined
   ) {
     count += 1;
+  }
+
+  if (
+    advancedFilterValues.caracteristicasIds &&
+    advancedFilterValues.caracteristicasIds.length > 0
+  ) {
+    count += advancedFilterValues.caracteristicasIds.length;
   }
 
   if (
