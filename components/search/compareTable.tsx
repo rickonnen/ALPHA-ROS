@@ -6,7 +6,7 @@ import CurrencySwitch from "@/components/search/currencySwitch";
 
 // Extendemos localmente tu Property para incluir las caracteristicas de la BD
 interface CompareProperty extends Property {
-  caracteristicas?: string[];
+  //caracteristicas?: string[];
   features?: string[]; 
 }
 
@@ -59,7 +59,12 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
 
   // Extraemos características únicas para el acordeón (filtros avanzados)
   const uniqueFeatures = Array.from(
-    new Set(selectedProperties.flatMap(p => p.caracteristicas || p.features || []))
+    new Set(selectedProperties.flatMap(p => {
+      const fromCaracterisiticas = p.caracteristicas?.map(c=>c.nombre) || [];
+      const fromFeatures = p.features || [];
+      return [ ... fromCaracterisiticas, ...fromFeatures ];
+      })
+    )
   ).sort();
 
   return (
@@ -157,7 +162,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Garajes</td>
               {selectedProperties.map(prop => (
-                <td key={`garages-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.garages || '—'}</td>
+                <td key={`garage-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.garajes || '—'}</td>
               ))}
             </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
@@ -176,7 +181,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
             </tr>
 
             {/* --- SECCIÓN DESPLEGABLE DE CARACTERÍSTICAS ADICIONALES --- */}
-            <tr 
+            {/* <tr 
               className="border-b border-gray-200 bg-slate-100/50 cursor-pointer hover:bg-slate-200/50 transition-colors"
               onClick={() => setShowFeatures(!showFeatures)}
             >
@@ -188,9 +193,9 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                   {showFeatures ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </div>
               </td>
-            </tr>
+            </tr> */}
             
-            {showFeatures && uniqueFeatures.length === 0 && (
+            {/* {showFeatures && uniqueFeatures.length === 0 && (
               <tr className="border-b border-gray-100 bg-gray-50/50 animate-in fade-in duration-300">
                 <td colSpan={selectedProperties.length + 1} className="p-0">
                   <div className="sticky left-0 w-screen sm:w-full p-4 sm:p-6 text-center text-gray-500 font-medium italic text-xs sm:text-sm">
@@ -198,7 +203,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                   </div>
                 </td>
               </tr>
-            )}
+            )} */}
 
             {showFeatures && uniqueFeatures.length > 0 && uniqueFeatures.map(featureName => (
               <tr key={featureName} className="border-b border-gray-100 hover:bg-gray-50/50 animate-in fade-in duration-300">
@@ -206,7 +211,9 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                   {featureName}
                 </td>
                 {selectedProperties.map(prop => {
-                  const hasFeature = prop.caracteristicas?.includes(featureName) || prop.features?.includes(featureName);
+                  const hasFeature = 
+                    prop.caracteristicas?.some(c => c.nombre === featureName) || 
+                    prop.features?.includes(featureName);
                   return (
                     <td key={`${featureName}-${prop.id}`} className="p-3 sm:p-6 text-center border-r border-gray-100">
                       {hasFeature ? (
@@ -228,12 +235,10 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Acciones</td>
               {selectedProperties.map(prop => (
                 <td key={`action-${prop.id}`} className="p-3 sm:p-6 border-r border-gray-100">
-                  <button 
-                    onClick={() => handleContact(prop.whatsappContact || prop.usuarioTelefono || '', prop.title)}
-                    className="w-full bg-slate-800 hover:bg-[#25D366] text-white font-bold py-2 sm:py-2.5 rounded text-[10px] sm:text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5 sm:gap-2"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                    <span className="truncate">CONTACTAR AGENTE</span>
+                  <button
+                    onClick={()=> handlePropertyClick(prop.id)}
+                    className="w-full bg-slate-800 hover:bg-[#a67c52] text-white font-bold py-2 sm:py-2.5 rounded text-[10px] sm:text-xs transition-colors shadow-sm flex items-center justify-center gap-1.5 sm:gap-2"                  >
+                    Ver Detalle
                   </button>
                 </td>
               ))}

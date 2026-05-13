@@ -363,6 +363,8 @@ function mapPublicationToProperty(
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
+    garajes: publication.garajes ?? 0,
+    floors: publication.plantas ?? 0,
     price: currentPrice,
     previousPrice: previousPrice,
     discountPercent: discountPercent,
