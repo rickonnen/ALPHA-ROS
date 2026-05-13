@@ -257,14 +257,14 @@ export default function PublicacionesView({
 
   return (
     <>
-      <Card className="border-none bg-transparent shadow-none text-foreground animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="pb-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="text-xl font-bold tracking-tight">
               PUBLICACIONES
             </CardTitle>
             <div className="flex items-center justify-center gap-2">
-              <span className="text-muted-foreground text-sm whitespace-nowrap">
+              <span className="text-white/60 text-sm whitespace-nowrap">
                 {publicacionesRestantes} publicaciones disponibles
               </span>
   
@@ -272,23 +272,23 @@ export default function PublicacionesView({
                 onClick={handleAgregar}
                 disabled={bolChecking}
                 size="sm"
-                className={`flex-shrink-0 font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                className={`flex-shrink-0 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--secondary)] ${
                   publicacionesRestantes <= 0
-                    ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
-                    : "bg-secondary text-secondary-foreground hover:opacity-90"
+                    ? "bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80" 
+                    : "bg-[var(--secondary)] hover:bg-[var(--secondary)]/80"
                 }`}
               >
                 {bolChecking ? "..." : "+ Agregar"}
               </Button>
             </div>
           </div>
-          <div className="border-b border-border w-full mt-1" />
+          <div className="border-b border-white/20 w-full mt-1" />
         </CardHeader>
 
         <CardContent className="flex flex-col pt-4">
           {/* Error */}
           {error && (
-            <p className="text-destructive text-sm text-center py-2">{error}</p>
+            <p className="text-red-400 text-sm text-center py-2">{error}</p>
           )}
 
           {/* Estado de carga */}
@@ -297,7 +297,7 @@ export default function PublicacionesView({
               {[1, 2, 3].map((i) => (
                 <Skeleton
                   key={i}
-                  className="h-24 mb-2 w-full rounded-md bg-muted"
+                  className="h-24 mb-2 w-full rounded-md bg-white/10"
                 />
               ))}
             </>
@@ -305,7 +305,7 @@ export default function PublicacionesView({
 
           {/* Lista vacía */}
           {!cargando && publicaciones.length === 0 && (
-            <p className="text-muted-foreground text-sm text-center py-8">
+            <p className="text-white/40 text-sm text-center py-8">
               No tienes publicaciones registradas.
             </p>
           )}
@@ -326,11 +326,11 @@ export default function PublicacionesView({
 
           {/* Paginación */}
           {!cargando && totalPaginas > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4 border-t border-border mt-2">
+            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/10 mt-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                className="text-white/60 hover:text-white disabled:opacity-30"
                 onClick={() => setPaginaActual((p) => p - 1)}
                 disabled={paginaActual === 1}
               >
@@ -344,10 +344,10 @@ export default function PublicacionesView({
                     variant="ghost"
                     size="sm"
                     onClick={() => setPaginaActual(num)}
-                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                    className={`w-8 h-8 rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--primary)] ${
                       paginaActual === num
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-white text-[var(--primary)]"
+                        : "text-white/60 hover:text-white"
                     }`}
                   >
                     {num}
@@ -358,7 +358,7 @@ export default function PublicacionesView({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                className="text-white/60 hover:text-white disabled:opacity-30"
                 onClick={() => setPaginaActual((p) => p + 1)}
                 disabled={paginaActual === totalPaginas}
               >
@@ -372,7 +372,7 @@ export default function PublicacionesView({
       {/* Modal de confirmación de eliminación */}
       {idAEliminar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-4">
             {/* Ícono */}
             <div className="w-14 h-14 rounded-full border-2 border-red-400 flex items-center justify-center">
               <svg
@@ -392,10 +392,10 @@ export default function PublicacionesView({
             </div>
 
             {/* Texto */}
-            <h2 className="text-lg font-bold text-foreground">
+            <h2 className="text-lg font-bold text-gray-900">
               ¿Eliminar publicación?
             </h2>
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-sm text-gray-500 text-center">
               ¿Estás seguro de eliminar esta publicación permanentemente?
             </p>
 
@@ -404,14 +404,14 @@ export default function PublicacionesView({
               <button
                 onClick={() => setIdAEliminar(null)}
                 disabled={eliminando}
-                className="flex-1 py-2 rounded-lg border border-card-border text-foreground font-semibold hover:bg-muted transition disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmarEliminar}
                 disabled={eliminando}
-                className="flex-1 py-2 rounded-lg bg-destructive hover:opacity-90 text-destructive-foreground font-semibold transition disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition disabled:opacity-50"
               >
                 {eliminando ? "Eliminando..." : "Sí, eliminar"}
               </button>
@@ -434,4 +434,3 @@ export default function PublicacionesView({
     </>
   );
 }
-
