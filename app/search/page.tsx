@@ -10,6 +10,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
+import CharacteristicsFilter from "@/components/search/characteristicsFilter";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -1300,11 +1301,16 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
-                <AdvancedFilters
-                  allTags={caracteristicasDB}           // <--- ACTIVADO PARA MÓVIL
-                  value={advancedFilterValues}    // <--- ACTIVADO PARA MÓVIL
-                  key={advancedFiltersKey}
+
+                <CharacteristicsFilter
+                  allTags={caracteristicasDB}
                   value={advancedFilterValues}
+                  onChange={(v: any) => setAdvancedFilterValues(v)}
+                />
+
+                <AdvancedFilters
+                  value={advancedFilterValues}
+                  key={advancedFiltersKey}
                   onChange={(v: any) => setAdvancedFilterValues(v)}
                 />
                 <div className="my-4 h-px bg-[#D8D2C8]" />
@@ -1642,11 +1648,17 @@ function SearchPageContent() {
                       selected={selectedPropertyTypes}
                       onChange={setSelectedPropertyTypes}
                     />
-                    <AdvancedFilters 
-                       allTags={caracteristicasDB}           // <--- ACTIVADO PARA DESKTOP
-                       value={advancedFilterValues}    // <--- ACTIVADO PARA DESKTOP
-                       key={advancedFiltersKey}
-                       onChange={(v: any) => setAdvancedFilterValues(v)} 
+
+                    <CharacteristicsFilter
+                      allTags={caracteristicasDB}
+                      value={advancedFilterValues}
+                      onChange={(v: any) => setAdvancedFilterValues(v)}
+                    />
+
+                    <AdvancedFilters
+                      value={advancedFilterValues}
+                      key={advancedFiltersKey}
+                      onChange={(v: any) => setAdvancedFilterValues(v)}
                     />
 
                     <div className="my-3 h-px bg-[#F4EFE6]" />

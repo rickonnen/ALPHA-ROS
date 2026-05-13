@@ -246,22 +246,12 @@ interface AdvancedFiltersValues {
   soloOfertas?: boolean;
 }
 
-interface CaracteristicaOption {
-  id_caracteristica: number;
-  nombre_caracteristica: string;
-}
-
 interface Props {
   onChange: (valores: AdvancedFiltersValues) => void;
   value?: AdvancedFiltersValues;
-  allTags?: CaracteristicaOption[];
 }
 
-export default function FiltrosAvanzado({
-  onChange,
-  value,
-  allTags = [],
-}: Props) {
+export default function FiltrosAvanzado({ onChange, value }: Props) {
   const [abierto, setAbierto] = useState(false);
 
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
@@ -392,23 +382,6 @@ export default function FiltrosAvanzado({
     });
   };
 
-  const toggleCaracteristica = (id: number) => {
-    const actuales = value?.caracteristicasIds ?? [];
-    const nuevos = actuales.includes(id)
-      ? actuales.filter((caracteristicaId) => caracteristicaId !== id)
-      : [...actuales, id];
-
-    onChange({
-      habitaciones,
-      banos,
-      piscina,
-      minSurface: parseSurface(minSurface),
-      maxSurface: parseSurface(maxSurface),
-      caracteristicasIds: nuevos,
-      soloOfertas,
-    });
-  };
-
   return (
     <div ref={wrapperRef} className={`${geist.className} mt-3 w-full`}>
       <Accordion
@@ -490,7 +463,7 @@ export default function FiltrosAvanzado({
                   >
                     <span
                       className={cn(
-                        "absolute top-[2px] left-[1px] h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        "absolute left-[1px] top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform",
                         soloOfertas
                           ? "translate-x-[22px]"
                           : "translate-x-[2px]",
@@ -513,46 +486,6 @@ export default function FiltrosAvanzado({
                   {surfaceError}
                 </p>
               </div>
-
-              {allTags.length > 0 && (
-                <div className="mt-4 border-t border-[#C8C0B5] pt-4">
-                  <h3 className="mb-3 text-sm font-bold text-[#2E2E2E]">
-                    Características
-                  </h3>
-
-                  <div className="flex flex-wrap gap-2">
-                    {allTags.map((caracteristica) => {
-                      const isSelected = value?.caracteristicasIds?.includes(
-                        caracteristica.id_caracteristica,
-                      );
-
-                      return (
-                        <button
-                          key={caracteristica.id_caracteristica}
-                          type="button"
-                          onClick={() =>
-                            toggleCaracteristica(
-                              caracteristica.id_caracteristica,
-                            )
-                          }
-                          className={cn(
-                            "rounded-md px-3 py-1.5 text-[10px] font-bold uppercase transition-all border-2",
-                            isSelected
-                              ? "border-[#1F3A4D] scale-105 shadow-md ring-1 ring-[#1F3A4D]"
-                              : "border-transparent opacity-70 hover:opacity-100",
-                          )}
-                          style={{
-                            backgroundColor: "#6B7280",
-                            color: "white",
-                          }}
-                        >
-                          {caracteristica.nombre_caracteristica}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </AccordionContent>
         </AccordionItem>
