@@ -607,27 +607,6 @@ function SearchPageContent() {
       };
     }, [objUser]);
 
-    useEffect(() => {
-    console.table({
-      ubicacion: searchLocation,
-      operaciones: selectedOperation.length,
-      tipos: selectedPropertyTypes.length,
-      habitaciones: advancedFilterValues.habitaciones,
-      banos: advancedFilterValues.banos,
-      piscina: advancedFilterValues.piscina,
-      minSurface: advancedFilterValues.minSurface,
-      maxSurface: advancedFilterValues.maxSurface,
-      minPrice: appliedPriceFilter?.minPrice,
-      maxPrice: appliedPriceFilter?.maxPrice,
-    });
-  }, [
-    searchLocation,
-    selectedOperation,
-    selectedPropertyTypes,
-    advancedFilterValues,
-    appliedPriceFilter,
-  ]);
-
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       selectedOperation.length > 0 ||
