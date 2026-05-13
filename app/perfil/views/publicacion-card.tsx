@@ -32,6 +32,13 @@
      - Usa variant="azul" y size="sm" igual que Ver Detalle y Editar
      - Ruta provisional: /publicacion/promocionar?id=<id>
      - TODO: reemplazar ruta cuando la página esté lista
+/* Dev: Dylan Coca Beltran - xdev/sow-dylanc
+   Fecha: 26/04/2026
+   Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+     - text-[#2E2E2E] → text-foreground, bg-white → bg-card-bg, bg-slate-100 → bg-muted,
+     - text-[#E05A2B] → text-secondary, text-[#1F3A4D] → text-primary,
+     - text-gray-500/text-gray-400/text-gray-600 → text-muted-foreground,
+     - bg-gray-100/text-gray-400 (sin imagen) → bg-muted/text-muted-foreground
 */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -82,7 +89,7 @@ export default function PublicacionCard({
 
   return (
     <Card
-      className={`relative border border-black/10 text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden ${!activo ? "bg-slate-100 brightness-[0.85]" : "bg-white"}`}
+      className={`relative border border-black/10 text-foreground hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden ${!activo ? "bg-muted brightness-[0.85]" : "bg-card-bg"}`}
     >
       <CardContent className="flex flex-col min-[480px]:flex-row items-stretch gap-0 p-0">
         {/* Miniatura */}
@@ -97,8 +104,8 @@ export default function PublicacionCard({
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <span className="text-gray-400 text-xs text-center px-2">
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <span className="text-muted-foreground text-xs text-center px-2">
                 Sin imagen
               </span>
             </div>
@@ -111,7 +118,7 @@ export default function PublicacionCard({
           <div>
             <div className="flex items-center justify-between mb-1">
               {strEtiqueta ? (
-                <p className="text-[11px] font-bold text-[#E05A2B] uppercase tracking-wide">
+                <p className="text-[11px] font-bold text-secondary uppercase tracking-wide">
                   {strEtiqueta}
                 </p>
               ) : (
@@ -150,7 +157,7 @@ export default function PublicacionCard({
               </div>
             </div>
             <h3
-              className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
+              className="text-base font-semibold text-primary leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
                 router.push(`/publicacion/Mi_inmueble/${publicacion.id}`)
               }
@@ -159,8 +166,8 @@ export default function PublicacionCard({
             </h3>
             {publicacion.direccion && (
               <div className="hidden sm:flex items-center gap-1 mt-1">
-                <MapPin className="w-3 h-3 text-[#E05A2B] shrink-0" />
-                <p className="text-xs text-gray-500 truncate">
+                <MapPin className="w-3 h-3 text-secondary shrink-0" />
+                <p className="text-xs text-muted-foreground truncate">
                   {[publicacion.direccion].filter(Boolean).join(", ")}
                 </p>
               </div>
@@ -168,7 +175,7 @@ export default function PublicacionCard({
           </div>
 
           {/* Métricas */}
-          <div className="hidden sm:flex items-center gap-4 text-xs text-gray-600 flex-wrap">
+          <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
             {publicacion.superficie != null && (
               <span className="flex items-center gap-1">
                 <Square className="w-3 h-3" />
@@ -193,12 +200,12 @@ export default function PublicacionCard({
           <div className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 mt-1">
             <div>
               {publicacion.precio != null && (
-                <p className="text-xl font-bold text-[#1F3A4D]">
+                <p className="text-xl font-bold text-primary">
                   $us {Number(publicacion.precio).toLocaleString("de-DE")}
                 </p>
               )}
               {publicacion.fechaPublicacion && (
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-muted-foreground">
                   {publicacion.fechaPublicacion}
                 </p>
               )}

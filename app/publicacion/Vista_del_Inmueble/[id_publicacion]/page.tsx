@@ -8,6 +8,7 @@
  * Fix: "Compra" → "Venta" en frontend.
  */
 /**
+<<<<<<< Updated upstream
  * Modificacion - @Dev: Gustavo Montaño - @Fecha: 09/05/2026
  * Se integró <ViewTracker /> para registro silencioso de visitas.
  */
@@ -28,6 +29,16 @@
  *   El estado, el botón y el <ShareModal> son gestionados internamente por MediaGallery.
  */
 
+=======
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-[#F4EFE6] → bg-background, text-[#2E2E2E] → text-foreground,
+ *      text-[#1F3A4D] → text-primary, bg-white/40 → bg-card-bg/40,
+ *      border-black/5 → border-card-border/20, text-gray-500 → text-muted-foreground,
+ *      border-[#C26E5A]/text-[#C26E5A] → border-secondary/text-secondary en botón Volver
+ */
+>>>>>>> Stashed changes
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
@@ -106,13 +117,17 @@ export default async function VistaInmueblePage({
   const bolDisponible  = !["Pausada", "Eliminada", "Inactiva"].includes(strEstado);
 
   return (
+<<<<<<< Updated upstream
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
       <ViewTracker id_publicacion={intId} />
+=======
+    <main className="min-h-screen bg-background text-foreground p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
+>>>>>>> Stashed changes
       <div className="max-w-6xl mx-auto">
 
         {/* Task 4.3: Título */}
         <header className="mb-10">
-          <h1 className="text-3xl md:text-5xl font-bold text-[#1F3A4D] mb-4 tracking-tight break-words">
+          <h1 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
           <PublicationStatusBadge strEstado={strEstado} />
@@ -139,19 +154,25 @@ export default async function VistaInmueblePage({
         {/* Task 4.3: Precio y Superficie */}
         <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
-            <Tag className="w-5 h-5 md:w-6 md:h-6 text-[#2E2E2E] opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <Tag className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
+<<<<<<< Updated upstream
               <span className="font-bold text-[#1F3A4D]">Precio:</span>
               <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
                 {(objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs."))} {Number(objPerfil.precio).toLocaleString("de-DE")}
+=======
+              <span className="font-bold text-primary">Precio:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
+                {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
+>>>>>>> Stashed changes
               </span>
             </div>
           </div>
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
-            <Ruler className="w-5 h-5 md:w-6 md:h-6 text-[#2E2E2E] opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <Ruler className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Superficie:</span>
-              <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
+              <span className="font-bold text-primary">Superficie:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
                 {Number(objPerfil.superficie).toLocaleString("de-DE")} m²
               </span>
             </div>
@@ -161,12 +182,12 @@ export default async function VistaInmueblePage({
         {/* Task 4.8: Dirección y Mapa */}
         <div className="mb-12">
           <p className="text-xl mb-6">
-            <span className="font-bold text-[#1F3A4D]">Dirección:</span> {strDireccion}
+            <span className="font-bold text-primary">Dirección:</span> {strDireccion}
           </p>
           {lat !== null && lng !== null ? (
             <LocationMapClient lat={lat} lng={lng} />
           ) : (
-            <p className="text-sm italic text-gray-500">Ubicación exacta en el mapa no disponible.</p>
+            <p className="text-sm italic text-muted-foreground">Ubicación exacta en el mapa no disponible.</p>
           )}
         </div>
 
@@ -191,8 +212,8 @@ export default async function VistaInmueblePage({
 
         {/* Task 4.8: Descripción */}
         <section className="mt-6 mb-6">
-          <div className="bg-white/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-black/5">
-            <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
+          <div className="bg-card-bg/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-card-border/20">
+            <h2 className="text-2xl font-bold mb-6 text-primary border-b border-foreground/5 pb-2">
               Descripción
             </h2>
             <p className="whitespace-pre-line text-base leading-relaxed opacity-90 break-words">
@@ -222,9 +243,15 @@ export default async function VistaInmueblePage({
           );
         })()}
 
+<<<<<<< Updated upstream
         {/* Botón Volver + ReportModal */}
         <div className="mt-12 flex items-center justify-between">
           <CloseTabButton className="px-10 py-3 border-2 border-[#C26E5A] text-[#C26E5A] rounded-xl font-bold hover:bg-[#C26E5A]/10 transition-colors">
+=======
+        {/* Botón Volver al final (Reemplaza a PropertyActions)*/}
+        <div className="mt-12 flex justify-start">
+          <CloseTabButton className="px-10 py-3 border-2 border-secondary text-secondary rounded-xl font-bold hover:bg-secondary/10 transition-colors">
+>>>>>>> Stashed changes
             Volver
           </CloseTabButton>
           <ReportModal id_publicacion={intId} />
