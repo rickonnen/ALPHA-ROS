@@ -1017,11 +1017,15 @@ function SearchPageContent() {
   const fetchRecommendations = useCallback(async () => {
     try {
       const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      
       const response = await fetch("/api/recommendations/personal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ candidate_ids }),
+        body: JSON.stringify({ 
+          candidate_ids,
+          id_usuario: objUser?.id // Include authenticated user ID
+        }),
       });
       if (response.ok) {
         const data = (await response.json()) as { id_publicacion: number }[];
@@ -1035,7 +1039,7 @@ function SearchPageContent() {
       console.error("Error fetching recommendations:", error);
       setRecommendedIds([]);
     }
-  }, [searchResults]);
+  }, [searchResults, objUser?.id]);
 
   // Cargar recomendaciones cuando se selecciona ese sort.
   useEffect(() => {
