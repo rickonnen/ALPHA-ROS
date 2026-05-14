@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -61,6 +61,19 @@ interface FiltrosBusquedaParams extends FiltrosPublicacion {
   currency?: undefined;
 }
 
+type BrowserCoordinates = {
+  latitud: number;
+  longitud: number;
+};
+
+type GlobalLocationRecommendationsResponse = {
+  success: boolean;
+  zone?: string | null;
+  publications?: PublicacionBusqueda[];
+  total?: number;
+  message?: string;
+};
+
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -113,6 +126,28 @@ function getQueryValues(value: string | null): string[] {
     .filter(Boolean);
 }
 
+function getBrowserCoordinates(): Promise<BrowserCoordinates | null> {
+  if (typeof window === "undefined" || !("geolocation" in navigator)) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          latitud: position.coords.latitude,
+          longitud: position.coords.longitude,
+        }),
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 10 * 60 * 1000,
+        timeout: 1500,
+      },
+    );
+  });
+}
+
 function normalizeZoneName(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -127,8 +162,8 @@ function isValidZoneCoordinates(
       (point) =>
         Array.isArray(point) &&
         point.length === 2 &&
-        typeof point[0] === "number" &&
-        typeof point[1] === "number" &&
+        point[0] === "number" &&
+        point[1] === "number" &&
         Number.isFinite(point[0]) &&
         Number.isFinite(point[1]),
     )
@@ -271,8 +306,9 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
         return first.id - second.id;
-      case "fecha-reciente":
       default:
+        if (first.isPromoted && !second.isPromoted) return -1;
+        if (!first.isPromoted && second.isPromoted) return 1;
         return second.id - first.id;
     }
   });
@@ -371,6 +407,8 @@ function mapPublicationToProperty(
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono,
     caracteristicas: publication.caracteristicas || [],
+    etiquetas: publication.etiquetas || [],
+    isPromoted: publication.es_promocionada ?? false,
   };
 }
 
@@ -438,6 +476,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
+  const skipNextZoneUrlLoadRef = useRef(false);
 
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -449,6 +488,7 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
+  const [caracteristicasDB, setCaracteristicasDB] = useState<any[]>([]);
   const [advancedFilterValues, setAdvancedFilterValues] = useState<{
     habitaciones?: string;
     banos?: string;
@@ -456,11 +496,11 @@ function SearchPageContent() {
     minSurface?: number;
     maxSurface?: number;
     soloOfertas?: boolean;
+    caracteristicasIds?: number[];
   }>({
     habitaciones: "",
     banos: "",
     piscina: "",
-    soloOfertas: false,
   });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -470,6 +510,9 @@ function SearchPageContent() {
   const [selectedSort, setSelectedSort] = useState("fecha-reciente");
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isShowingGlobalRecommendations, setIsShowingGlobalRecommendations] = useState(false);
+  const [globalRecommendationIds, setGlobalRecommendationIds] = useState<number[]>([]);
+  const [globalRecommendationZone, setGlobalRecommendationZone] = useState<string | null>(null);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
   const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
@@ -510,6 +553,27 @@ function SearchPageContent() {
       setIsSelectionLoaded(true);
     }
   }, []);
+
+  useEffect(() => {
+  const fetchCaracteristicas = async () => {
+    try {
+      const res = await fetch("/api/etiquetas");
+      const payload = await res.json();
+
+      const rawCaracteristicas = Array.isArray(payload)
+        ? payload
+        : payload.caracteristicas || payload.data || [];
+
+      setCaracteristicasDB(rawCaracteristicas);
+
+      console.log("Características cargadas:", rawCaracteristicas);
+    } catch (error) {
+      console.error("Error cargando características de la DB:", error);
+    }
+  };
+
+  fetchCaracteristicas();
+}, []);
 
   useEffect(() => {
     if (isSelectionLoaded && typeof window !== "undefined") {
@@ -604,14 +668,15 @@ function SearchPageContent() {
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      searchLocation.trim() ||
-        selectedOperation.length > 0 ||
+      selectedOperation.length > 0 ||
         selectedPropertyTypes.length > 0 ||
         advancedFilterValues.habitaciones ||
         advancedFilterValues.banos ||
         advancedFilterValues.piscina ||
         advancedFilterValues.minSurface !== undefined ||
         advancedFilterValues.maxSurface !== undefined ||
+        (advancedFilterValues.caracteristicasIds &&
+          advancedFilterValues.caracteristicasIds.length > 0) ||
         appliedPriceFilter?.minPrice !== undefined ||
         appliedPriceFilter?.maxPrice !== undefined ||
         advancedFilterValues.soloOfertas,
@@ -620,12 +685,12 @@ function SearchPageContent() {
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
-    appliedPriceFilter?.maxPrice,
-    appliedPriceFilter?.minPrice,
     advancedFilterValues.minSurface,
     advancedFilterValues.maxSurface,
     advancedFilterValues.soloOfertas,
-    searchLocation,
+    advancedFilterValues.caracteristicasIds,
+    appliedPriceFilter?.maxPrice,
+    appliedPriceFilter?.minPrice,
     selectedOperation,
     selectedPropertyTypes,
   ]);
@@ -691,6 +756,19 @@ function SearchPageContent() {
       mapped = mapped.filter(hasPropertyDiscount);
     }
 
+    if (isShowingGlobalRecommendations && globalRecommendationIds.length > 0) {
+      return mapped.slice().sort((a, b) => {
+        const indexA = globalRecommendationIds.indexOf(a.id);
+        const indexB = globalRecommendationIds.indexOf(b.id);
+
+        if (indexA !== -1 && indexB === -1) return -1;
+        if (indexA === -1 && indexB !== -1) return 1;
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+        return 0;
+      });
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
       return mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
@@ -705,7 +783,15 @@ function SearchPageContent() {
     }
 
     return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
+  }, [
+    filteredSearchResults,
+    selectedOperation,
+    selectedSort,
+    recommendedIds,
+    advancedFilterValues.soloOfertas,
+    isShowingGlobalRecommendations,
+    globalRecommendationIds,
+  ]);
 
 // Paginación con soporte de sidebar colapsado (v2)
   const itemsPerPage = isMapOpen
@@ -808,7 +894,11 @@ function SearchPageContent() {
       selectedPropertyTypes,
       PROPERTY_TYPE_OPTIONS,
     ).join(", ") || "Inmuebles";
-  const breadcrumbLocationLabel = searchLocation.trim() || "Bolivia";
+  const breadcrumbLocationLabel =
+    searchLocation.trim() ||
+    (isShowingGlobalRecommendations && globalRecommendationZone
+      ? globalRecommendationZone
+      : "Bolivia");
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
   const saveFiltersToUrl = () => {
@@ -843,6 +933,12 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (
+      advancedFilterValues.caracteristicasIds &&
+      advancedFilterValues.caracteristicasIds.length > 0
+    ) {
+      urlParams.set("caracteristicas", advancedFilterValues.caracteristicasIds.join(","));
+    }
     window.history.pushState(null, "", `/search?${urlParams.toString()}`);
   };
 
@@ -850,6 +946,57 @@ function SearchPageContent() {
     setAppliedPriceFilter(priceFilter);
   const handleCurrencyChange = (currency: Currency) =>
     setSelectedCurrency(currency);
+
+  const runGlobalLocationRecommendations = async () => {
+    setIsApplyingFilters(true);
+    try {
+      const coordinates = await getBrowserCoordinates();
+      const response = await fetch("/api/recommendations/global-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...coordinates,
+          limit: 36,
+        }),
+      });
+
+      const payload = (await response.json()) as GlobalLocationRecommendationsResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.message ?? "No se pudieron consultar las recomendaciones globales",
+        );
+      }
+
+      const publications = payload.publications ?? [];
+      setSearchResults(publications);
+      setGlobalRecommendationIds(publications.map((item) => item.id_publicacion));
+      setGlobalRecommendationZone(payload.zone ?? null);
+      setIsShowingGlobalRecommendations(true);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
+      await runSearch({
+        ubicacion: "",
+        operacion: undefined,
+        tipoInmueble: undefined,
+        habitaciones: "",
+        banos: "",
+        piscina: "",
+        minPrice: undefined,
+        maxPrice: undefined,
+        minSurface: undefined,
+        maxSurface: undefined,
+        caracteristicasIds: [],
+      });
+    } finally {
+      setIsApplyingFilters(false);
+    }
+  };
 
   const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
     setIsApplyingFilters(true);
@@ -876,11 +1023,15 @@ function SearchPageContent() {
         soloOfertas: advancedFilterValues.soloOfertas,
         sort: selectedSort,
         currency: selectedCurrency,
+        caracteristicasIds: advancedFilterValues.caracteristicasIds,
         ...overrides,
       };
 
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
       setHasSearched(true);
 
       const OPERACION_ID: Record<string, number> = {
@@ -967,6 +1118,13 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    const sortParam = searchParams.get("sort")?.trim();
+    const nextSort = sortParam || "fecha-reciente";
+    // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
+    const caracteristicasParam = searchParams.get("caracteristicas");
+    const nextCaracteristicas = caracteristicasParam
+      ? caracteristicasParam.split(",").map(Number).filter((n) => !isNaN(n))
+      : [];
 
     const nextMinPrice =
       minPriceParam !== null && minPriceParam.trim() !== ""
@@ -987,6 +1145,22 @@ function SearchPageContent() {
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
+    setSelectedSort(nextSort);
+
+    // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
+    setAdvancedFilterValues(prev => ({
+      ...prev,
+      caracteristicasIds: nextCaracteristicas
+    }));
+
+    if (nextSort === "recomendados-zona") {
+      if (skipNextZoneUrlLoadRef.current) {
+        skipNextZoneUrlLoadRef.current = false;
+        return;
+      }
+      void runGlobalLocationRecommendations();
+      return;
+    }
 
     void runSearch({
       ubicacion: nextLocation,
@@ -995,6 +1169,8 @@ function SearchPageContent() {
         nextPropertyLabels.join(",") || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
+      caracteristicasIds: nextCaracteristicas,
+      sort: nextSort,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -1095,10 +1271,14 @@ function SearchPageContent() {
       minSurface: undefined,
       maxSurface: undefined,
       soloOfertas: false,
+      caracteristicasIds: [],
     } as any);
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
+    setGlobalRecommendationIds([]);
+    setGlobalRecommendationZone(null);
+    setIsShowingGlobalRecommendations(false);
     setAdvancedFiltersKey((prev) => prev + 1);
     setCurrentPage(1);
     window.history.pushState(null, "", "/search");
@@ -1113,15 +1293,26 @@ function SearchPageContent() {
       maxPrice: undefined,
       minSurface: undefined,
       maxSurface: undefined,
+      caracteristicasIds: [], 
     });
   };
 
-  const handleSort = (sortOption: string) => setSelectedSort(sortOption);
+  const handleSort = (sortOption: string) => {
+    setSelectedSort(sortOption);
+
+    if (sortOption === "recomendados-zona") {
+      skipNextZoneUrlLoadRef.current = true;
+      void runGlobalLocationRecommendations();
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (hasSearched || hasActiveFilters) {
         saveFiltersToUrl();
+        if (selectedSort === "recomendados-zona") {
+          return;
+        }
         void runSearch();
       }
     }, 500);
@@ -1258,9 +1449,11 @@ function SearchPageContent() {
                   onChange={setSelectedPropertyTypes}
                 />
                 <AdvancedFilters
+                  allTags={caracteristicasDB}           // <--- ACTIVADO PARA MÓVIL
+                  value={advancedFilterValues}    // <--- ACTIVADO PARA MÓVIL
                   key={advancedFiltersKey}
                   value={advancedFilterValues}
-                  onChange={setAdvancedFilterValues}
+                  onChange={(v: any) => setAdvancedFilterValues(v)}
                 />
                 <div className="my-4 h-px bg-[#D8D2C8]" />
                 <PriceDropdown
@@ -1326,7 +1519,8 @@ function SearchPageContent() {
                     }}
                   />
                 </>
-              )}
+              )
+              }
             </>
           )
         ) : (
@@ -1596,10 +1790,11 @@ function SearchPageContent() {
                       selected={selectedPropertyTypes}
                       onChange={setSelectedPropertyTypes}
                     />
-
-                    <AdvancedFilters
-                      key={advancedFiltersKey}
-                      onChange={setAdvancedFilterValues}
+                    <AdvancedFilters 
+                       allTags={caracteristicasDB}           // <--- ACTIVADO PARA DESKTOP
+                       value={advancedFilterValues}    // <--- ACTIVADO PARA DESKTOP
+                       key={advancedFiltersKey}
+                       onChange={(v: any) => setAdvancedFilterValues(v)} 
                     />
 
                     <div className="my-3 h-px bg-[#F4EFE6]" />

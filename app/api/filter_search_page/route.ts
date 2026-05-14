@@ -21,27 +21,20 @@ export async function POST(request: NextRequest) {
 
     const filters: SearchFiltersInput = {
       ...body,
-
-      minPrice: toOptionalNumber(body.minPrice),
-      maxPrice: toOptionalNumber(body.maxPrice),
-
-      minSurface:
-        toOptionalNumber(body.minSurface) ??
-        toOptionalNumber(body.superficieMin),
-
-      maxSurface:
-        toOptionalNumber(body.maxSurface) ??
-        toOptionalNumber(body.superficieMax),
-
-      soloOfertas: Boolean(body.soloOfertas),
-      sort: typeof body.sort === "string" ? body.sort : undefined,
+      // CAPTURAMOS LAS CARACTERÍSTICAS: Convertimos a número para evitar errores de tipo
+      caracteristicasIds: body.caracteristicasIds ? body.caracteristicasIds.map(Number) : undefined,
+      
+      // Mantenemos el arreglo de superficies
+      minSurface: body.minSurface ? Number(body.minSurface) : (body.superficieMin ? Number(body.superficieMin) : undefined),
+      maxSurface: body.maxSurface ? Number(body.maxSurface) : (body.superficieMax ? Number(body.superficieMax) : undefined),
     };
 
+    // Llamamos al servicio 
     const publications = await getCachedPublicaciones(filters);
 
     return NextResponse.json({
       success: true,
-      publications,
+      publications, 
       total: publications.length,
     });
   } catch (error) {
