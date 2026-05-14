@@ -52,7 +52,7 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid #e5e7eb" }} />
+      <hr style={{ border: "none", borderTop: "1px solid #1F3A4D" }} />
 
       {/* Message */}
       <p style={{ fontSize: "14px", color: "#4b5563", lineHeight: "1.6", margin: 0 }}>

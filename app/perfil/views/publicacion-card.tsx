@@ -26,6 +26,13 @@
        (superficie, habitaciones, baños) para ocultarlas en mobile
      - Ambos elementos siguen visibles desde el breakpoint `sm` en adelante
 */
+/* Dev: [tu nombre]
+   Fecha: 10/05/2026
+   Add: Botón "Promocionar" junto a los botones de acción existentes
+     - Usa variant="azul" y size="sm" igual que Ver Detalle y Editar
+     - Ruta provisional: /publicacion/promocionar?id=<id>
+     - TODO: reemplazar ruta cuando la página esté lista
+*/
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,8 +72,9 @@ export default function PublicacionCard({
   const [activo, setActivo] = useState(publicacion.id_estado !== 4);
   const [bloqueado, setBloqueado] = useState(false);
   const [estadoPrevio, setEstadoPrevio] = useState(
-  publicacion.id_estado !== 4 ? publicacion.id_estado : 1);
-  
+    publicacion.id_estado !== 4 ? publicacion.id_estado : 1
+  );
+
   const strEtiqueta = [publicacion.tipo, publicacion.tipoOperacion]
     .filter(Boolean)
     .join(" en ")
@@ -111,9 +119,9 @@ export default function PublicacionCard({
               )}
               <div className="flex items-center gap-2">
                 {publicacion.gratuito && (
-                    <span className="px-2 py-1 text-[10px] font-semibold text-blue-800 bg-blue-100 rounded-full">
+                  <span className="px-2 py-1 text-[10px] font-semibold text-blue-800 bg-blue-100 rounded-full">
                     Gratuita
-                    </span>
+                  </span>
                 )}
                 <span
                   className={`text-[10px] font-bold uppercase ${activo ? "text-green-600" : "text-red-500"}`}
@@ -144,9 +152,7 @@ export default function PublicacionCard({
             <h3
               className="text-base font-semibold text-[#1F3A4D] leading-snug cursor-pointer hover:underline truncate"
               onClick={() =>
-                router.push(
-                  `/publicacion/Mi_inmueble/${publicacion.id}`,
-                )
+                router.push(`/publicacion/Mi_inmueble/${publicacion.id}`)
               }
             >
               {publicacion.titulo}
@@ -204,7 +210,10 @@ export default function PublicacionCard({
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
                 onClick={() =>
-                  window.open(`/publicacion/Mi_inmueble/${publicacion.id}`, `tab_inmueble_${publicacion.id}`)                
+                  window.open(
+                    `/publicacion/Mi_inmueble/${publicacion.id}`,
+                    `tab_inmueble_${publicacion.id}`
+                  )
                 }
               >
                 Ver Detalle
@@ -213,9 +222,26 @@ export default function PublicacionCard({
                 variant="azul"
                 size="sm"
                 className="flex-1 min-[480px]:flex-none"
-                onClick={() => router.push(`/publicacion/formularioPublicacion?editar=${publicacion.id}`)}
+                onClick={() =>
+                  router.push(
+                    `/publicacion/formularioPublicacion?editar=${publicacion.id}`
+                  )
+                }
               >
                 Editar
+              </Button>
+              {/* TODO: reemplazar la ruta cuando la página de promoción esté lista */}
+              <Button
+                variant="azul"
+                size="sm"
+                className="flex-1 min-[480px]:flex-none"
+                onClick={() =>
+                  router.push(`/cobros/planes-promocion?pubId=${publicacion.id}`
+
+                  )
+                }
+              >
+                Promocionar
               </Button>
               <Button
                 size="sm"

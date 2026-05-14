@@ -74,7 +74,7 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
     <div className="flex flex-col gap-3 h-full">
 
       {/* Label */}
-      <Label htmlFor="video-url" className="text-sm font-semibold text-[#1F3A4D] flex-shrink-0">
+      <Label htmlFor="video-url" className="text-sm font-semibold text-primary flex-shrink-0">
         Pega el enlace de video de Youtube o REEL(Instagram) de tu propiedad
       </Label>
 
@@ -85,8 +85,8 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
           placeholder="Introduce un enlace de YouTube o Instagram Reel..."
           value={strUrl}
           onChange={handleInputChange}
-          className={`pr-10 bg-white text-sm ${
-            strUrl && !hasValidPreview ? 'border-red-400 focus-visible:ring-red-400' : ''
+          className={`pr-10 bg-card-bg text-sm ${
+            strUrl && !hasValidPreview ? 'border-destructive focus-visible:ring-destructive' : ''
           }`}
         />
         <Link2Icon className="absolute right-3 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -94,7 +94,7 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
 
       {/* Error */}
       {strUrl && !hasValidPreview && (
-        <p className="text-xs font-medium text-red-500 flex-shrink-0">
+        <p className="text-xs font-medium text-destructive flex-shrink-0">
           Introduce una URL válida de YouTube o Instagram (Reel/Post).
         </p>
       )}
@@ -106,33 +106,33 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
         {!hasValidPreview && (
           <div
             className="w-full h-full flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed"
-            style={{ borderColor: '#D4B8AE', backgroundColor: '#EDE8E0' }}
+            style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--secondary-fund)' }}
           >
             <div
               className="flex items-center justify-center rounded-full"
-              style={{ width: '56px', height: '56px', backgroundColor: '#D4B8AE' }}
+              style={{ width: '56px', height: '56px', backgroundColor: 'var(--card-border)' }}
             >
               <svg viewBox="0 0 24 24" fill="none" style={{ width: '28px', height: '28px' }}>
-                <circle cx="12" cy="12" r="10" fill="#C26E5A" opacity="0.25" />
-                <polygon points="10,8 18,12 10,16" fill="#C26E5A" />
+                <circle cx="12" cy="12" r="10" fill="var(--secondary)" opacity="0.25" />
+                <polygon points="10,8 18,12 10,16" fill="var(--secondary)" />
               </svg>
             </div>
             <div className="text-center px-4">
-              <p className="text-sm font-semibold" style={{ color: '#1F3A4D' }}>
+              <p className="text-sm font-semibold text-primary">
                 Aquí se visualizará tu video
               </p>
-              <p className="text-xs mt-0.5" style={{ color: '#9E8E84' }}>
+              <p className="text-xs mt-0.5 text-muted-foreground">
                 Introduce un enlace de YouTube o Instagram Reel
               </p>
             </div>
           </div>
         )}
 
-        {/* Embed YouTube — llena todo el marco */}
+        {/* Embed YouTube */}
         {hasValidPreview && objPreview.platform === 'youtube' && (
           <div
             className="w-full h-full overflow-hidden rounded-xl"
-            style={{ border: '2px solid #D4B8AE', backgroundColor: '#000' }}
+            style={{ border: '2px solid var(--card-border)', backgroundColor: '#000' }}
           >
             <iframe
               src={`https://www.youtube.com/embed/${objPreview.id}`}
@@ -144,12 +144,9 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
           </div>
         )}
 
-        {/* Embed Instagram — escalado para caber en el marco fijo */}
+        {/* Embed Instagram */}
         {hasValidPreview && objPreview.platform === 'instagram' && (
-          <div
-            className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl"
-          >
-        
+          <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
             <div style={{ overflow: 'hidden', width: '154px', height: '278px' }}>
               <iframe
                 src={`https://www.instagram.com/p/${objPreview.id}/embed`}
@@ -174,7 +171,7 @@ export function VideoForm({ onNext, onBack }: VideoFormProps) {
 
       {/* Nota opcional */}
       {!strUrl && (
-        <p className="text-xs text-gray-400 flex-shrink-0">
+        <p className="text-xs text-muted-foreground flex-shrink-0">
           Puedes dejar este campo en blanco si aún no tienes un video.
         </p>
       )}

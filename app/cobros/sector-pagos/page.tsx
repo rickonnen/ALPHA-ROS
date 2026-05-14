@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PagoCliente from "@/features/cobros/sectorPago/pagoCliente";
 import ResumenPublicacion from "@/features/cobros/sectorPago/ResumenPublicacion";
 
@@ -22,7 +22,12 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
   // plan.tipo === true  => Es Publicación
   // plan.tipo === false => Es Promoción
   const esPromocion = plan.tipo === false;
-  // Solo se muestra si es una promoción Y además el idPublicacion no está vacío.
+  if (!esPromocion && idPublicacion) {
+    redirect(`/cobros/sector-pagos?planId=${planId}&modalidad=${modalidad || "mensual"}`);
+  }
+  if (esPromocion && !idPublicacion) {
+    redirect("/perfil");
+  }
   const mostrarTarjetaAlMedio = esPromocion && Boolean(idPublicacion);
 
   let precioFinal = Number(plan.precio_plan);
@@ -56,7 +61,7 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
   return (
     <PagoCliente 
       datos={datosParaPago}
-      backUrl={esPromocion ? `/perfil/publicacion` : "/cobros/planes"} 
+      backUrl={esPromocion ? `/cobros/planes-promocion` : "/cobros/planes"} 
       resumenPublicacionNode={
         mostrarTarjetaAlMedio ? <ResumenPublicacion idPublicacion={idPublicacion!} /> : null
       }

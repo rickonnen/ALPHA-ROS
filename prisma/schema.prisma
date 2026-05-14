@@ -619,6 +619,19 @@ model DetallePago {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model EstadisticaPublicacion {
+  id_estadistica Int         @id @default(autoincrement())
+  id_publicacion Int
+  fecha          DateTime    @db.Date
+  vistas         Int         @default(0)
+  compartidas    Int         @default(0)
+  Publicacion    Publicacion @relation(fields: [id_publicacion], references: [id_publicacion], onDelete: Cascade, onUpdate: NoAction, map: "fk_estadistica_publicacion")
+
+  @@unique([id_publicacion, fecha], map: "uk_estadistica_pub_fecha")
+  @@schema("public")
+}
+
 model EstadoConstruccion {
   id_estado_construccion     Int           @id(map: "EstadoConstruccion_pk") @default(autoincrement()) @db.SmallInt
   nombre_estado_construccion String?       @db.VarChar(128)
@@ -772,6 +785,28 @@ model Notificacion {
   @@schema("public")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model NotificationQueue {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone               String
+  title               String?
+  body                String?
+  status              String?   @default("PENDING")
+  scheduled_at        DateTime  @db.Timestamptz(6)
+  sent_at             DateTime? @db.Timestamptz(6)
+  read                String?
+  created_at          DateTime? @default(now()) @db.Timestamptz(6)
+  user_id             String?   @db.Uuid
+  timezone            String?   @default("America/La_Paz")
+  channel             String?   @default("WHATSAPP")
+  provider_message_id String?
+  error               String?
+  read_at             DateTime? @db.Timestamptz(6)
+
+  @@index([status, scheduled_at], map: "idx_notificationqueue_pending")
+  @@schema("public")
+}
+
 model Pais {
   id_pais     Int         @id(map: "Pais_pk") @default(autoincrement()) @db.SmallInt
   nombre_pais String?     @db.VarChar(128)
@@ -837,6 +872,20 @@ model PreferenciaNotificacionCanal {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Privacidad {
+  id_priv          Int     @id @default(autoincrement())
+  id_usuario       String  @unique(map: "uq_privacidad_usuario") @db.Uuid
+  favorito         Boolean @default(false)
+  direccion        Boolean @default(false)
+  genero           Boolean @default(false)
+  fecha_nacimiento Boolean @default(false)
+  estado_civil     Boolean @default(false)
+  Usuario          Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PromocionPublicacion {
   id_promocion   Int          @id @default(autoincrement())
   id_usuario     String?      @db.Uuid
@@ -871,6 +920,7 @@ model Publicacion {
   gratuito                  Boolean                     @default(false)
   prioridad                 Boolean?
   DetallePago               DetallePago[]
+  EstadisticaPublicacion    EstadisticaPublicacion[]
   Favorito                  Favorito[]
   HistorialVistos           HistorialVistos[]
   Imagen                    Imagen[]
@@ -1136,6 +1186,7 @@ model Usuario {
   HistorialVistos              HistorialVistos[]
   LikesComentarios             LikesComentarios[]
   Notificacion                 Notificacion[]
+  Privacidad                   Privacidad?
   PromocionPublicacion         PromocionPublicacion[]
   Publicacion                  Publicacion[]
   Recuperacion_password        Recuperacion_password[]

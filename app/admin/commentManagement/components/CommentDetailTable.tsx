@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Loader2, Trash2, ShieldAlert, CornerDownRight } from "lucide-react";
 import { CommentDetailData, CLS_FOCUS } from "../[commentId]/types";
+import { SoftDeleteModal, HardDeleteModal } from "./CommentDetailModals";
+
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 06/05/2026
  * funcionalidad: Componente de presentación
- * encargado de renderizar la tabla de comentarios detallados de un post, 
+ * encargado de renderizar la tabla de comentarios detallados de un post,
  * mostrar el estado visual (activo/borrado) e hilos de respuesta
  */
 interface CommentDetailTableProps {
@@ -13,6 +16,9 @@ interface CommentDetailTableProps {
 }
 
 export default function CommentDetailTable({ BolIsLoading, ArrPaginated, onAction }: CommentDetailTableProps) {
+  const [softModal, setSoftModal] = useState<{ open: boolean; commentId: number | null }>({ open: false, commentId: null });
+  const [hardModal, setHardModal] = useState<{ open: boolean; commentId: number | null }>({ open: false, commentId: null });
+
   return (
     <div className="bg-secondary-fund p-6 sm:p-8 rounded-sm w-full min-h-[25rem] border border-card-border shadow-sm mt-2">
       <div className="overflow-x-auto scrollbar-custom rounded-lg border border-card-border bg-card">
@@ -82,7 +88,11 @@ export default function CommentDetailTable({ BolIsLoading, ArrPaginated, onActio
 
                     <td className="p-4 text-center">
                       <button
-                        onClick={() => onAction(objComment.id, !isDeleted)}
+                        onClick={() =>
+                          isDeleted
+                            ? setHardModal({ open: true, commentId: objComment.id })
+                            : setSoftModal({ open: true, commentId: objComment.id })
+                        }
                         className={`inline-flex items-center justify-center gap-2 rounded px-4 py-1.5 text-xs font-bold uppercase shadow-sm transition-transform duration-200 hover:scale-105 ${CLS_FOCUS} ${
                           isDeleted
                             ? "bg-destructive text-destructive-foreground border border-destructive hover:bg-destructive/90"
@@ -113,6 +123,17 @@ export default function CommentDetailTable({ BolIsLoading, ArrPaginated, onActio
           </tbody>
         </table>
       </div>
+
+      <SoftDeleteModal
+        isOpen={softModal.open}
+        onClose={() => setSoftModal({ open: false, commentId: null })}
+        onConfirm={() => softModal.commentId !== null && onAction(softModal.commentId, true)}
+      />
+      <HardDeleteModal
+        isOpen={hardModal.open}
+        onClose={() => setHardModal({ open: false, commentId: null })}
+        onConfirm={() => hardModal.commentId !== null && onAction(hardModal.commentId, false)}
+      />
     </div>
   );
 }

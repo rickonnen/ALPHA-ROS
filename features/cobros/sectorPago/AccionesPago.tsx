@@ -24,6 +24,7 @@ interface Props {
   iniciarPagoCrypto: (precio: number, planId: string) => void;
   idReferencia: string;
   onTabChange: (value: "qr" | "virtual") => void; 
+  tipoPagoSeleccionado: "qr" | "virtual";
   setEstadoModal: (estado: EstadoModal) => void;
 }
 
@@ -39,7 +40,7 @@ export const AccionesPago = ({
   idUsuario, precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
   estaCargandoEstado, fileInputRef, onVerificar, onDescargar,
   onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, 
-  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange, setEstadoModal
+  cargandoCrypto, iniciarPagoCrypto, idReferencia, tipoPagoSeleccionado, onTabChange, setEstadoModal
 }: Props) => {
 
 // --- ESTADOS PARA LA SIMULACIÓN ---
@@ -50,7 +51,9 @@ const horaEntradaRef = useRef(new Date().toISOString());
 
 useEffect(() => {
   // Si no hay ID o ya terminamos, no hacemos NADA
-  if (!idUsuario || finalizado) return;
+  if (!idUsuario || finalizado || tipoPagoSeleccionado !== "virtual") {
+    return;
+  }
 
   console.log("🚀 Iniciando monitoreo de pago desde:", horaEntradaRef.current);
 
@@ -85,7 +88,7 @@ useEffect(() => {
     console.log("🧹 Limpiando intervalo");
     clearInterval(intervalo);
   };
-}, [idUsuario, finalizado]); 
+}, [idUsuario, finalizado, tipoPagoSeleccionado]); 
 
   return (
     <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
@@ -182,6 +185,7 @@ useEffect(() => {
               {!archivoSeleccionado ? (
                 <Button 
                   variant="outline" 
+                  disabled={tienePagoPendiente || estaCargandoEstado}
                   className="w-full font-medium text-lg py-6 cursor-pointer border-dashed border-2" 
                   onClick={() => fileInputRef.current?.click()}
                 >
