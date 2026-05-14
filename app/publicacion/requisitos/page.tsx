@@ -1,4 +1,18 @@
 "use client";
+/**
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-[#E7E1D7] → bg-secondary-fund, bg-[#F8F5EF] → bg-card-bg,
+ *      bg-[#E5DED2]/bg-[#E9E2D8]/bg-[#ECE6DD]/bg-[#EFE9E0] → bg-muted,
+ *      border-[#DDD4C8]/border-[#D8CFC2]/border-[#E2D6C8]/border-[#E2D9CD]/border-[#D9D0C4] → border-card-border,
+ *      text-[#1F2D3D]/text-[#1E1E1E] → text-foreground,
+ *      text-[#77716B]/text-[#756D65] → text-muted-foreground,
+ *      text-[#C26E5A]/text-[#B76857] → text-secondary,
+ *      bg-[#C26E5A] → bg-secondary, border-[#C26E5A]/border-[#CDAA9F] → border-secondary,
+ *      hover:bg-[#AF604E] → hover:bg-secondary/80, disabled:bg-[#D8B9AF] → disabled:bg-secondary/40,
+ *      text-white (sobre secondary) → text-secondary-foreground
+ */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -72,10 +86,10 @@ export default function RequisitosPublicacionPage() {
 
   if (isLoading || !user) {
     return (
-      <section className="min-h-[70vh] bg-[#E7E1D7] px-4 py-8 sm:px-6 md:py-10">
-        <div className="mx-auto w-full max-w-5xl animate-pulse rounded-lg border border-[#DDD4C8] bg-[#F8F5EF] p-6">
-          <div className="h-9 w-3/4 rounded-md bg-[#E5DED2]" />
-          <div className="mt-6 h-64 rounded-md bg-[#E5DED2]" />
+      <section className="min-h-[70vh] bg-secondary-fund px-4 py-8 sm:px-6 md:py-10">
+        <div className="mx-auto w-full max-w-5xl animate-pulse rounded-lg border border-card-border bg-card-bg p-6">
+          <div className="h-9 w-3/4 rounded-md bg-muted" />
+          <div className="mt-6 h-64 rounded-md bg-muted" />
         </div>
       </section>
     );
@@ -84,32 +98,32 @@ export default function RequisitosPublicacionPage() {
   const arrEspecificos = strTipoSeleccionado ? REQUISITOS_ESPECIFICOS[strTipoSeleccionado] : [];
 
   return (
-    <main className="min-h-screen bg-[#E7E1D7] px-4 py-8 text-[#1F2D3D] sm:px-6 md:py-10">
+    <main className="min-h-screen bg-secondary-fund px-4 py-8 text-foreground sm:px-6 md:py-10">
       <section className="mx-auto w-full max-w-5xl">
         <h1 className="mb-6 text-center text-3xl font-bold leading-tight sm:text-4xl">
           ¿Qué necesitas tener en cuenta para publicar tu inmueble?
         </h1>
 
-        <div className="rounded-lg border border-[#DDD4C8] bg-[#F8F5EF] p-4 shadow-sm sm:p-6">
+        <div className="rounded-lg border border-card-border bg-card-bg p-4 shadow-sm sm:p-6">
           <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
-            <article className="rounded-lg bg-[#E5DED2] p-4 text-center">
+            <article className="rounded-lg bg-muted p-4 text-center">
               {strVideoUrl ? (
                 <iframe
                   title="Guía rápida para publicar tu propiedad"
                   src={strVideoUrl}
-                  className="h-52 w-full rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64"
+                  className="h-52 w-full rounded-lg border border-card-border bg-muted sm:h-64"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               ) : (
-                <div className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/85">
-                    <Play className="h-8 w-8 text-[#C26E5A]" />
+                <div className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-card-border bg-muted sm:h-64">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-card-bg/85">
+                    <Play className="h-8 w-8 text-secondary" />
                   </div>
                 </div>
               )}
               <h2 className="mt-4 text-xl font-bold">Guía rápida para publicar tu propiedad</h2>
-              <p className="mt-1 text-base font-semibold text-[#77716B]">Ver video Explicativo</p>
+              <p className="mt-1 text-base font-semibold text-muted-foreground">Ver video Explicativo</p>
             </article>
 
             <article className="space-y-4">
@@ -124,8 +138,8 @@ export default function RequisitosPublicacionPage() {
                       onClick={() => setStrTipoSeleccionado(strTipo)}
                       className={`min-h-10 rounded-full border px-3 py-2 text-sm font-semibold transition-colors sm:text-base ${
                         bolActive
-                          ? "border-[#C26E5A] bg-[#C26E5A] text-white"
-                          : "border-[#CDAA9F] bg-[#EFE9E0] text-[#B76857] hover:bg-[#E8DED0]"
+                          ? "border-secondary bg-secondary text-secondary-foreground"
+                          : "border-secondary/50 bg-muted text-secondary hover:bg-muted/80"
                       }`}
                     >
                       {strTipo}
@@ -134,9 +148,9 @@ export default function RequisitosPublicacionPage() {
                 })}
               </div>
 
-              <div className="min-h-48 rounded-lg border border-[#E2D6C8] bg-[#E9E2D8] p-4">
+              <div className="min-h-48 rounded-lg border border-card-border bg-muted p-4">
                 {!strTipoSeleccionado ? (
-                  <p className="grid h-full min-h-36 place-items-center text-center text-lg font-semibold text-[#756D65]">
+                  <p className="grid h-full min-h-36 place-items-center text-center text-lg font-semibold text-muted-foreground">
                     &quot;Selecciona el tipo de inmueble para ver las características correspondientes&quot;
                   </p>
                 ) : (
@@ -144,8 +158,8 @@ export default function RequisitosPublicacionPage() {
                     {arrEspecificos.map((strRequisito) => {
                       const Icon = getRequirementIcon(strRequisito);
                       return (
-                        <li key={strRequisito} className="flex items-start gap-2 text-base text-[#1E1E1E]">
-                          <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C26E5A]" />
+                        <li key={strRequisito} className="flex items-start gap-2 text-base text-foreground">
+                          <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                           <span>{strRequisito}</span>
                         </li>
                       );
@@ -156,7 +170,7 @@ export default function RequisitosPublicacionPage() {
             </article>
           </div>
 
-          <div className="my-5 border-t border-[#D9D0C4]" />
+          <div className="my-5 border-t border-card-border" />
 
           <section>
             <h2 className="text-2xl font-semibold">Requisitos Generales para Cualquier Inmueble</h2>
@@ -166,9 +180,9 @@ export default function RequisitosPublicacionPage() {
                 return (
                   <li
                     key={strItem}
-                    className="flex min-h-16 items-start gap-2 rounded-lg border border-[#E2D9CD] bg-[#ECE6DD] px-3 py-3 text-base text-[#1E1E1E]"
+                    className="flex min-h-16 items-start gap-2 rounded-lg border border-card-border bg-muted px-3 py-3 text-base text-foreground"
                   >
-                    <Icon className="mt-1 h-4 w-4 flex-shrink-0 text-[#C26E5A]" />
+                    <Icon className="mt-1 h-4 w-4 flex-shrink-0 text-secondary" />
                     <span>{strItem}</span>
                   </li>
                 );
@@ -176,18 +190,18 @@ export default function RequisitosPublicacionPage() {
             </ul>
           </section>
 
-          <div className="my-5 border-t border-[#D9D0C4]" />
+          <div className="my-5 border-t border-card-border" />
 
           <div className="space-y-3">
             <label
               htmlFor="confirmar-requisitos"
-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#C26E5A] bg-[#F5EDE4] p-3 text-base text-[#1E1E1E]"
+              className="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary bg-card-bg p-3 text-base text-foreground"
             >
               <Checkbox
                 id="confirmar-requisitos"
                 checked={bolConfirmado}
                 onCheckedChange={handleConfirmar}
-                className="mt-0.5 border-[#C26E5A] data-checked:border-[#C26E5A] data-checked:bg-[#C26E5A]"
+                className="mt-0.5 border-secondary data-checked:border-secondary data-checked:bg-secondary"
               />
               <span>Sí, entiendo qué necesito para añadir mi propiedad y tengo todo listo</span>
             </label>
@@ -197,7 +211,7 @@ export default function RequisitosPublicacionPage() {
                 type="button"
                 onClick={handleContinuar}
                 disabled={!bolConfirmado}
-                className="h-10 rounded-lg bg-[#C26E5A] px-6 font-semibold text-white hover:bg-[#AF604E] disabled:cursor-not-allowed disabled:bg-[#D8B9AF]"
+                className="h-10 rounded-lg bg-secondary px-6 font-semibold text-secondary-foreground hover:bg-secondary/80 disabled:cursor-not-allowed disabled:bg-secondary/40"
               >
                 Empezar a publicar
               </Button>
