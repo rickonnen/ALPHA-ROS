@@ -13,11 +13,14 @@ import { useAuth } from "./AuthContext";
 
 import { SignInFacebook } from "./FacebookSignInButton";
 import { SignInDiscord } from "./DiscordSignInButton";
+import { SignInLinkedIn } from "./LinkedInSignInButton"
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
   onClose?: () => void;
   onForgotPassword?: () => void;
+  onMagicLink?: () => void;
+  onReactivarCuenta?: (email: string) => void;
 }
 
 interface LoginTelemetry {
@@ -55,7 +58,7 @@ async function checkInternetConnection() {
   }
 }
 
-export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword }: LoginFormProps) {
+export default function LoginForm({ onSwitchToRegister, onClose, onForgotPassword, onMagicLink, onReactivarCuenta }: LoginFormProps) {
   const router = useRouter();
   const { login, fetchUserFromServer } = useAuth();
   const [email, setEmail] = useState("");
@@ -374,10 +377,10 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
               No puedes iniciar sesión porque tu cuenta fue desactivada.
               Para recuperar el acceso, comunícate con nuestro equipo de soporte técnico.
             </p>
-            {/* CA-24: enlace para abrir modal de reactivación */}
+            {/* CA-24 / HU-05 CA-3: abre el panel de reactivación */}
             <button
               type="button"
-              onClick={() => setModalReactivar(true)}
+              onClick={() => onReactivarCuenta ? onReactivarCuenta(email) : setModalReactivar(true)}
               style={{
                 fontSize: "12px",
                 color: "#1F3A4D",
@@ -623,7 +626,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#0F172A",
+          backgroundColor: blockedByConnection || googleLoading ? "#9ca3af" : "#1C3445",
           cursor: blockedByConnection || googleLoading ? "not-allowed" : "pointer",
           opacity: blockedByConnection ? 0.5 : googleLoading ? 0.6 : 1,
           color: "white",
@@ -635,7 +638,6 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
-          marginBottom: "16px",
           pointerEvents: googleLoading ? "none" : "auto",
         }}
       >
@@ -655,6 +657,45 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         )}
         {googleLoading ? "Conectando..." : "Continuar con Google"}
       </button>
+      
+       {/* Magic Link button */}
+      {onMagicLink && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onMagicLink}
+          style={{
+            width: "100%",
+            backgroundColor: "#1C3445",
+            color: "white",
+            fontWeight: "bold",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            marginBottom: "16px",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Continuar con Magic Link
+        </button>
+      )}
+
+
+
+
+
+
+
+
+
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -723,6 +764,16 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
         </div>
 
         <div style={{ textAlign: "right" }}>
+          {/* HU-05 CA-3: enlace siempre visible para ir al panel de reactivación */}
+          {onReactivarCuenta && (
+            <button
+              type="button"
+              onClick={() => onReactivarCuenta(email)}
+              style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline", display: "block", marginBottom: "4px", marginLeft: "auto" }}
+            >
+              ¿Deseas reactivar tu cuenta?
+            </button>
+          )}
           <button
             type="button"
              onClick={onForgotPassword}
@@ -759,6 +810,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                  <div style={{ display: "flex", justifyContent: "center", gap: "16px" }}>
                   <SignInFacebook />
                   <SignInDiscord />
+                  <SignInLinkedIn />
                     </div>
            </div>
       </form>

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { blogState } from "@/types/blogType";
-
+import { transporter, getFormattedSender } from "@/lib/email/config";
+import { templateBlogAceptado } from "@/lib/email/templates/blogAceptado";
+import { templateBlogRechazado } from "@/lib/email/templates/blogRechazado";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 interface updateActionRequest {
   action: string;
 }
@@ -20,27 +23,36 @@ export async function GET(
     if (isNaN(IntIdBlo)) {
       return NextResponse.json({ error: "id invalido" }, { status: 400 });
     }
-
-    // Buscamos el blog por ID incluyendo el nombre del autor
     const ObjDbBlogBlo = await prisma.blogs.findUnique({
       where: { id_blog: IntIdBlo },
-      include: {
-        Usuario: {
-          select: { nombres: true } 
-        }
-      }
     });
 
     if (!ObjDbBlogBlo) {
       return NextResponse.json({ error: "blog no encontrado" }, { status: 404 });
     }
 
-    // Formateamos la fecha
-    const StrDateBlo = ObjDbBlogBlo.fecha_creacion
+    const ObjDbAuthorBlo = await prisma.usuario.findUnique({
+      where: { id_usuario: ObjDbBlogBlo.id_user }, 
+      select: { 
+        nombres: true,
+        apellidos: true,
+        url_foto_perfil: true
+      }
+    });
+
+    const StrFullNameBlo = ObjDbAuthorBlo
+      ? `${ObjDbAuthorBlo.nombres || ''} ${ObjDbAuthorBlo.apellidos || ''}`.trim() || "Nombre no disponible"
+      : "Autor no disponible";
+
+    const StrDateBlo = ObjDbBlogBlo.fecha_publicacion
+      ? new Date(ObjDbBlogBlo.fecha_publicacion).toLocaleDateString("es-ES", {
+          day: "numeric", month: "short", year: "numeric"
+        })
+      : "fecha desconocida";
+
+    const StrCreationDateBlo = ObjDbBlogBlo.fecha_creacion
       ? new Date(ObjDbBlogBlo.fecha_creacion).toLocaleDateString("es-ES", {
-          day: "numeric",
-          month: "long",
-          year: "numeric"
+          day: "numeric", month: "short", year: "numeric"
         })
       : "fecha desconocida";
 
@@ -57,7 +69,9 @@ export async function GET(
       StrContentBlo: ObjDbBlogBlo.contenido || "No hay contenido para mostrar.",
       StrImageUrlBlo: ObjDbBlogBlo.imagen_url || "",
       StrDateBlo: StrDateBlo,
-      StrAuthorBlo: ObjDbBlogBlo.Usuario?.nombres || "Anónimo",
+      StrCreationDateBlo: StrCreationDateBlo,
+      StrAuthorBlo: StrFullNameBlo,
+      StrAuthorAvatarBlo: ObjDbAuthorBlo?.url_foto_perfil || undefined,
       StrStateBlo: StrStateValueBlo,
       BolIsDeletedBlo: ObjDbBlogBlo.deleted_at !== null,
     };
@@ -104,8 +118,8 @@ export async function PATCH(
         };
         break;
       case "ELIMINAR":
-        // Soft delete: No tocamos el estado, solo ponemos la fecha de eliminación
         ObjUpdateDataBlo = { 
+          estado: blogState.NOVISIBLE,
           deleted_at: new Date()
         };
         break;
@@ -113,11 +127,55 @@ export async function PATCH(
         return NextResponse.json({ error: "acción no permitida" }, { status: 400 });
     }
 
+   const ObjBlogConUsuario = await prisma.blogs.findUnique({
+  where: { id_blog: IntIdBlo },
+  include: { Usuario: { select: { nombres: true, email: true } } }
+});
+
     const ObjUpdatedBlogBlo = await prisma.blogs.update({
       where: { id_blog: IntIdBlo },
       data: ObjUpdateDataBlo,
-    });
+});
 
+if (ObjBlogConUsuario?.Usuario?.email) {
+  const strEmail = ObjBlogConUsuario.Usuario.email;
+  const strNombre = ObjBlogConUsuario.Usuario.nombres ?? "Usuario";
+  const strTitulo = ObjBlogConUsuario.titulo ?? "Tu publicación";
+
+  try {
+    if (action === "ACEPTAR" || action === "PUBLICAR") {
+      await transporter.sendMail({
+        from: getFormattedSender(),
+        to: strEmail,
+        subject: "¡Tu blog fue aprobado! - PROPBOL",
+        html: templateBlogAceptado(strNombre, strTitulo)
+      });
+      await crearNotificacion({
+        id_usuario: ObjBlogConUsuario.id_user,
+        titulo: "¡Publicación Aprobada!",
+        mensaje: `Tu blog "${strTitulo}" fue aprobado por el administrador.`,
+        id_categoria: 3
+      });
+    }
+
+    if (action === "RECHAZAR") {
+      await transporter.sendMail({
+        from: getFormattedSender(),
+        to: strEmail,
+        subject: "Tu blog no fue aprobado - PROPBOL",
+        html: templateBlogRechazado(strNombre, strTitulo)
+      });
+      await crearNotificacion({
+        id_usuario: ObjBlogConUsuario.id_user,
+        titulo: "Publicación No Aprobada",
+        mensaje: `Tu blog "${strTitulo}" no fue aprobado. Puedes corregirlo y volver a enviarlo.`,
+        id_categoria: 3
+      });
+    }
+  } catch (err) {
+    console.error("[EMAIL_BLOG_ERROR]", err);
+  }
+}
     return NextResponse.json({ 
       success: true, 
       StrCurrentStateBlo: ObjUpdatedBlogBlo.estado 

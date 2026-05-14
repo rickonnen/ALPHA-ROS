@@ -1,33 +1,38 @@
 "use client";
+import { useState, useEffect } from "react";
 
-import { useEffect, useState } from "react";
+export function NotificationBadge({ count }: { count: number }) {
+  const [unreadCount, setUnreadCount] = useState(0);
 
-interface NotificationBadgeProps {
-  count?: number;
-}
-
-export function NotificationBadge({ count = 0 }: NotificationBadgeProps) {
-  const [optimisticCount, setOptimisticCount] = useState<number>(count);
-
-  // Sincronizar cuando el padre actualiza el count
   useEffect(() => {
-    setOptimisticCount(count);
+    const updateCount = () => {
+      const stored = localStorage.getItem("notification_unread_count");
+      if (stored) {
+        setUnreadCount(parseInt(stored, 10));
+      } else {
+        setUnreadCount(count);
+      }
+    };
+
+    updateCount();
+
+    // Escucha cuando NotificationPanel actualiza el badge
+    window.addEventListener("refresh-notification-badge", updateCount);
+
+    // Polling cada 30 segundos como respaldo
+    const interval = setInterval(updateCount, 30000);
+
+    return () => {
+      window.removeEventListener("refresh-notification-badge", updateCount);
+      clearInterval(interval);
+    };
   }, [count]);
 
-  // Escuchar actualizaciones en tiempo real del panel
-  useEffect(() => {
-    const handleOptimisticSync = (e: Event) => {
-      setOptimisticCount((e as CustomEvent<number>).detail);
-    };
-    window.addEventListener("optimistic-unread-sync", handleOptimisticSync);
-    return () => window.removeEventListener("optimistic-unread-sync", handleOptimisticSync);
-  }, []);
-
-  if (optimisticCount === 0) return null;
+  if (unreadCount === 0) return null;
 
   return (
-    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold z-10 pointer-events-none">
-      {optimisticCount > 99 ? "99+" : optimisticCount}
+    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+      {unreadCount > 99 ? "99+" : unreadCount}
     </span>
   );
 }

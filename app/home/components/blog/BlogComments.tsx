@@ -10,18 +10,22 @@ import CommentItem, { CommentData } from "./CommentItem";
  */
 interface BlogCommentsProps {
   blogId: string;
+  isAuthenticated?: boolean;
 }
 
-export default function BlogComments({ blogId }: BlogCommentsProps) {
+export default function BlogComments({ blogId, isAuthenticated = false }: BlogCommentsProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [userForcedPreview, setUserForcedPreview] = useState(false);
 
   useEffect(() => {
     const fetchTopComment = async () => {
       try {
-        const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`);
+        const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`, {
+          cache: 'no-store'
+        });
+        
         if (res.ok) {
           const data = await res.json();
           setComments(data);
@@ -32,39 +36,48 @@ export default function BlogComments({ blogId }: BlogCommentsProps) {
         setIsLoading(false);
       }
     };
-    fetchTopComment();
-  }, [blogId]);
+    if (!isDrawerOpen && !userForcedPreview) {
+      fetchTopComment();
+    }
+  }, [blogId, isDrawerOpen, userForcedPreview]);
+
+  const handleNewUserComment = (newComment: CommentData) => {
+    setComments([newComment]);
+    setUserForcedPreview(true);
+  };
 
   if (isLoading) return <div className="animate-pulse w-full h-24 bg-secondary-fund rounded-xl mt-8"></div>;
 
   const topComment = comments[0];
 
   return (
-    <div className="w-full mt-10 pt-6 border-t border-card-border">
+    <div className="w-full mt-5 pt-6 border-t border-card-border">
       <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-foreground">
         Comentarios
       </h3>
-
-      {/* Vista previa de 1 solo comentario */}
       {topComment ? (
-        <CommentItem comment={topComment} blogId={blogId} />
+        <CommentItem 
+          comment={topComment} 
+          blogId={blogId} 
+          isAuthenticated={isAuthenticated} 
+          isPreview={true}
+        />
       ) : (
         <p className="text-foreground/60 mt-4 mb-4 italic text-sm">Sé el primero en comentar.</p>
       )}
-
-      {/* Botón para abrir el modal */}
       <button 
         onClick={() => setIsDrawerOpen(true)}
-        className="w-full py-3 bg-secondary-fund hover:bg-card-border/50 text-foreground font-semibold rounded-xl transition-colors mt-2"
+        className="w-full py-3 bg-secondary-fund hover:bg-card-border text-foreground font-semibold rounded-xl transition-colors mt-2"
       >
         Ver comentarios y opinar
       </button>
-
       {/* El cajón flotante */}
       <CommentsDrawer 
         blogId={blogId}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        onNewUserComment={handleNewUserComment} 
+        isAuthenticated={isAuthenticated}
       />
     </div>
   );

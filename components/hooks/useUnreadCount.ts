@@ -1,93 +1,73 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-// Usamos 'any' para evitar errores estrictos de TypeScript con el objeto User
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export function useUnreadCount(user: any) {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // ✅ Extraemos el ID para evitar la advertencia del React Compiler
-  const userId = user?.id;
-
-  const fetchCount = useCallback(async () => {
-    if (!userId) {
-      setUnreadCount(0);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      
-      // ✅ PASO 1: En vez de un conteo ciego, traemos la columna "type"
-      const { data, error } = await supabase
-        .from("notificacion_campana")
-        .select("type")
-        .eq("read", false);
-
-      if (error) { 
-        console.error("Error:", error.message); 
-        return; 
-      }
-
-      if (data) {
-        // ✅ PASO 2: Leemos tu configuración local
-        const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
-        const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
-        
-        const gmailEnabled = savedGmail !== "false"; 
-        const whatsappEnabled = savedWhatsapp !== "false";
-
-        // ✅ PASO 3: Filtramos la basura. Si WhatsApp está apagado, no lo cuenta.
-        const conteoReal = data.filter((n: Record<string, any>) => {
-          if (n.type === "gmail" && !gmailEnabled) return false;
-          if (n.type === "whatsapp" && !whatsappEnabled) return false;
-          return true;
-        }).length;
-
-        // Ahora setea "1" en lugar de "6"
-        setUnreadCount(conteoReal);
-      }
-    } catch (err) {
-      console.error("Error inesperado:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
   useEffect(() => {
-    if (!userId) {
+    if (!user?.id) {
       setUnreadCount(0);
       setLoading(false);
       return;
     }
+
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from("Notificacion")
+        .select("*", { count: "exact", head: true })
+        .eq("id_usuario", user.id)
+        .eq("leido", false);
+
+      const trashRaw = localStorage.getItem(`trash_notif_ids_${user.id}`);
+      const trashIds: string[] = trashRaw
+        ? JSON.parse(trashRaw).map((t: any) => (typeof t === "string" ? t : t.id))
+        : [];
+
+      const real = Math.max(0, (count ?? 0) - trashIds.length);
+      setUnreadCount(real);
+      localStorage.setItem("notification_unread_count", real.toString());
+      setLoading(false);
+    };
 
     fetchCount();
-    
-    const interval = setInterval(fetchCount, 10000);
-    const handleRefresh = () => fetchCount();
-    
-    // ✅ PASO 4: Esta es la "antena" que escucha cuando modificas el panel
-    const handleOptimisticSync = (e: any) => {
-      if (e.detail !== undefined) {
-        setUnreadCount(e.detail);
-      }
-    };
 
-    window.addEventListener("notifications-updated", handleRefresh);
-    window.addEventListener("refresh-notification-badge", handleRefresh);
-    window.addEventListener("optimistic-unread-sync", handleOptimisticSync);
+    // Realtime: escucha INSERT en Notificacion
+    const channel = supabase
+      .channel(`unread-count-${user.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, () => {
+        fetchCount();
+      })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, () => {
+        fetchCount();
+      })
+      .subscribe();
+
+    // También escucha cuando el panel marca como leído
+    window.addEventListener("refresh-notification-badge", fetchCount);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener("notifications-updated", handleRefresh);
-      window.removeEventListener("refresh-notification-badge", handleRefresh);
-      // ✅ PASO 5: Faltaba limpiar esto en tu código original, causaba bugs
-      window.removeEventListener("optimistic-unread-sync", handleOptimisticSync);
+      supabase.removeChannel(channel);
+      window.removeEventListener("refresh-notification-badge", fetchCount);
     };
-  }, [userId, fetchCount]);
+  }, [user?.id]);
 
-  return { unreadCount, refreshCount: fetchCount, loading };
+  return { unreadCount, loading };
 }

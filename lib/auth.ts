@@ -71,6 +71,73 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    CredentialsProvider({
+      id: "magic-link",
+      name: "Magic Link",
+      credentials: {
+        email: { label: "Email", type: "email" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) {
+          return null;
+        }
+
+        try {
+          const { createClient } = await import("@supabase/supabase-js");
+          const prisma = (await import("@/lib/prisma")).prisma;
+
+          // Bug 3: verificar que el usuario realmente consumió un token en los últimos 60 s
+          const recentAttempt = await prisma.magic_link_attempt.findFirst({
+            where: {
+              email: credentials.email.toLowerCase(),
+              status: "consumed",
+              consumed_at: { gte: new Date(Date.now() - 60_000) },
+            },
+          });
+
+          if (!recentAttempt) {
+            console.error("[Magic Link Auth] No hay token consumido reciente para:", credentials.email);
+            return null;
+          }
+
+          const supabase = createClient(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          );
+
+          // Obtener usuario de Supabase por email
+          const { data: authUser, error: authError } = await supabase
+            .from("auth.users")
+            .select("id")
+            .eq("email", credentials.email.toLowerCase())
+            .maybeSingle();
+
+          if (authError || !authUser) {
+            console.error("[Magic Link Auth] Error obteniendo usuario:", authError);
+            return null;
+          }
+
+          // Obtener usuario de Prisma
+          const user = await prisma.usuario.findFirst({
+            where: { id_usuario: authUser.id },
+          });
+
+          if (!user) {
+            console.error("[Magic Link Auth] Usuario no encontrado en Prisma");
+            return null;
+          }
+
+          return {
+            id: user.id_usuario,
+            email: user.email,
+            name: user.nombres,
+          };
+        } catch (error) {
+          console.error("[Magic Link Auth] Error:", error);
+          return null;
+        }
+      },
+    }),
   ],
 
   callbacks: {

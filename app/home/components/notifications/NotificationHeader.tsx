@@ -1,18 +1,17 @@
 "use client";
 
 interface NotificationHeaderProps {
-  unreadCount: number;
+  totalCount: number; // Total de notificaciones (todas las que no están en papelera)
 }
 
-export function NotificationHeader({ unreadCount }: NotificationHeaderProps) {
-  // Eliminamos los hooks useAuth y useUnreadCount para evitar desincronización
-  
+export function NotificationHeader({ totalCount }: NotificationHeaderProps) {
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-[#2C4A5A] text-white rounded-t-md">
       <h4 className="text-[20px] font-normal leading-[120%] tracking-normal">
         Notificaciones
       </h4>
-      <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
+
+      <span>{totalCount}</span> {/* Mostrar total de notificaciones */}
     </div>
   );
 }

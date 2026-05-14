@@ -51,10 +51,20 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /*alertas y estados (destructive ya de encontraba en este globals)*/
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  
+  /* Nota: En el menú anterior usaste 'text-muted-foreground', 
+     te sugiero mapearlo también para evitar que shadcn use el gris por defecto */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
   /* ------ */
   --color-secondary-fund: var(--secondary-fund);
-  --radius: 0.5rem;
+  --radius: 1rem;
 
   /* escala tipográfica personalizada para títulos, subtítulos y cuerpo */
   --text-main-title: var(--text-3xl);
@@ -107,7 +117,7 @@
   --border: oklch(0.85 0.015 83);
   --input: oklch(0.85 0.015 83);
   --ring: var(--primary);
-  --radius: 0.5rem;
+  --radius: 1rem;
 
   --sidebar: var(--primary);
   --sidebar-foreground: var(--primary-foreground);
@@ -136,6 +146,18 @@
   /* boton secundario: Terracota suave (#C26E5A)*/
   --secondary: #C26E5A;
   --secondary-foreground: #F4EFE6;
+  /* ESTADOS (Gestión de comentarios y alertas) */
+  /* boton/badge de éxito: Verde oliva/bosque suave */
+  --success: #4A7C59;
+  --success-foreground: #F4EFE6;
+
+  /* boton/badge de advertencia: Mostaza/Ámbar apagado */
+  --warning: #D4A373;
+  --warning-foreground: #2E2E2E;
+
+  /* elementos inactivos o texto secundario */
+  --muted: #E7E1D7;
+  --muted-foreground: #7A756D;
 
   /* Título Principal (Hero/Propiedad) */
   --text-3xl: 1.80rem; 
@@ -179,7 +201,18 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --destructive: oklch(0.704 0.191 22.2);
+  /* Ajuste de estados para Modo Oscuro */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+
+  --success: #528A63;
+  --success-foreground: #FFFFFF;
+
+  --warning: #E2B07E;
+  --warning-foreground: #1A1A1A;
+
+  --muted: #3D3D3D;
+  --muted-foreground: #A3A3A3;
 
   /* jerarquía visual en modo oscuro */
   --text-3xl: 1.875rem;
@@ -225,5 +258,69 @@
 
   .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #blog-print-area,
+  #blog-print-area * {
+    visibility: visible !important;
+  }
+
+  #blog-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  #blog-print-area img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  #blog-print-area h1,
+  #blog-print-area h2,
+  #blog-print-area h3 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  #blog-print-area p {
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  a::after {
+    content: "";
   }
 }

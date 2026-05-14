@@ -3,6 +3,7 @@ import { PaymentRecord } from "./paymentTypes"
 
 interface PaymentMobileCardsProps {
   arrData: PaymentRecord[];
+  strStatus: string;
   bolIsLoading?: boolean;
   bolShowActions?: boolean;
   onViewReceipt?: (url: string) => void;
@@ -12,6 +13,7 @@ interface PaymentMobileCardsProps {
 
 export function PaymentMobileCards({ 
   arrData, 
+  strStatus,
   bolIsLoading, 
   bolShowActions, 
   onViewReceipt, 
@@ -68,6 +70,12 @@ export function PaymentMobileCards({
                   <span className="text-muted-foreground font-medium">Fecha:</span>
                   <span className="text-right truncate">{objPayment.strDate}</span>
                 </div>
+                {(strStatus === 'Pendiente' || strStatus === 'Aceptado') && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-medium">Vigente hasta:</span>
+                    <span className="font-medium text-right text-foreground truncate">{objPayment.strValidUntil}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-medium">Método:</span>
                   <div className="flex flex-col items-end">

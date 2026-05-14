@@ -43,7 +43,7 @@ function FormularioDinamicoInner() {
     handleNext,
     handleBack,
     handleSidebarClick,
-  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal, setBolShowPlanLimitModal, })
+  } = usePublicar({ ...state, triggerRefs, setBolShowFreeModal, setBolShowPlanLimitModal })
 
   if (!hydrated || !datosListos || !sessionKey) return null
 
@@ -61,7 +61,6 @@ function FormularioDinamicoInner() {
     sessionKey,
   }
 
-  // ─── Handler para el botón Regresar ──────────────────────────────────────
   const handleBackOrCancel = () => {
     if (isFirstStep) {
       setShowCancelarModal(true)
@@ -70,7 +69,6 @@ function FormularioDinamicoInner() {
     }
   }
 
-  // ─── Modal cancelar ───────────────────────────────────────────────────────
   const CancelarModal = (
     <div
       onClick={() => setShowCancelarModal(false)}
@@ -83,17 +81,17 @@ function FormularioDinamicoInner() {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          backgroundColor: '#ffffff', borderRadius: 16,
+          backgroundColor: 'var(--card-bg)', borderRadius: 16,
           padding: '36px 32px', maxWidth: 420, width: '90%',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           gap: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
           textAlign: 'center',
         }}
       >
-        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.marino }}>
+        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--primary)' }}>
           ¿Cancelar formulario?
         </h3>
-        <p style={{ margin: 0, fontSize: 15, color: '#6b7280', lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 15, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
           Si cancelas ahora perderás todo el progreso.<br />
           Esta acción no se puede deshacer.
         </p>
@@ -103,7 +101,7 @@ function FormularioDinamicoInner() {
             onClick={() => setShowCancelarModal(false)}
             style={{
               flex: 1, maxWidth: 160,
-              backgroundColor: '#ffffff', border: `1.5px solid ${C.terracota}`,
+              backgroundColor: 'var(--card-bg)', border: `1.5px solid ${C.terracota}`,
               color: C.terracota, borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600, cursor: 'pointer',
             }}
@@ -116,7 +114,7 @@ function FormularioDinamicoInner() {
             style={{
               flex: 1, maxWidth: 160,
               backgroundColor: C.terracota, border: 'none',
-              color: '#ffffff', borderRadius: 8, padding: '11px 0',
+              color: 'var(--secondary-foreground)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -144,14 +142,12 @@ function FormularioDinamicoInner() {
           {tituloPagina}
         </h1>
 
-        {/* ── Contenedor marino altura fija: flex:1 en contenido lo distribuye bien ── */}
         <div style={{
           backgroundColor: C.marino, borderRadius: 12, display: 'flex',
           flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
           height: 650,
         }}>
 
-          {/* Barra de progreso — flexShrink: 0 para que nunca se comprima */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
             <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.75)', textAlign: 'center' }}>
               Completa el proceso para {modoEdicion ? 'guardar' : 'publicar'} tu propiedad
@@ -168,10 +164,9 @@ function FormularioDinamicoInner() {
             </p>
           </div>
 
-          {/* Título del paso + botón X — minHeight reserva espacio para 2 líneas siempre */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, minHeight: 46 }}>
             <h2 style={{
-              fontSize: 16, fontWeight: 700, color: '#ffffff', margin: 0,
+              fontSize: 16, fontWeight: 700, color: 'var(--primary-foreground)', margin: 0,
               textTransform: 'uppercase', letterSpacing: '0.06em', flex: 1,
             }}>
               {STEPS[currentStep].title}
@@ -184,7 +179,7 @@ function FormularioDinamicoInner() {
               onClick={() => setShowCancelarModal(true)}
               style={{
                 background: 'none', border: 'none',
-                color: '#ffffff', fontSize: 24, fontWeight: 700,
+                color: 'var(--primary-foreground)', fontSize: 24, fontWeight: 700,
                 cursor: 'pointer', lineHeight: 1, padding: 0,
                 flexShrink: 0,
               }}
@@ -195,14 +190,15 @@ function FormularioDinamicoInner() {
 
           {(blockMsg || publishError) && (
             <div style={{
-              backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-              padding: '8px 12px', fontSize: 13, color: '#991b1b', flexShrink: 0,
+              backgroundColor: 'color-mix(in srgb, var(--destructive) 10%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--destructive) 40%, transparent)',
+              borderRadius: 6, padding: '8px 12px', fontSize: 13,
+              color: 'var(--destructive)', flexShrink: 0,
             }}>
               {blockMsg ?? publishError}
             </div>
           )}
 
-          {/* Área de contenido — height fijo siempre, scroll si desborda */}
           <div key={currentStep} style={{
             backgroundColor: C.crema, borderRadius: 10, padding: 14,
             height: 430, flexShrink: 0, overflowY: 'auto',
@@ -211,7 +207,6 @@ function FormularioDinamicoInner() {
             <StepContent step={currentStep} {...stepContentProps} />
           </div>
 
-          {/* Botones de pasos circulares — flexShrink: 0 */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
             {STEPS.map((_, i) => {
               const isActive    = i === currentStep
@@ -221,9 +216,9 @@ function FormularioDinamicoInner() {
                   key={i} type="button" onClick={() => handleSidebarClick(i)}
                   style={{
                     width: 34, height: 34, borderRadius: '50%',
-                    border: isActive ? '3px solid #ffffff' : 'none',
+                    border: isActive ? '3px solid var(--primary-foreground)' : 'none',
                     backgroundColor: isCompleted ? C.terracota : isActive ? 'transparent' : 'rgba(255,255,255,0.15)',
-                    color: '#ffffff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    color: 'var(--primary-foreground)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0, transition: 'all 0.2s',
                   }}
@@ -252,7 +247,7 @@ function FormularioDinamicoInner() {
             type="button" onClick={handleNext} disabled={isPublishing}
             style={{
               flex: 1, backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-              color: '#ffffff', borderRadius: 8, padding: '11px 0',
+              color: 'var(--secondary-foreground)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600,
               cursor: isPublishing ? 'not-allowed' : 'pointer',
               opacity: isPublishing ? 0.6 : 1,
@@ -328,10 +323,9 @@ function FormularioDinamicoInner() {
             flex: 1, backgroundColor: C.marino,
             padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
           }}>
-            {/* Título del paso + botón X alineados */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
               <h2 key={`title-${currentStep}`} style={{
-                fontSize: 20, fontWeight: 600, color: '#ffffff', margin: 0,
+                fontSize: 20, fontWeight: 600, color: 'var(--primary-foreground)', margin: 0,
                 textTransform: 'uppercase', letterSpacing: '0.05em',
                 animation: 'stepIn 0.3s ease forwards',
               }}>
@@ -345,7 +339,7 @@ function FormularioDinamicoInner() {
                 onClick={() => setShowCancelarModal(true)}
                 style={{
                   background: 'none', border: 'none',
-                  color: '#ffffff', fontSize: 28, fontWeight: 700,
+                  color: 'var(--primary-foreground)', fontSize: 28, fontWeight: 700,
                   cursor: 'pointer', lineHeight: 1, padding: 0,
                   flexShrink: 0,
                 }}
@@ -356,8 +350,10 @@ function FormularioDinamicoInner() {
 
             {(blockMsg || publishError) && (
               <div style={{
-                backgroundColor: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 6,
-                padding: '8px 12px', marginBottom: 10, fontSize: 13, color: '#991b1b', flexShrink: 0,
+                backgroundColor: 'color-mix(in srgb, var(--destructive) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--destructive) 40%, transparent)',
+                borderRadius: 6, padding: '8px 12px', marginBottom: 10,
+                fontSize: 13, color: 'var(--destructive)', flexShrink: 0,
               }}>
                 {blockMsg ?? publishError}
               </div>
@@ -387,7 +383,7 @@ function FormularioDinamicoInner() {
                 type="button" onClick={handleNext} disabled={isPublishing}
                 style={{
                   backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-                  color: '#ffffff', borderRadius: 6, padding: '5px 20px',
+                  color: 'var(--secondary-foreground)', borderRadius: 6, padding: '5px 20px',
                   fontSize: 16, fontWeight: 600,
                   cursor: isPublishing ? 'not-allowed' : 'pointer',
                   opacity: isPublishing ? 0.6 : 1,
@@ -413,7 +409,6 @@ function FormularioDinamicoInner() {
   )
 }
 
-// ─── Export con Suspense ──────────────────────────────────────────────────────
 export default function CrearPublicacionPage() {
   return (
     <Suspense fallback={null}>

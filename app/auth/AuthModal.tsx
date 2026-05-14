@@ -8,6 +8,8 @@ import NewPasswordForm from "./NewPasswordForm";
 import SuccessModal from "./SuccessModal";
 import { useResetFlow } from "./useResetFlow";
 import { X } from "lucide-react";
+import { useMagicLinkFlow } from "./useMagicLinkFlow";
+import ReactivacionCuentaForm from "./ReactivacionCuentaForm";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
   const [isLogin, setIsLogin] = useState(initialMode === "login");
   const { screen, setScreen, forgotEmail, setForgotEmail, clearResetFlow } = useResetFlow();
   const [showSuccess, setShowSuccess] = useState(false);
+  const magicLink = useMagicLinkFlow();
+  const [emailReactivacion, setEmailReactivacion] = useState("");
 
   useEffect(() => {
     setIsLogin(initialMode === "login");
@@ -31,21 +35,32 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-6 flex flex-col">
+      <div className="flex justify-between items-center">
+          <magicLink.BackButton />
+        
         <button onClick={onClose} className="self-end text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline">
           <X size={16} /> Volver al inicio
         </button>
+      </div>
+
+        <magicLink.Screen />
+
+
+        {!magicLink.isActive && (
+          <>
+
 
         {screen === "auth" && (
           <div className="flex gap-4 mt-12 mb-8 justify-center bg-white p-1 rounded-full shadow-sm">
             <button
               onClick={() => setIsLogin(true)}
-              className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#0F172A] text-white' : 'text-gray-400'}`}
+              className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#1C3445] text-white' : 'text-gray-400'}`}
             >
               Iniciar sesión
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#0F172A] text-white' : 'text-gray-400'}`}
+              className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#1C3445] text-white' : 'text-gray-400'}`}
             >
               Crear cuenta
             </button>
@@ -70,16 +85,29 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
               onBack={() => setScreen("code")}
               onSuccess={() => { clearResetFlow(); setShowSuccess(true); setIsLogin(true); }}
             />
+          ) : screen === "reactivacion" ? (
+            
+            <ReactivacionCuentaForm
+              onBack={() => setScreen("auth")}
+              emailPrellenado={emailReactivacion}
+            />
           ) : isLogin ? (
             <LoginForm
               onSwitchToRegister={() => setIsLogin(false)}
               onClose={onClose}
               onForgotPassword={() => setScreen("forgot")}
+              onMagicLink={magicLink.open}
+              onReactivarCuenta={(email) => {
+                setEmailReactivacion(email || "");
+                setScreen("reactivacion");
+              }}
             />
           ) : (
-            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} />
+            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} onMagicLink={magicLink.open} />
           )}
         </div>
+         </>
+        )}
       </div>
 
       <SuccessModal

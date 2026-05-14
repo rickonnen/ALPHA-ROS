@@ -3,10 +3,8 @@ import Link from "next/link";
 import { BookOpen, Clock, X as ObjXIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button"; // Importamos el botón de Shadcn
-import { FnFormatLongWords } from "@/app/utils/textUtils";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
 /**
  * dev: Rodrigo Saul Zarate Villarroel      fecha: 25/04/2026 (Refactor Glassmorphism)
  * funcionalidad: card estilo glass para gestionar estados de los blogs en admin
@@ -19,7 +17,6 @@ export interface articleCardAdminProps {
   StrImageUrlBlo: string;
   StrCurrentTabBlo: string;
   FnOnActionBlo: (IntId: number, StrAction: string) => void;
-  // Añadimos las props opcionales del diseño Glass por si la API admin también las trae
   ObjAuthorBlo?: {
     name: string;
     avatar?: string;
@@ -124,9 +121,8 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
                <ObjXIcon className="w-10 h-10 opacity-30 text-muted-foreground" strokeWidth={1} />
              </div>
           )}
-
-          {/* Botón Overlay que aparece al hacer hover (Adaptado para Admin) */}
-          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[2px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10">
+          {/* Botón Overlay que aparece al hacer hover */}
+          <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[2px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-10 pointer-coarse:hidden">
             <Link href={`/admin/manageBlogs/${IntIdBlo}`}>
               <button className="flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <BookOpen className="h-4 w-4" />
@@ -137,20 +133,20 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
         </div>
 
         {/* --- SECCIÓN DE CONTENIDO --- */}
-        <div className="flex flex-col flex-1 gap-4 p-5">
+        <div className="flex flex-col flex-1 gap-4 p-5 overflow-hidden">
           <div className="space-y-2 flex-1">
-            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase">
-              {FnFormatLongWords(StrTitleBlo)}
+            <h3 className="text-[1.15rem] font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary line-clamp-2 uppercase break-words">
+              {StrTitleBlo}
             </h3>
-            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug">
-              {FnFormatLongWords(StrDescriptionBlo)}
+            <p className="line-clamp-3 text-[0.9rem] text-muted-foreground leading-snug break-words">
+              {StrDescriptionBlo}
             </p>
           </div>
 
           {/* Footer de la tarjeta: Autor, Fecha y Reloj */}
           <div className="flex items-center justify-between border-t border-card-border/60 pt-4 mt-auto">
             <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8 border border-border/50 bg-secondary-fund">
+              <Avatar className="h-8 w-8 border border-border bg-secondary-fund">
                 {ObjAuthorBlo.avatar && <AvatarImage src={ObjAuthorBlo.avatar} alt={ObjAuthorBlo.name} />}
                 <AvatarFallback className="text-xs font-bold text-primary">
                   {ObjAuthorBlo.name.substring(0, 2).toUpperCase()}
@@ -169,12 +165,15 @@ export default function ArticleCardAdmin(ObjPropsBlo: articleCardAdminProps) {
               <span>{StrReadTimeBlo}</span>
             </div>
           </div>
-          
-          {/* --- BOTONES DE ACCIÓN ADMIN --- */}
-          <div className="w-full flex flex-row justify-end flex-wrap gap-2 pt-3 border-t border-card-border/60">
-            {FnRenderButtonsBlo()}
+          {/* Botón de texto para dispositivos táctiles */}
+          <div className="hidden w-full justify-center pointer-coarse:flex">
+            <Link 
+              href={`/admin/manageBlogs/${IntIdBlo}`} // ✅ "/" agregado
+              className="text-sm font-bold text-primary active:scale-95 transition-transform"
+            >
+              Revisar Blog
+            </Link>
           </div>
-
         </div>
       </Card>
     </div>

@@ -1,0 +1,135 @@
+/* ─── Animación del panel (AC 12: máx 200ms) ─────────────────────────── */
+@keyframes panelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panelExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+.panel {
+  animation: panelEnter 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+.panelExiting {
+  animation: panelExit 150ms ease-in forwards;
+}
+
+/* ─── Tooltip (AC 9: aparece tras 1 segundo) ─────────────────────────── */
+.iconWrapper {
+  position: relative;
+}
+
+.iconWrapper::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #f9fafb;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: "Geist", sans-serif;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 5px;
+  pointer-events: none;
+  opacity: 0;
+  /* Retraso de 1 segundo (AC 9) */
+  transition: opacity 0.15s ease 1s;
+  z-index: 60;
+}
+
+.iconWrapper::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #111827;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease 1s;
+  z-index: 60;
+}
+
+.iconWrapper:hover::after,
+.iconWrapper:focus-within::after,
+.iconWrapper:hover::before,
+.iconWrapper:focus-within::before {
+  opacity: 1;
+}
+
+/* ─── Toast (AC 4, 5, 10) ────────────────────────────────────────────── */
+@keyframes toastSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast {
+  animation: toastSlide 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Botón del ícono ────────────────────────────────────────────────── */
+.iconButton {
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 150ms ease;
+}
+
+.iconButton:hover {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.25);
+}
+
+.iconButton:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+/* ─── Botón principal "Compartir" ────────────────────────────────────── */
+.shareButton {
+  transition: background-color 150ms ease, box-shadow 150ms ease,
+    transform 100ms ease;
+}
+
+.shareButton:hover {
+  box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.shareButton:active {
+  transform: translateY(0);
+}
+
+.shareButton:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
