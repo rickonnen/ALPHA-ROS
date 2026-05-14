@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { v2 as cloudinary } from "cloudinary";
+import { revalidatePath } from "next/cache";
 
 // Configuración de Cloudinary con variables P y optimización WebP
 cloudinary.config({
@@ -10,6 +11,9 @@ cloudinary.config({
   secure: true,
 });
 
+/**
+ * Sube una imagen a Cloudinary con reescalado forzado a 300x300
+ */
 async function uploadToCloudinary(file: File) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
@@ -19,7 +23,6 @@ async function uploadToCloudinary(file: File) {
       {
         folder: "planes_qr",
         format: "webp",
-        // Aquí forzamos el tamaño a 300x300 píxeles
         transformation: [
           { width: 300, height: 300, crop: "fill", gravity: "center" },
           { quality: "auto", fetch_format: "webp" }
@@ -37,7 +40,7 @@ export async function GET() {
   try {
     const planes = await prisma.planPublicacion.findMany({
       include: {
-        QrUrl: true // Cargamos los QRs asociados a cada plan
+        QrUrl: true 
       },
       orderBy: { id_plan: 'asc' }
     });
@@ -89,8 +92,12 @@ export async function POST(req: NextRequest) {
       await prisma.qrUrl.createMany({ data: qrRecords });
     }
 
+    // Invalida la caché de la página de planes (ajusta la ruta según tu proyecto)
+    revalidatePath("/cobros/planes");
+
     return NextResponse.json(nuevoPlan);
   } catch (error) {
+    console.error("Error en POST:", error);
     return NextResponse.json({ error: "Error en POST" }, { status: 500 });
   }
 }
@@ -100,7 +107,6 @@ export async function PATCH(req: NextRequest) {
     const formData = await req.formData();
     const id_plan = Number(formData.get("id_plan"));
     
-    // Procesar el booleano 'activo' desde el FormData
     const activoRaw = formData.get("activo");
     const activo = activoRaw !== null ? activoRaw === "true" : undefined;
 
@@ -114,26 +120,39 @@ export async function PATCH(req: NextRequest) {
       }
     });
 
-    const processQR = async (fileKey: string, modalidad: string | null) => {
+    /**
+     * Lógica para procesar subida o eliminación de QRs
+     */
+    const processQRAction = async (fileKey: string, deleteKey: string, modalidad: string | null) => {
       const file = formData.get(fileKey) as File;
+      const shouldDelete = formData.get(deleteKey) === "true";
+
       if (file && file.size > 0) {
+        // Si hay archivo nuevo, reemplazamos
         const url = await uploadToCloudinary(file);
         await prisma.qrUrl.deleteMany({ where: { id_plan, modalidad } });
         await prisma.qrUrl.create({
             data: { qr_URL: url as string, id_plan, modalidad }
         });
+      } else if (shouldDelete) {
+        // Si el usuario presionó "X" y no subió nada nuevo
+        await prisma.qrUrl.deleteMany({ where: { id_plan, modalidad } });
       }
     };
 
     if (actualizado.tipo) {
-      await processQR("qr_mensual", "mensual");
-      await processQR("qr_anual", "anual");
+      await processQRAction("qr_mensual", "delete_qr_mensual", "mensual");
+      await processQRAction("qr_anual", "delete_qr_anual", "anual");
     } else {
-      await processQR("qr_promo", null);
+      await processQRAction("qr_promo", "delete_qr_promo", null);
     }
+
+    // Invalida la caché de la página de planes para que el cambio sea visible
+    revalidatePath("/cobros/planes");
 
     return NextResponse.json(actualizado);
   } catch (error) {
+    console.error("Error en PATCH:", error);
     return NextResponse.json({ error: "Error en PATCH" }, { status: 500 });
   }
 }
