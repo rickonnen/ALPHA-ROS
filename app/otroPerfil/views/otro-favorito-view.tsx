@@ -83,9 +83,9 @@ export default function OtroFavoritoView({ id_usuario }: { id_usuario: string })
               const strEtiqueta = [fav.tipo, fav.tipo_operacion]
                 .filter(Boolean).join(" en ").toUpperCase();
               return (
-                <Card key={fav.id} className="mb-3 border border-black/10 bg-white text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden">
+                <Card key={fav.id} className="mb-3 border border-black/10 bg-white text-[#2E2E2E] hover:shadow-md transition-all duration-200 rounded-xl ">
                   <CardContent className="flex flex-col min-[480px]:flex-row items-stretch gap-0 p-0">
-                    <div className="w-full h-40 min-[480px]:w-40 min-[480px]:h-auto min-[480px]:min-w-[10rem] flex-shrink-0 overflow-hidden">
+                    <div className="w-full min-[480px]:w-40 min-[480px]:h-auto min-[480px]:min-w-[10rem] flex-shrink-0 ">
                       {fav.imagen ? (
                         <img src={fav.imagen} alt={fav.titulo}
                           className="w-full h-full object-cover"
@@ -144,11 +144,10 @@ export default function OtroFavoritoView({ id_usuario }: { id_usuario: string })
                             Ver Detalle
                           </Button>
                           <div
-                            title="Favoritos privados"
-                            className="flex items-center justify-center w-9 h-9 rounded-full border-2 border-gray-300 bg-gray-200 cursor-not-allowed opacity-50"
+                            title="Favoritos del usuario"
+                            className="flex items-center justify-center w-9 h-9 rounded-full border-2 border-red-500 bg-red-500 shadow-lg shadow-red-500/50"
                           >
-                            {/* Corazón siempre relleno pero grisáceo para indicar que no es interactivo */}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#9ca3af" stroke="#9ca3af" strokeWidth="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="2">
                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                             </svg>
                           </div>

@@ -30,12 +30,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 
-function DetailBlock({ label, value }: { label: string; value: string }) {
+function DetailBlock({ label, value, switchNode }: { 
+  label: string; 
+  value: string; 
+  switchNode?: React.ReactNode; 
+}) {
   return (
     <div className="group flex flex-col transition-all duration-300 ease-out hover:-translate-y-1 cursor-default border-b border-white/10 pb-4">
-      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 transition-colors duration-300 group-hover:text-white/80">
-        {label}
-      </label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 transition-colors duration-300 group-hover:text-white/80">
+          {label}
+        </label>
+        {switchNode}
+      </div>
       <p className="text-base md:text-lg font-semibold tracking-tight transition-all duration-300 group-hover:text-white group-hover:scale-[1.02] origin-left">
         {value}
       </p>
@@ -107,6 +114,7 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
       body: JSON.stringify({ id_usuario: userId, [campo]: valor }),
     });
   };
+  
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="px-6 md:px-8">
@@ -139,16 +147,24 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
             label="Nombre y Apellido"
             value={`${usuario.nombres ?? ""} ${usuario.apellidos ?? ""}`.trim() || "-"}
           />
-          <DetailBlock label="Dirección" value={usuario.direccion ?? "-"} />
-          <DetailBlock label="Género" value={getGenero(usuario.genero)} />
-          <DetailBlock label="Fecha de Nacimiento" value={formatFecha(usuario.fecha_nac)} />
+          <DetailBlock label="Dirección" value={usuario.direccion ?? "-"}
+            switchNode={<PrivSwitch campo="direccion" valor={privacidad.direccion} onChange={toggleCampo} />}
+          />
+          <DetailBlock label="Género" value={getGenero(usuario.genero)}
+            switchNode={<PrivSwitch campo="genero" valor={privacidad.genero} onChange={toggleCampo} />}
+          />
+          <DetailBlock label="Fecha de Nacimiento" value={formatFecha(usuario.fecha_nac)}
+            switchNode={<PrivSwitch campo="fecha_nacimiento" valor={privacidad.fecha_nacimiento} onChange={toggleCampo} />}
+          />
         </div>
         <div className="flex flex-col gap-6">
           <DetailBlock label="Email" value={usuario.email ?? "-"} />
           <DetailBlock label="Teléfono 1" value={telefonos[0] ?? "No registrado"} />
           <DetailBlock label="Teléfono 2" value={telefonos[1] ?? "No registrado"} />
           <DetailBlock label="Teléfono 3" value={telefonos[2] ?? "No registrado"} />
-          <DetailBlock label="Estado Civil" value={usuario.estado_civil ?? "No registrado"} />
+          <DetailBlock label="Estado Civil" value={usuario.estado_civil ?? "No registrado"}
+            switchNode={<PrivSwitch campo="estado_civil" valor={privacidad.estado_civil} onChange={toggleCampo} />}
+          />
         </div>
       </CardContent>
     </Card>
@@ -163,8 +179,13 @@ function PrivSwitch({ campo, valor, onChange }: {
       <span className="text-[10px] text-slate-400">{valor ? "Público" : "Privado"}</span>
       <button
         onClick={() => onChange(campo, !valor)}
-        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-          valor ? "bg-[var(--primary)]" : "bg-slate-200"
+        /* 
+           CAMBIOS REALIZADOS:
+           1. Agregamos 'border-white/20' para un borde sutil que combine con tus separadores.
+           2. Aseguramos que 'border' sea de 1px.
+        */
+        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border border-white/30 transition-colors duration-200 focus:outline-none ${
+          valor ? "bg-[var(--secondary)]" : "bg-slate-800" 
         }`}
       >
         <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ${

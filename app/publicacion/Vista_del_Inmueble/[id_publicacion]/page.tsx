@@ -45,6 +45,8 @@ import ReportModal           from "@/features/publicacion/[id_publicacion]/compo
 
 import Link from "next/link";
 
+import UserAvatar from "./UserAvatar";
+
 export default async function VistaInmueblePage({
   params,
 }: {
@@ -120,13 +122,15 @@ export default async function VistaInmueblePage({
               href={`/otroPerfil?id=${objPerfil.Usuario.id_usuario}`}
               className="inline-flex items-center gap-3 mb-6 group"
             >
-              <img
-                src={objPerfil.Usuario.url_foto_perfil?.trim() || "https://i.imgur.com/WxNkK7J.png"}
+              <UserAvatar
+                src={objPerfil.Usuario.url_foto_perfil ?? ""}
+                alt={objPerfil.Usuario.username ?? ""}
                 className="w-10 h-10 rounded-full border-2 border-[#1F3A4D]/20 object-cover group-hover:border-[#C26E5A] transition-colors"
-                onError={(e) => { e.currentTarget.src = "https://i.imgur.com/WxNkK7J.png"; }}
               />
               <span className="text-[#1F3A4D] font-semibold text-sm group-hover:text-[#C26E5A] transition-colors">
-                @{objPerfil.Usuario.username}
+                @{`${objPerfil.Usuario.nombres} ${objPerfil.Usuario.apellidos}`.trim()
+                  ? `${objPerfil.Usuario.nombres ?? ""} ${objPerfil.Usuario.apellidos ?? ""}`.trim()
+                  : "Usuario"}
               </span>
             </Link>
           )}
