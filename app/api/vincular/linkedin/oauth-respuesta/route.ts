@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       body: new URLSearchParams({
         grant_type:    "authorization_code",
         code,
-        redirect_uri:  `${process.env.NEXTAUTH_URL}api/vincular/linkedin/oauth-respuesta`,
+        redirect_uri:  `${process.env.NEXTAUTH_URL}/api/vincular/linkedin/oauth-respuesta`,
         client_id:     process.env.LINKEDIN_CLIENT_ID!,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
       }),
