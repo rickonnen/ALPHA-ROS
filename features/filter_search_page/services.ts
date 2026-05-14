@@ -1,10 +1,8 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from "@prisma/client";
+import { prisma } from "./prismaClient";
+import { unstable_cache } from "next/cache";
 
-import { prisma } from './prismaClient';
-
-import { unstable_cache } from 'next/cache';
-
-export type SearchCurrency = 'USD' | 'BS';
+export type SearchCurrency = "USD" | "BS";
 
 export type SearchFiltersInput = {
   ubicacion?: string;
@@ -19,6 +17,11 @@ export type SearchFiltersInput = {
   maxPrice?: number;
   minSurface?: number;
   maxSurface?: number;
+  soloOfertas?: boolean;
+  sort?: string;
+
+  // Filtro por características de publicación
+  caracteristicasIds?: number[];
 };
 
 export type SearchPublicationResult = {
@@ -26,6 +29,7 @@ export type SearchPublicationResult = {
   titulo: string | null;
   descripcion: string | null;
   precio: number | null;
+  precio_anterior: number | null;
   superficie: number | null;
   habitaciones: number | null;
   banos: number | null;
@@ -39,6 +43,7 @@ export type SearchPublicationResult = {
   moneda_simbolo: string | null;
   moneda_tasa_cambio: number | null;
   fecha_creacion: string | null;
+  es_promocionada: boolean;
   ubicacion: {
     direccion: string | null;
     zona: string | null;
@@ -47,8 +52,19 @@ export type SearchPublicationResult = {
     latitud: number | null;
     longitud: number | null;
   } | null;
+
   imagenes: string[];
-  caracteristicas: string[];
+
+  caracteristicas: {
+    id: number;
+    nombre: string;
+    detalle: string | null;
+  }[];
+  etiquetas: {
+    id: number;
+    nombre: string;
+    color: string;
+  }[];
 };
 
 type PublicationWithRelations = Prisma.PublicacionGetPayload<{
@@ -70,15 +86,22 @@ type PublicationWithRelations = Prisma.PublicacionGetPayload<{
         Caracteristica: true;
       };
     };
+    PublicacionEtiquetas: {
+      include: {
+        Etiquetas: true;
+      };
+    };
   };
 }>;
 
+const BS_EXCHANGE_RATE = 6.96;
+
 const OPERACION_ID: Record<string, number> = {
   venta: 2,
-  'en venta': 2,
+  "en venta": 2,
   compra: 2,
   alquiler: 1,
-  'en alquiler': 1,
+  "en alquiler": 1,
   anticretico: 3,
 };
 
@@ -88,22 +111,17 @@ const TIPO_INMUEBLE_ID: Record<string, number> = {
   terreno: 3,
 };
 
-const BS_EXCHANGE_RATE = 6.96;
-
 function normalizeText(value: string): string {
   return value
     .trim()
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function toNumber(value: Prisma.Decimal | number | null | undefined): number | null {
-  if (value == null) {
-    return null;
-  }
-
-  return typeof value === 'number' ? value : value.toNumber();
+  if (value == null) return null;
+  return typeof value === "number" ? value : value.toNumber();
 }
 
 function parseMinimum(value: string): number | null {
@@ -115,69 +133,78 @@ function roundToTwo(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function convertBsToUsd(amount: number, exchangeRate: number = BS_EXCHANGE_RATE): number {
+function convertBsToUsd(
+  amount: number,
+  exchangeRate: number = BS_EXCHANGE_RATE,
+): number {
   return roundToTwo(amount / exchangeRate);
 }
 
+function getPreviousPrice(publication: PublicationWithRelations): number | null {
+  return toNumber(
+    (
+      publication as PublicationWithRelations & {
+        precio_anterior?: Prisma.Decimal | number | null;
+      }
+    ).precio_anterior,
+  );
+}
+
 function getPropertyTypeNames(value: string | undefined): string[] {
-  if (!value) {
-    return [];
-  }
+  if (!value) return [];
 
   return value
-    .split(',')
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 function getOperationIds(value: string | undefined): number[] {
-  if (!value) {
-    return [];
-  }
+  if (!value) return [];
 
   return value
-    .split(',')
+    .split(",")
     .map((item) => OPERACION_ID[normalizeText(item)])
     .filter((id): id is number => Boolean(id))
     .filter((id, index, array) => array.indexOf(id) === index);
 }
 
-function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
-  const andClauses: Prisma.PublicacionWhereInput[] = [
-    {
-      OR: [
-        { id_estado: null },
-        { id_estado: 0 },
-        { id_estado: 1 },
-        { id_estado: 2 },
-        { id_estado: 3 },
-      ],
-    },
-  ];
-
-  const where: Prisma.PublicacionWhereInput = {
-    AND: andClauses,
-  };
-
-  // OPTIMIZACIÓN: Filtro de precio directamente en la base de datos
-  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    andClauses.push({
-      precio: {
-      ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
-      ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
-      },
-    });
+function addAndCondition(
+  where: Prisma.PublicacionWhereInput,
+  condition: Prisma.PublicacionWhereInput,
+) {
+  if (!where.AND) {
+    where.AND = [];
   }
 
+  if (Array.isArray(where.AND)) {
+    where.AND.push(condition);
+  } else {
+    where.AND = [where.AND, condition];
+  }
+}
+
+function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
+  const where: Prisma.PublicacionWhereInput = {};
+
+  addAndCondition(where, {
+    OR: [
+      { id_estado: null },
+      { id_estado: 0 },
+      { id_estado: 1 },
+      { id_estado: 2 },
+      { id_estado: 3 },
+    ],
+  });
+
   const operationIds = getOperationIds(filters.operacion);
+
   if (operationIds.length === 1) {
-    andClauses.push({ id_tipo_operacion: operationIds[0] });
+    where.id_tipo_operacion = operationIds[0];
   } else if (operationIds.length > 1) {
-    andClauses.push({
-      id_tipo_operacion: {
-        in: operationIds,
-      },
-    });
+    where.id_tipo_operacion = {
+      in: operationIds,
+    };
   }
 
   const propertyTypeNames = getPropertyTypeNames(filters.tipoInmueble);
@@ -192,151 +219,169 @@ function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
       .filter((id): id is number => Boolean(id));
 
     if (mappedIds.length === propertyTypeNames.length) {
-      andClauses.push({
-        id_tipo_inmueble:
-          mappedIds.length === 1 ? mappedIds[0] : { in: mappedIds },
-      });
+      where.id_tipo_inmueble =
+        mappedIds.length === 1 ? mappedIds[0] : { in: mappedIds };
     } else {
-      andClauses.push({
-        TipoInmueble: {
-          is: {
-            OR: propertyTypeNames.map((name) => ({
-              nombre_inmueble: {
-                equals: name,
-                mode: 'insensitive',
-              },
-            })),
-          },
+      where.TipoInmueble = {
+        is: {
+          OR: propertyTypeNames.map((name) => ({
+            nombre_inmueble: {
+              equals: name,
+              mode: "insensitive",
+            },
+          })),
         },
-      });
+      };
     }
   }
 
-  if (filters.habitaciones && filters.habitaciones !== 'Sin ambientes') {
+  if (filters.habitaciones && filters.habitaciones !== "Sin ambientes") {
     const minimum = parseMinimum(filters.habitaciones);
+
     if (minimum !== null) {
-      andClauses.push({ habitaciones: { gte: minimum } });
+      where.habitaciones = {
+        gte: minimum,
+      };
     }
-  } else if (filters.habitaciones === 'Sin ambientes') {
-    andClauses.push({ habitaciones: 0 });
+  } else if (filters.habitaciones === "Sin ambientes") {
+    where.habitaciones = 0;
   }
 
   if (filters.banos) {
     const minimum = parseMinimum(filters.banos);
+
     if (minimum !== null) {
-      andClauses.push({ banos: { gte: minimum } });
+      where.banos = {
+        gte: minimum,
+      };
     }
   }
 
   if (filters.piscina) {
-    const wantsPool = normalizeText(filters.piscina) === 'si';
-    andClauses.push({
-      PublicacionCaracteristica: wantsPool
+    const wantsPool = normalizeText(filters.piscina) === "si";
+
+    addAndCondition(
+      where,
+      wantsPool
         ? {
-            some: {
-              Caracteristica: {
-                nombre_caracteristica: {
-                  equals: 'Piscina',
-                  mode: 'insensitive',
+            PublicacionCaracteristica: {
+              some: {
+                Caracteristica: {
+                  nombre_caracteristica: {
+                    equals: "Piscina",
+                    mode: "insensitive",
+                  },
                 },
               },
             },
           }
         : {
-            none: {
-              Caracteristica: {
-                nombre_caracteristica: {
-                  equals: 'Piscina',
-                  mode: 'insensitive',
+            PublicacionCaracteristica: {
+              none: {
+                Caracteristica: {
+                  nombre_caracteristica: {
+                    equals: "Piscina",
+                    mode: "insensitive",
+                  },
                 },
               },
             },
           },
-    });
+    );
   }
 
   if (filters.minSurface !== undefined || filters.maxSurface !== undefined) {
-    andClauses.push({
-      superficie: {
+    where.superficie = {
       ...(filters.minSurface !== undefined ? { gte: filters.minSurface } : {}),
       ...(filters.maxSurface !== undefined ? { lte: filters.maxSurface } : {}),
-      },
-    });
+    };
   }
 
   if (filters.ubicacion?.trim()) {
     const search = filters.ubicacion.trim();
-    andClauses.push({
-      OR: [
-        {
-          Ubicacion: {
-            is: {
-              direccion: {
-                contains: search,
-                mode: 'insensitive',
-              },
+
+    where.OR = [
+      {
+        Ubicacion: {
+          is: {
+            direccion: {
+              contains: search,
+              mode: "insensitive",
             },
           },
         },
-        {
-          Ubicacion: {
-            is: {
-              zona: {
-                contains: search,
-                mode: 'insensitive',
-              },
+      },
+      {
+        Ubicacion: {
+          is: {
+            zona: {
+              contains: search,
+              mode: "insensitive",
             },
           },
         },
-        {
-          Ubicacion: {
-            is: {
-              Ciudad: {
-                is: {
-                  nombre_ciudad: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
+      },
+      {
+        Ubicacion: {
+          is: {
+            Ciudad: {
+              is: {
+                nombre_ciudad: {
+                  contains: search,
+                  mode: "insensitive",
                 },
               },
             },
           },
         },
-        {
-          Ubicacion: {
-            is: {
-              Pais: {
-                is: {
-                  nombre_pais: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
+      },
+      {
+        Ubicacion: {
+          is: {
+            Pais: {
+              is: {
+                nombre_pais: {
+                  contains: search,
+                  mode: "insensitive",
                 },
               },
             },
           },
         },
-      ],
+      },
+    ];
+  }
+
+  if (filters.caracteristicasIds && filters.caracteristicasIds.length > 0) {
+    addAndCondition(where, {
+      PublicacionCaracteristica: {
+        some: {
+          id_caracteristica: {
+            in: filters.caracteristicasIds,
+          },
+        },
+      },
     });
   }
 
   return where;
 }
 
-function convertPublicationPriceToUsd(publication: PublicationWithRelations, apiExchangeRate: number = BS_EXCHANGE_RATE): number | null {
+function convertPublicationPriceToUsd(
+  publication: PublicationWithRelations,
+  apiExchangeRate: number = BS_EXCHANGE_RATE,
+): number | null {
   const rawPrice = toNumber(publication.precio);
-  if (rawPrice === null) {
-    return null;
-  }
 
-  const currencyName = normalizeText(publication.Moneda?.nombre ?? 'USD');
+  if (rawPrice === null) return null;
 
-  if (currencyName === 'usd' || currencyName.includes('dolar')) {
+  const currencyName = normalizeText(publication.Moneda?.nombre ?? "USD");
+
+  if (currencyName === "usd" || currencyName.includes("dolar")) {
     return rawPrice;
   }
 
-  if (currencyName === 'bs' || currencyName.includes('boliv')) {
-    // Usar el tipo de cambio de venta de DolarAPI
+  if (currencyName === "bs" || currencyName.includes("boliv")) {
     return convertBsToUsd(rawPrice, apiExchangeRate);
   }
 
@@ -352,7 +397,11 @@ function passesPriceFilter(
     return true;
   }
 
-  const publicationPriceInUsd = convertPublicationPriceToUsd(publication, apiExchangeRate);
+  const publicationPriceInUsd = convertPublicationPriceToUsd(
+    publication,
+    apiExchangeRate,
+  );
+
   if (publicationPriceInUsd === null) {
     return false;
   }
@@ -360,14 +409,14 @@ function passesPriceFilter(
   const minPriceInUsd =
     filters.minPrice === undefined
       ? undefined
-      : filters.currency === 'BS'
+      : filters.currency === "BS"
         ? convertBsToUsd(filters.minPrice, apiExchangeRate)
         : filters.minPrice;
 
   const maxPriceInUsd =
     filters.maxPrice === undefined
       ? undefined
-      : filters.currency === 'BS'
+      : filters.currency === "BS"
         ? convertBsToUsd(filters.maxPrice, apiExchangeRate)
         : filters.maxPrice;
 
@@ -382,12 +431,37 @@ function passesPriceFilter(
   return true;
 }
 
+function hasDiscount(publication: PublicationWithRelations): boolean {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = getPreviousPrice(publication);
+
+  return (currentPrice !== null && previousPrice !== null && previousPrice > currentPrice);
+}
+
+function getDiscountPercent(publication: PublicationWithRelations): number {
+  const currentPrice = toNumber(publication.precio);
+  const previousPrice = getPreviousPrice(publication);
+
+  if (currentPrice === null || previousPrice === null || previousPrice <= currentPrice) {
+    return 0;
+  }
+
+  return Math.round(((previousPrice - currentPrice) / previousPrice) * 100);
+}
+
 function mapPublication(publication: PublicationWithRelations): SearchPublicationResult {
+  const caracteristicas = publication.PublicacionCaracteristica.map((item) => ({
+    id: item.id_caracteristica,
+    nombre: item.Caracteristica?.nombre_caracteristica ?? "",
+    detalle: item.detalle_caracteristica ?? null,
+  })).filter((item) => Boolean(item.nombre));
+
   return {
     id_publicacion: publication.id_publicacion,
     titulo: publication.titulo,
     descripcion: publication.descripcion,
     precio: toNumber(publication.precio),
+    precio_anterior: getPreviousPrice(publication),
     superficie: toNumber(publication.superficie),
     habitaciones: publication.habitaciones,
     banos: publication.banos,
@@ -395,16 +469,19 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     plantas: publication.plantas,
     tipo_inmueble: publication.TipoInmueble?.nombre_inmueble ?? null,
     tipo_operacion: publication.TipoOperacion?.nombre_operacion ?? null,
-    estado_construccion: publication.EstadoConstruccion?.nombre_estado_construccion ?? null,
+    estado_construccion:
+      publication.EstadoConstruccion?.nombre_estado_construccion ?? null,
     estado_publicacion:
       publication.EstadoPublicacion?.nombre_estado ??
       (publication.id_estado == null || [0, 1, 2, 3].includes(publication.id_estado)
-        ? 'Activa'
+        ? "Activa"
         : null),
     moneda_nombre: publication.Moneda?.nombre ?? null,
     moneda_simbolo: publication.Moneda?.simbolo ?? null,
     moneda_tasa_cambio: toNumber(publication.Moneda?.tasa_cambio),
-    fecha_creacion: publication.fecha_creacion ? publication.fecha_creacion.toISOString() : null,
+    fecha_creacion: publication.fecha_creacion
+      ? publication.fecha_creacion.toISOString()
+      : null,
     ubicacion: publication.Ubicacion
       ? {
           direccion: publication.Ubicacion.direccion,
@@ -418,22 +495,30 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     imagenes: publication.Imagen.map((image) => image.url_imagen).filter(
       (url): url is string => Boolean(url),
     ),
-    caracteristicas: publication.PublicacionCaracteristica.map(
-      (item) => item.Caracteristica?.nombre_caracteristica,
-    ).filter((name): name is string => Boolean(name)),
+    caracteristicas,
+    es_promocionada: publication.prioridad ?? false,
+
+    etiquetas: (publication.PublicacionEtiquetas || []).map((pe) => ({
+       id: pe.Etiquetas?.id_etiqueta ?? 0, // <--- Etiquetas con S
+       nombre: pe.Etiquetas?.nombre_etiqueta ?? "", 
+       color: pe.Etiquetas?.color ?? '#6B7280'
+    })),
   };
 }
 
 export async function searchPublicaciones(
   filters: SearchFiltersInput,
 ): Promise<SearchPublicationResult[]> {
-  // Obtener el tipo de cambio de venta directamente desde DolarAPI Bolivia
   let apiExchangeRate = BS_EXCHANGE_RATE;
 
   try {
     const exchangeRateResponse = await fetch(
-      `${process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"}/v1/dolares/binance`,
-      { cache: "no-store" }
+      `${
+        process.env.DOLAR_API_BASE_URL ?? "https://bo.dolarapi.com"
+      }/v1/dolares/binance`,
+      {
+        cache: "no-store",
+      },
     );
 
     if (exchangeRateResponse.ok) {
@@ -451,7 +536,7 @@ export async function searchPublicaciones(
   const publications = await prisma.publicacion.findMany({
     where: buildWhere(filters),
     orderBy: {
-      id_publicacion: 'desc',
+      id_publicacion: "desc",
     },
     include: {
       TipoInmueble: true,
@@ -467,7 +552,7 @@ export async function searchPublicaciones(
       },
       Imagen: {
         orderBy: {
-          id_imagen: 'asc',
+          id_imagen: "asc",
         },
       },
       PublicacionCaracteristica: {
@@ -475,26 +560,46 @@ export async function searchPublicaciones(
           Caracteristica: true,
         },
       },
+      PublicacionEtiquetas: {
+        include: {
+          Etiquetas: true,
+        },
+      },
     },
   });
-
-  const priceFiltered = publications.filter((publication) =>
+  let filteredPublications = publications.filter((publication) =>
     passesPriceFilter(publication, filters, apiExchangeRate),
   );
 
-  return priceFiltered.map(mapPublication);
+  if (filters.soloOfertas) {
+    filteredPublications = filteredPublications.filter(hasDiscount);
+  }
+
+  if (filters.sort === "rebajas-desc") {
+    filteredPublications = filteredPublications
+      .filter(hasDiscount)
+      .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a));
+  }
+
+  return filteredPublications.map(mapPublication);
+
+  /*const priceFiltered = publications.filter((publication) => passesPriceFilter(publication, filters, apiExchangeRate));
+  const mapped = priceFiltered.map(mapPublication);
+
+  const promoted = mapped.filter((p) => p.es_promocionada);
+  const regular = mapped.filter((p) => !p.es_promocionada);
+  return [...promoted, ...regular];*/
 }
-// con esto la llave es única y estable, no importa el orden de los filtros
+
 export async function getCachedPublicaciones(filters: SearchFiltersInput) {
-  // Ordenamos las llaves para que {a:1, b:2} sea igual a {b:2, a:1}
   const stableKey = JSON.stringify(filters, Object.keys(filters).sort());
 
   return unstable_cache(
     async () => searchPublicaciones(filters),
-    ['search-results', stableKey], 
-    { 
-      revalidate: 60, 
-      tags: ['publicaciones'] 
-    }
+    ["search-results", stableKey],
+    {
+      revalidate: 60,
+      tags: ["publicaciones"],
+    },
   )();
 }

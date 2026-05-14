@@ -25,6 +25,7 @@ import { PropertyDetails } from "@/features/publicacion/[id_publicacion]/compone
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import { PropertyDetailTracking } from "@/features/publicacion/[id_publicacion]/components/PropertyDetailTracking";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import { ReferencePointsSection } from "@/features/publicacion/[id_publicacion]/components/ReferencePointsSection";
 import { ViewTracker } from "@/features/publicacion/[id_publicacion]/components/ViewTracker";
@@ -113,6 +114,7 @@ export default async function VistaInmueblePage({
   return (
     <main className="min-h-screen bg-[#F4EFE6] p-4 font-[family-name:var(--font-geist-sans)] text-[#2E2E2E] md:p-12">
       <ViewTracker id_publicacion={intId} />
+      <PropertyDetailTracking id_publicacion={intId} />
       <div className="mx-auto max-w-6xl">
         <header className="mb-10">
           <h1 className="mb-4 break-words text-3xl font-bold tracking-tight text-[#1F3A4D] md:text-5xl">
@@ -212,6 +214,7 @@ export default async function VistaInmueblePage({
 
           return objPerfil.Usuario ? (
             <ContactCard
+              id_publicacion={intId}
               strTituloInmueble={objPerfil.titulo || "Inmueble"}
               objPropietario={{
                 strNombres: objPerfil.Usuario.nombres || "Usuario",

@@ -220,6 +220,7 @@ export default async function PerfilInmueblePage({
 
           return objPerfil.Usuario ? (
             <ContactCard
+              id_publicacion={intId}
               strTituloInmueble={objPerfil.titulo || "Inmueble"}
               objPropietario={{
                 strNombres: objPerfil.Usuario.nombres || "Usuario",

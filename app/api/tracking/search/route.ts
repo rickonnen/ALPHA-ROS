@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -8,6 +7,7 @@ const supabaseAdmin = createClient(
 );
 
 export interface TrackSearchPayload {
+  id_usuario: string;
   id_ciudad?: number;
   id_zona?: number;
   texto_calle?: string;
@@ -28,29 +28,21 @@ export interface TrackSearchPayload {
   texto_busqueda?: string;
 }
 
-function getUserIdFromToken(request: NextRequest): string | null {
-  try {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) return null;
-    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
-    return decoded.userId;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackSearchPayload;
-    const id_usuario = getUserIdFromToken(request);
 
-    if (!id_usuario) {
-      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
+    // Validate required field
+    if (!body.id_usuario) {
+      return NextResponse.json(
+        { success: false, message: 'Missing required field: id_usuario' },
+        { status: 400 }
+      );
     }
 
     const { error } = await supabaseAdmin.from('BusquedaLog').insert({
-      id_usuario,
-      session_id: id_usuario,
+      id_usuario: body.id_usuario,
+      session_id: body.id_usuario,
       id_ciudad: body.id_ciudad ?? null,
       id_zona: body.id_zona ?? null,
       texto_calle: body.texto_calle ?? null,

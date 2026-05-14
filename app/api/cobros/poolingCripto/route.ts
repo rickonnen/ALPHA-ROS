@@ -14,7 +14,8 @@ export async function GET(req: Request) {
     where: {
       id_usuario: userId,
       estado: { in: [2, 3] },
-      fecha_detalle: { gte: new Date(desde) } 
+      fecha_detalle: { gte: new Date(desde) },
+      metodo_pago: "Transferencia virtual"
     },
     orderBy: { fecha_detalle: 'desc' }
   });

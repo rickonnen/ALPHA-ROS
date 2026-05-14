@@ -1,6 +1,5 @@
 "use client";
-
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -11,7 +10,7 @@ import {
 } from "@/features/search/search-services";
 import { useTracking } from "@/components/hooks/useTracking";
 import AdvancedFilters from "@/components/search/advancedFilters";
-// import { ApplyFiltersButton } from "@/components/search/applyFiltersButton";
+import CharacteristicsFilter from "@/components/search/characteristicsFilter";
 import { ClearFiltersButton } from "@/components/search/clearFiltersButton";
 import {
   FilterTypeProperty,
@@ -41,7 +40,10 @@ import {
   Type,
 } from "lucide-react";
 import SearchMapClient from "./SearchMapClient";
-import { convertPublicacionesToLocations, formatPropertyPrice } from "@/lib/locations";
+import {
+  convertPublicacionesToLocations,
+  formatPropertyPrice,
+} from "@/lib/locations";
 import CurrencySwitch from "@/components/search/currencySwitch";
 
 /* hooks y ui para autenticación */
@@ -49,11 +51,31 @@ import { useAuth } from "@/app/auth/AuthContext";
 import AuthModal from "@/app/auth/AuthModal";
 import ProtectedFeatureModal from "@/app/auth/ProtectedFeatureModal";
 
+/* Para comparacion de propiedades */
+import { CompareTable } from "@/components/search/compareTable";
+import { CompareFloatingBar } from "@/components/search/floatBar";
+import { countActiveFilters } from "@/features/filter_search_page/countActiveFilters";
+
 type Currency = "USD" | "BS";
 
 type AppliedPriceFilter = {
   minPrice?: number;
   maxPrice?: number;
+};
+
+type SearchAdvancedFilterValues = {
+  habitaciones?: string;
+  banos?: string;
+  piscina?: string;
+  minSurface?: number;
+  maxSurface?: number;
+  soloOfertas?: boolean;
+  caracteristicasIds?: number[];
+};
+
+type SearchCharacteristicOption = {
+  id_caracteristica: number;
+  nombre_caracteristica: string;
 };
 
 interface SavedZone {
@@ -77,9 +99,9 @@ interface ZoneStats {
 
 type ZoneModalMode = "create" | "rename";
 
-interface FiltrosBusquedaParams extends FiltrosPublicacion{
-  page?:number;
-  limit?:number;
+interface FiltrosBusquedaParams extends FiltrosPublicacion {
+  page?: number;
+  limit?: number;
   currency?: undefined;
 }
 
@@ -91,12 +113,12 @@ const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 5, nombre_inmueble: "Espacio de cementerio" },
 ];
 
-const LOCAL_FALLBACK_IMAGES = ['/casa1.jpg', '/casa2.jpg', '/casa3.jpg'];
+const LOCAL_FALLBACK_IMAGES = ["/casa1.jpg", "/casa2.jpg", "/casa3.jpg"];
 const ZONE_NAME_PATTERN = /^[A-Za-z0-9]+$/;
 const ZONE_NAME_MAX_LENGTH = 50;
-const POST_AUTH_REDIRECT_KEY = 'postAuthRedirect';
-const POST_AUTH_LOADED_ZONE_KEY = 'loadedZona';
-const POST_AUTH_MAP_OPEN_KEY = 'searchMapOpen';
+const POST_AUTH_REDIRECT_KEY = "postAuthRedirect";
+const POST_AUTH_LOADED_ZONE_KEY = "loadedZona";
+const POST_AUTH_MAP_OPEN_KEY = "searchMapOpen";
 const MIN_ZONE_POINTS = 4;
 const MAX_ZONE_POINTS = 10;
 const POST_AUTH_EDIT_ZONE_KEY = "loadedZonaEditMode";
@@ -105,7 +127,7 @@ const POST_AUTH_EDIT_ZONE_KEY = "loadedZonaEditMode";
 const ITEMS_PER_PAGE_GRID = 6;
 const ITEMS_PER_PAGE_LIST = 5;
 const ITEMS_PER_PAGE_MAP_GRID = 3;
-const ITEMS_PER_PAGE_MAP_LIST = 5;
+const ITEMS_PER_PAGE_MAP_LIST = 4;
 
 function isValidLatLng(lat: unknown, lng: unknown): lat is number {
   return (
@@ -153,8 +175,8 @@ function isValidZoneCoordinates(
       (point) =>
         Array.isArray(point) &&
         point.length === 2 &&
-        typeof point[0] === 'number' &&
-        typeof point[1] === 'number' &&
+        typeof point[0] === "number" &&
+        typeof point[1] === "number" &&
         Number.isFinite(point[0]) &&
         Number.isFinite(point[1]),
     )
@@ -178,7 +200,7 @@ function getZoneNameError(
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
-    return 'Ingresa un nombre para la zona.';
+    return "Ingresa un nombre para la zona.";
   }
 
   if (trimmedValue.length > ZONE_NAME_MAX_LENGTH) {
@@ -186,19 +208,19 @@ function getZoneNameError(
   }
 
   if (!ZONE_NAME_PATTERN.test(trimmedValue)) {
-    return 'Usa solo letras y números, sin espacios ni caracteres especiales.';
+    return "Usa solo letras y números, sin espacios ni caracteres especiales.";
   }
 
   const normalizedValue = normalizeZoneName(trimmedValue);
   const hasDuplicateName = savedZones.some(
     (zone) =>
       zone.id_mi_zona !== excludedZoneId &&
-      typeof zone.nombre_zona === 'string' &&
+      typeof zone.nombre_zona === "string" &&
       normalizeZoneName(zone.nombre_zona) === normalizedValue,
   );
 
   if (hasDuplicateName) {
-    return 'Ya tienes una zona guardada con ese nombre.';
+    return "Ya tienes una zona guardada con ese nombre.";
   }
 
   return null;
@@ -249,9 +271,9 @@ function getZoneStats(
 }
 
 function persistSearchStateForAuth(drawnPolygon: [number, number][] | null) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
-  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, '/search');
+  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "/search");
   localStorage.setItem(POST_AUTH_MAP_OPEN_KEY, JSON.stringify(true));
 
   if (drawnPolygon && isValidZoneCoordinates(drawnPolygon)) {
@@ -312,6 +334,21 @@ function getPropertyTypeLabelsFromIds(
     .map((option) => option.nombre_inmueble as string);
 }
 
+function hasPropertyDiscount(property: Property): boolean {
+  return (
+    typeof property.previousPrice === "number" &&
+    property.previousPrice > property.price
+  );
+}
+
+function getPropertyDiscountPercent(property: Property): number {
+  if (!hasPropertyDiscount(property)) return 0;
+
+  return Math.round(
+    ((property.previousPrice! - property.price) / property.previousPrice!) * 100,
+  );
+}
+
 function sortProperties(properties: Property[], sortBy: string): Property[] {
   const sorted = [...properties];
   sorted.sort((first, second) => {
@@ -320,14 +357,17 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
         return first.price - second.price;
       case "precio-des":
         return second.price - first.price;
+      case "rebajas-desc":
+        return getPropertyDiscountPercent(second) - getPropertyDiscountPercent(first);
       case "m2-menor":
         return first.terrainArea - second.terrainArea;
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
         return first.id - second.id;
-      case "fecha-reciente":
       default:
+        if (first.isPromoted && !second.isPromoted) return -1;
+        if (!first.isPromoted && second.isPromoted) return 1;
         return second.id - first.id;
     }
   });
@@ -366,38 +406,26 @@ function getSafeImages(publication: PublicacionBusqueda): string[] {
 }
 
 function formatPublishedDate(date: Date | string | null | undefined): string {
-  if (!date) return "Reciente";
-  
   try {
-    const publishedDate = typeof date === "string" ? new Date(date) : date;
-    if (isNaN(publishedDate.getTime())) return "Reciente";
-    
-    const now = new Date();
-    const diffMs = now.getTime() - publishedDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    // Mostrar hace cuánto tiempo fue publicado
-    if (diffDays === 0) return "Hoy";
-    if (diffDays === 1) return "Ayer";
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return `Hace ${weeks} ${weeks === 1 ? "semana" : "semanas"}`;
+    const publishedDate = date ? (typeof date === "string" ? new Date(date) : date) : new Date();
+    if (isNaN(publishedDate.getTime())) {
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      return `${day}/${month}/${year}`;
     }
-    if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30);
-      return `Hace ${months} ${months === 1 ? "mes" : "meses"}`;
-    }
-    
-    // Para fechas más antiguas, mostrar la fecha formateada
-    const formatter = new Intl.DateTimeFormat("es-BO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-    return formatter.format(publishedDate);
+
+    const day = String(publishedDate.getDate()).padStart(2, '0');
+    const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
+    const year = publishedDate.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
-    return "Reciente";
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 }
 
@@ -413,6 +441,12 @@ function mapPublicationToProperty(
   ]
     .filter(Boolean)
     .join(", ");
+ const currentPrice = toNumber(publication.precio);
+ const previousPrice = toNumber(publication.precio_anterior);
+ const discountPercent =
+    previousPrice > currentPrice
+      ? Math.round(((previousPrice - currentPrice) / previousPrice) * 100)
+      : 0;
 
   return {
     id: publication.id_publicacion,
@@ -422,12 +456,20 @@ function mapPublicationToProperty(
     terrainArea: toNumber(publication.superficie),
     bedrooms: publication.habitaciones ?? 0,
     bathrooms: publication.banos ?? 0,
-    price: toNumber(publication.precio),
+    garajes: publication.garajes ?? 0,
+    floors: publication.plantas ?? 0,
+    price: currentPrice,
+    previousPrice: previousPrice,
+    discountPercent: discountPercent,
+    /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
+    caracteristicas: publication.caracteristicas || [],
+    etiquetas: publication.etiquetas || [],
+    isPromoted: publication.es_promocionada ?? false,
   };
 }
 
@@ -463,7 +505,9 @@ function Pagination({
         const showEllipsis = prev !== undefined && page - prev > 1;
         return (
           <span key={page} className="flex items-center gap-1">
-            {showEllipsis && <span className="px-1 text-gray-400 text-sm">…</span>}
+            {showEllipsis && (
+              <span className="px-1 text-gray-400 text-sm">…</span>
+            )}
             <button
               onClick={() => onPageChange(page)}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
@@ -504,17 +548,15 @@ function SearchPageContent() {
   const [appliedPriceFilter, setAppliedPriceFilter] =
     useState<AppliedPriceFilter | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("USD");
-  const [advancedFilterValues, setAdvancedFilterValues] = useState<{
-    habitaciones?: string;
-    banos?: string;
-    piscina?: string;
-    minSurface?: number;
-    maxSurface?: number;
-  }>({
+  const [caracteristicasDB, setCaracteristicasDB] = useState<
+    SearchCharacteristicOption[]
+  >([]);
+  const [advancedFilterValues, setAdvancedFilterValues] =
+    useState<SearchAdvancedFilterValues>({
     habitaciones: "",
     banos: "",
     piscina: "",
-  });
+    });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<number[]>(
@@ -530,31 +572,95 @@ function SearchPageContent() {
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
 
-  // Estados de paginación y recomendaciones (merge-sysinfosquad-bughunters)
+  // --- Estados para la vista de comparación ---
+  const [appView, setAppView] = useState<"listings" | "compare">("listings");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSelectionLoaded, setIsSelectionLoaded] = useState(false);
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((item) => item !== id);
+      if (prev.length >= 4) {
+        setToastMessage(
+          "Solo puedes seleccionar hasta 4 inmuebles para comparar.",
+        );
+        return prev;
+      }
+      return [...prev, id];
+    });
+  };
+
+  // Recuperar y guardar seleccion en LocalStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("compareSelectedIds");
+      if (saved) {
+        try {
+          setSelectedIds(JSON.parse(saved));
+        } catch (e) {
+          console.error("Error parsing saved selected IDs:", e);
+        }
+      }
+      setIsSelectionLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+  const fetchCaracteristicas = async () => {
+    try {
+      const res = await fetch("/api/etiquetas");
+      const payload = await res.json();
+
+      const rawCaracteristicas = Array.isArray(payload)
+        ? payload
+        : payload.caracteristicas || payload.data || [];
+
+      setCaracteristicasDB(rawCaracteristicas);
+
+      console.log("Características cargadas:", rawCaracteristicas);
+    } catch (error) {
+      console.error("Error cargando características de la DB:", error);
+    }
+  };
+
+  fetchCaracteristicas();
+}, []);
+
+  useEffect(() => {
+    if (isSelectionLoaded && typeof window !== "undefined") {
+      localStorage.setItem("compareSelectedIds", JSON.stringify(selectedIds));
+    }
+  }, [selectedIds, isSelectionLoaded]);
+
+  // Estados de paginación y recomendaciones
   const [recommendedIds, setRecommendedIds] = useState<number[]>([]);
 
-  // Estados de zona dibujada y fullscreen (team-bugHunters)
+  // Estado colapso sidebar desktop (v2)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Estados de zona dibujada y fullscreen
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [drawnPolygon, setDrawnPolygon] = useState<[number, number][] | null>(
     null,
   );
 
-  // Datos de usuario y autenticación (team-bugHunters)
+  // Datos de usuario y autenticación
   const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
   const [bolShowAuth, setBolShowAuth] = useState(false);
   const [bolShowProtected, setBolShowProtected] = useState(false);
   const [strAuthMode, setStrAuthMode] = useState<"login" | "register">("login");
 
-  // Modales para zonas (team-bugHunters)
+  // Modales para zonas
   const [showZoneNameModal, setShowZoneNameModal] = useState(false);
-  const [zoneModalMode, setZoneModalMode] = useState<ZoneModalMode>("create");
   const [zoneName, setZoneName] = useState("");
   const [savedZones, setSavedZones] = useState<SavedZone[]>([]);
   const [defaultZones, setDefaultZones] = useState<DefaultZone[]>([]);
-  const [showDefaultZones, setShowDefaultZones] = useState(true);
   const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDefaultZones, setShowDefaultZones] = useState(true);
+  const [zoneModalMode, setZoneModalMode] = useState<ZoneModalMode>("create");
   const [isZoneMenuOpen, setIsZoneMenuOpen] = useState(false);
   const [isEditingSavedZone, setIsEditingSavedZone] = useState(false);
   const [zonePendingDelete, setZonePendingDelete] = useState<SavedZone | null>(
@@ -563,7 +669,7 @@ function SearchPageContent() {
   const [shouldAutoEditLoadedZone, setShouldAutoEditLoadedZone] =
     useState(false);
 
-  // Reset page when filters/sort/view change (merge-sysinfosquad-bughunters)
+  // Reset page when filters/sort/view change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedSort, viewMode, isMapOpen]);
@@ -580,8 +686,8 @@ function SearchPageContent() {
         if (!isMounted || !Array.isArray(payload.data)) return;
 
         setDefaultZones(
-          payload.data.filter(
-            (zone: DefaultZone) => isValidZoneCoordinates(zone.coordenadas),
+          payload.data.filter((zone: DefaultZone) =>
+            isValidZoneCoordinates(zone.coordenadas),
           ),
         );
       } catch (error) {
@@ -603,8 +709,8 @@ function SearchPageContent() {
 
     const fetchSavedZones = async () => {
       try {
-        const response = await fetch('/api/perfil/mis-zonas', {
-          credentials: 'include',
+        const response = await fetch("/api/perfil/mis-zonas", {
+          credentials: "include",
         });
 
         if (!response.ok) return;
@@ -613,12 +719,12 @@ function SearchPageContent() {
         if (!isMounted || !Array.isArray(payload.data)) return;
 
         setSavedZones(
-          payload.data.filter(
-            (zone: SavedZone) => isValidZoneCoordinates(zone.coordenadas),
+          payload.data.filter((zone: SavedZone) =>
+            isValidZoneCoordinates(zone.coordenadas),
           ),
         );
       } catch (error) {
-        console.error('Error al cargar zonas guardadas:', error);
+        console.error("Error al cargar zonas guardadas:", error);
       }
     };
 
@@ -631,30 +737,47 @@ function SearchPageContent() {
 
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      searchLocation.trim() ||
       selectedOperation.length > 0 ||
-      selectedPropertyTypes.length > 0 ||
-      advancedFilterValues.habitaciones ||
-      advancedFilterValues.banos ||
-      advancedFilterValues.piscina ||
-      advancedFilterValues.minSurface !== undefined ||
-      advancedFilterValues.maxSurface !== undefined ||
-      appliedPriceFilter?.minPrice !== undefined ||
-      appliedPriceFilter?.maxPrice !== undefined ||
-      selectedSort !== "fecha-reciente",
+        selectedPropertyTypes.length > 0 ||
+        advancedFilterValues.habitaciones ||
+        advancedFilterValues.banos ||
+        advancedFilterValues.piscina ||
+        advancedFilterValues.minSurface !== undefined ||
+        advancedFilterValues.maxSurface !== undefined ||
+        (advancedFilterValues.caracteristicasIds &&
+          advancedFilterValues.caracteristicasIds.length > 0) ||
+        appliedPriceFilter?.minPrice !== undefined ||
+        appliedPriceFilter?.maxPrice !== undefined ||
+        advancedFilterValues.soloOfertas,
     );
   }, [
     advancedFilterValues.banos,
     advancedFilterValues.habitaciones,
     advancedFilterValues.piscina,
+    advancedFilterValues.minSurface,
+    advancedFilterValues.maxSurface,
+    advancedFilterValues.soloOfertas,
+    advancedFilterValues.caracteristicasIds,
     appliedPriceFilter?.maxPrice,
     appliedPriceFilter?.minPrice,
-    advancedFilterValues?.minSurface,
-    advancedFilterValues?.maxSurface,
+    selectedOperation,
+    selectedPropertyTypes,
+  ]);
+
+  const activeFiltersCount = useMemo(() => {
+    return countActiveFilters({
+      searchLocation,
+      selectedOperation,
+      selectedPropertyTypes,
+      advancedFilterValues,
+      appliedPriceFilter,
+    });
+  }, [
     searchLocation,
     selectedOperation,
-    selectedPropertyTypes.length,
-    selectedSort,
+    selectedPropertyTypes,
+    advancedFilterValues,
+    appliedPriceFilter,
   ]);
 
   const currentPolygonSignature = useMemo(
@@ -689,9 +812,11 @@ function SearchPageContent() {
     }
   }, [currentSavedZone, shouldAutoEditLoadedZone]);
 
-  // 1. Filtrar por zona dibujada con Turf.js (team-bugHunters)
+  // Filtrar por zona dibujada con Turf.js
   const filteredSearchResults = useMemo(() => {
-    if (!drawnPolygon || drawnPolygon.length < MIN_ZONE_POINTS) return searchResults;
+    if (!drawnPolygon || drawnPolygon.length < MIN_ZONE_POINTS) {
+      return searchResults;
+    }
 
     const turfCoords = drawnPolygon.map((p) => [p[1], p[0]]);
     turfCoords.push(turfCoords[0]);
@@ -706,25 +831,31 @@ function SearchPageContent() {
     });
   }, [searchResults, drawnPolygon]);
 
-  // 2. Mapear, ordenar y paginar (combinado)
+  // Mapear, ordenar y paginar
   const allProperties = useMemo(() => {
-    const mapped = filteredSearchResults.map((publication) =>
+    let mapped = filteredSearchResults.map((publication) =>
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
+      mapped = mapped.filter(hasPropertyDiscount);
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.sort((a, b) => {
+      return mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
+
         if (indexA !== -1 && indexB === -1) return -1;
         if (indexA === -1 && indexB !== -1) return 1;
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
         return 0;
       });
     }
 
     return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults, selectedOperation, selectedSort, recommendedIds]);
+  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
 
   const defaultZonesWithStats = useMemo(
     () =>
@@ -740,20 +871,23 @@ function SearchPageContent() {
 
     return {
       nombre:
-        currentSavedZone?.nombre_zona?.trim() && currentSavedZone.nombre_zona.trim().length > 0
+        currentSavedZone?.nombre_zona?.trim() &&
+        currentSavedZone.nombre_zona.trim().length > 0
           ? currentSavedZone.nombre_zona.trim()
           : "Zona dibujada",
       stats: getZoneStats(drawnPolygon, searchResults, selectedCurrency),
     };
   }, [currentSavedZone, drawnPolygon, searchResults, selectedCurrency]);
 
-  // Paginación (merge-sysinfosquad-bughunters)
+// Paginación con soporte de sidebar colapsado (v2)
   const itemsPerPage = isMapOpen
     ? viewMode === "grid"
       ? ITEMS_PER_PAGE_MAP_GRID
       : ITEMS_PER_PAGE_MAP_LIST
     : viewMode === "grid"
-      ? ITEMS_PER_PAGE_GRID
+      ? isSidebarCollapsed
+        ? 9
+        : ITEMS_PER_PAGE_GRID
       : ITEMS_PER_PAGE_LIST;
 
   const totalPages = Math.max(
@@ -766,7 +900,7 @@ function SearchPageContent() {
     return allProperties.slice(start, start + itemsPerPage);
   }, [allProperties, currentPage, itemsPerPage]);
 
-  // Manejadores de autenticación (team-bugHunters)
+  // Manejadores de autenticación
   const handleOpenLogin = () => {
     persistSearchStateForAuth(drawnPolygon);
     setStrAuthMode("login");
@@ -819,7 +953,7 @@ function SearchPageContent() {
     if (!drawnPolygon) return;
 
     if (isCurrentPolygonSaved) {
-      setZoneNameError('Esta zona ya está guardada en tu perfil.');
+      setZoneNameError("Esta zona ya está guardada en tu perfil.");
       return;
     }
 
@@ -951,7 +1085,9 @@ function SearchPageContent() {
       }
 
       setSavedZones((current) =>
-        current.filter((zone) => zone.id_mi_zona !== zonePendingDelete.id_mi_zona),
+        current.filter(
+          (zone) => zone.id_mi_zona !== zonePendingDelete.id_mi_zona,
+        ),
       );
 
       if (currentSavedZone?.id_mi_zona === zonePendingDelete.id_mi_zona) {
@@ -1012,6 +1148,12 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (
+      advancedFilterValues.caracteristicasIds &&
+      advancedFilterValues.caracteristicasIds.length > 0
+    ) {
+      urlParams.set("caracteristicas", advancedFilterValues.caracteristicasIds.join(","));
+    }
     window.history.pushState(null, "", `/search?${urlParams.toString()}`);
   };
 
@@ -1020,21 +1162,27 @@ function SearchPageContent() {
   const handleCurrencyChange = (currency: Currency) =>
     setSelectedCurrency(currency);
   const handleAdvancedFiltersChange = (values: {
-    habitaciones: string;
-    banos: string;
-    piscina: string;
-    minSurface: string;
-    maxSurface: string;
+    habitaciones?: string;
+    banos?: string;
+    piscina?: string;
+    minSurface?: string | number;
+    maxSurface?: string | number;
   }) => {
-    setAdvancedFilterValues({
-      habitaciones: values.habitaciones,
-      banos: values.banos,
-      piscina: values.piscina,
+    const minSurfaceValue =
+      values.minSurface === undefined ? "" : String(values.minSurface);
+    const maxSurfaceValue =
+      values.maxSurface === undefined ? "" : String(values.maxSurface);
+
+    setAdvancedFilterValues((current) => ({
+      ...current,
+      habitaciones: values.habitaciones ?? "",
+      banos: values.banos ?? "",
+      piscina: values.piscina ?? "",
       minSurface:
-        values.minSurface.trim() === "" ? undefined : Number(values.minSurface),
+        minSurfaceValue.trim() === "" ? undefined : Number(minSurfaceValue),
       maxSurface:
-        values.maxSurface.trim() === "" ? undefined : Number(values.maxSurface),
-    });
+        maxSurfaceValue.trim() === "" ? undefined : Number(maxSurfaceValue),
+    }));
   };
 
   const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
@@ -1044,43 +1192,7 @@ function SearchPageContent() {
         selectedPropertyTypes,
         PROPERTY_TYPE_OPTIONS,
       );
-      // Mínimas modificaciones para llamar a la API con paginación
-    //   const response = await fetch("/api/filter_search_page", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       ubicacion: searchLocation,
-    //       operacion: selectedOperation.length > 0 ? selectedOperation.join(",") : undefined,
-    //       tipoInmueble: selectedPropertyLabels.join(","),
-    //       habitaciones: advancedFilterValues.habitaciones,
-    //       banos: advancedFilterValues.banos,
-    //       piscina: advancedFilterValues.piscina,
-    //       minPrice: appliedPriceFilter?.minPrice,
-    //       maxPrice: appliedPriceFilter?.maxPrice,
-    //       currency: selectedCurrency,
-    //       page: currentPage,
-    //       limit: itemsPerPage,
-    //       ...overrides,
-    //     }),
-    //   });
 
-    //   const data = await response.json();
-    //   if (data.success) {
-    //     setSearchResults(data.publications);
-    //     setTotalCount(data.total);
-    //   }
-    //   setHasSearched(true);
-
-    //   trackSearch({
-    //     texto_busqueda: searchLocation,
-    //     cant_resultados: data.total,
-    //   });
-    // } catch (error) {
-    //   console.error("Search error:", error);
-    //   setSearchResults([]);
-    // } finally {
-    //   setIsApplyingFilters(false);
-    // }
       const filtros: FiltrosPublicacion = {
         ubicacion: searchLocation,
         operacion:
@@ -1093,13 +1205,15 @@ function SearchPageContent() {
         piscina: advancedFilterValues.piscina,
         minPrice: appliedPriceFilter?.minPrice,
         maxPrice: appliedPriceFilter?.maxPrice,
-        minSurface: advancedFilterValues.minSurface, 
+        minSurface: advancedFilterValues.minSurface,
         maxSurface: advancedFilterValues.maxSurface,
+        soloOfertas: Boolean(advancedFilterValues.soloOfertas),
+        sort: selectedSort,
         currency: selectedCurrency,
+        caracteristicasIds: advancedFilterValues.caracteristicasIds,
         ...overrides,
       };
 
-      
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
       setHasSearched(true);
@@ -1113,11 +1227,19 @@ function SearchPageContent() {
       const trackPayload = {
         texto_busqueda: searchLocation,
         id_tipo_operacion:
-          selectedOperation.length === 1 ? OPERACION_ID[selectedOperation[0]] : undefined,
+          selectedOperation.length === 1
+            ? OPERACION_ID[selectedOperation[0]]
+            : undefined,
         id_tipo_inmueble:
-          selectedPropertyTypes.length === 1 ? selectedPropertyTypes[0] : undefined,
-        habitaciones: advancedFilterValues.habitaciones ? parseInt(advancedFilterValues.habitaciones) : undefined,
-        banos: advancedFilterValues.banos ? parseInt(advancedFilterValues.banos) : undefined,
+          selectedPropertyTypes.length === 1
+            ? selectedPropertyTypes[0]
+            : undefined,
+        habitaciones: advancedFilterValues.habitaciones
+          ? parseInt(advancedFilterValues.habitaciones)
+          : undefined,
+        banos: advancedFilterValues.banos
+          ? parseInt(advancedFilterValues.banos)
+          : undefined,
         precio_min: appliedPriceFilter?.minPrice,
         precio_max: appliedPriceFilter?.maxPrice,
         cant_resultados: resultados.length,
@@ -1132,13 +1254,12 @@ function SearchPageContent() {
     }
   };
 
-  // Cargar estado del mapa y zona guardada desde localStorage (combinado)
+  // Cargar estado del mapa y zona guardada desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedMapState = localStorage.getItem("searchMapOpen");
       if (savedMapState !== null) setIsMapOpen(JSON.parse(savedMapState));
 
-      // team-bugHunters: cargar zona desde perfil
       const loadedZona = localStorage.getItem("loadedZona");
       const editLoadedZona = localStorage.getItem(POST_AUTH_EDIT_ZONE_KEY);
       if (loadedZona) {
@@ -1150,7 +1271,7 @@ function SearchPageContent() {
             setIsMapOpen(true);
             setShouldAutoEditLoadedZone(editLoadedZona === "true");
           }
-          localStorage.removeItem('loadedZona');
+          localStorage.removeItem("loadedZona");
           localStorage.removeItem(POST_AUTH_EDIT_ZONE_KEY);
         } catch (error) {
           console.error("Error al cargar zona:", error);
@@ -1159,14 +1280,14 @@ function SearchPageContent() {
     }
   }, []);
 
-  // Persistir estado del mapa (merge-sysinfosquad-bughunters)
+  // Persistir estado del mapa
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("searchMapOpen", JSON.stringify(isMapOpen));
     }
   }, [isMapOpen]);
 
-  // Ejecutar búsqueda al cambiar URL (compartido)
+  // Ejecutar búsqueda al cambiar URL
   useEffect(() => {
     const nextLocation = searchParams.get("ciudad")?.trim() ?? "";
     const nextOperation = mapQueryOperationToValue(
@@ -1184,6 +1305,11 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
+    const caracteristicasParam = searchParams.get("caracteristicas");
+    const nextCaracteristicas = caracteristicasParam
+      ? caracteristicasParam.split(",").map(Number).filter((n) => !isNaN(n))
+      : [];
 
     const nextMinPrice =
       minPriceParam !== null && minPriceParam.trim() !== ""
@@ -1205,6 +1331,12 @@ function SearchPageContent() {
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
 
+    // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
+    setAdvancedFilterValues(prev => ({
+      ...prev,
+      caracteristicasIds: nextCaracteristicas
+    }));
+
     void runSearch({
       ubicacion: nextLocation,
       operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
@@ -1212,6 +1344,7 @@ function SearchPageContent() {
         nextPropertyLabels.join(",") || rawPropertyType || undefined,
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
+      caracteristicasIds: nextCaracteristicas,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -1231,36 +1364,61 @@ function SearchPageContent() {
     };
   }, [isMobileFiltersOpen]);
 
-  // Cargar recomendaciones cuando se selecciona ese sort (merge-sysinfosquad-bughunters)
-  useEffect(() => {
-    if (selectedSort === "mas-recomendados") {
-      const fetchRecommendations = async () => {
-        try {
-          const candidate_ids = searchResults.map((item) => item.id_publicacion);
-          const response = await fetch('/api/recommendations/personal', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ candidate_ids }),
-          });
-          if (response.ok) {
-            const data = (await response.json()) as {
-              id_publicacion: number;
-            }[];
-            setRecommendedIds(data.map((item) => item.id_publicacion));
-          } else {
-            setRecommendedIds([]);
-          }
-        } catch (error) {
-          console.error('Error fetching recommendations:', error);
-          setRecommendedIds([]);
-        }
-      };
-      void fetchRecommendations();
-    } else {
+  const fetchRecommendations = useCallback(async () => {
+    try {
+      const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      const response = await fetch("/api/recommendations/personal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ candidate_ids }),
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { id_publicacion: number }[];
+        setRecommendedIds(data.map((item) => item.id_publicacion));
+      } else {
+        const errorBody = await response.text();
+        console.error("Recommendations request failed:", response.status, errorBody);
+        setRecommendedIds([]);
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
       setRecommendedIds([]);
     }
-  }, [selectedSort, searchResults]);
+  }, [searchResults]);
+
+  // Cargar recomendaciones cuando se selecciona ese sort.
+  useEffect(() => {
+    if (selectedSort === "mas-recomendados") {
+      const id = setTimeout(() => void fetchRecommendations(), 0);
+      return () => clearTimeout(id);
+    } else {
+      const id = setTimeout(() => setRecommendedIds([]), 0);
+      return () => clearTimeout(id);
+    }
+  }, [fetchRecommendations, selectedSort]);
+
+  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  useEffect(() => {
+    if (selectedSort !== "mas-recomendados") return;
+    if (typeof window === "undefined") return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const onInteraction = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        void fetchRecommendations();
+      }, 650);
+    };
+
+    window.addEventListener("tracking:interaction", onInteraction as EventListener);
+    return () => {
+      window.removeEventListener("tracking:interaction", onInteraction as EventListener);
+      if (timer) clearTimeout(timer);
+    };
+  }, [fetchRecommendations, selectedSort]);
 
   const openMobileFilters = () => {
     setIsMobileFiltersOpen(true);
@@ -1276,13 +1434,15 @@ function SearchPageContent() {
     setSearchLocation("");
     setSelectedOperation([]);
     setSelectedPropertyTypes([]);
-    setAdvancedFilterValues({ 
-      habitaciones: "", 
-      banos: "", 
+    setAdvancedFilterValues({
+      habitaciones: "",
+      banos: "",
       piscina: "",
       minSurface: undefined,
-      maxSurface: undefined 
-    }as any);
+      maxSurface: undefined,
+      soloOfertas: false,
+      caracteristicasIds: [],
+    });
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
@@ -1298,33 +1458,32 @@ function SearchPageContent() {
       piscina: "",
       minPrice: undefined,
       maxPrice: undefined,
-      minSurface: undefined, 
-      maxSurface: undefined  
+      minSurface: undefined,
+      maxSurface: undefined,
+      caracteristicasIds: [], 
     });
   };
 
   const handleSort = (sortOption: string) => setSelectedSort(sortOption);
 
   useEffect(() => {
-    // Si el usuario escribe o hace clic, esperamos 200ms antes de buscar
-    // para no saturar la base de datos (debounce)
     const timer = setTimeout(() => {
-      // Solo ejecutamos si ya se hizo una busqueda inicial o hay filtros
       if (hasSearched || hasActiveFilters) {
-        saveFiltersToUrl(); // Actualiza la URL arriba en el navegador
-        void runSearch();   // Llama a tu función de Prisma/API
+        saveFiltersToUrl();
+        void runSearch();
       }
     }, 500);
     return () => clearTimeout(timer);
   }, [
-    searchLocation,       // Escucha cambios en el buscador de texto
-    selectedOperation,    // Escucha cambios en Venta/Alquiler
-    selectedPropertyTypes,// Escucha cambios en Casa/Dpto
-    appliedPriceFilter,   // Escucha cambios en el precio
-    advancedFilterValues, // Escucha cambios en habitaciones/baños
-    selectedSort,         // Escucha cambios en el ordenamiento
-    selectedCurrency,      // Escucha cambios en la moneda
+    searchLocation,
+    selectedOperation,
+    selectedPropertyTypes,
+    appliedPriceFilter,
+    advancedFilterValues,
+    selectedSort,
+    selectedCurrency,
   ]);
+
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1373,33 +1532,37 @@ function SearchPageContent() {
       </div>
 
       {/* ══════════════════ MOBILE INFO + SORT ══════════════════ */}
-      <div className="block lg:hidden px-4 mb-3">
-        <nav className="mb-1 text-sm text-gray-500 underline">{breadcrumb}</nav>
-        <h1 className="text-base font-semibold mb-2">
-          {allProperties.length} inmuebles disponibles
-        </h1>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 max-w-[220px]">
-            <SortSelect onSortChange={handleSort} />
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-              aria-label="vista grilla"
-            >
-              <LayoutGrid className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-              aria-label="vista lista"
-            >
-              <List className="h-5 w-5" />
-            </button>
+      {appView === "listings" && (
+        <div className="block lg:hidden px-4 mb-3">
+          <nav className="mb-1 text-sm text-gray-500 underline">
+            {breadcrumb}
+          </nav>
+          <h1 className="text-base font-semibold mb-2">
+            {allProperties.length} inmuebles disponibles
+          </h1>
+          <div className="flex w-full items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <SortSelect onSortChange={handleSort} />
+            </div>
+            <div className="ml-auto flex items-center gap-2 shrink-0 justify-end">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                aria-label="vista grilla"
+              >
+                <LayoutGrid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                aria-label="vista lista"
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ══════════════════ MOBILE FILTERS DRAWER ══════════════════ */}
       {isMobileFiltersOpen && (
@@ -1424,14 +1587,6 @@ function SearchPageContent() {
                   <X className="h-7 w-7" />
                 </button>
               </div>
-              {/* <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                  closeMobileFilters();
-                }}
-              /> */}
               <div className="my-4 h-px bg-[#D8D2C8]" />
               <p className="mb-3 text-sm font-medium text-[#2E2E2E]">
                 Filtros Básicos
@@ -1450,13 +1605,19 @@ function SearchPageContent() {
                   selected={selectedPropertyTypes}
                   onChange={setSelectedPropertyTypes}
                 />
+
+                <CharacteristicsFilter
+                  allTags={caracteristicasDB}
+                  value={advancedFilterValues}
+                  onChange={(values) => setAdvancedFilterValues(values)}
+                />
+
                 <AdvancedFilters
+                  value={advancedFilterValues}
                   key={advancedFiltersKey}
                   onChange={handleAdvancedFiltersChange}
                 />
-
                 <div className="my-4 h-px bg-[#D8D2C8]" />
-
                 <PriceDropdown
                   selectedCurrency={selectedCurrency}
                   appliedPriceFilter={appliedPriceFilter}
@@ -1468,6 +1629,7 @@ function SearchPageContent() {
               <div className="mt-4 pb-6">
                 <ClearFiltersButton
                   hasActiveFilters={hasActiveFilters}
+                  activeFiltersCount={activeFiltersCount}
                   onClear={handleClearFilters}
                 />
               </div>
@@ -1478,85 +1640,89 @@ function SearchPageContent() {
 
       {/* ══════════════════ MOBILE RESULTS ══════════════════ */}
       <div className="block lg:hidden px-4">
-        {!isMapOpen && (
-          <>
-            {!hasSearched && isApplyingFilters ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                Cargando inmuebles...
-              </div>
-            ) : allProperties.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                No se encontraron inmuebles con los filtros aplicados.
-              </div>
-            ) : (
-              <>
-                <div className="grid gap-2 grid-cols-1">
-                  {displayedProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      selectedCurrency={selectedCurrency}
-                      viewMode={viewMode}
-                      isHovered={hoveredId === property.id}
-                      onMouseEnter={() => setHoveredId(property.id)}
-                      onMouseLeave={() => {}}
-                      onClick={() => {}}
-                    />
-                  ))}
+        {appView === "listings" ? (
+          !isMapOpen && (
+            <>
+              {!hasSearched && isApplyingFilters ? (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                  Cargando inmuebles...
                 </div>
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              </>
-            )}
-          </>
+              ) : allProperties.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                  {advancedFilterValues.soloOfertas
+                    ? "No hay propiedades en oferta disponibles por el momento."
+                    : "No se encontraron inmuebles con los filtros aplicados."}
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-2 grid-cols-1">
+                    {displayedProperties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        selectedCurrency={selectedCurrency}
+                        viewMode={viewMode}
+                        isHovered={hoveredId === property.id}
+                        isSelected={selectedIds.includes(property.id)}
+                        onToggleCompare={() => toggleSelection(property.id)}
+                        onMouseEnter={() => setHoveredId(property.id)}
+                        onMouseLeave={() => {}}
+                        onClick={() => {}}
+                        isMapOpen={isMapOpen}
+                      />
+                    ))}
+                  </div>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </>
+              )
+              }
+            </>
+          )
+        ) : (
+          <CompareTable
+            properties={allProperties}
+            selectedCurrency={selectedCurrency}
+            selectedIds={selectedIds}
+            onBack={() => setAppView("listings")}
+          />
         )}
       </div>
 
       {/* ══════════════════ MOBILE MAP ══════════════════ */}
-      {isMapOpen && (
+      {isMapOpen && appView === "listings" && (
         <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 lg:hidden">
-          {/* Controles de dibujo flotantes en móvil */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[998]">
             {!drawnPolygon ? (
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={() => {
-                    setIsEditingSavedZone(false);
-                    setIsDrawingMode(!isDrawingMode);
-                  }}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-lg ${
-                    isDrawingMode
-                      ? "bg-slate-800 hover:bg-slate-900"
-                      : "bg-[#C26E5A] hover:bg-[#b05e4a]"
-                  }`}
+              <button
+                onClick={() => setIsDrawingMode(!isDrawingMode)}
+                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-lg ${
+                  isDrawingMode
+                    ? "bg-slate-800 hover:bg-slate-900"
+                    : "bg-[#C26E5A] hover:bg-[#b05e4a]"
+                }`}
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                    />
-                  </svg>
-                  {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
-                </button>
-                {isDrawingMode && (
-                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                    Doble clic o toca el primer punto para cerrar. Minimo 4 y maximo 10 puntos.
-                  </span>
-                )}
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                  />
+                </svg>
+                {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
+              </button>
             ) : (
               <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-lg">
                 <span className="text-sm font-medium text-slate-900 text-center">
@@ -1573,12 +1739,12 @@ function SearchPageContent() {
                   }}
                   className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
                     isCurrentPolygonSaved
-                      ? 'cursor-not-allowed bg-slate-400'
-                      : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
+                      ? "cursor-not-allowed bg-slate-400"
+                      : "bg-[#C26E5A] hover:bg-[#b05e4a]"
                   }`}
                   disabled={isCurrentPolygonSaved}
                 >
-                  {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
+                  {isCurrentPolygonSaved ? "Zona ya guardada" : "Guardar en mi Perfil"}
                 </button>
                 <button
                   onClick={() => {
@@ -1626,251 +1792,365 @@ function SearchPageContent() {
 
       {/* ══════════════════ DESKTOP LAYOUT ══════════════════ */}
       <div className="hidden lg:flex items-stretch min-h-screen">
-        {/* ── Sidebar filtros ── */}
-        <aside className="shrink-0 w-[280px] xl:w-[320px] px-4 pt-6 border-r border-gray-200">
-          <div className="sticky top-6">
-            {/* Controles de zona dibujada (team-bugHunters) */}
-            <div className="mb-4">
-            {!drawnPolygon ? (
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => {
-                      setIsEditingSavedZone(false);
-                      setIsDrawingMode(!isDrawingMode);
-                      if (!isMapOpen) setIsMapOpen(true);
-                    }}
-                    className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
-                      isDrawingMode
-                        ? "bg-slate-800 hover:bg-slate-900"
-                        : "bg-[#C26E5A] hover:bg-[#b05e4a]"
-                    }`}
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+
+        {/* ── Sidebar filtros (colapsable - v2) ── */}
+        <aside
+          className={`relative shrink-0 border-r border-gray-200 transition-all duration-300 ease-in-out ${
+            isSidebarCollapsed
+              ? "w-0 px-0 pt-0 overflow-visible"
+              : "w-[280px] xl:w-[320px] px-4 pt-6"
+          }`}
+        >
+          {/* Pestaña para reabrir cuando está colapsado */}
+          {isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="absolute left-0 top-24 z-10 flex flex-col items-center justify-center gap-1 rounded-r-xl bg-[#C26E5A] px-1.5 py-4 text-white shadow-md hover:bg-[#b05e4a] transition-colors"
+              title="Mostrar filtros"
+              aria-label="Mostrar filtros"
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span
+                className="text-[10px] font-semibold tracking-wide"
+                style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+              >
+                Filtros
+              </span>
+            </button>
+          )}
+
+          {/* Contenido del sidebar */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isSidebarCollapsed
+                ? "invisible opacity-0 w-0 overflow-hidden"
+                : "visible opacity-100 w-full"
+            }`}
+          >
+            <div className="sticky top-6">
+              {/* Controles de zona dibujada */}
+              <div className="mb-4">
+                {!drawnPolygon ? (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setIsDrawingMode(!isDrawingMode);
+                        if (!isMapOpen) setIsMapOpen(true);
+                      }}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+                        isDrawingMode
+                          ? "bg-slate-800 hover:bg-slate-900"
+                          : "bg-[#C26E5A] hover:bg-[#b05e4a]"
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                      />
-                    </svg>
-                    {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
-                  </button>
-                  {isDrawingMode && (
-                    <p className="text-center text-xs font-medium text-slate-500">
-                      Doble clic o toca el primer punto para cerrar el poligono. Minimo 4 y maximo 10 puntos.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
-                  <span className="text-sm font-medium text-slate-900 text-center">
-                    Zona aplicada: {allProperties.length} inmuebles
-                  </span>
-                  <button
-                    onClick={() => {
-                      if (!objUser) {
-                        setBolShowProtected(true);
-                        return;
-                      }
-                      if (isCurrentPolygonSaved) return;
-                      openCreateZoneModal();
-                    }}
-                    className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
-                      isCurrentPolygonSaved
-                        ? 'cursor-not-allowed bg-slate-400'
-                        : 'bg-[#C26E5A] hover:bg-[#b05e4a]'
-                    }`}
-                    disabled={isCurrentPolygonSaved}
-                  >
-                    {isCurrentPolygonSaved ? 'Zona ya guardada' : 'Guardar en mi Perfil'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setDrawnPolygon(null);
-                      setIsDrawingMode(false);
-                      setIsEditingSavedZone(false);
-                      setIsZoneMenuOpen(false);
-                    }}
-                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
-                  >
-                    Limpiar mapa
-                  </button>
-                </div>
-              )}
-            </div>
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                        />
+                      </svg>
+                      {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
+                    </button>
 
-            <div className="flex h-[calc(85vh-80px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+                    {savedZones.length > 0 && (
+                      <select
+                        value={currentSavedZone?.id_mi_zona?.toString() ?? ""}
+                        onChange={(event) => {
+                          const selectedZone = savedZones.find(
+                            (zone) =>
+                              zone.id_mi_zona.toString() === event.target.value,
+                          );
 
-              <div className="flex mb-4 items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isMapOpen}
-                      onChange={() => setIsMapOpen(!isMapOpen)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]" />
-                  </label>
-                  <span className="text-sm font-medium text-gray-700">
-                    Mapa
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-                    aria-label="vista grilla"
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
-                    aria-label="vista lista"
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
+                          if (!selectedZone) return;
+
+                          setDrawnPolygon(selectedZone.coordenadas);
+                          setIsDrawingMode(false);
+                          setIsEditingSavedZone(false);
+                          setIsZoneMenuOpen(false);
+                          if (!isMapOpen) setIsMapOpen(true);
+
+                          if (typeof window !== "undefined") {
+                            localStorage.setItem(
+                              POST_AUTH_LOADED_ZONE_KEY,
+                              JSON.stringify(selectedZone.coordenadas),
+                            );
+                          }
+                        }}
+                        className="w-full rounded-xl border border-[#D8D2C8] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm focus:border-[#C26E5A] focus:outline-none"
+                      >
+                        <option value="">Mis zonas guardadas</option>
+                        {savedZones.map((zone) => (
+                          <option
+                            key={zone.id_mi_zona}
+                            value={zone.id_mi_zona.toString()}
+                          >
+                            {zone.nombre_zona}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
+                    <span className="text-sm font-medium text-slate-900 text-center">
+                      Zona aplicada: {allProperties.length} inmuebles
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (!objUser) {
+                          setBolShowProtected(true);
+                          return;
+                        }
+                        if (isCurrentPolygonSaved) return;
+                        openCreateZoneModal();
+                      }}
+                      className={`w-full rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors ${
+                        isCurrentPolygonSaved
+                          ? "cursor-not-allowed bg-slate-400"
+                          : "bg-[#C26E5A] hover:bg-[#b05e4a]"
+                      }`}
+                      disabled={isCurrentPolygonSaved}
+                    >
+                      {isCurrentPolygonSaved ? "Zona ya guardada" : "Guardar en mi Perfil"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDrawnPolygon(null);
+                        setIsDrawingMode(false);
+                        setIsEditingSavedZone(false);
+                        setIsZoneMenuOpen(false);
+                      }}
+                      className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
+                    >
+                      Limpiar mapa
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* <ApplyFiltersButton
-                isLoading={isApplyingFilters}
-                onClick={() => {
-                  saveFiltersToUrl();
-                  void runSearch();
-                }}
-              /> */}
-              <div className="my-3 h-px bg-[#F4EFE6]" />
-              <SearchAutocomplete
-                value={searchLocation}
-                onChange={setSearchLocation}
-              />
-              <div className="my-3 h-px bg-[#F4EFE6]" />
+              <div className="flex h-[min(604px,calc(100vh_-_120px))] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                {/* Título Filtros + botón ocultar */}
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-[#2E2E2E]">Filtros</h2>
+                  <button
+                    onClick={() => setIsSidebarCollapsed(true)}
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold  border  text-[#C26E5A] hover:bg-[#C26E5A]/10 transition-colors"
+                    title="Ocultar filtros"
+                    aria-label="Ocultar filtros"
+                  >
+                    Ocultar
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
 
-              <div className="min-h-0 flex-1">
-                <ScrollArea className="h-full pr-3">
-                  <OperationTypeFilter
-                    value={selectedOperation}
-                    onChange={setSelectedOperation}
-                  />
-                  <FilterTypeProperty
-                    tipos={PROPERTY_TYPE_OPTIONS}
-                    selected={selectedPropertyTypes}
-                    onChange={setSelectedPropertyTypes}
-                  />
-                  <AdvancedFilters
-                    key={advancedFiltersKey}
-                    onChange={handleAdvancedFiltersChange}
-                  />
-                  <div className="my-3 h-px bg-[#F4EFE6]" />
-                  <PriceDropdown
-                    selectedCurrency={selectedCurrency}
-                    appliedPriceFilter={appliedPriceFilter}
-                    onCurrencyChange={handleCurrencyChange}
-                    onApplyRange={handleApplyRange}
-                  />
-                  <div className="my-3 h-px bg-[#F4EFE6]" />
-                  <div className="pb-2">
-                    <ClearFiltersButton
-                      hasActiveFilters={hasActiveFilters}
-                      onClear={handleClearFilters}
-                    />
+                <div className="flex mb-4 items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isMapOpen}
+                        onChange={() => setIsMapOpen(!isMapOpen)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C26E5A]" />
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">
+                      Mapa
+                    </span>
                   </div>
-                </ScrollArea>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 rounded ${viewMode === "grid" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                      aria-label="vista grilla"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 rounded ${viewMode === "list" ? "bg-[#C26E5A] text-white" : "bg-gray-200 text-gray-700"}`}
+                      aria-label="vista lista"
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="my-3 h-px bg-[#F4EFE6]" />
+                <SearchAutocomplete
+                  value={searchLocation}
+                  onChange={setSearchLocation}
+                />
+                <div className="my-3 h-px bg-[#F4EFE6]" />
+
+                <div className="min-h-0 flex-1">
+                  <ScrollArea className="h-full pr-3">
+                    <OperationTypeFilter
+                      value={selectedOperation}
+                      onChange={setSelectedOperation}
+                    />
+
+                    <FilterTypeProperty
+                      tipos={PROPERTY_TYPE_OPTIONS}
+                      selected={selectedPropertyTypes}
+                      onChange={setSelectedPropertyTypes}
+                    />
+
+                    <CharacteristicsFilter
+                      allTags={caracteristicasDB}
+                      value={advancedFilterValues}
+                      onChange={(values) => setAdvancedFilterValues(values)}
+                    />
+
+                    <AdvancedFilters
+                      value={advancedFilterValues}
+                      key={advancedFiltersKey}
+                      onChange={handleAdvancedFiltersChange}
+                    />
+
+                    <div className="my-3 h-px bg-[#F4EFE6]" />
+
+                    <PriceDropdown
+                      selectedCurrency={selectedCurrency}
+                      appliedPriceFilter={appliedPriceFilter}
+                      onCurrencyChange={handleCurrencyChange}
+                      onApplyRange={handleApplyRange}
+                    />
+                  </ScrollArea>
+                </div>
+
+                <div className="mt-3 shrink-0 border-t border-[#F4EFE6] bg-white pt-3">
+                  <ClearFiltersButton
+                    hasActiveFilters={hasActiveFilters}
+                    activeFiltersCount={activeFiltersCount}
+                    onClear={handleClearFilters}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </aside>
 
         {/* ── Results area ── */}
-        <main className="flex flex-col pt-6 px-4 flex-1 min-w-0">
-          <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
-            <div>
-              <nav className="mb-0.5 text-sm text-gray-500">{breadcrumb}</nav>
-              <h1 className="text-base font-semibold">
-                {allProperties.length} inmuebles disponibles
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <SortSelect onSortChange={handleSort} />
-            </div>
-          </div>
+        <main
+          className={`flex flex-col pt-6 pl-4 flex-1 min-w-0 ${
+            isMapOpen ? "pr-2" : "pr-4"
+          }`}
+        >
+          {appView === "listings" ? (
+            <>
+              <div
+                className={`mb-3 flex shrink-0 gap-3 ${
+                  isMapOpen
+                    ? "flex-col items-start"
+                    : "items-center justify-between"
+                }`}
+              >
+                <div className="min-w-0">
+                  <nav className="mb-0.5 text-sm text-gray-500">
+                    {breadcrumb}
+                  </nav>
 
-          <div className="flex-1">
-            {!hasSearched && isApplyingFilters ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                Cargando inmuebles...
-              </div>
-            ) : allProperties.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                No se encontraron inmuebles con los filtros aplicados.
-              </div>
-            ) : (
-              <>
-                <div
-                  className={`grid gap-2 ${
-                    isMapOpen
-                      ? "grid-cols-1"
-                      : viewMode === "grid"
-                        ? "grid-cols-2"
-                        : "grid-cols-1"
-                  }`}
-                >
-                  {displayedProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      selectedCurrency={selectedCurrency}
-                      viewMode={viewMode}
-                      isHovered={hoveredId === property.id}
-                      onMouseEnter={() => {
-                        setHoveredId(property.id);
-                        const loc = searchResults.find(
-                          (p) => p.id_publicacion === property.id,
-                        )?.ubicacion;
-                        const lat = Number(loc?.latitud);
-                        const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) setHoveredPos([lat, lng]);
-                      }}
-                      onMouseLeave={() => {}}
-                      onClick={() => {
-                        setHoveredId(property.id);
-                        const loc = searchResults.find(
-                          (p) => p.id_publicacion === property.id,
-                        )?.ubicacion;
-                        const lat = Number(loc?.latitud);
-                        const lng = Number(loc?.longitud);
-                        if (isValidLatLng(lat, lng)) {
-                          setHoveredPos([lat, lng]);
-                          setSelectedPos([lat, lng]);
-                        }
-                      }}
-                    />
-                  ))}
+                  <h1 className="text-base font-semibold leading-snug">
+                    {allProperties.length} inmuebles disponibles
+                  </h1>
                 </div>
 
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => {
-                    setCurrentPage(page);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                />
-              </>
-            )}
-          </div>
+                <div className={isMapOpen ? "w-full" : "shrink-0"}>
+                  <SortSelect onSortChange={handleSort} />
+                </div>
+              </div>
+
+              <div className="flex-1">
+                {!hasSearched && isApplyingFilters ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                    Cargando inmuebles...
+                  </div>
+                ) : allProperties.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                    No se encontraron inmuebles con los filtros aplicados.
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className={`grid gap-2 ${
+                        isMapOpen
+                          ? "grid-cols-1"
+                          : viewMode === "grid"
+                            ? isSidebarCollapsed
+                              ? "grid-cols-3"
+                              : "grid-cols-2"
+                            : "grid-cols-1"
+                      }`}
+                    >
+                      {displayedProperties.map((property) => (
+                        <PropertyCard
+                          key={property.id}
+                          property={property}
+                          selectedCurrency={selectedCurrency}
+                          viewMode={viewMode}
+                          isHovered={hoveredId === property.id}
+                          isSelected={selectedIds.includes(property.id)}
+                          onToggleCompare={() => toggleSelection(property.id)}
+                          isMapOpen={isMapOpen}
+                          onMouseEnter={() => {
+                            setHoveredId(property.id);
+                            const loc = searchResults.find(
+                              (p) => p.id_publicacion === property.id,
+                            )?.ubicacion;
+                            const lat = Number(loc?.latitud);
+                            const lng = Number(loc?.longitud);
+                            if (isValidLatLng(lat, lng))
+                              setHoveredPos([lat, lng]);
+                          }}
+                          onMouseLeave={() => {}}
+                          onClick={() => {
+                            setHoveredId(property.id);
+                            const loc = searchResults.find(
+                              (p) => p.id_publicacion === property.id,
+                            )?.ubicacion;
+                            const lat = Number(loc?.latitud);
+                            const lng = Number(loc?.longitud);
+                            if (isValidLatLng(lat, lng)) {
+                              setHoveredPos([lat, lng]);
+                              setSelectedPos([lat, lng]);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={(page) => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <CompareTable
+              properties={allProperties}
+              selectedCurrency={selectedCurrency}
+              selectedIds={selectedIds}
+              onBack={() => setAppView("listings")}
+            />
+          )}
         </main>
 
-        {/* ── Map panel (team-bugHunters: fullscreen + drawing controls) ── */}
-        {isMapOpen && (
+        {/* ── Map panel (fullscreen + drawing controls) ── */}
+        {isMapOpen && appView === "listings" && (
           <div
             className={`${
               isMapFullscreen
@@ -1879,11 +2159,15 @@ function SearchPageContent() {
             }`}
             style={
               !isMapFullscreen
-                ? { width: "calc(50% - 40px)", height: "90vh" }
+                ? {
+                    width: isSidebarCollapsed
+                      ? "calc(70% - 40px)"
+                      : "calc(50% - 40px)",
+                    height: "90vh",
+                  }
                 : undefined
             }
           >
-            {/* Botón fullscreen */}
             <button
               onClick={() => setIsMapFullscreen(!isMapFullscreen)}
               className="absolute top-3 right-3 z-[999] flex items-center justify-center h-9 w-9 rounded-lg bg-white shadow-md hover:bg-gray-100 transition-colors"
@@ -1908,52 +2192,54 @@ function SearchPageContent() {
               )}
             </button>
 
-            {currentSavedZone && !isDrawingMode && (
-              <div className="absolute right-3 top-14 z-[999]">
-                <button
-                  onClick={() => setIsZoneMenuOpen((current) => !current)}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md transition-colors hover:bg-gray-100"
-                  title="Opciones de la zona"
-                >
-                  <Menu className="h-5 w-5 text-gray-700" />
-                </button>
+            {currentSavedZone && (
+              <div className="absolute left-3 top-3 z-[999]">
+                <div className="relative">
+                  <button
+                    onClick={() => setIsZoneMenuOpen((current) => !current)}
+                    className="flex items-center gap-2 rounded-xl bg-white/95 px-4 py-2 text-sm font-semibold text-slate-700 shadow-md transition-colors hover:bg-white"
+                  >
+                    <Menu className="h-4 w-4" />
+                    {currentSavedZone.nombre_zona}
+                  </button>
 
-                {isZoneMenuOpen && (
-                  <div className="mt-2 w-56 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
-                    <button
-                      onClick={() => {
-                        setIsEditingSavedZone((current) => !current);
-                        setIsZoneMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      <Pencil className="h-4 w-4" />
-                      {isEditingSavedZone ? "Finalizar edición" : "Editar zona"}
-                    </button>
-                    <button
-                      onClick={openRenameZoneModal}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      <Type className="h-4 w-4" />
-                      Cambiar nombre de la zona
-                    </button>
-                    <button
-                      onClick={() => {
-                        setZonePendingDelete(currentSavedZone);
-                        setIsZoneMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Eliminar zona
-                    </button>
-                  </div>
-                )}
+                  {isZoneMenuOpen && (
+                    <div className="absolute left-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                      <button
+                        onClick={() => {
+                          setIsEditingSavedZone((current) => !current);
+                          setIsZoneMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        {isEditingSavedZone ? "Terminar edicion" : "Editar zona"}
+                      </button>
+                      <button
+                        onClick={openRenameZoneModal}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        <Type className="h-4 w-4" />
+                        Cambiar nombre
+                      </button>
+                      <button
+                        onClick={() => {
+                          setZonePendingDelete(currentSavedZone);
+                          setIsZoneMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar zona
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             {isEditingSavedZone && currentSavedZone && (
-              <div className="absolute left-3 top-3 z-[999] rounded-xl bg-white/95 px-3 py-2 text-xs font-medium text-slate-700 shadow-md">
+              <div className="absolute left-3 top-16 z-[999] rounded-xl bg-white/95 px-3 py-2 text-xs font-medium text-slate-700 shadow-md">
                 Selecciona un punto y arrastralo a su nueva posicion.
               </div>
             )}
@@ -1989,7 +2275,16 @@ function SearchPageContent() {
         )}
       </div>
 
-      {/* ══════════════════ MODALES (team-bugHunters) ══════════════════ */}
+      {/* ══════════════════ FLOATING BAR DE COMPARACIÓN ══════════════════ */}
+      {appView === "listings" && selectedIds.length > 0 && (
+        <CompareFloatingBar
+          selectedCount={selectedIds.length}
+          onClear={() => setSelectedIds([])}
+          onCompare={() => setAppView("compare")}
+        />
+      )}
+
+      {/* ══════════════════ MODALES ══════════════════ */}
 
       {bolShowProtected && (
         <ProtectedFeatureModal
@@ -2013,9 +2308,9 @@ function SearchPageContent() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-in zoom-in-95 duration-200">
             <h3 className="text-lg font-bold mb-4 text-slate-800 uppercase tracking-tight">
-              {zoneModalMode === "create"
-                ? "Nombre de la zona"
-                : "Cambiar nombre de la zona"}
+              {zoneModalMode === "rename"
+                ? "Cambiar nombre"
+                : "Nombre de la zona"}
             </h3>
             <input
               type="text"
@@ -2034,7 +2329,7 @@ function SearchPageContent() {
               }}
               placeholder="Ingresa el nombre de la zona"
               className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${
-                zoneNameError ? 'mb-2 border-red-400' : 'mb-6 border-slate-300'
+                zoneNameError ? "mb-2 border-red-400" : "mb-6 border-slate-300"
               }`}
             />
             {zoneNameError && (
@@ -2051,22 +2346,20 @@ function SearchPageContent() {
               </button>
               <button
                 onClick={
-                  zoneModalMode === "create"
-                    ? handleSaveZone
-                    : handleRenameZone
+                  zoneModalMode === "rename" ? handleRenameZone : handleSaveZone
                 }
                 className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors ${
                   currentZoneNameError ||
                   (zoneModalMode === "create" && isCurrentPolygonSaved)
-                    ? 'cursor-not-allowed bg-slate-400'
-                    : 'bg-[var(--primary)] hover:bg-[var(--primary)]/90'
+                    ? "cursor-not-allowed bg-slate-400"
+                    : "bg-[var(--primary)] hover:bg-[var(--primary)]/90"
                 }`}
                 disabled={
                   Boolean(currentZoneNameError) ||
                   (zoneModalMode === "create" && isCurrentPolygonSaved)
                 }
               >
-                {zoneModalMode === "create" ? "Guardar" : "Actualizar"}
+                {zoneModalMode === "rename" ? "Guardar cambios" : "Guardar"}
               </button>
             </div>
           </div>
@@ -2083,11 +2376,11 @@ function SearchPageContent() {
               Eliminar zona
             </h3>
             <p className="mb-6 text-sm text-slate-500">
-              Se eliminarÃ¡ la zona{" "}
+              Se eliminara la zona{" "}
               <span className="font-semibold text-slate-700">
                 {zonePendingDelete.nombre_zona}
               </span>
-              . Esta acciÃ³n no se puede deshacer.
+              . Esta accion no se puede deshacer.
             </p>
             <div className="flex gap-3">
               <button
