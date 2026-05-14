@@ -4,22 +4,6 @@ import { X, QrCode, Coins,XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
 import { useEffect, useState, useRef } from 'react';
-import ModalExito from "@/components/ModalExito";
-
-const ModalRechazo = ({ onClose }: { onClose: () => void }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-    <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm border-t-8 border-red-500 animate-in zoom-in duration-300">
-      <div className="mb-4 text-red-500 bg-red-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-        <XCircle size={48} />
-      </div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">Pago Fallido</h2>
-      <p className="text-gray-600 mb-6">Lo sentimos, la transacción no pudo ser validada. Por favor, intenta de nuevo.</p>
-      <button onClick={onClose} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
-        CERRAR
-      </button>
-    </div>
-  </div>
-);
 
 interface Props {
   idUsuario: string;
@@ -40,6 +24,7 @@ interface Props {
   iniciarPagoCrypto: (precio: number, planId: string) => void;
   idReferencia: string;
   onTabChange: (value: "qr" | "virtual") => void; 
+  tipoPagoSeleccionado: "qr" | "virtual";
   setEstadoModal: (estado: EstadoModal) => void;
 }
 
@@ -55,12 +40,10 @@ export const AccionesPago = ({
   idUsuario, precio, generandoQr, qrUrl, archivoSeleccionado, tienePagoPendiente,
   estaCargandoEstado, fileInputRef, onVerificar, onDescargar,
   onSeleccionarArchivo, onQuitarArchivo, onVerFoto, datosCrypto, 
-  cargandoCrypto, iniciarPagoCrypto, idReferencia, onTabChange, setEstadoModal
+  cargandoCrypto, iniciarPagoCrypto, idReferencia, tipoPagoSeleccionado, onTabChange, setEstadoModal
 }: Props) => {
 
 // --- ESTADOS PARA LA SIMULACIÓN ---
-const [mostrarExito, setMostrarExito] = useState(false);
-const [mostrarRechazo, setMostrarRechazo] = useState(false);
 const [finalizado, setFinalizado] = useState(false);
 
 // Guardamos el momento exacto en que el usuario entró a la página
@@ -68,7 +51,9 @@ const horaEntradaRef = useRef(new Date().toISOString());
 
 useEffect(() => {
   // Si no hay ID o ya terminamos, no hacemos NADA
-  if (!idUsuario || finalizado) return;
+  if (!idUsuario || finalizado || tipoPagoSeleccionado !== "virtual") {
+    return;
+  }
 
   console.log("🚀 Iniciando monitoreo de pago desde:", horaEntradaRef.current);
 
@@ -103,12 +88,10 @@ useEffect(() => {
     console.log("🧹 Limpiando intervalo");
     clearInterval(intervalo);
   };
-}, [idUsuario, finalizado]); 
+}, [idUsuario, finalizado, tipoPagoSeleccionado]); 
 
   return (
     <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
-      {mostrarExito && <ModalExito onClose={() => setMostrarExito(false)} />}
-      {mostrarRechazo && <ModalRechazo onClose={() => setMostrarRechazo(false)} />}
       <div className="flex flex-col items-center w-full max-w-sm">
 
         {/* para cambio de pestañas */}
@@ -119,11 +102,11 @@ useEffect(() => {
         >
           <TabsList className="grid w-full grid-cols-2 mb-8 h-12 p-1 rounded-xl gap-1">
             <TabsTrigger value="qr" 
-              className="group gap-2 rounded-lg text-sm font-medium
+              className="group flex items-center justify-center gap-2 rounded-lg text-sm font-medium
                 transition-all duration-300
                 data-[state=active]:font-bold
                 data-[state=active]:shadow-sm
-                hover:opacity-80"
+                hover:opacity-80 -translate-y-0.5"
             >
               <Image
                 src="/banderaBolivia.svg"
@@ -136,14 +119,14 @@ useEffect(() => {
             </TabsTrigger>
 
             <TabsTrigger value="crypto" 
-              className="group gap-2 rounded-lg text-sm font-medium
+              className="group flex items-center justify-center gap-2 rounded-lg text-sm font-medium
                 transition-all duration-300
                 data-[state=active]:font-bold
                 data-[state=active]:shadow-sm
-                hover:opacity-80"
+                hover:opacity-80 -translate-y-0.5"
             >
               <Image
-                src="/simbolo_tron.png"
+                src="/logo-tron.png"
                 alt="Simbolo tron"
                 width={20}
                 height={20}

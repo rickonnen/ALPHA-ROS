@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -19,6 +18,7 @@ export type TipoEvento =
   | 'descartar';
 
 export interface TrackEventPayload {
+  id_usuario: string;
   id_publicacion: number;
   tipo_evento: TipoEvento;
   duracion_ms?: number;
@@ -28,33 +28,21 @@ export interface TrackEventPayload {
   pagina_origen?: string;
 }
 
-function getUserIdFromToken(request: NextRequest): string | null {
-  try {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) return null;
-    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
-    return decoded.userId;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackEventPayload;
-    const id_usuario = getUserIdFromToken(request);
 
-    if (!id_usuario) {
-      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
-    }
-
-    if (!body.id_publicacion || !body.tipo_evento) {
-      return NextResponse.json({ success: false, message: 'Faltan campos requeridos' }, { status: 400 });
+    // Validate required fields
+    if (!body.id_usuario || !body.id_publicacion || !body.tipo_evento) {
+      return NextResponse.json(
+        { success: false, message: 'Missing required fields: id_usuario, id_publicacion, tipo_evento' },
+        { status: 400 }
+      );
     }
 
     const { error } = await supabaseAdmin.from('InteraccionEvento').insert({
-      id_usuario,
-      session_id: id_usuario,
+      id_usuario: body.id_usuario,
+      session_id: body.id_usuario,
       id_publicacion: body.id_publicacion,
       tipo_evento: body.tipo_evento,
       duracion_ms: body.duracion_ms ?? null,

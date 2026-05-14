@@ -8,7 +8,6 @@
  * Fix: "Compra" → "Venta" en frontend.
  */
 /**
-<<<<<<< Updated upstream
  * Modificacion - @Dev: Gustavo Montaño - @Fecha: 09/05/2026
  * Se integró <ViewTracker /> para registro silencioso de visitas.
  */
@@ -27,9 +26,6 @@
  * @Funcionalidad: Se habilita mostrarShare={true} en <MediaGallery /> y se pasan
  *   tituloShare (para truncado en X) y disponible (para aviso de publicación dada de baja).
  *   El estado, el botón y el <ShareModal> son gestionados internamente por MediaGallery.
- */
-
-=======
  * Dev: Dylan Coca Beltran - xdev/sow-dylanc
  * Fecha: 26/04/2026
  * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
@@ -38,7 +34,6 @@
  *      border-black/5 → border-card-border/20, text-gray-500 → text-muted-foreground,
  *      border-[#C26E5A]/text-[#C26E5A] → border-secondary/text-secondary en botón Volver
  */
->>>>>>> Stashed changes
 import { notFound }          from "next/navigation";
 import { Tag, Ruler }        from "lucide-react";
 import { MediaGallery }      from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
@@ -46,6 +41,7 @@ import { PropertyDetails }   from "@/features/publicacion/[id_publicacion]/compo
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { ContactCard }       from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import { PropertyDetailTracking } from "@/features/publicacion/[id_publicacion]/components/PropertyDetailTracking";
 import FavButton             from "@/components/ui/fav";
 import { PublicationStatusBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import CloseTabButton        from "./CloseTabButton";
@@ -117,12 +113,9 @@ export default async function VistaInmueblePage({
   const bolDisponible  = !["Pausada", "Eliminada", "Inactiva"].includes(strEstado);
 
   return (
-<<<<<<< Updated upstream
     <main className="min-h-screen bg-[#F4EFE6] text-[#2E2E2E] p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
-      <ViewTracker id_publicacion={intId} />
-=======
     <main className="min-h-screen bg-background text-foreground p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
->>>>>>> Stashed changes
+      <PropertyDetailTracking id_publicacion={intId} />
       <div className="max-w-6xl mx-auto">
 
         {/* Task 4.3: Título */}
@@ -156,15 +149,9 @@ export default async function VistaInmueblePage({
           <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
             <Tag className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
             <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
-<<<<<<< Updated upstream
-              <span className="font-bold text-[#1F3A4D]">Precio:</span>
-              <span className="font-medium whitespace-nowrap text-[#2E2E2E]">
-                {(objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs."))} {Number(objPerfil.precio).toLocaleString("de-DE")}
-=======
               <span className="font-bold text-primary">Precio:</span>
               <span className="font-medium whitespace-nowrap text-foreground">
                 {Number(objPerfil.precio).toLocaleString("de-DE")} {objPerfil.Moneda?.simbolo === "B" ? "Bs." : (objPerfil.Moneda?.simbolo || "Bs.")}
->>>>>>> Stashed changes
               </span>
             </div>
           </div>
@@ -228,7 +215,8 @@ export default async function VistaInmueblePage({
             (ut) => ut.Telefono ? `+${ut.Telefono.codigo_pais} ${ut.Telefono.nro_telefono}` : ""
           ).filter(Boolean) || [];
           return objPerfil.Usuario && (
-            <ContactCard
+            <ContactCard 
+              id_publicacion={intId}
               strTituloInmueble={objPerfil.titulo || "Inmueble"}
               objPropietario={{
                 strNombres:   objPerfil.Usuario.nombres  || "Usuario",
@@ -243,15 +231,9 @@ export default async function VistaInmueblePage({
           );
         })()}
 
-<<<<<<< Updated upstream
-        {/* Botón Volver + ReportModal */}
-        <div className="mt-12 flex items-center justify-between">
-          <CloseTabButton className="px-10 py-3 border-2 border-[#C26E5A] text-[#C26E5A] rounded-xl font-bold hover:bg-[#C26E5A]/10 transition-colors">
-=======
         {/* Botón Volver al final (Reemplaza a PropertyActions)*/}
-        <div className="mt-12 flex justify-start">
+        <div className="mt-12 flex items-center justify-between">
           <CloseTabButton className="px-10 py-3 border-2 border-secondary text-secondary rounded-xl font-bold hover:bg-secondary/10 transition-colors">
->>>>>>> Stashed changes
             Volver
           </CloseTabButton>
           <ReportModal id_publicacion={intId} />
