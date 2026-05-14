@@ -6,6 +6,9 @@ import type { TipoEvento } from '@/app/api/tracking/event/route';
 import type { TrackSearchPayload } from '@/app/api/tracking/search/route';
 import type { TrackPlacePayload } from '@/app/api/tracking/place/route';
 
+type TrackSearchInput = Omit<TrackSearchPayload, 'id_usuario'>;
+type TrackPlaceInput = Omit<TrackPlacePayload, 'id_usuario'>;
+
 function fireAndForget(url: string, body: unknown): void {
   fetch(url, {
     method: 'POST',
@@ -72,7 +75,7 @@ export function useTracking() {
     [user]
   );
 
-  const trackSearch = useCallback((payload: TrackSearchPayload) => {
+  const trackSearch = useCallback((payload: TrackSearchInput) => {
     // Only track logged-in users
     if (!user?.id) return;
 
@@ -83,7 +86,7 @@ export function useTracking() {
     notifyInteraction('search');
   }, [user]);
 
-  const trackPlace = useCallback((payload: TrackPlacePayload) => {
+  const trackPlace = useCallback((payload: TrackPlaceInput) => {
     // Only track logged-in users
     if (!user?.id) return;
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Map, AlertCircle } from "lucide-react";
+import { Trash2, Map, AlertCircle, Pencil, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,11 +13,23 @@ interface Zona {
   fecha_creacion: string;
 }
 
-export default function ZonasView({ id_usuario }: { id_usuario: string }) {
+const ZONE_NAME_PATTERN = /^[A-Za-z0-9]+$/;
+const ZONE_NAME_MAX_LENGTH = 50;
+const LOADED_ZONE_KEY = "loadedZona";
+const LOADED_ZONE_EDIT_MODE_KEY = "loadedZonaEditMode";
+
+function normalizeZoneName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export default function ZonasView() {
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; zona: Zona | null }>({ show: false, zona: null });
+  const [renameModal, setRenameModal] = useState<{ show: boolean; zona: Zona | null }>({ show: false, zona: null });
+  const [zoneName, setZoneName] = useState("");
+  const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -63,8 +75,85 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
   };
 
   const handleLoadZona = (coordenadas: [number, number][]) => {
-    localStorage.setItem("loadedZona", JSON.stringify(coordenadas));
+    localStorage.setItem(LOADED_ZONE_KEY, JSON.stringify(coordenadas));
+    localStorage.removeItem(LOADED_ZONE_EDIT_MODE_KEY);
     router.push("/search");
+  };
+
+  const handleEditZona = (coordenadas: [number, number][]) => {
+    localStorage.setItem(LOADED_ZONE_KEY, JSON.stringify(coordenadas));
+    localStorage.setItem(LOADED_ZONE_EDIT_MODE_KEY, "true");
+    router.push("/search");
+  };
+
+  const getZoneNameError = (value: string, excludedZoneId?: number) => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) return "Ingresa un nombre para la zona.";
+    if (trimmedValue.length > ZONE_NAME_MAX_LENGTH) {
+      return `El nombre no puede superar ${ZONE_NAME_MAX_LENGTH} caracteres.`;
+    }
+    if (!ZONE_NAME_PATTERN.test(trimmedValue)) {
+      return "Usa solo letras y numeros, sin espacios ni caracteres especiales.";
+    }
+
+    const normalizedValue = normalizeZoneName(trimmedValue);
+    const hasDuplicateName = zonas.some(
+      (zona) =>
+        zona.id_mi_zona !== excludedZoneId &&
+        normalizeZoneName(zona.nombre_zona) === normalizedValue,
+    );
+
+    if (hasDuplicateName) {
+      return "Ya tienes una zona guardada con ese nombre.";
+    }
+
+    return null;
+  };
+
+  const handleOpenRenameModal = (zona: Zona) => {
+    setRenameModal({ show: true, zona });
+    setZoneName(zona.nombre_zona);
+    setZoneNameError(null);
+  };
+
+  const handleRenameZona = async () => {
+    if (!renameModal.zona) return;
+
+    const currentError = getZoneNameError(zoneName, renameModal.zona.id_mi_zona);
+    if (currentError) {
+      setZoneNameError(currentError);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/perfil/mis-zonas`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          id_mi_zona: renameModal.zona.id_mi_zona,
+          nombre_zona: zoneName.trim(),
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        setZonas((current) =>
+          current.map((zona) =>
+            zona.id_mi_zona === json.data.id_mi_zona ? json.data : zona,
+          ),
+        );
+        setRenameModal({ show: false, zona: null });
+        setZoneName("");
+        setZoneNameError(null);
+      } else {
+        setZoneNameError(json.error || "No se pudo cambiar el nombre.");
+      }
+    } catch (err) {
+      console.error("Error al renombrar zona:", err);
+      setZoneNameError("Error al cambiar el nombre de la zona.");
+    }
   };
 
   return (
@@ -123,15 +212,37 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
                         })}
                       </p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLoadZona(zona.coordenadas);
-                      }}
-                      className="mt-3 w-fit px-3 py-1.5 rounded-lg bg-[var(--secondary)] text-white text-xs font-semibold hover:bg-[var(--secondary)]/80 transition-colors border-none"
-                    >
-                      Cargar zona
-                    </button>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLoadZona(zona.coordenadas);
+                        }}
+                        className="w-fit rounded-lg bg-[var(--secondary)] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--secondary)]/80 border-none"
+                      >
+                        Cargar zona
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditZona(zona.coordenadas);
+                        }}
+                        className="flex w-fit items-center gap-1 rounded-lg border border-[#C26E5A]/70 px-3 py-1.5 text-xs font-semibold text-[#F1C7B8] transition-colors hover:bg-[#C26E5A]/10"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Editar zona
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenRenameModal(zona);
+                        }}
+                        className="flex w-fit items-center gap-1 rounded-lg border border-slate-500/70 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-800/70"
+                      >
+                        <Type className="h-3.5 w-3.5" />
+                        Cambiar nombre
+                      </button>
+                    </div>
                   </div>
 
                   {/* Botón eliminar */}
@@ -169,7 +280,7 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
             <h2 className="text-lg font-bold text-gray-900">¿Eliminar zona?</h2>
             <p className="text-sm text-gray-500 text-center">
               ¿Estás seguro de eliminar la zona{" "}
-              <span className="font-semibold text-red-500">"{deleteModal.zona.nombre_zona}"</span>?
+              <span className="font-semibold text-red-500">&quot;{deleteModal.zona.nombre_zona}&quot;</span>?
               Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-3 w-full mt-2">
@@ -184,6 +295,58 @@ export default function ZonasView({ id_usuario }: { id_usuario: string }) {
                 className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition"
               >
                 Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameModal.show && renameModal.zona && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+            <h2 className="mb-4 text-center text-lg font-bold text-gray-900">
+              Cambiar nombre de la zona
+            </h2>
+            <input
+              type="text"
+              value={zoneName}
+              onChange={(e) => {
+                setZoneName(e.target.value);
+                setZoneNameError(
+                  getZoneNameError(e.target.value, renameModal.zona?.id_mi_zona),
+                );
+              }}
+              className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#C26E5A] ${
+                zoneNameError ? "mb-2 border-red-400" : "mb-6 border-slate-300"
+              }`}
+              placeholder="Ingresa el nuevo nombre"
+            />
+            {zoneNameError && (
+              <p className="mb-4 text-sm font-medium text-red-500">
+                {zoneNameError}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setRenameModal({ show: false, zona: null });
+                  setZoneName("");
+                  setZoneNameError(null);
+                }}
+                className="flex-1 rounded-lg border border-gray-300 py-2 font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRenameZona}
+                disabled={Boolean(zoneNameError)}
+                className={`flex-1 rounded-lg py-2 font-semibold text-white transition ${
+                  zoneNameError
+                    ? "cursor-not-allowed bg-slate-400"
+                    : "bg-[#C26E5A] hover:bg-[#b05e4a]"
+                }`}
+              >
+                Actualizar
               </button>
             </div>
           </div>

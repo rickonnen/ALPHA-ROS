@@ -60,6 +60,11 @@ export type SearchPublicationResult = {
     nombre: string;
     detalle: string | null;
   }[];
+  etiquetas: {
+    id: number;
+    nombre: string;
+    color: string;
+  }[];
 };
 
 type PublicationWithRelations = Prisma.PublicacionGetPayload<{
@@ -79,6 +84,11 @@ type PublicationWithRelations = Prisma.PublicacionGetPayload<{
     PublicacionCaracteristica: {
       include: {
         Caracteristica: true;
+      };
+    };
+    PublicacionEtiquetas: {
+      include: {
+        Etiquetas: true;
       };
     };
   };
@@ -130,6 +140,16 @@ function convertBsToUsd(
   return roundToTwo(amount / exchangeRate);
 }
 
+function getPreviousPrice(publication: PublicationWithRelations): number | null {
+  return toNumber(
+    (
+      publication as PublicationWithRelations & {
+        precio_anterior?: Prisma.Decimal | number | null;
+      }
+    ).precio_anterior,
+  );
+}
+
 function getPropertyTypeNames(value: string | undefined): string[] {
   if (!value) return [];
 
@@ -165,9 +185,17 @@ function addAndCondition(
 }
 
 function buildWhere(filters: SearchFiltersInput): Prisma.PublicacionWhereInput {
-  const where: Prisma.PublicacionWhereInput = {
-    id_estado: 1,
-  };
+  const where: Prisma.PublicacionWhereInput = {};
+
+  addAndCondition(where, {
+    OR: [
+      { id_estado: null },
+      { id_estado: 0 },
+      { id_estado: 1 },
+      { id_estado: 2 },
+      { id_estado: 3 },
+    ],
+  });
 
   const operationIds = getOperationIds(filters.operacion);
 
@@ -405,14 +433,14 @@ function passesPriceFilter(
 
 function hasDiscount(publication: PublicationWithRelations): boolean {
   const currentPrice = toNumber(publication.precio);
-  const previousPrice = toNumber(publication.precio_anterior);
+  const previousPrice = getPreviousPrice(publication);
 
   return (currentPrice !== null && previousPrice !== null && previousPrice > currentPrice);
 }
 
 function getDiscountPercent(publication: PublicationWithRelations): number {
   const currentPrice = toNumber(publication.precio);
-  const previousPrice = toNumber(publication.precio_anterior);
+  const previousPrice = getPreviousPrice(publication);
 
   if (currentPrice === null || previousPrice === null || previousPrice <= currentPrice) {
     return 0;
@@ -433,7 +461,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     titulo: publication.titulo,
     descripcion: publication.descripcion,
     precio: toNumber(publication.precio),
-    precio_anterior: toNumber(publication.precio_anterior),
+    precio_anterior: getPreviousPrice(publication),
     superficie: toNumber(publication.superficie),
     habitaciones: publication.habitaciones,
     banos: publication.banos,
@@ -443,7 +471,11 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     tipo_operacion: publication.TipoOperacion?.nombre_operacion ?? null,
     estado_construccion:
       publication.EstadoConstruccion?.nombre_estado_construccion ?? null,
-    estado_publicacion: publication.EstadoPublicacion?.nombre_estado ?? null,
+    estado_publicacion:
+      publication.EstadoPublicacion?.nombre_estado ??
+      (publication.id_estado == null || [0, 1, 2, 3].includes(publication.id_estado)
+        ? "Activa"
+        : null),
     moneda_nombre: publication.Moneda?.nombre ?? null,
     moneda_simbolo: publication.Moneda?.simbolo ?? null,
     moneda_tasa_cambio: toNumber(publication.Moneda?.tasa_cambio),
@@ -463,9 +495,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     imagenes: publication.Imagen.map((image) => image.url_imagen).filter(
       (url): url is string => Boolean(url),
     ),
-    caracteristicas: publication.PublicacionCaracteristica.map(
-      (item) => item.Caracteristica?.nombre_caracteristica,
-    ).filter((name): name is string => Boolean(name)),
+    caracteristicas,
     es_promocionada: publication.prioridad ?? false,
 
     etiquetas: (publication.PublicacionEtiquetas || []).map((pe) => ({
@@ -528,6 +558,11 @@ export async function searchPublicaciones(
       PublicacionCaracteristica: {
         include: {
           Caracteristica: true,
+        },
+      },
+      PublicacionEtiquetas: {
+        include: {
+          Etiquetas: true,
         },
       },
     },
