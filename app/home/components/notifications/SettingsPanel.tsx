@@ -217,6 +217,18 @@ export function SettingsPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {feedbackMessage && (
+          <div
+            className={`rounded-lg px-4 py-3 text-sm font-medium border ${feedbackType === "success"
+              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-900"
+              : feedbackType === "error"
+                ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-900"
+                : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-900"
+              }`}
+          >
+            {feedbackMessage}
+          </div>
+        )}
         <div className="flex items-center justify-between bg-[var(--notification-card)] p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
