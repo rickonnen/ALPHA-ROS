@@ -194,13 +194,20 @@ export default function PlanForm({
             }}
             onChange={(e) => {
               let val = e.target.value;
+              
+              // 1. Quitar ceros a la izquierda
               if (
                 val.length > 1 &&
                 val.startsWith("0") &&
                 !val.startsWith("0.")
-              )
+              ) {
                 val = val.replace(/^0+/, "");
-              setFormData({ ...formData, precio_plan: val });
+              }
+
+              // 2. Validación de máximo 2 decimales
+              if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
+                setFormData({ ...formData, precio_plan: val });
+              }
             }}
           />
         </div>
