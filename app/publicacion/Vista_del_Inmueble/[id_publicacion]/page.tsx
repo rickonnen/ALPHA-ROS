@@ -22,6 +22,7 @@ import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
 import { MediaGallery } from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
 import { PropertyDetails } from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
+
 import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
 import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
 import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
@@ -112,12 +113,12 @@ export default async function VistaInmueblePage({
   }));
 
   return (
-    <main className="min-h-screen bg-[#F4EFE6] p-4 font-[family-name:var(--font-geist-sans)] text-[#2E2E2E] md:p-12">
+    <main className="min-h-screen bg-background p-4 font-[family-name:var(--font-geist-sans)] text-foreground md:p-12">
       <ViewTracker id_publicacion={intId} />
       <PropertyDetailTracking id_publicacion={intId} />
       <div className="mx-auto max-w-6xl">
         <header className="mb-10">
-          <h1 className="mb-4 break-words text-3xl font-bold tracking-tight text-[#1F3A4D] md:text-5xl">
+          <h1 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
           <PublicationStatusBadge strEstado={strEstado} />
@@ -139,22 +140,23 @@ export default async function VistaInmueblePage({
           </div>
         </div>
 
-        <div className="mb-10 flex flex-row items-center justify-between gap-2 border-y border-black/10 py-6 md:py-8">
-          <div className="flex min-w-0 items-start gap-1.5 md:gap-2 min-[540px]:items-center">
-            <Tag className="mt-1 h-5 w-5 shrink-0 text-[#2E2E2E] opacity-70 min-[540px]:mt-0 md:h-6 md:w-6" />
-            <div className="flex flex-col gap-x-1.5 text-[20px] min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Precio:</span>
-              <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
+        {/* Task 4.3: Precio y Superficie */}
+        <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">
+          <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
+            <Tag className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
+              <span className="font-bold text-primary">Precio:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
                 {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}{" "}
                 {Number(objPerfil.precio).toLocaleString("de-DE")}
               </span>
             </div>
           </div>
-          <div className="flex min-w-0 items-start gap-1.5 md:gap-2 min-[540px]:items-center">
-            <Ruler className="mt-1 h-5 w-5 shrink-0 text-[#2E2E2E] opacity-70 min-[540px]:mt-0 md:h-6 md:w-6" />
-            <div className="flex flex-col gap-x-1.5 text-[20px] min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Superficie:</span>
-              <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
+          <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
+            <Ruler className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
+              <span className="font-bold text-primary">Superficie:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
                 {Number(objPerfil.superficie).toLocaleString("de-DE")} m²
               </span>
             </div>
@@ -162,13 +164,13 @@ export default async function VistaInmueblePage({
         </div>
 
         <div className="mb-12">
-          <p className="mb-6 text-xl">
-            <span className="font-bold text-[#1F3A4D]">Dirección:</span> {strDireccion}
+          <p className="text-xl mb-6">
+            <span className="font-bold text-primary">Dirección:</span> {strDireccion}
           </p>
           {lat !== null && lng !== null ? (
             <LocationMapClient lat={lat} lng={lng} puntosInteres={puntosInteres} />
           ) : (
-            <p className="text-sm italic text-gray-500">Ubicación exacta en el mapa no disponible.</p>
+            <p className="text-sm italic text-muted-foreground">Ubicación exacta en el mapa no disponible.</p>
           )}
         </div>
 
@@ -195,9 +197,10 @@ export default async function VistaInmueblePage({
         />
         <ReferencePointsSection puntosInteres={puntosInteres} />
 
-        <section className="mb-6 mt-6">
-          <div className="rounded-3xl border border-black/5 bg-white/40 p-8 shadow-sm backdrop-blur-sm md:p-10">
-            <h2 className="mb-6 border-b border-[#2E2E2E]/5 pb-2 text-2xl font-bold text-[#1F3A4D]">
+        {/* Task 4.8: Descripción */}
+        <section className="mt-6 mb-6">
+          <div className="bg-card-bg/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-card-border/20">
+            <h2 className="text-2xl font-bold mb-6 text-primary border-b border-foreground/5 pb-2">
               Descripción
             </h2>
             <p className="whitespace-pre-line break-words text-base leading-relaxed opacity-90">
@@ -230,8 +233,9 @@ export default async function VistaInmueblePage({
           ) : null;
         })()}
 
+        {/* Botón Volver al final (Reemplaza a PropertyActions)*/}
         <div className="mt-12 flex items-center justify-between gap-4">
-          <CloseTabButton className="rounded-xl border-2 border-[#C26E5A] px-10 py-3 font-bold text-[#C26E5A] transition-colors hover:bg-[#C26E5A]/10">
+          <CloseTabButton className="px-10 py-3 border-2 border-secondary text-secondary rounded-xl font-bold hover:bg-secondary/10 transition-colors">
             Volver
           </CloseTabButton>
           <ReportModal id_publicacion={intId} />
