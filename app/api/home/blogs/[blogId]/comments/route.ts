@@ -36,7 +36,11 @@ export async function GET(
     const IntParentId = strParentId ? parseInt(strParentId) : null;
 
     let ObjOrderBy: any = StrSort === "relevante" 
-      ? [{ LikesComentarios: { _count: "desc" } }, { fecha_creacion: "desc" }]
+      ? [
+          { LikesComentarios: { _count: "desc" } },
+          { other_ComentariosBlog: { _count: "desc" } },
+          { fecha_creacion: "desc" }
+        ]
       : { fecha_creacion: StrSort === "antiguo" ? "asc" : "desc" };
 
     const ArrDbComments = await prisma.comentariosBlog.findMany({

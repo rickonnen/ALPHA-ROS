@@ -3,6 +3,9 @@ export function templatePagoRechazado(
   plan: string,
   motivo: string
 ): string {
+  const fecha = new Date().toLocaleDateString("es-BO", {
+    day: "numeric", month: "long", year: "numeric"
+  });
   return `
     <!DOCTYPE html>
     <html lang="es" style="margin:0;padding:0">

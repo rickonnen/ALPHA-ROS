@@ -34,24 +34,35 @@ export async function GET(
       return NextResponse.json({ error: "blog no encontrado" }, { status: 404 });
     }
 
-    // Formateo de fecha
-    const StrFormattedDateBlo = ObjDbBlogBlo.fecha_publicacion
+    const formattedPublishDate = ObjDbBlogBlo.fecha_publicacion
       ? new Date(ObjDbBlogBlo.fecha_publicacion).toLocaleDateString("es-ES", {
           day: "numeric",
-          month: "long",
+          month: "short",
           year: "numeric",
         })
-      : "fecha desconocida";
+      : "Fecha desconocida";
 
-    // Mapeo de datos
-    const ObjFormattedBlogBlo: singleBlogData = {
+    const formattedCreationDate = ObjDbBlogBlo.fecha_creacion
+      ? new Date(ObjDbBlogBlo.fecha_creacion).toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "Fecha desconocida";
+    const authorFullName = ObjDbBlogBlo.Usuario 
+      ? `${ObjDbBlogBlo.Usuario.nombres || ''} ${ObjDbBlogBlo.Usuario.apellidos || ''}`.trim() 
+      : "Equipo PropBol";
+      
+    const ObjFormattedBlogBlo = {
       IntIdBlo: ObjDbBlogBlo.id_blog,
       StrTitleBlo: ObjDbBlogBlo.titulo || "",
       StrDescriptionBlo: ObjDbBlogBlo.descripcion || "",
       StrContentBlo: ObjDbBlogBlo.contenido || "",
       StrImageUrlBlo: ObjDbBlogBlo.imagen_url || "",
-      StrDateBlo: StrFormattedDateBlo,
-      StrAuthorBlo: ObjDbBlogBlo.Usuario?.nombres || "Autor Desconocido", 
+      StrDateBlo: formattedPublishDate,
+      StrCreationDateBlo: formattedCreationDate,
+      StrAuthorBlo: authorFullName, 
+      StrAuthorAvatarBlo: ObjDbBlogBlo.Usuario?.url_foto_perfil || undefined,
     };
 
     return NextResponse.json(ObjFormattedBlogBlo);

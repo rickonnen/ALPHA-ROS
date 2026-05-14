@@ -6,14 +6,27 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { NextRequest, NextResponse } from "next/server"
 import { dbInstance } from "@/lib/auth/dbInstance"
+import { verify } from "jsonwebtoken"
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
+    let id_usuario: string | null = session?.user?.id ?? null
+
 
   // 1. Verificar que hay sesión activa
-  //const session = await getServerSession()
-
-  if (!session?.user?.id) {
+    if (!id_usuario) {
+    const token = req.cookies.get("auth_token")?.value
+    if (token) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string }
+        id_usuario = decoded.userId
+      } catch {
+        // token inválido
+      }
+    }
+  }
+  
+  if (!id_usuario) {
     return NextResponse.json(
       { error: "No autorizado" },
       { status: 401 }
@@ -29,7 +42,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const id_usuario = session.user.id
+  //const id_usuario = session.user.id
 
   try {
     // 2. Validación crítica → nunca desvincular el primary_provider

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { upsertUserSubscription } from "@/features/cobros/verificacion-pagos/services/subscriptionService";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    const { paymentId, userId, nuevoEstado, planId } = await req.json();
-
+    const { paymentId, userId, nuevoEstado, planId, modalidad } = await req.json();
+    
     // Aceptado = 2, Rechazado = 3
     let estadocrip = 1; 
 
@@ -17,20 +18,36 @@ export async function POST(req: Request) {
       estadocrip = 3;
     }
 
-    const resultado = await prisma.detallePago.create({
-      data: {
-        id_plan: planId,
-        id_cripto: paymentId,
-        id_usuario: userId,
-        estado: estadocrip,
-        metodo_pago: "Transferencia virtual",
-        fecha_detalle: new Date(),
-      },
+    const resultado = await prisma.$transaction(async (tx) => {
+      // Creamos el detalle del pago
+      const nuevoPago = await tx.detallePago.create({
+        data: {
+          id_plan: planId ? parseInt(planId) : null,
+          id_cripto: paymentId,
+          id_usuario: userId,
+          estado: estadocrip,
+          metodo_pago: "Transferencia virtual",
+          fecha_detalle: new Date(),
+        },
+      });
+
+      if (estadocrip === 2) {
+        await upsertUserSubscription(
+          tx, 
+          userId, 
+          parseInt(planId), 
+          modalidad || "mensual"
+        );
+      }
+
+      return nuevoPago;
     });
+
+    
 
     return NextResponse.json({
       success: true,
-      mensaje: "Registro creado y validado exitosamente",
+      mensaje: estadocrip === 2 ? "Pago y suscripción actualizados" : "Registro creado",
       data: resultado
     });
 

@@ -78,14 +78,14 @@ export function CityCard({
       {...touchHandlers}
       className={[
         "group relative h-full w-full overflow-hidden rounded-2xl select-none font-sans",
-        "shadow-[0_4px_16px_rgba(0,0,0,0.10)] transition-[transform,box-shadow] duration-300",
+        "bg-card-bg border border-card-border shadow-sm transition-all duration-300",
         bolSinDisponibles
-          ? "cursor-default"
-          : "cursor-pointer hover:scale-[1.018] hover:shadow-[0_16px_40px_rgba(0,0,0,0.22)]",
+          ? "cursor-default opacity-80 grayscale-[30%]"
+          : "cursor-pointer hover:scale-[1.018] hover:shadow-xl hover:border-primary/30",
       ].join(" ")}
     >
       {/* ── Fotos con crossfade ── */}
-      <div className="absolute inset-0 bg-gray-800">
+      <div className="absolute inset-0 bg-secondary">
         {objCity.arrImagenes.map((objImage, intIndex) => (
           <Image
             key={objImage.strPublicId}
@@ -107,20 +107,11 @@ export function CityCard({
       </div>
 
       {/* ── Gradiente inferior ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.82) 100%)",
-        }}
-      />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
       {/* ── Badge operación ── */}
       <div className="absolute top-4 left-4 z-10">
-        <span
-          className="font-sans text-[10px] font-bold uppercase tracking-[0.14em] text-white"
-          style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
-        >
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white drop-shadow-md">
           {strOperationLabel}
         </span>
       </div>
@@ -133,44 +124,40 @@ export function CityCard({
               key={dir}
               type="button"
               onClick={(e) => handleArrowClick(e, dir)}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-white text-lg leading-none"
-              style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-white bg-black/30 backdrop-blur-md hover:bg-primary hover:text-primary-foreground transition-colors"
               aria-label={`${dir === "prev" ? "Imagen anterior" : "Siguiente imagen"} de ${objCity.strDepartamento}`}
             >
-              {dir === "prev" ? "‹" : "›"}
+              <span className="text-lg leading-none -mt-0.5">{dir === "prev" ? "‹" : "›"}</span>
             </button>
           ))}
         </div>
       )}
 
       {/* ── Contenido inferior ── */}
-      <div className="absolute bottom-[-8px] left-0 right-0 p-4 sm:p-5 z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-10">
         <h3
-          className="font-sans font-bold leading-none text-white"
+          className="font-bold leading-none text-white drop-shadow-lg"
           style={{
-            fontSize:   bolIsLarge ? "clamp(1.6rem, 2.5vw, 2.2rem)" : "clamp(1.05rem, 1.8vw, 1.35rem)",
-            textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+            fontSize: bolIsLarge ? "clamp(1.6rem, 2.5vw, 2.2rem)" : "clamp(1.05rem, 1.8vw, 1.35rem)",
           }}
         >
           {objCity.strDepartamento}
         </h3>
 
         {objCity.strDescription && (
-            <p
-            className="font-sans mt-2 leading-snug"
+          <p
+            className="mt-2 leading-snug font-medium text-white/90 drop-shadow-md"
             style={{
-            fontSize:   bolIsLarge ? "0.95rem" : "0.78rem",
-            fontWeight: 500,
-            color:      "rgba(255,255,255,0.82)",
-            maxWidth:   "85%",
-          }}
-    >
-      {objCity.strDescription}
-      </p>
-      )}
+              fontSize: bolIsLarge ? "0.95rem" : "0.78rem",
+              maxWidth: "85%",
+            }}
+          >
+            {objCity.strDescription}
+          </p>
+        )}
 
         {/* ── Dots + botón ── */}
-        <div className="mt-0 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between">
           <div
             className="flex items-center gap-1.5"
             onClick={(e) => e.stopPropagation()}
@@ -181,49 +168,27 @@ export function CityCard({
                 type="button"
                 onClick={(e) => handleDotClick(e, intIndex)}
                 aria-label={`Ir a imagen ${intIndex + 1} de ${objCity.strDepartamento}`}
-                style={{
-                  height:       "5px",
-                  width:        intIndex === intCurrentIndex ? "18px" : "5px",
-                  background:   intIndex === intCurrentIndex
-                    ? "rgba(255,255,255,0.9)"
-                    : "rgba(255,255,255,0.3)",
-                  transition:   "width 0.5s ease",
-                  border:       "none",
-                  borderRadius: "9999px",
-                  cursor:       "pointer",
-                  display:      "block",
-                  padding:      0,
-                }}
+                className={`h-[5px] rounded-full transition-all duration-500 ${
+                  intIndex === intCurrentIndex
+                    ? "w-[18px] bg-primary"
+                    : "w-[5px] bg-white/50 hover:bg-white/80"
+                }`}
               />
             ))}
           </div>
 
           {bolSinDisponibles ? (
-            <span
-              className="font-sans text-[10px] font-semibold rounded-full px-2 py-1"
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                color:      "rgba(255,255,255,0.6)",
-              }}
-            >
+            <span className="text-[10px] font-semibold rounded-full px-2.5 py-1 bg-black/40 backdrop-blur-sm text-white/80 border border-white/10">
               0 disponibles
             </span>
           ) : (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
-              className="flex items-center justify-center rounded-full transition-[background] duration-200 hover:bg-white/30"
-              style={{
-                height:         "32px",
-                width:          "32px",
-                background:     "rgba(255,255,255,0.16)",
-                border:         "1px solid rgba(255,255,255,0.22)",
-                backdropFilter: "blur(8px)",
-                color:          "white",
-              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-110 shadow-lg"
               aria-label={`Ver propiedades en ${objCity.strDepartamento}`}
             >
-              <ArrowRight size={14} />
+              <ArrowRight size={14} strokeWidth={2.5} />
             </button>
           )}
         </div>

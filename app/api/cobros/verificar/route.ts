@@ -75,3 +75,10 @@ export async function POST(request: Request) {
     }, { status: 500 });
   }
 }
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Aumentamos el límite a 10MB
+    },
+  },
+};
