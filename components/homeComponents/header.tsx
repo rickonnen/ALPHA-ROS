@@ -15,8 +15,7 @@ import { useScrollDirection } from "../hooks/useScrollDirection";
 import { useHoverAnimation } from "../hooks/useHoverAnimation";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { usePublicarAccion } from "../hooks/usePublicarAccion";
-import { useFotoPerfil } from "../hooks/useFotoPerfil";
-import { useUsuarioHeader } from "../hooks/useUsuarioHeader";
+import { useHeaderUserInfo } from "../hooks/useHeaderUserInfo";
 import { useAuth } from "@/app/auth/AuthContext";
 
 /* componentes de ui */
@@ -26,6 +25,8 @@ import FreePublicationLimitModal from "@/features/publicacion/components/FreePub
 import PlanLimitModal from "@/features/publicacion/components/PlanLimitModal";
 import { useUnreadCount } from "@/components/hooks/useUnreadCount";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 /* subcomponentes */
 import { NotificationButton } from "./headerSubcomponents/notificationButton";
@@ -62,8 +63,7 @@ export const Header = () => {
 
   // datos de usuario y autenticación
   const { user: objUser, isLoading: bolIsAuthLoading } = useAuth();
-  const { strFotoPerfil } = useFotoPerfil(objUser?.id);
-  const { strNombreHeader } = useUsuarioHeader(objUser);
+  const { strNombreCompleto, strFotoPerfil, strIniciales } = useHeaderUserInfo(objUser);
   const { unreadCount } = useUnreadCount(objUser);
   
   const objRouter = useRouter();
@@ -200,17 +200,26 @@ export const Header = () => {
                 />
                 <button aria-label="perfil de usuario" onClick={() => objRouter.push(`${APP_PATHS.profile}`)}
                   className={`flex items-center gap-3 h-10 px-4 bg-background border border-border rounded-full ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
-                  <Image src={strFotoPerfil || "/account_avatar.svg"} alt="perfil" width={28} height={28} className={`w-7 h-7 object-cover rounded-full bg-muted ${!strFotoPerfil ? "svg-theme-invert" : ""}`} 
-                  unoptimized={true} onError={(e) => { e.currentTarget.src = "/account_avatar.svg"; e.currentTarget.srcset = "/account_avatar.svg"; e.currentTarget.classList.add("svg-theme-invert"); }} />
-                  <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">{strNombreHeader}</span>
+                  
+                  <Avatar className="h-7 w-7 border border-border/50 bg-secondary-fund">
+                    {strFotoPerfil && (
+                      <AvatarImage src={strFotoPerfil} alt={strNombreCompleto} className="object-cover" />
+                    )}
+                    <AvatarFallback className="text-xs font-bold text-primary">
+                      {strIniciales || "US"}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none whitespace-nowrap">{strNombreCompleto}</span>
                 </button>
               </>
             ) : (
               <button onClick={handleOpenLogin} className={`h-10 px-4 rounded-full bg-background border border-border flex items-center gap-3 transition-all duration-300 ${clsFocusBase} ${strHoverAnimNoTextColor}`}>
-                <div className="relative flex items-center justify-center">
-                  <Image src="/account_avatar.svg" alt="iniciar sesión" width={28} height={28} className="w-7 h-7 object-contain svg-theme-invert" />
-                  <div className="absolute w-[120%] h-[2px] bg-foreground rotate-45 rounded-full" />
-                </div>
+                <Avatar className="h-7 w-7 border border-border/50 bg-primary-foreground/10">
+                  <AvatarFallback className="bg-transparent">
+                    <User className="w-4 h-4 text-foreground opacity-80" />
+                  </AvatarFallback>
+                </Avatar>
                 <span className="text-[0.83rem] md:text-[0.95rem] lg:text-[1.07rem] font-semibold uppercase text-foreground leading-none pt-0.5 whitespace-nowrap">iniciar sesión</span>
               </button>
             )}
@@ -223,8 +232,9 @@ export const Header = () => {
           isOpen={bolIsMobileMenuOpen}
           onClose={handleCloseMobileMenu}
           objUser={objUser}
-          strNombreHeader={strNombreHeader}
+          strNombreHeader={strNombreCompleto}
           strFotoPerfil={strFotoPerfil}
+          strIniciales={strIniciales}
           arrNavLinks={arrNavLinks}
           onLoginClick={handleOpenLogin}
           onPublicarClick={handlePublicar}
