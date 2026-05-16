@@ -10,7 +10,7 @@ export default function SumarioPage() {
   return (
     <main
       className="min-h-screen px-4 py-6 sm:px-6 sm:py-8 font-[family-name:var(--font-geist-sans)]"
-      style={{ background: 'linear-gradient(to bottom, #F4EFE6 35%, #E7E1D7 35%)' }}
+      style={{ background: 'linear-gradient(to bottom, var(--background) 35%, var(--secondary-fund) 35%)' }}
     >
       <SumarioModal
         onClose={() => router.push('/publicacion/Caracteristicas')}

@@ -7,23 +7,82 @@
  * @param {string} params.id_publicacion - Identificador único de la publicación extraído desde la URL.
  * @return {JSX.Element} Interfaz completa de la vista privada del inmueble renderizada desde el servidor.
  */
-import { notFound, redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { verify } from "jsonwebtoken";
-import { getServerSession } from "next-auth";
-import { Tag, Ruler } from "lucide-react";
-import { MediaGallery } from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
-import { PropertyDetails } from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
-import { getPerfilInmueble } from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
-import { PropertyActions } from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
-import { ContactCard } from "@/features/publicacion/[id_publicacion]/components/ContactCard";
-import { LocationMapClient } from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
-import {
-  PublicationStatusBadge,
-  DestacadaBadge,
-} from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
-import { ReferencePointsSection } from "@/features/publicacion/[id_publicacion]/components/ReferencePointsSection";
+/**
+  * @Modificacion
+  * @Dev: Gustavo Montaño
+  * @Fecha: 18/04/2026
+  * @Funcionalidad: Capa de autorización del lado del servidor. Verifica la identidad 
+  *                 del usuario actual (ya sea mediante JWT por correo o sesión de Google) 
+  *                 y la compara con el propietario original del inmueble. Evita vulnerabilidades 
+  *                 tipo IDOR redirigiendo a intrusos a la vista pública.
+  * @param {string | undefined} token - Token de sesión JWT extraído directamente de las cookies.
+  * @param {Session | null} session - Sesión de NextAuth generada a través del proveedor de Google.
+  * @param {Object} objPerfil.Usuario - Datos del dueño de la propiedad consultados previamente en la BD.
+  * @return {void | never} Lanza un 'redirect' (Next.js) hacia la ruta pública si falla la validación, 
+  *                        o permite continuar con el renderizado si el usuario es el dueño legítimo.
+*/
+/**
+ * Dev: Gustavo Montaño
+ * Fecha: 25/04/2026
+ * Update: Fix Modificación de "Compra" a "Venta" en frontend antes de pasar a PropertyDetails.
+ * @param {Promise<{ id_publicacion: string }>} params - Promesa con el ID dinámico de la URL.
+ * @return {JSX.Element} Interfaz completa privada del inmueble.
+ */
+/**
+ * Modificacion
+ * Dev: Oliver Garcia
+ * Fecha: 09/05/2026
+ * Update: Agrega etiqueta "Propiedad Destacada" en el header cuando la publicación
+ *         tiene una PromocionPublicacion vigente (fecha_fin > now()). Solo visible
+ *         para el propietario en esta vista privada.
+ */
+/**
+ * Modificacion
+ * @Dev: Gustavo Montaño
+ * @Fecha: 09/05/2026
+ * @Funcionalidad: Se integró el componente <EstadisticasInmueble /> dentro de la vista.
+ * El componente se sitúa antes de los botones de acción, pasando los datos 
+ * del historial de rendimiento recuperados directamente desde el backend.
+ */
+/**
+ * Modificacion
+ * @Dev: Marcela C.
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Corrección de posición del símbolo de moneda (Bs.) 
+ *                 para que aparezca delante del número, no detrás.
+ */
+/**
+ * Modificacion
+ * @Dev: Gabriel Paredes
+ * @Fecha: 10/05/2026
+ * @Funcionalidad: Se habilita mostrarShare={true} en <MediaGallery /> para mostrar
+ *   el botón de compartir sobre la galería. Se pasan tituloShare y disponible.
+ *   mostrarFav se mantiene en false (vista privada del propietario).
+ */
+/*
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-[#F4EFE6] → bg-background, text-[#2E2E2E] → text-foreground,
+ *      text-[#1F3A4D] → text-primary, bg-white/40 → bg-card-bg/40,
+ *      border-black/5 → border-card-border/20, text-gray-500 → text-muted-foreground
+ */
+
+import { notFound, redirect }     from "next/navigation";
+import { cookies }                from "next/headers";
+import { verify }                 from "jsonwebtoken";
+import { getServerSession }       from "next-auth";
+import { Tag, Ruler }             from "lucide-react";
+import { MediaGallery }           from "@/features/publicacion/[id_publicacion]/components/MediaGallery";
+import { PropertyDetails }        from "@/features/publicacion/[id_publicacion]/components/PropertyDetails";
+import { getPerfilInmueble }      from "@/features/publicacion/Perfil_Publicacion/getPerfilInmueble";
+import { PropertyActions }        from "@/features/publicacion/[id_publicacion]/components/PropertyActions";
+import { ContactCard }            from "@/features/publicacion/[id_publicacion]/components/ContactCard";
+import { LocationMapClient }      from "@/features/publicacion/[id_publicacion]/components/LocationMapClient";
+import { PublicationStatusBadge, DestacadaBadge } from "@/features/publicacion/[id_publicacion]/components/PublicationStatusBadge";
 import { EstadisticasInmueble } from "@/features/publicacion/[id_publicacion]/components/EstadisticasInmueble";
+
+import { ReferencePointsSection } from "@/features/publicacion/[id_publicacion]/components/ReferencePointsSection";
 
 export default async function PerfilInmueblePage({
   params,
@@ -120,10 +179,10 @@ export default async function PerfilInmueblePage({
   }));
 
   return (
-    <main className="min-h-screen bg-[#F4EFE6] p-4 font-[family-name:var(--font-geist-sans)] text-[#2E2E2E] md:p-12">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen bg-background text-foreground p-4 md:p-12 font-[family-name:var(--font-geist-sans)]">
+      <div className="max-w-6xl mx-auto">
         <header className="mb-10">
-          <h1 className="mb-4 break-words text-3xl font-bold tracking-tight text-[#1F3A4D] md:text-5xl">
+          <h1 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
           <div className="flex flex-wrap items-center gap-3">
@@ -145,22 +204,23 @@ export default async function PerfilInmueblePage({
           />
         </div>
 
-        <div className="mb-10 flex flex-row items-center justify-between gap-2 border-y border-black/10 py-6 md:py-8">
-          <div className="flex min-w-0 items-start gap-1.5 md:gap-2 min-[540px]:items-center">
-            <Tag className="mt-1 h-5 w-5 shrink-0 text-[#2E2E2E] opacity-70 min-[540px]:mt-0 md:h-6 md:w-6" />
-            <div className="flex flex-col gap-x-1.5 text-subtitle min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Precio:</span>
-              <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
+        {/* Task 4.3: Precio y Superficie */}
+        <div className="flex flex-row justify-between items-center py-6 md:py-8 border-y border-black/10 mb-10 gap-2">
+          <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
+            <Tag className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-subtitle min-[811px]:text-[24px]">
+              <span className="font-bold text-primary">Precio:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
                 {objPerfil.Moneda?.simbolo === "B" ? "Bs." : objPerfil.Moneda?.simbolo || "Bs."}{" "}
                 {Number(objPerfil.precio).toLocaleString("de-DE")}
               </span>
             </div>
           </div>
-          <div className="flex min-w-0 items-start gap-1.5 md:gap-2 min-[540px]:items-center">
-            <Ruler className="mt-1 h-5 w-5 shrink-0 text-[#2E2E2E] opacity-70 min-[540px]:mt-0 md:h-6 md:w-6" />
-            <div className="flex flex-col gap-x-1.5 text-[20px] min-[540px]:flex-row min-[540px]:items-center min-[811px]:text-[24px]">
-              <span className="font-bold text-[#1F3A4D]">Superficie:</span>
-              <span className="whitespace-nowrap font-medium text-[#2E2E2E]">
+          <div className="flex items-start min-[540px]:items-center gap-1.5 md:gap-2 min-w-0">
+            <Ruler className="w-5 h-5 md:w-6 md:h-6 text-foreground opacity-70 shrink-0 mt-1 min-[540px]:mt-0" />
+            <div className="flex flex-col min-[540px]:flex-row min-[540px]:items-center gap-x-1.5 text-[20px] min-[811px]:text-[24px]">
+              <span className="font-bold text-primary">Superficie:</span>
+              <span className="font-medium whitespace-nowrap text-foreground">
                 {Number(objPerfil.superficie).toLocaleString("de-DE")} m²
               </span>
             </div>
@@ -168,13 +228,13 @@ export default async function PerfilInmueblePage({
         </div>
 
         <div className="mb-12">
-          <p className="mb-6 text-xl">
-            <span className="font-bold text-[#1F3A4D]">Dirección:</span> {strDireccion}
+          <p className="text-xl mb-6">
+            <span className="font-bold text-primary">Dirección:</span> {strDireccion}
           </p>
           {lat !== null && lng !== null ? (
             <LocationMapClient lat={lat} lng={lng} puntosInteres={puntosInteres} />
           ) : (
-            <p className="text-sm italic text-gray-500">Ubicación exacta en el mapa no disponible.</p>
+            <p className="text-sm italic text-muted-foreground">Ubicación exacta en el mapa no disponible.</p>
           )}
         </div>
 
@@ -201,9 +261,9 @@ export default async function PerfilInmueblePage({
         />
         <ReferencePointsSection puntosInteres={puntosInteres} />
 
-        <section className="mb-6 mt-6">
-          <div className="rounded-3xl border border-black/5 bg-white/40 p-8 shadow-sm backdrop-blur-sm md:p-10">
-            <h2 className="mb-6 border-b border-[#2E2E2E]/5 pb-2 text-2xl font-bold text-[#1F3A4D]">
+        <section className="mt-6 mb-6">
+          <div className="bg-card-bg/40 backdrop-blur-sm p-8 md:p-10 rounded-3xl shadow-sm border border-card-border/20">
+            <h2 className="text-2xl font-bold mb-6 text-primary border-b border-foreground/5 pb-2">
               Descripción
             </h2>
             <p className="whitespace-pre-line break-words text-base leading-relaxed opacity-90">

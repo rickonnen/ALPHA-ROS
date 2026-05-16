@@ -6,6 +6,15 @@
  * @Funcionalidad: Modal HU7. Se muestra cuando el usuario con plan activo
  * ha agotado el límite de publicaciones permitidas por su plan.
  */
+/**
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-white → bg-card-bg, text-[#1a1a1a] → text-foreground,
+ *      text-[#2E2E2E]/70 → text-muted-foreground, border-[#C26E5A] → border-secondary,
+ *      text-[#C26E5A] → text-secondary, hover:bg-[#C26E5A]/10 → hover:bg-secondary/10,
+ *      hover:text-[#C26E5A] → hover:text-secondary
+ */
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -35,14 +44,14 @@ export default function PlanLimitModal({
   return (
     <Dialog open={bolOpen} onOpenChange={(open) => { if (!open) onBack(); }}>
       <DialogContent
-        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-white"
+        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-card-bg"
         style={{ fontFamily: "var(--font-geist-sans)" }}
       >
         <DialogHeader className="text-center space-y-3">
-          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight text-[#1a1a1a]">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight text-foreground">
             Límite de publicaciones alcanzado
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
+          <DialogDescription className="text-sm sm:text-base text-muted-foreground text-center leading-relaxed">
             Has utilizado la cantidad de publicaciones incluidas en tu plan
             actual. Para seguir publicando, mejora tu suscripción o adquiere
             un paquete adicional.
@@ -54,7 +63,7 @@ export default function PlanLimitModal({
             type="button"
             variant="outline"
             onClick={onBack}
-            className="flex-1 border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 hover:text-[#C26E5A] font-semibold cursor-pointer"
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
           >
             {"< Atrás"}
           </Button>
@@ -62,7 +71,7 @@ export default function PlanLimitModal({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 hover:text-[#C26E5A] font-semibold cursor-pointer"
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
             onClick={() => {
               onBack();
               router.push(strPlansHref);
