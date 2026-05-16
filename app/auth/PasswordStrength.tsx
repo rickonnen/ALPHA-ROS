@@ -32,7 +32,7 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
     <div style={{ marginTop: '6px', marginBottom: '8px' }}>
 
       {/* Barra de progreso */}
-      <div style={{ width: '100%', height: '6px', backgroundColor: '#e5e7eb', borderRadius: '9999px', overflow: 'hidden' }}>
+      <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--auth-segment)', borderRadius: '9999px', overflow: 'hidden' }}>
         <div
           style={{
             height: '100%',
@@ -54,7 +54,7 @@ export default function PasswordStrength({ password }: PasswordStrengthProps) {
         {requirements.map(req => {
           const ok = req.test(password);
           return (
-            <li key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: ok ? '#16a34a' : '#9ca3af' }}>
+            <li key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: ok ? 'var(--auth-success)' : 'var(--auth-icon)' }}>
               <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{ok ? '✓' : '○'}</span>
               {req.label}
             </li>

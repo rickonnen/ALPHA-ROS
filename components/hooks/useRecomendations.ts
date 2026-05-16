@@ -11,7 +11,9 @@ function fireAndForget(url: string, body: unknown): void {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     keepalive: true,
-  }).catch(() => {});
+  }).catch(() => {
+    // Silent fail - tracking is non-critical
+  });
 }
 
 

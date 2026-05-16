@@ -36,4 +36,12 @@ export const activatePromotion = async (
     });
     console.log(`Nueva promoción creada para el usuario ${strUserId}. Expira el: ${objFechaFin}`);
   }
+
+  await tx.publicacion.update({
+    where: { id_publicacion: intPublicacionId },
+    data: { prioridad: true }
+  });
+  
+  console.log(`Publicación ${intPublicacionId} está ahora como prioridad.`);
+
 };

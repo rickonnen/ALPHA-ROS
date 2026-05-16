@@ -34,7 +34,6 @@ export function useUnreadCount(user: any) {
       const real = Math.max(0, (count ?? 0) - trashIds.length);
       setUnreadCount(real);
       localStorage.setItem("notification_unread_count", real.toString());
-      window.dispatchEvent(new Event("refresh-notification-badge"));
       setLoading(false);
     };
 

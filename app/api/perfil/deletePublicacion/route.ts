@@ -13,6 +13,7 @@
       - Query params: ?id_usuario=...&id_publicacion=...
 */
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -59,6 +60,7 @@ export async function DELETE(req: NextRequest) {
         data: { cant_publicaciones_restantes: { increment: 1 } },
       }),
     ]);
+    revalidateTag("publicaciones");
 
     return NextResponse.json(
       { message: "Publicación eliminada correctamente" },
