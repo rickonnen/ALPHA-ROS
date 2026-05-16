@@ -54,41 +54,41 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
         <div style={{
           width: "48px", height: "48px", borderRadius: "50%",
-          backgroundColor: "#1F3A4D",
+          backgroundColor: "var(--auth-primary-strong)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Link2 size={22} color="white" />
+          <Link2 size={22} color="var(--auth-primary-foreground)" />
         </div>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#1f2937", margin: 0 }}>
+          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--auth-text)", margin: 0 }}>
             Magic Link
           </h2>
-          <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+          <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: 0 }}>
             Obtén tu enlace mágico
           </p>
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid #1F3A4D" }} />
+      <hr style={{ border: "none", borderTop: "1px solid var(--auth-primary-strong)" }} />
 
-      <p style={{ fontSize: "14px", color: "#4b5563", textAlign: "center", lineHeight: "1.6" }}>
+      <p style={{ fontSize: "14px", color: "var(--auth-text-soft)", textAlign: "center", lineHeight: "1.6" }}>
         Ingrese su correo electrónico y recibirá un Enlace Mágico seguro
         para que pueda iniciar sesión
       </p>
 
       {/* Email field */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           Correo electrónico
         </label>
         <div style={{
           display: "flex", alignItems: "center",
-          border: `1px solid ${error ? "#ef4444" : "#d1d5db"}`,
+          border: `1px solid ${error ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`,
           borderRadius: "8px", padding: "10px 14px", gap: "10px",
-          backgroundColor: error ? "#fee2e2" : "white",
+          backgroundColor: error ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)",
         }}>
-          <Mail size={18} style={{ color: "#9ca3af", flexShrink: 0 }} />
+          <Mail size={18} style={{ color: "var(--auth-icon)", flexShrink: 0 }} />
           <input
             type="email"
             placeholder="usuario@correo.com"
@@ -105,11 +105,11 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
             onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
             style={{
               width: "100%", fontSize: "14px",
-              outline: "none", border: "none", backgroundColor: "transparent",
+              outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)",
             }}
           />
         </div>
-        {error && <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>{error}</p>}
+        {error && <p style={{ color: "var(--auth-danger)", fontSize: "12px", margin: 0 }}>{error}</p>}
       </div>
 
       {/* Submit button */}
@@ -119,8 +119,8 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
         onClick={handleSubmit}
         style={{
           width: "100%",
-          backgroundColor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "#e5a89f" : "#C26E5A",
-          color: "white",
+          backgroundColor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "var(--auth-disabled)" : "var(--auth-secondary)",
+          color: "var(--auth-primary-foreground)",
           fontWeight: "bold",
           fontSize: "15px",
           padding: "13px",
