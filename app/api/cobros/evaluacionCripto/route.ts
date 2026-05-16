@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { upsertUserSubscription } from "@/features/cobros/verificacion-pagos/services/subscriptionService";
+import { syncUserPublicationsAndQuota } from "@/features/cobros/verificacion-pagos/services/publicationService"; 
 
 import { v4 as uuidv4 } from "uuid";
 import { generarComprobantePDF } from "@/app/api/admin/services/pdfService";
@@ -45,6 +46,8 @@ export async function POST(req: Request) {
           parseInt(planId), 
           modalidad
         );
+        const nuevoCupo = nuevoPago.PlanPublicacion?.cant_publicaciones || 0;
+        await syncUserPublicationsAndQuota(tx, userId, nuevoCupo);
       }
 
       const planNombre = nuevoPago.PlanPublicacion?.nombre_plan || "Plan";
