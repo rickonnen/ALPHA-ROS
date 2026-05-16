@@ -26,6 +26,38 @@ import {
   TIPOS_INMUEBLE,
 } from "./requisitos.constants";
 
+const DEFAULT_GUIA_VIDEO_URL = "https://www.youtube.com/embed/f_WuRfuMXQw";
+
+function normalizeGuideVideoUrl(strUrl?: string): string | null {
+  const strValue = strUrl?.trim();
+  if (!strValue) return null;
+
+  try {
+    const objUrl = new URL(strValue);
+    const strHost = objUrl.hostname.replace(/^www\./, "");
+
+    if (strHost === "youtu.be") {
+      const strVideoId = objUrl.pathname.split("/").filter(Boolean)[0];
+      return strVideoId ? `https://www.youtube.com/embed/${strVideoId}` : null;
+    }
+
+    if (strHost.endsWith("youtube.com") || strHost.endsWith("youtube-nocookie.com")) {
+      if (objUrl.pathname.startsWith("/embed/")) {
+        return `https://www.youtube.com${objUrl.pathname}`;
+      }
+
+      const strVideoId = objUrl.searchParams.get("v");
+      if (strVideoId) {
+        return `https://www.youtube.com/embed/${strVideoId}`;
+      }
+    }
+  } catch {
+    return strValue;
+  }
+
+  return strValue;
+}
+
 function getRequirementIcon(strItem: string) {
   if (strItem.startsWith("Titulo")) return FileText;
   if (strItem.startsWith("Superficie")) return Ruler;
@@ -39,8 +71,15 @@ export default function RequisitosPublicacionPage() {
   const { user, isLoading } = useAuth();
   const [strTipoSeleccionado, setStrTipoSeleccionado] = useState<TipoInmueble | null>(null);
   const [bolConfirmado, setBolConfirmado] = useState(false);
+  const [bolMostrarVideo, setBolMostrarVideo] = useState(false);
+  const [bolMostrarFallbackGuia, setBolMostrarFallbackGuia] = useState(false);
 
-  const strVideoUrl = "https://www.youtube.com/embed/f_WuRfuMXQw";
+  const strVideoUrl = normalizeGuideVideoUrl(
+    process.env.NEXT_PUBLIC_PUBLICACION_GUIA_VIDEO_URL || DEFAULT_GUIA_VIDEO_URL,
+  );
+  const strVideoPlaybackUrl = strVideoUrl
+    ? `${strVideoUrl}${strVideoUrl.includes("?") ? "&" : "?"}autoplay=1`
+    : null;
 
   useEffect(() => {
     if (isLoading) return;
@@ -70,6 +109,16 @@ export default function RequisitosPublicacionPage() {
     router.push(PUBLICACION_FORM_ROUTE);
   };
 
+  const handlePlayGuiaRapida = () => {
+    if (strVideoUrl) {
+      setBolMostrarVideo(true);
+      setBolMostrarFallbackGuia(false);
+      return;
+    }
+
+    setBolMostrarFallbackGuia(true);
+  };
+
   if (isLoading || !user) {
     return (
       <section className="min-h-[70vh] bg-[#E7E1D7] px-4 py-8 sm:px-6 md:py-10">
@@ -93,20 +142,30 @@ export default function RequisitosPublicacionPage() {
         <div className="rounded-lg border border-[#DDD4C8] bg-[#F8F5EF] p-4 shadow-sm sm:p-6">
           <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
             <article className="rounded-lg bg-[#E5DED2] p-4 text-center">
-              {strVideoUrl ? (
+              {bolMostrarVideo && strVideoPlaybackUrl ? (
                 <iframe
                   title="Guía rápida para publicar tu propiedad"
-                  src={strVideoUrl}
+                  src={strVideoPlaybackUrl}
                   className="h-52 w-full rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               ) : (
-                <div className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64">
+                <button
+                  type="button"
+                  onClick={handlePlayGuiaRapida}
+                  className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-[#D8CFC2] bg-[#E5DED2] transition-colors hover:bg-[#DED6CA] sm:h-64"
+                  aria-label="Reproducir guía rápida"
+                >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/85">
                     <Play className="h-8 w-8 text-[#C26E5A]" />
                   </div>
-                </div>
+                </button>
+              )}
+              {bolMostrarFallbackGuia && !strVideoUrl && (
+                <p className="mt-3 rounded-md bg-[#F5EDE4] px-3 py-2 text-sm font-medium text-[#6B5F57]">
+                  Aun no hay un video de guía configurado. Puedes continuar revisando los requisitos aquí mismo.
+                </p>
               )}
               <h2 className="mt-4 text-xl font-bold">Guía rápida para publicar tu propiedad</h2>
               <p className="mt-1 text-base font-semibold text-[#77716B]">Ver video Explicativo</p>
