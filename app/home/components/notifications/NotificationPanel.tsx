@@ -10,7 +10,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BellOff } from "lucide-react";
 import { useAuth } from "@/app/auth/AuthContext";
 import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
 
 type Notification = {
   id: string;
@@ -22,6 +21,15 @@ type Notification = {
   type?: string | number;
 };
 
+type NotificationRow = {
+  id_notificacion: string;
+  titulo: string;
+  mensaje: string;
+  leido: boolean;
+  creado_en?: string | null;
+  tipo?: string | number | null;
+};
+
 function formatRelativeTime(isoString: string): string {
   const diff = Date.now() - new Date(isoString).getTime();
   const minutes = Math.floor(diff / 60000);
@@ -31,6 +39,18 @@ function formatRelativeTime(isoString: string): string {
   if (minutes < 60) return `hace ${minutes} min`;
   if (hours < 24) return `hace ${hours} h`;
   return `hace ${days} d`;
+}
+
+function mapNotificationRow(n: NotificationRow): Notification {
+  return {
+    id: n.id_notificacion,
+    title: n.titulo,
+    description: n.mensaje,
+    read: n.leido,
+    createdAt: n.creado_en ?? null,
+    time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
+    type: n.tipo ?? "general",
+  };
 }
 
 const supabase = createClient(
@@ -50,7 +70,7 @@ interface NotificationPanelProps {
   onClose?: () => void;
   onVerTodas?: () => void;
 }
-export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProps) {
+export function NotificationPanel({ onVerTodas }: NotificationPanelProps) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -62,8 +82,6 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-//////////////////////////////HU2//////////
-  const router = useRouter();
 
   const [trash, setTrash] = useState<Notification[]>([]);
   useEffect(() => {
@@ -87,15 +105,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
 
         if (error) throw error;
 
-        const mapped = (data ?? []).map((n: any) => ({
-          id: n.id_notificacion,
-          title: n.titulo,
-          description: n.mensaje,
-          read: n.leido,
-          createdAt: n.creado_en ?? null,
-          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
-          type: "general",
-        }));
+        const mapped = (data ?? []).map((n: NotificationRow) => mapNotificationRow(n));
 
         setNotifications(mapped);
       } catch (error) {
@@ -116,16 +126,8 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
         table: "Notificacion",
         filter: `id_usuario=eq.${user.id}`,
       }, (payload) => {
-        const n = payload.new as any;
-        setNotifications((prev) => [{
-          id: n.id_notificacion,
-          title: n.titulo,
-          description: n.mensaje,
-          read: n.leido,
-          createdAt: n.creado_en ?? null,
-          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
-          type: "general",
-        }, ...prev]);
+        const n = payload.new as NotificationRow;
+        setNotifications((prev) => [mapNotificationRow(n), ...prev]);
       })
       .subscribe();
 
@@ -239,7 +241,7 @@ const handleRestore = (id: string) => {
   };
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
+    <div className="notification-system-theme fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-[var(--notification-surface)] text-[var(--notification-text)] flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
 
       {showSettings ? (
         // Mostrar solo el panel de configuración
@@ -272,31 +274,31 @@ const handleRestore = (id: string) => {
             <div className="flex justify-end px-3 pb-1">
               <button
                 onClick={() => setShowConfirmModal(true)}
-                className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
+              className="text-xs text-[var(--notification-danger)] hover:underline transition"
               >
                 Vaciar papelera
               </button>
             </div>
           )}
           {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
+            <div className="flex items-center justify-center py-12 text-[var(--notification-muted)] text-sm">
               Cargando notificaciones...
             </div>
           ) : hasError ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <div className="w-12 h-12 rounded-full bg-[var(--notification-muted-surface)] flex items-center justify-center text-[var(--notification-muted)]">
                 <BellOff size={22} />
               </div>
-              <p className="text-gray-500 text-sm font-medium">
+              <p className="text-[var(--notification-muted)] text-sm font-medium">
                 No fue posible cargar las notificaciones.
               </p>
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <div className="w-12 h-12 rounded-full bg-[var(--notification-muted-surface)] flex items-center justify-center text-[var(--notification-muted)]">
                 <BellOff size={22} />
               </div>
-              <p className="text-gray-500 text-sm font-medium">
+              <p className="text-[var(--notification-muted)] text-sm font-medium">
                 {activeTab === "unread"
                   ? "No tienes notificaciones no leídas."
                   : activeTab === "trash"
@@ -330,12 +332,12 @@ const handleRestore = (id: string) => {
       )}
       {/* Botón Ver todas - HU-02 */}
       {!showSettings && (
-        <div className="p-3 border-t border-gray-100">
+        <div className="p-3 border-t border-[var(--notification-border)]">
           <button
             onClick={() => {
               onVerTodas?.();
             }}
-            className="w-full py-2 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
+            className="w-full py-2 text-sm font-medium text-center bg-[var(--notification-button)] text-[var(--notification-button-foreground)] hover:bg-[var(--notification-button-hover)] rounded-xl transition"
           >
             Ver todas las notificaciones
           </button>
@@ -348,6 +350,79 @@ const handleRestore = (id: string) => {
   onCancel={() => setShowConfirmModal(false)}
 />
 
+      <style jsx>{`
+        .notification-system-theme {
+          color-scheme: light;
+          --notification-surface: #ffffff;
+          --notification-page-bg: #f2ede4;
+          --notification-card: #f3f4f6;
+          --notification-muted-surface: #f3f4f6;
+          --notification-item-read: #ffffff;
+          --notification-item-unread: #f3f4f6;
+          --notification-item-border-read: #f3f4f6;
+          --notification-item-border-unread: #e5e7eb;
+          --notification-text: #111827;
+          --notification-title-read: #4b5563;
+          --notification-title-unread: #000000;
+          --notification-muted: #6b7280;
+          --notification-subtle: #9ca3af;
+          --notification-border: #f3f4f6;
+          --notification-header: #2c4a5a;
+          --notification-header-foreground: #ffffff;
+          --notification-button: #2c4a5a;
+          --notification-button-hover: #1e3a4a;
+          --notification-button-soft: #2c4a5a1a;
+          --notification-button-foreground: #ffffff;
+          --notification-tab-active-bg: #ffffff;
+          --notification-tab-active-border: transparent;
+          --notification-tab-active-text: #111827;
+          --notification-danger: #ef4444;
+          --notification-danger-soft: #fef2f2;
+          --notification-success: #16a34a;
+          --notification-success-soft: #f0fdf4;
+          --notification-warning-bg: #fefce8;
+          --notification-warning-border: #fde68a;
+          --notification-warning-text: #a16207;
+          --notification-input-bg: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          .notification-system-theme {
+            color-scheme: dark;
+            --notification-surface: #333333;
+            --notification-page-bg: #292929;
+            --notification-card: #474747;
+            --notification-muted-surface: #474747;
+            --notification-item-read: #333333;
+            --notification-item-unread: #474747;
+            --notification-item-border-read: #1f1f1f;
+            --notification-item-border-unread: #666666;
+            --notification-text: #ebebeb;
+            --notification-title-read: #d8d8d8;
+            --notification-title-unread: #ffffff;
+            --notification-muted: #a3a3a3;
+            --notification-subtle: #c7c7c7;
+            --notification-border: #1f1f1f;
+            --notification-header: #333333;
+            --notification-header-foreground: #ebebeb;
+            --notification-button: #474747;
+            --notification-button-hover: #555555;
+            --notification-button-soft: #ffffff14;
+            --notification-button-foreground: #ebebeb;
+            --notification-tab-active-bg: transparent;
+            --notification-tab-active-border: #ebebeb;
+            --notification-tab-active-text: #ebebeb;
+            --notification-danger: #ff6b6b;
+            --notification-danger-soft: #4a2626;
+            --notification-success: #5fd37c;
+            --notification-success-soft: #245437;
+            --notification-warning-bg: #4a3a1e;
+            --notification-warning-border: #8a6b2d;
+            --notification-warning-text: #f0c06f;
+            --notification-input-bg: #333333;
+          }
+        }
+      `}</style>
 
     </div>
   );

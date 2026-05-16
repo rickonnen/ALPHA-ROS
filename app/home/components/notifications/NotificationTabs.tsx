@@ -27,23 +27,23 @@ export function NotificationTabs({
       <div className="flex items-center justify-between">
         
         <Tabs value={activeTab} onValueChange={onTabChange}>
-          <TabsList className="bg-gray-200 p-1 rounded-xl inline-flex h-auto">
+          <TabsList className="bg-[var(--notification-card)] p-1 rounded-xl inline-flex h-auto">
             <TabsTrigger
               value="all"
-              className="text-sm px-3 py-1 rounded-lg data-[state=active]:bg-white"
+              className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
             >
               Todas
             </TabsTrigger>
 
             <TabsTrigger
               value="unread"
-              className="text-sm px-3 py-1 rounded-lg data-[state=active]:bg-white"
+              className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
             >
               No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
             </TabsTrigger>
              <TabsTrigger
   value="trash"
-  className="text-sm px-3 py-1 rounded-lg data-[state=active]:bg-white"
+  className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
 >
   Papelera {trashCount > 0 ? `(${trashCount})` : ""}
 </TabsTrigger>
@@ -58,7 +58,7 @@ export function NotificationTabs({
           {activeTab === "unread" && (
             <button
               onClick={onMarkAll}
-              className="text-xs text-gray-500 hover:text-black"
+              className="text-xs text-[var(--notification-muted)] hover:text-[var(--notification-title-unread)]"
             >
               Marcar todas
             </button>
@@ -66,7 +66,7 @@ export function NotificationTabs({
 
           <button
             onClick={onOpenSettings}
-            className="p-2 rounded-md hover:bg-gray-200 transition"
+            className="p-2 rounded-md text-[var(--notification-muted)] hover:bg-[var(--notification-card)] hover:text-[var(--notification-text)] transition"
             type="button"
             title="Configuración"
           >

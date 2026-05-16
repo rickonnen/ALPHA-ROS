@@ -36,36 +36,36 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
         <div style={{
           width: "48px", height: "48px", borderRadius: "50%",
-          backgroundColor: "#1F3A4D",
+          backgroundColor: "var(--auth-primary-strong)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Link2 size={22} color="white" />
+          <Link2 size={22} color="var(--auth-primary-foreground)" />
         </div>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#1f2937", margin: 0 }}>
+          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--auth-text)", margin: 0 }}>
             Magic Link
           </h2>
-          <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+          <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: 0 }}>
             Revisa tu Correo Electrónico
           </p>
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid #1F3A4D" }} />
+      <hr style={{ border: "none", borderTop: "1px solid var(--auth-primary-strong)" }} />
 
       {/* Message */}
-      <p style={{ fontSize: "14px", color: "#4b5563", lineHeight: "1.6", margin: 0 }}>
+      <p style={{ fontSize: "14px", color: "var(--auth-text-soft)", lineHeight: "1.6", margin: 0 }}>
         Se ha enviado un enlace de verificación a tu dirección de correo
         electrónico:{" "}
-        <span style={{ color: "#C26E5A", fontWeight: "600" }}>{email}</span>
+        <span style={{ color: "var(--auth-secondary)", fontWeight: "600" }}>{email}</span>
       </p>
 
       {/* Loading dots animation */}
       <div style={{ display: "flex", justifyContent: "center", padding: "12px 0" }}>
         <div style={{
           width: "60px", height: "60px", borderRadius: "50%",
-          border: "2px solid #1F3A4D",
+          border: "2px solid var(--auth-primary-strong)",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
@@ -74,7 +74,7 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
                 key={i}
                 style={{
                   width: "6px", height: "6px", borderRadius: "50%",
-                  backgroundColor: "#1F3A4D",
+                  backgroundColor: "var(--auth-primary-strong)",
                   animation: "bounce 1.2s ease-in-out infinite",
                   animationDelay: `${i * 0.2}s`,
                 }}
@@ -91,8 +91,8 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
         onClick={handleResend}
         style={{
           width: "100%",
-          backgroundColor: resent ? "#16a34a" : resending ? "#e5a89f" : "#C26E5A",
-          color: "white",
+          backgroundColor: resent ? "var(--auth-success)" : resending ? "var(--auth-disabled)" : "var(--auth-secondary)",
+          color: "var(--auth-primary-foreground)",
           fontWeight: "bold",
           fontSize: "14px",
           padding: "13px 16px",

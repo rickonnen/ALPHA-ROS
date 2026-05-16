@@ -353,7 +353,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
       <div>
-        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>
+        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "var(--auth-text)", marginBottom: "4px" }}>
           Crear tu cuenta
         </h2>
       </div>
@@ -368,8 +368,8 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
           onClick={onMagicLink}
           style={{
             width: "100%",
-            backgroundColor: "#1C3445",
-            color: "white",
+            backgroundColor: "var(--auth-primary)",
+            color: "var(--auth-primary-foreground)",
             fontWeight: "bold",
             padding: "12px",
             borderRadius: "8px",
@@ -393,81 +393,81 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
         <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
           {generalError && (
-            <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
+            <p style={{ color: "var(--auth-danger)", fontSize: "12px", textAlign: "center" }}>{generalError}</p>
           )}
 
           {/* NOMBRE */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Nombre</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.nombre ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.nombre ? "#fee2e2" : "white" }}>
-              <User size={18} style={{ color: "#9ca3af" }} />
+            <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Nombre</label>
+            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.nombre ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.nombre ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+              <User size={18} style={{ color: "var(--auth-icon)" }} />
               <input type="text" placeholder="Tu nombre" value={nombre} maxLength={40}
                 onChange={(e) => { const value = e.target.value.slice(0, 40); setNombre(value); validateField("nombre", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }} />
             </div>
-            {errors.nombre && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.nombre}</p>}
+            {errors.nombre && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.nombre}</p>}
           </div>
 
           {/* APELLIDO */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Apellido</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.apellido ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.apellido ? "#fee2e2" : "white" }}>
-              <User size={18} style={{ color: "#9ca3af" }} />
+            <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Apellido</label>
+            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.apellido ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.apellido ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+              <User size={18} style={{ color: "var(--auth-icon)" }} />
               <input type="text" placeholder="Tu apellido" value={apellido} maxLength={40}
                 onChange={(e) => { const value = e.target.value.slice(0, 40); setApellido(value); validateField("apellido", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }} />
             </div>
-            {errors.apellido && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.apellido}</p>}
+            {errors.apellido && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.apellido}</p>}
           </div>
 
           {/* CORREO */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Correo electrónico</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.email || emailExists ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.email || emailExists ? "#fee2e2" : "white" }}>
-              <Mail size={18} style={{ color: "#9ca3af" }} />
+            <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Correo electrónico</label>
+            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.email || emailExists ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.email || emailExists ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+              <Mail size={18} style={{ color: "var(--auth-icon)" }} />
               <input type="email" placeholder="usuario@gmail.com" value={email}
                 onChange={(e) => { setEmail(e.target.value); validateField("email", e.target.value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }} />
               {checkingEmail && (
-                <div style={{ width: "16px", height: "16px", border: "2px solid #C85A4F", borderTop: "2px solid transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <div style={{ width: "16px", height: "16px", border: "2px solid var(--auth-secondary-action)", borderTop: "2px solid transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               )}
             </div>
-            {errors.email && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.email}</p>}
+            {errors.email && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.email}</p>}
           </div>
 
           {/* CONTRASEÑA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Contraseña</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.password ? "#fee2e2" : "white" }}>
-              <Lock size={18} style={{ color: "#9ca3af" }} />
+            <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Contraseña</label>
+            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.password ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.password ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+              <Lock size={18} style={{ color: "var(--auth-icon)" }} />
               <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 y maximo 15 caracteres" value={password} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setPassword(value); validateField("password", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{password.length}/15</span>
+                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "var(--auth-secondary-action)", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "var(--auth-counter-bg)", borderRadius: "4px" }}>{password.length}/15</span>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
+                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "var(--auth-icon)", padding: "0" }}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.password && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.password}</p>}
+            {errors.password && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.password}</p>}
             <PasswordStrength password={password} />
           </div>
 
           {/* CONFIRMAR CONTRASEÑA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Confirmar contraseña</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.confirmPassword ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.confirmPassword ? "#fee2e2" : "white" }}>
-              <Lock size={18} style={{ color: "#9ca3af" }} />
+            <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Confirmar contraseña</label>
+            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.confirmPassword ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.confirmPassword ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+              <Lock size={18} style={{ color: "var(--auth-icon)" }} />
               <input type={showConfirm ? "text" : "password"} placeholder="Confirmar contraseña" value={confirmPassword} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setConfirmPassword(value); validateField("confirmPassword", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{confirmPassword.length}/15</span>
+                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }} />
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "var(--auth-secondary-action)", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "var(--auth-counter-bg)", borderRadius: "4px" }}>{confirmPassword.length}/15</span>
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
+                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "var(--auth-icon)", padding: "0" }}>
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.confirmPassword && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p style={{ color: "var(--auth-danger)", fontSize: "12px" }}>{errors.confirmPassword}</p>}
           </div>
 
           <button
@@ -475,8 +475,8 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
             disabled={loading || !isFormValid()}
             style={{
               width: "100%",
-              backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C85A4F",
-              color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px",
+              backgroundColor: loading || !isFormValid() ? "var(--auth-disabled)" : "var(--auth-secondary-action)",
+              color: "var(--auth-primary-foreground)", fontWeight: "bold", padding: "12px", borderRadius: "6px",
               border: "none", cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.5 : 1, marginTop: "8px",
             }}
@@ -484,10 +484,10 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
             {loading ? "Creando cuenta..." : "Crear cuenta"}
           </button>
 
-          <p style={{ textAlign: "center", fontSize: "12px", color: "#4b5563" }}>
+          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--auth-text-soft)" }}>
             ¿Ya tenés una cuenta?{" "}
             <button type="button" onClick={onSwitchToLogin}
-              style={{ backgroundColor: "transparent", border: "none", color: "#111827", fontWeight: "600", cursor: "pointer", textDecoration: "underline" }}>
+              style={{ backgroundColor: "transparent", border: "none", color: "var(--auth-text)", fontWeight: "600", cursor: "pointer", textDecoration: "underline" }}>
               Iniciar sesión
             </button>
           </p>
@@ -509,8 +509,8 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
             disabled={isVerifying || userInputCode.length !== 6 || timeRemaining === 0}
             style={{
               width: "100%",
-              backgroundColor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "#e5a89f" : "#C85A4F",
-              color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px",
+              backgroundColor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "var(--auth-disabled)" : "var(--auth-secondary-action)",
+              color: "var(--auth-primary-foreground)", fontWeight: "bold", padding: "12px", borderRadius: "6px",
               border: "none", cursor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "not-allowed" : "pointer",
               opacity: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? 0.5 : 1, marginTop: "8px",
             }}
@@ -521,12 +521,12 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
           <button
             type="button"
             onClick={() => { setVerificationStep(false); setVerificationError(""); setUserInputCode(""); }}
-            style={{ width: "100%", backgroundColor: "transparent", color: "#C85A4F", border: "1px solid #C85A4F", padding: "12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}
+            style={{ width: "100%", backgroundColor: "transparent", color: "var(--auth-secondary-action)", border: "1px solid var(--auth-secondary-action)", padding: "12px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}
           >
             Volver al formulario
           </button>
 
-          <p style={{ textAlign: "center", fontSize: "11px", color: "#6b7280" }}>
+          <p style={{ textAlign: "center", fontSize: "11px", color: "var(--auth-muted)" }}>
             Se envió un código a <strong>{email}</strong>
           </p>
         </div>
