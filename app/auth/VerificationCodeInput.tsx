@@ -45,10 +45,10 @@ export default function VerificationCodeInput({
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Título */}
       <div>
-        <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1f2937", margin: "0 0 4px 0" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "var(--auth-text)", margin: "0 0 4px 0" }}>
           Verifica tu email
         </h3>
-        <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
+        <p style={{ fontSize: "12px", color: "var(--auth-muted)", margin: 0 }}>
           Ingresá el código de 6 dígitos que te enviamos
         </p>
       </div>
@@ -73,12 +73,12 @@ export default function VerificationCodeInput({
             fontWeight: "bold",
             fontFamily: "monospace",
             border: `2px solid ${
-              isExpired ? "#ef4444" : error ? "#f97316" : "#d1d5db"
+              isExpired ? "var(--auth-field-error-border)" : error ? "var(--auth-warning)" : "var(--auth-field-border)"
             }`,
             borderRadius: "8px",
             outline: "none",
-            backgroundColor: isExpired ? "#fee2e2" : error ? "#fef3c7" : "white",
-            color: "#1f2937",
+            backgroundColor: isExpired ? "var(--auth-field-error-bg)" : error ? "var(--auth-warning-soft)" : "var(--auth-field-bg)",
+            color: "var(--auth-text)",
             transition: "all 0.2s",
             cursor: isExpired || isLoading ? "not-allowed" : "text",
             opacity: isExpired ? 0.6 : 1,
@@ -94,7 +94,7 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             fontSize: "12px",
-            color: timeRemaining < 30 ? "#ef4444" : "#6b7280",
+            color: timeRemaining < 30 ? "var(--auth-danger)" : "var(--auth-muted)",
           }}
         >
           <Clock size={14} />
@@ -112,9 +112,9 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             padding: "8px 12px",
-            backgroundColor: "#fee2e2",
+            backgroundColor: "var(--auth-danger-soft)",
             borderRadius: "6px",
-            color: "#dc2626",
+            color: "var(--auth-danger)",
             fontSize: "12px",
           }}
         >
@@ -131,9 +131,9 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             padding: "8px 12px",
-            backgroundColor: "#fef3c7",
+            backgroundColor: "var(--auth-warning-soft)",
             borderRadius: "6px",
-            color: "#b45309",
+            color: "var(--auth-warning)",
             fontSize: "12px",
           }}
         >
@@ -151,8 +151,8 @@ export default function VerificationCodeInput({
           width: "100%",
           padding: "10px",
           backgroundColor:
-            !isExpired && timeRemaining > 30 ? "#e5e7eb" : "#C85A4F",
-          color: !isExpired && timeRemaining > 30 ? "#9ca3af" : "white",
+            !isExpired && timeRemaining > 30 ? "var(--auth-segment)" : "var(--auth-secondary-action)",
+          color: !isExpired && timeRemaining > 30 ? "var(--auth-icon)" : "var(--auth-primary-foreground)",
           border: "none",
           borderRadius: "6px",
           fontSize: "12px",

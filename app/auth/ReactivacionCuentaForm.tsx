@@ -168,7 +168,7 @@ export default function ReactivacionCuentaForm({
             cursor: "pointer",
             fontSize: "11px",
             fontWeight: "700",
-            color: "#888",
+            color: "var(--auth-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.5px",
             padding: "0",
@@ -185,7 +185,7 @@ export default function ReactivacionCuentaForm({
             style={{
               width: "36px",
               height: "36px",
-              backgroundColor: "#1F3A4D22",
+              backgroundColor: "var(--auth-primary-soft)",
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
@@ -193,26 +193,26 @@ export default function ReactivacionCuentaForm({
               flexShrink: 0,
             }}
           >
-            <Clock size={18} color="#1F3A4D" />
+            <Clock size={18} color="var(--auth-primary-strong)" />
           </div>
           <div>
             <h2
               style={{
                 fontSize: "20px",
                 fontWeight: "800",
-                color: "#1F3A4D",
+                color: "var(--auth-primary-strong)",
                 margin: "0 0 2px 0",
               }}
             >
               {step === "success" ? "Solicitud Enviada" : "Reactivación de cuenta"}
             </h2>
-            <p style={{ fontSize: "12px", color: "#888", margin: 0 }}>
+            <p style={{ fontSize: "12px", color: "var(--auth-muted)", margin: 0 }}>
               Reactiva tu cuenta.
             </p>
           </div>
         </div>
 
-        <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "16px 0 0 0" }} />
+        <hr style={{ border: "none", borderTop: "1px solid var(--auth-border)", margin: "16px 0 0 0" }} />
       </div>
 
       {/* ── PANTALLA DE ÉXITO (CA-7, CA-8) ── */}
@@ -222,8 +222,8 @@ export default function ReactivacionCuentaForm({
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div
               style={{
-                backgroundColor: "#1F3A4D",
-                color: "white",
+                backgroundColor: "var(--auth-primary-strong)",
+                color: "var(--auth-primary-foreground)",
                 borderRadius: "20px",
                 padding: "6px 18px",
                 fontSize: "12px",
@@ -241,11 +241,11 @@ export default function ReactivacionCuentaForm({
           {/* Mensaje */}
           <div
             style={{
-              backgroundColor: "#f8f9fa",
+              backgroundColor: "var(--auth-card)",
               borderRadius: "8px",
               padding: "18px",
               fontSize: "13px",
-              color: "#444",
+              color: "var(--auth-text-soft)",
               lineHeight: "1.7",
             }}
           >
@@ -254,7 +254,7 @@ export default function ReactivacionCuentaForm({
             </p>
             <p style={{ margin: "0 0 8px 0" }}>
               Recibirás un correo de confirmación en{" "}
-              <strong style={{ color: "#1F3A4D" }}>{email}</strong> y otro
+              <strong style={{ color: "var(--auth-primary-strong)" }}>{email}</strong> y otro
               cuando tu cuenta sea reactivada.
             </p>
             <p style={{ margin: 0 }}>
@@ -268,9 +268,9 @@ export default function ReactivacionCuentaForm({
             style={{
               padding: "11px",
               borderRadius: "8px",
-              border: "1px solid #1F3A4D44",
+              border: "1px solid color-mix(in srgb, var(--auth-primary-strong) 35%, transparent)",
               backgroundColor: "transparent",
-              color: "#1F3A4D",
+              color: "var(--auth-primary-strong)",
               fontWeight: "700",
               fontSize: "13px",
               cursor: "pointer",
@@ -288,12 +288,12 @@ export default function ReactivacionCuentaForm({
           {solicitudPendiente && (
             <div
               style={{
-                backgroundColor: "#FEF9EC",
-                border: "1px solid #F59E0B55",
+                backgroundColor: "var(--auth-warning-soft)",
+                border: "1px solid color-mix(in srgb, var(--auth-warning) 45%, transparent)",
                 borderRadius: "8px",
                 padding: "14px 16px",
                 fontSize: "13px",
-                color: "#92400E",
+                color: "var(--auth-warning)",
                 lineHeight: "1.6",
               }}
             >
@@ -311,7 +311,7 @@ export default function ReactivacionCuentaForm({
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#92400E",
+                  color: "var(--auth-warning)",
                   fontWeight: "700",
                   fontSize: "12px",
                   cursor: "pointer",
@@ -325,7 +325,7 @@ export default function ReactivacionCuentaForm({
           )}
 
           {/* Instrucciones CA-4 */}
-          <p style={{ margin: 0, fontSize: "13px", color: "#555", lineHeight: "1.6" }}>
+          <p style={{ margin: 0, fontSize: "13px", color: "var(--auth-text-soft)", lineHeight: "1.6" }}>
             Para reactivar tu cuenta, completa el formulario. Te enviaremos un
             correo de confirmación y nuestro equipo de soporte procesará tu
             solicitud en un plazo máximo de <strong>24 horas</strong>.
@@ -337,7 +337,7 @@ export default function ReactivacionCuentaForm({
               style={{
                 fontSize: "11px",
                 fontWeight: "700",
-                color: "#374151",
+                color: "var(--auth-muted-strong)",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -348,12 +348,12 @@ export default function ReactivacionCuentaForm({
               value={tipoCuenta}
               onChange={(e) => setTipoCuenta(e.target.value)}
               style={{
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--auth-field-border)",
                 borderRadius: "6px",
                 padding: "10px 12px",
                 fontSize: "13px",
-                color: "#333",
-                backgroundColor: "white",
+                color: "var(--auth-text)",
+                backgroundColor: "var(--auth-field-bg)",
                 outline: "none",
                 cursor: "pointer",
               }}
@@ -372,7 +372,7 @@ export default function ReactivacionCuentaForm({
               style={{
                 fontSize: "11px",
                 fontWeight: "700",
-                color: "#374151",
+                color: "var(--auth-muted-strong)",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
@@ -383,14 +383,14 @@ export default function ReactivacionCuentaForm({
               style={{
                 display: "flex",
                 alignItems: "center",
-                border: `1px solid ${emailError ? "#ef4444" : "#d1d5db"}`,
+                border: `1px solid ${emailError ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`,
                 borderRadius: "6px",
                 padding: "10px 12px",
                 gap: "10px",
-                backgroundColor: emailError ? "#fee2e2" : "#1F3A4D",
+                backgroundColor: emailError ? "var(--auth-field-error-bg)" : "var(--auth-primary-strong)",
               }}
             >
-              <Mail size={16} color={emailError ? "#ef4444" : "#94a3b8"} />
+              <Mail size={16} color={emailError ? "var(--auth-danger)" : "var(--auth-icon)"} />
               <input
                 type="email"
                 placeholder="tu@correo.com"
@@ -403,13 +403,13 @@ export default function ReactivacionCuentaForm({
                   outline: "none",
                   border: "none",
                   backgroundColor: "transparent",
-                  color: emailError ? "#333" : "white",
+                  color: emailError ? "var(--auth-text)" : "var(--auth-primary-foreground)",
                 }}
               />
             </div>
             {/* CA-5: mensaje de error de validación */}
             {emailError && (
-              <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>
+              <p style={{ color: "var(--auth-danger)", fontSize: "12px", margin: 0 }}>
                 {emailError}
               </p>
             )}
@@ -421,13 +421,13 @@ export default function ReactivacionCuentaForm({
               style={{
                 fontSize: "11px",
                 fontWeight: "700",
-                color: "#374151",
+                color: "var(--auth-muted-strong)",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
               }}
             >
               Motivo de la desactivación{" "}
-              <span style={{ fontWeight: "400", color: "#9ca3af" }}>(opcional)</span>
+              <span style={{ fontWeight: "400", color: "var(--auth-icon)" }}>(opcional)</span>
             </label>
             <textarea
               value={motivo}
@@ -435,11 +435,12 @@ export default function ReactivacionCuentaForm({
               placeholder="Ej: Solicité la desactivación por error..."
               rows={3}
               style={{
-                border: "1px solid #d1d5db",
+                border: "1px solid var(--auth-field-border)",
                 borderRadius: "6px",
                 padding: "10px 12px",
                 fontSize: "13px",
-                color: "#333",
+                color: "var(--auth-text)",
+                backgroundColor: "var(--auth-field-bg)",
                 resize: "none",
                 outline: "none",
                 fontFamily: "inherit",
@@ -451,12 +452,12 @@ export default function ReactivacionCuentaForm({
           {apiError && (
             <div
               style={{
-                backgroundColor: "#fee2e2",
-                border: "1px solid #fecaca",
+                backgroundColor: "var(--auth-danger-soft)",
+                border: "1px solid color-mix(in srgb, var(--auth-danger) 35%, transparent)",
                 borderRadius: "6px",
                 padding: "12px 14px",
                 fontSize: "13px",
-                color: "#ef4444",
+                color: "var(--auth-danger)",
               }}
             >
               {apiError}
@@ -474,8 +475,8 @@ export default function ReactivacionCuentaForm({
               borderRadius: "8px",
               border: "none",
               backgroundColor:
-                !isFormValid() ? "#C26E5A88" : "#C26E5A",
-              color: "white",
+                !isFormValid() ? "color-mix(in srgb, var(--auth-secondary) 55%, transparent)" : "var(--auth-secondary)",
+              color: "var(--auth-primary-foreground)",
               fontWeight: "700",
               fontSize: "14px",
               cursor: !isFormValid() ? "not-allowed" : "pointer",

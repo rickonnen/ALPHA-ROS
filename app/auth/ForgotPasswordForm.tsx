@@ -42,30 +42,30 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#B47B65", display: "flex", alignItems: "center" }}>
+        <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--auth-secondary)", display: "flex", alignItems: "center" }}>
           <ArrowLeft size={20} />
         </button>
-        <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>Recuperar cuenta</h2>
+        <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "var(--auth-text)", margin: 0 }}>Recuperar cuenta</h2>
       </div>
-      <p style={{ fontSize: "13px", color: "#6b7280", textAlign: "center", margin: 0 }}>
+      <p style={{ fontSize: "13px", color: "var(--auth-muted)", textAlign: "center", margin: 0 }}>
         Ingresa tu correo y te enviaremos un código de 6 dígitos para restablecer tu contraseña.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Correo electrónico</label>
-        <div style={{ display: "flex", alignItems: "center", border: `1px solid ${error ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: error ? "#fee2e2" : "white" }}>
-          <Mail size={18} style={{ color: "#9ca3af" }} />
+        <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase" }}>Correo electrónico</label>
+        <div style={{ display: "flex", alignItems: "center", border: `1px solid ${error ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: error ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)" }}>
+          <Mail size={18} style={{ color: "var(--auth-icon)" }} />
           <input
             type="email"
             placeholder="usuario@ejemplo.com"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+            style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)" }}
           />
         </div>
-        {error && <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>{error}</p>}
+        {error && <p style={{ color: "var(--auth-danger)", fontSize: "12px", margin: 0 }}>{error}</p>}
       </div>
-      <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", backgroundColor: loading ? "#e5a89f" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontSize: "14px" }}>
+      <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", backgroundColor: loading ? "var(--auth-disabled)" : "var(--auth-secondary-action)", color: "var(--auth-primary-foreground)", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontSize: "14px" }}>
         {loading ? "Enviando..." : "Enviar código"}
       </button>
     </div>
