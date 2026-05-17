@@ -101,8 +101,8 @@ function FormularioDinamicoInner() {
             onClick={() => setShowCancelarModal(false)}
             style={{
               flex: 1, maxWidth: 160,
-              backgroundColor: 'var(--card-bg)', border: `1.5px solid ${C.terracota}`,
-              color: C.terracota, borderRadius: 8, padding: '11px 0',
+              backgroundColor: 'var(--card-bg)', border: '1.5px solid var(--secondary)',
+              color: 'var(--secondary)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -113,8 +113,8 @@ function FormularioDinamicoInner() {
             onClick={() => { setShowCancelarModal(false); router.push('/') }}
             style={{
               flex: 1, maxWidth: 160,
-              backgroundColor: C.terracota, border: 'none',
-              color: 'var(--secondary-foreground)', borderRadius: 8, padding: '11px 0',
+              backgroundColor: 'var(--secondary)', border: 'none',
+              color: 'var(--primary-foreground)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600, cursor: 'pointer',
             }}
           >
@@ -129,7 +129,7 @@ function FormularioDinamicoInner() {
   if (isMobile) {
     return (
       <main style={{
-        backgroundColor: C.crema, display: 'flex', flexDirection: 'column',
+        backgroundColor: 'var(--background)', display: 'flex', flexDirection: 'column',
         fontFamily: 'var(--font-geist-sans)', padding: '16px 12px', gap: 0,
       }}>
         <style>{`
@@ -138,12 +138,12 @@ function FormularioDinamicoInner() {
             to   { opacity: 1; transform: translateX(0); }
           }
         `}</style>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: C.marino, margin: '0 0 12px' }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--primary)', margin: '0 0 12px' }}>
           {tituloPagina}
         </h1>
 
         <div style={{
-          backgroundColor: C.marino, borderRadius: 12, display: 'flex',
+          backgroundColor: 'var(--primary)', borderRadius: 12, display: 'flex',
           flexDirection: 'column', padding: '16px 16px 16px', gap: 14,
           height: 650,
         }}>
@@ -154,7 +154,7 @@ function FormularioDinamicoInner() {
             </p>
             <div style={{ height: 18, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.2)' }}>
               <div style={{
-                height: '100%', borderRadius: 99, backgroundColor: C.terracota,
+                height: '100%', borderRadius: 99, backgroundColor: 'var(--secondary)',
                 width: `${Math.round((completedSteps.size / STEPS.length) * 100)}%`,
                 transition: 'width 0.4s ease',
               }} />
@@ -171,7 +171,7 @@ function FormularioDinamicoInner() {
             }}>
               {STEPS[currentStep].title}
               {STEPS[currentStep].opcional && (
-                <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: C.terracota }}>-Opcional</span>
+                <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: 'var(--secondary)' }}>-Opcional</span>
               )}
             </h2>
             <button
@@ -200,7 +200,7 @@ function FormularioDinamicoInner() {
           )}
 
           <div key={currentStep} style={{
-            backgroundColor: C.crema, borderRadius: 10, padding: 14,
+            backgroundColor: 'var(--background)', borderRadius: 10, padding: 14,
             height: 430, flexShrink: 0, overflowY: 'auto',
             animation: 'stepIn 0.3s ease forwards',
           }}>
@@ -234,8 +234,8 @@ function FormularioDinamicoInner() {
           <button
             type="button" onClick={handleBackOrCancel} disabled={isPublishing}
             style={{
-              flex: 1, backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
-              color: C.terracota, borderRadius: 8, padding: '11px 0',
+              flex: 1, backgroundColor: 'var(--background)', border: '1.5px solid var(--secondary)',
+              color: 'var(--secondary)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600,
               cursor: isPublishing ? 'not-allowed' : 'pointer',
               opacity: isPublishing ? 0.6 : 1,
@@ -246,8 +246,8 @@ function FormularioDinamicoInner() {
           <button
             type="button" onClick={handleNext} disabled={isPublishing}
             style={{
-              flex: 1, backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-              color: 'var(--secondary-foreground)', borderRadius: 8, padding: '11px 0',
+              flex: 1, backgroundColor: 'var(--secondary)', border: '1.5px solid var(--secondary)',
+              color: 'var(--primary-foreground)', borderRadius: 8, padding: '11px 0',
               fontSize: 15, fontWeight: 600,
               cursor: isPublishing ? 'not-allowed' : 'pointer',
               opacity: isPublishing ? 0.6 : 1,
@@ -273,7 +273,7 @@ function FormularioDinamicoInner() {
   // ─── DESKTOP ──────────────────────────────────────────────────────────────
   return (
     <main style={{
-      backgroundColor: C.crema, display: 'flex',
+      backgroundColor: 'var(--background)', display: 'flex',
       flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
       padding: '8px 16px', fontFamily: 'var(--font-geist-sans)',
     }}>
@@ -298,7 +298,7 @@ function FormularioDinamicoInner() {
           <h1
             className="titulo-publicacion"
             style={{
-              fontSize: 60, fontWeight: 700, color: C.marino,
+              fontSize: 60, fontWeight: 700, color: 'var(--primary)',
               marginBottom: 20, marginTop: 10, marginLeft: -9,
             }}
           >
@@ -320,7 +320,7 @@ function FormularioDinamicoInner() {
           />
 
           <div style={{
-            flex: 1, backgroundColor: C.marino,
+            flex: 1, backgroundColor: 'var(--primary)',
             padding: '50px 50px 20px', display: 'flex', flexDirection: 'column',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
@@ -331,7 +331,7 @@ function FormularioDinamicoInner() {
               }}>
                 {STEPS[currentStep].title}
                 {STEPS[currentStep].opcional && (
-                  <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: C.terracota }}>-Opcional</span>
+                  <span style={{ fontSize: 20, fontWeight: 600, marginLeft: 8, color: 'var(--secondary)' }}>-Opcional</span>
                 )}
               </h2>
               <button
@@ -360,7 +360,7 @@ function FormularioDinamicoInner() {
             )}
 
             <div key={currentStep} style={{
-              backgroundColor: C.crema, borderRadius: 12, padding: 15,
+              backgroundColor: 'var(--background)', borderRadius: 12, padding: 15,
               flex: 1, overflowY: 'auto', animation: 'stepIn 0.3s ease forwards',
             }}>
               <StepContent step={currentStep} {...stepContentProps} />
@@ -370,8 +370,8 @@ function FormularioDinamicoInner() {
               <button
                 type="button" onClick={handleBackOrCancel} disabled={isPublishing}
                 style={{
-                  backgroundColor: C.crema, border: `1.5px solid ${C.terracota}`,
-                  color: C.terracota, borderRadius: 6, padding: '5px 20px',
+                  backgroundColor: 'var(--background)', border: '1.5px solid var(--secondary)',
+                  color: 'var(--secondary)', borderRadius: 6, padding: '5px 20px',
                   fontSize: 16, fontWeight: 600,
                   cursor: isPublishing ? 'not-allowed' : 'pointer',
                   opacity: isPublishing ? 0.6 : 1,
@@ -382,8 +382,8 @@ function FormularioDinamicoInner() {
               <button
                 type="button" onClick={handleNext} disabled={isPublishing}
                 style={{
-                  backgroundColor: C.terracota, border: `1.5px solid ${C.terracota}`,
-                  color: 'var(--secondary-foreground)', borderRadius: 6, padding: '5px 20px',
+                  backgroundColor: 'var(--secondary)', border: '1.5px solid var(--secondary)',
+                  color: 'var(--primary-foreground)', borderRadius: 6, padding: '5px 20px',
                   fontSize: 16, fontWeight: 600,
                   cursor: isPublishing ? 'not-allowed' : 'pointer',
                   opacity: isPublishing ? 0.6 : 1,

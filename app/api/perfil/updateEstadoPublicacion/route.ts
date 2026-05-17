@@ -6,6 +6,7 @@
       - Query params: ?id_usuario=...&id_publicacion=...&id_estado=...
 */
 
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -81,6 +82,7 @@ export async function PATCH(req: NextRequest) {
           id_estado: idEst,
         },
       });
+      revalidateTag("publicaciones");
 
       return NextResponse.json(
         { message: "Estado de la publicación actualizado correctamente" },

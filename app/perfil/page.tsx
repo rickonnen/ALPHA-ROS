@@ -62,7 +62,7 @@ import ConfirmModal from "@/components/ui/confirmModal";
       - Lee el id_usuario desde el query param ?id=... que envía el Header
       - Consume GET /backend/perfil/getUsuario?id_usuario=...
       - Distribuye los datos reales a cada vista
-*/
+ */
 
 function PerfilContent() {
   const { user, logout } = useAuth();
@@ -167,7 +167,7 @@ function PerfilContent() {
     favoritos: usuario ? <FavoritoView id_usuario={userId} /> : null,
     historial: <HistorialView id_usuario={userId} />,
     historialPagos: <HistorialPagosView />,
-    zonas: usuario ? <ZonasView id_usuario={userId} /> : null,
+    zonas: usuario ? <ZonasView /> : null,
     planes: <SuscripcionView />,
   };
 
