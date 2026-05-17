@@ -3,17 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Bath,
+  BedDouble,
+  BriefcaseBusiness,
+  Building2,
   Camera,
   CheckCircle2,
+  ClipboardCheck,
   DollarSign,
   FileText,
   House,
+  LandPlot,
+  Layers,
   MapPin,
+  MapPinned,
   PencilLine,
   Play,
+  PlugZap,
   Ruler,
   Video,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -27,6 +37,20 @@ import {
 } from "./requisitos.constants";
 
 const DEFAULT_GUIA_VIDEO_URL = "https://www.youtube.com/embed/f_WuRfuMXQw";
+
+const TIPO_INMUEBLE_ICONS: Record<TipoInmueble, LucideIcon> = {
+  Casa: House,
+  Departamento: Building2,
+  Terreno: LandPlot,
+  Oficina: BriefcaseBusiness,
+};
+
+const REQUISITO_ICONS: Record<TipoInmueble, LucideIcon[]> = {
+  Casa: [FileText, Ruler, BedDouble, ClipboardCheck],
+  Departamento: [FileText, Ruler, Bath, Layers],
+  Terreno: [FileText, LandPlot, MapPinned, PlugZap],
+  Oficina: [FileText, Ruler, BriefcaseBusiness, ClipboardCheck],
+};
 
 function normalizeGuideVideoUrl(strUrl?: string): string | null {
   const strValue = strUrl?.trim();
@@ -58,12 +82,8 @@ function normalizeGuideVideoUrl(strUrl?: string): string | null {
   return strValue;
 }
 
-function getRequirementIcon(strItem: string) {
-  if (strItem.startsWith("Titulo")) return FileText;
-  if (strItem.startsWith("Superficie")) return Ruler;
-  if (strItem.startsWith("Nro.")) return House;
-  if (strItem.startsWith("Piso")) return House;
-  return PencilLine;
+function getRequirementIcon(strTipo: TipoInmueble, intIndex: number) {
+  return REQUISITO_ICONS[strTipo][intIndex] ?? PencilLine;
 }
 
 export default function RequisitosPublicacionPage() {
@@ -176,17 +196,19 @@ export default function RequisitosPublicacionPage() {
               <div className="mx-auto grid max-w-xs grid-cols-2 gap-2">
                 {TIPOS_INMUEBLE.map((strTipo) => {
                   const bolActive = strTipoSeleccionado === strTipo;
+                  const TipoIcon = TIPO_INMUEBLE_ICONS[strTipo];
                   return (
                     <button
                       key={strTipo}
                       type="button"
                       onClick={() => setStrTipoSeleccionado(strTipo)}
-                      className={`min-h-10 rounded-full border px-3 py-2 text-sm font-semibold transition-colors sm:text-base ${
+                      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition-colors sm:text-base ${
                         bolActive
                           ? "border-[#C26E5A] bg-[#C26E5A] text-white"
                           : "border-[#CDAA9F] bg-[#EFE9E0] text-[#B76857] hover:bg-[#E8DED0]"
                       }`}
                     >
+                      <TipoIcon className="h-4 w-4 flex-shrink-0" />
                       {strTipo}
                     </button>
                   );
@@ -200,8 +222,8 @@ export default function RequisitosPublicacionPage() {
                   </p>
                 ) : (
                   <ul className="space-y-3">
-                    {arrEspecificos.map((strRequisito) => {
-                      const Icon = getRequirementIcon(strRequisito);
+                    {arrEspecificos.map((strRequisito, intIndex) => {
+                      const Icon = getRequirementIcon(strTipoSeleccionado, intIndex);
                       return (
                         <li key={strRequisito} className="flex items-start gap-2 text-base text-[#1E1E1E]">
                           <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C26E5A]" />

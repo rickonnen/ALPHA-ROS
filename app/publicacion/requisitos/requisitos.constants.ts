@@ -22,7 +22,7 @@ export const REQUISITOS_ESPECIFICOS: Record<TipoInmueble, string[]> = {
   Casa: [
     "Título de la propiedad",
     "Superficie de construcción en m²",
-    "Nro. de habitaciones, baños y garajes",
+    "Nro. de habitaciones,pisos, baños y garajes",
     "Estado de construcción",
   ],
   Departamento: [
