@@ -1,9 +1,13 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
+import { useAuth } from '@/app/auth/AuthContext';
 import type { TipoEvento } from '@/app/api/tracking/event/route';
 import type { TrackSearchPayload } from '@/app/api/tracking/search/route';
 import type { TrackPlacePayload } from '@/app/api/tracking/place/route';
+
+type TrackSearchInput = Omit<TrackSearchPayload, 'id_usuario'>;
+type TrackPlaceInput = Omit<TrackPlacePayload, 'id_usuario'>;
 
 function fireAndForget(url: string, body: unknown): void {
   fetch(url, {
@@ -11,12 +15,23 @@ function fireAndForget(url: string, body: unknown): void {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     keepalive: true,
-    credentials: 'same-origin',
-  }).catch(() => {});
+  }).catch(() => {
+    // Silent fail - tracking is non-critical
+  });
+}
+
+function notifyInteraction(tipo: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('tracking:interaction', { detail: { tipo } }));
+  } catch {
+    // ignore
+  }
 }
 
 
 export function useTracking() {
+  const { user } = useAuth();
   const viewedCards = useRef<Set<number>>(new Set());
 
   const trackEvent = useCallback(
@@ -30,6 +45,9 @@ export function useTracking() {
         pagina_origen?: string;
       }
     ) => {
+      // Only track logged-in users
+      if (!user?.id) return;
+
       if (tipo_evento === 'view') {
         if (viewedCards.current.has(id_publicacion)) return;
         viewedCards.current.add(id_publicacion);
@@ -45,23 +63,39 @@ export function useTracking() {
           : 'desktop';
 
       fireAndForget('/api/tracking/event', {
+        id_usuario: user.id,
         id_publicacion,
         tipo_evento,
         dispositivo,
         pagina_origen: typeof window !== 'undefined' ? window.location.pathname : undefined,
         ...extras,
       });
+      notifyInteraction(tipo_evento);
     },
-    []
+    [user]
   );
 
-  const trackSearch = useCallback((payload: TrackSearchPayload) => {
-    fireAndForget('/api/tracking/search', payload);
-  }, []);
+  const trackSearch = useCallback((payload: TrackSearchInput) => {
+    // Only track logged-in users
+    if (!user?.id) return;
 
-  const trackPlace = useCallback((payload: TrackPlacePayload) => {
-    fireAndForget('/api/tracking/place', payload);
-  }, []);
+    fireAndForget('/api/tracking/search', {
+      id_usuario: user.id,
+      ...payload,
+    });
+    notifyInteraction('search');
+  }, [user]);
+
+  const trackPlace = useCallback((payload: TrackPlaceInput) => {
+    // Only track logged-in users
+    if (!user?.id) return;
+
+    fireAndForget('/api/tracking/place', {
+      id_usuario: user.id,
+      ...payload,
+    });
+    notifyInteraction('place');
+  }, [user]);
 
   return { trackEvent, trackSearch, trackPlace };
 }

@@ -4,7 +4,7 @@ import { PaymentRecord } from "./paymentTypes"
 
 const TableSkeleton = ({ strStatus }: { strStatus: string }) => {
 
-  const intTotalCells = strStatus === 'Aceptado' ? 6 : 7;
+  const intTotalCells = strStatus === 'Pendiente' ? 7 : 6;
 
   return (
     <>

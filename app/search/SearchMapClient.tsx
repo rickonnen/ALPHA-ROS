@@ -14,37 +14,68 @@ const PropertyMap = dynamic(() => import('@/app/mapas/components/Map'), {
 
 interface SearchMapClientProps {
   locations: Location[];
+  defaultZones?: {
+    id_zona: number;
+    nombre_zona: string;
+    coordenadas: [number, number][];
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  }[];
+  drawnZoneSummary?: {
+    nombre: string;
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  } | null;
+  showDefaultZones?: boolean;
+  onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
   selectedPos: [number, number] | null;
   hoveredPos: [number, number] | null;
   setSelectedPos: (pos: [number, number]) => void;
-  // --- PROPS PARA LA HU2 ---
   isDrawingMode?: boolean;
   drawnPolygon?: [number, number][] | null;
   onPolygonComplete?: (points: [number, number][]) => void;
+  isEditingPolygon?: boolean;
+  onPolygonEdit?: (points: [number, number][]) => void;
 }
 
 export default function SearchMapClient({
   locations,
+  defaultZones = [],
+  drawnZoneSummary = null,
+  showDefaultZones = true,
+  onToggleDefaultZones,
   hoveredId,
   selectedPos,
   hoveredPos,
   setSelectedPos,
-  isDrawingMode,         // <-- 1. Lo extraemos
-  drawnPolygon,          // <-- 1. Lo extraemos
-  onPolygonComplete,     // <-- 1. Lo extraemos
+  isDrawingMode,
+  drawnPolygon,
+  onPolygonComplete,
+  isEditingPolygon,
+  onPolygonEdit,
 }: SearchMapClientProps) {
   return (
     <div className="h-full w-full z-0 relative">
       <PropertyMap
         locations={locations}
+        defaultZones={defaultZones}
+        drawnZoneSummary={drawnZoneSummary}
+        showDefaultZones={showDefaultZones}
+        onToggleDefaultZones={onToggleDefaultZones}
         hoveredId={hoveredId}
         selectedPos={selectedPos}
         hoveredPos={hoveredPos}
         setSelectedPos={setSelectedPos}
-        isDrawingMode={isDrawingMode}         // <-- 2. Lo pasamos al mapa real
-        drawnPolygon={drawnPolygon}           // <-- 2. Lo pasamos al mapa real
-        onPolygonComplete={onPolygonComplete} // <-- 2. Lo pasamos al mapa real
+        isDrawingMode={isDrawingMode}
+        drawnPolygon={drawnPolygon}
+        onPolygonComplete={onPolygonComplete}
+        isEditingPolygon={isEditingPolygon}
+        onPolygonEdit={onPolygonEdit}
       />
     </div>
   );
