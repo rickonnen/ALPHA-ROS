@@ -54,6 +54,11 @@ export interface PublicacionBusqueda {
     nombre: string;
     detalle: string | null;
   }[];
+  etiquetas?: {
+    id: number;
+    nombre: string;
+    color: string;
+  }[];
 
   usuario?: {
     nombres?: string | null;

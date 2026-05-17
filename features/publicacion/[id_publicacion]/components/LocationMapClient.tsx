@@ -17,6 +17,25 @@ const LocationDisplay = dynamic(
     loading: () => <div className="h-[280px] md:h-[350px] w-full flex items-center justify-center bg-slate-100 rounded-3xl text-slate-400">Cargando ubicación...</div> 
   }
 );
-export const LocationMapClient = ({ lat, lng }: { lat: number; lng: number }) => {
-  return <LocationDisplay lat={lat} lng={lng} />;
+type PointOfInterestMapItem = {
+  id: number
+  nombre: string
+  descripcion?: string | null
+  lat: number
+  lng: number
+  distancia_metros?: number | null
+  tipo_nombre?: string | null
+  tipo_color?: string | null
+}
+
+export const LocationMapClient = ({
+  lat,
+  lng,
+  puntosInteres = [],
+}: {
+  lat: number
+  lng: number
+  puntosInteres?: PointOfInterestMapItem[]
+}) => {
+  return <LocationDisplay lat={lat} lng={lng} puntosInteres={puntosInteres} />;
 };

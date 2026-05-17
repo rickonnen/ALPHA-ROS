@@ -547,6 +547,7 @@ model BusquedaLog {
 model Caracteristica {
   id_caracteristica         Int                         @id(map: "Caracteristica_pk") @default(autoincrement())
   nombre_caracteristica     String?                     @db.VarChar(128)
+  color                     String?                     @db.VarChar(50)
   PublicacionCaracteristica PublicacionCaracteristica[]
 
   @@schema("public")
@@ -914,7 +915,7 @@ model Publicacion {
   id_ubicacion              Int?
   id_moneda                 Int?
   id_etiqueta               Int?                        @db.SmallInt
-  id_estado                 Int?                        @db.SmallInt
+  id_estado                 Int?                        @default(1) @db.SmallInt
   id_usuario                String?                     @db.Uuid
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   gratuito                  Boolean                     @default(false)
