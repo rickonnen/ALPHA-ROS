@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -8,6 +7,7 @@ const supabaseAdmin = createClient(
 );
 
 export interface TrackPlacePayload {
+  id_usuario: string;
   mapbox_id: string;
   name: string;
   full_name?: string;
@@ -19,33 +19,21 @@ export interface TrackPlacePayload {
   cant_resultados?: number;
 }
 
-function getUserIdFromToken(request: NextRequest): string | null {
-  try {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) return null;
-    const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
-    return decoded.userId;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as TrackPlacePayload;
-    const id_usuario = getUserIdFromToken(request);
 
-    if (!id_usuario) {
-      return NextResponse.json({ success: false, message: 'No autenticado' }, { status: 401 });
-    }
-
-    if (!body.mapbox_id || !body.name) {
-      return NextResponse.json({ success: false, message: 'mapbox_id y name son requeridos' }, { status: 400 });
+    // Validate required fields
+    if (!body.id_usuario || !body.mapbox_id || !body.name) {
+      return NextResponse.json(
+        { success: false, message: 'Missing required fields: id_usuario, mapbox_id, name' },
+        { status: 400 }
+      );
     }
 
     const { error } = await supabaseAdmin.from('HistorialBusqueda').insert({
-      id_usuario,
-      session_id: id_usuario,
+      id_usuario: body.id_usuario,
+      session_id: body.id_usuario,
       mapbox_id: body.mapbox_id,
       name: body.name,
       full_name: body.full_name ?? null,

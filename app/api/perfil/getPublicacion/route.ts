@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       banos: pub.banos ?? null,
       //zona: pub.Ubicacion?.zona ?? null,
       direccion: pub.Ubicacion?.direccion ?? null,
-      id_estado: pub.id_estado,
+      id_estado: pub.id_estado ?? 1,
       gratuito: pub.gratuito,
       fechaPublicacion: pub.fecha_creacion
         ? new Date(pub.fecha_creacion).toLocaleDateString("es-BO", {

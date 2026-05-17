@@ -140,8 +140,8 @@ export function NotificationItem({
       onClick={handleItemClick}
       className={`rounded-lg p-3 flex items-start gap-3 max-w-[99%] mx-auto cursor-pointer transition-all duration-200 group relative border
         ${read
-          ? "bg-white border-gray-100 shadow-sm"
-          : "bg-gray-100 border-gray-200"
+          ? "bg-[var(--notification-item-read)] border-[var(--notification-item-border-read)] shadow-sm"
+          : "bg-[var(--notification-item-unread)] border-[var(--notification-item-border-unread)]"
         }`}
     >
       {/* ICON */}
@@ -152,11 +152,11 @@ export function NotificationItem({
       {/* CONTENT */}
       <div className="flex flex-col flex-1 min-w-0">
         <span className={`text-[15px] leading-[120%] truncate
-          ${read ? "font-medium text-gray-600" : "font-black text-black"}`}>
+          ${read ? "font-medium text-[var(--notification-title-read)]" : "font-black text-[var(--notification-title-unread)]"}`}>
           {title}
 
           {isWhatsApp && !read && (
-            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+            <span className="ml-2 text-xs bg-[var(--notification-success-soft)] text-[var(--notification-success)] px-2 py-0.5 rounded-full">
               WhatsApp
             </span>
           )}
@@ -164,7 +164,7 @@ export function NotificationItem({
 
         <p
           ref={textRef}
-          className={`text-gray-500 text-[13px] font-medium leading-5 break-words ${!expanded ? "line-clamp-1" : ""}`}
+          className={`text-[var(--notification-muted)] text-[13px] font-medium leading-5 break-words ${!expanded ? "line-clamp-1" : ""}`}
         >
           {description}
         </p>
@@ -175,13 +175,13 @@ export function NotificationItem({
               e.stopPropagation();
               setExpanded((prev) => !prev);
             }}
-            className="text-blue-500 text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
+            className="text-[var(--notification-button)] text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
           >
             {expanded ? "Ocultar" : "Ver más"}
           </button>
         )}
 
-        <span className="text-gray-400 text-xs mt-1">{time}</span>
+        <span className="text-[var(--notification-subtle)] text-xs mt-1">{time}</span>
       </div>
 
       {/* ACTIONS */}
@@ -189,7 +189,7 @@ export function NotificationItem({
   {isInTrash ? (
     <button
       onClick={(e) => { e.stopPropagation(); onRestore?.(id); }}
-      className="w-7 h-7 flex items-center justify-center rounded-full text-green-500 hover:bg-green-50 transition-colors"
+      className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--notification-success)] hover:bg-[var(--notification-success-soft)] transition-colors"
       title="Restaurar notificación"
     >
       <RotateCcw size={15} />
@@ -198,7 +198,7 @@ export function NotificationItem({
     <button
       onClick={handleDelete}
       disabled={isDeleting}
-      className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+      className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--notification-subtle)] hover:text-[var(--notification-danger)] hover:bg-[var(--notification-danger-soft)] transition-colors disabled:opacity-50"
       title="Eliminar notificación"
     >
       <Trash2 size={15} />
