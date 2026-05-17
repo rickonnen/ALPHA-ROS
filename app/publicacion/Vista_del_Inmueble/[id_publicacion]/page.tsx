@@ -34,6 +34,10 @@ import ReportModal from "@/features/publicacion/[id_publicacion]/components/Repo
 import FavButton from "@/components/ui/fav";
 import CloseTabButton from "./CloseTabButton";
 
+import Link from "next/link";
+
+import UserAvatar from "./UserAvatar";
+
 export default async function VistaInmueblePage({
   params,
 }: {
@@ -118,6 +122,24 @@ export default async function VistaInmueblePage({
       <PropertyDetailTracking id_publicacion={intId} />
       <div className="mx-auto max-w-6xl">
         <header className="mb-10">
+          {/* Mini-perfil del propietario → link a otroPerfil */}
+          {objPerfil.Usuario && (
+            <Link
+              href={`/otroPerfil?id=${objPerfil.Usuario.id_usuario}`}
+              className="inline-flex items-center gap-3 mb-6 group"
+            >
+              <UserAvatar
+                src={objPerfil.Usuario.url_foto_perfil ?? ""}
+                alt={objPerfil.Usuario.username ?? ""}
+                className="w-10 h-10 rounded-full border-2 border-[#1F3A4D]/20 object-cover group-hover:border-[#C26E5A] transition-colors"
+              />
+              <span className="text-[#1F3A4D] font-semibold text-sm group-hover:text-[#C26E5A] transition-colors">
+                @{`${objPerfil.Usuario.nombres} ${objPerfil.Usuario.apellidos}`.trim()
+                  ? `${objPerfil.Usuario.nombres ?? ""} ${objPerfil.Usuario.apellidos ?? ""}`.trim()
+                  : "Usuario"}
+              </span>
+            </Link>
+          )}
           <h1 className="text-3xl md:text-5xl font-bold text-primary mb-4 tracking-tight break-words">
             {objPerfil.titulo}
           </h1>
