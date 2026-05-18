@@ -16,11 +16,11 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
   const [hovCancelar, setHovCancelar] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const CREAM_BG = "var(--auth-card-soft)";
-  const DARK_BLUE = "var(--auth-primary-strong)";
-  const TERRACOTTA = "var(--auth-secondary)";
-  const INPUT_BG = "var(--auth-otp-bg)";
-  const MUTED_TEXT = "var(--auth-muted)";
+  const CREAM_BG = "#F4EFE6";
+  const DARK_BLUE = "#1F3A4D";
+  const TERRACOTTA = "#C26E5A";
+  const INPUT_BG = "#4a6878";
+  const MUTED_TEXT = "#5a7a8a";
 
   const codigo = digits.join("");
 
@@ -109,7 +109,7 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <Lock size={20} color="var(--auth-primary-foreground)" />
+            <Lock size={20} color="white" />
           </div>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: DARK_BLUE }}>
@@ -152,7 +152,7 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
       borderRadius: 10,
       fontSize: 24,
       fontWeight: 700,
-      color: "var(--auth-primary-foreground)",
+      color: "white",
       textAlign: "center",
       outline: "none",
       caretColor: "transparent",
@@ -182,7 +182,7 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
               cursor: cargando || codigo.length !== 6 ? "not-allowed" : "pointer",
               background: hovVerificar && codigo.length === 6 ? TERRACOTTA : "transparent",
               border: `2px solid ${hovVerificar && codigo.length === 6 ? TERRACOTTA : DARK_BLUE}`,
-              color: hovVerificar && codigo.length === 6 ? "var(--auth-primary-foreground)" : DARK_BLUE,
+              color: hovVerificar && codigo.length === 6 ? "white" : DARK_BLUE,
               opacity: cargando || codigo.length !== 6 ? 0.45 : 1,
               transition: "all 0.15s",
             }}
@@ -201,9 +201,9 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
               fontSize: 15,
               fontWeight: 700,
               cursor: "pointer",
-              background: hovCancelar ? "var(--auth-primary)" : DARK_BLUE,
+              background: hovCancelar ? "#16303f" : DARK_BLUE,
               border: `2px solid ${DARK_BLUE}`,
-              color: "var(--auth-primary-foreground)",
+              color: "white",
               transition: "all 0.15s",
             }}
           >

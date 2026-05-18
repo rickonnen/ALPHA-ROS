@@ -119,8 +119,8 @@ export default function GoogleSignInButton({
         onClick={handleGoogleSignIn}
         style={{
           width: "100%",
-          backgroundColor: googleLoading || blockedByConnection ? "var(--auth-muted)" : "var(--auth-primary)",
-          color: "var(--auth-primary-foreground)",
+          backgroundColor: googleLoading || blockedByConnection ? "#9ca3af" : "#1C3445",
+          color: "white",
           fontWeight: "bold",
           padding: "12px",
           borderRadius: "8px",
@@ -154,7 +154,7 @@ export default function GoogleSignInButton({
       </button>
 
       {error && (
-        <p style={{ color: "var(--auth-danger)", fontSize: "12px", textAlign: "center" }}>
+        <p style={{ color: "#ef4444", fontSize: "12px", textAlign: "center" }}>
           {error}
         </p>
       )}

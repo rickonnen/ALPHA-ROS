@@ -48,10 +48,18 @@ function toNumber(value: Prisma.Decimal | number | null | undefined): number | n
 function getUserIdFromToken(request: NextRequest): string | null {
   try {
     const token = request.cookies.get('auth_token')?.value;
-    if (!token) return null;
+    if (!token) {
+      console.debug('[recommendations] No auth_token cookie found');
+      return null;
+    }
     const decoded = verify(token, process.env.JWT_SECRET!) as { userId: string };
+    if (!decoded.userId) {
+      console.debug('[recommendations] JWT decoded but no userId:', decoded);
+      return null;
+    }
     return decoded.userId;
-  } catch {
+  } catch (error) {
+    console.debug('[recommendations] JWT verification failed:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -405,7 +413,10 @@ async function scoreCandidates(
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('id_usuario');
+    let userId = searchParams.get('id_usuario');
+    if (!userId) {
+      userId = getUserIdFromToken(request);
+    }
 
     const prefs = await loadPreferences(userId);
     if (!prefs.hasSignal) {
@@ -461,7 +472,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(scored, { status: 200 });
   } catch (error) {
-    console.error('[recommendations/personal][GET] Error:', error);
+    console.error('[recommendations/personal][POST] Error:', error);
     return NextResponse.json([], { status: 500 });
   }
 }
@@ -470,14 +481,29 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as { candidate_ids?: number[]; id_usuario?: string };
     const candidateIds = Array.isArray(body.candidate_ids) ? body.candidate_ids : [];
-    const userId = typeof body.id_usuario === 'string' ? body.id_usuario : null;
+    let userId = typeof body.id_usuario === 'string' ? body.id_usuario : null;
+    
+    if (!userId) {
+      userId = getUserIdFromToken(request);
+    }
+
+    if (!userId) {
+      console.debug('[recommendations/personal][POST] No userId found after checking body and token');
+      return NextResponse.json([], { status: 200 });
+    }
+
+    console.debug(`[recommendations/personal][POST] Processing for userId: ${userId}, candidates: ${candidateIds.length}`);
 
     const prefs = await loadPreferences(userId);
+    console.debug(`[recommendations/personal][POST] Preferences loaded - hasSignal: ${prefs.hasSignal}, interactions: ${prefs.totalInteracciones}`);
+    
     if (!prefs.hasSignal) {
+      console.debug(`[recommendations/personal][POST] No signal for userId ${userId}, returning empty`);
       return NextResponse.json([], { status: 200 });
     }
     const scored = await scoreCandidates(candidateIds, prefs);
 
+    console.debug(`[recommendations/personal][POST] Returning ${scored.length} scored results`);
     return NextResponse.json(scored, { status: 200 });
   } catch (error) {
     console.error('[recommendations/personal][POST] Error:', error);
