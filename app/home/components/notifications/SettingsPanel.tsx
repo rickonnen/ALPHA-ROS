@@ -200,11 +200,11 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[var(--notification-surface)] text-[var(--notification-text)] rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-2 bg-[var(--notification-header)] text-[var(--notification-header-foreground)] px-4 py-3">
+    <div className="flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden">
+      <div className="flex items-center gap-2 bg-slate-700 text-white px-4 py-3">
         <button
           onClick={onClose}
-          className="hover:bg-[var(--notification-button-hover)] p-1 rounded-md transition-colors"
+          className="hover:bg-slate-600 p-1 rounded-md transition-colors"
           title="Volver"
         >
           <ArrowLeft size={18} />
@@ -220,16 +220,16 @@ export function SettingsPanel({
         {feedbackMessage && (
           <div
             className={`rounded-lg px-4 py-3 text-sm font-medium border ${feedbackType === "success"
-              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-900"
+              ? "bg-green-50 text-green-700 border-green-200"
               : feedbackType === "error"
-                ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-900"
-                : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-900"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-yellow-50 text-yellow-700 border-yellow-200"
               }`}
           >
             {feedbackMessage}
           </div>
         )}
-        <div className="flex items-center justify-between bg-[var(--notification-card)] p-3 rounded-xl">
+        <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
               src="https://cdn-icons-png.flaticon.com/512/5968/5968534.png"
@@ -239,7 +239,7 @@ export function SettingsPanel({
 
             <div>
               <p className="font-semibold">Gmail</p>
-              <p className="text-sm text-[var(--notification-muted)]">
+              <p className="text-sm text-gray-500">
                 usuario@gmail.com
               </p>
             </div>
@@ -255,16 +255,15 @@ export function SettingsPanel({
             />
 
             <div
-              className={`w-11 h-6 bg-[var(--notification-muted)] rounded-full peer peer-checked:bg-[var(--notification-button)] transition ${
-                isUpdating ? "opacity-50" : ""
-              }`}
+              className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""
+                }`}
             />
 
-            <div className="absolute left-1 top-1 w-4 h-4 bg-[var(--notification-surface)] rounded-full transition peer-checked:translate-x-5" />
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
           </label>
         </div>
 
-        <div className="bg-[var(--notification-card)] p-3 rounded-xl">
+        <div className="bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
@@ -277,7 +276,7 @@ export function SettingsPanel({
                 <p className="font-semibold">WhatsApp</p>
 
                 {isPhoneSaved && verifiedPhone && (
-                  <p className="text-sm text-[var(--notification-muted)]">
+                  <p className="text-sm text-gray-500">
                     {maskPhone(verifiedPhone)}
                   </p>
                 )}
@@ -301,32 +300,31 @@ export function SettingsPanel({
               />
 
               <div
-                className={`w-11 h-6 bg-[var(--notification-muted)] rounded-full peer peer-checked:bg-green-600 transition ${
-                  isUpdating ? "opacity-50" : ""
-                }`}
+                className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition ${isUpdating ? "opacity-50" : ""
+                  }`}
               />
 
-              <div className="absolute left-1 top-1 w-4 h-4 bg-[var(--notification-surface)] rounded-full transition peer-checked:translate-x-5" />
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
             </label>
           </div>
 
           {isPhoneSaved && !isChangingPhone ? (
             <div className="flex items-center justify-between mt-3 ml-12">
-              <p className="text-xs text-[var(--notification-success)]">
+              <p className="text-xs text-green-700">
                 Número verificado y WhatsApp activado.
               </p>
 
               <button
                 onClick={handleEditPhoneNumber}
                 disabled={isUpdating}
-                className="text-xs text-[var(--notification-button)] hover:underline px-2 py-1"
+                className="text-xs text-blue-600 hover:text-blue-700 hover:underline px-2 py-1"
               >
                 Cambiar
               </button>
             </div>
           ) : (
-            <div className="bg-[var(--notification-warning-bg)] p-3 rounded-lg border border-[var(--notification-warning-border)] mt-3">
-              <p className="text-xs text-[var(--notification-warning-text)] mb-2">
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-3">
+              <p className="text-xs text-yellow-700 mb-2">
                 Ingresa tu número para recibir notificaciones de WhatsApp:
               </p>
 
@@ -337,7 +335,7 @@ export function SettingsPanel({
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   disabled={isUpdating}
-                  className="w-full px-3 py-2 border border-[var(--notification-warning-border)] bg-[var(--notification-input-bg)] text-[var(--notification-text)] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
 
                 <button
@@ -349,7 +347,7 @@ export function SettingsPanel({
                 </button>
               </div>
 
-              <p className="text-xs text-[var(--notification-muted)] mt-2">
+              <p className="text-xs text-gray-500 mt-2">
                 Formato: Código de país + número. Ej:
                 +59171234567
               </p>

@@ -48,7 +48,19 @@ export default function LocationDisplay({
   lng,
   puntosInteres = [],
 }: LocationDisplayProps) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return (
+      <div className="flex h-[280px] w-full items-center justify-center rounded-3xl border border-black/5 bg-slate-100 text-slate-500 md:h-[350px]">
+        Ubicación exacta en el mapa no disponible.
+      </div>
+    );
+  }
+
   const position: [number, number] = [lat, lng];
+  const validPoints = puntosInteres.filter(
+    (point) => Number.isFinite(point.lat) && Number.isFinite(point.lng),
+  );
+
   return (
     // Contenedor con bordes redondeados adaptado a tu mockup
     <div className="h-[280px] md:h-[350px] w-full rounded-3xl overflow-hidden border border-black/5 shadow-sm relative z-0">
@@ -69,7 +81,7 @@ export default function LocationDisplay({
             </div>
           </Popup>
         </Marker>
-        {puntosInteres.map((point) => (
+        {validPoints.map((point) => (
           <Marker
             key={point.id}
             position={[point.lat, point.lng]}
