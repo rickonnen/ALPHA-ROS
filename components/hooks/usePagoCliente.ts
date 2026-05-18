@@ -39,8 +39,8 @@ export function usePagoCliente(planId: string, modalidad: string, idPublicacion:
     //usuario no logueado termina aca el proceso, el user se toma del token de useAuth()
     if (!user?.id) return;
     try {
-      //aqui se invoca 
-      const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+      //aqui se invoca incluyendo de forma limpia el id de la publicacion si existe
+      const res = await fetch(`/api/cobros/estado?userId=${user.id}&idPublicacion=${idPublicacion || ""}`);
       //los datos del GET se convierten en data en un .json, como no necesitamos url de imagenes, no usamos formdata
       //recordatorio, aqui se tiene dos datos:  "id" y "estado"
       const data = await res.json();
@@ -53,7 +53,7 @@ export function usePagoCliente(planId: string, modalidad: string, idPublicacion:
     }finally {
       setEstaCargandoEstado(false); 
     }
-  }, [user?.id]);
+  }, [user?.id, idPublicacion]);
 
   
   useEffect(() => {

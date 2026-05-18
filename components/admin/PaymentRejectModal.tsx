@@ -94,7 +94,7 @@ export function PaymentRejectModal({
           </label>
           <div className="w-full sm:w-[220px]">
             <Select value={strReason} onValueChange={setStrReason}>
-              <SelectTrigger className="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
+              <SelectTrigger className="w-full bg-white border border-gray-300 text-primary text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
                 <div className="truncate w-full pr-0">
                   <SelectValue placeholder="Seleccione un motivo" />
                 </div>
@@ -104,9 +104,9 @@ export function PaymentRejectModal({
                 sideOffset={4} 
                 className="rounded-xl border-gray-200 shadow-lg bg-white w-[--radix-select-trigger-width]"
               >
-                <SelectItem value="Comprobante inválido" className="rounded-lg cursor-pointer">Comprobante inválido</SelectItem>
-                <SelectItem value="Monto incorrecto" className="rounded-lg cursor-pointer">Monto incorrecto</SelectItem>
-                <SelectItem value="Datos no coinciden" className="rounded-lg cursor-pointer">Datos no coinciden</SelectItem>
+                <SelectItem value="Comprobante inválido" className="rounded-lg cursor-pointer text-primary">Comprobante inválido</SelectItem>
+                <SelectItem value="Monto incorrecto" className="rounded-lg cursor-pointer text-primary">Monto incorrecto</SelectItem>
+                <SelectItem value="Datos no coinciden" className="rounded-lg cursor-pointer text-primary">Datos no coinciden</SelectItem>
               </SelectContent>
             </Select>
           </div>
