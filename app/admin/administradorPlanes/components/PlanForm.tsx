@@ -124,8 +124,16 @@ export default function PlanForm({
   const isFormValid =
     formData.nombre_plan.trim().length > 0 &&
     Number(formData.precio_plan) >= 0 &&
+    Number(formData.precio_plan) <= 1000000 &&
     String(formData.precio_plan) !== "" &&
     Number(formData.cant_publicaciones) > 0;
+
+  // Lógica de cálculo de precios dinámicos para los QR
+  const basePrice = Number(formData.precio_plan) || 0;
+  const precioMensualFormateado =
+    basePrice > 0 ? `${basePrice.toFixed(2)} $` : "0.00 $";
+  const precioAnualFormateado =
+    basePrice > 0 ? `${(basePrice * 12 * 0.9).toFixed(2)} $` : "0.00 $";
 
   return (
     <div className="mb-12 p-8 border border-border rounded-[2.5rem] bg-card/50 shadow-2xl relative">
@@ -186,6 +194,7 @@ export default function PlanForm({
           <input
             type="number"
             min="0"
+            max="1000000"
             step="0.01"
             className="w-full bg-muted/50 border-2 border-transparent p-4 rounded-2xl outline-none transition-all font-semibold"
             value={formData.precio_plan}
@@ -194,7 +203,7 @@ export default function PlanForm({
             }}
             onChange={(e) => {
               let val = e.target.value;
-              
+
               // 1. Quitar ceros a la izquierda
               if (
                 val.length > 1 &&
@@ -206,7 +215,9 @@ export default function PlanForm({
 
               // 2. Validación de máximo 2 decimales
               if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
-                setFormData({ ...formData, precio_plan: val });
+                if (Number(val) <= 1000000) {
+                  setFormData({ ...formData, precio_plan: val });
+                }
               }
             }}
           />
@@ -241,6 +252,7 @@ export default function PlanForm({
               <>
                 <QRBox
                   title="QR Mensual"
+                  price={precioMensualFormateado}
                   preview={qrMensual.preview}
                   onClick={() => fileInputMensualRef.current?.click()}
                   onRemove={() => handleRemoveFile(setQrMensual)}
@@ -248,6 +260,7 @@ export default function PlanForm({
                 />
                 <QRBox
                   title="QR Anual"
+                  price={precioAnualFormateado}
                   preview={qrAnual.preview}
                   onClick={() => fileInputAnualRef.current?.click()}
                   onRemove={() => handleRemoveFile(setQrAnual)}
@@ -258,6 +271,7 @@ export default function PlanForm({
               <div className="col-span-1 sm:col-span-2">
                 <QRBox
                   title="QR Promocional Único"
+                  price={precioMensualFormateado}
                   preview={qrPromo.preview}
                   onClick={() => fileInputPromoRef.current?.click()}
                   onRemove={() => handleRemoveFile(setQrPromo)}
@@ -316,20 +330,27 @@ export default function PlanForm({
   );
 }
 
-// COMPONENTE QRBox CORREGIDO (Sin doble clic)
-const QRBox = ({ title, preview, onClick, onRemove, onZoom }: any) => {
+// COMPONENTE QRBox MODIFICADO (Agregada la prop de precio)
+const QRBox = ({ title, price, preview, onClick, onRemove, onZoom }: any) => {
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (preview) return; // Si ya hay imagen, los clics los manejan los botones internos
+    if (preview) return;
     e.preventDefault();
     e.stopPropagation();
     onClick();
   };
 
   return (
-    <div className="flex flex-col items-center gap-5">
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-        {title}
-      </span>
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+          {title}
+        </span>
+        {/* Aquí se despliega el precio calculado en tiempo real */}
+        <span className="text-xs font-extrabold text-primary tracking-wider bg-primary/10 px-3 py-0.5 rounded-full">
+          {price}
+        </span>
+      </div>
+
       <div className="relative group w-52 h-52">
         <div
           onClick={handleContainerClick}
