@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/app/auth/AuthContext";
 import Link from "next/link";
@@ -25,7 +25,6 @@ import {
 export default function SuscripcionPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const [suscripcion, setSuscripcion] = useState(null);
   const [nombre_plan, setNombre_plan] = useState(null);
   const [fecha_inicio, setFecha_inicio] = useState(null);
   const [fecha_expiracion, setFecha_expiracion] = useState(null);
@@ -34,39 +33,44 @@ export default function SuscripcionPage() {
 
   const isFree = id_plan === null || id_plan === 7;
 
-  const obtenerDatosSuscripcion = async () => {
-    try {
-      if (!user?.id) {
-        console.warn("Usuario no autenticado");
-        return;
+  useEffect(() => {
+    const obtenerDatosSuscripcion = async () => {
+      try {
+        if (!user?.id) {
+          console.warn("Usuario no autenticado");
+          return;
+        }
+
+        const res = await fetch(
+          `/api/cobros/getSuscripcion?id_usuario=${user.id}`,
+          {
+            cache: "no-store",
+            method: "GET",
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error("Error al obtener suscripción");
+        }
+
+        const data = await res.json();
+
+        setNombre_plan(data.nombre_plan);
+        setFecha_inicio(data.fecha_inicio);
+        setFecha_expiracion(data.fecha_fin);
+        setCupos(data.cant_publicaciones);
+        setId_plan(data.id_plan);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const res = await fetch(
-        `/api/cobros/getSuscripcion?id_usuario=${user.id}`,
-        {
-          cache: "no-store",
-          method: "GET",
-        },
-      );
-
-      if (!res.ok) {
-        throw new Error("Error al obtener suscripción");
-      }
-
-      const data = await res.json();
-
-      setSuscripcion(data);
-      setNombre_plan(data.nombre_plan);
-      setFecha_inicio(data.fecha_inicio);
-      setFecha_expiracion(data.fecha_fin);
-      setCupos(data.cant_publicaciones);
-      setId_plan(data.id_plan);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
+    if (user?.id) {
+      obtenerDatosSuscripcion();
     }
-  };
+  }, [user?.id]);
 
   const formatearFecha = (fecha: string | null) => {
     if (!fecha) return "-";
@@ -97,16 +101,29 @@ export default function SuscripcionPage() {
         throw new Error("Error al cancelar");
       }
 
-      await obtenerDatosSuscripcion();
+      const getRes = await fetch(
+        `/api/cobros/getSuscripcion?id_usuario=${user.id}`,
+        {
+          cache: "no-store",
+          method: "GET",
+        },
+      );
+
+      if (!getRes.ok) {
+        throw new Error("Error al obtener suscripción actualizada");
+      }
+
+      const data = await getRes.json();
+
+      setNombre_plan(data.nombre_plan);
+      setFecha_inicio(data.fecha_inicio);
+      setFecha_expiracion(data.fecha_fin);
+      setCupos(data.cant_publicaciones);
+      setId_plan(data.id_plan);
     } catch (error) {
       console.error("Error al cancelar:", error);
     }
   };
-
-  useEffect(() => {
-    if (!user?.id) return;
-    obtenerDatosSuscripcion();
-  }, [user?.id]);
 
   if (!user || loading) {
     return (
@@ -119,9 +136,9 @@ export default function SuscripcionPage() {
 
         <CardContent className="pt-5">
           <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-            <div className="flex-1 h-[140px] rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
-            <div className="flex-1 h-[140px] rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
-            <div className="w-full lg:w-fit min-w-[220px] h-[140px] rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+            <div className="flex-1 h-140px rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+            <div className="flex-1 h-140px rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+            <div className="w-full lg:w-fit min-w-220px h-140px rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
 
           <div className="mt-5 w-44 h-11 rounded-xl bg-white/5 animate-pulse" />
@@ -202,7 +219,7 @@ export default function SuscripcionPage() {
             </div>
           </div>
 
-          <div className="w-full lg:w-fit min-w-[220px] rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-all duration-300">
+          <div className="w-full lg:w-fit min-w-220px rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-all duration-300">
             <div className="flex items-center gap-2 text-white/60 mb-4">
               <CalendarIcon className="w-4 h-4 text-secondary" />
               <span className="text-xs uppercase tracking-[0.2em]">
