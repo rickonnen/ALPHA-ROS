@@ -73,8 +73,24 @@ const MAX_POLYGON_POINTS = 10;
 
 function MarkerPropertyPopup({ location }: { location: Location }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isOpeningMaps, setIsOpeningMaps] = useState(false);    // mensaje de cargando... (HU11)
   const images = location.images.length > 0 ? location.images : ["/casa1.jpg"];
   const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+  const [isClosing, setIsClosing] = useState(false); //zoom ventana popup
+  //efecto de zoom para ajustar el tamaño del popup dependiendo del nivel de zoom del mapa (HU11)
+     useEffect(() => {
+     const handleZoomStart = () => {
+       setIsClosing(true);
+        setTimeout(() => {
+        map.closePopup();
+       }, 220);
+     };
+       map.on("zoomstart", handleZoomStart);
+     return () => {
+       map.off("zoomstart", handleZoomStart);
+     };
+     }, [map]);
 
   const goToPreviousImage = () => {
     setActiveImageIndex((current) =>
@@ -89,7 +105,24 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
   };
 
   return (
-    <div className="relative w-[280px] overflow-hidden rounded-2xl bg-white">
+      <div
+       className={`
+         relative overflow-hidden rounded-2xl bg-white
+          transition-all duration-200 ease-out
+          ${
+           isClosing
+              ? "scale-75 opacity-0"
+              : "scale-100 opacity-100"
+         }
+         ${
+            zoom <= 13
+              ? "w-[210px]"
+              : zoom <= 15
+              ? "w-[245px]"
+              : "w-[265px]"
+         }
+       `}
+      >
       <button
         type="button"
         onClick={(event) => {
@@ -102,7 +135,7 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
         <X className="h-4 w-4" />
       </button>
 
-      <div className="relative h-40 w-full overflow-hidden rounded-b-none rounded-t-2xl bg-slate-100">
+      <div className="relative h-32 w-full overflow-hidden rounded-b-none rounded-t-2xl bg-slate-100">
         <Image
           src={images[activeImageIndex]}
           alt={`Imagen de ${location.title}`}
@@ -132,7 +165,7 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
         )}
       </div>
 
-      <div className="space-y-3 px-4 pb-4 pt-4">
+      <div className="space-y-2 px-3 pb-3 pt-3">
         <div>
           <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-[#8c6c4c]">
             {location.type}
@@ -163,7 +196,7 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pt-4">
+        <div className="border-t border-gray-100 pt-3">
           <p className="text-center text-xl font-bold leading-tight text-gray-950">
             {location.precio}
           </p>
@@ -171,17 +204,20 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
 
                 <button
                   type="button"
+                  disabled={isOpeningMaps}
                   onClick={() => {
-                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`;
+                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-                    window.open(
-                      googleMapsUrl,
-                      "_blank"
-                    );
+                    const destination = `${location.lat},${location.lng}`;
+                    const mapsUrl = isIOS
+                      ? `https://maps.apple.com/?daddr=${destination}`
+                      : `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+
+                  window.open(mapsUrl, "_blank");
                   }}
                  className="flex w-full items-center justify-center rounded-lg bg-[#c26e5a] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
                 >
-                Cómo llegar
+                {isOpeningMaps ? "Abriendo mapas..." : "Cómo llegar"}
             </button>
 
                  <button
@@ -383,15 +419,18 @@ export default function PropertyMap({
     <>
       <style jsx global>{`
         .property-marker-popup .leaflet-popup-content-wrapper {
-          padding: 0;
-          overflow: hidden;
-          border-radius: 18px;
+        padding: 0 !important;
+        overflow: hidden;
+        border-radius: 18px;
         }
 
         .property-marker-popup .leaflet-popup-content {
-          margin: 0;
-          width: 280px !important;
-        }
+            margin: 0 !important;
+            width: auto !important;
+            min-width: 0 !important;
+            display: flex;
+            justify-content: center;
+}
 
         .property-marker-popup .leaflet-popup-tip-container {
           margin-top: -1px;
