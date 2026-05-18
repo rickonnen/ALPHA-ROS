@@ -57,6 +57,13 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
   const baths = selectedProperties.map(p => p.bathrooms || 0);
   const maxBaths = Math.max(...baths);
 
+  const garages = selectedProperties.map(p=> p.garajes || 0);
+  const maxGarages = Math.max(...garages);
+
+
+  const floors = selectedProperties.map(p=> p.floors || 0);
+  const maxFloors = Math.max(... floors);
+
   // Extraemos características únicas para el acordeón (filtros avanzados)
   const uniqueFeatures = Array.from(
     new Set(selectedProperties.flatMap(p => {
@@ -162,13 +169,15 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Garajes</td>
               {selectedProperties.map(prop => (
-                <td key={`garage-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.garajes || '—'}</td>
+                <td key={`garage-${prop.id}`} className={`p-3 sm:p-6 border-r border-gray-100 ${prop.garajes === maxGarages && maxGarages > 0 ? 'font-bold text-[#00c087] bg-green-50/30' : 'text-gray-800 font-medium'}`}>
+                  {prop.garajes || '—'}</td>
               ))}
             </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Plantas / Pisos</td>
               {selectedProperties.map(prop => (
-                <td key={`floors-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.floors || '—'}</td>
+                <td key={`floors-${prop.id}`} className={`p-3 sm:p-6 border-r border-gray-100 ${prop.floors === maxFloors && maxFloors > 0 ? 'font-bold text-[#00c087] bg-green-50/30' : 'text-gray-800 font-medium'}`}>
+                  {prop.floors || '—'}</td>
               ))}
             </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
