@@ -130,7 +130,7 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
         >
           <div className="text-left">
             <p className="font-semibold">Redes Vinculadas</p>
-            <p className="text-sm text-gray-300">Vincula o desvincula tus cuentas de Facebook y Discord</p>
+            <p className="text-sm text-gray-300">Vincula o desvincula tus cuentas de Facebook, Discord y LinkedIn</p>
           </div>
           <span className="text-gray-400">›</span>
         </button>

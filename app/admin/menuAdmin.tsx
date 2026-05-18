@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, Newspaper, ArrowRight, MessageSquare } from "lucide-react";
+import { CreditCard, Newspaper, ArrowRight, MessageSquare, LayoutList } from "lucide-react";
 
 const arrAdminOptions = [
   {
@@ -28,6 +28,14 @@ const arrAdminOptions = [
     Icon: MessageSquare,
     strButtonText: "Inspeccionar",
   },
+  {
+    strTitle: "Administrador de planes",
+    strDescription:
+      "Gestiona los planes de publicación y promoción, define precios, límites y vigencia.",
+    strHref: "/admin/administradorPlanes", 
+    Icon: LayoutList, 
+    strButtonText: "Inspeccionar",
+  },
 ];
 
 export default function MenuAdmin() {
@@ -42,7 +50,8 @@ export default function MenuAdmin() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* 👇 AQUÍ ESTÁ EL CAMBIO: md:grid-cols-2 lg:grid-cols-4 👇 */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {arrAdminOptions.map((objOption) => {
           const Icon = objOption.Icon;
 

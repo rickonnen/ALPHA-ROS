@@ -11,6 +11,7 @@ export type PaymentRecord = {
   strClientName: string;
   strPlanType: string;
   strDate: string;
+  strValidUntil?: string;
   strPaymentMethod: string;
   strReceiptUrl?: string | null;
   strReason?: string | null;
