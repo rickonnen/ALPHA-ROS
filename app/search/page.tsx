@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -105,6 +105,19 @@ interface FiltrosBusquedaParams extends FiltrosPublicacion {
   currency?: undefined;
 }
 
+type BrowserCoordinates = {
+  latitud: number;
+  longitud: number;
+};
+
+type GlobalLocationRecommendationsResponse = {
+  success: boolean;
+  zone?: string | null;
+  publications?: PublicacionBusqueda[];
+  total?: number;
+  message?: string;
+};
+
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -158,6 +171,28 @@ function getQueryValues(value: string | null): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function getBrowserCoordinates(): Promise<BrowserCoordinates | null> {
+  if (typeof window === "undefined" || !("geolocation" in navigator)) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          latitud: position.coords.latitude,
+          longitud: position.coords.longitude,
+        }),
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 10 * 60 * 1000,
+        timeout: 1500,
+      },
+    );
+  });
 }
 
 function normalizeZoneName(value: string): string {
@@ -537,6 +572,7 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
+  const skipNextZoneUrlLoadRef = useRef(false);
 
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -565,6 +601,9 @@ function SearchPageContent() {
   const [selectedSort, setSelectedSort] = useState("fecha-reciente");
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isShowingGlobalRecommendations, setIsShowingGlobalRecommendations] = useState(false);
+  const [globalRecommendationIds, setGlobalRecommendationIds] = useState<number[]>([]);
+  const [globalRecommendationZone, setGlobalRecommendationZone] = useState<string | null>(null);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
   const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
@@ -841,6 +880,19 @@ function SearchPageContent() {
       mapped = mapped.filter(hasPropertyDiscount);
     }
 
+    if (isShowingGlobalRecommendations && globalRecommendationIds.length > 0) {
+      return mapped.slice().sort((a, b) => {
+        const indexA = globalRecommendationIds.indexOf(a.id);
+        const indexB = globalRecommendationIds.indexOf(b.id);
+
+        if (indexA !== -1 && indexB === -1) return -1;
+        if (indexA === -1 && indexB !== -1) return 1;
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+        return 0;
+      });
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
       return mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
@@ -855,7 +907,15 @@ function SearchPageContent() {
     }
 
     return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
+  }, [
+    filteredSearchResults,
+    selectedOperation,
+    selectedSort,
+    recommendedIds,
+    advancedFilterValues.soloOfertas,
+    isShowingGlobalRecommendations,
+    globalRecommendationIds,
+  ]);
 
   const defaultZonesWithStats = useMemo(
     () =>
@@ -1113,7 +1173,11 @@ function SearchPageContent() {
       selectedPropertyTypes,
       PROPERTY_TYPE_OPTIONS,
     ).join(", ") || "Inmuebles";
-  const breadcrumbLocationLabel = searchLocation.trim() || "Bolivia";
+  const breadcrumbLocationLabel =
+    searchLocation.trim() ||
+    (isShowingGlobalRecommendations && globalRecommendationZone
+      ? globalRecommendationZone
+      : "Bolivia");
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
   const saveFiltersToUrl = () => {
@@ -1185,6 +1249,57 @@ function SearchPageContent() {
     }));
   };
 
+  const runGlobalLocationRecommendations = async () => {
+    setIsApplyingFilters(true);
+    try {
+      const coordinates = await getBrowserCoordinates();
+      const response = await fetch("/api/recommendations/global-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...coordinates,
+          limit: 36,
+        }),
+      });
+
+      const payload = (await response.json()) as GlobalLocationRecommendationsResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.message ?? "No se pudieron consultar las recomendaciones globales",
+        );
+      }
+
+      const publications = payload.publications ?? [];
+      setSearchResults(publications);
+      setGlobalRecommendationIds(publications.map((item) => item.id_publicacion));
+      setGlobalRecommendationZone(payload.zone ?? null);
+      setIsShowingGlobalRecommendations(true);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
+      await runSearch({
+        ubicacion: "",
+        operacion: undefined,
+        tipoInmueble: undefined,
+        habitaciones: "",
+        banos: "",
+        piscina: "",
+        minPrice: undefined,
+        maxPrice: undefined,
+        minSurface: undefined,
+        maxSurface: undefined,
+        caracteristicasIds: [],
+      });
+    } finally {
+      setIsApplyingFilters(false);
+    }
+  };
+
   const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
     setIsApplyingFilters(true);
     try {
@@ -1216,6 +1331,9 @@ function SearchPageContent() {
 
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
       setHasSearched(true);
 
       const OPERACION_ID: Record<string, number> = {
@@ -1305,6 +1423,8 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    const sortParam = searchParams.get("sort")?.trim();
+    const nextSort = sortParam || "fecha-reciente";
     // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
     const caracteristicasParam = searchParams.get("caracteristicas");
     const nextCaracteristicas = caracteristicasParam
@@ -1330,12 +1450,22 @@ function SearchPageContent() {
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
+    setSelectedSort(nextSort);
 
     // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
     setAdvancedFilterValues(prev => ({
       ...prev,
       caracteristicasIds: nextCaracteristicas
     }));
+
+    if (nextSort === "recomendados-zona") {
+      if (skipNextZoneUrlLoadRef.current) {
+        skipNextZoneUrlLoadRef.current = false;
+        return;
+      }
+      void runGlobalLocationRecommendations();
+      return;
+    }
 
     void runSearch({
       ubicacion: nextLocation,
@@ -1345,6 +1475,7 @@ function SearchPageContent() {
       minPrice: nextMinPrice,
       maxPrice: nextMaxPrice,
       caracteristicasIds: nextCaracteristicas,
+      sort: nextSort,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
@@ -1367,11 +1498,15 @@ function SearchPageContent() {
   const fetchRecommendations = useCallback(async () => {
     try {
       const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      
       const response = await fetch("/api/recommendations/personal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ candidate_ids }),
+        body: JSON.stringify({ 
+          candidate_ids,
+          id_usuario: objUser?.id // Include authenticated user ID
+        }),
       });
       if (response.ok) {
         const data = (await response.json()) as { id_publicacion: number }[];
@@ -1385,7 +1520,7 @@ function SearchPageContent() {
       console.error("Error fetching recommendations:", error);
       setRecommendedIds([]);
     }
-  }, [searchResults]);
+  }, [searchResults, objUser?.id]);
 
   // Cargar recomendaciones cuando se selecciona ese sort.
   useEffect(() => {
@@ -1446,6 +1581,9 @@ function SearchPageContent() {
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
+    setGlobalRecommendationIds([]);
+    setGlobalRecommendationZone(null);
+    setIsShowingGlobalRecommendations(false);
     setAdvancedFiltersKey((prev) => prev + 1);
     setCurrentPage(1);
     window.history.pushState(null, "", "/search");
@@ -1464,12 +1602,22 @@ function SearchPageContent() {
     });
   };
 
-  const handleSort = (sortOption: string) => setSelectedSort(sortOption);
+  const handleSort = (sortOption: string) => {
+    setSelectedSort(sortOption);
+
+    if (sortOption === "recomendados-zona") {
+      skipNextZoneUrlLoadRef.current = true;
+      void runGlobalLocationRecommendations();
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (hasSearched || hasActiveFilters) {
         saveFiltersToUrl();
+        if (selectedSort === "recomendados-zona") {
+          return;
+        }
         void runSearch();
       }
     }, 500);
