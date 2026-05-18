@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import styles from "./ShareBlog.module.css";
 import {
@@ -17,24 +15,24 @@ import type { SocialNetwork } from "@/components/hooks/useShareBlog";
 
 const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   facebook: FacebookIcon,
-  twitter:  TwitterXIcon,
+  twitter: TwitterXIcon,
   linkedin: LinkedInIcon,
   whatsapp: WhatsAppIcon,
   telegram: TelegramIcon,
-  reddit:   RedditIcon,
-  email:    EmailIcon,
+  reddit: RedditIcon,
+  email: EmailIcon,
 };
 
 interface SharePanelProps {
-  isExiting:   boolean;
-  networks:    SocialNetwork[];
-  onClose:     () => void;
-  onCopyLink:  () => void;
-  onShare:     (network: SocialNetwork) => void;
+  isExiting: boolean;
+  networks: SocialNetwork[];
+  onClose: () => void;
+  onCopyLink: () => void;
+  onShare: (network: SocialNetwork) => void;
   triggerRect: DOMRect | null;
 }
 
-const GAP    = 8;
+const GAP = 8;
 const MARGIN = 12;
 
 const SharePanel: React.FC<SharePanelProps> = ({
@@ -49,36 +47,40 @@ const SharePanel: React.FC<SharePanelProps> = ({
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
+
     check();
     window.addEventListener("resize", check);
+
     return () => window.removeEventListener("resize", check);
   }, []);
 
   if (!triggerRect) return null;
 
   const bottomFromViewport = window.innerHeight - triggerRect.top + GAP;
-  const buttonCenterX      = triggerRect.left + triggerRect.width / 2;
+  const buttonCenterX = triggerRect.left + triggerRect.width / 2;
 
   // ── Desktop ──────────────────────────────────────────────────────────────
+  const desktopWidth = 360;
   const idealLeft = triggerRect.left;
-  const maxLeft   = window.innerWidth - MARGIN;
-  const finalLeft = Math.min(idealLeft, maxLeft);
+  const minLeft = MARGIN;
+  const maxLeft = window.innerWidth - desktopWidth - MARGIN;
+  const finalLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
   const arrowLeft = `${buttonCenterX - finalLeft}px`;
 
   const desktopStyle: React.CSSProperties = {
     position: "fixed",
-    bottom:   bottomFromViewport,
-    left:     finalLeft,
-    zIndex:   9999,
+    bottom: bottomFromViewport,
+    left: finalLeft,
+    zIndex: 9999,
   };
 
   // ── Móvil ────────────────────────────────────────────────────────────────
   const mobileStyle: React.CSSProperties = {
     position: "fixed",
-    bottom:   bottomFromViewport,
-    left:     MARGIN,
-    right:    MARGIN,
-    zIndex:   9999,
+    bottom: bottomFromViewport,
+    left: MARGIN,
+    right: MARGIN,
+    zIndex: 9999,
   };
 
   return (
@@ -91,7 +93,7 @@ const SharePanel: React.FC<SharePanelProps> = ({
         styles.panel,
         isExiting ? styles.panelExiting : "",
         "bg-white border border-gray-100 rounded-2xl shadow-xl px-4 py-3",
-        isMobile ? "" : "w-max",
+        isMobile ? "max-w-[calc(100vw-24px)]" : "w-[360px]",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -104,12 +106,13 @@ const SharePanel: React.FC<SharePanelProps> = ({
         >
           Compartir
         </span>
+
         <button
           onClick={onClose}
           aria-label="Cerrar panel de compartir"
           className={[
             styles.iconButton,
-            "flex items-center justify-center w-6 h-6 rounded-full",
+            "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
             "text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors",
           ].join(" ")}
         >
@@ -120,22 +123,25 @@ const SharePanel: React.FC<SharePanelProps> = ({
       {/* ── Íconos ──────────────────────────────────────────────────── */}
       <div
         className={[
-          "flex items-center gap-2",
-          isMobile ? "justify-between flex-wrap" : "",
+          "flex flex-wrap items-center justify-start gap-2.5",
+          "max-w-full",
         ].join(" ")}
         role="list"
       >
         {/* Copiar enlace */}
-        <div className={styles.iconWrapper} data-tooltip="Copiar enlace" role="listitem">
+        <div
+          className={`${styles.iconWrapper} shrink-0`}
+          data-tooltip="Copiar enlace"
+          role="listitem"
+        >
           <button
             onClick={onCopyLink}
             aria-label="Copiar enlace del blog"
             tabIndex={0}
             className={[
               styles.iconButton,
-              "flex items-center justify-center rounded-xl",
+              "flex items-center justify-center rounded-xl shrink-0",
               "bg-gray-100 text-gray-600 hover:bg-gray-200",
-              // Íconos ligeramente más pequeños en móvil para que quepan en una fila
               isMobile ? "w-9 h-9" : "w-10 h-10",
             ].join(" ")}
           >
@@ -146,11 +152,13 @@ const SharePanel: React.FC<SharePanelProps> = ({
         {/* Redes sociales */}
         {networks.map((network) => {
           const IconComponent = ICON_MAP[network.id];
+
           if (!IconComponent) return null;
+
           return (
             <div
               key={network.id}
-              className={styles.iconWrapper}
+              className={`${styles.iconWrapper} shrink-0`}
               data-tooltip={network.label}
               role="listitem"
             >
@@ -160,10 +168,13 @@ const SharePanel: React.FC<SharePanelProps> = ({
                 tabIndex={0}
                 className={[
                   styles.iconButton,
-                  "flex items-center justify-center rounded-xl",
+                  "flex items-center justify-center rounded-xl shrink-0",
                   isMobile ? "w-9 h-9" : "w-10 h-10",
                 ].join(" ")}
-                style={{ backgroundColor: network.color, color: network.textColor }}
+                style={{
+                  backgroundColor: network.color,
+                  color: network.textColor,
+                }}
               >
                 <IconComponent className="w-[17px] h-[17px]" />
               </button>
@@ -177,7 +188,7 @@ const SharePanel: React.FC<SharePanelProps> = ({
         aria-hidden="true"
         className="absolute -bottom-[7px] w-3 h-3 bg-white border-r border-b border-gray-100"
         style={{
-          left:      isMobile ? `${buttonCenterX - MARGIN}px` : arrowLeft,
+          left: isMobile ? `${buttonCenterX - MARGIN}px` : arrowLeft,
           transform: "translateX(-50%) rotate(45deg)",
         }}
       />

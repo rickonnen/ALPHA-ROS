@@ -1,6 +1,5 @@
 "use client";
 
- 
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import PublicarInmuebleGuide from "./PublicarInmuebleGuide";
@@ -233,14 +232,14 @@ export default function HelpContentClient() {
         <button
           type="button"
           onClick={() => setBolMobileMenuOpen((p) => !p)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-[#E7E1D7] border border-[#C4BAA8] text-sm font-medium text-[#1F3A4D]"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-secondary-fund border border-card-border text-sm font-medium text-primary"
         >
           <div className="flex items-center gap-2">
             {objActiveTopic.icon}
             <span>{objActiveTopic.title}</span>
           </div>
           <svg
-            className={`w-4 h-4 text-[#8b8276] transition-transform duration-200 ${bolMobileMenuOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${bolMobileMenuOpen ? "rotate-180" : ""}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -249,16 +248,16 @@ export default function HelpContentClient() {
  
         
         {bolMobileMenuOpen && (
-          <div className="mt-1 rounded-xl border border-[#C4BAA8] bg-[#E7E1D7] overflow-hidden shadow-lg">
+          <div className="mt-1 rounded-xl border border-card-border bg-secondary-fund overflow-hidden shadow-lg">
             {arrHelpTopics.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
                 onClick={() => handleTopicSelect(topic.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors border-b last:border-0 border-[#C4BAA8]/50 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm transition-colors border-b last:border-0 border-card-border/50 ${
                   strActiveTopicId === topic.id
-                    ? "bg-[#1F3A4D] text-white"
-                    : "text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-background"
                 }`}
               >
                 {topic.icon}
@@ -277,8 +276,8 @@ export default function HelpContentClient() {
       
       <div className="flex flex-col md:flex-row gap-5 sm:gap-8 items-start">
  
-        <aside className="hidden md:flex w-full md:w-56 lg:w-64 md:sticky md:top-24 flex-col bg-[#E7E1D7] p-3 sm:p-4 rounded-2xl border border-[#C4BAA8] shadow-sm h-fit z-10 shrink-0">
-          <h2 className="mb-3 px-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#8b8276]">
+        <aside className="hidden md:flex w-full md:w-56 lg:w-64 md:sticky md:top-24 flex-col bg-secondary-fund p-3 sm:p-4 rounded-2xl border border-card-border shadow-sm h-fit z-10 shrink-0">
+          <h2 className="mb-3 px-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             Temas de ayuda
           </h2>
           <div className="flex flex-col gap-1.5">
@@ -289,8 +288,8 @@ export default function HelpContentClient() {
                 onClick={() => handleTopicSelect(topic.id)}
                 className={`flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl text-left text-sm font-medium transition-all duration-200 border ${
                   strActiveTopicId === topic.id
-                    ? "bg-[#1F3A4D] text-[#E7E1D7] border-[#1F3A4D] shadow-md"
-                    : "bg-transparent text-[#2E2E2E] border-transparent hover:bg-[#F4EFE6] hover:border-[#C4BAA8]"
+                    ? "bg-primary text-primary-foreground border-primary shadow-md"
+                    : "bg-transparent text-foreground border-transparent hover:bg-background hover:border-card-border"
                 }`}
               >
                 {topic.icon}
@@ -303,23 +302,23 @@ export default function HelpContentClient() {
         {/* Área de contenido */}
         <main
           key={strActiveTopicId}
-          className="w-full md:flex-1 bg-[#E7E1D7] p-4 sm:p-6 lg:p-10 rounded-2xl border border-[#C4BAA8] shadow-sm animate-in fade-in duration-500 min-w-0"
+          className="w-full md:flex-1 bg-secondary-fund p-4 sm:p-6 lg:p-10 rounded-2xl border border-card-border shadow-sm animate-in fade-in duration-500 min-w-0"
         >
           {/* Breadcrumb */}
-          <nav className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs text-[#8b8276] mb-4">
-            <Link href="/" className="hover:text-[#1F3A4D] transition-colors">
+          <nav className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs text-muted-foreground mb-4">
+            <Link href="/" className="hover:text-primary transition-colors">
               Inicio
             </Link>
             <span>/</span>
             <button
               type="button"
               onClick={() => handleTopicSelect(arrHelpTopics[0].id)}
-              className="hover:text-[#1F3A4D] transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Guía de Ayuda
             </button>
             <span>/</span>
-            <span className="text-[#2E2E2E] font-semibold">{objActiveTopic.breadcrumb}</span>
+            <span className="text-foreground font-semibold">{objActiveTopic.breadcrumb}</span>
           </nav>
  
           {/* Contenido según topic */}
@@ -327,12 +326,12 @@ export default function HelpContentClient() {
             <PublicarInmuebleGuide />
           ) : (
             <>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-[#1F3A4D] mb-4 sm:mb-6 leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-primary mb-4 sm:mb-6 leading-tight">
                 {objActiveTopic.title}
               </h1>
  
-              <div className="text-[#2E2E2E] text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed">
-                <p className="font-semibold text-[#C26E5A] mb-2 sm:mb-3">{activeContent.subtitle}</p>
+              <div className="text-foreground text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 leading-relaxed">
+                <p className="font-semibold text-secondary mb-2 sm:mb-3">{activeContent.subtitle}</p>
                 <p className="mb-6 sm:mb-10 opacity-90">{activeContent.description}</p>
  
                 {/* Grid de pasos */}
@@ -340,27 +339,27 @@ export default function HelpContentClient() {
                   {activeContent.steps.map((step, index) => (
                     <div
                       key={index}
-                      className="flex flex-col gap-2 sm:gap-3 bg-[#F4EFE6] p-4 sm:p-5 rounded-xl border border-[#C4BAA8] transition-all duration-200 hover:border-[#C26E5A]/50"
+                      className="flex flex-col gap-2 sm:gap-3 bg-background p-4 sm:p-5 rounded-xl border border-card-border transition-all duration-200 hover:border-secondary/50"
                     >
-                      <span className="text-[10px] font-bold text-[#8b8276] uppercase tracking-widest">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         Paso 0{index + 1}
                       </span>
-                      <p className="text-[13px] sm:text-[14px] lg:text-[15px] font-semibold text-[#2E2E2E] leading-snug">
+                      <p className="text-[13px] sm:text-[14px] lg:text-[15px] font-semibold text-foreground leading-snug">
                         {step}
                       </p>
-                      <div className="h-[2px] w-6 bg-[#C26E5A] mt-auto" />
+                      <div className="h-[2px] w-6 bg-secondary mt-auto" />
                     </div>
                   ))}
                 </div>
               </div>
  
               {/* Galería */}
-              <div className="mt-6 sm:mt-8 border-t border-[#C4BAA8] pt-6 sm:pt-8">
-                <h3 className="text-[10px] font-bold text-[#8b8276] mb-3 sm:mb-4 uppercase tracking-[3px] text-center">
+              <div className="mt-6 sm:mt-8 border-t border-card-border pt-6 sm:pt-8">
+                <h3 className="text-[10px] font-bold text-muted-foreground mb-3 sm:mb-4 uppercase tracking-[3px] text-center">
                   Referencia Visual
                 </h3>
                 <div
-                  className="relative w-full aspect-video bg-[#F4EFE6] rounded-xl border border-[#C4BAA8] overflow-hidden group"
+                  className="relative w-full aspect-video bg-background rounded-xl border border-card-border overflow-hidden group"
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}
                 >
@@ -388,7 +387,7 @@ export default function HelpContentClient() {
                       <button
                         type="button"
                         onClick={goToPreviousImage}
-                        className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-[#1F3A4D] text-[#E7E1D7] p-1.5 sm:p-2 rounded-full opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-all z-10 shadow-md"
+                        className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground p-1.5 sm:p-2 rounded-full opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-all z-10 shadow-md"
                         aria-label="Imagen anterior"
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -398,7 +397,7 @@ export default function HelpContentClient() {
                       <button
                         type="button"
                         onClick={goToNextImage}
-                        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-[#1F3A4D] text-[#E7E1D7] p-1.5 sm:p-2 rounded-full opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-all z-10 shadow-md"
+                        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground p-1.5 sm:p-2 rounded-full opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-all z-10 shadow-md"
                         aria-label="Imagen siguiente"
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -412,7 +411,7 @@ export default function HelpContentClient() {
                             type="button"
                             onClick={() => goToSelectedImage(idx)}
                             className={`h-1.5 rounded-full transition-all ${
-                              intCurrentIndex === idx ? "bg-[#C26E5A] w-6" : "bg-[#C4BAA8] w-2"
+                              intCurrentIndex === idx ? "bg-secondary w-6" : "bg-card-border w-2"
                             }`}
                             aria-label={`Ir a imagen ${idx + 1}`}
                           />
@@ -424,14 +423,14 @@ export default function HelpContentClient() {
  
                 {/* Tip Pro */}
                 {activeContent.proTip && (
-                  <div className="mt-6 sm:mt-8 lg:mt-10 bg-[#C26E5A] text-[#E7E1D7] p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-                    <div className="bg-white/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                  <div className="mt-6 sm:mt-8 lg:mt-10 bg-secondary text-secondary-foreground p-4 sm:p-5 md:p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                    <div className="bg-secondary-foreground/20 p-1.5 sm:p-2 rounded-full flex-shrink-0">
                       <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 fill-current" viewBox="0 0 24 24">
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <h4 className="font-bold text-[12px] sm:text-[13px] lg:text-[14px] uppercase tracking-widest text-[#E7E1D7]/90">
+                      <h4 className="font-bold text-[12px] sm:text-[13px] lg:text-[14px] uppercase tracking-widest text-secondary-foreground/90">
                         Tip Pro
                       </h4>
                       <p className="text-[13px] sm:text-[14px] lg:text-[15px] leading-relaxed font-medium">
@@ -441,7 +440,7 @@ export default function HelpContentClient() {
                   </div>
                 )}
  
-                <p className="text-[10px] mt-5 sm:mt-6 lg:mt-8 text-center text-[#8b8276] uppercase tracking-widest">
+                <p className="text-[10px] mt-5 sm:mt-6 lg:mt-8 text-center text-muted-foreground uppercase tracking-widest">
                   Interactive Guide • OiDevs
                 </p>
               </div>
