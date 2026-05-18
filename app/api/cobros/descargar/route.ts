@@ -9,18 +9,20 @@ export async function GET(request: Request) {
     const planId = searchParams.get('planId');
     const modalidad = searchParams.get("modalidad");
 
-    if (!planId || !modalidad) {
-      return NextResponse.json({ error: "Faltan parámetros (planId o modalidad)" }, { status: 400 });
+    if (!planId) {
+      return NextResponse.json({ error: "Falta el parámetro planId" }, { status: 400 });
     }
 
     // Buscamos en la tabla QrUrl usando la nueva estructura
+    const modalidadDb = (modalidad === "unico" || modalidad === "null") ? null : modalidad;
+
     const qr = await (prisma.qrUrl as any).findFirst({
       where: {
         id_plan: parseInt(planId),
-        modalidad: modalidad
+        modalidad: modalidadDb
       }
     });
-
+    
     if (!qr) {
       return NextResponse.json({ error: "No se encontró un QR para este plan y modalidad" }, { status: 404 });
     }
