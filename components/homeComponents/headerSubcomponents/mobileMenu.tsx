@@ -9,6 +9,7 @@
  * @param objUser datos del usuario autenticado para mostrar su perfil o el login
  * @param strNombreHeader nombre formateado del usuario
  * @param strFotoPerfil URL de la foto de perfil del usuario
+ * @param strIniciales Iniciales del usuario para el fallback del avatar
  * @param arrNavLinks arreglo con los enlaces de navegación principales
  * @param onLoginClick función para abrir el modal de inicio de sesión
  * @param onPublicarClick función para iniciar el flujo de publicación
@@ -24,6 +25,8 @@
 
 import Image from "next/image";
 import { useHoverAnimation } from "../../hooks/useHoverAnimation";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 interface NavLink {
   strHref: string;
@@ -38,6 +41,7 @@ interface MobileMenuProps {
   objUser: any;
   strNombreHeader: string;
   strFotoPerfil: string;
+  strIniciales: string;
   arrNavLinks: NavLink[];
   onLoginClick: () => void;
   onPublicarClick: () => void;
@@ -56,6 +60,7 @@ export const MobileMenu = ({
   objUser,
   strNombreHeader,
   strFotoPerfil,
+  strIniciales,
   arrNavLinks,
   onLoginClick,
   onPublicarClick,
@@ -74,8 +79,6 @@ export const MobileMenu = ({
 
   return (
     <>
-      {/* SE ELIMINÓ EL DIV INVISIBLE: El hook useClickOutside del Header ahora gestiona esto sin interferencias */}
-
       {/* panel de navegación movil posición derecha rectangulares */}
       <nav
         ref={menuRef}
@@ -90,21 +93,17 @@ export const MobileMenu = ({
             onClick={onProfileClick} 
             className={`flex flex-col items-center justify-center gap-2 w-full pb-8 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
-            <div className="p-1 bg-primary-foreground/10 rounded-full">
-              <Image 
-                src={strFotoPerfil || "/account_avatar.svg"} 
-                alt="perfil" 
-                width={80} 
-                height={80} 
-                className="w-20 h-20 object-cover rounded-full bg-primary-foreground/20" 
-                unoptimized={true} 
-                onError={(e) => { 
-                  e.currentTarget.src = "/account_avatar.svg"; 
-                  e.currentTarget.srcset = "/account_avatar.svg"; 
-                }} 
-              />
+            <div className="p-1 bg-primary-foreground/10 rounded-full flex items-center justify-center">
+              <Avatar className="h-20 w-20 border border-border/50 bg-secondary-fund">
+                {strFotoPerfil && (
+                  <AvatarImage src={strFotoPerfil} alt={strNombreHeader} className="object-cover" />
+                )}
+                <AvatarFallback className="text-2xl font-bold text-primary">
+                  {strIniciales || "US"}
+                </AvatarFallback>
+              </Avatar>
             </div>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 mt-2">
               <span className="font-bold text-xl tracking-wide">{strNombreHeader}</span>
               <span className="text-sm opacity-70 normal-case">ver mi perfil</span>
             </div>
@@ -114,17 +113,12 @@ export const MobileMenu = ({
             onClick={onLoginClick} 
             className={`flex flex-col items-center justify-center gap-2 w-full pb-8 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-primary ${optionHover}`}
           >
-            <div className="p-1 bg-primary-foreground/10 rounded-full">
-              <div className="relative flex items-center justify-center w-20 h-20 bg-primary-foreground/10 rounded-full">
-                <Image 
-                  src="/account_avatar.svg" 
-                  alt="iniciar sesión" 
-                  width={40} 
-                  height={40} 
-                  className="w-10 h-10 object-contain brightness-0 invert opacity-80" 
-                />
-                <div className="absolute w-[110%] h-[0.125rem] bg-primary-foreground rotate-45 rounded-full opacity-80" />
-              </div>
+            <div className="p-1 bg-primary-foreground/10 rounded-full flex items-center justify-center">
+              <Avatar className="h-20 w-20 border border-border/50 bg-primary-foreground/10">
+                <AvatarFallback className="bg-transparent">
+                  <User className="w-10 h-10 text-primary-foreground opacity-80" />
+                </AvatarFallback>
+              </Avatar>
             </div>
             <div className="flex flex-col items-center gap-1 mt-2">
               <span className="font-bold text-xl tracking-wide uppercase">iniciar sesión</span>

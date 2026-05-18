@@ -31,7 +31,7 @@ export async function GET(
     if (isNaN(IntBlogId)) return NextResponse.json({ error: "id invalido" }, { status: 400 });
 
     const { searchParams } = new URL(request.url);
-    const StrSort = searchParams.get("sort") || "reciente";
+    const StrSort = searchParams.get("sort") || "relevante";
     const strParentId = searchParams.get("parentId");
     const IntParentId = strParentId ? parseInt(strParentId) : null;
 
