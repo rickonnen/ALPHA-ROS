@@ -3,17 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Bath,
+  BedDouble,
+  BriefcaseBusiness,
+  Building2,
   Camera,
   CheckCircle2,
+  ClipboardCheck,
   DollarSign,
   FileText,
   House,
+  LandPlot,
+  Layers,
   MapPin,
+  MapPinned,
   PencilLine,
   Play,
+  PlugZap,
   Ruler,
   Video,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/auth/AuthContext";
@@ -26,12 +36,54 @@ import {
   TIPOS_INMUEBLE,
 } from "./requisitos.constants";
 
-function getRequirementIcon(strItem: string) {
-  if (strItem.startsWith("Titulo")) return FileText;
-  if (strItem.startsWith("Superficie")) return Ruler;
-  if (strItem.startsWith("Nro.")) return House;
-  if (strItem.startsWith("Piso")) return House;
-  return PencilLine;
+const DEFAULT_GUIA_VIDEO_URL = "https://youtu.be/o7BLVyPD0hk?si=cWfQioPVZhAguEPz";
+
+const TIPO_INMUEBLE_ICONS: Record<TipoInmueble, LucideIcon> = {
+  Casa: House,
+  Departamento: Building2,
+  Terreno: LandPlot,
+  Oficina: BriefcaseBusiness,
+};
+
+const REQUISITO_ICONS: Record<TipoInmueble, LucideIcon[]> = {
+  Casa: [FileText, Ruler, BedDouble, ClipboardCheck],
+  Departamento: [FileText, Ruler, Bath, Layers],
+  Terreno: [FileText, LandPlot, MapPinned, PlugZap],
+  Oficina: [FileText, Ruler, BriefcaseBusiness, ClipboardCheck],
+};
+
+function normalizeGuideVideoUrl(strUrl?: string): string | null {
+  const strValue = strUrl?.trim();
+  if (!strValue) return null;
+
+  try {
+    const objUrl = new URL(strValue);
+    const strHost = objUrl.hostname.replace(/^www\./, "");
+
+    if (strHost === "youtu.be") {
+      const strVideoId = objUrl.pathname.split("/").filter(Boolean)[0];
+      return strVideoId ? `https://www.youtube.com/embed/${strVideoId}` : null;
+    }
+
+    if (strHost.endsWith("youtube.com") || strHost.endsWith("youtube-nocookie.com")) {
+      if (objUrl.pathname.startsWith("/embed/")) {
+        return `https://www.youtube.com${objUrl.pathname}`;
+      }
+
+      const strVideoId = objUrl.searchParams.get("v");
+      if (strVideoId) {
+        return `https://www.youtube.com/embed/${strVideoId}`;
+      }
+    }
+  } catch {
+    return strValue;
+  }
+
+  return strValue;
+}
+
+function getRequirementIcon(strTipo: TipoInmueble, intIndex: number) {
+  return REQUISITO_ICONS[strTipo][intIndex] ?? PencilLine;
 }
 
 export default function RequisitosPublicacionPage() {
@@ -39,8 +91,15 @@ export default function RequisitosPublicacionPage() {
   const { user, isLoading } = useAuth();
   const [strTipoSeleccionado, setStrTipoSeleccionado] = useState<TipoInmueble | null>(null);
   const [bolConfirmado, setBolConfirmado] = useState(false);
+  const [bolMostrarVideo, setBolMostrarVideo] = useState(false);
+  const [bolMostrarFallbackGuia, setBolMostrarFallbackGuia] = useState(false);
 
-  const strVideoUrl = "" // video explicativo
+  const strVideoUrl = normalizeGuideVideoUrl(
+    process.env.NEXT_PUBLIC_PUBLICACION_GUIA_VIDEO_URL || DEFAULT_GUIA_VIDEO_URL,
+  );
+  const strVideoPlaybackUrl = strVideoUrl
+    ? `${strVideoUrl}${strVideoUrl.includes("?") ? "&" : "?"}autoplay=1`
+    : null;
 
   useEffect(() => {
     if (isLoading) return;
@@ -70,6 +129,16 @@ export default function RequisitosPublicacionPage() {
     router.push(PUBLICACION_FORM_ROUTE);
   };
 
+  const handlePlayGuiaRapida = () => {
+    if (strVideoUrl) {
+      setBolMostrarVideo(true);
+      setBolMostrarFallbackGuia(false);
+      return;
+    }
+
+    setBolMostrarFallbackGuia(true);
+  };
+
   if (isLoading || !user) {
     return (
       <section className="min-h-[70vh] bg-[#E7E1D7] px-4 py-8 sm:px-6 md:py-10">
@@ -93,20 +162,30 @@ export default function RequisitosPublicacionPage() {
         <div className="rounded-lg border border-[#DDD4C8] bg-[#F8F5EF] p-4 shadow-sm sm:p-6">
           <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
             <article className="rounded-lg bg-[#E5DED2] p-4 text-center">
-              {strVideoUrl ? (
+              {bolMostrarVideo && strVideoPlaybackUrl ? (
                 <iframe
                   title="Guía rápida para publicar tu propiedad"
-                  src={strVideoUrl}
+                  src={strVideoPlaybackUrl}
                   className="h-52 w-full rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               ) : (
-                <div className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-[#D8CFC2] bg-[#E5DED2] sm:h-64">
+                <button
+                  type="button"
+                  onClick={handlePlayGuiaRapida}
+                  className="flex h-52 w-full flex-col items-center justify-center rounded-lg border border-[#D8CFC2] bg-[#E5DED2] transition-colors hover:bg-[#DED6CA] sm:h-64"
+                  aria-label="Reproducir guía rápida"
+                >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/85">
                     <Play className="h-8 w-8 text-[#C26E5A]" />
                   </div>
-                </div>
+                </button>
+              )}
+              {bolMostrarFallbackGuia && !strVideoUrl && (
+                <p className="mt-3 rounded-md bg-[#F5EDE4] px-3 py-2 text-sm font-medium text-[#6B5F57]">
+                  Aun no hay un video de guía configurado. Puedes continuar revisando los requisitos aquí mismo.
+                </p>
               )}
               <h2 className="mt-4 text-xl font-bold">Guía rápida para publicar tu propiedad</h2>
               <p className="mt-1 text-base font-semibold text-[#77716B]">Ver video Explicativo</p>
@@ -117,17 +196,19 @@ export default function RequisitosPublicacionPage() {
               <div className="mx-auto grid max-w-xs grid-cols-2 gap-2">
                 {TIPOS_INMUEBLE.map((strTipo) => {
                   const bolActive = strTipoSeleccionado === strTipo;
+                  const TipoIcon = TIPO_INMUEBLE_ICONS[strTipo];
                   return (
                     <button
                       key={strTipo}
                       type="button"
                       onClick={() => setStrTipoSeleccionado(strTipo)}
-                      className={`min-h-10 rounded-full border px-3 py-2 text-sm font-semibold transition-colors sm:text-base ${
+                      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition-colors sm:text-base ${
                         bolActive
                           ? "border-[#C26E5A] bg-[#C26E5A] text-white"
                           : "border-[#CDAA9F] bg-[#EFE9E0] text-[#B76857] hover:bg-[#E8DED0]"
                       }`}
                     >
+                      <TipoIcon className="h-4 w-4 flex-shrink-0" />
                       {strTipo}
                     </button>
                   );
@@ -141,8 +222,8 @@ export default function RequisitosPublicacionPage() {
                   </p>
                 ) : (
                   <ul className="space-y-3">
-                    {arrEspecificos.map((strRequisito) => {
-                      const Icon = getRequirementIcon(strRequisito);
+                    {arrEspecificos.map((strRequisito, intIndex) => {
+                      const Icon = getRequirementIcon(strTipoSeleccionado, intIndex);
                       return (
                         <li key={strRequisito} className="flex items-start gap-2 text-base text-[#1E1E1E]">
                           <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C26E5A]" />

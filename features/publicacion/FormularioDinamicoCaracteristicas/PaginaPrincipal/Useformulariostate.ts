@@ -12,7 +12,7 @@ import {
 import {
   PUBLICACION_REQUISITOS_ROUTE,
   PUBLICACION_REQUISITOS_SESSION_KEY,
-}from '@/app/publicacion/requisitos/requisitos.constants'
+} from '@/app/publicacion/requisitos/requisitos.constants'
 import { limpiarImagenes } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/imagenesDB'
 
 export function useFormularioState() {
@@ -56,10 +56,11 @@ export function useFormularioState() {
     urlsABorrarRef.current   = []
 
     if (!modoEdicion || !idPublicacion) {
-      if(sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY) !== '1') {
-        router.push(PUBLICACION_REQUISITOS_ROUTE)
+      if (sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY) !== '1') {
+        router.replace(PUBLICACION_REQUISITOS_ROUTE)
         return
       }
+
       const keyEnStorage = sessionStorage.getItem('publicacion_sessionKey')
 
       let key: string
