@@ -12,10 +12,86 @@ interface Props {
   tipoPlan: number | null; 
   resumenPublicacionNode?: React.ReactNode; 
 }
+interface PasoItemProps {
+  num: number;
+  titulo: string;
+  descripcion: React.ReactNode; // ReactNode para permitir <span> dentro
+  esUltimo?: boolean;
+}
+
+const PASOS_QR = (monto: number) => [
+  {
+    titulo: "Escanea el código QR",
+    descripcion: (
+      <>
+        Abre la aplicación de tu banco y escanea el código QR que aparece a la derecha. Asegúrate de ingresar el monto exacto:{" "}
+        <span className="font-semibold text-foreground">${monto.toLocaleString("es-ES")}</span>.
+      </>
+    ),
+  },
+  {
+    titulo: "Guarda el comprobante",
+    descripcion:
+      "Una vez realizada la transferencia, guarda la imagen o captura de pantalla del comprobante en tu dispositivo.",
+  },
+  {
+    titulo: "Sube y verifica",
+    descripcion: (
+      <>
+        Haz clic en <span className="italic text-foreground">"Adjuntar comprobante"</span>, selecciona tu imagen y luego
+        presiona <span className="italic text-foreground">"Verificar Pago"</span>.
+      </>
+    ),
+  },
+];
+
+const PASOS_VIRTUAL = [
+  {
+    titulo: "Verifica el monto en TRX",
+    descripcion: (
+      <>
+        El sistema convierte automáticamente el valor de tu plan al equivalente exacto en{" "}
+        <span className="font-semibold text-foreground">TRON (TRX)</span> usando la tasa actual.
+      </>
+    ),
+  },
+  {
+    titulo: "Envía el pago",
+    descripcion:
+      "Envía el monto exacto a la dirección de la billetera indicada a la derecha. Puedes escanear el QR desde tu Wallet.",
+  },
+  {
+    titulo: "Espera la confirmación",
+    descripcion: (
+      <>
+        Una vez que se confirme la transacción, tu plan se activará{" "}
+        <span className="font-semibold text-foreground">automáticamente</span>.
+      </>
+    ),
+  },
+];
+
+
+const PasoItem = ({ num, titulo, descripcion, esUltimo = false }: PasoItemProps) => (
+  <div className="flex gap-4">
+    <div className="flex flex-col items-center">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+        {num}
+      </div>
+      {!esUltimo && <div className="w-px flex-grow bg-border mt-2" />}
+    </div>
+
+    <div className={esUltimo ? "" : "pb-4"}>
+      <h3 className="font-bold text-foreground">{titulo}</h3>
+      <p className="text-sm text-muted-foreground">{descripcion}</p>
+    </div>
+  </div>
+);
 
 export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tipoPago, resumenPublicacionNode }: Props) => {
+const pasos = tipoPago === "qr" ? PASOS_QR(monto) : PASOS_VIRTUAL;
   return (
-    <div className="flex flex-col w-full h-full mt-6 bg-muted/30 p-6 md:p-8 rounded-xl">
+    <div className="flex flex-col w-full h-full mt-6 bg-muted/30 p-6 md:p-8 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col">
         
         <div className="md:hidden mb-6">
@@ -66,92 +142,16 @@ export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tip
           <h2 className="text-xl font-bold text-foreground border-b border-border pb-2">
             PASOS
           </h2>
-
-          <div className="space-y-6">
-            {tipoPago === "qr" ? (
-              <>
-                {/* PASOS PARA PAGO QR */}
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">1</div>
-                    <div className="w-px flex-grow bg-border mt-2"></div>
-                  </div>
-                  <div className="pb-4">
-                    <h3 className="font-bold text-foreground">Escanea el código QR</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Abre la aplicación de tu banco y escanea el código QR que aparece a la derecha. Asegúrate de ingresar el monto exacto: 
-                      <span className="font-semibold text-foreground"> ${monto.toLocaleString("es-ES")}</span>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">2</div>
-                    <div className="w-px flex-grow bg-border mt-2"></div>
-                  </div>
-                  <div className="pb-4">
-                    <h3 className="font-bold text-foreground">Guarda el comprobante</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Una vez realizada la transferencia, guarda la imagen o captura de pantalla del comprobante en tu dispositivo.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">3</div>
-                  </div>
-                  <div className="">
-                    <h3 className="font-bold text-foreground">Sube y verifica</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Haz clic en <span className="italic text-foreground">"Adjuntar comprobante"</span>, selecciona tu imagen y luego presiona <span className="italic text-foreground">"Verificar Pago"</span>.
-                    </p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* PASOS PARA PAGO VIRTUAL */}
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">1</div>
-                    <div className="w-px flex-grow bg-border mt-2"></div>
-                  </div>
-                  <div className="pb-4">
-                    <h3 className="font-bold text-foreground">Verifica el monto en TRX</h3>
-                    <p className="text-sm text-muted-foreground">
-                      El sistema convierte automáticamente el valor de tu plan al equivalente exacto en <span className="font-semibold text-foreground">TRON (TRX)</span> usando la tasa actual.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">2</div>
-                    <div className="w-px flex-grow bg-border mt-2"></div>
-                  </div>
-                  <div className="pb-4">
-                    <h3 className="font-bold text-foreground">Envía el pago</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Envía el monto exacto a la dirección de la billetera indicada a la derecha. Puedes escanear el QR desde tu Wallet.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">3</div>
-                  </div>
-                  <div className="">
-                    <h3 className="font-bold text-foreground">Espera la confirmación</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Una vez que se confirme la transacción, tu plan se activará<span className="font-semibold text-foreground">automáticamente</span>.
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
+           <div key={tipoPago} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {pasos.map((paso, i) => (
+              <PasoItem
+                key={i}
+                num={i + 1}
+                titulo={paso.titulo}
+                descripcion={paso.descripcion}
+                esUltimo={i === pasos.length - 1}
+              />
+            ))}
           </div>
         </section>
       </div>

@@ -9,6 +9,7 @@ import {
   Polyline,
   Popup,
   TileLayer,
+  Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -20,6 +21,8 @@ import {
   BedDouble,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   MapPin,
   Square,
   X,
@@ -47,6 +50,24 @@ const DEFAULT_ZOOM = 15;
 
 interface MapProps {
   locations: Location[];
+  defaultZones?: {
+    id_zona: number;
+    nombre_zona: string;
+    coordenadas: [number, number][];
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  }[];
+  drawnZoneSummary?: {
+    nombre: string;
+    stats: {
+      propertyCount: number;
+      averagePriceLabel: string | null;
+    };
+  } | null;
+  showDefaultZones?: boolean;
+  onToggleDefaultZones?: (nextValue: boolean) => void;
   hoveredId: number | null;
   selectedPos: [number, number] | null;
   hoveredPos: [number, number] | null;
@@ -54,10 +75,16 @@ interface MapProps {
   isDrawingMode?: boolean;
   drawnPolygon?: [number, number][] | null;
   onPolygonComplete?: (points: [number, number][]) => void;
+  isEditingPolygon?: boolean;
+  onPolygonEdit?: (points: [number, number][]) => void;
 }
+
+const MIN_POLYGON_POINTS = 4;
+const MAX_POLYGON_POINTS = 10;
 
 function MarkerPropertyPopup({ location }: { location: Location }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isOpeningDirections, setIsOpeningDirections] = useState(false);
   const images = location.images.length > 0 ? location.images : ["/casa1.jpg"];
   const map = useMap();
 
@@ -70,6 +97,61 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
   const goToNextImage = () => {
     setActiveImageIndex((current) =>
       current === images.length - 1 ? 0 : current + 1,
+    );
+  };
+
+  const openDirectionsWithUserLocation = () => {
+    if (isOpeningDirections) return;
+
+    const fallbackUrl =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${location.lat},${location.lng}` +
+      `&travelmode=driving`;
+    const openedWindow = window.open("", "_blank");
+
+    if (openedWindow) {
+      openedWindow.document.write(
+        "<!doctype html><title>Abriendo ruta...</title><body style=\"font-family:sans-serif;padding:24px;color:#1f3a4d\">Abriendo Google Maps...</body>",
+      );
+      openedWindow.document.close();
+    }
+
+    const navigateTo = (url: string) => {
+      if (openedWindow) {
+        openedWindow.location.href = url;
+        return;
+      }
+
+      window.open(url, "_blank");
+    };
+
+    if (!("geolocation" in navigator)) {
+      navigateTo(fallbackUrl);
+      return;
+    }
+
+    setIsOpeningDirections(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const directionsUrl =
+          `https://www.google.com/maps/dir/?api=1` +
+          `&origin=${position.coords.latitude},${position.coords.longitude}` +
+          `&destination=${location.lat},${location.lng}` +
+          `&travelmode=driving`;
+
+        navigateTo(directionsUrl);
+        setIsOpeningDirections(false);
+      },
+      () => {
+        navigateTo(fallbackUrl);
+        setIsOpeningDirections(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
     );
   };
 
@@ -152,18 +234,31 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
           <p className="text-center text-xl font-bold leading-tight text-gray-950">
             {location.precio}
           </p>
-          <button
-            type="button"
-            onClick={() =>
-              window.open(
-                `/publicacion/Vista_del_Inmueble/${location.id}`,
-                `tab_mi_inmueble_${location.id}`,
-              )
-            }
-            className="mt-3 flex w-full items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--primary)]/90"
-          >
-            Ver Detalle
-          </button>
+          <div className="mt-3 space-y-2">
+
+                <button
+                  type="button"
+                  onClick={openDirectionsWithUserLocation}
+                  disabled={isOpeningDirections}
+                 className="flex w-full items-center justify-center rounded-lg bg-[#c26e5a] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-80"
+                >
+                {isOpeningDirections ? "Abriendo ruta..." : "Cómo llegar"}
+            </button>
+
+                 <button
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `/publicacion/Vista_del_Inmueble/${location.id}`,
+                      `tab_mi_inmueble_${location.id}`,
+                    )
+                  }
+                  className="flex w-full items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--primary)]/90"
+                >
+                  Ver Detalle
+                </button>
+
+          </div>
         </div>
       </div>
     </div>
@@ -184,9 +279,11 @@ function MapDrawingLogic({
   useEffect(() => {
     if (isDrawingMode) {
       map.dragging.disable();
+      map.doubleClickZoom.disable();
       map.getContainer().style.cursor = "crosshair";
     } else {
       map.dragging.enable();
+      map.doubleClickZoom.enable();
       map.getContainer().style.cursor = "";
       if (resetTimeoutRef.current !== null) {
         window.clearTimeout(resetTimeoutRef.current);
@@ -201,21 +298,51 @@ function MapDrawingLogic({
         window.clearTimeout(resetTimeoutRef.current);
         resetTimeoutRef.current = null;
       }
+      map.doubleClickZoom.enable();
+      map.getContainer().style.cursor = "";
     };
   }, [isDrawingMode, map]);
 
   useMapEvents({
     click(e) {
       if (!isDrawingMode || !onPolygonComplete) return;
+      if ((e.originalEvent as MouseEvent | undefined)?.detail === 2) return;
+
+      if (points.length >= MAX_POLYGON_POINTS) {
+        onPolygonComplete(points);
+        setPoints([]);
+        return;
+      }
+
+      if (points.length >= MIN_POLYGON_POINTS) {
+        const firstPoint = L.latLng(points[0][0], points[0][1]);
+        const firstPointPixel = map.latLngToContainerPoint(firstPoint);
+        const clickedPointPixel = map.latLngToContainerPoint(e.latlng);
+
+        if (firstPointPixel.distanceTo(clickedPointPixel) <= 14) {
+          onPolygonComplete(points);
+          setPoints([]);
+          return;
+        }
+      }
+
       const newPoints: [number, number][] = [
         ...points,
         [e.latlng.lat, e.latlng.lng],
       ];
+
       setPoints(newPoints);
-      if (newPoints.length === 4) {
+
+      if (newPoints.length === MAX_POLYGON_POINTS) {
         onPolygonComplete(newPoints);
         setPoints([]);
       }
+    },
+    dblclick() {
+      if (!isDrawingMode || !onPolygonComplete) return;
+      if (points.length < MIN_POLYGON_POINTS) return;
+      onPolygonComplete(points);
+      setPoints([]);
     },
   });
 
@@ -235,7 +362,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       ))}
-      {points.length > 1 && points.length < 4 && (
+      {points.length > 1 && points.length < MAX_POLYGON_POINTS && (
         <Polyline
           positions={points}
           color="#C26E5A"
@@ -244,7 +371,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       )}
-      {points.length === 4 && (
+      {points.length >= MIN_POLYGON_POINTS && (
         <Polygon
           positions={points}
           color="#C26E5A"
@@ -258,6 +385,10 @@ function MapDrawingLogic({
 
 export default function PropertyMap({
   locations,
+  defaultZones = [],
+  drawnZoneSummary = null,
+  showDefaultZones = true,
+  onToggleDefaultZones,
   hoveredId,
   selectedPos,
   hoveredPos,
@@ -265,6 +396,8 @@ export default function PropertyMap({
   isDrawingMode,
   drawnPolygon,
   onPolygonComplete,
+  isEditingPolygon,
+  onPolygonEdit,
 }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const popupRef = useRef<L.Popup | null>(null);
@@ -302,6 +435,11 @@ export default function PropertyMap({
 
   const validHoveredPos = isValidPos(hoveredPos) ? hoveredPos : null;
   const validSelectedPos = isValidPos(selectedPos) ? selectedPos : null;
+  const editPointIcon = L.divIcon({
+    className:
+      "flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#8B4423] shadow-md",
+    iconSize: [16, 16],
+  });
 
   return (
     <>
@@ -320,6 +458,84 @@ export default function PropertyMap({
         .property-marker-popup .leaflet-popup-tip-container {
           margin-top: -1px;
         }
+
+        .default-zones-toggle {
+          position: absolute;
+          left: 10px;
+          top: 90px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          border-radius: 12px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+        }
+
+        .default-zones-toggle__button {
+          display: flex;
+          height: 40px;
+          width: 40px;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          background: transparent;
+          color: #475569;
+          transition:
+            background-color 0.2s ease,
+            color 0.2s ease;
+        }
+
+        .default-zones-toggle__button + .default-zones-toggle__button {
+          border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .default-zones-toggle__button:hover {
+          background: rgba(31, 58, 77, 0.08);
+          color: #1f3a4d;
+        }
+
+        .default-zones-toggle__button--active {
+          background: #1f3a4d;
+          color: #f8fafc;
+        }
+
+        .default-zone-label {
+          border: none;
+          background: rgba(31, 58, 77, 0.9);
+          color: #f8fafc;
+          border-radius: 999px;
+          box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
+          padding: 0;
+        }
+
+        .default-zone-label .leaflet-tooltip-content {
+          margin: 0;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
+
+        .user-zone-label {
+          border: none;
+          background: rgba(194, 110, 90, 0.92);
+          color: #fffaf7;
+          border-radius: 999px;
+          box-shadow: 0 6px 18px rgba(139, 68, 35, 0.25);
+          padding: 0;
+        }
+
+        .user-zone-label .leaflet-tooltip-content {
+          margin: 0;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.01em;
+          white-space: nowrap;
+        }
       `}</style>
 
       <MapContainer
@@ -327,6 +543,33 @@ export default function PropertyMap({
         zoom={DEFAULT_ZOOM}
         className="h-full w-full"
       >
+        {defaultZones.length > 0 && (
+          <div className="default-zones-toggle">
+            <button
+              type="button"
+              className={`default-zones-toggle__button ${
+                showDefaultZones ? "default-zones-toggle__button--active" : ""
+              }`}
+              aria-label="Mostrar zonas predeterminadas"
+              title="Mostrar zonas predeterminadas"
+              onClick={() => onToggleDefaultZones?.(true)}
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className={`default-zones-toggle__button ${
+                !showDefaultZones ? "default-zones-toggle__button--active" : ""
+              }`}
+              aria-label="Ocultar zonas predeterminadas"
+              title="Ocultar zonas predeterminadas"
+              onClick={() => onToggleDefaultZones?.(false)}
+            >
+              <EyeOff className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {validHoveredPos && <ChangeView center={validHoveredPos} />}
         {!validHoveredPos && validSelectedPos && (
           <ChangeView center={validSelectedPos} />
@@ -346,8 +589,94 @@ export default function PropertyMap({
             fillColor="#C26E5A"
             fillOpacity={0.25}
             weight={2}
-          />
+          >
+            {drawnZoneSummary && (
+              <>
+                <Tooltip
+                  permanent
+                  direction="center"
+                  className="user-zone-label"
+                >
+                  {drawnZoneSummary.nombre}
+                </Tooltip>
+                <Popup>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-[#8B4423]">
+                      {drawnZoneSummary.nombre}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {drawnZoneSummary.stats.propertyCount} inmuebles con los filtros actuales
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {drawnZoneSummary.stats.averagePriceLabel
+                        ? `Promedio: ${drawnZoneSummary.stats.averagePriceLabel}`
+                        : "Sin datos de precio para calcular promedio"}
+                    </p>
+                  </div>
+                </Popup>
+              </>
+            )}
+          </Polygon>
         )}
+
+        {showDefaultZones &&
+          defaultZones.map((zone) => (
+            <Polygon
+              key={`default-zone-${zone.id_zona}`}
+              positions={zone.coordenadas}
+              color="#1F3A4D"
+              fillColor="#3E6B87"
+              fillOpacity={0.16}
+              weight={2}
+            >
+              <Tooltip
+                permanent
+                direction="center"
+                className="default-zone-label"
+              >
+                {zone.nombre_zona}
+              </Tooltip>
+              <Popup>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[#1F3A4D]">
+                    {zone.nombre_zona}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Zona predeterminada del sitio
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {zone.stats.propertyCount} inmuebles con los filtros actuales
+                  </p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {zone.stats.averagePriceLabel
+                      ? `Promedio: ${zone.stats.averagePriceLabel}`
+                      : "Sin datos de precio para calcular promedio"}
+                  </p>
+                </div>
+              </Popup>
+            </Polygon>
+          ))}
+
+        {isEditingPolygon &&
+          drawnPolygon?.map((point, index) => (
+            <Marker
+              key={`edit-point-${index}`}
+              position={point}
+              icon={editPointIcon}
+              draggable
+              eventHandlers={{
+                dragend: (event) => {
+                  if (!onPolygonEdit || !drawnPolygon) return;
+                  const marker = event.target as L.Marker;
+                  const { lat, lng } = marker.getLatLng();
+                  const updatedPolygon = drawnPolygon.map((currentPoint, currentIndex) =>
+                    currentIndex === index ? [lat, lng] : currentPoint,
+                  ) as [number, number][];
+                  onPolygonEdit(updatedPolygon);
+                },
+              }}
+            />
+          ))}
 
         <MarkerClusterGroup
           disableClusteringAtZoom={17}
@@ -421,3 +750,4 @@ export default function PropertyMap({
     </>
   );
 }
+

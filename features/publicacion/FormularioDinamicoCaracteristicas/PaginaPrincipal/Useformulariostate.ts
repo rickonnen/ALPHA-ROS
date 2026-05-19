@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, startTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getPublicacionById } from '@/features/publicacion/BackendEditarPublicacion/getPublicacion'
 import {
@@ -12,7 +12,7 @@ import {
 import {
   PUBLICACION_REQUISITOS_ROUTE,
   PUBLICACION_REQUISITOS_SESSION_KEY,
-}from '@/app/publicacion/requisitos/requisitos.constants'
+} from '@/app/publicacion/requisitos/requisitos.constants'
 import { limpiarImagenes } from '@/features/publicacion/FormularioDinamicoCaracteristicas/Imagenes/imagenesDB'
 
 export function useFormularioState() {
@@ -35,7 +35,11 @@ export function useFormularioState() {
   const [isPublishing,      setIsPublishing]      = useState(false)
   const [publishError,      setPublishError]      = useState<string | null>(null)
   const [bolShowSumario,    setBolShowSumario]    = useState(false)
-  const [isMobile,          setIsMobile]          = useState(false)
+  const [isMobile,          setIsMobile]          = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(max-width: 767px)').matches
+      : false,
+  )
   const [datosListos,       setDatosListos]       = useState(!modoEdicion)
   const [imagenesIniciales, setImagenesIniciales] = useState<string[]>([])
   const [sessionKey,        setSessionKey]        = useState<string>('')
@@ -44,7 +48,6 @@ export function useFormularioState() {
   useEffect(() => {
     const mq      = window.matchMedia('(max-width: 767px)')
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    setIsMobile(mq.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
@@ -56,10 +59,11 @@ export function useFormularioState() {
     urlsABorrarRef.current   = []
 
     if (!modoEdicion || !idPublicacion) {
-      if(sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY) !== '1') {
-        router.push(PUBLICACION_REQUISITOS_ROUTE)
+      if (sessionStorage.getItem(PUBLICACION_REQUISITOS_SESSION_KEY) !== '1') {
+        router.replace(PUBLICACION_REQUISITOS_ROUTE)
         return
       }
+
       const keyEnStorage = sessionStorage.getItem('publicacion_sessionKey')
 
       let key: string
@@ -75,14 +79,15 @@ export function useFormularioState() {
         sessionStorage.setItem('publicacion_sessionKey', key)
       }
 
-      setSessionKey(key)
-
       const paso        = leerPaso()
       const completados = leerCompletados()
-      setCurrentStep(paso)
-      setCompletedSteps(completados)
-      setHydrated(true)
-      setDatosListos(true)
+      startTransition(() => {
+        setSessionKey(key)
+        setCurrentStep(paso)
+        setCompletedSteps(completados)
+        setHydrated(true)
+        setDatosListos(true)
+      })
 
       return () => {
         // Al desmontar (salir del form) → borrar todo para próxima entrada limpia
@@ -97,17 +102,21 @@ export function useFormularioState() {
     limpiarImagenes()
     const nuevaKey = `session-${Date.now()}`
     sessionStorage.setItem('publicacion_sessionKey', nuevaKey)
-    setSessionKey(nuevaKey)
+    startTransition(() => {
+      setSessionKey(nuevaKey)
+    })
 
     getPublicacionById(idPublicacion).then(pub => {
       if (!pub) {
-        router.replace('/publicacion/FormularioDinamico')
+        router.replace('/publicacion/formularioPublicacion')
         return
       }
 
       urlsQueQuedanRef.current = pub.imagenesUrl
       urlsABorrarRef.current   = []
-      setImagenesIniciales(pub.imagenesUrl)
+      startTransition(() => {
+        setImagenesIniciales(pub.imagenesUrl)
+      })
       try { sessionStorage.setItem('imagenesIniciales', JSON.stringify(pub.imagenesUrl)) } catch { }
 
       try {
@@ -127,6 +136,7 @@ export function useFormularioState() {
           zona:         pub.zona,
           lat:          pub.lat,
           lng:          pub.lng,
+          puntosInteres: pub.puntosInteres ?? [],
         }))
         sessionStorage.setItem('caracteristicasDetalle', JSON.stringify({
           habitaciones: pub.habitaciones,
@@ -145,12 +155,16 @@ export function useFormularioState() {
 
         const todosCompletos = new Set([0, 1, 2, 3, 4, 5, 6])
         guardarCompletados(todosCompletos)
-        setCompletedSteps(todosCompletos)
+        startTransition(() => {
+          setCompletedSteps(todosCompletos)
+        })
       } catch { }
 
-      setCurrentStep(0)
-      setHydrated(true)
-      setDatosListos(true)
+      startTransition(() => {
+        setCurrentStep(0)
+        setHydrated(true)
+        setDatosListos(true)
+      })
     })
 
     return () => {

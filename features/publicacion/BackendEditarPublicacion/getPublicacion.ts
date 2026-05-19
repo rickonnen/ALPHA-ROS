@@ -31,7 +31,7 @@ async function getUserIdSeguro(): Promise<string | null> {
       const id = decoded.userId || decoded.id || decoded.sub;
       if (id) return id;
     }
-  } catch (error) {
+  } catch {
     // Ignoramos el error si no hay token manual
   }
 
@@ -59,6 +59,18 @@ export interface CaracteristicaExtraEdit {
   detalle:           string
 }
 
+export interface PuntoInteresEdit {
+  tempId: string
+  id_tipo_poi: number
+  tipo_nombre: string
+  tipo_icono?: string | null
+  tipo_color?: string | null
+  nombre: string
+  descripcion: string
+  lat: number
+  lng: number
+}
+
 export type PublicacionEditData = {
   titulo:          string
   tipoOperacion:   string
@@ -81,6 +93,7 @@ export type PublicacionEditData = {
   descripcion:     string
   // ← NUEVO: características extras para pre-poblar el paso 6
   caracteristicasExtras: CaracteristicaExtraEdit[]
+  puntosInteres: PuntoInteresEdit[]
 }
 
 export async function getPublicacionById(id: number): Promise<PublicacionEditData | null> {
@@ -110,6 +123,10 @@ export async function getPublicacionById(id: number): Promise<PublicacionEditDat
         Imagen:                   true,
         Video:                    true,
         Moneda:                   true,
+        PuntoInteres: {
+          include: { TipoPuntoInteres: true },
+          orderBy: { orden: 'asc' },
+        },
         PublicacionCaracteristica: {
           include: { Caracteristica: true },
         },
@@ -125,6 +142,18 @@ export async function getPublicacionById(id: number): Promise<PublicacionEditDat
         titulo:            pc.Caracteristica.nombre_caracteristica ?? '',
         detalle:           pc.detalle_caracteristica ?? '',
       }))
+
+    const puntosInteres: PuntoInteresEdit[] = pub.PuntoInteres.map((point) => ({
+      tempId: `poi-${point.id_punto_interes}`,
+      id_tipo_poi: point.id_tipo_poi ?? 0,
+      tipo_nombre: point.TipoPuntoInteres?.nombre ?? 'Punto de interés',
+      tipo_icono: point.TipoPuntoInteres?.icono ?? null,
+      tipo_color: point.TipoPuntoInteres?.color ?? null,
+      nombre: point.nombre,
+      descripcion: point.descripcion ?? '',
+      lat: Number(point.latitud),
+      lng: Number(point.longitud),
+    }))
 
     return {
       titulo:          pub.titulo        ?? '',
@@ -147,6 +176,7 @@ export async function getPublicacionById(id: number): Promise<PublicacionEditDat
       videoUrl:        pub.Video[0]?.url_video ?? '',
       descripcion:     pub.descripcion ?? '',
       caracteristicasExtras,
+      puntosInteres,
     }
   } catch (err) {
     console.error('[getPublicacionById]', err)

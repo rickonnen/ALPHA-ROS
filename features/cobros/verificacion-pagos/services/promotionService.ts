@@ -12,19 +12,19 @@ export const activatePromotion = async (
   objFechaFin.setDate(objFechaFin.getDate() + intDaysQuota);
 
   const objExistingPromotion = await tx.promocionPublicacion.findFirst({
-    where: { id_usuario: strUserId }
+    where: { id_publicacion: intPublicacionId }
   });
 
   if (objExistingPromotion) {
     await tx.promocionPublicacion.update({
       where: { id_promocion: objExistingPromotion.id_promocion },
       data: {
-        id_publicacion: intPublicacionId,
+        id_usuario: strUserId, 
         fecha_fin: objFechaFin,
         fecha_inicio: objFechaInicio 
       }
     });
-    console.log(`Promoción actualizada para el usuario ${strUserId}. Vigente hasta: ${objFechaFin}`);
+    console.log(`Promoción renovada para la publicación ${intPublicacionId}. Vigente hasta: ${objFechaFin}`);
   } else {
     await tx.promocionPublicacion.create({
       data: {
@@ -34,6 +34,14 @@ export const activatePromotion = async (
         fecha_fin: objFechaFin
       }
     });
-    console.log(`Nueva promoción creada para el usuario ${strUserId}. Expira el: ${objFechaFin}`);
+    console.log(`Nueva promoción creada para la publicación ${intPublicacionId}. Expira el: ${objFechaFin}`);
   }
+
+  await tx.publicacion.update({
+    where: { id_publicacion: intPublicacionId },
+    data: { prioridad: true }
+  });
+  
+  console.log(`Publicación ${intPublicacionId} está ahora como prioridad.`);
+
 };

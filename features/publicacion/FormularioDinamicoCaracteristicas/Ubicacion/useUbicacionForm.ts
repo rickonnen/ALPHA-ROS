@@ -3,6 +3,7 @@ import {
   UbicacionValues,
   UbicacionErrors,
   INITIAL_VALUES,
+  PuntoInteresForm,
 } from './useUbicacionTypes'
 import { validate }                                  from './useUbicacionValidacion'
 import { leerSesion, guardarSesion, limpiarSesion } from './useUbicacionPersistencia'
@@ -74,6 +75,12 @@ export function useUbicacionForm() {
     setErrors(prev => ({ ...prev, [field]: errs[field] }))
   }, [])
 
+  const setPuntosInteres = useCallback((puntosInteres: PuntoInteresForm[]) => {
+    const updated = { ...valuesRef.current, puntosInteres }
+    valuesRef.current = updated
+    setValues(updated)
+  }, [])
+
   const handleSubmit = useCallback((onSuccess: (values: UbicacionValues) => void) => {
     const allTouched = Object.keys(INITIAL_VALUES).reduce(
       (acc, key) => ({ ...acc, [key]: true }),
@@ -107,5 +114,6 @@ export function useUbicacionForm() {
     handleBlur,
     handleSubmit,
     handleReset,
+    setPuntosInteres,
   }
 }

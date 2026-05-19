@@ -7,6 +7,28 @@ export interface UbicacionValues {
   lng:          string
   departamento: string
   zona:         string
+  puntosInteres: PuntoInteresForm[]
+}
+
+export interface PuntoInteresTipoOption {
+  id_tipo_poi: number
+  nombre: string
+  icono?: string | null
+  color?: string | null
+}
+
+export interface PuntoInteresForm {
+  tempId: string
+  id_tipo_poi: number
+  tipo_nombre: string
+  tipo_icono?: string | null
+  tipo_color?: string | null
+  nombre: string
+  descripcion: string
+  lat: number
+  lng: number
+  direccion?: string
+  ciudad?: string
 }
 
 // Solo los campos que se validan — lat y lng no se validan directamente
@@ -36,6 +58,7 @@ export const INITIAL_VALUES: UbicacionValues = {
   lng:          '',
   departamento: '',
   zona:         '',
+  puntosInteres: [],
 }
 
 export const SESSION_KEY = 'ubicacion'

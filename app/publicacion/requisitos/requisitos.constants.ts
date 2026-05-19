@@ -21,25 +21,25 @@ export const REQUISITOS_GENERALES = [
 export const REQUISITOS_ESPECIFICOS: Record<TipoInmueble, string[]> = {
   Casa: [
     "Título de la propiedad",
-    "Superficie de terreno y construcción",
-    "Nro. de habitaciones, baños y garajes",
+    "Superficie de construcción en m²",
+    "Nro. de habitaciones,pisos, baños y garajes",
     "Estado de construcción",
   ],
   Departamento: [
     "Título de la propiedad",
-    "Superficie total del departamento",
+    "Superficie total del departamento en m²",
     "Nro. de habitaciones, baños y garajes",
     "Piso y estado de construcción",
   ],
   Terreno: [
     "Título de la propiedad",
-    "Superficie total del terreno",
+    "Superficie total del terreno en m²",
     "Ubicación y referencias de acceso",
     "Servicios cercanos",
   ],
   Oficina: [
     "Título de la propiedad",
-    "Superficie de la oficina",
+    "Superficie de la oficina en m²",
     "Piso, ambientes y baños",
     "Estado de construcción",
   ],

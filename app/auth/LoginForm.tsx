@@ -336,7 +336,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
       <div>
-        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>
+        <h2 className="text-[28px] font-bold text-slate-900 dark:text-slate-100" style={{ marginBottom: "4px" }}>
           Bienvenido de vuelta
         </h2>
       </div>
@@ -702,16 +702,11 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
+          <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">
             Correo electrónico
           </label>
-          <div style={{
-            display: "flex", alignItems: "center",
-            border: `1px solid ${errors.email ? "#ef4444" : "#d1d5db"}`,
-            borderRadius: "6px", padding: "10px 12px", gap: "10px",
-            backgroundColor: errors.email ? "#fee2e2" : "white",
-          }}>
-            <Mail size={18} style={{ color: "#9ca3af" }} />
+          <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.email ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+            <Mail size={18} className="text-slate-400" />
             <input
               type="email"
               placeholder="ejemplo@correo.com"
@@ -721,23 +716,18 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 validateField("email", e.target.value);
                 if (cuentaDesactivada) setCuentaDesactivada(false);
               }}
-              style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+              className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
             />
           </div>
           {errors.email && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.email}</p>}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>
+          <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">
             Contraseña
           </label>
-          <div style={{
-            display: "flex", alignItems: "center",
-            border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`,
-            borderRadius: "6px", padding: "10px 12px", gap: "10px",
-            backgroundColor: errors.password ? "#fee2e2" : "white",
-          }}>
-            <Lock size={18} style={{ color: "#9ca3af" }} />
+          <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.password ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+            <Lock size={18} className="text-slate-400" />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Tu contraseña"
@@ -747,12 +737,12 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
                 validateField("password", e.target.value);
                 if (cuentaDesactivada) setCuentaDesactivada(false);
               }}
-              style={{ flex: 1, fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+              className="flex-1 text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={{ backgroundColor: "transparent", border: "none", padding: "0", cursor: "pointer", color: "#9ca3af", display: "flex", alignItems: "center" }}
+              className="bg-transparent border-none p-0 cursor-pointer text-slate-400 flex items-center"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -769,7 +759,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
             <button
               type="button"
               onClick={() => onReactivarCuenta(email)}
-              style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline", display: "block", marginBottom: "4px", marginLeft: "auto" }}
+              className="text-xs text-slate-500 dark:text-slate-400 bg-transparent border-none cursor-pointer underline block mb-1 ml-auto"
             >
               ¿Deseas reactivar tu cuenta?
             </button>
@@ -777,7 +767,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           <button
             type="button"
              onClick={onForgotPassword}
-            style={{ fontSize: "12px", color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            className="text-xs text-slate-500 dark:text-slate-400 bg-transparent border-none cursor-pointer underline"
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -788,7 +778,7 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           disabled={loading || !isFormValid()}
           style={{
             width: "100%",
-            backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C26E5A",
+            backgroundColor: loading || !isFormValid() ? "#8B4A3D" : "#C26E5A",
             color: "white",
             fontWeight: "bold",
             padding: "12px",
@@ -802,8 +792,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
           {loading ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
 
-           <div style={{ textAlign: "center", marginTop: "16px" }}>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginBottom: "12px" }}>
+            <div style={{ textAlign: "center", marginTop: "16px" }}>
+              <p className="text-sm text-slate-500 dark:text-slate-400" style={{ marginBottom: "12px" }}>
                   Acceso rápido con
               </p>
 

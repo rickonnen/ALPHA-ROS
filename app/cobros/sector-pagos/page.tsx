@@ -31,7 +31,7 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
   const mostrarTarjetaAlMedio = esPromocion && Boolean(idPublicacion);
 
   let precioFinal = Number(plan.precio_plan);
-  let textoModalidad = esPromocion ? "pago único" : "mensual";
+  let textoModalidad = esPromocion ? "unico" : "mensual";
   let tiempoAcceso = esPromocion ? `${plan.cant_publicaciones} días` : "30 días";
 
   if (modalidad === "anual" && !esPromocion) {
@@ -61,7 +61,7 @@ export default async function PaginaSectorPagos({ searchParams }: Props) {
   return (
     <PagoCliente 
       datos={datosParaPago}
-      backUrl={esPromocion ? `/cobros/planes-promocion` : "/cobros/planes"} 
+      backUrl={esPromocion ? `/cobros/planes-promocion?pubId=${idPublicacion}` : "/cobros/planes"} 
       resumenPublicacionNode={
         mostrarTarjetaAlMedio ? <ResumenPublicacion idPublicacion={idPublicacion!} /> : null
       }

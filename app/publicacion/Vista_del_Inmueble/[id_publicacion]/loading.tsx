@@ -12,7 +12,7 @@ import { PropertySkeleton } from "@/features/publicacion/[id_publicacion]/compon
 
 export default function LoadingPerfilInmueble() {
   return (
-    <main className="min-h-screen bg-[#F4EFE6] p-4 md:p-12">
+    <main className="min-h-screen bg-background p-4 md:p-12">
       <div className="max-w-6xl mx-auto">
         <PropertySkeleton />
       </div>

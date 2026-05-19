@@ -353,7 +353,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
       <div>
-        <h2 style={{ fontSize: "28px", fontWeight: "bold", color: "#1f2937", marginBottom: "4px" }}>
+        <h2 className="text-[28px] font-bold text-slate-900 dark:text-slate-100" style={{ marginBottom: "4px" }}>
           Crear tu cuenta
         </h2>
       </div>
@@ -398,36 +398,36 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
 
           {/* NOMBRE */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Nombre</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.nombre ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.nombre ? "#fee2e2" : "white" }}>
-              <User size={18} style={{ color: "#9ca3af" }} />
+            <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Nombre</label>
+            <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.nombre ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+              <User size={18} className="text-slate-400" />
               <input type="text" placeholder="Tu nombre" value={nombre} maxLength={40}
                 onChange={(e) => { const value = e.target.value.slice(0, 40); setNombre(value); validateField("nombre", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0" />
             </div>
             {errors.nombre && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.nombre}</p>}
           </div>
 
           {/* APELLIDO */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Apellido</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.apellido ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.apellido ? "#fee2e2" : "white" }}>
-              <User size={18} style={{ color: "#9ca3af" }} />
+            <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Apellido</label>
+            <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.apellido ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+              <User size={18} className="text-slate-400" />
               <input type="text" placeholder="Tu apellido" value={apellido} maxLength={40}
                 onChange={(e) => { const value = e.target.value.slice(0, 40); setApellido(value); validateField("apellido", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0" />
             </div>
             {errors.apellido && <p style={{ color: "#ef4444", fontSize: "12px" }}>{errors.apellido}</p>}
           </div>
 
           {/* CORREO */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Correo electrónico</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.email || emailExists ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.email || emailExists ? "#fee2e2" : "white" }}>
-              <Mail size={18} style={{ color: "#9ca3af" }} />
+            <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Correo electrónico</label>
+            <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.email || emailExists ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+              <Mail size={18} className="text-slate-400" />
               <input type="email" placeholder="usuario@gmail.com" value={email}
                 onChange={(e) => { setEmail(e.target.value); validateField("email", e.target.value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0" />
               {checkingEmail && (
                 <div style={{ width: "16px", height: "16px", border: "2px solid #C85A4F", borderTop: "2px solid transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
               )}
@@ -437,15 +437,15 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
 
           {/* CONTRASEÑA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Contraseña</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.password ? "#fee2e2" : "white" }}>
-              <Lock size={18} style={{ color: "#9ca3af" }} />
+            <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Contraseña</label>
+            <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.password ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+              <Lock size={18} className="text-slate-400" />
               <input type={showPassword ? "text" : "password"} placeholder="Mínimo 8 y maximo 15 caracteres" value={password} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setPassword(value); validateField("password", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0" />
               <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{password.length}/15</span>
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
+                className="bg-transparent border-none cursor-pointer text-slate-400 p-0">
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
@@ -455,15 +455,15 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
 
           {/* CONFIRMAR CONTRASEÑA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Confirmar contraseña</label>
-            <div style={{ display: "flex", alignItems: "center", border: `1px solid ${errors.confirmPassword ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: errors.confirmPassword ? "#fee2e2" : "white" }}>
-              <Lock size={18} style={{ color: "#9ca3af" }} />
+            <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Confirmar contraseña</label>
+            <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${errors.confirmPassword ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+              <Lock size={18} className="text-slate-400" />
               <input type={showConfirm ? "text" : "password"} placeholder="Confirmar contraseña" value={confirmPassword} maxLength={15}
                 onChange={(e) => { const value = e.target.value.slice(0, 15); setConfirmPassword(value); validateField("confirmPassword", value); }}
-                style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }} />
+                className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0" />
               <span style={{ fontSize: "14px", fontWeight: "700", color: "#C85A4F", whiteSpace: "nowrap", padding: "4px 8px", backgroundColor: "#fef2f2", borderRadius: "4px" }}>{confirmPassword.length}/15</span>
               <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#9ca3af", padding: "0" }}>
+                className="bg-transparent border-none cursor-pointer text-slate-400 p-0">
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
@@ -475,7 +475,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
             disabled={loading || !isFormValid()}
             style={{
               width: "100%",
-              backgroundColor: loading || !isFormValid() ? "#e5a89f" : "#C85A4F",
+              backgroundColor: loading || !isFormValid() ? "#8B4A3D" : "#C85A4F",
               color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px",
               border: "none", cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.5 : 1, marginTop: "8px",
@@ -509,7 +509,7 @@ export default function RegisterForm({ onSwitchToLogin, onClose, onMagicLink }: 
             disabled={isVerifying || userInputCode.length !== 6 || timeRemaining === 0}
             style={{
               width: "100%",
-              backgroundColor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "#e5a89f" : "#C85A4F",
+              backgroundColor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "#8B4A3D" : "#C85A4F",
               color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px",
               border: "none", cursor: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? "not-allowed" : "pointer",
               opacity: isVerifying || userInputCode.length !== 6 || timeRemaining === 0 ? 0.5 : 1, marginTop: "8px",
