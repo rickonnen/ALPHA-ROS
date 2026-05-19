@@ -399,11 +399,11 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
-        return first.id - second.id;
+        return new Date(first.publishedDateRaw || first.publishedDate).getTime() - new Date(second.publishedDateRaw || second.publishedDate).getTime();
       default:
         if (first.isPromoted && !second.isPromoted) return -1;
         if (!first.isPromoted && second.isPromoted) return 1;
-        return second.id - first.id;
+        return new Date(second.publishedDateRaw || second.publishedDate).getTime() - new Date(first.publishedDateRaw || first.publishedDate).getTime();
     }
   });
   return sorted;
@@ -499,6 +499,7 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
+    publishedDateRaw: publication.fecha_creacion,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,

@@ -44,6 +44,7 @@ export interface Property {
   discountPercent?: number;
   currencySymbol: string;
   publishedDate: string;
+  publishedDateRaw?: string;
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
@@ -319,6 +320,11 @@ function PropertyCard({
             {property.type}
           </span>
 
+          <p className="flex items-center gap-1 truncate text-[10px] text-gray-400 mb-0.5">
+            <CalendarDays className="h-3 w-3 shrink-0" />
+            <span className="truncate">{property.publishedDate}</span>
+          </p>
+
           <h3 className="mb-0.5 truncate text-[11px] font-semibold text-[#a67c52]">
             {property.title}
           </h3>
@@ -370,6 +376,15 @@ function PropertyCard({
             >
               {property.type}
             </span>
+
+            <p
+              className={`flex items-center gap-1 truncate text-gray-400 ${
+                isMapOpen ? "mt-0.5 text-[9px] xl:text-[10px]" : "mt-0.5 text-[11px]"
+              }`}
+            >
+              <CalendarDays className="h-3 w-3 shrink-0" />
+              <span className="truncate">{property.publishedDate}</span>
+            </p>
           </div>
 
           <div
