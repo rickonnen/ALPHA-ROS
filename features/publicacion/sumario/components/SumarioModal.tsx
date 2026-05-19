@@ -1,5 +1,6 @@
 'use client'
 
+// Componente de modal para mostrar el resumen de la publicación antes de confirmar.
 /**
  * Dev: Dylan Coca Beltran - xdev/sow-dylanc
  * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:

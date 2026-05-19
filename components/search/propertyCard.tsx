@@ -62,6 +62,7 @@ interface PropertyCardProps {
   onMouseLeave?: () => void;
   onClick?: () => void;
   isSelected?: boolean;
+  isCompareDisabled?: boolean;
   onToggleCompare?: () => void;
 }
 
@@ -108,6 +109,7 @@ function PropertyCard({
   onMouseLeave,
   onClick,
   isSelected = false,
+  isCompareDisabled = false,
   onToggleCompare,
 }: PropertyCardProps) {
   const { trackEvent } = useTracking();
@@ -262,15 +264,21 @@ function PropertyCard({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
+
+                if (isCompareDisabled) return;
+
                 onToggleCompare();
               }}
+              disabled={isCompareDisabled}
               className={`absolute top-1 right-1 z-[30] p-1.5 shrink-0 
                 rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 
                 ${!isMapOpen ? "flex sm:hidden" : "flex"} 
                 ${
                   isSelected
                     ? "bg-[#1a2b4c] text-white border border-[#1a2b4c]"
-                    : "bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    : isCompareDisabled
+                      ? "bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed opacity-70"
+                      : "bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50"
                 }`}
               title={
                 isSelected
@@ -466,7 +474,7 @@ function PropertyCard({
                     strokeWidth={2}
                   />
                   <span className="hidden text-[15px] sm:inline">
-                    COMPARAR
+                    {isCompareDisabled ? "LÍMITE" : "COMPARAR"}
                   </span>
                 </>
               )}
@@ -534,7 +542,7 @@ function PropertyCard({
                   className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                   strokeWidth={2.5}
                 />
-                <span>COMPARAR</span>
+                <span>{isCompareDisabled ? "LÍMITE" : "COMPARAR"}</span>
               </>
             )}
           </button>

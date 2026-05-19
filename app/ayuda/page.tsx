@@ -8,8 +8,7 @@ export const metadata: Metadata = {
 
 export default function AyudaPage() {
   return (
-    // Usamos el fondo Soft Sand Beige de tu paleta
-    <div className="min-h-full bg-background w-full flex-1 pb-16">
+      <div className="min-h-full bg-background w-full flex-1 pb-16">
       <div className="w-[90%] max-w-[1600px] mx-auto pt-8">
         <HelpContentClient />
       </div>
