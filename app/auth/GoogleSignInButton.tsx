@@ -65,7 +65,7 @@ export default function GoogleSignInButton({
       "Google Login",
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=no`
     );
-
+    
     popupRef.current = popup;
 
     checkPopupRef.current = setInterval(() => {

@@ -5,6 +5,9 @@ import { sign } from "jsonwebtoken";
 import { registrarSesionTelemetry } from "@/lib/auth/sessionTelemetry";
 import { randomBytes } from 'crypto';
 
+// sesiones de Mi Perfil
+import { registrarSesionDispositivo } from "@/lib/sesion-dispositivo";
+
 const PENDING_LOGIN_LAT_COOKIE = "pending_login_latitud";
 const PENDING_LOGIN_LNG_COOKIE = "pending_login_longitud";
 
@@ -19,6 +22,7 @@ const supabaseAdmin = createClient(
 );
 
 const prisma = new PrismaClient();
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -181,6 +185,19 @@ export async function POST(request: NextRequest) {
       latitud,
       longitud,
     });
+    // sesiones de Mi Perfil
+    const userAgent = request.headers.get("user-agent");
+    const ip = request.headers.get("x-forwarded-for") || 
+           request.headers.get("x-client-ip") || 
+           "unknown";
+
+    await registrarSesionDispositivo({
+      id_usuario: authData.user.id,
+      token_hash: sessionId,
+      ip,
+      user_agent: userAgent,
+    });
+    //////
 
     const jwtToken = sign(
       { userId: userData.id_usuario },  
