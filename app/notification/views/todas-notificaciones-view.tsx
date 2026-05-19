@@ -1,13 +1,13 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/app/auth/AuthContext";
 import { NotificationItem } from "@/app/home/components/notifications/NotificationItem";
+import { NotificationHeader } from "@/app/home/components/notifications/NotificationHeader";
 import { BellOff, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/app/home/components/notifications/ConfirmModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 
 type Notificacion = {
   id: string;
@@ -42,13 +42,15 @@ export function TodasNotificacionesView({ onClose }: Props) {
   const { user } = useAuth();
   const router = useRouter();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
-const [activeTab, setActiveTab] = useState<"todas" | "no-leidas" | "papelera">("todas");
-
-
-const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"todas" | "no-leidas" | "papelera">("todas");
+  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [trash, setTrash] = useState<Notificacion[]>([]);
-const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [pendingBulkIds, setPendingBulkIds] = useState<string[]>([]);
+  const skipNextTrashReload = useRef(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -91,8 +93,12 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || notificaciones.length === 0) return;
     const loadTrash = () => {
+      if (skipNextTrashReload.current) {
+        skipNextTrashReload.current = false;
+        return;
+      }
       const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
       if (!raw) { setTrash([]); return; }
       const saved = JSON.parse(raw);
@@ -109,40 +115,44 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
     return () => window.removeEventListener("trash-updated", loadTrash);
   }, [user?.id, notificaciones]);
 
- const handleDelete = (id: string) => {
+  useEffect(() => { setSelectedIds([]); }, [activeTab]);
+
+  const handleDelete = (id: string) => {
     const notif = notificaciones.find((n) => n.id === id);
     if (!notif) return;
-    const trashData: { id: string; read: boolean }[] = trash.map((n) => ({ id: n.id, read: n.read }));
-    if (!trashData.find((t) => t.id === id)) {
-      trashData.push({ id, read: notif.read });
-    }
-    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(trashData));
-    const evt = new Event("trash-updated");
-    (evt as any).detail = { type: "delete", id };
-    window.dispatchEvent(evt);
+    setTrash((prev) => {
+      if (prev.some((t) => t.id === id)) return prev;
+      const next = [notif, ...prev];
+      localStorage.setItem(`trash_notif_ids_${user?.id}`,
+        JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
+      window.dispatchEvent(new Event("trash-updated"));
+      return next;
+    });
   };
 
   const handleRestore = (id: string) => {
-    const remaining = trash.filter((n) => n.id !== id);
-    const trashData = remaining.map((n) => ({ id: n.id, read: n.read }));
-    localStorage.setItem(`trash_notif_ids_${user?.id}`, JSON.stringify(trashData));
-    const evt = new Event("trash-updated");
-    (evt as any).detail = { type: "restore", id };
-    window.dispatchEvent(evt);
+    setTrash((prev) => {
+      const remaining = prev.filter((n) => n.id !== id);
+      localStorage.setItem(`trash_notif_ids_${user?.id}`,
+        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
+      window.dispatchEvent(new Event("trash-updated"));
+      return remaining;
+    });
   };
 
   const handleEmptyTrash = async () => {
     const trashIds = trash.map((n) => n.id);
-    if (trashIds.length > 0) {
-      await Promise.all(
-        trashIds.map((id) =>
-          supabase.from("Notificacion").delete().eq("id_notificacion", id)
-        )
-      );
-    }
+    setNotificaciones((prev) => prev.filter((n) => !trashIds.includes(n.id)));
+    setTrash([]);
     localStorage.removeItem(`trash_notif_ids_${user?.id}`);
+    skipNextTrashReload.current = true;
     window.dispatchEvent(new Event("trash-updated"));
     setShowConfirmModal(false);
+    if (trashIds.length > 0) {
+      await Promise.all(
+        trashIds.map((id) => supabase.from("Notificacion").delete().eq("id_notificacion", id))
+      );
+    }
   };
 
   const handleRead = async (id: string) => {
@@ -158,12 +168,64 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
     window.dispatchEvent(new Event("refresh-notification-badge"));
   };
 
-  const sinPapelera = useMemo(() => notificaciones.filter(
-    (n) => !trash.some((t) => t.id === n.id)
-  ), [notificaciones, trash]);
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => setSelectedIds(visibles.map((n) => n.id));
+  const handleDeselectAll = () => setSelectedIds([]);
+
+  const handleBulkDelete = () => {
+    selectedIds.forEach((id) => handleDelete(id));
+    setSelectedIds([]);
+  };
+
+  const handleBulkMarkRead = async () => {
+    setNotificaciones((prev) =>
+      prev.map((n) => selectedIds.includes(n.id) ? { ...n, read: true } : n)
+    );
+    await supabase.from("Notificacion").update({ leido: true }).in("id_notificacion", selectedIds);
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+    setSelectedIds([]);
+  };
+
+  const handleBulkRestore = () => {
+    selectedIds.forEach((id) => handleRestore(id));
+    setSelectedIds([]);
+  };
+
+  const handleBulkDeleteFromTrash = () => {
+    setPendingBulkIds([...selectedIds]);
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDeleteFromTrash = async () => {
+    const ids = [...pendingBulkIds];
+    setSelectedIds([]);
+    setPendingBulkIds([]);
+    setShowBulkDeleteModal(false);
+    setNotificaciones((prev) => prev.filter((n) => !ids.includes(n.id)));
+    setTrash((prev) => {
+      const remaining = prev.filter((n) => !ids.includes(n.id));
+      localStorage.setItem(`trash_notif_ids_${user?.id}`,
+        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
+      return remaining;
+    });
+    skipNextTrashReload.current = true;
+    await Promise.all(
+      ids.map((id) => supabase.from("Notificacion").delete().eq("id_notificacion", id))
+    );
+  };
+
+  const sinPapelera = useMemo(() =>
+    notificaciones.filter((n) => !trash.some((t) => t.id === n.id)),
+    [notificaciones, trash]
+  );
 
   const unreadCount = useMemo(() => sinPapelera.filter((n) => !n.read).length, [sinPapelera]);
-  
+
   const visibles = useMemo(() => {
     if (activeTab === "papelera") return trash;
     if (activeTab === "no-leidas") return sinPapelera.filter((n) => !n.read);
@@ -171,12 +233,27 @@ const [showConfirmModal, setShowConfirmModal] = useState(false);
   }, [sinPapelera, activeTab, trash]);
 
   const mostrarMarcarTodas = activeTab === "no-leidas" && unreadCount > 0;
-const trashCount = trash.length;
+  const trashCount = trash.length;
+  const isTrashTab = activeTab === "papelera";
+
   return (
     <div className="min-h-screen bg-[#F2EDE4]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
 
-        {/* Header: botón + título + espaciador en la misma fila */}
+        <div className="mb-6 rounded-xl overflow-hidden shadow-sm">
+          <NotificationHeader
+            totalCount={sinPapelera.length}
+            selectedIds={selectedIds}
+            allIds={visibles.map((n) => n.id)}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
+            onBulkDelete={isTrashTab ? handleBulkDeleteFromTrash : handleBulkDelete}
+            onBulkMarkRead={isTrashTab ? undefined : handleBulkMarkRead}
+            isInTrash={isTrashTab}
+            onBulkRestore={isTrashTab ? handleBulkRestore : undefined}
+          />
+        </div>
+
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => { onClose?.(); router.push("/"); }}
@@ -184,16 +261,12 @@ const trashCount = trash.length;
           >
             ← Volver al inicio
           </button>
-
           <h1 className="text-[#2C4A5A] text-4xl font-black text-center tracking-widest uppercase flex-1 px-4">
             Todas las Notificaciones
           </h1>
-
-          {/* Espaciador para centrar el título */}
           <div className="flex-shrink-0 w-[160px]" />
         </div>
 
-        {/* Tabs + botones */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
           <div className="flex gap-2">
             <button
@@ -230,7 +303,7 @@ const trashCount = trash.length;
             <button
               onClick={() => setActiveTab("papelera")}
               className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold border-2 transition ${
-                activeTab === "papelera"
+                isTrashTab
                   ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
                   : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
               }`}
@@ -241,7 +314,6 @@ const trashCount = trash.length;
           </div>
         </div>
 
-        {/* Lista */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20 text-[#2C4A5A]/60 text-sm">
             Cargando notificaciones...
@@ -275,14 +347,17 @@ const trashCount = trash.length;
                 type={n.type}
                 onDelete={handleDelete}
                 onRead={handleRead}
-                isInTrash={activeTab === "papelera"}
+                isInTrash={isTrashTab}
                 onRestore={handleRestore}
+                isSelected={selectedIds.includes(n.id)}
+                onToggleSelect={handleToggleSelect}
+                selectionMode={selectedIds.length > 0}
               />
             ))}
           </div>
         )}
 
-        {activeTab === "papelera" && trash.length > 0 && (
+        {isTrashTab && trash.length > 0 && (
           <button
             onClick={() => setShowConfirmModal(true)}
             className="text-sm text-red-500 hover:text-red-700 hover:underline transition font-bold mt-4"
@@ -295,6 +370,12 @@ const trashCount = trash.length;
           isOpen={showConfirmModal}
           onConfirm={handleEmptyTrash}
           onCancel={() => setShowConfirmModal(false)}
+        />
+
+        <ConfirmModal
+          isOpen={showBulkDeleteModal}
+          onConfirm={confirmBulkDeleteFromTrash}
+          onCancel={() => { setShowBulkDeleteModal(false); setPendingBulkIds([]); }}
         />
       </div>
     </div>
