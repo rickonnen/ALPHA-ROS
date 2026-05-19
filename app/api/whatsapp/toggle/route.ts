@@ -24,18 +24,34 @@ export async function POST(req: Request) {
 
     const now = new Date().toISOString();
 
-    const { data: pref, error: prefError } = await supabaseAdmin
+    const { data: pref, error } = await supabaseAdmin
       .from("PreferenciaNotificacionCanal")
-      .select("*")
+      .select(`
+        id_preferencia,
+        activo,
+        verificado,
+        fecha_activacion,
+        id_telefono,
+        Telefono:id_telefono (
+          id_telefono,
+          codigo_pais,
+          nro_telefono,
+          verificado
+        )
+      `)
       .eq("id_usuario", userId)
       .eq("canal", "WHATSAPP")
       .maybeSingle();
 
-    if (prefError) {
-      throw prefError;
+    if (error) {
+      throw error;
     }
 
-    if (!pref || !pref.id_telefono || !pref.verificado) {
+    const telefono = Array.isArray(pref?.Telefono)
+      ? pref.Telefono[0]
+      : pref?.Telefono;
+
+    if (!pref || !pref.id_telefono || !pref.verificado || !telefono?.verificado) {
       return NextResponse.json(
         {
           ok: false,
@@ -43,16 +59,6 @@ export async function POST(req: Request) {
         },
         { status: 400 }
       );
-    }
-
-    const { data: telefono, error: telefonoError } = await supabaseAdmin
-      .from("Telefono")
-      .select("*")
-      .eq("id_telefono", pref.id_telefono)
-      .single();
-
-    if (telefonoError) {
-      throw telefonoError;
     }
 
     const phoneE164 = buildPhoneE164(
