@@ -16,6 +16,7 @@ import { ContactCardDesktop } from "./ContactCardDesktop";
 import { ContactCardMobile } from "./ContactCardMobile";
 
 export interface ContactoProps {
+  id_publicacion: number;
   objPropietario: {
     strNombres: string;
     strApellidos: string;

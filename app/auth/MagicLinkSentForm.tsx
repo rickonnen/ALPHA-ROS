@@ -91,7 +91,7 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
         onClick={handleResend}
         style={{
           width: "100%",
-          backgroundColor: resent ? "#16a34a" : resending ? "#e5a89f" : "#C26E5A",
+          backgroundColor: resent ? "#16a34a" : resending ? "#8B4A3D" : "#C26E5A",
           color: "white",
           fontWeight: "bold",
           fontSize: "14px",

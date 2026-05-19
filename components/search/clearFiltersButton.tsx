@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 
 interface ClearFiltersButtonProps {
   hasActiveFilters: boolean;
+  activeFiltersCount: number;
   onClear: () => void;
 }
 
 export function ClearFiltersButton({
   hasActiveFilters,
+  activeFiltersCount,
   onClear,
 }: ClearFiltersButtonProps) {
   return (
@@ -20,11 +22,16 @@ export function ClearFiltersButton({
       onClick={onClear}
       aria-label="Limpiar todos los filtros aplicados"
       className={cn(
-        "w-full",
+        "w-full gap-2",
         !hasActiveFilters && "text-gray-400"
       )}
     >
-      Limpiar filtros
+      <span>
+        Limpiar filtros
+        {activeFiltersCount > 0 && (
+          <span className="ml-1">({activeFiltersCount})</span>
+        )}
+      </span>
     </Button>
   );
 }

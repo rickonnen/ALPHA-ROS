@@ -99,7 +99,7 @@ function SubDropdown({
   const handleOptionKeyDown = (
     event: KeyboardEvent<HTMLButtonElement>,
     index: number,
-    optionValue: string
+    optionValue: string,
   ) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -206,7 +206,7 @@ function SubDropdown({
                     "focus:ring-2 focus:ring-[#1F3A4D] focus:ring-offset-2",
                     checked
                       ? "bg-[#E7E3DD] text-[#2E2E2E]"
-                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]"
+                      : "bg-transparent text-[#2E2E2E] hover:bg-[#F4EFE6]",
                   )}
                 >
                   <span
@@ -214,13 +214,13 @@ function SubDropdown({
                       "flex h-[18px] w-[18px] items-center justify-center rounded-lg border transition",
                       checked
                         ? "border-[#6B6B6B] bg-white"
-                        : "border-[#8A847C] bg-white"
+                        : "border-[#8A847C] bg-white",
                     )}
                   >
                     <span
                       className={cn(
                         "h-[8px] w-[8px] rounded-lg bg-[#1F3A4D] transition",
-                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                        checked ? "scale-100 opacity-100" : "scale-0 opacity-0",
                       )}
                     />
                   </span>
@@ -237,11 +237,13 @@ function SubDropdown({
 }
 
 interface AdvancedFiltersValues {
-  habitaciones: string;
-  banos: string;
-  piscina: string;
-  minSurface: string;
-  maxSurface: string;
+  habitaciones?: string;
+  banos?: string;
+  piscina?: string;
+  minSurface?: number;
+  maxSurface?: number;
+  caracteristicasIds?: number[];
+  soloOfertas?: boolean;
 }
 
 interface Props {
@@ -255,8 +257,15 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
   const [habitaciones, setHabitaciones] = useState(value?.habitaciones ?? "");
   const [banos, setBanos] = useState(value?.banos ?? "");
   const [piscina, setPiscina] = useState(value?.piscina ?? "");
-  const [minSurface, setMinSurface] = useState(value?.minSurface ?? "");
-  const [maxSurface, setMaxSurface] = useState(value?.maxSurface ?? "");
+
+  const [minSurface, setMinSurface] = useState(
+    value?.minSurface?.toString() ?? "",
+  );
+  const [maxSurface, setMaxSurface] = useState(
+    value?.maxSurface?.toString() ?? "",
+  );
+
+  const [soloOfertas, setSoloOfertas] = useState(value?.soloOfertas ?? false);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -265,26 +274,59 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
     setHabitaciones(value?.habitaciones ?? "");
     setBanos(value?.banos ?? "");
     setPiscina(value?.piscina ?? "");
-    setMinSurface(value?.minSurface ?? "");
-    setMaxSurface(value?.maxSurface ?? "");
+    setMinSurface(value?.minSurface?.toString() ?? "");
+    setMaxSurface(value?.maxSurface?.toString() ?? "");
+    setSoloOfertas(value?.soloOfertas ?? false);
   }, [
     value?.habitaciones,
     value?.banos,
     value?.piscina,
     value?.minSurface,
     value?.maxSurface,
+    value?.soloOfertas,
   ]);
 
+  const parseSurface = (val: string) => {
+    if (val === "") return undefined;
+
+    const parsed = Number(val);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
   const actualizar = (
-    campo: "habitaciones" | "banos" | "piscina" | "minSurface" | "maxSurface",
-    valor: string
+    campo:
+      | "habitaciones"
+      | "banos"
+      | "piscina"
+      | "minSurface"
+      | "maxSurface"
+      | "soloOfertas",
+    nuevoValor: string | boolean,
   ) => {
+    const nextHabitaciones =
+      campo === "habitaciones" ? String(nuevoValor) : habitaciones;
+
+    const nextBanos = campo === "banos" ? String(nuevoValor) : banos;
+
+    const nextPiscina = campo === "piscina" ? String(nuevoValor) : piscina;
+
+    const nextMinSurface =
+      campo === "minSurface" ? String(nuevoValor) : minSurface;
+
+    const nextMaxSurface =
+      campo === "maxSurface" ? String(nuevoValor) : maxSurface;
+
+    const nextSoloOfertas =
+      campo === "soloOfertas" ? Boolean(nuevoValor) : soloOfertas;
+
     onChange({
-      habitaciones: campo === "habitaciones" ? valor : habitaciones,
-      banos: campo === "banos" ? valor : banos,
-      piscina: campo === "piscina" ? valor : piscina,
-      minSurface: campo === "minSurface" ? valor : minSurface,
-      maxSurface: campo === "maxSurface" ? valor : maxSurface,
+      habitaciones: nextHabitaciones,
+      banos: nextBanos,
+      piscina: nextPiscina,
+      minSurface: parseSurface(nextMinSurface),
+      maxSurface: parseSurface(nextMaxSurface),
+      caracteristicasIds: value?.caracteristicasIds ?? [],
+      soloOfertas: nextSoloOfertas,
     });
   };
 
@@ -333,8 +375,10 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
       habitaciones,
       banos,
       piscina,
-      minSurface: "",
-      maxSurface: "",
+      minSurface: undefined,
+      maxSurface: undefined,
+      caracteristicasIds: value?.caracteristicasIds ?? [],
+      soloOfertas,
     });
   };
 
@@ -344,7 +388,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
         type="single"
         collapsible
         value={abierto ? "advanced" : ""}
-        onValueChange={(value) => setAbierto(value === "advanced")}
+        onValueChange={(val) => setAbierto(val === "advanced")}
         className="w-full"
       >
         <AccordionItem value="advanced" className="border-none">
@@ -352,7 +396,7 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
             <AccordionTrigger
               className={cn(
                 "w-full px-4 py-3 text-left text-sm font-normal text-[#2E2E2E] hover:no-underline",
-                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]"
+                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-[#4B4B4B]",
               )}
             >
               Avanzado
@@ -391,6 +435,43 @@ export default function FiltrosAvanzado({ onChange, value }: Props) {
                   actualizar("piscina", v);
                 }}
               />
+
+              <div className="rounded-lg border border-[#C8C0B5] bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#2E2E2E]">
+                      Solo ofertas
+                    </p>
+                    <p className="text-xs text-[#6B6258]">
+                      Mostrar propiedades con precio rebajado
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={soloOfertas}
+                    onClick={() => {
+                      const nextValue = !soloOfertas;
+                      setSoloOfertas(nextValue);
+                      actualizar("soloOfertas", nextValue);
+                    }}
+                    className={cn(
+                      "relative h-6 w-11 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#C26E5A] focus:ring-offset-2",
+                      soloOfertas ? "bg-[#C26E5A]" : "bg-gray-300",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute left-[1px] top-[2px] h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        soloOfertas
+                          ? "translate-x-[22px]"
+                          : "translate-x-[2px]",
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
 
               <SurfaceRangeDropdown
                 minValue={minSurface}

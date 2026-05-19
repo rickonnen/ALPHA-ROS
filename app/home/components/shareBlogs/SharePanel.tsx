@@ -1,6 +1,4 @@
-"use client";
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./ShareBlog.module.css";
 import {
   CopyLinkIcon,
@@ -34,6 +32,9 @@ interface SharePanelProps {
   triggerRect: DOMRect | null;
 }
 
+const GAP = 8;
+const MARGIN = 12;
+
 const SharePanel: React.FC<SharePanelProps> = ({
   isExiting,
   networks,
@@ -42,35 +43,63 @@ const SharePanel: React.FC<SharePanelProps> = ({
   onShare,
   triggerRect,
 }) => {
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Posición dinámica ajustada para abrir hacia la derecha
-  const positionStyle: React.CSSProperties = triggerRect
-    ? {
-        position: "absolute",
-        top: `${triggerRect.top + window.scrollY - 12}px`, 
-        left: `${triggerRect.left + window.scrollX}px`, // Alinea borde izquierdo con borde izquierdo
-        transform: "translate(0, -100%)", // Solo sube, ya no se desplaza a la izquierda
-        zIndex: 9999, 
-      }
-    : { display: "none" };
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+
+    check();
+    window.addEventListener("resize", check);
+
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (!triggerRect) return null;
+
+  const bottomFromViewport = window.innerHeight - triggerRect.top + GAP;
+  const buttonCenterX = triggerRect.left + triggerRect.width / 2;
+
+  // ── Desktop ──────────────────────────────────────────────────────────────
+  const desktopWidth = 360;
+  const idealLeft = triggerRect.left;
+  const minLeft = MARGIN;
+  const maxLeft = window.innerWidth - desktopWidth - MARGIN;
+  const finalLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
+  const arrowLeft = `${buttonCenterX - finalLeft}px`;
+
+  const desktopStyle: React.CSSProperties = {
+    position: "fixed",
+    bottom: bottomFromViewport,
+    left: finalLeft,
+    zIndex: 9999,
+  };
+
+  // ── Móvil ────────────────────────────────────────────────────────────────
+  const mobileStyle: React.CSSProperties = {
+    position: "fixed",
+    bottom: bottomFromViewport,
+    left: MARGIN,
+    right: MARGIN,
+    zIndex: 9999,
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Opciones para compartir este blog"
-      style={positionStyle}
+      style={isMobile ? mobileStyle : desktopStyle}
       className={[
         styles.panel,
         isExiting ? styles.panelExiting : "",
-        "bg-white border border-gray-100 rounded-2xl shadow-xl",
-        "px-4 py-3 w-max max-w-xs",
+        "bg-white border border-gray-100 rounded-2xl shadow-xl px-4 py-3",
+        isMobile ? "max-w-[calc(100vw-24px)]" : "w-[360px]",
       ]
         .filter(Boolean)
         .join(" ")}
     >
       {/* ── Encabezado ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-3 gap-6">
+      <div className="flex items-center justify-between mb-3 gap-4">
         <span
           className="text-xs font-semibold text-gray-400 uppercase tracking-widest"
           style={{ fontFamily: "Geist, sans-serif" }}
@@ -83,23 +112,25 @@ const SharePanel: React.FC<SharePanelProps> = ({
           aria-label="Cerrar panel de compartir"
           className={[
             styles.iconButton,
-            "flex items-center justify-center w-6 h-6 rounded-full",
-            "text-gray-400 hover:text-gray-700 hover:bg-gray-100",
-            "transition-colors",
+            "flex items-center justify-center w-6 h-6 rounded-full shrink-0",
+            "text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors",
           ].join(" ")}
         >
           <CloseIcon className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* ── Grid de íconos ──────────────────────────────────────────── */}
+      {/* ── Íconos ──────────────────────────────────────────────────── */}
       <div
-        className="flex items-center gap-2"
+        className={[
+          "flex flex-wrap items-center justify-start gap-2.5",
+          "max-w-full",
+        ].join(" ")}
         role="list"
-        aria-label="Redes sociales disponibles"
       >
+        {/* Copiar enlace */}
         <div
-          className={styles.iconWrapper}
+          className={`${styles.iconWrapper} shrink-0`}
           data-tooltip="Copiar enlace"
           role="listitem"
         >
@@ -109,22 +140,25 @@ const SharePanel: React.FC<SharePanelProps> = ({
             tabIndex={0}
             className={[
               styles.iconButton,
-              "flex items-center justify-center w-10 h-10 rounded-xl",
+              "flex items-center justify-center rounded-xl shrink-0",
               "bg-gray-100 text-gray-600 hover:bg-gray-200",
+              isMobile ? "w-9 h-9" : "w-10 h-10",
             ].join(" ")}
           >
-            <CopyLinkIcon className="w-4.5 h-4.5 w-[18px] h-[18px]" />
+            <CopyLinkIcon className="w-[17px] h-[17px]" />
           </button>
         </div>
 
+        {/* Redes sociales */}
         {networks.map((network) => {
           const IconComponent = ICON_MAP[network.id];
+
           if (!IconComponent) return null;
 
           return (
             <div
               key={network.id}
-              className={styles.iconWrapper}
+              className={`${styles.iconWrapper} shrink-0`}
               data-tooltip={network.label}
               role="listitem"
             >
@@ -134,28 +168,28 @@ const SharePanel: React.FC<SharePanelProps> = ({
                 tabIndex={0}
                 className={[
                   styles.iconButton,
-                  "flex items-center justify-center w-10 h-10 rounded-xl",
+                  "flex items-center justify-center rounded-xl shrink-0",
+                  isMobile ? "w-9 h-9" : "w-10 h-10",
                 ].join(" ")}
                 style={{
                   backgroundColor: network.color,
                   color: network.textColor,
                 }}
               >
-                <IconComponent className="w-[18px] h-[18px]" />
+                <IconComponent className="w-[17px] h-[17px]" />
               </button>
             </div>
           );
         })}
       </div>
 
-      {/* ── Flecha decorativa (Ajustada dinámicamente al centro del botón) ── */}
+      {/* ── Flecha decorativa ────────────────────────────────────────── */}
       <div
         aria-hidden="true"
         className="absolute -bottom-[7px] w-3 h-3 bg-white border-r border-b border-gray-100"
-        style={{ 
-          // Calculamos la mitad del ancho del botón para posicionar la flecha
-          left: triggerRect ? `${triggerRect.width / 2}px` : '20px', 
-          transform: 'translateX(-50%) rotate(45deg)' 
+        style={{
+          left: isMobile ? `${buttonCenterX - MARGIN}px` : arrowLeft,
+          transform: "translateX(-50%) rotate(45deg)",
         }}
       />
     </div>

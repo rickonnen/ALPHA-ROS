@@ -67,7 +67,6 @@ export async function POST(req: NextRequest) {
       });
       return { pagoActualizado, nuevaNotificacion };
     });
-    console.log("hola")
     if (decision === "ACEPTAR") {
       try {
         const pdfBuffer = await generarComprobantePDF({

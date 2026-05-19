@@ -4,7 +4,7 @@ import { PaymentRecord } from "./paymentTypes"
 
 const TableSkeleton = ({ strStatus }: { strStatus: string }) => {
 
-  const intTotalCells = strStatus === 'Aceptado' ? 5 : 6;
+  const intTotalCells = strStatus === 'Pendiente' ? 7 : 6;
 
   return (
     <>
@@ -54,6 +54,11 @@ export function PaymentDesktopTable({
                         <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[25%] border-r border-border">Cliente</TableHead>
                         <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] border-r border-border">Tipo de Plan</TableHead>
                         <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[15%] border-r border-border">Fecha</TableHead>
+                        {(strStatus === 'Pendiente' || strStatus === 'Aceptado') && (
+                          <TableHead className="h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[15%] border-r border-border">
+                            Vigente Hasta
+                          </TableHead>
+                        )}
                         <TableHead className={`h-12 px-6 text-xs font-bold tracking-wider text-muted-foreground uppercase w-[20%] ${strStatus !== 'Aceptado' ? 'border-r border-border' : ''}`}>Método de Pago</TableHead>
 
                         {strStatus === 'Pendiente' && (
@@ -74,7 +79,7 @@ export function PaymentDesktopTable({
               ) : arrData.length === 0 ? (
                 <TableRow>
                   <TableCell 
-                    colSpan={strStatus === 'Aceptado' ? 5 : 6} 
+                    colSpan={strStatus === 'Aceptado' ? 6 : 7} 
                     className="text-center py-16 text-muted-foreground font-medium italic"
                   >
                     No existen registros en esta categoría.
@@ -87,6 +92,11 @@ export function PaymentDesktopTable({
                     <TableCell className="px-6 py-4 font-medium text-foreground border-r border-border truncate max-w-[250px]">{objPayment.strClientName}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border truncate max-w-[200px]">{objPayment.strPlanType}</TableCell>
                     <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">{objPayment.strDate}</TableCell>
+                    {(strStatus === 'Pendiente' || strStatus === 'Aceptado') && (
+                      <TableCell className="px-6 py-4 text-muted-foreground border-r border-border">
+                        {objPayment.strValidUntil}
+                      </TableCell>
+                    )}
                     <TableCell className={`px-6 py-4 text-muted-foreground truncate max-w-[200px] ${strStatus !== 'Aceptado' ? 'border-r border-border' : ''}`}>
                       <div className="flex flex-col gap-1">
                         <span className="text-muted-foreground">{objPayment.strPaymentMethod}</span>

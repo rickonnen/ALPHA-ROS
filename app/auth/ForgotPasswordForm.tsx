@@ -42,30 +42,30 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <button onClick={onBack} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#B47B65", display: "flex", alignItems: "center" }}>
+        <button onClick={onBack} className="bg-transparent border-none cursor-pointer text-[#B47B65] flex items-center">
           <ArrowLeft size={20} />
         </button>
-        <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>Recuperar cuenta</h2>
+        <h2 className="text-[22px] font-bold text-slate-900 dark:text-slate-100" style={{ margin: 0 }}>Recuperar cuenta</h2>
       </div>
-      <p style={{ fontSize: "13px", color: "#6b7280", textAlign: "center", margin: 0 }}>
+      <p className="text-[13px] text-slate-500 dark:text-slate-400 text-center" style={{ margin: 0 }}>
         Ingresa tu correo y te enviaremos un código de 6 dígitos para restablecer tu contraseña.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase" }}>Correo electrónico</label>
-        <div style={{ display: "flex", alignItems: "center", border: `1px solid ${error ? "#ef4444" : "#d1d5db"}`, borderRadius: "6px", padding: "10px 12px", gap: "10px", backgroundColor: error ? "#fee2e2" : "white" }}>
-          <Mail size={18} style={{ color: "#9ca3af" }} />
+        <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Correo electrónico</label>
+        <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${error ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+          <Mail size={18} className="text-slate-400" />
           <input
             type="email"
             placeholder="usuario@ejemplo.com"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            style={{ width: "100%", fontSize: "14px", outline: "none", border: "none", backgroundColor: "transparent" }}
+            className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
           />
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>{error}</p>}
       </div>
-      <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", backgroundColor: loading ? "#e5a89f" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontSize: "14px" }}>
+      <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", backgroundColor: loading ? "#8B4A3D" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontSize: "14px" }}>
         {loading ? "Enviando..." : "Enviar código"}
       </button>
     </div>

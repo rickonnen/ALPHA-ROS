@@ -8,18 +8,29 @@ export async function GET(request: Request) {
     //el searchparams obtiene 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+    const idPublicacionStr = searchParams.get("idPublicacion");
 
     if (!userId) {
       return NextResponse.json({ error: "Falta el ID de usuario" }, { status: 400 });
     }
 
+    // Estructuramos el filtro base manteniendo el comportamiento esperado
+    let consultaWhere: any = {
+      id_usuario: userId,
+      estado: 1, 
+    };
+
+    // Validamos de forma estricta si el ID corresponde a una publicación válida
+    if (idPublicacionStr && idPublicacionStr !== "null" && idPublicacionStr !== "undefined" && idPublicacionStr !== "") {
+      consultaWhere.id_publicacion = parseInt(idPublicacionStr, 10);
+    } else {
+      consultaWhere.id_publicacion = null;
+    }
+
     //llamamos aca a prisma y que busque el PRIMER DATO que tenga el id correspondiente y que el estado sea 1 (pendiente)
     //pago pendiente tendra tanto el valor de id, como el valor de estado osea un 2x1
     const pagoPendiente = await prisma.detallePago.findFirst({
-      where: {
-        id_usuario: userId,
-        estado: 1, 
-      },
+      where: consultaWhere,
     });
     //aqui se devolvera la variable estado, si encontro algo la variable estado tendra el valor del pagopendiente(id y estado)
     //si la variable pagopendiente no encontro nada, devuelve un null

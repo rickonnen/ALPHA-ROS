@@ -11,6 +11,7 @@ export async function getPlanesPublicacion(): Promise<PlanPublicacion[]> {
     const planes = await prisma.planPublicacion.findMany({
       where: {
         activo: true,
+        tipo: true,
       },
       orderBy: {
         precio_plan: "asc",

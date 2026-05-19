@@ -159,7 +159,7 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
       {expired && <p style={{ fontSize: "12px", color: "#ef4444", margin: 0, textAlign: "center" }}>El código ha expirado. Solicita uno nuevo.</p>}
       {error && <p style={{ color: "#ef4444", fontSize: "13px", textAlign: "center", margin: 0, padding: "8px", backgroundColor: "#fee2e2", borderRadius: "6px" }}>{error}</p>}
 
-      <button onClick={handleVerify} disabled={loading || expired} style={{ width: "100%", backgroundColor: loading || expired ? "#e5a89f" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading || expired ? "not-allowed" : "pointer", opacity: loading || expired ? 0.7 : 1, fontSize: "14px" }}>
+      <button onClick={handleVerify} disabled={loading || expired} style={{ width: "100%", backgroundColor: loading || expired ? "#8B4A3D" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading || expired ? "not-allowed" : "pointer", opacity: loading || expired ? 0.7 : 1, fontSize: "14px" }}>
         {loading ? "Verificando..." : "Verificar código"}
       </button>
 

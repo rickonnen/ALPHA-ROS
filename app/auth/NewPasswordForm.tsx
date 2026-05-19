@@ -149,7 +149,7 @@ export default function NewPasswordForm({ email, onBack, onSuccess }: NewPasswor
       </div>
 
       <button onClick={handleSave} disabled={loading} style={{
-        width: "100%", backgroundColor: loading ? "#e5a89f" : "#C85A4F",
+        width: "100%", backgroundColor: loading ? "#8B4A3D" : "#C85A4F",
         color: "white", fontWeight: "bold", padding: "12px",
         borderRadius: "6px", border: "none",
         cursor: loading ? "not-allowed" : "pointer",

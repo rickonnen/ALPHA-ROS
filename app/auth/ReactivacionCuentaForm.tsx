@@ -159,18 +159,8 @@ export default function ReactivacionCuentaForm({
         <button
           type="button"
           onClick={onBack}
+          className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[11px] font-bold uppercase tracking-[0.5px] text-slate-500 dark:text-slate-400"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            backgroundColor: "transparent",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "11px",
-            fontWeight: "700",
-            color: "#888",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
             padding: "0",
             marginBottom: "20px",
           }}
@@ -182,37 +172,24 @@ export default function ReactivacionCuentaForm({
         {/* Título del panel */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
           <div
-            style={{
-              width: "36px",
-              height: "36px",
-              backgroundColor: "#1F3A4D22",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
+            className="flex items-center justify-center shrink-0 w-9 h-9 rounded-full bg-[#1F3A4D22] dark:bg-slate-600/40"
           >
-            <Clock size={18} color="#1F3A4D" />
+            <Clock size={18} className="text-[#1F3A4D] dark:text-slate-200" />
           </div>
           <div>
             <h2
-              style={{
-                fontSize: "20px",
-                fontWeight: "800",
-                color: "#1F3A4D",
-                margin: "0 0 2px 0",
-              }}
+              className="text-[20px] font-extrabold text-slate-900 dark:text-slate-100"
+              style={{ margin: "0 0 2px 0" }}
             >
               {step === "success" ? "Solicitud Enviada" : "Reactivación de cuenta"}
             </h2>
-            <p style={{ fontSize: "12px", color: "#888", margin: 0 }}>
+            <p className="text-xs text-slate-500 dark:text-slate-400" style={{ margin: 0 }}>
               Reactiva tu cuenta.
             </p>
           </div>
         </div>
 
-        <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "16px 0 0 0" }} />
+        <hr className="border-t border-slate-200 dark:border-slate-600" style={{ margin: "16px 0 0 0" }} />
       </div>
 
       {/* ── PANTALLA DE ÉXITO (CA-7, CA-8) ── */}
@@ -325,7 +302,7 @@ export default function ReactivacionCuentaForm({
           )}
 
           {/* Instrucciones CA-4 */}
-          <p style={{ margin: 0, fontSize: "13px", color: "#555", lineHeight: "1.6" }}>
+          <p className="text-[13px] text-slate-600 dark:text-slate-300" style={{ margin: 0, lineHeight: "1.6" }}>
             Para reactivar tu cuenta, completa el formulario. Te enviaremos un
             correo de confirmación y nuestro equipo de soporte procesará tu
             solicitud en un plazo máximo de <strong>24 horas</strong>.
@@ -333,30 +310,13 @@ export default function ReactivacionCuentaForm({
 
           {/* Tipo de cuenta CA-17 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label
-              style={{
-                fontSize: "11px",
-                fontWeight: "700",
-                color: "#374151",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
+            <label className="text-[11px] font-bold uppercase tracking-[0.5px] text-slate-700 dark:text-slate-300">
               Tipo de cuenta
             </label>
             <select
               value={tipoCuenta}
               onChange={(e) => setTipoCuenta(e.target.value)}
-              style={{
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                padding: "10px 12px",
-                fontSize: "13px",
-                color: "#333",
-                backgroundColor: "white",
-                outline: "none",
-                cursor: "pointer",
-              }}
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] text-slate-900 outline-none cursor-pointer dark:border-slate-600 dark:bg-[#3a3a3a] dark:text-slate-100"
             >
               {TIPOS_CUENTA.map((tipo) => (
                 <option key={tipo} value={tipo}>
@@ -368,43 +328,20 @@ export default function ReactivacionCuentaForm({
 
           {/* Email de la cuenta desactivada CA-5, CA-6 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label
-              style={{
-                fontSize: "11px",
-                fontWeight: "700",
-                color: "#374151",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
+            <label className="text-[11px] font-bold uppercase tracking-[0.5px] text-slate-700 dark:text-slate-300">
               Email de la cuenta desactivada
             </label>
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                border: `1px solid ${emailError ? "#ef4444" : "#d1d5db"}`,
-                borderRadius: "6px",
-                padding: "10px 12px",
-                gap: "10px",
-                backgroundColor: emailError ? "#fee2e2" : "#1F3A4D",
-              }}
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${emailError ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}
             >
-              <Mail size={16} color={emailError ? "#ef4444" : "#94a3b8"} />
+              <Mail size={16} className={emailError ? "text-red-500" : "text-slate-400"} />
               <input
                 type="email"
                 placeholder="tu@correo.com"
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
                 onBlur={() => setEmailError(validateEmail(email))}
-                style={{
-                  width: "100%",
-                  fontSize: "13px",
-                  outline: "none",
-                  border: "none",
-                  backgroundColor: "transparent",
-                  color: emailError ? "#333" : "white",
-                }}
+                className="w-full text-[13px] text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
               />
             </div>
             {/* CA-5: mensaje de error de validación */}
@@ -417,47 +354,23 @@ export default function ReactivacionCuentaForm({
 
           {/* Motivo (opcional) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label
-              style={{
-                fontSize: "11px",
-                fontWeight: "700",
-                color: "#374151",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
+            <label className="text-[11px] font-bold uppercase tracking-[0.5px] text-slate-700 dark:text-slate-300">
               Motivo de la desactivación{" "}
-              <span style={{ fontWeight: "400", color: "#9ca3af" }}>(opcional)</span>
+              <span className="font-normal text-slate-400 dark:text-slate-500">(opcional)</span>
             </label>
             <textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               placeholder="Ej: Solicité la desactivación por error..."
               rows={3}
-              style={{
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                padding: "10px 12px",
-                fontSize: "13px",
-                color: "#333",
-                resize: "none",
-                outline: "none",
-                fontFamily: "inherit",
-              }}
+              className="w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none dark:border-slate-600 dark:bg-[#3a3a3a] dark:text-slate-100 dark:placeholder:text-slate-400"
             />
           </div>
 
           {/* Error de API */}
           {apiError && (
             <div
-              style={{
-                backgroundColor: "#fee2e2",
-                border: "1px solid #fecaca",
-                borderRadius: "6px",
-                padding: "12px 14px",
-                fontSize: "13px",
-                color: "#ef4444",
-              }}
+              className="rounded-md border border-red-200 bg-red-100 px-3.5 py-3 text-[13px] text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
             >
               {apiError}
             </div>
@@ -474,7 +387,7 @@ export default function ReactivacionCuentaForm({
               borderRadius: "8px",
               border: "none",
               backgroundColor:
-                !isFormValid() ? "#C26E5A88" : "#C26E5A",
+                !isFormValid() ? "#8B4A3D" : "#C26E5A",
               color: "white",
               fontWeight: "700",
               fontSize: "14px",

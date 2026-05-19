@@ -34,7 +34,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
     <div className="fixed inset-0 z-[100] flex justify-end">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-6 flex flex-col">
+      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] dark:bg-[#2b2b2b] shadow-2xl p-6 flex flex-col">
       <div className="flex justify-between items-center">
           <magicLink.BackButton />
         
@@ -51,16 +51,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
 
 
         {screen === "auth" && (
-          <div className="flex gap-4 mt-12 mb-8 justify-center bg-white p-1 rounded-full shadow-sm">
+          <div className="flex gap-4 mt-12 mb-8 justify-center bg-white dark:bg-[#3a3a3a] p-1 rounded-full shadow-sm">
             <button
               onClick={() => setIsLogin(true)}
-              className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#1C3445] text-white' : 'text-gray-400'}`}
+              className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#1C3445] text-white dark:bg-[#C26E5A] dark:text-white' : 'text-gray-400 dark:text-slate-300'}`}
             >
               Iniciar sesión
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#1C3445] text-white' : 'text-gray-400'}`}
+              className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#1C3445] text-white dark:bg-[#C26E5A] dark:text-white' : 'text-gray-400 dark:text-slate-300'}`}
             >
               Crear cuenta
             </button>

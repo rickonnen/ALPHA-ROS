@@ -7,13 +7,13 @@ export type EstadoModal =
   | "cerrado"
   | "confirmacion_pago"
   | "verificando_pago"
-  | "pendiente_pago";
+  | "pendiente_pago"
+  | "pago_completado"
+  | "pago_rechazado";
 
-type PlanPago = Omit<PlanPublicacion, "precio_plan"> & {
-  precio_plan: number;
-};
 
-export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string) {
+
+export function usePagoCliente(planId: string, modalidad: string, idPublicacion: string | null) {
   const { user } = useAuth();
   const router = useRouter();
   
@@ -39,8 +39,8 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     //usuario no logueado termina aca el proceso, el user se toma del token de useAuth()
     if (!user?.id) return;
     try {
-      //aqui se invoca 
-      const res = await fetch(`/api/cobros/estado?userId=${user.id}`);
+      //aqui se invoca incluyendo de forma limpia el id de la publicacion si existe
+      const res = await fetch(`/api/cobros/estado?userId=${user.id}&idPublicacion=${idPublicacion || ""}`);
       //los datos del GET se convierten en data en un .json, como no necesitamos url de imagenes, no usamos formdata
       //recordatorio, aqui se tiene dos datos:  "id" y "estado"
       const data = await res.json();
@@ -53,7 +53,7 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     }finally {
       setEstaCargandoEstado(false); 
     }
-  }, [user?.id]);
+  }, [user?.id, idPublicacion]);
 
   
   useEffect(() => {
@@ -104,6 +104,11 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     formData.append("id_usuario", user.id);
     formData.append("id_plan", planId);
     formData.append("tiempo_pago", modalidad);
+    const urlParams = new URLSearchParams(window.location.search);
+    const idPub = urlParams.get('idPublicacion');
+    if (idPublicacion) {
+      formData.append("id_publicacion", idPublicacion);
+    }
     const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
     formData.append("mes_pago", nombreMes);
 
@@ -138,19 +143,72 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `QR_Plan_${plan.nombre_plan}.png`;
+    link.download = `codigoQR.png`;
     link.click();
   };
+
+  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
-      if (file.type.startsWith("image/")) setArchivoSeleccionado(file);
-      else alert("Selecciona una imagen (JPG/PNG)");
+      if (file.type.startsWith("image/")) {
+        setArchivoSeleccionado(file);
+        
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        alert("Selecciona una imagen (JPG/PNG)");
+      }
     }
   };
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
-  const irAlPerfil = () => router.push(`/perfil?id=${user?.id}`);
+  //para las cripts
+  const [datosCrypto, setDatosCrypto] = useState<{
+    address: string;
+    amount: number;
+    paymentId: string;
+  } | null>(null);
+  const [cargandoCrypto, setCargandoCrypto] = useState(false);
+
+  // Función para llamar a la api nowpayments
+  const iniciarPagoCrypto = async (precio: number, planId: string) => {
+    setCargandoCrypto(true);
+    try {
+      const res = await fetch("/api/cobros/crypto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId, precio }),
+      });
+
+      const data = await res.json();
+
+      if (data.pay_address) {
+        setDatosCrypto({
+          address: data.pay_address,
+          amount: data.pay_amount, 
+          paymentId: data.payment_id
+        });
+      } else {
+        console.warn("C. Detalle del error del servidor:", data.details || data.error);
+      }
+    } catch (error) {
+      console.error("D. Error de red o conexión:", error);
+    } finally {
+      setCargandoCrypto(false);
+    }
+  };
 
   return {
     qrUrl,
@@ -166,6 +224,11 @@ export function usePagoCliente(plan: PlanPago, planId: string, modalidad: string
     archivoSeleccionado,
     setArchivoSeleccionado,
     manejarSeleccionArchivo,
+    previewUrl,
+    setPreviewUrl,
     estaCargandoEstado,
+    iniciarPagoCrypto,
+    datosCrypto,
+    cargandoCrypto
   };
 }
