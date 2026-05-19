@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useTrash } from "@/components/hooks/useTrash";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
@@ -60,11 +61,22 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const [gmailEnabled, setGmailEnabled] = useState(true);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [trash, setTrash] = useState<Notification[]>([]);
+  const { trashIds, addToTrash, removeFromTrash, emptyTrash } = useTrash(user?.id);
+
+const trash = useMemo(
+  () =>
+    trashIds
+      .map((entry) => {
+        const notif = notifications.find((n) => n.id === entry.id);
+        return notif ? { ...notif, read: entry.read } : null;
+      })
+      .filter(Boolean) as Notification[],
+  [trashIds, notifications]
+);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [pendingBulkIds, setPendingBulkIds] = useState<string[]>([]);
-  const skipNextTrashReload = useRef(false);
 
   useEffect(() => {
     const userId = user?.id ?? "guest";
@@ -127,31 +139,6 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  useEffect(() => {
-    if (!user?.id || notifications.length === 0) return;
-    const loadTrash = () => {
-      if (skipNextTrashReload.current) {
-        skipNextTrashReload.current = false;
-        return;
-      }
-      const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
-      if (!raw) { setTrash([]); return; }
-      const parsed = JSON.parse(raw);
-      const saved: { id: string; read: boolean }[] = Array.isArray(parsed)
-        ? parsed.map((s) => (typeof s === "string" ? { id: s, read: true } : s))
-        : [];
-      setTrash(() =>
-        saved.map((s) => {
-          const notif = notifications.find((n) => n.id === s.id);
-          return notif ? { ...notif, read: s.read } : null;
-        }).filter(Boolean) as Notification[]
-      );
-    };
-    loadTrash();
-    window.addEventListener("trash-updated", loadTrash);
-    return () => window.removeEventListener("trash-updated", loadTrash);
-  }, [user?.id, notifications]);
-
   useEffect(() => { setSelectedIds([]); }, [activeTab]);
 
   const notInTrash = useMemo(() =>
@@ -176,34 +163,21 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const handleDelete = (id: string) => {
     const notif = notifications.find((n) => n.id === id);
     if (!notif) return;
-    setTrash((prev) => {
-      if (prev.some((t) => t.id === id)) return prev;
-      const next = [notif, ...prev];
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
-      window.dispatchEvent(new Event("trash-updated"));
-      return next;
-    });
+    addToTrash({ id, read: notif.read });
   };
 
   const handleRestore = (id: string) => {
-    setTrash((prevTrash) => {
-      const remaining = prevTrash.filter((n) => n.id !== id);
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-      window.dispatchEvent(new Event("trash-updated"));
-      return remaining;
-    });
+    removeFromTrash(id);
   };
 
-  const handleEmptyTrash = () => {
+  const handleEmptyTrash = async () => {
     const ids = trash.map((n) => n.id);
+    emptyTrash();
     setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
-    setTrash([]);
-    localStorage.removeItem(`trash_notif_ids_${user?.id}`);
-    skipNextTrashReload.current = true;
-    window.dispatchEvent(new Event("trash-updated"));
     setShowConfirmModal(false);
+    if (ids.length > 0) {
+      await supabase.from("Notificacion").delete().in("id_notificacion", ids);
+    }
   };
 
   const handleRead = async (id: string) => {
@@ -256,13 +230,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
     setPendingBulkIds([]);
     setShowBulkDeleteModal(false);
     setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
-    setTrash((prev) => {
-      const remaining = prev.filter((n) => !ids.includes(n.id));
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-      return remaining;
-    });
-    skipNextTrashReload.current = true;
+    ids.forEach((id) => removeFromTrash(id));
     await supabase.from("Notificacion").delete().in("id_notificacion", ids);
   };
 

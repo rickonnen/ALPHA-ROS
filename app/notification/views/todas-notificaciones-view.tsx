@@ -8,6 +8,7 @@ import { NotificationHeader } from "@/app/home/components/notifications/Notifica
 import { BellOff, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/app/home/components/notifications/ConfirmModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTrash } from "@/components/hooks/useTrash";
 
 type Notificacion = {
   id: string;
@@ -45,12 +46,10 @@ export function TodasNotificacionesView({ onClose }: Props) {
   const [activeTab, setActiveTab] = useState<"todas" | "no-leidas" | "papelera">("todas");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [trash, setTrash] = useState<Notificacion[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [pendingBulkIds, setPendingBulkIds] = useState<string[]>([]);
-  const skipNextTrashReload = useRef(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -92,66 +91,38 @@ export function TodasNotificacionesView({ onClose }: Props) {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
-  useEffect(() => {
-    if (!user?.id || notificaciones.length === 0) return;
-    const loadTrash = () => {
-      if (skipNextTrashReload.current) {
-        skipNextTrashReload.current = false;
-        return;
-      }
-      const raw = localStorage.getItem(`trash_notif_ids_${user.id}`);
-      if (!raw) { setTrash([]); return; }
-      const saved = JSON.parse(raw);
-      const items = saved.map((s: any) => {
-        const id = typeof s === "string" ? s : s.id;
-        const read = typeof s === "string" ? true : s.read;
-        const notif = notificaciones.find((n) => n.id === id);
-        return notif ? { ...notif, read } : null;
-      }).filter(Boolean);
-      setTrash(items);
-    };
-    loadTrash();
-    window.addEventListener("trash-updated", loadTrash);
-    return () => window.removeEventListener("trash-updated", loadTrash);
-  }, [user?.id, notificaciones]);
+  const { trashIds, addToTrash, removeFromTrash, emptyTrash } = useTrash(user?.id);
+
+const trash = useMemo(
+  () =>
+    trashIds
+      .map((entry) => {
+        const notif = notificaciones.find((n) => n.id === entry.id);
+        return notif ? { ...notif, read: entry.read } : null;
+      })
+      .filter(Boolean) as Notificacion[],
+  [trashIds, notificaciones]
+);
 
   useEffect(() => { setSelectedIds([]); }, [activeTab]);
 
   const handleDelete = (id: string) => {
     const notif = notificaciones.find((n) => n.id === id);
     if (!notif) return;
-    setTrash((prev) => {
-      if (prev.some((t) => t.id === id)) return prev;
-      const next = [notif, ...prev];
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(next.map((n) => ({ id: n.id, read: n.read }))));
-      window.dispatchEvent(new Event("trash-updated"));
-      return next;
-    });
+    addToTrash({ id, read: notif.read });
   };
 
   const handleRestore = (id: string) => {
-    setTrash((prev) => {
-      const remaining = prev.filter((n) => n.id !== id);
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-      window.dispatchEvent(new Event("trash-updated"));
-      return remaining;
-    });
+    removeFromTrash(id);
   };
 
   const handleEmptyTrash = async () => {
-    const trashIds = trash.map((n) => n.id);
-    setNotificaciones((prev) => prev.filter((n) => !trashIds.includes(n.id)));
-    setTrash([]);
-    localStorage.removeItem(`trash_notif_ids_${user?.id}`);
-    skipNextTrashReload.current = true;
-    window.dispatchEvent(new Event("trash-updated"));
+    const ids = trash.map((n) => n.id);
+    emptyTrash();
+    setNotificaciones((prev) => prev.filter((n) => !ids.includes(n.id)));
     setShowConfirmModal(false);
-    if (trashIds.length > 0) {
-      await Promise.all(
-        trashIds.map((id) => supabase.from("Notificacion").delete().eq("id_notificacion", id))
-      );
+    if (ids.length > 0) {
+      await supabase.from("Notificacion").delete().in("id_notificacion", ids);
     }
   };
 
@@ -206,17 +177,11 @@ export function TodasNotificacionesView({ onClose }: Props) {
     setSelectedIds([]);
     setPendingBulkIds([]);
     setShowBulkDeleteModal(false);
+    ids.forEach((id) => removeFromTrash(id));
     setNotificaciones((prev) => prev.filter((n) => !ids.includes(n.id)));
-    setTrash((prev) => {
-      const remaining = prev.filter((n) => !ids.includes(n.id));
-      localStorage.setItem(`trash_notif_ids_${user?.id}`,
-        JSON.stringify(remaining.map((n) => ({ id: n.id, read: n.read }))));
-      return remaining;
-    });
-    skipNextTrashReload.current = true;
-    await Promise.all(
-      ids.map((id) => supabase.from("Notificacion").delete().eq("id_notificacion", id))
-    );
+    if (ids.length > 0) {
+      await supabase.from("Notificacion").delete().in("id_notificacion", ids);
+    }
   };
 
   const sinPapelera = useMemo(() =>
