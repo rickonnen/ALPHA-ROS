@@ -13,6 +13,13 @@ type Props = {
   onWhatsappToggle: (enabled: boolean) => void;
 };
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain || local.length <= 2) return email;
+  const masked = local.slice(0, 2) + "*".repeat(local.length - 4) + local.slice(-2);
+  return `${masked}@${domain}`;
+}
+
 export function SettingsPanel({
   onClose,
   gmailEnabled,
@@ -240,7 +247,7 @@ export function SettingsPanel({
             <div>
               <p className="font-semibold">Gmail</p>
               <p className="text-sm text-gray-500">
-                usuario@gmail.com
+                {objUser?.email ? maskEmail(objUser.email) : "Sin correo"}
               </p>
             </div>
           </div>
