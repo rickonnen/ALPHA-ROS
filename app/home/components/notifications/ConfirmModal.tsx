@@ -22,7 +22,7 @@ export function ConfirmModal({ isOpen, onConfirm, onCancel }: Props) {
         </div>
 
         <p className="text-sm text-gray-500">
-          Todas las notificaciones eliminadas se borrarán permanentemente. Esta acción no se puede deshacer.
+           Se eliminaran todas las notificaciones de forma permanente. Esta acción no se puede deshacer.
         </p>
 
         <div className="flex gap-2 justify-end">
