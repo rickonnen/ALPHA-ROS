@@ -1,18 +1,8 @@
-/* HU-05
-   CA-3:  Abrir este panel al presionar "¿Deseas reactivar tu cuenta?"
-   CA-4:  Mostrar instrucciones claras para contactar soporte
-   CA-5:  Validar email con formato inválido
-   CA-6:  Botón deshabilitado si email vacío
-   CA-7:  Pantalla de confirmación al enviar correctamente
-   CA-8:  Indicar que la respuesta llega en máx. 24 horas
-   CA-14: Avisar si ya hay solicitud pendiente (sessionStorage)
-   CA-15: Permitir reenvío si pasaron 24h
-   CA-16: Botón "← Volver" al login
-   CA-17: Soporte para tipo de cuenta Google
-*/
 "use client";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Clock, Mail, Send } from "lucide-react";
+import { isValidEmail, getSuspiciousDomainSuggestion } from "@/lib/utils";
+import { sanitizarTextoLibre } from "@/lib/utils";
 
 interface ReactivacionCuentaFormProps {
   onBack: () => void;
@@ -23,6 +13,7 @@ interface ReactivacionCuentaFormProps {
 type Step = "form" | "success";
 
 const STORAGE_KEY = "reactivacion_solicitud";
+const MAX_MOTIVO = 500;
 
 interface SolicitudGuardada {
   email: string;
@@ -32,8 +23,8 @@ interface SolicitudGuardada {
 const TIPOS_CUENTA = [
   "Creada con correo y contraseña",
   "Creada con Google",
-  "Creada con Facebook",
   "Creada con Discord",
+  "Creada con Linkedin",
 ];
 
 // 24 horas en ms
@@ -76,7 +67,6 @@ export default function ReactivacionCuentaForm({
   const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
-  // CA-14: solicitud duplicada
   const [solicitudPendiente, setSolicitudPendiente] = useState(false);
   const [solicitudEmail, setSolicitudEmail] = useState("");
 
@@ -93,8 +83,12 @@ export default function ReactivacionCuentaForm({
 
   function validateEmail(value: string): string {
     if (!value.trim()) return "El correo electrónico es obligatorio.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-      return "Ingresa un correo electrónico válido.";
+    if (!isValidEmail(value.trim())) {
+      const suggestion = getSuspiciousDomainSuggestion(value.trim());
+      if (suggestion)
+        return `Ingresa un correo electrónico válido. ¿Quisiste escribir ${value.trim().split("@")[0]}@${suggestion}?`;
+      return "Ingresa un correo válido (gmail.com, outlook.com, hotmail.com, icloud.com, yahoo.com o .edu).";
+    }
     return "";
   }
 
@@ -166,7 +160,7 @@ export default function ReactivacionCuentaForm({
           }}
         >
           <ArrowLeft size={13} />
-          SEGURIDAD
+          Login
         </button>
 
         {/* Título del panel */}
@@ -360,11 +354,23 @@ export default function ReactivacionCuentaForm({
             </label>
             <textarea
               value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
+              onChange={(e) => setMotivo(sanitizarTextoLibre(e.target.value).slice(0, MAX_MOTIVO))}
               placeholder="Ej: Solicité la desactivación por error..."
               rows={3}
+              maxLength={MAX_MOTIVO}
               className="w-full resize-none rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none dark:border-slate-600 dark:bg-[#3a3a3a] dark:text-slate-100 dark:placeholder:text-slate-400"
             />
+            <p
+              style={{
+                fontSize: "11px",
+                margin: 0,
+                textAlign: "right",
+                color: motivo.length >= MAX_MOTIVO ? "#ef4444" : motivo.length >= MAX_MOTIVO * 0.9 ? "#F59E0B" : "#94a3b8",
+                fontWeight: motivo.length >= MAX_MOTIVO ? "700" : "400",
+              }}
+            >
+              {MAX_MOTIVO - motivo.length} caracteres restantes
+            </p>
           </div>
 
           {/* Error de API */}

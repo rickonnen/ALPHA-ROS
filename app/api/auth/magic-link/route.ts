@@ -35,7 +35,7 @@ const ALLOWED_DOMAINS = [
 export async function POST(req: NextRequest) {
   try {
     // 1️ Parsear y validar request
-    const { email } = await req.json();
+    const { email, sessionId } = await req.json();
 
     if (!email || email.trim() === "") {
       return NextResponse.json(
@@ -137,17 +137,26 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
-    // 6️ Guardar intento en BD (cuando tabla exista)
+    // 6️ Invalidar tokens previos pendientes y guardar el nuevo en BD
+    // NOTA: @@unique([email, status]) impide más de un row por status por email.
+    // Si ya existe un row "expired", el updateMany pending→expired violaría ese constraint.
+    // Solución: eliminar el expired anterior ANTES de hacer el updateMany.
     try {
-      await prisma.magic_link_attempt.deleteMany({
-        where: { email: emailLower, status: "pending" },
-      });
-      await prisma.magic_link_attempt.deleteMany({
-        where: { email: emailLower, status: "consumed" },
-      });
+      // Liberar el slot "expired" para que podamos ocuparlo con el token anterior
       await prisma.magic_link_attempt.deleteMany({
         where: { email: emailLower, status: "expired" },
       });
+
+      // TC-HU03-09: Solo UN link activo por usuario.
+      const invalidados = await prisma.magic_link_attempt.updateMany({
+        where: { email: emailLower, status: "pending" },
+        data: { status: "expired" },
+      });
+
+      if (invalidados.count > 0) {
+        console.log(`[Magic Link] ${invalidados.count} token(s) previo(s) invalidados para:`, emailLower);
+      }
+
       await prisma.magic_link_attempt.create({
         data: {
           email: emailLower,
@@ -158,13 +167,19 @@ export async function POST(req: NextRequest) {
           ip_address: ipAddress,
         },
       });
-      console.log("[Magic Link] Intento guardado para:", emailLower);
+      console.log("[Magic Link] Nuevo token creado para:", emailLower);
     } catch (error) {
-      console.warn("[Magic Link] No se pudo guardar intento:", error);
+      console.error("[Magic Link] Error al guardar token en BD:", error);
+      return NextResponse.json(
+        { error: "Error al generar el Magic Link. Intenta de nuevo más tarde." },
+        { status: 500 }
+      );
     }
 
     // 7️ Construir URL del Magic Link
-    const magicLinkUrl = `${process.env.NEXTAUTH_URL}/auth/callback#token=${token}`;
+    // sessionId en query param (público) + token en hash (no viaja al servidor)
+    const sessionParam = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : "";
+    const magicLinkUrl = `${process.env.NEXTAUTH_URL}/auth/callback${sessionParam}#token=${token}`;
 
     // 8️ Obtener nombre del usuario (si existe) o usar parte del email
     let nombre = emailLower.split("@")[0];

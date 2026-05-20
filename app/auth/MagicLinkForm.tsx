@@ -28,21 +28,29 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
     if (validationError) { setError(validationError); return; }
     setError("");
     setLoading(true);
+
+    // Generar sessionId único para identificar esta pestaña en el flujo cross-tab
+    const sessionId = crypto.randomUUID();
+    localStorage.setItem("magic_link_session_id", sessionId);
+    console.log("[MagicLinkForm] SessionId generado:", sessionId.substring(0, 8) + "...");
+
     try {
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, sessionId }),
       });
       if (!res.ok) {
         const data = await res.json();
         setError(data.error || "Error al enviar el enlace");
+        localStorage.removeItem("magic_link_session_id");
         setLoading(false);
         return;
       }
       onSent(email);
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
+      localStorage.removeItem("magic_link_session_id");
       setLoading(false);
     }
   }

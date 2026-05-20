@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Link2 } from "lucide-react";
+import { useAuthListener } from "@/lib/hooks/useAuthListener";
 
 interface MagicLinkSentFormProps {
   email: string;
@@ -8,17 +9,25 @@ interface MagicLinkSentFormProps {
 }
 
 export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentFormProps) {
+  useAuthListener(); // 👂 Pestaña A: escucha MAGIC_LINK_SUCCESS → redirige a /home
+
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
 
   async function handleResend() {
     if (resending || resent) return;
     setResending(true);
+
+    // Nuevo sessionId para el link reenviado
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem("magic_link_session_id", newSessionId);
+    console.log("[MagicLinkSentForm] Nuevo sessionId para reenvío:", newSessionId.substring(0, 8) + "...");
+
     try {
       await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, sessionId: newSessionId }),
       });
       setResent(true);
       setTimeout(() => setResent(false), 4000);

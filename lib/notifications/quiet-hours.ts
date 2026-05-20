@@ -1,33 +1,28 @@
-export function isQuietHours(timezone = "America/La_Paz") {
-    const now = new Date();
+import { DateTime } from "luxon";
 
-    const localTime = new Date(
-        now.toLocaleString("en-US", {
-            timeZone: timezone,
-        })
-    );
+const QUIET_START_HOUR = 22;
+const QUIET_END_HOUR = 7;
 
-    const hour = localTime.getHours();
+export function isQuietHours(timezone = "America/La_Paz", date = new Date()) {
+    const localNow = DateTime.fromJSDate(date).setZone(timezone);
+    const hour = localNow.hour;
 
-    // No molestar: 22:00 → 07:00
-    return hour >= 22 || hour < 7;
+    return hour >= QUIET_START_HOUR || hour < QUIET_END_HOUR;
 }
 
-export function nextAllowedTime(timezone = "America/La_Paz") {
-    const now = new Date();
+export function nextAllowedTime(timezone = "America/La_Paz", date = new Date()) {
+    const localNow = DateTime.fromJSDate(date).setZone(timezone);
 
-    const localTime = new Date(
-        now.toLocaleString("en-US", {
-            timeZone: timezone,
-        })
-    );
+    let next = localNow.set({
+        hour: QUIET_END_HOUR,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+    });
 
-    localTime.setHours(7, 0, 0, 0);
-
-    // Si ya pasaron las 7am → programar mañana
-    if (now.getHours() >= 7) {
-        localTime.setDate(localTime.getDate() + 1);
+    if (localNow >= next) {
+        next = next.plus({ days: 1 });
     }
 
-    return localTime;
+    return next.toUTC().toJSDate();
 }
