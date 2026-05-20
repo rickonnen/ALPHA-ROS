@@ -409,6 +409,62 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
   return sorted;
 }
 
+function getPropertyCharacteristicIds(property: Property): number[] {
+  if (!property.caracteristicas || property.caracteristicas.length === 0) {
+    return [];
+  }
+
+  return property.caracteristicas
+    .map((caracteristica: any) => {
+      if (typeof caracteristica === "object" && caracteristica !== null) {
+        return Number(caracteristica.id);
+      }
+
+      return NaN;
+    })
+    .filter((id) => Number.isFinite(id));
+}
+
+function getCharacteristicMatchCount(
+  property: Property,
+  selectedCharacteristicIds: number[],
+): number {
+  if (selectedCharacteristicIds.length === 0) return 0;
+
+  const propertyCharacteristicIds = getPropertyCharacteristicIds(property);
+
+  return selectedCharacteristicIds.filter((id) =>
+    propertyCharacteristicIds.includes(id),
+  ).length;
+}
+
+function prioritizePropertiesBySelectedCharacteristics(
+  properties: Property[],
+  selectedCharacteristicIds: number[],
+): Property[] {
+  if (selectedCharacteristicIds.length === 0) {
+    return properties;
+  }
+
+  return [...properties].sort((first, second) => {
+    const firstMatches = getCharacteristicMatchCount(
+      first,
+      selectedCharacteristicIds,
+    );
+
+    const secondMatches = getCharacteristicMatchCount(
+      second,
+      selectedCharacteristicIds,
+    );
+
+    if (secondMatches !== firstMatches) {
+      return secondMatches - firstMatches;
+    }
+
+    return 0;
+  });
+}
+
 function toNumber(value: number | null | undefined): number {
   return value ?? 0;
 }
@@ -899,12 +955,15 @@ function SearchPageContent() {
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    const selectedCharacteristicIds =
+      advancedFilterValues.caracteristicasIds ?? [];
+
     if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
       mapped = mapped.filter(hasPropertyDiscount);
     }
 
     if (isShowingGlobalRecommendations && globalRecommendationIds.length > 0) {
-      return mapped.slice().sort((a, b) => {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
         const indexA = globalRecommendationIds.indexOf(a.id);
         const indexB = globalRecommendationIds.indexOf(b.id);
 
@@ -914,10 +973,15 @@ function SearchPageContent() {
 
         return 0;
       });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
     }
 
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.slice().sort((a, b) => {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
 
@@ -927,15 +991,26 @@ function SearchPageContent() {
 
         return 0;
       });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
     }
 
-    return sortProperties(mapped, selectedSort);
+    const sortedProperties = sortProperties(mapped, selectedSort);
+
+    return prioritizePropertiesBySelectedCharacteristics(
+      sortedProperties,
+      selectedCharacteristicIds,
+    );
   }, [
     filteredSearchResults,
     selectedOperation,
     selectedSort,
     recommendedIds,
     advancedFilterValues.soloOfertas,
+    advancedFilterValues.caracteristicasIds,
     isShowingGlobalRecommendations,
     globalRecommendationIds,
   ]);
