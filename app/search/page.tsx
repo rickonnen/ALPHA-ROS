@@ -574,6 +574,8 @@ function SearchPageContent() {
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
   const skipNextZoneUrlLoadRef = useRef(false);
+  const lastRecommendationsFetchRef = useRef<number>(0);
+  const RECOMMENDATIONS_COOLDOWN_MS = 90 * 1000; // 90 seconds
 
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -1535,6 +1537,8 @@ function SearchPageContent() {
       if (response.ok) {
         const data = (await response.json()) as { id_publicacion: number }[];
         setRecommendedIds(data.map((item) => item.id_publicacion));
+        // Update fetch timestamp after successful fetch
+        lastRecommendationsFetchRef.current = Date.now();
       } else {
         const errorBody = await response.text();
         console.error("Recommendations request failed:", response.status, errorBody);
@@ -1557,25 +1561,39 @@ function SearchPageContent() {
     }
   }, [fetchRecommendations, selectedSort]);
 
-  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  // Refrescar recomendaciones si el usuario interactúa mientras está activo el ordenamiento.
+  // Con cooldown de 90 segundos entre refetches.
   useEffect(() => {
     if (selectedSort !== "mas-recomendados") return;
     if (typeof window === "undefined") return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
     const onInteraction = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         timer = null;
-        void fetchRecommendations();
+        // Only refetch if 90 seconds have passed since last fetch
+        const timeSinceLastFetch = Date.now() - lastRecommendationsFetchRef.current;
+        if (timeSinceLastFetch >= RECOMMENDATIONS_COOLDOWN_MS) {
+          void fetchRecommendations();
+        }
       }, 650);
     };
+
+    // Also set up a 90-second interval to auto-refetch while on "mas-recomendados"
+    cooldownTimer = setInterval(() => {
+      if (selectedSort === "mas-recomendados") {
+        void fetchRecommendations();
+      }
+    }, RECOMMENDATIONS_COOLDOWN_MS);
 
     window.addEventListener("tracking:interaction", onInteraction as EventListener);
     return () => {
       window.removeEventListener("tracking:interaction", onInteraction as EventListener);
       if (timer) clearTimeout(timer);
+      if (cooldownTimer) clearInterval(cooldownTimer);
     };
   }, [fetchRecommendations, selectedSort]);
 
