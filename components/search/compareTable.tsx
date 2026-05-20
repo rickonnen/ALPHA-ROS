@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronDown, ChevronUp, Check, MessageCircle } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 import { type Property } from "./propertyCard";
 import { useState } from "react";
 import { useDollarRate } from '@/components/hooks/getDollarRate';
@@ -24,6 +24,8 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
   const { compra } = useDollarRate();
   const exchangeRate = compra ?? 6.96;
 
+  const [showFeatures, setShowFeatures] = useState<boolean>(false);
+
   // Filtramos solo las propiedades seleccionadas
   const selectedProperties = properties
   .filter((p) => selectedIds.includes(p.id))
@@ -45,7 +47,7 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
     );
   }
   
-  const [showFeatures, setShowFeatures] = useState<boolean>(false);
+  
   
   const handlePropertyClick = (id: number) => {
     window.open(`/publicacion/Vista_del_Inmueble/${id}`, '_blank');
@@ -62,6 +64,26 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
     const converted = selectedCurrency === 'USD' ? price : Math.round(price * exchangeRate * 100) / 100;
     const symbol = selectedCurrency === 'USD' ? '$us' : 'Bs';
     return `${symbol} ${converted.toLocaleString('es-BO')}`;
+  };
+
+  const getDiscountPercent = (prop: CompareProperty) => {
+    if (
+      typeof prop.previousPrice !== "number" ||
+      !Number.isFinite(prop.previousPrice) ||
+      !Number.isFinite(prop.price) ||
+      prop.previousPrice <= prop.price
+    ) {
+      return 0;
+    }
+
+    return (
+      prop.discountPercent ??
+      Math.round(((prop.previousPrice - prop.price) / prop.previousPrice) * 100)
+    );
+  };
+
+  const hasDiscount = (prop: CompareProperty) => {
+    return getDiscountPercent(prop) > 0;
   };
 
   // Identificar los mejores/peores valores para destacarlos (Req 20)
@@ -128,7 +150,13 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                     className="cursor-pointer group relative"
                     title="Ver detalles del inmueble"
                   >
-                    <div className="overflow-hidden rounded-lg mb-2 sm:mb-4 shadow-sm border-2 border-transparent group-hover:border-[#C26E5A] transition-colors">
+                    <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 shadow-sm border-2 border-transparent group-hover:border-[#C26E5A] transition-colors">
+                      {hasDiscount(prop) && (
+                        <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-1 text-xs font-bold leading-none text-white shadow">
+                          -{getDiscountPercent(prop)}%
+                        </span>
+                      )}
+
                       <img
                         src={prop.images?.[0] || FALLBACK_COMPARE_IMAGE}
                         alt={prop.title}
