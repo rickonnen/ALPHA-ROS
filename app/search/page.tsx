@@ -1395,6 +1395,26 @@ function SearchPageContent() {
     }
   };
 
+  const handleCaracteristicaCardClick = (idCaracteristica: number) => {
+    const currentIds = advancedFilterValues.caracteristicasIds ?? [];
+
+    const nextCaracteristicasIds = currentIds.includes(idCaracteristica)
+      ? currentIds
+      : [...currentIds, idCaracteristica];
+
+    const nextAdvancedFilters = {
+      ...advancedFilterValues,
+      caracteristicasIds: nextCaracteristicasIds,
+    };
+
+    setAdvancedFilterValues(nextAdvancedFilters);
+    setCurrentPage(1);
+
+    void runSearch({
+      caracteristicasIds: nextCaracteristicasIds,
+    });
+  };
+
   // Cargar estado del mapa y zona guardada desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1840,6 +1860,8 @@ function SearchPageContent() {
                         onMouseLeave={() => {}}
                         onClick={() => {}}
                         isMapOpen={isMapOpen}
+                        onCaracteristicaClick={handleCaracteristicaCardClick}
+                        selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                       />
                     ))}
                   </div>
@@ -2271,6 +2293,8 @@ function SearchPageContent() {
                           isSelected={selectedIds.includes(property.id)}
                           onToggleCompare={() => toggleSelection(property.id)}
                           isMapOpen={isMapOpen}
+                          onCaracteristicaClick={handleCaracteristicaCardClick}
+                          selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                           onMouseEnter={() => {
                             setHoveredId(property.id);
                             const loc = searchResults.find(
