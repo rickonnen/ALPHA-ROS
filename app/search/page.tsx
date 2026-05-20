@@ -648,9 +648,13 @@ function SearchPageContent() {
   >([]);
   const [advancedFilterValues, setAdvancedFilterValues] =
     useState<SearchAdvancedFilterValues>({
-    habitaciones: "",
-    banos: "",
-    piscina: "",
+      habitaciones: "",
+      banos: "",
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined,
+      soloOfertas: false,
+      caracteristicasIds: [],
     });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -1313,6 +1317,7 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (advancedFilterValues.soloOfertas) urlParams.set("soloOfertas", "true");
     if (
       advancedFilterValues.caracteristicasIds &&
       advancedFilterValues.caracteristicasIds.length > 0
@@ -1332,9 +1337,12 @@ function SearchPageContent() {
     piscina?: string;
     minSurface?: string | number;
     maxSurface?: string | number;
+    soloOfertas?: boolean;
+    caracteristicasIds?: number[];
   }) => {
     const minSurfaceValue =
       values.minSurface === undefined ? "" : String(values.minSurface);
+
     const maxSurfaceValue =
       values.maxSurface === undefined ? "" : String(values.maxSurface);
 
@@ -1347,6 +1355,11 @@ function SearchPageContent() {
         minSurfaceValue.trim() === "" ? undefined : Number(minSurfaceValue),
       maxSurface:
         maxSurfaceValue.trim() === "" ? undefined : Number(maxSurfaceValue),
+      // IM Rebajas
+      soloOfertas: Boolean(values.soloOfertas),
+      // Para no perder características
+      caracteristicasIds:
+        values.caracteristicasIds ?? current.caracteristicasIds ?? [],
     }));
   };
 
@@ -1546,6 +1559,8 @@ function SearchPageContent() {
     const currencyParam = searchParams.get("currency");
     const sortParam = searchParams.get("sort")?.trim();
     const nextSort = sortParam || "fecha-reciente";
+    const soloOfertasParam = searchParams.get("soloOfertas");
+    const nextSoloOfertas = soloOfertasParam === "true";
     // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
     const caracteristicasParam = searchParams.get("caracteristicas");
     const nextCaracteristicas = caracteristicasParam
@@ -1574,9 +1589,10 @@ function SearchPageContent() {
     setSelectedSort(nextSort);
 
     // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
-    setAdvancedFilterValues(prev => ({
+    setAdvancedFilterValues((prev) => ({
       ...prev,
-      caracteristicasIds: nextCaracteristicas
+      caracteristicasIds: nextCaracteristicas,
+      soloOfertas: nextSoloOfertas,
     }));
 
     if (nextSort === "recomendados-zona") {
@@ -1588,16 +1604,17 @@ function SearchPageContent() {
       return;
     }
 
-    void runSearch({
-      ubicacion: nextLocation,
-      operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
-      tipoInmueble:
-        nextPropertyLabels.join(",") || rawPropertyType || undefined,
-      minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice,
-      caracteristicasIds: nextCaracteristicas,
-      sort: nextSort,
-    });
+  void runSearch({
+    ubicacion: nextLocation,
+    operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
+    tipoInmueble:
+      nextPropertyLabels.join(",") || rawPropertyType || undefined,
+    minPrice: nextMinPrice,
+    maxPrice: nextMaxPrice,
+    caracteristicasIds: nextCaracteristicas,
+    soloOfertas: nextSoloOfertas,
+    sort: nextSort,
+  });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
@@ -2360,11 +2377,13 @@ function SearchPageContent() {
                   <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
                     Cargando inmuebles...
                   </div>
-                ) : allProperties.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                    No se encontraron inmuebles con los filtros aplicados.
-                  </div>
-                ) : (
+                    ) : allProperties.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                        {advancedFilterValues.soloOfertas
+                          ? "No hay propiedades en oferta disponibles por el momento."
+                          : "No se encontraron inmuebles con los filtros aplicados."}
+                      </div>
+                    ) : (
                   <>
                     <div
                       className={`grid gap-2 ${
