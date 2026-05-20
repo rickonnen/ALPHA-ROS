@@ -16,6 +16,7 @@ export function CompareFloatingBar({
   if (selectedCount === 0) return null;
 
   const isLimitReached = selectedCount >= MAX_COMPARE_PROPERTIES;
+  const isMinLimit = selectedCount < 2;
 
   return (
     <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom-8 duration-300 w-[92%] sm:w-max max-w-[600px]">
@@ -38,13 +39,20 @@ export function CompareFloatingBar({
             </span>
 
             <span className="text-[#8ba3c7] text-[10px] font-bold tracking-widest uppercase leading-tight mt-0.5 hidden sm:block">
-              {isLimitReached ? (
+              
+              {isLimitReached ?  (
                 <>
                   Límite máximo
                   <br />
                   alcanzado
                 </>
-              ) : (
+              ) : isMinLimit ? (
+                <>
+                  Seleccionada 
+                  <br/>
+                  falta una más
+                </>
+              ):(
                 <>
                   Seleccionadas
                   <br />
@@ -54,7 +62,10 @@ export function CompareFloatingBar({
             </span>
 
             <span className="text-[#8ba3c7] text-[9px] font-bold tracking-widest uppercase leading-tight mt-0.5 sm:hidden">
-              {isLimitReached ? "Límite alcanzado" : "Seleccionadas"}
+              {isLimitReached ? "Límite alcanzado" 
+                : isMinLimit 
+                ? "Falta 1 más" 
+                : "Seleccionadas"}
             </span>
           </div>
         </div>
