@@ -11,6 +11,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/app/auth/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { BellOff } from "lucide-react";
+import { useEmailNotificationStatus } from "@/components/hooks/useEmailNotificationStatus";
 
 type Notification = {
   id: string;
@@ -58,7 +59,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [gmailEnabled, setGmailEnabled] = useState(true);
+  const { gmailEnabled, toggleGmail } = useEmailNotificationStatus(user?.id);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { trashIds, addToTrash, removeFromTrash, emptyTrash } = useTrash(user?.id);
@@ -80,9 +81,7 @@ const trash = useMemo(
 
   useEffect(() => {
     const userId = user?.id ?? "guest";
-    const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
     const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
-    if (savedGmail !== null) setGmailEnabled(savedGmail === "true");
     if (savedWhatsapp !== null) setWhatsappEnabled(savedWhatsapp === "true");
   }, [user]);
 
@@ -235,9 +234,8 @@ const trash = useMemo(
   };
 
   const handleGmailToggle = (enabled: boolean) => {
-    setGmailEnabled(enabled);
-    localStorage.setItem(`gmail_enabled_${user?.id ?? "guest"}`, enabled.toString());
-  };
+  toggleGmail(enabled);
+ };
 
   const handleWhatsappToggle = (enabled: boolean) => {
     setWhatsappEnabled(enabled);

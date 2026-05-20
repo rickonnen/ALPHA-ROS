@@ -33,7 +33,7 @@ export function templatePagoProcesado(
           <div style="background:#f0f4f8;padding:16px;border-radius:8px;margin:20px 0;border-left:4px solid #1F3A4D">
             <p style="margin:0 0 8px 0;font-size:12px;color:#666;font-weight:700;text-transform:uppercase">Detalles de tu plan:</p>
             <p style="margin:0 0 4px 0;font-size:16px;font-weight:700;color:#1F3A4D">${plan}</p>
-            <p style="margin:0 0 8px 0;font-size:13px;color:#666">Frecuencia: ${frecuencia === 'mensual' ? 'Mensual (30 días)' : 'Anual (12 meses)'}</p>
+            <p style="margin:0 0 8px 0;font-size:13px;color:#666">Frecuencia: ${frecuencia.toLowerCase() === 'mensual' ? 'Mensual (30 días)' : 'Anual (12 meses)'}</p>
             <p style="margin:0;font-size:13px;color:#666"><strong>${cupos}</strong> cupos de publicación</p>
           </div>
 
@@ -42,7 +42,7 @@ export function templatePagoProcesado(
           </p>
 
           <div style="text-align:center;padding:16px 0">
-            <a href="https://alpha-ros-deploy.vercel.app/cobros/suscripcion"
+            <a href="https://alpha-ros-deploy.vercel.app/perfil?seccion=planes"
                style="display:inline-block;background:#1F3A4D;color:white;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
               Ver mi plan activo
             </a>

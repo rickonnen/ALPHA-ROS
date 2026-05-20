@@ -5,6 +5,8 @@ import { transporter, getFormattedSender } from "@/lib/email/config";
 import { templateBlogAceptado } from "@/lib/email/templates/blogAceptado";
 import { templateBlogRechazado } from "@/lib/email/templates/blogRechazado";
 import { crearNotificacion } from "@/lib/notifications/notificationService";
+import { emailNotificacionesActivas } from "@/lib/notifications/emailPreferencia";
+
 interface updateActionRequest {
   action: string;
 }
@@ -143,13 +145,17 @@ if (ObjBlogConUsuario?.Usuario?.email) {
   const strTitulo = ObjBlogConUsuario.titulo ?? "Tu publicación";
 
   try {
+    const puedeEnviar = await emailNotificacionesActivas(ObjBlogConUsuario.id_user);
+
     if (action === "ACEPTAR" || action === "PUBLICAR") {
-      await transporter.sendMail({
-        from: getFormattedSender(),
-        to: strEmail,
-        subject: "¡Tu blog fue aprobado! - PROPBOL",
-        html: templateBlogAceptado(strNombre, strTitulo)
-      });
+      if (puedeEnviar) {
+        await transporter.sendMail({
+          from: getFormattedSender(),
+          to: strEmail,
+          subject: "¡Tu blog fue aprobado! - PROPBOL",
+          html: templateBlogAceptado(strNombre, strTitulo)
+        });
+      }
       await crearNotificacion({
         id_usuario: ObjBlogConUsuario.id_user,
         titulo: "¡Publicación Aprobada!",
@@ -159,12 +165,14 @@ if (ObjBlogConUsuario?.Usuario?.email) {
     }
 
     if (action === "RECHAZAR") {
-      await transporter.sendMail({
-        from: getFormattedSender(),
-        to: strEmail,
-        subject: "Tu blog no fue aprobado - PROPBOL",
-        html: templateBlogRechazado(strNombre, strTitulo)
-      });
+      if (puedeEnviar) {
+        await transporter.sendMail({
+          from: getFormattedSender(),
+          to: strEmail,
+          subject: "Tu blog no fue aprobado - PROPBOL",
+          html: templateBlogRechazado(strNombre, strTitulo)
+        });
+      }
       await crearNotificacion({
         id_usuario: ObjBlogConUsuario.id_user,
         titulo: "Publicación No Aprobada",
