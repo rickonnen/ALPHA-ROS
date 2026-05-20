@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings } from "lucide-react";
+import { Settings, Trash2 } from "lucide-react";
 
 type Props = {
   activeTab: string;
@@ -12,6 +12,7 @@ type Props = {
 
   onMarkAll: () => void;
   onOpenSettings: () => void;
+  onTrashClick?: () => void;
 };
 
 export function NotificationTabs({
@@ -21,6 +22,7 @@ export function NotificationTabs({
   trashCount,
   onMarkAll,
   onOpenSettings,
+  onTrashClick,
 }: Props) {
   return (
     <div className="flex flex-col gap-3">
@@ -41,15 +43,6 @@ export function NotificationTabs({
             >
               No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
             </TabsTrigger>
-             <TabsTrigger
-  value="trash"
-  className="text-sm px-3 py-1 rounded-lg data-[state=active]:bg-white"
->
-  Papelera {trashCount > 0 ? `(${trashCount})` : ""}
-</TabsTrigger>
-
-
-
           </TabsList>
         </Tabs>
 
@@ -63,6 +56,18 @@ export function NotificationTabs({
               Marcar todas
             </button>
           )}
+
+          <button
+            onClick={onTrashClick}
+            className={`flex items-center gap-1 px-2 py-2 rounded-md transition ${
+              activeTab === "trash" ? "bg-gray-200" : "hover:bg-gray-200"
+            }`}
+            type="button"
+            title={`Papelera ${trashCount > 0 ? `(${trashCount})` : ""}`}
+          >
+            <Trash2 size={18} />
+            {trashCount > 0 && <span className="text-xs text-gray-600">{trashCount}</span>}
+          </button>
 
           <button
             onClick={onOpenSettings}

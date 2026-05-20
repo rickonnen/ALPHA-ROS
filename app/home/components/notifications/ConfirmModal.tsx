@@ -1,4 +1,5 @@
 "use client";
+import { Trash2 } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
@@ -13,9 +14,12 @@ export function ConfirmModal({ isOpen, onConfirm, onCancel }: Props) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-[320px] flex flex-col gap-4">
         
-        <h2 className="text-[16px] font-semibold text-gray-800">
-          ¿Vaciar papelera?
-        </h2>
+        <div className="flex items-center gap-3">
+          <Trash2 size={20} className="text-red-500" />
+          <h2 className="text-[16px] font-semibold text-gray-800">
+            ¿Vaciar papelera?
+          </h2>
+        </div>
 
         <p className="text-sm text-gray-500">
           Todas las notificaciones eliminadas se borrarán permanentemente. Esta acción no se puede deshacer.

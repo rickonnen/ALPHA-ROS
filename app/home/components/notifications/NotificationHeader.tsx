@@ -31,10 +31,10 @@ export function NotificationHeader({
       <h4 className="text-[20px] font-normal leading-[120%] tracking-normal flex-1">
         {hasSelected
           ? `${selectedIds.length} seleccionada${selectedIds.length > 1 ? "s" : ""}`
-          : "Notificaciones"}
+          : "NOTIFICACIONES"}
       </h4>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-center">
         {hasSelected && (
           <>
             {isInTrash && onBulkRestore && (
@@ -61,7 +61,7 @@ export function NotificationHeader({
               <button
                 onClick={onBulkDelete}
                 title={isInTrash ? "Eliminar permanentemente" : "Eliminar"}
-                className="flex items-center gap-1 text-xs bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded-lg transition"
+                className="flex items-center gap-1 text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded-lg transition"
               >
                 <Trash2 size={13} />
                 <span className="hidden sm:inline">Eliminar</span>

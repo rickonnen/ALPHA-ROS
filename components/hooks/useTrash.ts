@@ -38,26 +38,33 @@ function saveToStorage(userId: string, entries: TrashEntry[]) {
 }
 
 export function useTrash(userId: string | undefined) {
-  const [trashIds, setTrashIds] = useState<TrashEntry[]>([]);
-  // Ref para evitar que un broadcast recibido vuelva a emitir
+  const [trashIds, setTrashIds] = useState<TrashEntry[]>(() =>
+    userId ? loadFromStorage(userId) : []
+  );
   const isBroadcasting = useRef(false);
+  const userIdRef = useRef(userId);
 
-  // Carga inicial desde localStorage
   useEffect(() => {
     if (!userId) return;
-    setTrashIds(loadFromStorage(userId));
-  }, [userId]);
+    userIdRef.current = userId;
 
-  // Canal Realtime Broadcast
-  useEffect(() => {
-    if (!userId) return;
+    // Cargar storage inmediatamente
+    const stored = loadFromStorage(userId);
+    setTrashIds(stored);
+
+    // ← NUEVO: escuchar cambios del localStorage desde CUALQUIER instancia
+    // del hook en la misma página (mismo proceso, misma pestaña)
+    const handleTrashUpdated = () => {
+      const fresh = loadFromStorage(userId);
+      setTrashIds(fresh);
+    };
+    window.addEventListener("trash-updated", handleTrashUpdated);
 
     const channel = supabase.channel(`trash-sync-${userId}`, {
-      config: { broadcast: { self: false } }, // no recibir los propios eventos
+      config: { broadcast: { self: false } },
     });
 
     channel.on("broadcast", { event: "trash" }, ({ payload }: { payload: BroadcastPayload }) => {
-      // Viniendo de otro dispositivo: actualizar estado y localStorage
       setTrashIds((prev) => {
         let next: TrashEntry[];
         if (payload.action === "delete") {
@@ -68,19 +75,24 @@ export function useTrash(userId: string | undefined) {
         } else if (payload.action === "empty") {
           next = [];
         } else if (payload.action === "sync") {
-          next = payload.entries;
+          const localEntries = loadFromStorage(userId);
+          const merged = [...localEntries];
+          for (const entry of payload.entries) {
+            if (!merged.some((e) => e.id === entry.id)) {
+              merged.push(entry);
+            }
+          }
+          next = merged;
         } else {
           return prev;
         }
         saveToStorage(userId, next);
-        // Notificar otros componentes en la misma pestaña
         window.dispatchEvent(new Event("trash-updated"));
         return next;
       });
     });
 
     channel.subscribe((status) => {
-      // Al conectar, emitir el estado actual para sincronizar dispositivos recién abiertos
       if (status === "SUBSCRIBED") {
         const current = loadFromStorage(userId);
         channel.send({
@@ -92,20 +104,18 @@ export function useTrash(userId: string | undefined) {
     });
 
     return () => {
+      window.removeEventListener("trash-updated", handleTrashUpdated); // ← cleanup
       supabase.removeChannel(channel);
     };
   }, [userId]);
 
-  /** Emite un evento broadcast y actualiza estado + localStorage */
   const broadcast = useCallback(
     (payload: BroadcastPayload, updater: (prev: TrashEntry[]) => TrashEntry[]) => {
       if (!userId) return;
       setTrashIds((prev) => {
         const next = updater(prev);
         saveToStorage(userId, next);
-        // Notificar otras pestañas del mismo navegador
-        window.dispatchEvent(new Event("trash-updated"));
-        // Emitir a otros dispositivos
+        window.dispatchEvent(new Event("trash-updated")); // ← notifica a todas las instancias
         supabase.channel(`trash-sync-${userId}`).send({
           type: "broadcast",
           event: "trash",
