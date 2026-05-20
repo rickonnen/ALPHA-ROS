@@ -1,0 +1,222 @@
+Sí. Tu mejora principal es **hacer JOIN entre `PreferenciaNotificacionCanal` y `Telefono` en una sola consulta**, en vez de consultar preferencia y luego teléfono por separado.
+
+### 1. Crea FK si no existe
+
+```sql
+ALTER TABLE "PreferenciaNotificacionCanal"
+ADD CONSTRAINT fk_preferencia_telefono
+FOREIGN KEY (id_telefono)
+REFERENCES "Telefono"(id_telefono);
+```
+
+También te conviene:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS uq_preferencia_usuario_canal
+ON "PreferenciaNotificacionCanal"(id_usuario, canal);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_telefono_numero
+ON "Telefono"(codigo_pais, nro_telefono);
+```
+
+---
+
+## `/api/whatsapp/status` optimizado
+
+Antes hacías:
+
+1. buscar preferencia
+2. buscar teléfono
+
+Ahora haces **1 sola consulta**:
+
+```ts
+const { data: pref, error } = await supabaseAdmin
+  .from("PreferenciaNotificacionCanal")
+  .select(`
+    id_preferencia,
+    activo,
+    verificado,
+    id_telefono,
+    Telefono:id_telefono (
+      id_telefono,
+      codigo_pais,
+      nro_telefono,
+      verificado
+    )
+  `)
+  .eq("id_usuario", userId)
+  .eq("canal", "WHATSAPP")
+  .maybeSingle();
+
+if (error) throw error;
+
+if (!pref || !pref.id_telefono || !pref.Telefono) {
+  return NextResponse.json({
+    ok: true,
+    exists: false,
+    isActive: false,
+    isVerified: false,
+    phoneE164: null,
+  });
+}
+
+const telefono = Array.isArray(pref.Telefono)
+  ? pref.Telefono[0]
+  : pref.Telefono;
+
+return NextResponse.json({
+  ok: true,
+  exists: true,
+  isActive: Boolean(pref.activo),
+  isVerified: Boolean(pref.verificado && telefono.verificado),
+  phoneE164: buildPhoneE164(telefono.codigo_pais, telefono.nro_telefono),
+});
+```
+
+---
+
+## `/api/whatsapp/toggle` optimizado
+
+Aquí necesitas leer el teléfono para enviar WhatsApp y luego actualizar. Puedes reducir de **3 pasos a 2**:
+
+```ts
+const { data: pref, error } = await supabaseAdmin
+  .from("PreferenciaNotificacionCanal")
+  .select(`
+    id_preferencia,
+    fecha_activacion,
+    verificado,
+    id_telefono,
+    Telefono:id_telefono (
+      codigo_pais,
+      nro_telefono,
+      verificado
+    )
+  `)
+  .eq("id_usuario", userId)
+  .eq("canal", "WHATSAPP")
+  .maybeSingle();
+
+if (error) throw error;
+
+const telefono = Array.isArray(pref?.Telefono)
+  ? pref.Telefono[0]
+  : pref?.Telefono;
+
+if (!pref || !pref.id_telefono || !pref.verificado || !telefono?.verificado) {
+  return NextResponse.json(
+    {
+      ok: false,
+      message: "Primero debes registrar y verificar un número de WhatsApp.",
+    },
+    { status: 400 }
+  );
+}
+
+const phoneE164 = buildPhoneE164(
+  telefono.codigo_pais,
+  telefono.nro_telefono
+);
+
+const { error: updateError } = await supabaseAdmin
+  .from("PreferenciaNotificacionCanal")
+  .update({
+    activo: enabled,
+    fecha_activacion: enabled ? now : pref.fecha_activacion,
+    fecha_desactivacion: enabled ? null : now,
+    updated_at: now,
+  })
+  .eq("id_preferencia", pref.id_preferencia);
+
+if (updateError) throw updateError;
+```
+
+---
+
+## Mejora importante en tu frontend
+
+En tu `SettingsPanel`, el `useEffect` corre aunque `USER_ID` todavía sea `undefined` . Cámbialo así:
+
+```ts
+useEffect(() => {
+  if (!USER_ID) return;
+
+  const loadWhatsappStatus = async () => {
+    // tu lógica actual
+  };
+
+  loadWhatsappStatus();
+}, [USER_ID]);
+```
+
+---
+
+## Para `verify-phone`
+
+Tu backend actual hace muchas consultas: busca teléfono, actualiza/inserta, busca relación, inserta relación, busca preferencia, actualiza/inserta preferencia .
+
+Para optimizar bien ahí, usa `upsert` con los índices únicos:
+
+```ts
+const { data: telefono, error: phoneError } = await supabaseAdmin
+  .from("Telefono")
+  .upsert(
+    {
+      codigo_pais: codigoPais,
+      nro_telefono: nroTelefono,
+      verificado: true,
+    },
+    {
+      onConflict: "codigo_pais,nro_telefono",
+    }
+  )
+  .select("id_telefono, codigo_pais, nro_telefono, verificado")
+  .single();
+```
+
+Luego relación:
+
+```ts
+await supabaseAdmin
+  .from("UsuarioTelefono")
+  .upsert(
+    {
+      id_usuario: userId,
+      id_telefono: telefono.id_telefono,
+      estado: 1,
+    },
+    {
+      onConflict: "id_usuario,id_telefono",
+    }
+  );
+```
+
+Y preferencia:
+
+```ts
+await supabaseAdmin
+  .from("PreferenciaNotificacionCanal")
+  .upsert(
+    {
+      id_usuario: userId,
+      canal: "WHATSAPP",
+      activo: true,
+      verificado: true,
+      id_telefono: telefono.id_telefono,
+      fecha_activacion: now,
+      fecha_desactivacion: null,
+      updated_at: now,
+    },
+    {
+      onConflict: "id_usuario,canal",
+    }
+  );
+```
+
+Eso elimina los `find + if + insert/update`.
+
+**Resumen:**
+`status`: 1 consulta.
+`toggle`: 1 consulta de lectura con JOIN + 1 update.
+`verify-phone`: usar `upsert` en vez de buscar primero y luego decidir.
