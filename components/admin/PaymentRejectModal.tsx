@@ -66,7 +66,7 @@ export function PaymentRejectModal({
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
       {/*Se lo mejoro para vista movil dado que con el anterior no se adaptaba*/}
-      <AlertDialogContent className="flex flex-col w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
+      <AlertDialogContent className="flex flex-col w-[90%] max-w-[500px] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -80,7 +80,7 @@ export function PaymentRejectModal({
           </div>
         </div>
         
-        <p className="text-center text-gray-700 text-sm sm:text-base mb-8">
+        <p className="text-center text-sm sm:text-base mb-8">
           Deseas rechazar el pago del cliente correspondiente:{" "}
           <span className="font-semibold">{strClientName}</span>{" "}
           para el plan <span className="font-semibold">{strPlanName}</span>
@@ -89,7 +89,7 @@ export function PaymentRejectModal({
         {/* seleccionar motivo ª; se cambio la estructura a la de shadcn; se llevó el dropdown a lado derecho
          se genero espacio del dropdown con los botones,*/}
         <div className="mb-20 flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
-          <label htmlFor="reason-select" className="flex-1 flex-col sm:flex-row text-sm font-bold text-gray-700 whitespace-nowrap">
+          <label htmlFor="reason-select" className="flex-1 flex-col sm:flex-row text-sm font-bold whitespace-nowrap">
             Motivo del rechazo <span className="text-red-500">*</span>
           </label>
           <div className="w-full sm:w-[220px]">

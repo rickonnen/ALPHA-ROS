@@ -32,26 +32,26 @@ export function PaymentEvidenceModal({
   }, [bolIsOpen, strUrl]);
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden bg-white border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
+      <AlertDialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
         <VisuallyHidden>
           <AlertDialogTitle>Comprobante de Pago</AlertDialogTitle>
         </VisuallyHidden>
 
         <div className="flex flex-col items-center">
           {/* Cabecera del Modal */}
-          <div className="w-full py-4 border-b border-border bg-gray-50/50">
+          <div className="w-full py-4 border-b border-border">
             <h3 className="text-center font-bold text-lg text-foreground uppercase tracking-tight">
               Comprobante de Pago
             </h3>
           </div>
 
           {/* Área de la Imagen */}
-          <div className="w-full p-6 flex justify-center bg-white min-h-[300px]">
+          <div className="w-full p-6 flex justify-center min-h-[300px]">
             {strUrl ? (
               <>
                 {/*Ya no es una rayita */}
                 {bolIsLoading && (
-                  <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg bg-gray-100" />
+                  <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg" />
                 )}
                 <img 
                   src={strUrl} 
@@ -68,7 +68,7 @@ export function PaymentEvidenceModal({
           </div>
             {/*Solo se agregó "cursor-pointer mt-1", parece que el botón se queda... */}
           {/* Botón Volver*/}
-          <div className="w-1 p-3 flex justify-center border-t bg-gray-50/50">
+          <div className="w-1 p-3 flex justify-center border-t">
             <Button
               onClick={() => onOpenChange(false)}
               variant="default"

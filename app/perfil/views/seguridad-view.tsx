@@ -43,6 +43,8 @@ import RedesView from "./redes-vinculadas/redes-view";
 import Autenticacion2FAView from "./2fa/autenticacion-2fa";
 import EstadoCuentaView from "./estado-cuenta/estado-cuenta-view";
 
+import SesionesView from "./sesiones-view";
+
 interface SeguridadProps {
   id_usuario: string;
   email: string;
@@ -145,6 +147,19 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
           <span className="text-gray-400">›</span>
         </button>
 
+        <button
+          onClick={() => setSubView("sesiones")}
+          className="w-full flex justify-between items-center bg-white/10 p-4 rounded-xl hover:bg-white/20 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+        >
+          <div className="text-left">
+            <p className="font-semibold">Gestión de Sesiones</p>
+            <p className="text-sm text-gray-300">
+              Controla los dispositivos con sesión activa en tu cuenta
+            </p>
+          </div>
+          <span className="text-gray-400">›</span>
+        </button>
+
         {/* HU-04: Estado de Cuenta */}
         <button
           onClick={() => setSubView("estado-cuenta")}
@@ -229,6 +244,13 @@ export default function SeguridadView({ id_usuario, email, telefonos, onSuccess,
       <Autenticacion2FAView
         id_usuario={id_usuario}
         primary_provider={objUsuario?.google_id ? "google" : null}
+        onBack={() => setSubView("menu")}
+      />
+    ),
+
+    sesiones: (
+      <SesionesView
+        id_usuario={id_usuario}
         onBack={() => setSubView("menu")}
       />
     ),

@@ -5,6 +5,9 @@ import { enviarBienvenida } from "@/lib/email/emailService";
 import { crearNotificacion } from "@/lib/notifications/notificationService";
 import { prisma } from "@/lib/prisma";
 
+// sesiones de Mi Perfil
+import { registrarSesionDispositivo } from "@/lib/sesion-dispositivo";
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -104,6 +107,18 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
       path: "/",
+    });
+    // sesiones de Mi Perfil
+    const userAgent = request.headers.get("user-agent");
+    const ip = request.headers.get("x-forwarded-for") || 
+           request.headers.get("x-client-ip") || 
+           "unknown";
+
+    await registrarSesionDispositivo({
+      id_usuario: authData.user.id,
+      token_hash: sessionId,
+      ip,
+      user_agent: userAgent,
     });
 try {
       await Promise.all([

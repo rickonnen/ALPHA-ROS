@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verify } from "jsonwebtoken";  // Para validar JWT
-import { createClient } from "@supabase/supabase-js"; 
+import { createClient } from "@supabase/supabase-js";
+import { registrarSesionDispositivo } from "@/lib/sesion-dispositivo";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -96,6 +97,25 @@ if (userData.estado === 0) {
     };
 
     console.log("[AUTH/ME] ✅ Usuario autenticado:", user.email);
+
+    // Registrar sesión del dispositivo
+    try {
+      const sessionId = request.cookies.get("session_id")?.value ?? "";
+      const userAgent = request.headers.get("user-agent");
+      const ip = request.headers.get("x-forwarded-for") || 
+                 request.headers.get("x-client-ip") || 
+                 "unknown";
+
+      await registrarSesionDispositivo({
+        id_usuario: userData.id_usuario,
+        token_hash: sessionId,
+        ip,
+        user_agent: userAgent,
+      });
+    } catch (sessionError) {
+      console.error("[AUTH/ME] Error registrando sesión:", sessionError);
+      // No bloqueamos el login si falla el registro de sesión
+    }
 
     return NextResponse.json({ user }, { status: 200 });
 
