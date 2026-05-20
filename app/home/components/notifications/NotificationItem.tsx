@@ -17,6 +17,7 @@ type Props = {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectionMode?: boolean;
+  hideCheckbox?: boolean;
 };
 
 function getTypeString(type: string | number | undefined): string {
@@ -74,6 +75,7 @@ export function NotificationItem({
   isSelected = false,
   onToggleSelect,
   selectionMode = false,
+  hideCheckbox = false,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -124,17 +126,19 @@ export function NotificationItem({
         <div className={`w-8 h-8 flex items-center justify-center rounded-full ${typeColor} text-white`}>
           {typeIcon}
         </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(id); }}
-          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-            ${isSelected
-              ? "bg-[#2C4A5A] border-[#2C4A5A]"
-              : "border-gray-300 bg-white hover:border-[#2C4A5A]"
-            }`}
-          title={isSelected ? "Deseleccionar" : "Seleccionar"}
-        >
-          {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
-        </button>
+        {!hideCheckbox && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSelect?.(id); }}
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+              ${isSelected
+                ? "bg-[#2C4A5A] border-[#2C4A5A]"
+                : "border-gray-300 bg-white hover:border-[#2C4A5A]"
+              }`}
+            title={isSelected ? "Deseleccionar" : "Seleccionar"}
+          >
+            {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
+          </button>
+        )}
       </div>
 
       {/* CONTENT */}

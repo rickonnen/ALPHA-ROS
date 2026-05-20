@@ -11,6 +11,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/app/auth/AuthContext";
 import { createClient } from "@supabase/supabase-js";
 import { BellOff } from "lucide-react";
+import { useEmailNotificationStatus } from "@/components/hooks/useEmailNotificationStatus";
 
 type Notification = {
   id: string;
@@ -58,7 +59,7 @@ export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProp
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [gmailEnabled, setGmailEnabled] = useState(true);
+  const { gmailEnabled, toggleGmail } = useEmailNotificationStatus(user?.id);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { trashIds, addToTrash, removeFromTrash, emptyTrash } = useTrash(user?.id);
@@ -80,9 +81,7 @@ const trash = useMemo(
 
   useEffect(() => {
     const userId = user?.id ?? "guest";
-    const savedGmail = localStorage.getItem(`gmail_enabled_${userId}`);
     const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
-    if (savedGmail !== null) setGmailEnabled(savedGmail === "true");
     if (savedWhatsapp !== null) setWhatsappEnabled(savedWhatsapp === "true");
   }, [user]);
 
@@ -134,6 +133,19 @@ const trash = useMemo(
           type: "general",
         }, ...prev]);
       })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, (payload) => {
+        const n = payload.new as any;
+        setNotifications((prev) => prev.map((notif) => 
+          notif.id === n.id_notificacion 
+            ? { ...notif, read: n.leido }
+            : notif
+        ));
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -183,12 +195,14 @@ const trash = useMemo(
   const handleRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
+    window.dispatchEvent(new Event("notifications-updated"));
   };
 
   const handleMarkAll = async () => {
     if (!user?.id) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     await supabase.from("Notificacion").update({ leido: true }).eq("id_usuario", user.id);
+    window.dispatchEvent(new Event("notifications-updated"));
   };
 
   const handleToggleSelect = (id: string) => {
@@ -210,6 +224,7 @@ const trash = useMemo(
       prev.map((n) => selectedIds.includes(n.id) ? { ...n, read: true } : n)
     );
     await supabase.from("Notificacion").update({ leido: true }).in("id_notificacion", selectedIds);
+    window.dispatchEvent(new Event("notifications-updated"));
     window.dispatchEvent(new Event("refresh-notification-badge"));
     setSelectedIds([]);
   };
@@ -235,9 +250,8 @@ const trash = useMemo(
   };
 
   const handleGmailToggle = (enabled: boolean) => {
-    setGmailEnabled(enabled);
-    localStorage.setItem(`gmail_enabled_${user?.id ?? "guest"}`, enabled.toString());
-  };
+  toggleGmail(enabled);
+ };
 
   const handleWhatsappToggle = (enabled: boolean) => {
     setWhatsappEnabled(enabled);
@@ -260,14 +274,6 @@ const trash = useMemo(
         <>
           <NotificationHeader
             totalCount={totalCount}
-            selectedIds={selectedIds}
-            allIds={visibleNotifications.map((n) => n.id)}
-            onSelectAll={handleSelectAll}
-            onDeselectAll={handleDeselectAll}
-            onBulkDelete={isTrashTab ? handleBulkDeleteFromTrash : handleBulkDelete}
-            onBulkMarkRead={isTrashTab ? undefined : handleBulkMarkRead}
-            isInTrash={isTrashTab}
-            onBulkRestore={isTrashTab ? handleBulkRestore : undefined}
           />
 
           <div className="p-2">
@@ -281,6 +287,7 @@ const trash = useMemo(
               trashCount={trash.length}
               onMarkAll={handleMarkAll}
               onOpenSettings={() => setShowSettings(true)}
+              onTrashClick={() => setActiveTab("trash")}
             />
           </div>
 
@@ -337,9 +344,7 @@ const trash = useMemo(
                     onRead={handleRead}
                     isInTrash={isTrashTab}
                     onRestore={handleRestore}
-                    isSelected={selectedIds.includes(n.id)}
-                    onToggleSelect={handleToggleSelect}
-                    selectionMode={selectedIds.length > 0}
+                    hideCheckbox={true}
                   />
                 ))}
               </div>

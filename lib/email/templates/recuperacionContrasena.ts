@@ -3,7 +3,7 @@ export function templateRecuperacionContrasena(nombre: string, codigo: string): 
     <!DOCTYPE html>
     <html lang="es" style="margin:0;padding:0">
     <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-    <body style="margin:0;padding:0;background-color:#f5e6e6;font-family:'Segoe UI',Arial,sans-serif">
+    <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Arial,sans-serif">
       <div style="padding:30px 20px">
         <div style="max-width:480px;margin:0 auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
           <div style="padding:16px 24px;text-align:center;border-bottom:1px solid #eee">
