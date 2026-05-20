@@ -17,10 +17,10 @@ type Props = {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectionMode?: boolean;
-  hideCheckbox?: boolean;
-};
-
-function getTypeString(type: string | number | undefined): string {
+          ? "bg-[#2C4A5A]/10 border-[#2C4A5A]/40 ring-1 ring-[#2C4A5A]/20"
+          : read
+            ? "bg-white border-gray-100 shadow-sm dark:bg-[#1f2c33] dark:border-[#2b3a45]"
+            : "bg-gray-100 border-gray-200 dark:bg-[#263540] dark:border-[#334551]"
   if (typeof type === "string") return type;
   if (typeof type === "number") {
     switch (type) {
@@ -117,8 +117,8 @@ export function NotificationItem({
         ${isSelected
           ? "bg-[#2C4A5A]/10 border-[#2C4A5A]/40 ring-1 ring-[#2C4A5A]/20"
           : read
-            ? "bg-white border-gray-100 shadow-sm"
-            : "bg-gray-100 border-gray-200"
+            ? "bg-white border-gray-100 shadow-sm dark:bg-[#1f2c33] dark:border-[#2b3a45]"
+            : "bg-gray-100 border-gray-200 dark:bg-[#263540] dark:border-[#334551]"
         }`}
     >
       {/* ICON + selector debajo */}
@@ -144,10 +144,10 @@ export function NotificationItem({
       {/* CONTENT */}
       <div className="flex flex-col flex-1 min-w-0">
         <span className={`text-[13px] md:text-[15px] leading-[120%] truncate
-          ${read ? "font-medium text-gray-600" : "font-black text-black"}`}>
+          ${read ? "font-medium text-gray-600 dark:text-slate-300" : "font-black text-black dark:text-white"}`}>
           {title}
           {isWhatsApp && !read && (
-            <span className="ml-1 md:ml-2 text-xs bg-green-100 text-green-700 px-1.5 md:px-2 py-0.5 rounded-full">
+            <span className="ml-1 md:ml-2 text-xs bg-green-100 text-green-700 px-1.5 md:px-2 py-0.5 rounded-full dark:bg-green-900/30 dark:text-green-300">
               WhatsApp
             </span>
           )}
@@ -155,7 +155,7 @@ export function NotificationItem({
 
         <p
           ref={textRef}
-          className={`text-gray-500 text-[11px] md:text-[13px] font-medium leading-4 md:leading-5 wrap-break-word ${!expanded ? "line-clamp-1" : ""}`}
+          className={`text-gray-500 text-[11px] md:text-[13px] font-medium leading-4 md:leading-5 wrap-break-word dark:text-slate-300/80 ${!expanded ? "line-clamp-1" : ""}`}
         >
           {description}
         </p>
@@ -163,13 +163,13 @@ export function NotificationItem({
         {isTruncated && (
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded((prev) => !prev); }}
-            className="text-blue-500 text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
+            className="text-blue-500 text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5 dark:text-blue-300"
           >
             {expanded ? "Ocultar" : "Ver más"}
           </button>
         )}
 
-        <span className="text-gray-400 text-[10px] md:text-xs mt-0.5 md:mt-1">{time}</span>
+        <span className="text-gray-400 text-[10px] md:text-xs mt-0.5 md:mt-1 dark:text-slate-400">{time}</span>
       </div>
 
       {/* ACTIONS */}
@@ -178,7 +178,7 @@ export function NotificationItem({
           {isInTrash ? (
             <button
               onClick={(e) => { e.stopPropagation(); onRestore?.(id); }}
-              className="w-6 md:w-7 h-6 md:h-7 flex items-center justify-center rounded-full text-green-500 hover:bg-green-50 transition-colors"
+              className="w-6 md:w-7 h-6 md:h-7 flex items-center justify-center rounded-full text-green-500 hover:bg-green-50 transition-colors dark:text-green-400 dark:hover:bg-green-900/30"
               title="Restaurar notificación"
             >
               <RotateCcw size={13} className="md:w-4 md:h-4" />
@@ -187,7 +187,7 @@ export function NotificationItem({
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="w-6 md:w-7 h-6 md:h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="w-6 md:w-7 h-6 md:h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-red-900/30"
               title="Eliminar notificación"
             >
               <Trash2 size={13} className="md:w-4 md:h-4" />
