@@ -48,9 +48,9 @@ export function CompareFloatingBar({
                 </>
               ) : isMinLimit ? (
                 <>
-                  Seleccionada 
+                  Falta 1 más 
                   <br/>
-                  falta una más
+                  para comparar
                 </>
               ):(
                 <>
