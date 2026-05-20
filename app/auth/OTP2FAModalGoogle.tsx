@@ -16,11 +16,11 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
   const [hovCancelar, setHovCancelar] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const CREAM_BG = "#F4EFE6";
-  const DARK_BLUE = "#1F3A4D";
+  const CREAM_BG = "var(--auth-otp-bg)";
+  const DARK_BLUE = "var(--auth-otp-text)";
   const TERRACOTTA = "#C26E5A";
-  const INPUT_BG = "#4a6878";
-  const MUTED_TEXT = "#5a7a8a";
+  const INPUT_BG = "var(--auth-otp-input-bg)";
+  const MUTED_TEXT = "var(--auth-otp-muted)";
 
   const codigo = digits.join("");
 
@@ -121,7 +121,7 @@ export default function OTP2FAModalGoogle({ onSuccess, onCancel }: OTP2FAModalGo
           </div>
         </div>
 
-        <div style={{ borderBottom: `1px solid ${DARK_BLUE}30`, marginBottom: 18 }} />
+        <div style={{ borderBottom: "1px solid var(--auth-border)", marginBottom: 18 }} />
 
         <p style={{ margin: "0 0 18px", fontSize: 14, color: DARK_BLUE, lineHeight: 1.6 }}>
           Ingresa el código de 6 dígitos de tu Google Authenticator o app de autenticación

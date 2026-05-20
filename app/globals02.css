@@ -89,6 +89,17 @@
   --text-3xl: 1.8rem;
   --text-xl: 1.3rem;
   --text-base: 1rem;
+
+  /* Auth surfaces */
+  --auth-surface: #ffffff;
+  --auth-surface-muted: #f3f4f6;
+  --auth-border: #d1d5db;
+  --auth-text: #1f2937;
+  --auth-muted: #6b7280;
+  --auth-otp-bg: #f4efe6;
+  --auth-otp-text: #1f3a4d;
+  --auth-otp-muted: #5a7a8a;
+  --auth-otp-input-bg: #4a6878;
 }
 
 /* ==========================================
@@ -127,6 +138,17 @@
     --text-3xl: 1.8rem;
     --text-xl: 1.3rem;
     --text-base: 1rem;
+
+    /* Auth surfaces */
+    --auth-surface: #3a3a3a;
+    --auth-surface-muted: #2f2f2f;
+    --auth-border: #52525b;
+    --auth-text: #f1f5f9;
+    --auth-muted: #a1a1aa;
+    --auth-otp-bg: #2b2b2b;
+    --auth-otp-text: #e2e8f0;
+    --auth-otp-muted: #94a3b8;
+    --auth-otp-input-bg: #3a3a3a;
   }
 }
 

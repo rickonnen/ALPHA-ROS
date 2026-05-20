@@ -26,11 +26,11 @@ export default function OTP2FAModal({
  
 
   // Paleta existente del proyecto
-  const CREAM_BG   = "#F4EFE6"; 
-  const DARK_BLUE  = "#1F3A4D"; 
+  const CREAM_BG   = "var(--auth-otp-bg)"; 
+  const DARK_BLUE  = "var(--auth-otp-text)"; 
   const TERRACOTTA = "#C26E5A"; 
-  const INPUT_BG   = "#4a6878";  
-  const MUTED_TEXT = "#5a7a8a"; 
+  const INPUT_BG   = "var(--auth-otp-input-bg)";  
+  const MUTED_TEXT = "var(--auth-otp-muted)"; 
   // 
 
   // Countdown automático cada segundo cuando está bloqueado
@@ -183,7 +183,7 @@ export default function OTP2FAModal({
         {/* Separador */}
         <div
           style={{
-            borderBottom: `1px solid ${DARK_BLUE}30`,
+            borderBottom: "1px solid var(--auth-border)",
             marginBottom: 18,
           }}
         />

@@ -111,20 +111,20 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
         <button onClick={onBack} disabled={loading} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#B47B65", display: "flex", alignItems: "center" }}>
           <ArrowLeft size={20} />
         </button>
-        <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>Verificar código</h2>
+        <h2 style={{ fontSize: "22px", fontWeight: "bold", color: "var(--auth-text)", margin: 0 }}>Verificar código</h2>
       </div>
 
       {/* Correo enmascarado en dos líneas */}
       <div style={{ textAlign: "center" }}>
-        <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 4px 0" }}>
+        <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: "0 0 4px 0" }}>
           Ingresa el código de 6 dígitos que enviamos a
         </p>
-        <p style={{ fontSize: "14px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>
+        <p style={{ fontSize: "14px", fontWeight: "bold", color: "var(--auth-text)", margin: 0 }}>
           {mask(email)}
         </p>
       </div>
 
-      <label style={{ fontSize: "11px", fontWeight: "600", color: "#374151", textTransform: "uppercase", margin: 0 }}>
+      <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-text)", textTransform: "uppercase", margin: 0 }}>
         Código de verificación
       </label>
 
@@ -142,17 +142,17 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
             style={{
               width: "14%", height: "48px", fontSize: "18px", fontWeight: "bold",
               textAlign: "center",
-              border: `2px solid ${emptyCells.includes(index) ? "#ef4444" : digit ? "#C85A4F" : "#d1d5db"}`,
+              border: `2px solid ${emptyCells.includes(index) ? "#ef4444" : digit ? "#C85A4F" : "var(--auth-border)"}`,
              borderRadius: "8px", outline: "none",
-             backgroundColor: emptyCells.includes(index) ? "#fee2e2" : expired ? "#f3f4f6" : "white",
-             color: "#1f2937", transition: "all 0.2s",
+             backgroundColor: emptyCells.includes(index) ? "#fee2e2" : expired ? "var(--auth-surface-muted)" : "var(--auth-surface)",
+             color: "var(--auth-text)", transition: "all 0.2s",
             }}
           />
         ))}
       </div>
 
       {!expired && timeLeft > 0 && (
-        <p style={{ fontSize: "12px", color: timeLeft <= 30 ? "#ef4444" : "#6b7280", margin: 0, textAlign: "center" }}>
+        <p style={{ fontSize: "12px", color: timeLeft <= 30 ? "#ef4444" : "var(--auth-muted)", margin: 0, textAlign: "center" }}>
           Código expira en <strong>{fmt(timeLeft)}</strong>
         </p>
       )}
@@ -164,8 +164,8 @@ export default function ResetCodeForm({ email, onBack, onCodeVerified }: ResetCo
       </button>
 
       <div style={{ textAlign: "center" }}>
-        <p style={{ fontSize: "13px", color: "#6b7280", margin: "0 0 8px 0" }}>¿No recibiste el código?</p>
-        <button onClick={handleResend} disabled={loading || resendTimer > 0} style={{ width: "100%", backgroundColor: "transparent", color: resendTimer > 0 ? "#9ca3af" : "#C85A4F", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: `2px solid ${resendTimer > 0 ? "#d1d5db" : "#C85A4F"}`, cursor: loading || resendTimer > 0 ? "not-allowed" : "pointer", fontSize: "14px" }}>
+        <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: "0 0 8px 0" }}>¿No recibiste el código?</p>
+        <button onClick={handleResend} disabled={loading || resendTimer > 0} style={{ width: "100%", backgroundColor: "transparent", color: resendTimer > 0 ? "var(--auth-muted)" : "#C85A4F", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: `2px solid ${resendTimer > 0 ? "var(--auth-border)" : "#C85A4F"}`, cursor: loading || resendTimer > 0 ? "not-allowed" : "pointer", fontSize: "14px" }}>
           {resendTimer > 0 ? `Reenviar en ${resendTimer}s` : "Reenviar código"}
         </button>
       </div>
