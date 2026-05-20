@@ -44,6 +44,7 @@ export interface Property {
   discountPercent?: number;
   currencySymbol: string;
   publishedDate: string;
+  publishedDateRaw?: string;
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
@@ -62,6 +63,7 @@ interface PropertyCardProps {
   onMouseLeave?: () => void;
   onClick?: () => void;
   isSelected?: boolean;
+  isCompareDisabled?: boolean;
   onToggleCompare?: () => void;
 }
 
@@ -108,6 +110,7 @@ function PropertyCard({
   onMouseLeave,
   onClick,
   isSelected = false,
+  isCompareDisabled = false,
   onToggleCompare,
 }: PropertyCardProps) {
   const { trackEvent } = useTracking();
@@ -262,15 +265,21 @@ function PropertyCard({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
+
+                if (isCompareDisabled) return;
+
                 onToggleCompare();
               }}
+              disabled={isCompareDisabled}
               className={`absolute top-1 right-1 z-[30] p-1.5 shrink-0 
                 rounded-md backdrop-blur border shadow-sm transition-all hover:scale-105 
                 ${!isMapOpen ? "flex sm:hidden" : "flex"} 
                 ${
                   isSelected
                     ? "bg-[#1a2b4c] text-white border border-[#1a2b4c]"
-                    : "bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50"
+                    : isCompareDisabled
+                      ? "bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed opacity-70"
+                      : "bg-white/95 text-gray-700 border border-gray-200 hover:bg-gray-50"
                 }`}
               title={
                 isSelected
@@ -310,6 +319,11 @@ function PropertyCard({
           <span className="block truncate text-[13px] font-medium text-gray-500">
             {property.type}
           </span>
+
+          <p className="flex items-center gap-1 truncate text-[10px] text-gray-400 mb-0.5">
+            <CalendarDays className="h-3 w-3 shrink-0" />
+            <span className="truncate">{property.publishedDate}</span>
+          </p>
 
           <h3 className="mb-0.5 truncate text-[11px] font-semibold text-[#a67c52]">
             {property.title}
@@ -362,6 +376,15 @@ function PropertyCard({
             >
               {property.type}
             </span>
+
+            <p
+              className={`flex items-center gap-1 truncate text-gray-400 ${
+                isMapOpen ? "mt-0.5 text-[9px] xl:text-[10px]" : "mt-0.5 text-[11px]"
+              }`}
+            >
+              <CalendarDays className="h-3 w-3 shrink-0" />
+              <span className="truncate">{property.publishedDate}</span>
+            </p>
           </div>
 
           <div
@@ -466,7 +489,7 @@ function PropertyCard({
                     strokeWidth={2}
                   />
                   <span className="hidden text-[15px] sm:inline">
-                    COMPARAR
+                    {isCompareDisabled ? "LÍMITE" : "COMPARAR"}
                   </span>
                 </>
               )}
@@ -534,7 +557,7 @@ function PropertyCard({
                   className="h-3 w-3 sm:h-3.5 sm:w-3.5"
                   strokeWidth={2.5}
                 />
-                <span>COMPARAR</span>
+                <span>{isCompareDisabled ? "LÍMITE" : "COMPARAR"}</span>
               </>
             )}
           </button>

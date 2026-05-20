@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 interface UserAvatarProps {
   src: string | null | undefined;
   alt: string;

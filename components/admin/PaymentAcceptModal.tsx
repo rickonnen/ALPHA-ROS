@@ -42,7 +42,7 @@ export function PaymentAcceptModal({
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
       {/* Añadimos márgenes horizontales (mx-4) para que en móviles no toque los bordes y ajustamos el padding (p-6 sm:p-8) */}
-      <AlertDialogContent className="w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
+      <AlertDialogContent className="w-[90%] max-w-[500px] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente por temas de accesibilidad */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -58,7 +58,7 @@ export function PaymentAcceptModal({
         </div>
         
         {/* Texto descriptivo indicando la acción a confirmar */}
-        <p className="text-center text-gray-700 text-sm sm:text-base mb-8">
+        <p className="text-center text-sm sm:text-base mb-8">
           Deseas aceptar el pago del cliente correspondiente:{" "}
           <span className="font-semibold">{strClientName}</span>{" "}
           para el plan <span className="font-semibold">{strPlanName}</span>

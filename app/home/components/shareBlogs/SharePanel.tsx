@@ -91,6 +91,7 @@ const SharePanel: React.FC<SharePanelProps> = ({
         styles.panel,
         isExiting ? styles.panelExiting : "",
         "bg-white border border-gray-100 rounded-2xl shadow-xl px-4 py-3",
+        // w-max solo en desktop; en móvil el ancho lo controla left+right
         isMobile ? "" : "w-max",
       ]
         .filter(Boolean)
@@ -121,7 +122,7 @@ const SharePanel: React.FC<SharePanelProps> = ({
       <div
         className={[
           "flex items-center gap-2",
-          isMobile ? "justify-between flex-wrap" : "",
+          isMobile ? "justify-center flex-wrap" : "",
         ].join(" ")}
         role="list"
       >
