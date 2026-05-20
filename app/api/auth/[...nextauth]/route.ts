@@ -106,18 +106,20 @@ export const authOptions: NextAuthOptions = {
         return true
       }
       try {
+        const { createClient } = await import("@supabase/supabase-js")
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
         if (account?.provider === "google") {
-          const { createClient } = await import("@supabase/supabase-js")
-          const supabase = createClient(
-            process.env.SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-          )
           const { data: existingUser } = await supabase
             .from("Usuario")
-            .select("id_usuario")
+            .select("id_usuario, estado")
             .eq("email", user.email)
             .maybeSingle()
           if (existingUser) {
+            if (existingUser.estado === 0) return "/auth/cuenta-desactivada"
             return true
           }
           const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -148,11 +150,9 @@ export const authOptions: NextAuthOptions = {
             await supabase.auth.admin.deleteUser(supabaseUserId)
             return "/api/google-cancelado"
           }
-          
-         const { enviarBienvenidaGoogle } = await import("@/lib/email/emailService")
+          const { enviarBienvenidaGoogle } = await import("@/lib/email/emailService")
           const { crearNotificacion } = await import("@/lib/notifications/notificationService")
           const nombre = user.name?.split(" ")[0] ?? "Usuario"
-          
           await enviarBienvenidaGoogle(user.email!, nombre)
           await crearNotificacion({
             id_usuario: supabaseUserId,
@@ -160,19 +160,42 @@ export const authOptions: NextAuthOptions = {
             mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente con Google. Bienvenido a la plataforma.`,
             id_categoria: 1,
           })
+          return true
         }
+
         if (account.provider === "discord") {
           const { handleDiscordSignIn } = await import("@/lib/auth/discordAuth")
-          return await handleDiscordSignIn(user, account)
+          const result = await handleDiscordSignIn(user, account)
+          if (result === true) {
+            const { data: usuarioDiscord } = await supabase
+              .from("Usuario")
+              .select("estado")
+              .eq("email", user.email)
+              .maybeSingle()
+            if (usuarioDiscord?.estado === 0) return "/auth/cuenta-desactivada"
+          }
+          return result
         }
+
         if (account.provider === "facebook") {
           const { handleFacebookSignIn } = await import("@/lib/auth/facebookAuth")
           return await handleFacebookSignIn(user, account)
         }
+
         if (account.provider === "linkedin") {
           const { handleLinkedInSignIn } = await import("@/lib/auth/linkedInAuth")
-          return await handleLinkedInSignIn(user, account)
+          const result = await handleLinkedInSignIn(user, account)
+          if (result === true) {
+            const { data: usuarioLinkedIn } = await supabase
+              .from("Usuario")
+              .select("estado")
+              .eq("email", user.email)
+              .maybeSingle()
+            if (usuarioLinkedIn?.estado === 0) return "/auth/cuenta-desactivada"
+          }
+          return result
         }
+
         return true
       } catch (error) {
         console.error("Error signIn:", error)

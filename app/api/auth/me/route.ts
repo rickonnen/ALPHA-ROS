@@ -12,11 +12,45 @@ export async function GET(request: NextRequest) {
     const authToken = request.cookies.get("auth_token")?.value;
 
     if (!authToken) {
-     
-      return NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      );
+      const { getServerSession } = await import("next-auth")
+      const { authOptions } = await import("@/app/api/auth/[...nextauth]/route")
+      const session = await getServerSession(authOptions)
+
+      if (!session?.user?.email) {
+        return NextResponse.json(
+          { error: "No autenticado" },
+          { status: 401 }
+        );
+      }
+
+      const { data: userData, error } = await supabaseAdmin
+        .from("Usuario")
+        .select("id_usuario, nombres, email, rol, estado")
+        .eq("email", session.user.email)
+        .maybeSingle();
+
+      if (error || !userData) {
+        return NextResponse.json(
+          { error: "Usuario no encontrado" },
+          { status: 404 }
+        );
+      }
+
+      if (userData.estado === 0) {
+        return NextResponse.json(
+          { error: "Cuenta desactivada" },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({
+        user: {
+          id: userData.id_usuario,
+          name: userData.nombres,
+          email: userData.email,
+          rol: userData.rol,
+        }
+      }, { status: 200 });
     }
 
     console.log("[AUTH/ME] Token encontrado, verificando...");
