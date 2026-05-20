@@ -54,41 +54,36 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
         <div style={{
           width: "48px", height: "48px", borderRadius: "50%",
-          backgroundColor: "var(--auth-primary-strong)",
+          backgroundColor: "#1F3A4D",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Link2 size={22} color="var(--auth-primary-foreground)" />
+          <Link2 size={22} color="white" />
         </div>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--auth-text)", margin: 0 }}>
+          <h2 className="text-[22px] font-extrabold text-slate-900 dark:text-slate-100" style={{ margin: 0 }}>
             Magic Link
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: 0 }}>
+          <p className="text-[13px] text-slate-500 dark:text-slate-400" style={{ margin: 0 }}>
             Obtén tu enlace mágico
           </p>
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid var(--auth-primary-strong)" }} />
+      <hr className="border-t border-[#1F3A4D] dark:border-slate-600" />
 
-      <p style={{ fontSize: "14px", color: "var(--auth-text-soft)", textAlign: "center", lineHeight: "1.6" }}>
+      <p className="text-sm text-slate-600 dark:text-slate-300 text-center" style={{ lineHeight: "1.6" }}>
         Ingrese su correo electrónico y recibirá un Enlace Mágico seguro
         para que pueda iniciar sesión
       </p>
 
       {/* Email field */}
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <label style={{ fontSize: "11px", fontWeight: "600", color: "var(--auth-muted-strong)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           Correo electrónico
         </label>
-        <div style={{
-          display: "flex", alignItems: "center",
-          border: `1px solid ${error ? "var(--auth-field-error-border)" : "var(--auth-field-border)"}`,
-          borderRadius: "8px", padding: "10px 14px", gap: "10px",
-          backgroundColor: error ? "var(--auth-field-error-bg)" : "var(--auth-field-bg)",
-        }}>
-          <Mail size={18} style={{ color: "var(--auth-icon)", flexShrink: 0 }} />
+        <div className={`flex items-center gap-2.5 rounded-lg px-3.5 py-2.5 border ${error ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+          <Mail size={18} className="text-slate-400 shrink-0" />
           <input
             type="email"
             placeholder="usuario@correo.com"
@@ -103,13 +98,10 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
               }
             }}
             onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
-            style={{
-              width: "100%", fontSize: "14px",
-              outline: "none", border: "none", backgroundColor: "transparent", color: "var(--auth-text)",
-            }}
+            className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
           />
         </div>
-        {error && <p style={{ color: "var(--auth-danger)", fontSize: "12px", margin: 0 }}>{error}</p>}
+        {error && <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>{error}</p>}
       </div>
 
       {/* Submit button */}
@@ -119,8 +111,8 @@ export default function MagicLinkForm({ onBack, onSent }: MagicLinkFormProps) {
         onClick={handleSubmit}
         style={{
           width: "100%",
-          backgroundColor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "var(--auth-disabled)" : "var(--auth-secondary)",
-          color: "var(--auth-primary-foreground)",
+          backgroundColor: (loading || !email.trim() || !isValidEmail(email.trim())) ? "#8B4A3D" : "#C26E5A",
+          color: "white",
           fontWeight: "bold",
           fontSize: "15px",
           padding: "13px",

@@ -91,7 +91,7 @@ const PasoItem = ({ num, titulo, descripcion, esUltimo = false }: PasoItemProps)
 export const ResumenPago = ({ titulo, descripcion, detalles, monto, backUrl, tipoPago, resumenPublicacionNode }: Props) => {
 const pasos = tipoPago === "qr" ? PASOS_QR(monto) : PASOS_VIRTUAL;
   return (
-    <div className="flex flex-col w-full h-full mt-6 bg-muted/30 p-6 md:p-8 rounded-xl">
+    <div className="flex flex-col w-full h-full mt-6 bg-muted/30 p-6 md:p-8 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col">
         
         <div className="md:hidden mb-6">
@@ -142,7 +142,7 @@ const pasos = tipoPago === "qr" ? PASOS_QR(monto) : PASOS_VIRTUAL;
           <h2 className="text-xl font-bold text-foreground border-b border-border pb-2">
             PASOS
           </h2>
-           <div className="space-y-6">
+           <div key={tipoPago} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {pasos.map((paso, i) => (
               <PasoItem
                 key={i}

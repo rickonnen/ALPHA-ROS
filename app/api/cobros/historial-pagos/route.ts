@@ -20,6 +20,11 @@ export async function GET(req: NextRequest) {
       },
       include: {
         PlanPublicacion: true,
+        Publicacion: {
+          select: {
+            titulo: true,
+          },
+        },
       },
       orderBy: {
         fecha_detalle: "desc",
@@ -28,7 +33,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(pagos);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { message: "Error al obtener pagos" },
       { status: 500 }

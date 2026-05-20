@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import CommentsDrawer from "./CommentsDrawer";
 import CommentItem, { CommentData } from "./CommentItem"; 
 /**
@@ -19,31 +19,36 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [userForcedPreview, setUserForcedPreview] = useState(false);
 
-  useEffect(() => {
-    const fetchTopComment = async () => {
-      try {
-        const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`, {
-          cache: 'no-store'
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setComments(data);
-        }
-      } catch (error) {
-        console.error("Error al cargar comentarios", error);
-      } finally {
-        setIsLoading(false);
+  const fetchTopComment = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante&limit=1`, {
+        cache: 'no-store'
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
       }
-    };
+    } catch (error) {
+      console.error("Error al cargar comentarios", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [blogId]);
+
+  useEffect(() => {
     if (!isDrawerOpen && !userForcedPreview) {
       fetchTopComment();
     }
-  }, [blogId, isDrawerOpen, userForcedPreview]);
+  }, [isDrawerOpen, userForcedPreview, fetchTopComment]);
 
   const handleNewUserComment = (newComment: CommentData) => {
     setComments([newComment]);
     setUserForcedPreview(true);
+  };
+
+  const handleCommentDeleted = () => {
+    fetchTopComment();
   };
 
   if (isLoading) return <div className="animate-pulse w-full h-24 bg-secondary-fund rounded-xl mt-8"></div>;
@@ -61,6 +66,7 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
           blogId={blogId} 
           isAuthenticated={isAuthenticated} 
           isPreview={true}
+          onDeleteSuccess={handleCommentDeleted}
         />
       ) : (
         <p className="text-foreground/60 mt-4 mb-4 italic text-sm">Sé el primero en comentar.</p>
@@ -77,6 +83,7 @@ export default function BlogComments({ blogId, isAuthenticated = false }: BlogCo
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         onNewUserComment={handleNewUserComment} 
+        onCommentDeleted={handleCommentDeleted}
         isAuthenticated={isAuthenticated}
       />
     </div>

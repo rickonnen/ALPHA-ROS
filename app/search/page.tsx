@@ -399,11 +399,11 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
-        return first.id - second.id;
+        return new Date(first.publishedDateRaw || first.publishedDate).getTime() - new Date(second.publishedDateRaw || second.publishedDate).getTime();
       default:
         if (first.isPromoted && !second.isPromoted) return -1;
         if (!first.isPromoted && second.isPromoted) return 1;
-        return second.id - first.id;
+        return new Date(second.publishedDateRaw || second.publishedDate).getTime() - new Date(first.publishedDateRaw || first.publishedDate).getTime();
     }
   });
   return sorted;
@@ -499,6 +499,7 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
+    publishedDateRaw: publication.fecha_creacion,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
@@ -617,28 +618,51 @@ function SearchPageContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSelectionLoaded, setIsSelectionLoaded] = useState(false);
 
+  const MAX_COMPARE_PROPERTIES = 4;
+
   const toggleSelection = (id: number) => {
     setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((item) => item !== id);
-      if (prev.length >= 4) {
+      const isAlreadySelected = prev.includes(id);
+
+      if (isAlreadySelected) {
+        return prev.filter((item) => item !== id);
+      }
+
+      if (prev.length >= MAX_COMPARE_PROPERTIES) {
         setToastMessage(
-          "Solo puedes seleccionar hasta 4 inmuebles para comparar.",
+          "El límite máximo de comparación es de 4 propiedades.",
         );
         return prev;
       }
+
       return [...prev, id];
     });
   };
 
-  // Recuperar y guardar seleccion en LocalStorage
+  useEffect(() => {
+    if (!toastMessage) return;
+
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  // Recuperar y guardar seleccion en 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("compareSelectedIds");
       if (saved) {
         try {
-          setSelectedIds(JSON.parse(saved));
+          const parsedIds = JSON.parse(saved);
+
+          if (Array.isArray(parsedIds)) {
+            setSelectedIds(parsedIds.slice(0, MAX_COMPARE_PROPERTIES));
+          }
         } catch (e) {
           console.error("Error parsing saved selected IDs:", e);
+          localStorage.removeItem("compareSelectedIds");
         }
       }
       setIsSelectionLoaded(true);
@@ -2430,6 +2454,11 @@ function SearchPageContent() {
           onClear={() => setSelectedIds([])}
           onCompare={() => setAppView("compare")}
         />
+      )}
+      {toastMessage && (
+        <div className="fixed bottom-28 left-1/2 z-[9999] -translate-x-1/2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
+          {toastMessage}
+        </div>
       )}
 
       {/* ══════════════════ MODALES ══════════════════ */}

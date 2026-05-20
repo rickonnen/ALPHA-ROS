@@ -3,6 +3,8 @@ import { type Property } from "./propertyCard";
 import { useState } from "react";
 import { useDollarRate } from '@/components/hooks/getDollarRate';
 import CurrencySwitch from "@/components/search/currencySwitch";
+const MAX_COMPARE_PROPERTIES = 4;
+const FALLBACK_COMPARE_IMAGE = "/casa1.jpg";
 
 // Extendemos localmente tu Property para incluir las caracteristicas de la BD
 interface CompareProperty extends Property {
@@ -23,7 +25,25 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
   const exchangeRate = compra ?? 6.96;
 
   // Filtramos solo las propiedades seleccionadas
-  const selectedProperties = properties.filter(p => selectedIds.includes(p.id)) as CompareProperty[];
+  const selectedProperties = properties
+  .filter((p) => selectedIds.includes(p.id))
+  .slice(0, MAX_COMPARE_PROPERTIES) as CompareProperty[];
+  if (selectedProperties.length < 2) {
+    return (
+      <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+        <p className="mb-4 text-sm font-semibold text-gray-600">
+          Selecciona al menos 2 propiedades para comparar.
+        </p>
+
+        <button
+          onClick={onBack}
+          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white hover:bg-[#a67c52] transition-colors"
+        >
+          Volver a los listados
+        </button>
+      </div>
+    );
+  }
   
   const [showFeatures, setShowFeatures] = useState<boolean>(false);
   
@@ -116,10 +136,10 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                     title="Ver detalles del inmueble"
                   >
                     <div className="overflow-hidden rounded-lg mb-2 sm:mb-4 shadow-sm border-2 border-transparent group-hover:border-[#C26E5A] transition-colors">
-                      <img 
-                        src={prop.images[0] || '/placeholder.jpg'} 
-                        alt={prop.title} 
-                        className="w-full h-28 sm:h-40 object-cover transition-transform duration-300 group-hover:scale-105" 
+                      <img
+                        src={prop.images?.[0] || FALLBACK_COMPARE_IMAGE}
+                        alt={prop.title}
+                        className="w-full h-28 sm:h-40 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                     {/* Resaltamos el precio más bajo en color verde */}
