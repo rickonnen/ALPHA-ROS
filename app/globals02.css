@@ -100,6 +100,27 @@
   --auth-otp-text: #1f3a4d;
   --auth-otp-muted: #5a7a8a;
   --auth-otp-input-bg: #4a6878;
+
+  /* Notification surfaces */
+  --notification-surface: #f9f5f1;
+  --notification-card: #ffffff;
+  --notification-header: #2c4a5a;
+  --notification-header-foreground: #ffffff;
+  --notification-text: #2c4a5a;
+  --notification-muted: #7a756d;
+  --notification-button: #2c4a5a;
+  --notification-button-hover: #1e3a4a;
+  --notification-input-bg: #ffffff;
+  --notification-success: #2f7a4a;
+  --notification-success-bg: #ecfdf3;
+  --notification-success-border: #bbf7d0;
+  --notification-success-text: #166534;
+  --notification-error-bg: #fee2e2;
+  --notification-error-border: #fecaca;
+  --notification-error-text: #b91c1c;
+  --notification-warning-bg: #fef3c7;
+  --notification-warning-border: #fcd34d;
+  --notification-warning-text: #92400e;
 }
 
 /* ==========================================
@@ -149,6 +170,27 @@
     --auth-otp-text: #e2e8f0;
     --auth-otp-muted: #94a3b8;
     --auth-otp-input-bg: #3a3a3a;
+
+    /* Notification surfaces */
+    --notification-surface: #1f2c33;
+    --notification-card: #263540;
+    --notification-header: #2a3b47;
+    --notification-header-foreground: #e2e8f0;
+    --notification-text: #e2e8f0;
+    --notification-muted: #94a3b8;
+    --notification-button: #3b5566;
+    --notification-button-hover: #2f4858;
+    --notification-input-bg: #22303a;
+    --notification-success: #8ad4a4;
+    --notification-success-bg: #1f3a2a;
+    --notification-success-border: #2e5a3a;
+    --notification-success-text: #b9f6ca;
+    --notification-error-bg: #3b1f1f;
+    --notification-error-border: #6b2a2a;
+    --notification-error-text: #fca5a5;
+    --notification-warning-bg: #3a2f1a;
+    --notification-warning-border: #6b5630;
+    --notification-warning-text: #f5d08a;
   }
 }
 
