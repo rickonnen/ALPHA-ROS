@@ -15,6 +15,26 @@ interface OtroPerfilViewProps {
 }
 
 export default function OtroPerfilView({ usuario, telefonos, privacidad }: OtroPerfilViewProps) {
+  const getGenero = (sigla: string | null | undefined) => {
+    const mapa: Record<string, string> = {
+      M: "Masculino",
+      F: "Femenino",
+      O: "Otro",
+    };
+    return sigla ? mapa[sigla.toUpperCase()] ?? "No registrado" : "No registrado";
+  };
+
+  const formatFecha = (fechaISO: string | Date | null | undefined) => {
+    if (!fechaISO) return null;
+    const fecha = typeof fechaISO === "string" ? new Date(fechaISO) : fechaISO;
+    if (Number.isNaN(fecha.getTime())) return null;
+    return fecha.toLocaleDateString("es-BO", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   const campos = [
     {
       label: "Dirección",
@@ -24,17 +44,13 @@ export default function OtroPerfilView({ usuario, telefonos, privacidad }: OtroP
     },
     {
       label: "Género",
-      valor: usuario.genero,
+      valor: getGenero(usuario.genero),
       visible: privacidad.genero,
       icon: <User className="w-4 h-4" />,
     },
     {
       label: "Fecha de nacimiento",
-      valor: usuario.fecha_nacimiento
-        ? new Date(usuario.fecha_nacimiento).toLocaleDateString("es-BO", {
-            day: "2-digit", month: "long", year: "numeric",
-          })
-        : null,
+      valor: formatFecha(usuario.fecha_nac),
       visible: privacidad.fecha_nacimiento,
       icon: <Calendar className="w-4 h-4" />,
     },
@@ -65,14 +81,20 @@ export default function OtroPerfilView({ usuario, telefonos, privacidad }: OtroP
             <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Usuario</p>
             <p className="text-white font-semibold">@{usuario.username}</p>
           </div>
-          {telefonos.length > 0 && (
-            <div className="bg-white/10 rounded-xl p-4">
-              <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Teléfono(s)</p>
-              {telefonos.map((t, i) => (
+          <div className="bg-white/10 rounded-xl p-4">
+            <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Correo electrónico</p>
+            <p className="text-white font-semibold">{usuario.email ?? "No registrado"}</p>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4">
+            <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Teléfono(s)</p>
+            {telefonos.length > 0 ? (
+              telefonos.map((t, i) => (
                 <p key={i} className="text-white font-semibold">{t}</p>
-              ))}
-            </div>
-          )}
+              ))
+            ) : (
+              <p className="text-white/60 font-semibold">Teléfono no registrado</p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -81,8 +103,12 @@ export default function OtroPerfilView({ usuario, telefonos, privacidad }: OtroP
               <div className="text-white/60 mt-0.5">{campo.icon}</div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-white/50 uppercase tracking-wide mb-1">{campo.label}</p>
-                {campo.visible && campo.valor ? (
-                  <p className="text-white font-semibold">{campo.valor}</p>
+                {campo.visible ? (
+                  campo.valor ? (
+                    <p className="text-white font-semibold">{campo.valor}</p>
+                  ) : (
+                    <p className="text-white/60 font-semibold">Sin registrar</p>
+                  )
                 ) : (
                   <div className="flex items-center gap-1 text-white/30">
                     <Lock className="w-3 h-3" />
