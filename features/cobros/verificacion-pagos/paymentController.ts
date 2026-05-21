@@ -93,6 +93,10 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         throw new Error(`No se encontró el pago con id ${intId}`);
       }
 
+      if (objCurrentPayment.estado !== objStatuses.intPending) {
+        throw new Error(`CONCURRENCY_ERROR: El pago #${intId} ya fue procesado previamente y no está pendiente.`);
+      }
+
       const objPaymentResult = await tx.detallePago.update({
         where: { id_detalle: intId },
         data: {
@@ -101,7 +105,7 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
         },
       });
 
-      if (strNewStatusName === 'Aceptado' && objCurrentPayment.estado === objStatuses.intPending) {
+      if (strNewStatusName === 'Aceptado') {
         
         const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
         const strUserId = objCurrentPayment.id_usuario;
