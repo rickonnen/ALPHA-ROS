@@ -261,7 +261,7 @@ const trash = useMemo(
   const isTrashTab = activeTab === "trash";
 
   return (
-    <div className="relative fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-110 w-[90vw] max-w-96 h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
       {showSettings ? (
         <SettingsPanel
           onClose={() => setShowSettings(false)}
@@ -276,7 +276,7 @@ const trash = useMemo(
             totalCount={totalCount}
           />
 
-          <div className="p-2">
+          <div className="px-4 py-3">
             <NotificationTabs
               activeTab={activeTab}
               onTabChange={(tab) => {
@@ -292,7 +292,7 @@ const trash = useMemo(
           </div>
 
           {isTrashTab && trash.length > 0 && (
-            <div className="flex justify-end px-3 pb-1">
+            <div className="flex justify-end px-4 py-2">
               <button
                 onClick={() => setShowConfirmModal(true)}
                 className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
@@ -330,7 +330,7 @@ const trash = useMemo(
             </div>
           ) : (
             <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="p-2 space-y-2">
+              <div className="px-4 py-3 space-y-2.5">
                 {visibleNotifications.map((n) => (
                   <NotificationItem
                     key={n.id}
@@ -355,10 +355,10 @@ const trash = useMemo(
       )}
 
       {!showSettings && (
-        <div className="p-3 border-t border-gray-100">
+        <div className="px-4 py-3.5 border-t border-gray-100">
           <button
             onClick={() => { onVerTodas?.(); }}
-            className="w-full py-2 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
+            className="w-full py-2.5 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
           >
             Ver todas las notificaciones
           </button>

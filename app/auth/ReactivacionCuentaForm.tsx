@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Clock, Mail, Send } from "lucide-react";
+import { ArrowLeft, Clock, Mail, Send, X } from "lucide-react";
 import { isValidEmail, getSuspiciousDomainSuggestion } from "@/lib/utils";
 import { sanitizarTextoLibre } from "@/lib/utils";
 
 interface ReactivacionCuentaFormProps {
   onBack: () => void;
+  onHome?: () => void;
   // email prellenado desde el LoginForm (si el usuario ya escribió su correo)
   emailPrellenado?: string;
 }
@@ -19,13 +20,6 @@ interface SolicitudGuardada {
   email: string;
   timestamp: number;
 }
-
-const TIPOS_CUENTA = [
-  "Creada con correo y contraseña",
-  "Creada con Google",
-  "Creada con Discord",
-  "Creada con Linkedin",
-];
 
 // 24 horas en ms
 const VEINTICUATRO_HORAS = 24 * 60 * 60 * 1000;
@@ -58,11 +52,11 @@ function solicitudEsReciente(guardada: SolicitudGuardada): boolean {
 
 export default function ReactivacionCuentaForm({
   onBack,
+  onHome,
   emailPrellenado = "",
 }: ReactivacionCuentaFormProps) {
   const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState(emailPrellenado);
-  const [tipoCuenta, setTipoCuenta] = useState(TIPOS_CUENTA[0]);
   const [motivo, setMotivo] = useState("");
   const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -118,7 +112,6 @@ export default function ReactivacionCuentaForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          tipoCuenta,
           motivo: motivo.trim(),
         }),
       });
@@ -150,18 +143,28 @@ export default function ReactivacionCuentaForm({
     <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
       {/* Header con breadcrumb */}
       <div style={{ marginBottom: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[11px] font-bold uppercase tracking-[0.5px] text-slate-500 dark:text-slate-400"
-          style={{
-            padding: "0",
-            marginBottom: "20px",
-          }}
-        >
-          <ArrowLeft size={13} />
+          className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[13px] font-bold text-[#B47B65] hover:underline"
+          style={{ padding: "0" }}
+          >
+            <ArrowLeft size={15} />
           Login
         </button>
+        {onHome && (
+            <button
+              type="button"
+              onClick={onHome}
+              className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[13px] font-bold text-[#B47B65] hover:underline"
+              style={{ padding: "0" }}
+            >
+              <X size={15} />
+              Volver al inicio
+            </button>
+          )}
+        </div>
 
         {/* Título del panel */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
@@ -237,17 +240,18 @@ export default function ReactivacionCuentaForm({
             type="button"
             onClick={onBack}
             style={{
-              padding: "11px",
+              padding: "12px",
               borderRadius: "8px",
-              border: "1px solid #1F3A4D44",
-              backgroundColor: "transparent",
-              color: "#1F3A4D",
+              border: "none",
+              backgroundColor: "#C26E5A",
+              color: "white",
               fontWeight: "700",
-              fontSize: "13px",
+              fontSize: "14px",
               cursor: "pointer",
+              width: "100%",
             }}
           >
-            ← Volver al inicio de sesión
+            Volver al inicio de sesión
           </button>
         </div>
       )}
@@ -301,24 +305,6 @@ export default function ReactivacionCuentaForm({
             correo de confirmación y nuestro equipo de soporte procesará tu
             solicitud en un plazo máximo de <strong>24 horas</strong>.
           </p>
-
-          {/* Tipo de cuenta CA-17 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label className="text-[11px] font-bold uppercase tracking-[0.5px] text-slate-700 dark:text-slate-300">
-              Tipo de cuenta
-            </label>
-            <select
-              value={tipoCuenta}
-              onChange={(e) => setTipoCuenta(e.target.value)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[13px] text-slate-900 outline-none cursor-pointer dark:border-slate-600 dark:bg-[#3a3a3a] dark:text-slate-100"
-            >
-              {TIPOS_CUENTA.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* Email de la cuenta desactivada CA-5, CA-6 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>

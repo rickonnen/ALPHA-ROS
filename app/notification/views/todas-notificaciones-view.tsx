@@ -85,7 +85,6 @@ export function TodasNotificacionesView({ onClose }: Props) {
 
         setNotificaciones(mapped);
 
-        // ← NUEVO: limpiar IDs fantasma del localStorage que ya no existen en Supabase
         const existingIds = new Set(mapped.map((n) => n.id));
         const storageKey = `trash_notif_ids_${user.id}`;
         try {
@@ -102,9 +101,11 @@ export function TodasNotificacionesView({ onClose }: Props) {
             }
           }
         } catch {}
-
-      } catch { setHasError(true); }
-      finally { setIsLoading(false); }
+      } catch {
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
 
@@ -127,9 +128,7 @@ export function TodasNotificacionesView({ onClose }: Props) {
       }, (payload) => {
         const n = payload.new as any;
         setNotificaciones((prev) => prev.map((notif) =>
-          notif.id === n.id_notificacion
-            ? { ...notif, read: n.leido }
-            : notif
+          notif.id === n.id_notificacion ? { ...notif, read: n.leido } : notif
         ));
       })
       .on("postgres_changes", {
@@ -264,24 +263,26 @@ export function TodasNotificacionesView({ onClose }: Props) {
           />
         </div>
 
-        <div className="flex items-center justify-between mb-8">
+        {/* Header con Volver y Título */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <button
             onClick={() => { onClose?.(); router.push("/"); }}
-            className="flex items-center gap-2 px-5 py-2 bg-[#2C4A5A] text-white text-sm font-bold rounded-xl hover:bg-[#1e3a4a] transition flex-shrink-0"
+            className="flex items-center gap-2 px-3 md:px-5 py-2 bg-[#2C4A5A] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#1e3a4a] transition shrink-0 w-fit"
           >
-            ← Volver al inicio
+            ← Volver
           </button>
-          <h1 className="text-[#2C4A5A] text-4xl font-black text-center tracking-widest uppercase flex-1 px-4">
+          <h1 className="text-[#2C4A5A] text-lg md:text-4xl font-black text-center tracking-widest uppercase flex-1 px-2 md:px-4">
             Todas las Notificaciones
           </h1>
-          <div className="flex-shrink-0 w-[160px]" />
+          <div className="hidden md:block md:shrink-0 md:w-40" />
         </div>
 
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
-          <div className="flex gap-2">
+        {/* Tabs: izquierda TODAS + NO LEÍDAS, derecha MARCAR TODAS + PAPELERA */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-1.5 md:gap-2 items-center flex-nowrap">
             <button
               onClick={() => setActiveTab("todas")}
-              className={`px-5 py-2 rounded-full text-sm font-bold border-2 transition ${
+              className={`px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 activeTab === "todas"
                   ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
                   : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
@@ -291,7 +292,7 @@ export function TodasNotificacionesView({ onClose }: Props) {
             </button>
             <button
               onClick={() => setActiveTab("no-leidas")}
-              className={`px-5 py-2 rounded-full text-sm font-bold border-2 transition ${
+              className={`px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 activeTab === "no-leidas"
                   ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
                   : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
@@ -301,25 +302,27 @@ export function TodasNotificacionesView({ onClose }: Props) {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex gap-1.5 md:gap-2 items-center flex-nowrap">
             {mostrarMarcarTodas && (
               <button
                 onClick={handleMarkAll}
-                className="px-4 py-2 text-sm font-bold bg-[#2C4A5A] text-white rounded-full hover:bg-[#1e3a4a] transition"
+                className="px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-bold bg-[#2C4A5A] text-white rounded-full hover:bg-[#1e3a4a] transition"
               >
-                MARCAR TODAS
+               <span className="hidden md:inline">MARCAR TODAS</span>
+<span className="md:hidden">MARCAR TODAS</span>
               </button>
             )}
             <button
               onClick={() => setActiveTab("papelera")}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold border-2 transition ${
+              className={`flex items-center gap-1 md:gap-1.5 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 isTrashTab
                   ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
                   : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
               }`}
             >
               <Trash2 size={14} />
-              PAPELERA {trashCount > 0 ? `(${trashCount})` : ""}
+              <span className="hidden md:inline">PAPELERA</span>
+              {trashCount > 0 ? ` (${trashCount})` : ""}
             </button>
           </div>
         </div>

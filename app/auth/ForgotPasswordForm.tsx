@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ArrowLeft, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 
 interface ForgotPasswordFormProps {
   onBack: () => void;
@@ -29,7 +29,7 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      await res.json();
       if (!res.ok) { setError("Si el correo está registrado, recibirás un código en tu bandeja de entrada."); return; }
       onCodeSent(email);
     } catch {
@@ -40,19 +40,36 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <button onClick={onBack} className="bg-transparent border-none cursor-pointer text-[#B47B65] flex items-center">
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="text-[22px] font-bold text-slate-900 dark:text-slate-100" style={{ margin: 0 }}>Recuperar cuenta</h2>
-      </div>
-      <p className="text-[13px] text-slate-500 dark:text-slate-400 text-center" style={{ margin: 0 }}>
+    <div style={{
+      width: "100%",
+      backgroundColor: "#eae3d9",
+      boxSizing: "border-box",
+    }}>
+
+      {/* Title block */}
+      <h2 style={{ margin: "0 0 2px 0", fontSize: "24px", fontWeight: "700", color: "#1a1a1a" }}>
+        Recuperar contraseña
+      </h2>
+      <p style={{ margin: "0 0 18px 0", fontSize: "13px", color: "#8c8e94", fontWeight: "600" }}>
+        Obten tu codigo de 6 Digitos
+      </p>
+
+      <hr style={{ border: "none", borderTop: "1px solid #d2c9be", margin: "0 0 24px 0" }} />
+
+      <p style={{ margin: "0 0 24px 0", fontSize: "13px", color: "#6b6b6b", textAlign: "center", lineHeight: "1.6" }}>
         Ingresa tu correo y te enviaremos un código de 6 dígitos para restablecer tu contraseña.
       </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <label className="text-[11px] font-semibold uppercase text-slate-700 dark:text-slate-300">Correo electrónico</label>
-        <div className={`flex items-center gap-2.5 rounded-md px-3 py-2 border ${error ? "border-red-500 bg-red-100 dark:bg-red-950/30" : "border-slate-300 bg-white dark:border-slate-600 dark:bg-[#3a3a3a]"}`}>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "24px" }}>
+        <label style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", color: "#4a4a4a" }}>
+          Correo electrónico
+        </label>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          backgroundColor: "#ffffff",
+          border: error ? "1.5px solid #ef4444" : "1.5px solid #ccc5bc",
+          borderRadius: "6px", padding: "11px 14px",
+        }}>
           <Mail size={18} className="text-slate-400" />
           <input
             type="email"
@@ -60,13 +77,26 @@ export default function ForgotPasswordForm({ onBack, onCodeSent }: ForgotPasswor
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="w-full text-sm text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-400 bg-transparent outline-none border-0"
+            className="w-full text-sm text-slate-900 placeholder:text-slate-400 bg-transparent outline-none border-0"
           />
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "12px", margin: 0 }}>{error}</p>}
       </div>
-      <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", backgroundColor: loading ? "#8B4A3D" : "#C85A4F", color: "white", fontWeight: "bold", padding: "12px", borderRadius: "6px", border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, fontSize: "14px" }}>
-        {loading ? "Enviando..." : "Enviar código"}
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        style={{
+          width: "100%",
+          backgroundColor: loading ? "#a0564c" : "#8B4A3D",
+          color: "white", fontWeight: "bold",
+          padding: "13px", borderRadius: "6px", border: "none",
+          cursor: loading ? "not-allowed" : "pointer",
+          opacity: loading ? 0.7 : 1, fontSize: "14px",
+          transition: "opacity 0.2s, background-color 0.2s",
+        }}
+      >
+        {loading ? "Enviando..." : "Enviar codigo"}
       </button>
     </div>
   );
