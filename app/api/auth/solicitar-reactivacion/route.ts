@@ -21,7 +21,7 @@ function isValidEmail(email: string): boolean {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, tipoCuenta, motivo } = body;
+    const { email, tipoCuenta = "No especificado", motivo } = body;
 
     if (!email || !email.trim()) {
       return NextResponse.json(

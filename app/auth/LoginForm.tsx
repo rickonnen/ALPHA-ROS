@@ -201,8 +201,8 @@ export default function LoginForm({ onSwitchToRegister, onClose, onForgotPasswor
       }
       // Manejo de cuenta desactivada
       if (err.code === "ACCOUNT_DISABLED") {
-        setCuentaDesactivada(true);
-        setGeneralError("");
+          window.location.href = "/auth/cuenta-desactivada";
+          return;
       } else {
         setGeneralError(err.message || "Ocurrió un error. Intentá de nuevo.");
         setErrors(prev => ({ ...prev, password: "incorrect" }));
