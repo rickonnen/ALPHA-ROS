@@ -41,6 +41,7 @@ interface SearchMapClientProps {
   onPolygonComplete?: (points: [number, number][]) => void;
   isEditingPolygon?: boolean;
   onPolygonEdit?: (points: [number, number][]) => void;
+  onPolygonValidationError?: (message: string) => void;
 }
 
 export default function SearchMapClient({
@@ -58,6 +59,7 @@ export default function SearchMapClient({
   onPolygonComplete,
   isEditingPolygon,
   onPolygonEdit,
+  onPolygonValidationError,
 }: SearchMapClientProps) {
   return (
     <div className="h-full w-full z-0 relative">
@@ -76,6 +78,7 @@ export default function SearchMapClient({
         onPolygonComplete={onPolygonComplete}
         isEditingPolygon={isEditingPolygon}
         onPolygonEdit={onPolygonEdit}
+        onPolygonValidationError={onPolygonValidationError}
       />
     </div>
   );
