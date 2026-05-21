@@ -14,6 +14,16 @@ export async function POST(req: NextRequest) {
 
   const normalizedEmail = email.toLowerCase().trim();
 
+  // Buscar usuario directamente por email sin paginación
+  const { data: userData, error: userError } = await supabase.auth.admin.listUsers({
+    perPage: 1000,
+  });
+
+  if (userError) return NextResponse.json({ error: "Error al buscar usuario" }, { status: 500 });
+
+  const user = userData?.users.find(u => u.email?.toLowerCase().trim() === normalizedEmail);
+  if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
   // Verificar si la nueva contraseña es igual a la anterior
   const { error: signInError } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
@@ -26,10 +36,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-
-  const { data: users } = await supabase.auth.admin.listUsers();
-  const user = users?.users.find(u => u.email === normalizedEmail);
-  if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
   const { error } = await supabase.auth.admin.updateUserById(user.id, { password });
   if (error) return NextResponse.json({ error: "Error al actualizar contraseña" }, { status: 500 });

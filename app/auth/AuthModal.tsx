@@ -35,13 +35,18 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] dark:bg-[#2b2b2b] shadow-2xl p-6 flex flex-col">
-      <div className="flex justify-between items-center">
-          <magicLink.BackButton />
-        
-        <button onClick={onClose} className="self-end text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline">
-          <X size={16} /> Volver al inicio
-        </button>
-      </div>
+     <div className="flex justify-between items-center mb-4">
+         {screen === "forgot" ? (
+         <button onClick={() => setScreen("auth")} className="text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline">
+        ← Login
+       </button>
+      ) : (
+      <magicLink.BackButton />
+     )}
+     <button onClick={onClose} className="text-[#B47B65] font-bold flex items-center gap-1 hover:underline" style={{ fontSize: "13px" }}>
+     <X size={14} /> Volver al inicio
+    </button>
+  </div>
 
         <magicLink.Screen />
 
@@ -69,10 +74,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
 
         <div className="overflow-y-auto pr-2">
           {screen === "forgot" ? (
-            <ForgotPasswordForm
-              onBack={() => setScreen("auth")}
-              onCodeSent={(email) => { setForgotEmail(email); setScreen("code"); }}
-            />
+          <ForgotPasswordForm
+          onBack={() => setScreen("auth")}
+          onCodeSent={(email) => { setForgotEmail(email); setScreen("code"); }}
+        />
           ) : screen === "code" ? (
             <ResetCodeForm
               email={forgotEmail}
