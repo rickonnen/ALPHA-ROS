@@ -555,7 +555,12 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
-    publishedDateRaw: publication.fecha_creacion,
+    publishedDateRaw:
+      typeof publication.fecha_creacion === "string"
+        ? publication.fecha_creacion
+        : publication.fecha_creacion instanceof Date
+          ? publication.fecha_creacion.toISOString()
+          : undefined,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
