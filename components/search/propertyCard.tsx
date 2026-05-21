@@ -44,6 +44,7 @@ export interface Property {
   discountPercent?: number;
   currencySymbol: string;
   publishedDate: string;
+  publishedDateRaw?: string;
   whatsappContact: string;
   images: string[];
   usuarioTelefono?: string;
@@ -64,6 +65,8 @@ interface PropertyCardProps {
   isSelected?: boolean;
   isCompareDisabled?: boolean;
   onToggleCompare?: () => void;
+  onCaracteristicaClick?: (idCaracteristica: number) => void;
+  selectedCaracteristicasIds?: number[];
 }
 
 function getSafePropertyImages(images: string[] | undefined): string[] {
@@ -111,9 +114,23 @@ function PropertyCard({
   isSelected = false,
   isCompareDisabled = false,
   onToggleCompare,
+  onCaracteristicaClick,
+  selectedCaracteristicasIds = [],
 }: PropertyCardProps) {
   const { trackEvent } = useTracking();
   const { compra } = useDollarRate();
+
+  const handleCaracteristicaClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    idCaracteristica?: number,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!idCaracteristica) return;
+
+    onCaracteristicaClick?.(idCaracteristica);
+  };
 
   const propertyImages = getSafePropertyImages(property.images);
   const mainImage = propertyImages[0];
@@ -319,6 +336,11 @@ function PropertyCard({
             {property.type}
           </span>
 
+          <p className="flex items-center gap-1 truncate text-[10px] text-gray-400 mb-0.5">
+            <CalendarDays className="h-3 w-3 shrink-0" />
+            <span className="truncate">{property.publishedDate}</span>
+          </p>
+
           <h3 className="mb-0.5 truncate text-[11px] font-semibold text-[#a67c52]">
             {property.title}
           </h3>
@@ -334,14 +356,31 @@ function PropertyCard({
           </p>
 
           <div className="mt-1 flex flex-wrap gap-1">
-            {property.caracteristicas?.map((caracteristica: any, index: number) => (
-              <span
-                key={caracteristica?.id || `carac-${index}`}
-                className="rounded-full bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white"
-              >
-                {caracteristica?.nombre|| caracteristica}
-              </span>
-            ))}
+            {property.caracteristicas?.map((caracteristica: any, index: number) => {
+              const caracteristicaId = caracteristica?.id;
+              const caracteristicaNombre = caracteristica?.nombre || caracteristica;
+              const isCaracteristicaSelected =
+                typeof caracteristicaId === "number" &&
+                selectedCaracteristicasIds.includes(caracteristicaId);
+
+              return (
+                <button
+                  key={`${caracteristicaId ?? caracteristicaNombre}-mobile-${index}`}
+                  type="button"
+                  onClick={(event) =>
+                    handleCaracteristicaClick(event, caracteristicaId)
+                  }
+                  className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase transition ${
+                    isCaracteristicaSelected
+                      ? "bg-[#1F3A4D] text-white"
+                      : "bg-[#6B7280] text-white hover:bg-[#1F3A4D]"
+                  }`}
+                  title={`Filtrar por ${caracteristicaNombre}`}
+                >
+                  {caracteristicaNombre}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -370,6 +409,15 @@ function PropertyCard({
             >
               {property.type}
             </span>
+
+            <p
+              className={`flex items-center gap-1 truncate text-gray-400 ${
+                isMapOpen ? "mt-0.5 text-[9px] xl:text-[10px]" : "mt-0.5 text-[11px]"
+              }`}
+            >
+              <CalendarDays className="h-3 w-3 shrink-0" />
+              <span className="truncate">{property.publishedDate}</span>
+            </p>
           </div>
 
           <div
@@ -425,14 +473,31 @@ function PropertyCard({
             </p>
 
             <div className="mt-2 flex flex-wrap gap-1">
-              {property.caracteristicas?.map((caracteristica: any, index: number) => (
-                <span
-                  key={caracteristica?.id || `caract-${index}`}
-                  className="rounded-full bg-[#6B7280] px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm"
-                >
-                  {caracteristica?.nombre|| caracteristica}
-                </span>
-              ))}
+              {property.caracteristicas?.map((caracteristica: any, index: number) => {
+                const caracteristicaId = caracteristica?.id;
+                const caracteristicaNombre = caracteristica?.nombre || caracteristica;
+                const isCaracteristicaSelected =
+                  typeof caracteristicaId === "number" &&
+                  selectedCaracteristicasIds.includes(caracteristicaId);
+
+                return (
+                  <button
+                    key={`${caracteristicaId ?? caracteristicaNombre}-list-${index}`}
+                    type="button"
+                    onClick={(event) =>
+                      handleCaracteristicaClick(event, caracteristicaId)
+                    }
+                    className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shadow-sm transition ${
+                      isCaracteristicaSelected
+                        ? "bg-[#1F3A4D] text-white"
+                        : "bg-[#6B7280] text-white hover:bg-[#1F3A4D]"
+                    }`}
+                    title={`Filtrar por ${caracteristicaNombre}`}
+                  >
+                    {caracteristicaNombre}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -611,14 +676,31 @@ function PropertyCard({
 
           {property.caracteristicas && property.caracteristicas.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {property.caracteristicas.map((caracteristica: any, index: number) => (
-                <span
-                  key={caracteristica?.id || `caract-${index}`}
-                  className="rounded-md bg-[#6B7280] px-1.5 py-0.5 text-[8px] font-bold uppercase text-white shadow-sm"
-                >
-                  {caracteristica?.nombre|| caracteristica}
-                </span>
-              ))}
+              {property.caracteristicas.map((caracteristica: any, index: number) => {
+                const caracteristicaId = caracteristica?.id;
+                const caracteristicaNombre = caracteristica?.nombre || caracteristica;
+                const isCaracteristicaSelected =
+                  typeof caracteristicaId === "number" &&
+                  selectedCaracteristicasIds.includes(caracteristicaId);
+
+                return (
+                  <button
+                    key={`${caracteristicaId ?? caracteristicaNombre}-grid-${index}`}
+                    type="button"
+                    onClick={(event) =>
+                      handleCaracteristicaClick(event, caracteristicaId)
+                    }
+                    className={`rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase shadow-sm transition ${
+                      isCaracteristicaSelected
+                        ? "bg-[#1F3A4D] text-white"
+                        : "bg-[#6B7280] text-white hover:bg-[#1F3A4D]"
+                    }`}
+                    title={`Filtrar por ${caracteristicaNombre}`}
+                  >
+                    {caracteristicaNombre}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

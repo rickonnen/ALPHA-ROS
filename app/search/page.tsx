@@ -399,14 +399,70 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
-        return first.id - second.id;
+        return new Date(first.publishedDateRaw || first.publishedDate).getTime() - new Date(second.publishedDateRaw || second.publishedDate).getTime();
       default:
         if (first.isPromoted && !second.isPromoted) return -1;
         if (!first.isPromoted && second.isPromoted) return 1;
-        return second.id - first.id;
+        return new Date(second.publishedDateRaw || second.publishedDate).getTime() - new Date(first.publishedDateRaw || first.publishedDate).getTime();
     }
   });
   return sorted;
+}
+
+function getPropertyCharacteristicIds(property: Property): number[] {
+  if (!property.caracteristicas || property.caracteristicas.length === 0) {
+    return [];
+  }
+
+  return property.caracteristicas
+    .map((caracteristica: any) => {
+      if (typeof caracteristica === "object" && caracteristica !== null) {
+        return Number(caracteristica.id);
+      }
+
+      return NaN;
+    })
+    .filter((id) => Number.isFinite(id));
+}
+
+function getCharacteristicMatchCount(
+  property: Property,
+  selectedCharacteristicIds: number[],
+): number {
+  if (selectedCharacteristicIds.length === 0) return 0;
+
+  const propertyCharacteristicIds = getPropertyCharacteristicIds(property);
+
+  return selectedCharacteristicIds.filter((id) =>
+    propertyCharacteristicIds.includes(id),
+  ).length;
+}
+
+function prioritizePropertiesBySelectedCharacteristics(
+  properties: Property[],
+  selectedCharacteristicIds: number[],
+): Property[] {
+  if (selectedCharacteristicIds.length === 0) {
+    return properties;
+  }
+
+  return [...properties].sort((first, second) => {
+    const firstMatches = getCharacteristicMatchCount(
+      first,
+      selectedCharacteristicIds,
+    );
+
+    const secondMatches = getCharacteristicMatchCount(
+      second,
+      selectedCharacteristicIds,
+    );
+
+    if (secondMatches !== firstMatches) {
+      return secondMatches - firstMatches;
+    }
+
+    return 0;
+  });
 }
 
 function toNumber(value: number | null | undefined): number {
@@ -499,6 +555,7 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
+    publishedDateRaw: publication.fecha_creacion,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
@@ -573,6 +630,8 @@ function SearchPageContent() {
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
   const skipNextZoneUrlLoadRef = useRef(false);
+  const lastRecommendationsFetchRef = useRef<number>(0);
+  const RECOMMENDATIONS_COOLDOWN_MS = 90 * 1000; // 90 seconds
 
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -589,9 +648,13 @@ function SearchPageContent() {
   >([]);
   const [advancedFilterValues, setAdvancedFilterValues] =
     useState<SearchAdvancedFilterValues>({
-    habitaciones: "",
-    banos: "",
-    piscina: "",
+      habitaciones: "",
+      banos: "",
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined,
+      soloOfertas: false,
+      caracteristicasIds: [],
     });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -899,12 +962,15 @@ function SearchPageContent() {
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    const selectedCharacteristicIds =
+      advancedFilterValues.caracteristicasIds ?? [];
+
     if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
       mapped = mapped.filter(hasPropertyDiscount);
     }
 
     if (isShowingGlobalRecommendations && globalRecommendationIds.length > 0) {
-      return mapped.slice().sort((a, b) => {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
         const indexA = globalRecommendationIds.indexOf(a.id);
         const indexB = globalRecommendationIds.indexOf(b.id);
 
@@ -914,10 +980,15 @@ function SearchPageContent() {
 
         return 0;
       });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
     }
 
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.slice().sort((a, b) => {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
 
@@ -927,15 +998,26 @@ function SearchPageContent() {
 
         return 0;
       });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
     }
 
-    return sortProperties(mapped, selectedSort);
+    const sortedProperties = sortProperties(mapped, selectedSort);
+
+    return prioritizePropertiesBySelectedCharacteristics(
+      sortedProperties,
+      selectedCharacteristicIds,
+    );
   }, [
     filteredSearchResults,
     selectedOperation,
     selectedSort,
     recommendedIds,
     advancedFilterValues.soloOfertas,
+    advancedFilterValues.caracteristicasIds,
     isShowingGlobalRecommendations,
     globalRecommendationIds,
   ]);
@@ -1235,6 +1317,7 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (advancedFilterValues.soloOfertas) urlParams.set("soloOfertas", "true");
     if (
       advancedFilterValues.caracteristicasIds &&
       advancedFilterValues.caracteristicasIds.length > 0
@@ -1254,9 +1337,12 @@ function SearchPageContent() {
     piscina?: string;
     minSurface?: string | number;
     maxSurface?: string | number;
+    soloOfertas?: boolean;
+    caracteristicasIds?: number[];
   }) => {
     const minSurfaceValue =
       values.minSurface === undefined ? "" : String(values.minSurface);
+
     const maxSurfaceValue =
       values.maxSurface === undefined ? "" : String(values.maxSurface);
 
@@ -1269,6 +1355,11 @@ function SearchPageContent() {
         minSurfaceValue.trim() === "" ? undefined : Number(minSurfaceValue),
       maxSurface:
         maxSurfaceValue.trim() === "" ? undefined : Number(maxSurfaceValue),
+      // IM Rebajas
+      soloOfertas: Boolean(values.soloOfertas),
+      // Para no perder características
+      caracteristicasIds:
+        values.caracteristicasIds ?? current.caracteristicasIds ?? [],
     }));
   };
 
@@ -1395,6 +1486,26 @@ function SearchPageContent() {
     }
   };
 
+  const handleCaracteristicaCardClick = (idCaracteristica: number) => {
+    const currentIds = advancedFilterValues.caracteristicasIds ?? [];
+
+    const nextCaracteristicasIds = currentIds.includes(idCaracteristica)
+      ? currentIds
+      : [...currentIds, idCaracteristica];
+
+    const nextAdvancedFilters = {
+      ...advancedFilterValues,
+      caracteristicasIds: nextCaracteristicasIds,
+    };
+
+    setAdvancedFilterValues(nextAdvancedFilters);
+    setCurrentPage(1);
+
+    void runSearch({
+      caracteristicasIds: nextCaracteristicasIds,
+    });
+  };
+
   // Cargar estado del mapa y zona guardada desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1448,6 +1559,8 @@ function SearchPageContent() {
     const currencyParam = searchParams.get("currency");
     const sortParam = searchParams.get("sort")?.trim();
     const nextSort = sortParam || "fecha-reciente";
+    const soloOfertasParam = searchParams.get("soloOfertas");
+    const nextSoloOfertas = soloOfertasParam === "true";
     // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
     const caracteristicasParam = searchParams.get("caracteristicas");
     const nextCaracteristicas = caracteristicasParam
@@ -1476,9 +1589,10 @@ function SearchPageContent() {
     setSelectedSort(nextSort);
 
     // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
-    setAdvancedFilterValues(prev => ({
+    setAdvancedFilterValues((prev) => ({
       ...prev,
-      caracteristicasIds: nextCaracteristicas
+      caracteristicasIds: nextCaracteristicas,
+      soloOfertas: nextSoloOfertas,
     }));
 
     if (nextSort === "recomendados-zona") {
@@ -1490,16 +1604,17 @@ function SearchPageContent() {
       return;
     }
 
-    void runSearch({
-      ubicacion: nextLocation,
-      operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
-      tipoInmueble:
-        nextPropertyLabels.join(",") || rawPropertyType || undefined,
-      minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice,
-      caracteristicasIds: nextCaracteristicas,
-      sort: nextSort,
-    });
+  void runSearch({
+    ubicacion: nextLocation,
+    operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
+    tipoInmueble:
+      nextPropertyLabels.join(",") || rawPropertyType || undefined,
+    minPrice: nextMinPrice,
+    maxPrice: nextMaxPrice,
+    caracteristicasIds: nextCaracteristicas,
+    soloOfertas: nextSoloOfertas,
+    sort: nextSort,
+  });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
@@ -1534,6 +1649,8 @@ function SearchPageContent() {
       if (response.ok) {
         const data = (await response.json()) as { id_publicacion: number }[];
         setRecommendedIds(data.map((item) => item.id_publicacion));
+        // Update fetch timestamp after successful fetch
+        lastRecommendationsFetchRef.current = Date.now();
       } else {
         const errorBody = await response.text();
         console.error("Recommendations request failed:", response.status, errorBody);
@@ -1556,25 +1673,39 @@ function SearchPageContent() {
     }
   }, [fetchRecommendations, selectedSort]);
 
-  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  // Refrescar recomendaciones si el usuario interactúa mientras está activo el ordenamiento.
+  // Con cooldown de 90 segundos entre refetches.
   useEffect(() => {
     if (selectedSort !== "mas-recomendados") return;
     if (typeof window === "undefined") return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
     const onInteraction = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         timer = null;
-        void fetchRecommendations();
+        // Only refetch if 90 seconds have passed since last fetch
+        const timeSinceLastFetch = Date.now() - lastRecommendationsFetchRef.current;
+        if (timeSinceLastFetch >= RECOMMENDATIONS_COOLDOWN_MS) {
+          void fetchRecommendations();
+        }
       }, 650);
     };
+
+    // Also set up a 90-second interval to auto-refetch while on "mas-recomendados"
+    cooldownTimer = setInterval(() => {
+      if (selectedSort === "mas-recomendados") {
+        void fetchRecommendations();
+      }
+    }, RECOMMENDATIONS_COOLDOWN_MS);
 
     window.addEventListener("tracking:interaction", onInteraction as EventListener);
     return () => {
       window.removeEventListener("tracking:interaction", onInteraction as EventListener);
       if (timer) clearTimeout(timer);
+      if (cooldownTimer) clearInterval(cooldownTimer);
     };
   }, [fetchRecommendations, selectedSort]);
 
@@ -1840,6 +1971,8 @@ function SearchPageContent() {
                         onMouseLeave={() => {}}
                         onClick={() => {}}
                         isMapOpen={isMapOpen}
+                        onCaracteristicaClick={handleCaracteristicaCardClick}
+                        selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                       />
                     ))}
                   </div>
@@ -2244,11 +2377,13 @@ function SearchPageContent() {
                   <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
                     Cargando inmuebles...
                   </div>
-                ) : allProperties.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                    No se encontraron inmuebles con los filtros aplicados.
-                  </div>
-                ) : (
+                    ) : allProperties.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                        {advancedFilterValues.soloOfertas
+                          ? "No hay propiedades en oferta disponibles por el momento."
+                          : "No se encontraron inmuebles con los filtros aplicados."}
+                      </div>
+                    ) : (
                   <>
                     <div
                       className={`grid gap-2 ${
@@ -2271,6 +2406,8 @@ function SearchPageContent() {
                           isSelected={selectedIds.includes(property.id)}
                           onToggleCompare={() => toggleSelection(property.id)}
                           isMapOpen={isMapOpen}
+                          onCaracteristicaClick={handleCaracteristicaCardClick}
+                          selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                           onMouseEnter={() => {
                             setHoveredId(property.id);
                             const loc = searchResults.find(

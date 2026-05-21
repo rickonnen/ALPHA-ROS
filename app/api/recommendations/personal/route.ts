@@ -194,6 +194,8 @@ async function loadPreferences(userId: string | null) {
           id_tipo_inmueble: true,
           precio_min: true,
           precio_max: true,
+          superficie_min: true,
+          superficie_max: true,
           habitaciones: true,
           banos: true,
           creado_en: true,
@@ -280,6 +282,8 @@ async function loadPreferences(userId: string | null) {
 
   let desiredMinPrice: number | null = null;
   let desiredMaxPrice: number | null = null;
+  let desiredMinSurface: number | null = null;
+  let desiredMaxSurface: number | null = null;
 
   for (const search of searches) {
     const atMs = search.creado_en ? search.creado_en.getTime() : nowMs;
@@ -296,8 +300,10 @@ async function loadPreferences(userId: string | null) {
 
     if (desiredMinPrice == null && search.precio_min != null) desiredMinPrice = toNumber(search.precio_min);
     if (desiredMaxPrice == null && search.precio_max != null) desiredMaxPrice = toNumber(search.precio_max);
+    if (desiredMinSurface == null && search.superficie_min != null) desiredMinSurface = toNumber(search.superficie_min);
+    if (desiredMaxSurface == null && search.superficie_max != null) desiredMaxSurface = toNumber(search.superficie_max);
 
-    if (desiredMinPrice != null && desiredMaxPrice != null) break;
+    if (desiredMinPrice != null && desiredMaxPrice != null && desiredMinSurface != null && desiredMaxSurface != null) break;
   }
 
   const prefOperacion = capScores(applyStepDecay(scoreOperacion, lastOperacion, nowMs), SCORE_CAP);
@@ -315,7 +321,9 @@ async function loadPreferences(userId: string | null) {
     prefBanos.size > 0 ||
     prefPublicacion.size > 0 ||
     desiredMinPrice != null ||
-    desiredMaxPrice != null;
+    desiredMaxPrice != null ||
+    desiredMinSurface != null ||
+    desiredMaxSurface != null;
 
   return {
     userId: userId ?? null,
@@ -327,6 +335,8 @@ async function loadPreferences(userId: string | null) {
     prefPublicacion,
     desiredMinPrice,
     desiredMaxPrice,
+    desiredMinSurface,
+    desiredMaxSurface,
     totalInteracciones: events.length + searches.length,
     hasSignal,
   };
@@ -347,6 +357,7 @@ async function scoreCandidates(
       habitaciones: true,
       banos: true,
       precio: true,
+      superficie: true,
       Ubicacion: { select: { id_ciudad: true } },
       fecha_creacion: true,
     },
@@ -361,6 +372,8 @@ async function scoreCandidates(
     prefPublicacion,
     desiredMinPrice,
     desiredMaxPrice,
+    desiredMinSurface,
+    desiredMaxSurface,
   } = prefs;
 
   const recencyMax = candidates.reduce<number>((max, c) => {
@@ -385,7 +398,7 @@ async function scoreCandidates(
         inScore * 0.6 +
         cityScore * 0.35 +
         habScore * 0.22 +
-        banosScore * 0.18;
+        banosScore * 0.22;
 
       const price = toNumber(candidate.precio);
       if (price != null && (desiredMinPrice != null || desiredMaxPrice != null)) {
@@ -395,6 +408,17 @@ async function scoreCandidates(
         const radius = Math.max(1, (max - min) / 2);
         const distance = Math.min(1, Math.abs(price - center) / radius);
         score += (1 - distance) * 0.25;
+      }
+
+      // Surface scoring (similar to price)
+      const surface = toNumber(candidate.superficie);
+      if (surface != null && (desiredMinSurface != null || desiredMaxSurface != null)) {
+        const min = desiredMinSurface ?? desiredMaxSurface ?? surface;
+        const max = desiredMaxSurface ?? desiredMinSurface ?? surface;
+        const center = (min + max) / 2;
+        const radius = Math.max(1, (max - min) / 2);
+        const distance = Math.min(1, Math.abs(surface - center) / radius);
+        score += (1 - distance) * 0.2;
       }
 
       // Recency small tiebreaker (no domina sobre preferencias).
@@ -446,28 +470,31 @@ export async function GET(request: NextRequest) {
     const scored = (await scoreCandidates(candidateIds, prefs)).slice(0, 200);
 
     if (prefs.userId) {
-      await prisma.perfilPreferencias.upsert({
+      const preference = await prisma.perfilPreferencias.findFirst({
         where: { id_usuario: prefs.userId },
-        create: {
-          id_usuario: prefs.userId,
-          pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
-          pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
-          pref_ciudades: mapToJson(prefs.prefCiudad, 10),
-          pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
-          total_interacciones: prefs.totalInteracciones,
-          ultimo_calculo: new Date(),
-          actualizado_en: new Date(),
-        },
-        update: {
-          pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
-          pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
-          pref_ciudades: mapToJson(prefs.prefCiudad, 10),
-          pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
-          total_interacciones: prefs.totalInteracciones,
-          ultimo_calculo: new Date(),
-          actualizado_en: new Date(),
-        },
       });
+
+      const preferenceData = {
+        id_usuario: prefs.userId,
+        pref_tipo_operacion: mapToJson(prefs.prefOperacion, 10),
+        pref_tipo_inmueble: mapToJson(prefs.prefInmueble, 10),
+        pref_ciudades: mapToJson(prefs.prefCiudad, 10),
+        pref_habitaciones: mapToJson(prefs.prefHabitaciones, 10),
+        total_interacciones: prefs.totalInteracciones,
+        ultimo_calculo: new Date(),
+        actualizado_en: new Date(),
+      };
+
+      if (preference) {
+        await prisma.perfilPreferencias.update({
+          where: { id_perfil: preference.id_perfil },
+          data: preferenceData,
+        });
+      } else {
+        await prisma.perfilPreferencias.create({
+          data: preferenceData,
+        });
+      }
     }
 
     return NextResponse.json(scored, { status: 200 });
