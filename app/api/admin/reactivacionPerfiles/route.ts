@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { enviarReactivacionPorSoporte } from "@/lib/email/emailService";
 /**
  * GET /api/admin/reactivacionPerfiles
  * Retorna la lista paginada de usuarios con estado = 0 (desactivados).
@@ -58,6 +59,18 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const usuario = await prisma.usuario.findUnique({
+      where: { id_usuario },
+      select: { email: true, nombres: true },
+    });
+
+    if (!usuario || !usuario.email) {
+      return NextResponse.json(
+        { success: false, message: "Usuario no encontrado o sin email" },
+        { status: 404 }
+      );
+    }
+
     await prisma.usuario.update({
       where: { id_usuario },
       data: {
@@ -65,6 +78,16 @@ export async function PATCH(request: Request) {
         fecha_desactivacion: null,
       },
     });
+
+    try {
+      await enviarReactivacionPorSoporte(
+        usuario.email,
+        usuario.nombres || "Usuario"
+      );
+      console.log(`[Admin Reactivación] ✅ Email enviado exitosamente a: ${usuario.email}`);
+    } catch (emailError) {
+      console.error(`[Admin Reactivación] ❌ Error enviando email a ${usuario.email}:`, emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -10,6 +10,7 @@ import { templateMagicLink } from "./templates/magicLink";
 import { templateBlogAceptado } from "./templates/blogAceptado";
 import { templateBlogRechazado } from "./templates/blogRechazado";
 import { templatePublicacionCreada } from "./templates/publicacionCreada";
+import { templateReactivacionPorSoporte } from "./templates/reactivacionPorSoporte";
 import { emailNotificacionesActivas } from "@/lib/notifications/emailPreferencia";
 import { prisma } from "@/lib/prisma";
 
@@ -285,5 +286,16 @@ export async function enviarPublicacionCreada(
     email,
     "¡Tu publicación fue registrada! - PROPBOL",
     templatePublicacionCreada(nombre, titulo, idPublicacion)
+  );
+}
+
+export async function enviarReactivacionPorSoporte(
+  email: string,
+  nombre: string
+): Promise<SendEmailResult> {
+  return sendGenericEmail(
+    email,
+    "Tu cuenta ha sido reactivada - PROPBOL",
+    templateReactivacionPorSoporte(nombre)
   );
 }
