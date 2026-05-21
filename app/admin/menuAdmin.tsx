@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CreditCard, Newspaper, ArrowRight, MessageSquare, LayoutList } from "lucide-react";
+import { CreditCard, Newspaper, ArrowRight, MessageSquare, LayoutList, ClipboardCheck } from "lucide-react";
 
 const arrAdminOptions = [
   {
@@ -36,6 +36,14 @@ const arrAdminOptions = [
     Icon: LayoutList, 
     strButtonText: "Inspeccionar",
   },
+  {
+    strTitle: "Reactivacion de Perfiles",
+    strDescription:
+      "Gestiona la reactivación de los perfiles desactivados de la plataforma.",
+    strHref: "/admin/reactivacionPerfiles",
+    Icon: ClipboardCheck,
+    strButtonText: "Inspeccionar",
+  },
 ];
 
 export default function MenuAdmin() {
@@ -51,7 +59,7 @@ export default function MenuAdmin() {
       </div>
 
       {/* 👇 AQUÍ ESTÁ EL CAMBIO: md:grid-cols-2 lg:grid-cols-4 👇 */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {arrAdminOptions.map((objOption) => {
           const Icon = objOption.Icon;
 
