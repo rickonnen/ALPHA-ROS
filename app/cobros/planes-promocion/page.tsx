@@ -32,7 +32,7 @@ export default async function PlanesPromocionPage(props: {
         <div className="relative mb-12 flex flex-col md:flex-row md:items-center justify-center min-h-11 gap-6 md:gap-0">
           <div className="self-start md:self-auto md:absolute md:left-0">
             <Button variant="default" asChild className="rounded-lg px-4 py-2">
-              <Link href="/perfil/publicacion" className="flex items-center gap-2">
+              <Link href="/perfil" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4 stroke-[3]" />
                 <span className="font-semibold text-sm">VOLVER</span>
               </Link>
