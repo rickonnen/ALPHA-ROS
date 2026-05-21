@@ -27,7 +27,7 @@ export function NotificationHeader({
   const hasSelected = selectedIds.length > 0;
 
   return (
-    <div className="flex items-center justify-between px-3 md:px-4 py-1.5 md:py-2 bg-[#2C4A5A] text-white rounded-t-md min-h-10 md:min-h-11 flex-wrap gap-1.5 md:gap-2">
+    <div className="flex items-center justify-between px-3 md:px-4 py-1.5 md:py-2 bg-[#2C4A5A] text-white rounded-t-md min-h-10 md:min-h-11 flex-wrap gap-1.5 md:gap-2 dark:bg-[#2a3b47]">
       <h4 className="text-[14px] md:text-[20px] font-normal leading-[120%] tracking-normal flex-1 min-w-max">
         {hasSelected
           ? `${selectedIds.length} sel.`

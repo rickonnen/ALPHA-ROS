@@ -45,10 +45,10 @@ export default function VerificationCodeInput({
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Título */}
       <div>
-        <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "#1f2937", margin: "0 0 4px 0" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: "bold", color: "var(--auth-text)", margin: "0 0 4px 0" }}>
           Verifica tu email
         </h3>
-        <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
+        <p style={{ fontSize: "12px", color: "var(--auth-muted)", margin: 0 }}>
           Ingresá el código de 6 dígitos que te enviamos
         </p>
       </div>
@@ -73,12 +73,12 @@ export default function VerificationCodeInput({
             fontWeight: "bold",
             fontFamily: "monospace",
             border: `2px solid ${
-              isExpired ? "#ef4444" : error ? "#f97316" : "#d1d5db"
+              isExpired ? "#ef4444" : error ? "#f97316" : "var(--auth-border)"
             }`,
             borderRadius: "8px",
             outline: "none",
-            backgroundColor: isExpired ? "#fee2e2" : error ? "#fef3c7" : "white",
-            color: "#1f2937",
+            backgroundColor: isExpired ? "#fee2e2" : error ? "#fef3c7" : "var(--auth-surface)",
+            color: "var(--auth-text)",
             transition: "all 0.2s",
             cursor: isExpired || isLoading ? "not-allowed" : "text",
             opacity: isExpired ? 0.6 : 1,
@@ -94,7 +94,7 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             fontSize: "12px",
-            color: timeRemaining < 30 ? "#ef4444" : "#6b7280",
+            color: timeRemaining < 30 ? "#ef4444" : "var(--auth-muted)",
           }}
         >
           <Clock size={14} />
@@ -151,8 +151,8 @@ export default function VerificationCodeInput({
           width: "100%",
           padding: "10px",
           backgroundColor:
-            !isExpired && timeRemaining > 30 ? "#e5e7eb" : "#C85A4F",
-          color: !isExpired && timeRemaining > 30 ? "#9ca3af" : "white",
+            !isExpired && timeRemaining > 30 ? "var(--auth-surface-muted)" : "#C85A4F",
+          color: !isExpired && timeRemaining > 30 ? "var(--auth-muted)" : "white",
           border: "none",
           borderRadius: "6px",
           fontSize: "12px",
