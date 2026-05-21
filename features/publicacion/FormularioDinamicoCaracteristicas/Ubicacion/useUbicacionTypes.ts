@@ -51,6 +51,7 @@ export const DEPARTAMENTOS = [
 ] as const
 
 export const MAX_ZONA = 100
+export const MAX_PUNTOS_INTERES = 5
 
 export const INITIAL_VALUES: UbicacionValues = {
   direccion:    '',
