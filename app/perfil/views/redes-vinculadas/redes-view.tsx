@@ -1,7 +1,7 @@
 /*redes-view.tsx*/
 "use client"
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import ConfirmModal from "@/app/perfil/views/redes-vinculadas/confirmModal"
 import {
   DiscordConfirmVincular,
@@ -75,6 +75,7 @@ const iconos: Record<string, React.ReactNode> = {
 //  Componente 
 export default function RedesView({ onBack }: RedesViewProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [redes, setRedes]   = useState<RedVinculada[]>([])
   const [cargando, setCargando] = useState(true)
   const [mensaje, setMensaje]   = useState<{ texto: string; tipo: "ok" | "error" } | null>(null)
@@ -116,6 +117,10 @@ export default function RedesView({ onBack }: RedesViewProps) {
     if (error) {
       setMensaje({ texto: decodeURIComponent(error), tipo: "error" })
     }
+
+      if (success || error) {
+        router.replace(window.location.pathname)
+      }
   }, [searchParams])
   useEffect(() => {
     cargarRedes()

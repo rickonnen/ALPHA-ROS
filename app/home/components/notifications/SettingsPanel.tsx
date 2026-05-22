@@ -584,7 +584,7 @@ export function SettingsPanel({
             <div
               key={phone.idTelefono}
               className={`rounded-lg border p-3 transition ${phone.idTelefono === selectedPhoneId
-                ? "bg-green-50 border-green-300"
+                ? "bg-green-50 border-green-500"
                 : "bg-white border-gray-200"
                 }`}
             >

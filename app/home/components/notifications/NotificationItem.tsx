@@ -14,13 +14,13 @@ type Props = {
   onRead: (id: string) => void;
   isInTrash?: boolean;
   onRestore?: (id: string) => void;
-  isSelected?: boolean;
+ isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectionMode?: boolean;
-          ? "bg-[#2C4A5A]/10 border-[#2C4A5A]/40 ring-1 ring-[#2C4A5A]/20"
-          : read
-            ? "bg-white border-gray-100 shadow-sm dark:bg-[#1f2c33] dark:border-[#2b3a45]"
-            : "bg-gray-100 border-gray-200 dark:bg-[#263540] dark:border-[#334551]"
+  hideCheckbox?: boolean;
+};
+
+function getTypeString(type: string | number | undefined): string {
   if (typeof type === "string") return type;
   if (typeof type === "number") {
     switch (type) {
@@ -62,7 +62,7 @@ function getTypeColor(type: string | number | undefined) {
   switch (typeStr) {
     case "gmail":    return "bg-red-500";
     case "whatsapp": return "bg-green-500";
-    case "general":  return "bg-blue-500";
+    case "general":  return "bg-[#2C4A5A]";
     default:         return "bg-gray-500";
   }
 }
@@ -163,7 +163,7 @@ export function NotificationItem({
         {isTruncated && (
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded((prev) => !prev); }}
-            className="text-blue-500 text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
+            className="text-[#2C4A5A] text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
           >
             {expanded ? "Ocultar" : "Ver más"}
           </button>
