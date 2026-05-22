@@ -52,19 +52,19 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
           <Link2 size={22} color="white" />
         </div>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--auth-text)", margin: 0 }}>
+          <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#1f2937", margin: 0 }}>
             Magic Link
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--auth-muted)", margin: 0 }}>
+          <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
             Revisa tu Correo Electrónico
           </p>
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid var(--auth-border)" }} />
+      <hr style={{ border: "none", borderTop: "1px solid #1F3A4D" }} />
 
       {/* Message */}
-      <p style={{ fontSize: "14px", color: "var(--auth-muted)", lineHeight: "1.6", margin: 0 }}>
+      <p style={{ fontSize: "14px", color: "#4b5563", lineHeight: "1.6", margin: 0 }}>
         Se ha enviado un enlace de verificación a tu dirección de correo
         electrónico:{" "}
         <span style={{ color: "#C26E5A", fontWeight: "600" }}>{email}</span>

@@ -32,10 +32,7 @@ export default function SuccessModal({
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div
-        className="relative rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center"
-        style={{ backgroundColor: "var(--auth-otp-bg)" }}
-      >
+      <div className="relative bg-[#EAE3D9] rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center">
         {/* Icono de éxito */}
         <div className="flex justify-center mb-4">
           <div className="border-2 border-green-500 rounded-full p-3">
@@ -44,8 +41,8 @@ export default function SuccessModal({
         </div>
 
         {/* Mensaje */}
-        <h2 className="font-bold text-xl mb-2" style={{ color: "var(--auth-text)" }}>¡Éxito!</h2>
-        <p className="text-sm" style={{ color: "var(--auth-muted)" }}>{message}</p>
+        <h2 className="text-[#0F172A] font-bold text-xl mb-2">¡Éxito!</h2>
+        <p className="text-[#6B7280] text-sm">{message}</p>
 
         {/* Botón opcional */}
         <button
