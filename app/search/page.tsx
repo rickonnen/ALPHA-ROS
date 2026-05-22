@@ -555,7 +555,12 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
-    publishedDateRaw: publication.fecha_creacion,
+    publishedDateRaw:
+      typeof publication.fecha_creacion === "string"
+        ? publication.fecha_creacion
+        : publication.fecha_creacion instanceof Date
+          ? publication.fecha_creacion.toISOString()
+          : undefined,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
@@ -784,6 +789,7 @@ function SearchPageContent() {
   const [defaultZones, setDefaultZones] = useState<DefaultZone[]>([]);
   const [zoneNameError, setZoneNameError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [zoneMapError, setZoneMapError] = useState<string | null>(null);
   const [showDefaultZones, setShowDefaultZones] = useState(true);
   const [zoneModalMode, setZoneModalMode] = useState<ZoneModalMode>("create");
   const [isZoneMenuOpen, setIsZoneMenuOpen] = useState(false);
@@ -2004,34 +2010,49 @@ function SearchPageContent() {
         <div className="fixed inset-x-0 bottom-0 top-[140px] z-40 lg:hidden">
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[998]">
             {!drawnPolygon ? (
-              <button
-                onClick={() => setIsDrawingMode(!isDrawingMode)}
-                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-lg ${
-                  isDrawingMode
-                    ? "bg-slate-800 hover:bg-slate-900"
-                    : "bg-[#C26E5A] hover:bg-[#b05e4a]"
-                }`}
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setZoneMapError(null);
+                    setIsDrawingMode(!isDrawingMode);
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-lg ${
+                    isDrawingMode
+                      ? "bg-slate-800 hover:bg-slate-900"
+                      : "bg-[#C26E5A] hover:bg-[#b05e4a]"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
-                  />
-                </svg>
-                {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
-              </button>
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                    />
+                  </svg>
+                  {isDrawingMode ? "Cancelar dibujo" : "Dibujar zona"}
+                </button>
+                {zoneMapError && (
+                  <span className="block rounded-lg bg-white/95 px-3 py-2 text-center text-xs font-medium text-red-500 shadow-lg">
+                    {zoneMapError}
+                  </span>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-lg">
                 <span className="text-sm font-medium text-slate-900 text-center">
                   Zona aplicada: {allProperties.length} inmuebles
                 </span>
+                {zoneMapError && (
+                  <span className="text-center text-xs font-medium text-red-500">
+                    {zoneMapError}
+                  </span>
+                )}
                 <button
                   onClick={() => {
                     if (!objUser) {
@@ -2056,6 +2077,7 @@ function SearchPageContent() {
                     setIsDrawingMode(false);
                     setIsEditingSavedZone(false);
                     setIsZoneMenuOpen(false);
+                    setZoneMapError(null);
                   }}
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
                 >
@@ -2087,9 +2109,11 @@ function SearchPageContent() {
             isEditingPolygon={isEditingSavedZone && Boolean(currentSavedZone)}
             onPolygonEdit={handleUpdateSavedZoneCoordinates}
             onPolygonComplete={(points: [number, number][]) => {
+              setZoneMapError(null);
               setDrawnPolygon(points);
               setIsDrawingMode(false);
             }}
+            onPolygonValidationError={setZoneMapError}
           />
         </div>
       )}
@@ -2138,6 +2162,7 @@ function SearchPageContent() {
                   <div className="space-y-2">
                     <button
                       onClick={() => {
+                        setZoneMapError(null);
                         setIsDrawingMode(!isDrawingMode);
                         if (!isMapOpen) setIsMapOpen(true);
                       }}
@@ -2200,12 +2225,22 @@ function SearchPageContent() {
                         ))}
                       </select>
                     )}
+                    {zoneMapError && (
+                      <span className="block text-center text-xs font-medium text-red-500">
+                        {zoneMapError}
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2 rounded-xl bg-white p-3 border border-gray-200 shadow-sm">
                     <span className="text-sm font-medium text-slate-900 text-center">
                       Zona aplicada: {allProperties.length} inmuebles
                     </span>
+                    {zoneMapError && (
+                      <span className="text-center text-xs font-medium text-red-500">
+                        {zoneMapError}
+                      </span>
+                    )}
                     <button
                       onClick={() => {
                         if (!objUser) {
@@ -2230,6 +2265,7 @@ function SearchPageContent() {
                         setIsDrawingMode(false);
                         setIsEditingSavedZone(false);
                         setIsZoneMenuOpen(false);
+                        setZoneMapError(null);
                       }}
                       className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition-colors"
                     >
@@ -2501,7 +2537,7 @@ function SearchPageContent() {
             </button>
 
             {currentSavedZone && (
-              <div className="absolute left-3 top-3 z-[999]">
+              <div className="absolute right-3 top-14 z-[999]">
                 <div className="relative">
                   <button
                     onClick={() => setIsZoneMenuOpen((current) => !current)}
@@ -2512,7 +2548,7 @@ function SearchPageContent() {
                   </button>
 
                   {isZoneMenuOpen && (
-                    <div className="absolute left-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
                       <button
                         onClick={() => {
                           setIsEditingSavedZone((current) => !current);
@@ -2547,7 +2583,7 @@ function SearchPageContent() {
             )}
 
             {isEditingSavedZone && currentSavedZone && (
-              <div className="absolute left-3 top-16 z-[999] rounded-xl bg-white/95 px-3 py-2 text-xs font-medium text-slate-700 shadow-md">
+              <div className="absolute left-1/2 top-3 z-[999] w-[min(320px,calc(100%-7rem))] -translate-x-1/2 rounded-xl bg-white/95 px-3 py-2 text-center text-xs font-medium text-slate-700 shadow-md">
                 Selecciona un punto y arrastralo a su nueva posicion.
               </div>
             )}
@@ -2574,10 +2610,12 @@ function SearchPageContent() {
               isEditingPolygon={isEditingSavedZone && Boolean(currentSavedZone)}
               onPolygonEdit={handleUpdateSavedZoneCoordinates}
               onPolygonComplete={(points: [number, number][]) => {
+                setZoneMapError(null);
                 setDrawnPolygon(points);
                 setIsDrawingMode(false);
               }}
               onToggleDefaultZones={setShowDefaultZones}
+              onPolygonValidationError={setZoneMapError}
             />
           </div>
         )}

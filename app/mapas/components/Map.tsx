@@ -30,6 +30,11 @@ import {
 import type { Location } from "@/lib/locations";
 import ChangeView from "./ChangeView";
 import {
+  getZoneSpanError,
+  MAX_ZONE_POINTS,
+  MIN_ZONE_POINTS,
+} from "@/lib/mapValidation";
+import {
   createClusterIcon,
   createClusterPopupHTML,
   createPriceIcon,
@@ -77,16 +82,17 @@ interface MapProps {
   onPolygonComplete?: (points: [number, number][]) => void;
   isEditingPolygon?: boolean;
   onPolygonEdit?: (points: [number, number][]) => void;
+  onPolygonValidationError?: (message: string) => void;
 }
-
-const MIN_POLYGON_POINTS = 4;
-const MAX_POLYGON_POINTS = 10;
 
 function MarkerPropertyPopup({ location }: { location: Location }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isOpeningDirections, setIsOpeningDirections] = useState(false);
   const images = location.images.length > 0 ? location.images : ["/casa1.jpg"];
   const map = useMap();
+  const isIOSDevice =
+    typeof navigator !== "undefined" &&
+    /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const goToPreviousImage = () => {
     setActiveImageIndex((current) =>
@@ -103,15 +109,14 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
   const openDirectionsWithUserLocation = () => {
     if (isOpeningDirections) return;
 
-    const fallbackUrl =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&destination=${location.lat},${location.lng}` +
-      `&travelmode=driving`;
+    const fallbackUrl = isIOSDevice
+      ? `https://maps.apple.com/?daddr=${location.lat},${location.lng}&dirflg=d`
+      : `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}&travelmode=driving`;
     const openedWindow = window.open("", "_blank");
 
     if (openedWindow) {
       openedWindow.document.write(
-        "<!doctype html><title>Abriendo ruta...</title><body style=\"font-family:sans-serif;padding:24px;color:#1f3a4d\">Abriendo Google Maps...</body>",
+        `<!doctype html><title>Abriendo ruta...</title><body style="font-family:sans-serif;padding:24px;color:#1f3a4d">Abriendo ${isIOSDevice ? "Apple Maps" : "Google Maps"}...</body>`,
       );
       openedWindow.document.close();
     }
@@ -134,11 +139,9 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const directionsUrl =
-          `https://www.google.com/maps/dir/?api=1` +
-          `&origin=${position.coords.latitude},${position.coords.longitude}` +
-          `&destination=${location.lat},${location.lng}` +
-          `&travelmode=driving`;
+        const directionsUrl = isIOSDevice
+          ? `https://maps.apple.com/?saddr=${position.coords.latitude},${position.coords.longitude}&daddr=${location.lat},${location.lng}&dirflg=d`
+          : `https://www.google.com/maps/dir/?api=1&origin=${position.coords.latitude},${position.coords.longitude}&destination=${location.lat},${location.lng}&travelmode=driving`;
 
         navigateTo(directionsUrl);
         setIsOpeningDirections(false);
@@ -268,9 +271,11 @@ function MarkerPropertyPopup({ location }: { location: Location }) {
 function MapDrawingLogic({
   isDrawingMode,
   onPolygonComplete,
+  onPolygonValidationError,
 }: {
   isDrawingMode?: boolean;
   onPolygonComplete?: (pts: [number, number][]) => void;
+  onPolygonValidationError?: (message: string) => void;
 }) {
   const [points, setPoints] = useState<[number, number][]>([]);
   const map = useMap();
@@ -308,13 +313,13 @@ function MapDrawingLogic({
       if (!isDrawingMode || !onPolygonComplete) return;
       if ((e.originalEvent as MouseEvent | undefined)?.detail === 2) return;
 
-      if (points.length >= MAX_POLYGON_POINTS) {
+      if (points.length >= MAX_ZONE_POINTS) {
         onPolygonComplete(points);
         setPoints([]);
         return;
       }
 
-      if (points.length >= MIN_POLYGON_POINTS) {
+      if (points.length >= MIN_ZONE_POINTS) {
         const firstPoint = L.latLng(points[0][0], points[0][1]);
         const firstPointPixel = map.latLngToContainerPoint(firstPoint);
         const clickedPointPixel = map.latLngToContainerPoint(e.latlng);
@@ -331,16 +336,22 @@ function MapDrawingLogic({
         [e.latlng.lat, e.latlng.lng],
       ];
 
+      const zoneSpanError = getZoneSpanError(newPoints);
+      if (zoneSpanError) {
+        onPolygonValidationError?.(zoneSpanError);
+        return;
+      }
+
       setPoints(newPoints);
 
-      if (newPoints.length === MAX_POLYGON_POINTS) {
+      if (newPoints.length === MAX_ZONE_POINTS) {
         onPolygonComplete(newPoints);
         setPoints([]);
       }
     },
     dblclick() {
       if (!isDrawingMode || !onPolygonComplete) return;
-      if (points.length < MIN_POLYGON_POINTS) return;
+      if (points.length < MIN_ZONE_POINTS) return;
       onPolygonComplete(points);
       setPoints([]);
     },
@@ -362,7 +373,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       ))}
-      {points.length > 1 && points.length < MAX_POLYGON_POINTS && (
+      {points.length > 1 && points.length < MAX_ZONE_POINTS && (
         <Polyline
           positions={points}
           color="#C26E5A"
@@ -371,7 +382,7 @@ function MapDrawingLogic({
           interactive={false}
         />
       )}
-      {points.length >= MIN_POLYGON_POINTS && (
+      {points.length >= MIN_ZONE_POINTS && (
         <Polygon
           positions={points}
           color="#C26E5A"
@@ -398,6 +409,7 @@ export default function PropertyMap({
   onPolygonComplete,
   isEditingPolygon,
   onPolygonEdit,
+  onPolygonValidationError,
 }: MapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const popupRef = useRef<L.Popup | null>(null);
@@ -580,6 +592,7 @@ export default function PropertyMap({
         <MapDrawingLogic
           isDrawingMode={isDrawingMode}
           onPolygonComplete={onPolygonComplete}
+          onPolygonValidationError={onPolygonValidationError}
         />
 
         {drawnPolygon && (
@@ -672,6 +685,12 @@ export default function PropertyMap({
                   const updatedPolygon = drawnPolygon.map((currentPoint, currentIndex) =>
                     currentIndex === index ? [lat, lng] : currentPoint,
                   ) as [number, number][];
+                  const zoneSpanError = getZoneSpanError(updatedPolygon);
+                  if (zoneSpanError) {
+                    onPolygonValidationError?.(zoneSpanError);
+                    marker.setLatLng(point);
+                    return;
+                  }
                   onPolygonEdit(updatedPolygon);
                 },
               }}
