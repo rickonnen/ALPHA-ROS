@@ -14,13 +14,13 @@ type Props = {
   onRead: (id: string) => void;
   isInTrash?: boolean;
   onRestore?: (id: string) => void;
-  isSelected?: boolean;
+ isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectionMode?: boolean;
-          ? "bg-[#2C4A5A]/10 border-[#2C4A5A]/40 ring-1 ring-[#2C4A5A]/20"
-          : read
-            ? "bg-white border-gray-100 shadow-sm dark:bg-[#1f2c33] dark:border-[#2b3a45]"
-            : "bg-gray-100 border-gray-200 dark:bg-[#263540] dark:border-[#334551]"
+  hideCheckbox?: boolean;
+};
+
+function getTypeString(type: string | number | undefined): string {
   if (typeof type === "string") return type;
   if (typeof type === "number") {
     switch (type) {
