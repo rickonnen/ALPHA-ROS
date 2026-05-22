@@ -5,6 +5,13 @@ import { cookies } from 'next/headers'
 import { verify }  from 'jsonwebtoken'
 import { getServerSession } from 'next-auth'
 import { prisma }      from '@/lib/prisma'
+import {
+  calculateDistanceMeters,
+  getPointOfInterestConstraintError,
+  MAX_POINTS_OF_INTEREST,
+  MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH,
+  MAX_POINT_OF_INTEREST_NAME_LENGTH,
+} from '@/lib/mapValidation'
 import { v2 as cloudinary } from 'cloudinary'
 import { publicacionSchema, TIPO_INMUEBLE_IDS, TIPO_OPERACION_IDS, DEPARTAMENTO_CIUDAD, MONEDA_IDS } from '../BackendFormulario/schema'
 import { subirImagen } from '../BackendFormulario/cloudinary'
@@ -52,25 +59,6 @@ function parseIntNullable(raw: FormDataEntryValue | null): number | null {
   return isNaN(n) ? null : n
 }
 
-function calculateDistanceMeters(
-  originLat: number,
-  originLng: number,
-  destinationLat: number,
-  destinationLng: number,
-): number {
-  const earthRadius = 6371000
-  const toRadians = (value: number) => (value * Math.PI) / 180
-  const deltaLat = toRadians(destinationLat - originLat)
-  const deltaLng = toRadians(destinationLng - originLng)
-  const a =
-    Math.sin(deltaLat / 2) ** 2 +
-    Math.cos(toRadians(originLat)) *
-      Math.cos(toRadians(destinationLat)) *
-      Math.sin(deltaLng / 2) ** 2
-
-  return Math.round(earthRadius * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))))
-}
-
 function parsePuntosInteres(raw: FormDataEntryValue | null): {
   puntosInteres: PuntoInteresPayload[]
   error?: string
@@ -83,8 +71,8 @@ function parsePuntosInteres(raw: FormDataEntryValue | null): {
       return { puntosInteres: [], error: 'El formato de puntos de interés es inválido.' }
     }
 
-    if (parsed.length > 10) {
-      return { puntosInteres: [], error: 'Solo puedes registrar hasta 10 puntos de interés.' }
+    if (parsed.length > MAX_POINTS_OF_INTEREST) {
+      return { puntosInteres: [], error: `Solo puedes registrar hasta ${MAX_POINTS_OF_INTEREST} puntos de interés.` }
     }
 
     const puntosInteres = parsed.map((point, index) => {
@@ -99,11 +87,11 @@ function parsePuntosInteres(raw: FormDataEntryValue | null): {
         throw new Error('Cada punto de interés debe tener un tipo válido.')
       }
 
-      if (!nombre || nombre.length > 128) {
+      if (!nombre || nombre.length > MAX_POINT_OF_INTEREST_NAME_LENGTH) {
         throw new Error('Cada punto de interés debe tener un nombre válido.')
       }
 
-      if (descripcion.length > 300) {
+      if (descripcion.length > MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH) {
         throw new Error('La descripción de un punto de interés no puede superar 300 caracteres.')
       }
 
@@ -262,6 +250,42 @@ export async function actualizarPublicacion(
 
   const d = parsed.data
 
+  if (
+    puntosInteres.length > 0 &&
+    (!Number.isFinite(d.lat) || !Number.isFinite(d.lng))
+  ) {
+    return {
+      success: false,
+      errors: {
+        puntosInteres: ['Primero debes guardar la ubicación principal de la propiedad para registrar puntos de interés.'],
+      },
+    }
+  }
+
+  for (let index = 0; index < puntosInteres.length; index += 1) {
+    const point = puntosInteres[index]
+    const pointConstraintError = getPointOfInterestConstraintError({
+      propertyLat: d.lat as number,
+      propertyLng: d.lng as number,
+      pointLat: point.lat,
+      pointLng: point.lng,
+      existingPoints: puntosInteres
+        .filter((_, pointIndex) => pointIndex !== index)
+        .map((existingPoint, existingIndex) => ({
+          id: `${existingIndex}`,
+          lat: existingPoint.lat,
+          lng: existingPoint.lng,
+        })),
+    })
+
+    if (pointConstraintError) {
+      return {
+        success: false,
+        errors: { puntosInteres: [pointConstraintError] },
+      }
+    }
+  }
+
   try {
     const idCiudad  = DEPARTAMENTO_CIUDAD[d.departamento]
     const idMoneda  = MONEDA_IDS[d.tipoMoneda]
@@ -340,13 +364,7 @@ export async function actualizarPublicacion(
       const propertyLat = d.lat
       const propertyLng = d.lng
 
-      if (
-        puntosInteres.length > 0 &&
-        typeof propertyLat === 'number' &&
-        Number.isFinite(propertyLat) &&
-        typeof propertyLng === 'number' &&
-        Number.isFinite(propertyLng)
-      ) {
+      if (puntosInteres.length > 0) {
 
         await tx.puntoInteres.createMany({
           data: puntosInteres.map((point) => ({

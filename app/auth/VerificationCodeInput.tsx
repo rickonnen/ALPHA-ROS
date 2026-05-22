@@ -73,11 +73,11 @@ export default function VerificationCodeInput({
             fontWeight: "bold",
             fontFamily: "monospace",
             border: `2px solid ${
-              isExpired ? "var(--auth-field-error-border)" : error ? "var(--auth-warning)" : "var(--auth-field-border)"
+              isExpired ? "#ef4444" : error ? "#f97316" : "var(--auth-border)"
             }`,
             borderRadius: "8px",
             outline: "none",
-            backgroundColor: isExpired ? "var(--auth-field-error-bg)" : error ? "var(--auth-warning-soft)" : "var(--auth-field-bg)",
+            backgroundColor: isExpired ? "#fee2e2" : error ? "#fef3c7" : "var(--auth-surface)",
             color: "var(--auth-text)",
             transition: "all 0.2s",
             cursor: isExpired || isLoading ? "not-allowed" : "text",
@@ -94,7 +94,7 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             fontSize: "12px",
-            color: timeRemaining < 30 ? "var(--auth-danger)" : "var(--auth-muted)",
+            color: timeRemaining < 30 ? "#ef4444" : "var(--auth-muted)",
           }}
         >
           <Clock size={14} />
@@ -112,9 +112,9 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             padding: "8px 12px",
-            backgroundColor: "var(--auth-danger-soft)",
+            backgroundColor: "#fee2e2",
             borderRadius: "6px",
-            color: "var(--auth-danger)",
+            color: "#dc2626",
             fontSize: "12px",
           }}
         >
@@ -131,9 +131,9 @@ export default function VerificationCodeInput({
             alignItems: "center",
             gap: "6px",
             padding: "8px 12px",
-            backgroundColor: "var(--auth-warning-soft)",
+            backgroundColor: "#fef3c7",
             borderRadius: "6px",
-            color: "var(--auth-warning)",
+            color: "#b45309",
             fontSize: "12px",
           }}
         >
@@ -151,8 +151,8 @@ export default function VerificationCodeInput({
           width: "100%",
           padding: "10px",
           backgroundColor:
-            !isExpired && timeRemaining > 30 ? "var(--auth-segment)" : "var(--auth-secondary-action)",
-          color: !isExpired && timeRemaining > 30 ? "var(--auth-icon)" : "var(--auth-primary-foreground)",
+            !isExpired && timeRemaining > 30 ? "var(--auth-surface-muted)" : "#C85A4F",
+          color: !isExpired && timeRemaining > 30 ? "var(--auth-muted)" : "white",
           border: "none",
           borderRadius: "6px",
           fontSize: "12px",

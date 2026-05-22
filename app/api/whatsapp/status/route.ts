@@ -23,43 +23,91 @@ export async function POST(req: Request) {
 
     const { data: pref, error: prefError } = await supabaseAdmin
       .from("PreferenciaNotificacionCanal")
-      .select("*")
+      .select(`
+        id_preferencia,
+        activo,
+        verificado,
+        id_telefono,
+        Telefono:id_telefono (
+          id_telefono,
+          codigo_pais,
+          nro_telefono,
+          verificado
+        )
+      `)
       .eq("id_usuario", userId)
       .eq("canal", "WHATSAPP")
       .maybeSingle();
 
-    if (prefError) {
-      throw prefError;
-    }
+    if (prefError) throw prefError;
 
-    if (!pref || !pref.id_telefono) {
+    const { data: userPhones, error: phonesError } = await supabaseAdmin
+      .from("UsuarioTelefono")
+      .select(`
+        id_uste,
+        estado,
+        id_telefono,
+        Telefono:id_telefono (
+          id_telefono,
+          codigo_pais,
+          nro_telefono,
+          verificado
+        )
+      `)
+      .eq("id_usuario", userId)
+      .eq("estado", 1)
+      .limit(3);
+
+    if (phonesError) throw phonesError;
+
+    const phones =
+      userPhones
+        ?.map((item) => {
+          const telefono = Array.isArray(item.Telefono)
+            ? item.Telefono[0]
+            : item.Telefono;
+
+          if (!telefono) return null;
+
+          return {
+            idTelefono: telefono.id_telefono,
+            phoneE164: buildPhoneE164(
+              telefono.codigo_pais,
+              telefono.nro_telefono
+            ),
+            isVerified: Boolean(telefono.verificado),
+            isSelected: pref?.id_telefono === telefono.id_telefono,
+          };
+        })
+        .filter(Boolean) ?? [];
+
+    const telefono = Array.isArray(pref?.Telefono)
+      ? pref.Telefono[0]
+      : pref?.Telefono;
+
+    if (!pref || !pref.id_telefono || !telefono) {
       return NextResponse.json({
         ok: true,
         exists: false,
         isActive: false,
         isVerified: false,
         phoneE164: null,
+        idTelefono: null,
+        phones,
       });
-    }
-
-    const { data: telefono, error: telefonoError } = await supabaseAdmin
-      .from("Telefono")
-      .select("*")
-      .eq("id_telefono", pref.id_telefono)
-      .maybeSingle();
-
-    if (telefonoError) {
-      throw telefonoError;
     }
 
     return NextResponse.json({
       ok: true,
       exists: true,
       isActive: Boolean(pref.activo),
-      isVerified: Boolean(pref.verificado && telefono?.verificado),
-      phoneE164: telefono
-        ? buildPhoneE164(telefono.codigo_pais, telefono.nro_telefono)
-        : null,
+      isVerified: Boolean(pref.verificado && telefono.verificado),
+      idTelefono: telefono.id_telefono,
+      phoneE164: buildPhoneE164(
+        telefono.codigo_pais,
+        telefono.nro_telefono
+      ),
+      phones,
     });
   } catch (error) {
     console.error("whatsapp status error:", error);

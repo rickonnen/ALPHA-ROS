@@ -196,6 +196,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
+  // Registrar sesión del dispositivo cuando el usuario inicia sesión
+  useEffect(() => {
+    const registrarSesion = async () => {
+      if (!user?.id) return;
+      if (sessionStorage.getItem("sesion_dispositivo_registrada")) return;
+
+      try {
+        const res = await fetch("/api/auth/registrar-sesion-actual", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          sessionStorage.setItem("sesion_dispositivo_registrada", "1");
+        }
+      } catch (error) {
+        console.error("Error registrando sesión:", error);
+      }
+    };
+
+    registrarSesion();
+  }, [user?.id]);
+
   // SOLUCIÓN: Agregar parámetro telemetry y el bloque `try {` faltante
   const login = async (email: string, password: string, telemetry?: LoginTelemetry) => {
     try {
@@ -330,7 +353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {/* Modal centrado */}
           <div style={{
             position: "relative",
-            backgroundColor: "#EAE3D9",
+            backgroundColor: "var(--auth-otp-bg)",
             borderRadius: "12px",
             boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
             padding: "32px",
@@ -358,7 +381,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             {/* Título */}
             <h2 style={{
-              color: "#0F172A",
+              color: "var(--auth-text)",
               fontWeight: "bold",
               fontSize: "20px",
               marginBottom: "8px",
@@ -368,7 +391,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             {/* Mensaje */}
             <p style={{
-              color: "#6B7280",
+              color: "var(--auth-muted)",
               fontSize: "14px",
               marginBottom: "24px",
               lineHeight: "1.5",

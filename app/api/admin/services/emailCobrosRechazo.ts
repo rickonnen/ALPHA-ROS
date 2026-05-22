@@ -6,12 +6,16 @@ export async function enviarEmailRechazo(datos: {
   emailAdmin: string,
   nombreCliente: string,
   plan: string,
-  motivo: string
+  motivo: string,
+  planId: number,
+  modalidad: string
 }) {
   const htmlRechazo = templatePagoRechazado(
     datos.nombreCliente,
     datos.plan,
-    datos.motivo
+    datos.motivo,
+    datos.planId,
+    datos.modalidad
   );
 
   return await transporter.sendMail({

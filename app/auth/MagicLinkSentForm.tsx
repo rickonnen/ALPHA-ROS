@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Link2 } from "lucide-react";
+import { useAuthListener } from "@/lib/hooks/useAuthListener";
 
 interface MagicLinkSentFormProps {
   email: string;
@@ -8,17 +9,25 @@ interface MagicLinkSentFormProps {
 }
 
 export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentFormProps) {
+  useAuthListener(); // 👂 Pestaña A: escucha MAGIC_LINK_SUCCESS → redirige a /home
+
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
 
   async function handleResend() {
     if (resending || resent) return;
     setResending(true);
+
+    // Nuevo sessionId para el link reenviado
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem("magic_link_session_id", newSessionId);
+    console.log("[MagicLinkSentForm] Nuevo sessionId para reenvío:", newSessionId.substring(0, 8) + "...");
+
     try {
       await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, sessionId: newSessionId }),
       });
       setResent(true);
       setTimeout(() => setResent(false), 4000);
@@ -36,11 +45,11 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
         <div style={{
           width: "48px", height: "48px", borderRadius: "50%",
-          backgroundColor: "var(--auth-primary-strong)",
+          backgroundColor: "#1F3A4D",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Link2 size={22} color="var(--auth-primary-foreground)" />
+          <Link2 size={22} color="white" />
         </div>
         <div>
           <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--auth-text)", margin: 0 }}>
@@ -52,20 +61,20 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
         </div>
       </div>
 
-      <hr style={{ border: "none", borderTop: "1px solid var(--auth-primary-strong)" }} />
+      <hr style={{ border: "none", borderTop: "1px solid var(--auth-border)" }} />
 
       {/* Message */}
-      <p style={{ fontSize: "14px", color: "var(--auth-text-soft)", lineHeight: "1.6", margin: 0 }}>
+      <p style={{ fontSize: "14px", color: "var(--auth-muted)", lineHeight: "1.6", margin: 0 }}>
         Se ha enviado un enlace de verificación a tu dirección de correo
         electrónico:{" "}
-        <span style={{ color: "var(--auth-secondary)", fontWeight: "600" }}>{email}</span>
+        <span style={{ color: "#C26E5A", fontWeight: "600" }}>{email}</span>
       </p>
 
       {/* Loading dots animation */}
       <div style={{ display: "flex", justifyContent: "center", padding: "12px 0" }}>
         <div style={{
           width: "60px", height: "60px", borderRadius: "50%",
-          border: "2px solid var(--auth-primary-strong)",
+          border: "2px solid #1F3A4D",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
@@ -74,7 +83,7 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
                 key={i}
                 style={{
                   width: "6px", height: "6px", borderRadius: "50%",
-                  backgroundColor: "var(--auth-primary-strong)",
+                  backgroundColor: "#1F3A4D",
                   animation: "bounce 1.2s ease-in-out infinite",
                   animationDelay: `${i * 0.2}s`,
                 }}
@@ -91,8 +100,8 @@ export default function MagicLinkSentForm({ email, onResend }: MagicLinkSentForm
         onClick={handleResend}
         style={{
           width: "100%",
-          backgroundColor: resent ? "var(--auth-success)" : resending ? "var(--auth-disabled)" : "var(--auth-secondary)",
-          color: "var(--auth-primary-foreground)",
+          backgroundColor: resent ? "#16a34a" : resending ? "#8B4A3D" : "#C26E5A",
+          color: "white",
           fontWeight: "bold",
           fontSize: "14px",
           padding: "13px 16px",

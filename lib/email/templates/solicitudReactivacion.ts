@@ -9,18 +9,22 @@ export function templateSolicitudReactivacion(
     <!DOCTYPE html>
     <html lang="es" style="margin:0;padding:0">
     <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-    <body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif">
-      <div style="padding:30px 20px">
-        <div style="max-width:520px;margin:0 auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-          <!-- Header logo -->
-          <div style="padding:16px 24px;text-align:center;border-bottom:1px solid #eee">
-            <span style="font-size:20px;font-weight:700;color:#1a1a2e"><span style="color:#C85A4F">Prop</span>bol</span>
-          </div>
-          <!-- Banner -->
-          <div style="background:#1F3A4D;padding:28px 24px;text-align:center">
-            <h1 style="margin:0;font-size:20px;font-weight:700;color:white">🔔 Solicitud de Reactivación de Cuenta</h1>
-            <p style="margin:6px 0 0 0;font-size:13px;color:rgba(255,255,255,0.8)">Panel de Soporte Técnico</p>
-          </div>
+    <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Arial,sans-serif">
+      <div style="max-width:600px;margin:0 auto;background:white">
+
+        <!-- Logo -->
+        <div style="padding:30px 0 24px 0;text-align:center">
+          <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja" 
+               alt="PROPBOL" style="height:60px;vertical-align:middle" />
+          <span style="font-size:26px;font-weight:800;color:#1F3A4D;vertical-align:middle;margin-left:10px;font-family:'Segoe UI',Arial,sans-serif">Propbol</span>
+        </div>
+
+        <!-- Header -->
+        <div style="background:#1F3A4D;padding:28px 24px;text-align:center;color:white;border-radius:10px;margin:0 24px">
+<h1 style="margin:0;font-size:22px;font-weight:700">¡Solicitud de Reactivación de Cuenta!</h1>         
+ <p style="margin:8px 0 0 0;font-size:13px;opacity:0.8">Panel de Soporte Técnico</p>
+        </div>
+        
           <!-- Body -->
           <div style="padding:28px 24px;color:#333">
             <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6">

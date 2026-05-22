@@ -119,4 +119,15 @@ export function getSuspiciousDomainSuggestion(email: string): string | null {
   return SUSPICIOUS_DOMAINS[domain] || null;
 }
 
-
+/**
+ * Sanitiza texto libre eliminando tags HTML/script y patrones de inyección SQL.
+ * Retorna el texto limpio.
+ */
+export function sanitizarTextoLibre(input: string): string {
+  return input
+    .replace(/<[^>]*>/g, "")                        // elimina cualquier tag HTML/script
+    .replace(/javascript\s*:/gi, "")                // elimina javascript:
+    .replace(/on\w+\s*=/gi, "")                     // elimina onload=, onclick=, etc.
+    .replace(/(['";])\s*(--|#|\/\*)/g, "")          // elimina comentarios SQL
+    .replace(/\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|EXEC|UNION|CAST|CONVERT)\b/gi, "") // palabras SQL
+}

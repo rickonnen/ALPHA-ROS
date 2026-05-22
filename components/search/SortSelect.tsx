@@ -104,6 +104,13 @@ export function SortSelect({
           </SelectItem>
 
           <SelectItem
+            value="recomendados-zona"
+            className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
+          >
+            Recomendado por Zona
+          </SelectItem>
+
+          <SelectItem
             value="fecha-reciente"
             className="text-sm py-2.5 focus:bg-[#F4EFE6] focus:text-[#1F3A4D] cursor-pointer rounded-[12px]"
           >

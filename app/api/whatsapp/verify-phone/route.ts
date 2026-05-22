@@ -37,7 +37,10 @@ export async function POST(req: Request) {
 
     if (!validation.valid || !validation.phoneE164) {
       return NextResponse.json(
-        { ok: false, message: validation.error },
+        {
+          ok: false,
+          message: validation.error ?? "Número inválido.",
+        },
         { status: 400 }
       );
     }
@@ -60,110 +63,87 @@ export async function POST(req: Request) {
 
     const now = new Date().toISOString();
 
-    let telefono;
-
-    const { data: existingTelefono, error: findPhoneError } =
-      await supabaseAdmin
-        .from("Telefono")
-        .select("*")
-        .eq("codigo_pais", codigoPais)
-        .eq("nro_telefono", nroTelefono)
-        .maybeSingle();
-
-    if (findPhoneError) {
-      throw findPhoneError;
-    }
-
-    if (existingTelefono) {
-      const { data: updatedTelefono, error: updatePhoneError } =
-        await supabaseAdmin
-          .from("Telefono")
-          .update({
-            verificado: true,
-          })
-          .eq("id_telefono", existingTelefono.id_telefono)
-          .select()
-          .single();
-
-      if (updatePhoneError) {
-        throw updatePhoneError;
-      }
-
-      telefono = updatedTelefono;
-    } else {
-      const { data: newTelefono, error: insertPhoneError } = await supabaseAdmin
-        .from("Telefono")
-        .insert({
-          nro_telefono: nroTelefono,
+    const { data: telefono, error: telefonoError } = await supabaseAdmin
+      .from("Telefono")
+      .upsert(
+        {
           codigo_pais: codigoPais,
+          nro_telefono: nroTelefono,
           verificado: true,
-        })
-        .select()
-        .single();
+        },
+        {
+          onConflict: "codigo_pais,nro_telefono",
+        }
+      )
+      .select("id_telefono, codigo_pais, nro_telefono, verificado")
+      .single();
 
-      if (insertPhoneError) {
-        throw insertPhoneError;
-      }
-
-      telefono = newTelefono;
+    if (telefonoError) {
+      throw telefonoError;
     }
 
-    const { data: existingRelation, error: findRelationError } =
-      await supabaseAdmin
-        .from("UsuarioTelefono")
-        .select("*")
-        .eq("id_usuario", userId)
-        .eq("id_telefono", telefono.id_telefono)
-        .maybeSingle();
-
-    if (findRelationError) {
-      throw findRelationError;
-    }
-
-    if (!existingRelation) {
-      const { error: relationError } = await supabaseAdmin
-        .from("UsuarioTelefono")
-        .insert({
-          id_usuario: userId,
-          id_telefono: telefono.id_telefono,
-        });
-
-      if (relationError) {
-        throw relationError;
-      }
-    }
-
-    const { data: existingPref, error: findPrefError } = await supabaseAdmin
-      .from("PreferenciaNotificacionCanal")
-      .select("*")
+    const { data: existingRelation } = await supabaseAdmin
+      .from("UsuarioTelefono")
+      .select(`
+    id_uste,
+    estado,
+    Telefono:id_telefono (
+      id_telefono,
+      verificado
+    )
+  `)
       .eq("id_usuario", userId)
-      .eq("canal", "WHATSAPP")
+      .eq("id_telefono", telefono.id_telefono)
       .maybeSingle();
 
-    if (findPrefError) {
-      throw findPrefError;
+    const alreadyExists = Boolean(existingRelation);
+
+    if (!alreadyExists) {
+      const { count, error: countError } = await supabaseAdmin
+        .from("UsuarioTelefono")
+        .select("id_uste", {
+          count: "exact",
+          head: true,
+        })
+        .eq("id_usuario", userId)
+        .eq("estado", 1);
+
+      if (countError) {
+        throw countError;
+      }
+
+      if ((count ?? 0) >= 3) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Solo puedes registrar hasta 3 números.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    if (existingPref) {
-      const { error: updatePrefError } = await supabaseAdmin
-        .from("PreferenciaNotificacionCanal")
-        .update({
-          activo: true,
-          verificado: true,
+    const { error: relationError } = await supabaseAdmin
+      .from("UsuarioTelefono")
+      .upsert(
+        {
+          id_usuario: userId,
           id_telefono: telefono.id_telefono,
-          fecha_activacion: now,
-          fecha_desactivacion: null,
-          updated_at: now,
-        })
-        .eq("id_preferencia", existingPref.id_preferencia);
+          estado: 1,
+        },
+        {
+          onConflict: "id_usuario,id_telefono",
+        }
+      );
 
-      if (updatePrefError) {
-        throw updatePrefError;
-      }
-    } else {
-      const { error: insertPrefError } = await supabaseAdmin
-        .from("PreferenciaNotificacionCanal")
-        .insert({
+    if (relationError) {
+      throw relationError;
+    }
+
+    const { error: prefError } = await supabaseAdmin
+      .from("PreferenciaNotificacionCanal")
+      .upsert(
+        {
           id_usuario: userId,
           canal: "WHATSAPP",
           activo: true,
@@ -172,21 +152,25 @@ export async function POST(req: Request) {
           fecha_activacion: now,
           fecha_desactivacion: null,
           updated_at: now,
-        });
+        },
+        {
+          onConflict: "id_usuario,canal",
+        }
+      );
 
-      if (insertPrefError) {
-        throw insertPrefError;
-      }
+    if (prefError) {
+      throw prefError;
     }
 
-  await sendWhatsAppNotification({
-  to: phoneE164,
-  title: "🎉 ¡Bienvenido a PropBol!",
-  body:
-    "📱 Tu número fue registrado correctamente\n\n" +
-    "Desde ahora podrás recibir novedades, oportunidades y avisos importantes sobre propiedades, visitas y actividad de tu cuenta 📲\n\n" +
-    "🏠 Encuentra el lugar ideal para comprar, alquilar o invertir ✨",
-});
+    await sendWhatsAppNotification({
+      to: phoneE164,
+      title: "🎉 ¡Bienvenido a PropBol!",
+      body:
+        "📱 Tu número fue registrado correctamente\n\n" +
+        "Desde ahora podrás recibir novedades, oportunidades y avisos importantes sobre propiedades, visitas y actividad de tu cuenta 📲\n\n" +
+        "🏠 Encuentra el lugar ideal para comprar, alquilar o invertir ✨",
+    });
+
     return NextResponse.json({
       ok: true,
       valid: true,

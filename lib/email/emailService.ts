@@ -5,11 +5,15 @@ import { templateBienvenida } from "./templates/bienvenida";
 import { templateBienvenidaGoogle } from "./templates/bienvenidaGoogle";
 import { templateCambioContrasena } from "./templates/cambioContrasena";
 import { templateRecuperacionContrasena } from "./templates/recuperacionContrasena";
-import { templatePagoProcesado } from "./templates/pagoProcesado"
+import { templatePagoProcesado } from "./templates/pagoProcesado";
 import { templateMagicLink } from "./templates/magicLink";
 import { templateBlogAceptado } from "./templates/blogAceptado";
 import { templateBlogRechazado } from "./templates/blogRechazado";
 import { templatePublicacionCreada } from "./templates/publicacionCreada";
+import { templateReactivacionPorSoporte } from "./templates/reactivacionPorSoporte";
+import { emailNotificacionesActivas } from "@/lib/notifications/emailPreferencia";
+import { prisma } from "@/lib/prisma";
+
 export interface SendEmailResult {
   success: boolean;
   messageId?: string;
@@ -17,6 +21,21 @@ export interface SendEmailResult {
   error?: string;
   attempts?: number;
 }
+
+// Helper interno - verifica si el usuario tiene Gmail activo
+async function puedeEnviarEmailAUsuario(email: string): Promise<boolean> {
+  try {
+    const usuario = await prisma.usuario.findFirst({
+      where: { email },
+      select: { id_usuario: true }
+    });
+    if (!usuario) return true;
+    return emailNotificacionesActivas(usuario.id_usuario);
+  } catch {
+    return true;
+  }
+}
+
 async function sendEmail(
   to: string,
   subject: string,
@@ -27,21 +46,18 @@ async function sendEmail(
   let lastError: string | undefined;
   let attempts = 0;
 
-  // Validar destinatario
   const recipientValidation = validateRecipient(to);
   if (!recipientValidation.valid) {
     logEmailError(to, recipientValidation.error || "Email inválido", 0);
     return { success: false, timeTakenMs: 0, error: recipientValidation.error, attempts: 0 };
   }
 
-  // Validar contenido seguro (sin contraseñas ni datos sensibles)
   const contentValidation = validateContentSafety(html);
   if (!contentValidation.valid) {
     logEmailError(to, contentValidation.error || "Contenido no seguro", 0);
     return { success: false, timeTakenMs: 0, error: contentValidation.error, attempts: 0 };
   }
 
-  // Reintentos con backoff exponencial
   for (attempts = 1; attempts <= maxRetries; attempts++) {
     try {
       const info = await transporter.sendMail({
@@ -59,7 +75,6 @@ async function sendEmail(
 
       const timeTakenMs = Date.now() - startTime;
       console.log(` [EMAIL] Enviado a ${to} en ${timeTakenMs}ms (intento ${attempts}/${maxRetries})`);
-
       return { success: true, messageId: info.messageId, timeTakenMs, attempts };
 
     } catch (error) {
@@ -81,72 +96,52 @@ async function sendEmail(
   return { success: false, timeTakenMs: Date.now() - startTime, error: lastError || "Error desconocido", attempts };
 }
 
-
 function logEmailError(recipient: string, error: string | undefined, timeTakenMs: number): void {
   const timestamp = new Date().toISOString();
   console.error(` [EMAIL LOG] [${timestamp}] EMAIL_ERROR | To: ${recipient} | Error: ${error} | Time: ${timeTakenMs}ms`);
-  // TODO: Guardar en tabla EmailLog para auditoría
 }
-/** Código de verificación al registrarse */
+
 export async function enviarCodigoVerificacion(
   email: string,
   code: string,
   nombre: string
 ): Promise<SendEmailResult> {
-  return sendEmail(
-    email,
-    "Tu código de verificación - PROPBOL",
-    templateVerificacion(nombre, code)
-  );
+  return sendEmail(email, "Tu código de verificación - PROPBOL", templateVerificacion(nombre, code));
 }
-/** Bienvenida para registro normal (email + contraseña) */
+
 export async function enviarBienvenida(
   email: string,
   nombre: string
 ): Promise<SendEmailResult> {
-  return sendEmail(
-    email,
-    "¡Bienvenido a PROPBOL!",
-    templateBienvenida(nombre)
-  );
+  return sendEmail(email, "¡Bienvenido a PROPBOL!", templateBienvenida(nombre));
 }
-/** Bienvenida para registro con Google OAuth */
+
 export async function enviarBienvenidaGoogle(
   email: string,
   nombre: string
 ): Promise<SendEmailResult> {
-  return sendEmail(
-    email,
-    "¡Bienvenido a PROPBOL!",
-    templateBienvenidaGoogle(nombre)
-  );
+  return sendEmail(email, "¡Bienvenido a PROPBOL!", templateBienvenidaGoogle(nombre));
 }
 
-/** Notificación de cambio de contraseña */
 export async function enviarCambioContrasena(
   email: string,
   nombre: string
 ): Promise<SendEmailResult> {
   const ahora = new Date();
-  const fecha = ahora.toLocaleDateString("es-BO", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+ const fecha = ahora.toLocaleDateString("es-BO", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
   return sendEmail(
     email,
     `Tu contraseña fue actualizada en PROBOL - ${ahora.toLocaleDateString("es-BO")}`,
     templateCambioContrasena(nombre, fecha)
   );
 }
-// Alias para compatibilidad con imports existentes
+
 export const sendPasswordChangeEmail = enviarCambioContrasena;
 
-/** Email genérico reutilizable para otros módulos */
 export async function sendGenericEmail(
   to: string,
   subject: string,
@@ -156,7 +151,6 @@ export async function sendGenericEmail(
   return sendEmail(to, subject, html, maxRetries);
 }
 
-// EL frontend de Notificacion de Discord// POR AHORA
 export async function enviarDiscordVinculado(
   email: string,
   nombre: string
@@ -176,34 +170,24 @@ export async function enviarDiscordVinculado(
         <p style="color:#999999;font-size:12px;text-align:center">Si no realizaste esta vinculación, accede a tu cuenta inmediatamente.</p>
       </div>
     </div>
-  `
-  return sendEmail(email, "Tu Discord está vinculado - PROPBOL", html)
+  `;
+  return sendEmail(email, "Tu Discord está vinculado - PROPBOL", html);
 }
+
 export async function enviarRecuperacionContrasena(
   email: string,
   codigo: string,
   nombre: string
 ): Promise<SendEmailResult> {
-  return sendEmail(
-    email,
-    "Recupera tu contraseña - PROPBOL",
-    templateRecuperacionContrasena(nombre, codigo)
-  );
+  return sendEmail(email, "Recupera tu contraseña - PROPBOL", templateRecuperacionContrasena(nombre, codigo));
 }
 
-export async function enviarConfirmacionPago(
+export async function enviarMagicLink(
   email: string,
-  nombre: string,
-  plan: string,
-  frecuencia: string,
-  monto: number,
-  cupos: number
+  magicLinkUrl: string,
+  nombre: string = "Usuario"
 ): Promise<SendEmailResult> {
-  return sendEmail(
-    email,
-    `Tu pago de $${monto} ha sido confirmado - PROPBOL`,
-    templatePagoProcesado(nombre, plan, frecuencia, monto, cupos)
-  );
+  return sendEmail(email, "Tu Magic Link de PROPBOL - Acceso Seguro", templateMagicLink(nombre, magicLinkUrl));
 }
 
 export async function enviarNotificacionDeGrupo(
@@ -236,29 +220,35 @@ export async function enviarNotificacionDeGrupo(
   `;
   return sendEmail(email, `[${grupo.toUpperCase()}] ${titulo}`, html);
 }
-/////////////////////hasta aqui 
- 
 
-/** Magic Link para autenticación sin contraseña */
-export async function enviarMagicLink(
+export async function enviarConfirmacionPago(
   email: string,
-  magicLinkUrl: string,
-  nombre: string = "Usuario"
+  nombre: string,
+  plan: string,
+  frecuencia: string,
+  monto: number,
+  cupos: number
 ): Promise<SendEmailResult> {
+  if (!await puedeEnviarEmailAUsuario(email)) {
+    console.log(`[Email] Confirmación pago omitida para ${email}`);
+    return { success: true, timeTakenMs: 0 };
+  }
   return sendEmail(
     email,
-    "Tu Magic Link de PROPBOL - Acceso Seguro",
-    templateMagicLink(nombre, magicLinkUrl)
+    `Tu pago de $${monto} ha sido confirmado - PROPBOL`,
+    templatePagoProcesado(nombre, plan, frecuencia, monto, cupos)
   );
 }
+
 export async function enviarBlogAceptado(
   email: string,
   nombre: string,
   tituloBlog: string
 ): Promise<SendEmailResult> {
-  const fecha = new Date().toLocaleDateString("es-BO", {
-    day: "numeric", month: "long", year: "numeric"
-  });
+  if (!await puedeEnviarEmailAUsuario(email)) {
+    console.log(`[Email] Blog aceptado omitido para ${email}`);
+    return { success: true, timeTakenMs: 0 };
+  }
   return sendEmail(
     email,
     "¡Tu publicación fue aprobada! - PROPBOL",
@@ -271,24 +261,41 @@ export async function enviarBlogRechazado(
   nombre: string,
   tituloBlog: string
 ): Promise<SendEmailResult> {
-  const fecha = new Date().toLocaleDateString("es-BO", {
-    day: "numeric", month: "long", year: "numeric"
-  });
+  if (!await puedeEnviarEmailAUsuario(email)) {
+    console.log(`[Email] Blog rechazado omitido para ${email}`);
+    return { success: true, timeTakenMs: 0 };
+  }
   return sendEmail(
     email,
     "Tu publicación requiere revisión - PROPBOL",
     templateBlogRechazado(nombre, tituloBlog)
   );
 }
+
 export async function enviarPublicacionCreada(
   email: string,
   nombre: string,
   titulo: string,
   idPublicacion: number
 ): Promise<SendEmailResult> {
+  if (!await puedeEnviarEmailAUsuario(email)) {
+    console.log(`[Email] Publicación creada omitida para ${email}`);
+    return { success: true, timeTakenMs: 0 };
+  }
   return sendEmail(
     email,
     "¡Tu publicación fue registrada! - PROPBOL",
     templatePublicacionCreada(nombre, titulo, idPublicacion)
+  );
+}
+
+export async function enviarReactivacionPorSoporte(
+  email: string,
+  nombre: string
+): Promise<SendEmailResult> {
+  return sendGenericEmail(
+    email,
+    "Tu cuenta ha sido reactivada - PROPBOL",
+    templateReactivacionPorSoporte(nombre)
   );
 }

@@ -8,6 +8,12 @@ import type {
   PuntoInteresTipoOption,
 } from "./useUbicacionTypes"
 import type { LocationData } from "./LocationPicker"
+import {
+  getPointOfInterestConstraintError,
+  MAX_POINTS_OF_INTEREST,
+  MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH,
+  MAX_POINT_OF_INTEREST_NAME_LENGTH,
+} from "@/lib/mapValidation"
 
 const LocationPicker = dynamic(
   () => import("./LocationPicker"),
@@ -165,17 +171,39 @@ export default function PointOfInterestModal({
 
     if (!nombre.trim()) {
       nextErrors.nombre = "Ingresa un nombre para el punto de interés."
-    } else if (nombre.trim().length > 128) {
-      nextErrors.nombre = "El nombre no puede superar 128 caracteres."
+    } else if (nombre.trim().length > MAX_POINT_OF_INTEREST_NAME_LENGTH) {
+      nextErrors.nombre = `El nombre no puede superar ${MAX_POINT_OF_INTEREST_NAME_LENGTH} caracteres.`
     }
 
-    if (descripcion.trim().length > 300) {
+    if (descripcion.trim().length > MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH) {
       nextErrors.descripcion =
-        "La descripción no puede superar 300 caracteres."
+        `La descripción no puede superar ${MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH} caracteres.`
     }
 
     if (!selectedLocation) {
       nextErrors.ubicacion = "Selecciona la ubicación del punto en el mapa."
+    }
+
+    if (!propertyLocation) {
+      nextErrors.ubicacion =
+        "Primero define la ubicación principal de la propiedad."
+    } else if (selectedLocation) {
+      const pointConstraintError = getPointOfInterestConstraintError({
+        propertyLat: propertyLocation.lat,
+        propertyLng: propertyLocation.lng,
+        pointLat: selectedLocation.lat,
+        pointLng: selectedLocation.lng,
+        existingPoints: existingPoints.map((point) => ({
+          id: point.tempId,
+          lat: point.lat,
+          lng: point.lng,
+        })),
+        currentPointId: initialValue?.tempId,
+      })
+
+      if (pointConstraintError) {
+        nextErrors.ubicacion = pointConstraintError
+      }
     }
 
     setErrors(nextErrors)
@@ -297,6 +325,9 @@ export default function PointOfInterestModal({
         <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
           <p style={{ margin: 0, fontSize: 12, color: "#6B7280" }}>
             La propiedad aparece marcada en azul y los puntos existentes conservan su icono según el tipo.
+          </p>
+          <p style={{ margin: 0, fontSize: 12, color: "#6B7280" }}>
+            Solo puedes registrar hasta {MAX_POINTS_OF_INTEREST} puntos, cerca de la propiedad y sin superponer marcadores.
           </p>
           <LocationPicker
             deptoActual={departamentoActual}
@@ -442,7 +473,7 @@ export default function PointOfInterestModal({
                 value={nombre}
                 onChange={(event) => setNombre(event.target.value)}
                 placeholder="Ej: Surtidor Cristo Rey"
-                maxLength={128}
+                maxLength={MAX_POINT_OF_INTEREST_NAME_LENGTH}
                 style={{
                   height: 40,
                   borderRadius: 8,
@@ -468,7 +499,7 @@ export default function PointOfInterestModal({
                 value={descripcion}
                 onChange={(event) => setDescripcion(event.target.value)}
                 placeholder="Ej: A una cuadra de la propiedad"
-                maxLength={300}
+                maxLength={MAX_POINT_OF_INTEREST_DESCRIPTION_LENGTH}
                 rows={3}
                 style={{
                   borderRadius: 8,

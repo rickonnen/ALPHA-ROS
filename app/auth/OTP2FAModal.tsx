@@ -26,11 +26,11 @@ export default function OTP2FAModal({
  
 
   // Paleta existente del proyecto
-  const CREAM_BG   = "var(--auth-card-soft)";
-  const DARK_BLUE  = "var(--auth-primary-strong)";
-  const TERRACOTTA = "var(--auth-secondary)";
-  const INPUT_BG   = "var(--auth-otp-bg)";
-  const MUTED_TEXT = "var(--auth-muted)";
+  const CREAM_BG   = "var(--auth-otp-bg)"; 
+  const DARK_BLUE  = "var(--auth-otp-text)"; 
+  const TERRACOTTA = "#C26E5A"; 
+  const INPUT_BG   = "var(--auth-otp-input-bg)";  
+  const MUTED_TEXT = "var(--auth-otp-muted)"; 
   // 
 
   // Countdown automático cada segundo cuando está bloqueado
@@ -129,7 +129,7 @@ export default function OTP2FAModal({
     transition: "background 0.15s, border-color 0.15s, color 0.15s",
     background: hovered ? TERRACOTTA : "transparent",
     border: `2px solid ${hovered ? TERRACOTTA : DARK_BLUE}`,
-    color: hovered ? "var(--auth-primary-foreground)" : DARK_BLUE,
+    color: hovered ? "white" : DARK_BLUE,
   });
 
   return (
@@ -168,7 +168,7 @@ export default function OTP2FAModal({
               flexShrink: 0,
             }}
           >
-            <Lock size={20} color="var(--auth-primary-foreground)" />
+            <Lock size={20} color="white" />
           </div>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: DARK_BLUE }}>
@@ -183,7 +183,7 @@ export default function OTP2FAModal({
         {/* Separador */}
         <div
           style={{
-            borderBottom: `1px solid ${DARK_BLUE}30`,
+            borderBottom: "1px solid var(--auth-border)",
             marginBottom: 18,
           }}
         />
@@ -197,12 +197,12 @@ export default function OTP2FAModal({
         {bloqueado && (
           <div
             style={{
-              background: "color-mix(in srgb, var(--auth-secondary) 80%, transparent)",
+              background: `${TERRACOTTA}cc`,
               border: `1px solid ${TERRACOTTA}`,
               borderRadius: 10,
               padding: "10px 14px",
               fontSize: 13,
-              color: "var(--auth-primary-foreground)",
+              color: "white",
               textAlign: "center",
               marginBottom: 14,
             }}
@@ -237,14 +237,14 @@ export default function OTP2FAModal({
           style={{
             width: "100%",
             boxSizing: "border-box",
-            background: bloqueado ? "var(--auth-otp-disabled-bg)" : INPUT_BG,
+            background: bloqueado ? `${INPUT_BG}66` : INPUT_BG,
             border: "none",
             borderRadius: 12,
             padding: "15px 0",
             fontSize: 22,
             fontFamily: "monospace",
             letterSpacing: "0.5em",
-            color: bloqueado ? "color-mix(in srgb, var(--auth-primary-foreground) 35%, transparent)" : "var(--auth-primary-foreground)",
+            color: bloqueado ? "rgba(255,255,255,0.35)" : "white",
             textAlign: "center",
             marginBottom: error ? 8 : 20,
             outline: "none",

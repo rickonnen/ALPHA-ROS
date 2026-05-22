@@ -1,17 +1,16 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings } from "lucide-react";
+import { Settings, Trash2 } from "lucide-react";
 
 type Props = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   unreadCount: number;
-////////////h2////////
   trashCount: number;
-
   onMarkAll: () => void;
   onOpenSettings: () => void;
+  onTrashClick?: () => void;
 };
 
 export function NotificationTabs({
@@ -21,58 +20,61 @@ export function NotificationTabs({
   trashCount,
   onMarkAll,
   onOpenSettings,
+  onTrashClick,
 }: Props) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        
-        <Tabs value={activeTab} onValueChange={onTabChange}>
-          <TabsList className="bg-[var(--notification-card)] p-1 rounded-xl inline-flex h-auto">
-            <TabsTrigger
-              value="all"
-              className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
-            >
-              Todas
-            </TabsTrigger>
-
-            <TabsTrigger
-              value="unread"
-              className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
-            >
-              No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
-            </TabsTrigger>
-             <TabsTrigger
-  value="trash"
-  className="text-sm px-3 py-1 rounded-lg border border-transparent text-[var(--notification-muted)] data-active:bg-[var(--notification-tab-active-bg)] data-active:text-[var(--notification-tab-active-text)] data-active:border-[var(--notification-tab-active-border)]"
->
-  Papelera {trashCount > 0 ? `(${trashCount})` : ""}
-</TabsTrigger>
-
-
-
-          </TabsList>
-        </Tabs>
-
-        <div className="flex items-center gap-2">
-          {/* Mostrar "Marcar todo" solo cuando la pestaña activa sea "unread" */}
-          {activeTab === "unread" && (
-            <button
-              onClick={onMarkAll}
-              className="text-xs text-[var(--notification-muted)] hover:text-[var(--notification-title-unread)]"
-            >
-              Marcar todas
-            </button>
-          )}
-
-          <button
-            onClick={onOpenSettings}
-            className="p-2 rounded-md text-[var(--notification-muted)] hover:bg-[var(--notification-card)] hover:text-[var(--notification-text)] transition"
-            type="button"
-            title="Configuración"
+    <div className="flex items-center justify-between gap-2">
+      {/* Izquierda: tabs */}
+      <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 min-w-0">
+        <TabsList className="bg-gray-200 p-1.5 rounded-xl inline-flex h-auto dark:bg-[#263540]">
+          <TabsTrigger
+            value="all"
+            className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-lg data-[state=active]:bg-white dark:text-slate-200 dark:data-[state=active]:bg-[#1f2c33]"
           >
-            <Settings size={18} />
+            Todas
+          </TabsTrigger>
+          <TabsTrigger
+            value="unread"
+            className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-lg data-[state=active]:bg-white dark:text-slate-200 dark:data-[state=active]:bg-[#1f2c33]"
+          >
+            No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Derecha: marcar todas + papelera + tuerca */}
+      <div className="flex items-center gap-0.5 shrink-0 min-w-[80px] justify-end">
+        {activeTab === "unread" && unreadCount > 0 && (
+          <button
+            onClick={onMarkAll}
+            className="text-[10px] md:text-xs text-gray-500 hover:text-black whitespace-nowrap dark:text-slate-300/70 dark:hover:text-white"
+          >
+            Marcar todas
           </button>
-        </div>
+        )}
+
+        <button
+          onClick={onTrashClick}
+          className={`flex items-center gap-0.5 px-1.5 py-1.5 rounded-md transition ${
+            activeTab === "trash" ? "bg-gray-200 dark:bg-[#263540]" : "hover:bg-gray-200 dark:hover:bg-[#263540]"
+          }`}
+          type="button"
+          title={`Papelera ${trashCount > 0 ? `(${trashCount})` : ""}`}
+        >
+          <Trash2 size={15} className="dark:text-slate-200" />
+          {trashCount > 0 && (
+            <span className="text-[9px] md:text-xs text-gray-600 dark:text-slate-300">{trashCount}</span>
+          )}
+        </button>
+
+        <button
+          onClick={onOpenSettings}
+          className="p-1.5 rounded-md hover:bg-gray-200 transition dark:text-slate-200 dark:hover:bg-[#263540]"
+          type="button"
+          title="Configuración"
+        >
+          <Settings size={15} />
+        </button>
       </div>
     </div>
   );

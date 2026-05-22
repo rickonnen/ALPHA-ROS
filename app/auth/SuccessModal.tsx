@@ -32,22 +32,25 @@ export default function SuccessModal({
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="relative bg-[var(--auth-panel)] text-[var(--auth-text)] rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+      <div
+        className="relative rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center"
+        style={{ backgroundColor: "var(--auth-otp-bg)" }}
+      >
         {/* Icono de éxito */}
         <div className="flex justify-center mb-4">
-          <div className="bg-[var(--auth-secondary)] rounded-full p-3">
-            <Check size={32} className="text-white" />
+          <div className="border-2 border-green-500 rounded-full p-3">
+            <Check size={32} className="text-green-500" />
           </div>
         </div>
 
         {/* Mensaje */}
-        <h2 className="text-[var(--auth-text-strong)] font-bold text-xl mb-2">¡Éxito!</h2>
-        <p className="text-[var(--auth-muted)] text-sm">{message}</p>
+        <h2 className="font-bold text-xl mb-2" style={{ color: "var(--auth-text)" }}>¡Éxito!</h2>
+        <p className="text-sm" style={{ color: "var(--auth-muted)" }}>{message}</p>
 
         {/* Botón opcional */}
         <button
           onClick={onClose}
-          className="mt-6 bg-[var(--auth-secondary)] text-[var(--auth-primary-foreground)] px-6 py-2 rounded-full font-bold hover:bg-[var(--auth-secondary-hover)] transition"
+          className="mt-6 bg-[#B47B65] text-white px-6 py-2 rounded-full font-bold hover:bg-[#a86b55] transition"
         >
           Aceptar
         </button>
