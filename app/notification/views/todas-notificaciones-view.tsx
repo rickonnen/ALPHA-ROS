@@ -246,21 +246,8 @@ export function TodasNotificacionesView({ onClose }: Props) {
   const isTrashTab = activeTab === "papelera";
 
   return (
-    <div className="min-h-screen bg-[#F2EDE4] dark:bg-[#1b2730]">
+    <div className="min-h-screen bg-[#F2EDE4]">
       <div className="max-w-6xl mx-auto px-6 pt-8 pb-12">
-        {/* Header con Volver y Título */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-          <button
-            onClick={() => { onClose?.(); router.push("/"); }}
-            className="flex items-center gap-2 px-3 md:px-5 py-2 bg-[#2C4A5A] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#1e3a4a] transition shrink-0 w-fit dark:bg-[#3b5566] dark:hover:bg-[#2f4858]"
-          >
-            ← Volver
-          </button>
-          <h1 className="text-[#2C4A5A] text-lg md:text-4xl font-black text-center tracking-widest uppercase flex-1 px-2 md:px-4 dark:text-slate-100">
-            Todas las Notificaciones
-          </h1>
-          <div className="hidden md:block md:shrink-0 md:w-40" />
-        </div>
 
         <div className="mb-6 rounded-xl overflow-hidden shadow-sm">
           <NotificationHeader
@@ -276,6 +263,20 @@ export function TodasNotificacionesView({ onClose }: Props) {
           />
         </div>
 
+        {/* Header con Volver y Título */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+          <button
+            onClick={() => { onClose?.(); router.push("/"); }}
+            className="flex items-center gap-2 px-3 md:px-5 py-2 bg-[#2C4A5A] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#1e3a4a] transition shrink-0 w-fit"
+          >
+            ← Volver
+          </button>
+          <h1 className="text-[#2C4A5A] text-lg md:text-4xl font-black text-center tracking-widest uppercase flex-1 px-2 md:px-4">
+            Todas las Notificaciones
+          </h1>
+          <div className="hidden md:block md:shrink-0 md:w-40" />
+        </div>
+
         {/* Tabs: izquierda TODAS + NO LEÍDAS, derecha MARCAR TODAS + PAPELERA */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-1.5 md:gap-2 items-center flex-nowrap">
@@ -283,8 +284,8 @@ export function TodasNotificacionesView({ onClose }: Props) {
               onClick={() => setActiveTab("todas")}
               className={`px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 activeTab === "todas"
-                  ? "bg-[#2C4A5A] text-white border-[#2C4A5A] dark:bg-[#3b5566] dark:border-[#3b5566]"
-                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10 dark:text-slate-200 dark:border-[#3b5566] dark:hover:bg-[#3b5566]/20"
+                  ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
+                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
               }`}
             >
               TODAS
@@ -293,8 +294,8 @@ export function TodasNotificacionesView({ onClose }: Props) {
               onClick={() => setActiveTab("no-leidas")}
               className={`px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 activeTab === "no-leidas"
-                  ? "bg-[#2C4A5A] text-white border-[#2C4A5A] dark:bg-[#3b5566] dark:border-[#3b5566]"
-                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10 dark:text-slate-200 dark:border-[#3b5566] dark:hover:bg-[#3b5566]/20"
+                  ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
+                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
               }`}
             >
               NO LEÍDAS {unreadCount > 0 ? `(${unreadCount})` : ""}
@@ -305,10 +306,10 @@ export function TodasNotificacionesView({ onClose }: Props) {
             {mostrarMarcarTodas && (
               <button
                 onClick={handleMarkAll}
-                className="px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-bold bg-[#2C4A5A] text-white rounded-full hover:bg-[#1e3a4a] transition dark:bg-[#3b5566] dark:hover:bg-[#2f4858]"
+                className="px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-bold bg-[#2C4A5A] text-white rounded-full hover:bg-[#1e3a4a] transition"
               >
-                <span className="hidden md:inline">MARCAR TODAS</span>
-                <span className="md:hidden">MARCAR TODAS</span>
+               <span className="hidden md:inline">MARCAR TODAS</span>
+<span className="md:hidden">MARCAR TODAS</span>
               </button>
             )}
             <button
@@ -316,7 +317,7 @@ export function TodasNotificacionesView({ onClose }: Props) {
               className={`flex items-center gap-1 md:gap-1.5 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold border-2 transition ${
                 isTrashTab
                   ? "bg-[#2C4A5A] text-white border-[#2C4A5A]"
-                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10 dark:text-slate-200 dark:border-[#3b5566] dark:hover:bg-[#3b5566]/20"
+                  : "bg-transparent text-[#2C4A5A] border-[#2C4A5A] hover:bg-[#2C4A5A]/10"
               }`}
             >
               <Trash2 size={14} />
@@ -327,20 +328,20 @@ export function TodasNotificacionesView({ onClose }: Props) {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20 text-[#2C4A5A]/60 text-sm dark:text-slate-300/70">
+          <div className="flex items-center justify-center py-20 text-[#2C4A5A]/60 text-sm">
             Cargando notificaciones...
           </div>
         ) : hasError ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <BellOff size={32} className="text-[#2C4A5A]/40 dark:text-slate-300/60" />
-            <p className="text-[#2C4A5A]/60 text-sm font-medium dark:text-slate-300/80">
+            <BellOff size={32} className="text-[#2C4A5A]/40" />
+            <p className="text-[#2C4A5A]/60 text-sm font-medium">
               No fue posible cargar las notificaciones.
             </p>
           </div>
         ) : visibles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-            <BellOff size={32} className="text-[#2C4A5A]/40 dark:text-slate-300/60" />
-            <p className="text-[#2C4A5A]/60 text-sm font-medium dark:text-slate-300/80">
+            <BellOff size={32} className="text-[#2C4A5A]/40" />
+            <p className="text-[#2C4A5A]/60 text-sm font-medium">
               {activeTab === "no-leidas"
                 ? "No tienes notificaciones no leídas."
                 : "No hay notificaciones disponibles."}
@@ -372,7 +373,7 @@ export function TodasNotificacionesView({ onClose }: Props) {
         {isTrashTab && trash.length > 0 && (
           <button
             onClick={() => setShowConfirmModal(true)}
-            className="text-sm text-red-500 hover:text-red-700 hover:underline transition font-bold mt-4 dark:text-red-400 dark:hover:text-red-300"
+            className="text-sm text-red-500 hover:text-red-700 hover:underline transition font-bold mt-4"
           >
             Vaciar papelera
           </button>

@@ -443,11 +443,11 @@ export function SettingsPanel({
   );
 
   return (
-    <div className="flex flex-col h-full w-full bg-[var(--notification-surface)] text-[var(--notification-text)] rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-2 bg-[var(--notification-header)] text-[var(--notification-header-foreground)] px-4 py-3">
+    <div className="flex flex-col h-full w-full bg-white rounded-2xl overflow-hidden">
+      <div className="flex items-center gap-2 bg-slate-700 text-white px-4 py-3">
         <button
           onClick={onClose}
-          className="hover:bg-[var(--notification-button-hover)] p-1 rounded-md transition-colors"
+          className="hover:bg-slate-600 p-1 rounded-md transition-colors"
           title="Volver"
         >
           <ArrowLeft size={18} />
@@ -463,18 +463,18 @@ export function SettingsPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {feedbackMessage && (
           <div
-            className={`rounded-lg px-4 py-3 text-sm font-medium border ${
-              feedbackType === "success"
-                ? "bg-[var(--notification-success-bg)] text-[var(--notification-success-text)] border-[var(--notification-success-border)]"
-                : feedbackType === "error"
-                  ? "bg-[var(--notification-error-bg)] text-[var(--notification-error-text)] border-[var(--notification-error-border)]"
-                  : "bg-[var(--notification-warning-bg)] text-[var(--notification-warning-text)] border-[var(--notification-warning-border)]"
-            }`}
+            className={`rounded-lg px-4 py-3 text-sm font-medium border ${feedbackType === "success"
+              ? "bg-green-50 text-green-700 border-green-200"
+              : feedbackType === "error"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-yellow-50 text-yellow-700 border-yellow-200"
+              }`}
           >
             {feedbackMessage}
           </div>
         )}
-        <div className="flex items-center justify-between bg-[var(--notification-card)] p-3 rounded-xl">
+
+        <div className="flex items-center justify-between bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center gap-3">
             <img
               src="https://cdn-icons-png.flaticon.com/512/5968/5968534.png"
@@ -484,8 +484,8 @@ export function SettingsPanel({
 
             <div>
               <p className="font-semibold">Gmail</p>
-              <p className="text-sm text-[var(--notification-muted)]">
-                usuario@gmail.com
+              <p className="text-sm text-gray-500">
+                {objUser?.email ? maskEmail(objUser.email) : "Sin correo"}
               </p>
             </div>
           </div>
@@ -500,16 +500,15 @@ export function SettingsPanel({
             />
 
             <div
-              className={`w-11 h-6 bg-[var(--notification-muted)] rounded-full peer peer-checked:bg-[var(--notification-button)] transition ${
-                isUpdating ? "opacity-50" : ""
-              }`}
+              className={`w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition ${isUpdating ? "opacity-50" : ""
+                }`}
             />
 
-            <div className="absolute left-1 top-1 w-4 h-4 bg-[var(--notification-surface)] rounded-full transition peer-checked:translate-x-5" />
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5" />
           </label>
         </div>
 
-        <div className="bg-[var(--notification-card)] p-3 rounded-xl">
+        <div className="bg-gray-100 p-3 rounded-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
@@ -522,7 +521,7 @@ export function SettingsPanel({
                 <p className="font-semibold">WhatsApp</p>
 
                 {isPhoneSaved && verifiedPhone && (
-                  <p className="text-sm text-[var(--notification-muted)]">
+                  <p className="text-sm text-gray-500">
                     {maskPhone(verifiedPhone)}
                   </p>
                 )}
@@ -549,17 +548,32 @@ export function SettingsPanel({
               />
 
               <div
-                className={`w-11 h-6 bg-[var(--notification-muted)] rounded-full peer peer-checked:bg-[var(--notification-button)] transition ${
-                  isUpdating ? "opacity-50" : ""
-                }`}
-              />
-
-              <div className="absolute left-1 top-1 w-4 h-4 bg-[var(--notification-surface)] rounded-full transition peer-checked:translate-x-5" />
+                className={`
+      w-14 h-7 rounded-full transition-all duration-300
+      ${whatsappEnabled
+                    ? "bg-green-600"
+                    : "bg-gray-300"
+                  }
+      ${isWhatsappLoading ? "opacity-70" : ""}
+    `}
+              >
+                <div
+                  className={`
+        absolute top-1 left-1 w-5 h-5 bg-white rounded-full
+        transition-transform duration-300 flex items-center justify-center
+        ${whatsappEnabled ? "translate-x-7" : ""}
+      `}
+                >
+                  {isWhatsappLoading && (
+                    <div className="w-3 h-3 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+              </div>
             </label>
           </div>
 
           {isWhatsappLoading && (
-            <p className="text-xs text-[var(--notification-muted)] mt-2 ml-12 animate-pulse">
+            <p className="text-xs text-gray-500 mt-2 ml-12 animate-pulse">
               {whatsappEnabled
                 ? "Desactivando WhatsApp..."
                 : "Activando WhatsApp..."}
@@ -569,24 +583,22 @@ export function SettingsPanel({
           {registeredPhones.map((phone) => (
             <div
               key={phone.idTelefono}
-              className={`rounded-lg border p-3 transition ${
-                phone.idTelefono === selectedPhoneId
-                  ? "bg-[var(--notification-success-bg)] border-[var(--notification-success-border)]"
-                  : "bg-[var(--notification-surface)] border-[var(--card-border)]"
-              }`}
+              className={`rounded-lg border p-3 transition ${phone.idTelefono === selectedPhoneId
+                ? "bg-green-50 border-green-300"
+                : "bg-white border-gray-200"
+                }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-[var(--notification-text)]">
+                  <span className="text-sm font-medium text-gray-700">
                     {maskPhone(phone.phoneE164)}
                   </span>
 
                   <span
-                    className={`text-xs ${
-                      phone.isVerified
-                        ? "text-[var(--notification-success)]"
-                        : "text-[var(--notification-warning-text)]"
-                    }`}
+                    className={`text-xs ${phone.isVerified
+                      ? "text-green-600"
+                      : "text-yellow-600"
+                      }`}
                   >
                     {phone.isVerified
                       ? "Número verificado"
@@ -602,11 +614,10 @@ export function SettingsPanel({
                         handleSelectRegisteredPhone(phone.idTelefono)
                       }
                       disabled={isUpdating}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                        phone.idTelefono === selectedPhoneId
-                          ? "bg-[var(--notification-button)] text-[var(--notification-header-foreground)]"
-                          : "bg-[var(--notification-surface)] text-[var(--notification-text)] hover:bg-[var(--notification-button-hover)] hover:text-[var(--notification-header-foreground)]"
-                      }`}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${phone.idTelefono === selectedPhoneId
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
                     >
                       {phone.idTelefono === selectedPhoneId
                         ? "Activo"
@@ -626,7 +637,7 @@ export function SettingsPanel({
                         );
                       }}
                       disabled={isUpdating}
-                      className="px-3 py-1.5 rounded-md text-xs font-medium bg-[var(--notification-warning-border)] text-[var(--notification-warning-text)] hover:bg-[var(--notification-warning-text)] hover:text-[var(--notification-header-foreground)] transition"
+                      className="px-3 py-1.5 rounded-md text-xs font-medium bg-yellow-500 text-white hover:bg-yellow-600 transition"
                     >
                       Verificar
                     </button>
@@ -638,21 +649,27 @@ export function SettingsPanel({
 
           {isPhoneSaved && !isChangingPhone ? (
             <div className="flex items-center justify-between mt-3 ml-12">
-              <p className="text-xs text-[var(--notification-success)]">
-                Número verificado y WhatsApp activado.
+              <p className="text-xs text-green-700">
+                Número verificado.
               </p>
 
-              <button
-                onClick={handleEditPhoneNumber}
-                disabled={isUpdating}
-                className="text-xs text-[var(--notification-button)] hover:text-[var(--notification-button-hover)] hover:underline px-2 py-1"
-              >
-                Cambiar
-              </button>
+              {canAddNewPhone ? (
+                <button
+                  onClick={handleEditPhoneNumber}
+                  disabled={isUpdating}
+                  className="text-xs text-blue-600 hover:text-blue-700 hover:underline px-2 py-1"
+                >
+                  Agregar otro
+                </button>
+              ) : (
+                <span className="text-xs text-gray-400 px-2 py-1">
+                  Máximo 3 números
+                </span>
+              )}
             </div>
           ) : (
-            <div className="bg-[var(--notification-warning-bg)] p-3 rounded-lg border border-[var(--notification-warning-border)] mt-3">
-              <p className="text-xs text-[var(--notification-warning-text)] mb-2">
+            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-3">
+              <p className="text-xs text-yellow-700 mb-2">
                 Ingresa tu número para recibir notificaciones de WhatsApp:
               </p>
 
@@ -662,8 +679,8 @@ export function SettingsPanel({
                   placeholder="Ej: +59171234567"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  disabled={isUpdating}
-                  className="w-full px-3 py-2 border border-[var(--notification-warning-border)] bg-[var(--notification-input-bg)] text-[var(--notification-text)] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={isUpdating || !USER_ID || !canAddNewPhone}
+                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
 
                 <button
@@ -679,9 +696,8 @@ export function SettingsPanel({
                 </button>
               </div>
 
-              <p className="text-xs text-[var(--notification-muted)] mt-2">
-                Formato: Código de país + número. Ej:
-                +59171234567
+              <p className="text-xs text-gray-500 mt-2">
+                Formato: Código de país + número. Ej: +59171234567
               </p>
             </div>
           )}

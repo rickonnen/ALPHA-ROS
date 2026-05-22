@@ -261,7 +261,7 @@ const trash = useMemo(
   const isTrashTab = activeTab === "trash";
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0 dark:bg-[#1f2c33] dark:border dark:border-[#2b3a45]">
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-110 w-[90vw] max-w-96 h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
       {showSettings ? (
         <SettingsPanel
           onClose={() => setShowSettings(false)}
@@ -295,7 +295,7 @@ const trash = useMemo(
             <div className="flex justify-end px-4 py-2">
               <button
                 onClick={() => setShowConfirmModal(true)}
-                className="text-xs text-red-500 hover:text-red-700 hover:underline transition dark:text-red-400 dark:hover:text-red-300"
+                className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
               >
                 Vaciar papelera
               </button>
@@ -303,24 +303,24 @@ const trash = useMemo(
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400 text-sm dark:text-slate-300/70">
+            <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
               Cargando notificaciones...
             </div>
           ) : hasError ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 dark:bg-[#263540] dark:text-slate-300/70">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <BellOff size={22} />
               </div>
-              <p className="text-gray-500 text-sm font-medium dark:text-slate-300/80">
+              <p className="text-gray-500 text-sm font-medium">
                 No fue posible cargar las notificaciones.
               </p>
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 dark:bg-[#263540] dark:text-slate-300/70">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <BellOff size={22} />
               </div>
-              <p className="text-gray-500 text-sm font-medium dark:text-slate-300/80">
+              <p className="text-gray-500 text-sm font-medium">
                 {activeTab === "unread"
                   ? "No tienes notificaciones no leídas."
                   : isTrashTab
@@ -355,12 +355,10 @@ const trash = useMemo(
       )}
 
       {!showSettings && (
-        <div className="p-3 border-t border-gray-100 dark:border-[#2b3a45]">
+        <div className="px-4 py-3.5 border-t border-gray-100">
           <button
-            onClick={() => {
-              onVerTodas?.();
-            }}
-            className="w-full py-2 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition dark:bg-[#3b5566] dark:hover:bg-[#2f4858]"
+            onClick={() => { onVerTodas?.(); }}
+            className="w-full py-2.5 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
           >
             Ver todas las notificaciones
           </button>

@@ -353,7 +353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {/* Modal centrado */}
           <div style={{
             position: "relative",
-            backgroundColor: "var(--auth-otp-bg)",
+            backgroundColor: "#EAE3D9",
             borderRadius: "12px",
             boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
             padding: "32px",
@@ -381,7 +381,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             {/* Título */}
             <h2 style={{
-              color: "var(--auth-text)",
+              color: "#0F172A",
               fontWeight: "bold",
               fontSize: "20px",
               marginBottom: "8px",
@@ -391,7 +391,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             {/* Mensaje */}
             <p style={{
-              color: "var(--auth-muted)",
+              color: "#6B7280",
               fontSize: "14px",
               marginBottom: "24px",
               lineHeight: "1.5",
