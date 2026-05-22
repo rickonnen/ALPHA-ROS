@@ -59,6 +59,7 @@ export type SearchPublicationResult = {
     id: number;
     nombre: string;
     detalle: string | null;
+    color: string;
   }[];
   etiquetas: {
     id: number;
@@ -454,6 +455,7 @@ function mapPublication(publication: PublicationWithRelations): SearchPublicatio
     id: item.id_caracteristica,
     nombre: item.Caracteristica?.nombre_caracteristica ?? "",
     detalle: item.detalle_caracteristica ?? null,
+    color: item.Caracteristica?.color ?? '#6B7280'
   })).filter((item) => Boolean(item.nombre));
 
   return {
@@ -602,4 +604,33 @@ export async function getCachedPublicaciones(filters: SearchFiltersInput) {
       tags: ["publicaciones"],
     },
   )();
+}
+
+export type CaracteristicaFilterOption = {
+  id_caracteristica: number;
+  nombre_caracteristica: string;
+  color: string;
+};
+
+export async function getCaracteristicasFilterOptions(): Promise<
+  CaracteristicaFilterOption[]
+> {
+  const caracteristicas = await prisma.caracteristica.findMany({
+    select: {
+      id_caracteristica: true,
+      nombre_caracteristica: true,
+      color: true,
+    },
+    orderBy: {
+      nombre_caracteristica: "asc",
+    },
+  });
+
+  return caracteristicas
+    .filter((caracteristica) => Boolean(caracteristica.nombre_caracteristica))
+    .map((caracteristica) => ({
+      id_caracteristica: caracteristica.id_caracteristica,
+      nombre_caracteristica: caracteristica.nombre_caracteristica ?? "",
+      color: caracteristica.color ?? "#6B7280",
+    }));
 }
