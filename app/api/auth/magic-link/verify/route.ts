@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { sign } from "jsonwebtoken";
 
 /**
  * POST /api/auth/magic-link/verify
@@ -33,16 +34,41 @@ export async function POST(req: NextRequest) {
     // 3️ Hacer hash del token recibido para comparar con BD
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-    // 4️ ATOMIC UPDATE: Buscar y marcar como consumed en UNA operación
-    // Esto previene race condition donde dos peticiones usen el mismo token
+    // 4️ Buscar el token pendiente primero (necesitamos el email para el constraint cleanup)
+    // @@unique([email, status]): solo puede existir UN row por (email, status).
+    // Si hay un row "consumed" previo y hacemos updateMany pending→consumed directamente,
+    // el constraint se viola y updateMany retorna count=0 sin lanzar excepción.
     const ahora = new Date();
+    const attempt = await prisma.magic_link_attempt.findFirst({
+      where: {
+        token: tokenHash,
+        status: "pending",
+        expires_at: { gt: ahora },
+      },
+    });
+
+    if (!attempt) {
+      console.error("[Magic Link Verify] Token inválido, expirado o ya consumido");
+      return NextResponse.json(
+        { error: "Link inválido o expirado. Solicita uno nuevo." },
+        { status: 400 }
+      );
+    }
+
+    const emailLower = attempt.email.toLowerCase();
+
+    // 5️ Eliminar consumed existente ANTES de marcar el nuevo como consumed
+    // (evita violación de @@unique([email, status]))
+    await prisma.magic_link_attempt.deleteMany({
+      where: { email: emailLower, status: "consumed" },
+    });
+
+    // Ahora sí marcar como consumed sin riesgo de constraint violation
     const attemptUpdated = await prisma.magic_link_attempt.updateMany({
       where: {
         token: tokenHash,
         status: "pending",
-        expires_at: {
-          gt: ahora, // Token no expirado
-        },
+        expires_at: { gt: ahora },
       },
       data: {
         status: "consumed",
@@ -50,41 +76,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Si no se actualizó ningún registro, significa que:
-    // - El token ya fue consumido por otra petición
-    // - El token expiró
-    // - El token no existe
+    // count=0 significa que otra petición concurrente consumió el token primero
     if (attemptUpdated.count === 0) {
-      console.error("[Magic Link Verify] Token inválido, expirado o ya consumido");
+      console.error("[Magic Link Verify] Token ya fue consumido (race condition)");
       return NextResponse.json(
-        { 
-          error: "Link inválido o expirado. Solicita uno nuevo." 
-        },
+        { error: "Link inválido o expirado. Solicita uno nuevo." },
         { status: 400 }
       );
     }
 
     console.log("[Magic Link] Token marcado como consumido de forma atómica");
-
-    // 5️ Obtener el intento que acabamos de consumir para validaciones posteriores
-    const attempt = await prisma.magic_link_attempt.findFirst({
-      where: {
-        token: tokenHash,
-        status: "consumed",
-      },
-    });
-
-    if (!attempt) {
-      console.error("[Magic Link Verify] No se encontró intento consumido");
-      return NextResponse.json(
-        {
-          error: "Error al procesar el link. Intenta nuevamente."
-        },
-        { status: 400 }
-      );
-    }
-
-    const emailLower = attempt.email.toLowerCase();
 
     // 6️ IMPORTANTE: Crear/obtener usuario en Supabase Auth PRIMERO
     const supabase = createClient(
@@ -229,8 +230,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 10️ Retornar datos del usuario para NextAuth
-    return NextResponse.json(
+    // 10️ Generar auth_token custom (mismo formato que /api/auth/signin)
+    // Esto permite que /api/auth/me y AuthContext reconozcan la sesión de Magic Link
+    const jwtToken = sign(
+      { userId: usuario.id_usuario },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+
+    const response = NextResponse.json(
       {
         success: true,
         usuario: {
@@ -245,6 +253,18 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
+
+    // Setear cookie idéntica a la del login normal
+    // La cookie es domain-scoped: disponible en todas las pestañas del mismo origen
+    response.cookies.set("auth_token", jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return response;
 
   } catch (error) {
     console.error("[Magic Link Verify] Error:", error);

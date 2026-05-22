@@ -11,8 +11,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useState, useRef } from "react";
-import { TriangleAlert } from "lucide-react";
-import { BadgeCheck } from "lucide-react";
+import Image from "next/image";
 
 type EstadoModal =
   | "cerrado"
@@ -147,46 +146,61 @@ const [loading, setLoading] = useState(false);
 
           {estadoModal === "pago_completado" && (
             <>
-    <div className="flex flex-col items-center text-center gap-2 pt-2">
-      <BadgeCheck className="h-12 w-12 text-green-500" />
-      <AlertDialogTitle className="text-lg font-semibold">
-        Pago confirmado
-      </AlertDialogTitle>
-      <AlertDialogDescription className="text-sm text-muted-foreground">
-        Hemos recibido tu pago correctamente.
-      </AlertDialogDescription>
-    </div>
-    <AlertDialogFooter className="flex justify-center mt-2">
-      <AlertDialogCancel
-        onClick={() => setEstadoModal("cerrado")}
-        className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
-      >
-        salir
-      </AlertDialogCancel>
-    </AlertDialogFooter>
-  </>
+              <div className="flex flex-col items-center text-center gap-2 pt-2">
+                <Image
+                  src="/logo-pagoCompletado.png"
+                  alt="Alerta"
+                  width={48}
+                  height={48}
+                  className="h-18 w-18"
+                />
+                <AlertDialogTitle className="text-lg font-semibold">
+                  Pago confirmado
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  Hemos recibido tu pago correctamente.
+                </AlertDialogDescription>
+              </div>
+              <AlertDialogFooter className="flex justify-center mt-2">
+                <AlertDialogAction
+                  onClick={() => {
+                    setEstadoModal("cerrado");
+                    irAlPerfil();
+                  }}
+                  className="!mx-auto text-sm px-6 !bg-primary !text-primary-foreground hover:!bg-primary/90 hover:!text-primary-foreground border-0"
+                >
+                  Ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
           )}
 
           {estadoModal === "pago_rechazado" && (
             <>
-    <div className="flex flex-col items-center text-center gap-2 pt-2">
-      <TriangleAlert className="h-12 w-12 text-red-500" />
-      <AlertDialogTitle className="text-lg font-semibold">
-        Pago no completado
-      </AlertDialogTitle>
-      <AlertDialogDescription className="text-sm text-muted-foreground">
-        No hemos podido confirmar tu pago.
-      </AlertDialogDescription>
-    </div>
-    <AlertDialogFooter className="flex justify-center mt-2">
-      <AlertDialogCancel
-        onClick={() => setEstadoModal("cerrado")}
-        className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
-      >
-        Salir
-      </AlertDialogCancel>
-    </AlertDialogFooter>
-  </>
+              <div className="flex flex-col items-center text-center gap-2 pt-2">
+                <Image
+                  src="/logo-rechazado-modal.png"
+                  alt="Alerta"
+                  width={48}
+                  height={48}
+                  className="h-16 w-16"
+                />
+                <AlertDialogTitle className="text-lg font-semibold">
+                  Pago no completado
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  No hemos podido confirmar tu pago.
+                </AlertDialogDescription>
+              </div>
+              <AlertDialogFooter className="flex justify-center mt-2">
+                <AlertDialogCancel
+                  onClick={() => setEstadoModal("cerrado")}
+                  className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
+                >
+                  Salir
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
           )}
 
         </AlertDialogContent>

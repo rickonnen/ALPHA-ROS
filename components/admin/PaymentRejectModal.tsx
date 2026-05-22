@@ -66,7 +66,7 @@ export function PaymentRejectModal({
   return (
     <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
       {/*Se lo mejoro para vista movil dado que con el anterior no se adaptaba*/}
-      <AlertDialogContent className="flex flex-col w-[90%] max-w-[500px] bg-[#F3F3F3] rounded-2xl p-6 sm:p-8 border-none shadow-md">
+      <AlertDialogContent className="flex flex-col w-[90%] max-w-[500px] rounded-2xl p-6 sm:p-8 border-none shadow-md">
         {/* Título accesible oculto visualmente */}
         <VisuallyHidden>
           <AlertDialogTitle>
@@ -80,7 +80,7 @@ export function PaymentRejectModal({
           </div>
         </div>
         
-        <p className="text-center text-gray-700 text-sm sm:text-base mb-8">
+        <p className="text-center text-sm sm:text-base mb-8">
           Deseas rechazar el pago del cliente correspondiente:{" "}
           <span className="font-semibold">{strClientName}</span>{" "}
           para el plan <span className="font-semibold">{strPlanName}</span>
@@ -89,12 +89,12 @@ export function PaymentRejectModal({
         {/* seleccionar motivo ª; se cambio la estructura a la de shadcn; se llevó el dropdown a lado derecho
          se genero espacio del dropdown con los botones,*/}
         <div className="mb-20 flex flex-col sm:flex-row items-center justify-between gap-2 px-1">
-          <label htmlFor="reason-select" className="flex-1 flex-col sm:flex-row text-sm font-bold text-gray-700 whitespace-nowrap">
+          <label htmlFor="reason-select" className="flex-1 flex-col sm:flex-row text-sm font-bold whitespace-nowrap">
             Motivo del rechazo <span className="text-red-500">*</span>
           </label>
           <div className="w-full sm:w-[220px]">
             <Select value={strReason} onValueChange={setStrReason}>
-              <SelectTrigger className="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
+              <SelectTrigger className="w-full bg-white border border-gray-300 text-primary text-sm rounded-xl focus:ring-primary focus:border-primary p-3 h-11 outline-none text-left">
                 <div className="truncate w-full pr-0">
                   <SelectValue placeholder="Seleccione un motivo" />
                 </div>
@@ -104,9 +104,9 @@ export function PaymentRejectModal({
                 sideOffset={4} 
                 className="rounded-xl border-gray-200 shadow-lg bg-white w-[--radix-select-trigger-width]"
               >
-                <SelectItem value="Comprobante inválido" className="rounded-lg cursor-pointer">Comprobante inválido</SelectItem>
-                <SelectItem value="Monto incorrecto" className="rounded-lg cursor-pointer">Monto incorrecto</SelectItem>
-                <SelectItem value="Datos no coinciden" className="rounded-lg cursor-pointer">Datos no coinciden</SelectItem>
+                <SelectItem value="Comprobante inválido" className="rounded-lg cursor-pointer text-primary">Comprobante inválido</SelectItem>
+                <SelectItem value="Monto incorrecto" className="rounded-lg cursor-pointer text-primary">Monto incorrecto</SelectItem>
+                <SelectItem value="Datos no coinciden" className="rounded-lg cursor-pointer text-primary">Datos no coinciden</SelectItem>
               </SelectContent>
             </Select>
           </div>

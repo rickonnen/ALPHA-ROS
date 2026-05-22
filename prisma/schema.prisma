@@ -921,7 +921,6 @@ model Publicacion {
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   gratuito                  Boolean                     @default(false)
   prioridad                 Boolean?
-  precio_anterior           Decimal?                    @db.Decimal(10, 2)
   DetallePago               DetallePago[]
   EstadisticaPublicacion    EstadisticaPublicacion[]
   Favorito                  Favorito[]

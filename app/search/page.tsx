@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import * as turf from "@turf/turf";
 
@@ -105,6 +105,19 @@ interface FiltrosBusquedaParams extends FiltrosPublicacion {
   currency?: undefined;
 }
 
+type BrowserCoordinates = {
+  latitud: number;
+  longitud: number;
+};
+
+type GlobalLocationRecommendationsResponse = {
+  success: boolean;
+  zone?: string | null;
+  publications?: PublicacionBusqueda[];
+  total?: number;
+  message?: string;
+};
+
 const PROPERTY_TYPE_OPTIONS: TipoInmueble[] = [
   { id_tipo_inmueble: 1, nombre_inmueble: "Casa" },
   { id_tipo_inmueble: 2, nombre_inmueble: "Departamento" },
@@ -158,6 +171,28 @@ function getQueryValues(value: string | null): string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function getBrowserCoordinates(): Promise<BrowserCoordinates | null> {
+  if (typeof window === "undefined" || !("geolocation" in navigator)) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          latitud: position.coords.latitude,
+          longitud: position.coords.longitude,
+        }),
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 10 * 60 * 1000,
+        timeout: 1500,
+      },
+    );
+  });
 }
 
 function normalizeZoneName(value: string): string {
@@ -364,14 +399,70 @@ function sortProperties(properties: Property[], sortBy: string): Property[] {
       case "m2-mayor":
         return second.terrainArea - first.terrainArea;
       case "fecha-antigua":
-        return first.id - second.id;
+        return new Date(first.publishedDateRaw || first.publishedDate).getTime() - new Date(second.publishedDateRaw || second.publishedDate).getTime();
       default:
         if (first.isPromoted && !second.isPromoted) return -1;
         if (!first.isPromoted && second.isPromoted) return 1;
-        return second.id - first.id;
+        return new Date(second.publishedDateRaw || second.publishedDate).getTime() - new Date(first.publishedDateRaw || first.publishedDate).getTime();
     }
   });
   return sorted;
+}
+
+function getPropertyCharacteristicIds(property: Property): number[] {
+  if (!property.caracteristicas || property.caracteristicas.length === 0) {
+    return [];
+  }
+
+  return property.caracteristicas
+    .map((caracteristica: any) => {
+      if (typeof caracteristica === "object" && caracteristica !== null) {
+        return Number(caracteristica.id);
+      }
+
+      return NaN;
+    })
+    .filter((id) => Number.isFinite(id));
+}
+
+function getCharacteristicMatchCount(
+  property: Property,
+  selectedCharacteristicIds: number[],
+): number {
+  if (selectedCharacteristicIds.length === 0) return 0;
+
+  const propertyCharacteristicIds = getPropertyCharacteristicIds(property);
+
+  return selectedCharacteristicIds.filter((id) =>
+    propertyCharacteristicIds.includes(id),
+  ).length;
+}
+
+function prioritizePropertiesBySelectedCharacteristics(
+  properties: Property[],
+  selectedCharacteristicIds: number[],
+): Property[] {
+  if (selectedCharacteristicIds.length === 0) {
+    return properties;
+  }
+
+  return [...properties].sort((first, second) => {
+    const firstMatches = getCharacteristicMatchCount(
+      first,
+      selectedCharacteristicIds,
+    );
+
+    const secondMatches = getCharacteristicMatchCount(
+      second,
+      selectedCharacteristicIds,
+    );
+
+    if (secondMatches !== firstMatches) {
+      return secondMatches - firstMatches;
+    }
+
+    return 0;
+  });
 }
 
 function toNumber(value: number | null | undefined): number {
@@ -464,6 +555,7 @@ function mapPublicationToProperty(
     /*price: toNumber(publication.precio),*/
     currencySymbol: publication.moneda_simbolo ?? "$us",
     publishedDate: formatPublishedDate(publication.fecha_creacion),
+    publishedDateRaw: publication.fecha_creacion,
     whatsappContact: publication.usuario?.telefono ?? "",
     images: getSafeImages(publication),
     usuarioTelefono: publication.usuario?.telefono ?? undefined,
@@ -537,6 +629,9 @@ function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const { trackSearch } = useTracking();
+  const skipNextZoneUrlLoadRef = useRef(false);
+  const lastRecommendationsFetchRef = useRef<number>(0);
+  const RECOMMENDATIONS_COOLDOWN_MS = 90 * 1000; // 90 seconds
 
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -553,9 +648,13 @@ function SearchPageContent() {
   >([]);
   const [advancedFilterValues, setAdvancedFilterValues] =
     useState<SearchAdvancedFilterValues>({
-    habitaciones: "",
-    banos: "",
-    piscina: "",
+      habitaciones: "",
+      banos: "",
+      piscina: "",
+      minSurface: undefined,
+      maxSurface: undefined,
+      soloOfertas: false,
+      caracteristicasIds: [],
     });
   const [selectedOperation, setSelectedOperation] =
     useState<OperationTypeValue>([]);
@@ -565,6 +664,9 @@ function SearchPageContent() {
   const [selectedSort, setSelectedSort] = useState("fecha-reciente");
   const [searchResults, setSearchResults] = useState<PublicacionBusqueda[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isShowingGlobalRecommendations, setIsShowingGlobalRecommendations] = useState(false);
+  const [globalRecommendationIds, setGlobalRecommendationIds] = useState<number[]>([]);
+  const [globalRecommendationZone, setGlobalRecommendationZone] = useState<string | null>(null);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [isMobileFiltersVisible, setIsMobileFiltersVisible] = useState(false);
   const [advancedFiltersKey, setAdvancedFiltersKey] = useState(0);
@@ -578,28 +680,51 @@ function SearchPageContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSelectionLoaded, setIsSelectionLoaded] = useState(false);
 
+  const MAX_COMPARE_PROPERTIES = 4;
+
   const toggleSelection = (id: number) => {
     setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((item) => item !== id);
-      if (prev.length >= 4) {
+      const isAlreadySelected = prev.includes(id);
+
+      if (isAlreadySelected) {
+        return prev.filter((item) => item !== id);
+      }
+
+      if (prev.length >= MAX_COMPARE_PROPERTIES) {
         setToastMessage(
-          "Solo puedes seleccionar hasta 4 inmuebles para comparar.",
+          "El límite máximo de comparación es de 4 propiedades.",
         );
         return prev;
       }
+
       return [...prev, id];
     });
   };
 
-  // Recuperar y guardar seleccion en LocalStorage
+  useEffect(() => {
+    if (!toastMessage) return;
+
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
+  // Recuperar y guardar seleccion en 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("compareSelectedIds");
       if (saved) {
         try {
-          setSelectedIds(JSON.parse(saved));
+          const parsedIds = JSON.parse(saved);
+
+          if (Array.isArray(parsedIds)) {
+            setSelectedIds(parsedIds.slice(0, MAX_COMPARE_PROPERTIES));
+          }
         } catch (e) {
           console.error("Error parsing saved selected IDs:", e);
+          localStorage.removeItem("compareSelectedIds");
         }
       }
       setIsSelectionLoaded(true);
@@ -837,12 +962,33 @@ function SearchPageContent() {
       mapPublicationToProperty(publication, selectedOperation),
     );
 
+    const selectedCharacteristicIds =
+      advancedFilterValues.caracteristicasIds ?? [];
+
     if (advancedFilterValues.soloOfertas || selectedSort === "rebajas-desc") {
       mapped = mapped.filter(hasPropertyDiscount);
     }
 
+    if (isShowingGlobalRecommendations && globalRecommendationIds.length > 0) {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
+        const indexA = globalRecommendationIds.indexOf(a.id);
+        const indexB = globalRecommendationIds.indexOf(b.id);
+
+        if (indexA !== -1 && indexB === -1) return -1;
+        if (indexA === -1 && indexB !== -1) return 1;
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+
+        return 0;
+      });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
+    }
+
     if (selectedSort === "mas-recomendados" && recommendedIds.length > 0) {
-      return mapped.slice().sort((a, b) => {
+      const sortedByRecommendations = mapped.slice().sort((a, b) => {
         const indexA = recommendedIds.indexOf(a.id);
         const indexB = recommendedIds.indexOf(b.id);
 
@@ -852,10 +998,29 @@ function SearchPageContent() {
 
         return 0;
       });
+
+      return prioritizePropertiesBySelectedCharacteristics(
+        sortedByRecommendations,
+        selectedCharacteristicIds,
+      );
     }
 
-    return sortProperties(mapped, selectedSort);
-  }, [filteredSearchResults,selectedOperation,selectedSort,recommendedIds,advancedFilterValues.soloOfertas,]);
+    const sortedProperties = sortProperties(mapped, selectedSort);
+
+    return prioritizePropertiesBySelectedCharacteristics(
+      sortedProperties,
+      selectedCharacteristicIds,
+    );
+  }, [
+    filteredSearchResults,
+    selectedOperation,
+    selectedSort,
+    recommendedIds,
+    advancedFilterValues.soloOfertas,
+    advancedFilterValues.caracteristicasIds,
+    isShowingGlobalRecommendations,
+    globalRecommendationIds,
+  ]);
 
   const defaultZonesWithStats = useMemo(
     () =>
@@ -1113,7 +1278,11 @@ function SearchPageContent() {
       selectedPropertyTypes,
       PROPERTY_TYPE_OPTIONS,
     ).join(", ") || "Inmuebles";
-  const breadcrumbLocationLabel = searchLocation.trim() || "Bolivia";
+  const breadcrumbLocationLabel =
+    searchLocation.trim() ||
+    (isShowingGlobalRecommendations && globalRecommendationZone
+      ? globalRecommendationZone
+      : "Bolivia");
   const breadcrumb = `${breadcrumbPropertyLabel} / ${getOperationLabel(selectedOperation)} / ${breadcrumbLocationLabel}`;
 
   const saveFiltersToUrl = () => {
@@ -1148,6 +1317,7 @@ function SearchPageContent() {
       urlParams.set("maxPrice", appliedPriceFilter.maxPrice.toString());
     if (selectedCurrency !== "USD") urlParams.set("currency", selectedCurrency);
     if (selectedSort !== "fecha-reciente") urlParams.set("sort", selectedSort);
+    if (advancedFilterValues.soloOfertas) urlParams.set("soloOfertas", "true");
     if (
       advancedFilterValues.caracteristicasIds &&
       advancedFilterValues.caracteristicasIds.length > 0
@@ -1167,9 +1337,12 @@ function SearchPageContent() {
     piscina?: string;
     minSurface?: string | number;
     maxSurface?: string | number;
+    soloOfertas?: boolean;
+    caracteristicasIds?: number[];
   }) => {
     const minSurfaceValue =
       values.minSurface === undefined ? "" : String(values.minSurface);
+
     const maxSurfaceValue =
       values.maxSurface === undefined ? "" : String(values.maxSurface);
 
@@ -1182,7 +1355,63 @@ function SearchPageContent() {
         minSurfaceValue.trim() === "" ? undefined : Number(minSurfaceValue),
       maxSurface:
         maxSurfaceValue.trim() === "" ? undefined : Number(maxSurfaceValue),
+      // IM Rebajas
+      soloOfertas: Boolean(values.soloOfertas),
+      // Para no perder características
+      caracteristicasIds:
+        values.caracteristicasIds ?? current.caracteristicasIds ?? [],
     }));
+  };
+
+  const runGlobalLocationRecommendations = async () => {
+    setIsApplyingFilters(true);
+    try {
+      const coordinates = await getBrowserCoordinates();
+      const response = await fetch("/api/recommendations/global-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...coordinates,
+          limit: 36,
+        }),
+      });
+
+      const payload = (await response.json()) as GlobalLocationRecommendationsResponse;
+
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.message ?? "No se pudieron consultar las recomendaciones globales",
+        );
+      }
+
+      const publications = payload.publications ?? [];
+      setSearchResults(publications);
+      setGlobalRecommendationIds(publications.map((item) => item.id_publicacion));
+      setGlobalRecommendationZone(payload.zone ?? null);
+      setIsShowingGlobalRecommendations(true);
+      setHasSearched(true);
+    } catch (error) {
+      console.error(error);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
+      await runSearch({
+        ubicacion: "",
+        operacion: undefined,
+        tipoInmueble: undefined,
+        habitaciones: "",
+        banos: "",
+        piscina: "",
+        minPrice: undefined,
+        maxPrice: undefined,
+        minSurface: undefined,
+        maxSurface: undefined,
+        caracteristicasIds: [],
+      });
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   const runSearch = async (overrides?: Partial<FiltrosPublicacion>) => {
@@ -1216,6 +1445,9 @@ function SearchPageContent() {
 
       const resultados = await buscarPublicaciones(filtros);
       setSearchResults(resultados);
+      setGlobalRecommendationIds([]);
+      setGlobalRecommendationZone(null);
+      setIsShowingGlobalRecommendations(false);
       setHasSearched(true);
 
       const OPERACION_ID: Record<string, number> = {
@@ -1252,6 +1484,26 @@ function SearchPageContent() {
     } finally {
       setIsApplyingFilters(false);
     }
+  };
+
+  const handleCaracteristicaCardClick = (idCaracteristica: number) => {
+    const currentIds = advancedFilterValues.caracteristicasIds ?? [];
+
+    const nextCaracteristicasIds = currentIds.includes(idCaracteristica)
+      ? currentIds
+      : [...currentIds, idCaracteristica];
+
+    const nextAdvancedFilters = {
+      ...advancedFilterValues,
+      caracteristicasIds: nextCaracteristicasIds,
+    };
+
+    setAdvancedFilterValues(nextAdvancedFilters);
+    setCurrentPage(1);
+
+    void runSearch({
+      caracteristicasIds: nextCaracteristicasIds,
+    });
   };
 
   // Cargar estado del mapa y zona guardada desde localStorage
@@ -1305,6 +1557,10 @@ function SearchPageContent() {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const currencyParam = searchParams.get("currency");
+    const sortParam = searchParams.get("sort")?.trim();
+    const nextSort = sortParam || "fecha-reciente";
+    const soloOfertasParam = searchParams.get("soloOfertas");
+    const nextSoloOfertas = soloOfertasParam === "true";
     // --- PASO 2: Leer las caracteristicas de la URL (NUEVO) ---
     const caracteristicasParam = searchParams.get("caracteristicas");
     const nextCaracteristicas = caracteristicasParam
@@ -1330,22 +1586,35 @@ function SearchPageContent() {
     setSearchLocation(nextLocation);
     setSelectedOperation(nextOperation);
     setSelectedPropertyTypes(nextPropertyTypes);
+    setSelectedSort(nextSort);
 
     // ACTUALIZAMOS EL ESTADO PARA QUE LOS BOTONES DE COLORES SE PINTEN
-    setAdvancedFilterValues(prev => ({
+    setAdvancedFilterValues((prev) => ({
       ...prev,
-      caracteristicasIds: nextCaracteristicas
+      caracteristicasIds: nextCaracteristicas,
+      soloOfertas: nextSoloOfertas,
     }));
 
-    void runSearch({
-      ubicacion: nextLocation,
-      operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
-      tipoInmueble:
-        nextPropertyLabels.join(",") || rawPropertyType || undefined,
-      minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice,
-      caracteristicasIds: nextCaracteristicas,
-    });
+    if (nextSort === "recomendados-zona") {
+      if (skipNextZoneUrlLoadRef.current) {
+        skipNextZoneUrlLoadRef.current = false;
+        return;
+      }
+      void runGlobalLocationRecommendations();
+      return;
+    }
+
+  void runSearch({
+    ubicacion: nextLocation,
+    operacion: nextOperation.length > 0 ? nextOperation.join(",") : undefined,
+    tipoInmueble:
+      nextPropertyLabels.join(",") || rawPropertyType || undefined,
+    minPrice: nextMinPrice,
+    maxPrice: nextMaxPrice,
+    caracteristicasIds: nextCaracteristicas,
+    soloOfertas: nextSoloOfertas,
+    sort: nextSort,
+  });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
@@ -1367,15 +1636,21 @@ function SearchPageContent() {
   const fetchRecommendations = useCallback(async () => {
     try {
       const candidate_ids = searchResults.map((item) => item.id_publicacion);
+      
       const response = await fetch("/api/recommendations/personal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ candidate_ids }),
+        body: JSON.stringify({ 
+          candidate_ids,
+          id_usuario: objUser?.id // Include authenticated user ID
+        }),
       });
       if (response.ok) {
         const data = (await response.json()) as { id_publicacion: number }[];
         setRecommendedIds(data.map((item) => item.id_publicacion));
+        // Update fetch timestamp after successful fetch
+        lastRecommendationsFetchRef.current = Date.now();
       } else {
         const errorBody = await response.text();
         console.error("Recommendations request failed:", response.status, errorBody);
@@ -1385,7 +1660,7 @@ function SearchPageContent() {
       console.error("Error fetching recommendations:", error);
       setRecommendedIds([]);
     }
-  }, [searchResults]);
+  }, [searchResults, objUser?.id]);
 
   // Cargar recomendaciones cuando se selecciona ese sort.
   useEffect(() => {
@@ -1398,25 +1673,39 @@ function SearchPageContent() {
     }
   }, [fetchRecommendations, selectedSort]);
 
-  // Refrescar recomendaciones si el usuario interactÃºa mientras estÃ¡ activo el ordenamiento.
+  // Refrescar recomendaciones si el usuario interactúa mientras está activo el ordenamiento.
+  // Con cooldown de 90 segundos entre refetches.
   useEffect(() => {
     if (selectedSort !== "mas-recomendados") return;
     if (typeof window === "undefined") return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
     const onInteraction = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         timer = null;
-        void fetchRecommendations();
+        // Only refetch if 90 seconds have passed since last fetch
+        const timeSinceLastFetch = Date.now() - lastRecommendationsFetchRef.current;
+        if (timeSinceLastFetch >= RECOMMENDATIONS_COOLDOWN_MS) {
+          void fetchRecommendations();
+        }
       }, 650);
     };
+
+    // Also set up a 90-second interval to auto-refetch while on "mas-recomendados"
+    cooldownTimer = setInterval(() => {
+      if (selectedSort === "mas-recomendados") {
+        void fetchRecommendations();
+      }
+    }, RECOMMENDATIONS_COOLDOWN_MS);
 
     window.addEventListener("tracking:interaction", onInteraction as EventListener);
     return () => {
       window.removeEventListener("tracking:interaction", onInteraction as EventListener);
       if (timer) clearTimeout(timer);
+      if (cooldownTimer) clearInterval(cooldownTimer);
     };
   }, [fetchRecommendations, selectedSort]);
 
@@ -1446,6 +1735,9 @@ function SearchPageContent() {
     setAppliedPriceFilter(null);
     setSelectedCurrency("USD");
     setSelectedSort("fecha-reciente");
+    setGlobalRecommendationIds([]);
+    setGlobalRecommendationZone(null);
+    setIsShowingGlobalRecommendations(false);
     setAdvancedFiltersKey((prev) => prev + 1);
     setCurrentPage(1);
     window.history.pushState(null, "", "/search");
@@ -1464,12 +1756,22 @@ function SearchPageContent() {
     });
   };
 
-  const handleSort = (sortOption: string) => setSelectedSort(sortOption);
+  const handleSort = (sortOption: string) => {
+    setSelectedSort(sortOption);
+
+    if (sortOption === "recomendados-zona") {
+      skipNextZoneUrlLoadRef.current = true;
+      void runGlobalLocationRecommendations();
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (hasSearched || hasActiveFilters) {
         saveFiltersToUrl();
+        if (selectedSort === "recomendados-zona") {
+          return;
+        }
         void runSearch();
       }
     }, 500);
@@ -1669,6 +1971,8 @@ function SearchPageContent() {
                         onMouseLeave={() => {}}
                         onClick={() => {}}
                         isMapOpen={isMapOpen}
+                        onCaracteristicaClick={handleCaracteristicaCardClick}
+                        selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                       />
                     ))}
                   </div>
@@ -2073,11 +2377,13 @@ function SearchPageContent() {
                   <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
                     Cargando inmuebles...
                   </div>
-                ) : allProperties.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
-                    No se encontraron inmuebles con los filtros aplicados.
-                  </div>
-                ) : (
+                    ) : allProperties.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center text-sm text-gray-500">
+                        {advancedFilterValues.soloOfertas
+                          ? "No hay propiedades en oferta disponibles por el momento."
+                          : "No se encontraron inmuebles con los filtros aplicados."}
+                      </div>
+                    ) : (
                   <>
                     <div
                       className={`grid gap-2 ${
@@ -2100,6 +2406,8 @@ function SearchPageContent() {
                           isSelected={selectedIds.includes(property.id)}
                           onToggleCompare={() => toggleSelection(property.id)}
                           isMapOpen={isMapOpen}
+                          onCaracteristicaClick={handleCaracteristicaCardClick}
+                          selectedCaracteristicasIds={advancedFilterValues.caracteristicasIds ?? []}
                           onMouseEnter={() => {
                             setHoveredId(property.id);
                             const loc = searchResults.find(
@@ -2282,6 +2590,11 @@ function SearchPageContent() {
           onClear={() => setSelectedIds([])}
           onCompare={() => setAppView("compare")}
         />
+      )}
+      {toastMessage && (
+        <div className="fixed bottom-28 left-1/2 z-[9999] -translate-x-1/2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
+          {toastMessage}
+        </div>
       )}
 
       {/* ══════════════════ MODALES ══════════════════ */}

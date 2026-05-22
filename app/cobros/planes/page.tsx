@@ -1,3 +1,5 @@
+
+export const dynamic = 'force-dynamic'
 import { getPlanesPublicacion } from "@/features/cobros/planes/getPlanesPublicacion";
 import { PricingClient } from "@/components/cobros/PricingClient";
 import Link from "next/link";

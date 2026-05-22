@@ -196,6 +196,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession();
   }, []);
 
+  // Registrar sesión del dispositivo cuando el usuario inicia sesión
+  useEffect(() => {
+    const registrarSesion = async () => {
+      if (!user?.id) return;
+      if (sessionStorage.getItem("sesion_dispositivo_registrada")) return;
+
+      try {
+        const res = await fetch("/api/auth/registrar-sesion-actual", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          sessionStorage.setItem("sesion_dispositivo_registrada", "1");
+        }
+      } catch (error) {
+        console.error("Error registrando sesión:", error);
+      }
+    };
+
+    registrarSesion();
+  }, [user?.id]);
+
   // SOLUCIÓN: Agregar parámetro telemetry y el bloque `try {` faltante
   const login = async (email: string, password: string, telemetry?: LoginTelemetry) => {
     try {

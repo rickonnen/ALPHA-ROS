@@ -1,8 +1,10 @@
-import { ChevronLeft, ChevronDown, ChevronUp, Check, MessageCircle } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 import { type Property } from "./propertyCard";
 import { useState } from "react";
 import { useDollarRate } from '@/components/hooks/getDollarRate';
 import CurrencySwitch from "@/components/search/currencySwitch";
+const MAX_COMPARE_PROPERTIES = 4;
+const FALLBACK_COMPARE_IMAGE = "/casa1.jpg";
 
 // Extendemos localmente tu Property para incluir las caracteristicas de la BD
 interface CompareProperty extends Property {
@@ -22,10 +24,30 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
   const { compra } = useDollarRate();
   const exchangeRate = compra ?? 6.96;
 
-  // Filtramos solo las propiedades seleccionadas
-  const selectedProperties = properties.filter(p => selectedIds.includes(p.id)) as CompareProperty[];
-  
   const [showFeatures, setShowFeatures] = useState<boolean>(false);
+
+  // Filtramos solo las propiedades seleccionadas
+  const selectedProperties = properties
+  .filter((p) => selectedIds.includes(p.id))
+  .slice(0, MAX_COMPARE_PROPERTIES) as CompareProperty[];
+  if (selectedProperties.length < 2) {
+    return (
+      <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+        <p className="mb-4 text-sm font-semibold text-gray-600">
+          Selecciona al menos 2 propiedades para comparar.
+        </p>
+
+        <button
+          onClick={onBack}
+          className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white hover:bg-[#a67c52] transition-colors"
+        >
+          Volver a los listados
+        </button>
+      </div>
+    );
+  }
+  
+  
   
   const handlePropertyClick = (id: number) => {
     window.open(`/publicacion/Vista_del_Inmueble/${id}`, '_blank');
@@ -44,6 +66,26 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
     return `${symbol} ${converted.toLocaleString('es-BO')}`;
   };
 
+  const getDiscountPercent = (prop: CompareProperty) => {
+    if (
+      typeof prop.previousPrice !== "number" ||
+      !Number.isFinite(prop.previousPrice) ||
+      !Number.isFinite(prop.price) ||
+      prop.previousPrice <= prop.price
+    ) {
+      return 0;
+    }
+
+    return (
+      prop.discountPercent ??
+      Math.round(((prop.previousPrice - prop.price) / prop.previousPrice) * 100)
+    );
+  };
+
+  const hasDiscount = (prop: CompareProperty) => {
+    return getDiscountPercent(prop) > 0;
+  };
+
   // Identificar los mejores/peores valores para destacarlos (Req 20)
   const prices = selectedProperties.map(p => p.price);
   const minPrice = Math.min(...prices.filter(p => p > 0));
@@ -56,6 +98,13 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
 
   const baths = selectedProperties.map(p => p.bathrooms || 0);
   const maxBaths = Math.max(...baths);
+
+  const garages = selectedProperties.map(p=> p.garajes || 0);
+  const maxGarages = Math.max(...garages);
+
+
+  const floors = selectedProperties.map(p=> p.floors || 0);
+  const maxFloors = Math.max(... floors);
 
   // Extraemos características únicas para el acordeón (filtros avanzados)
   const uniqueFeatures = Array.from(
@@ -108,11 +157,17 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
                     className="cursor-pointer group relative"
                     title="Ver detalles del inmueble"
                   >
-                    <div className="overflow-hidden rounded-lg mb-2 sm:mb-4 shadow-sm border-2 border-transparent group-hover:border-[#C26E5A] transition-colors">
-                      <img 
-                        src={prop.images[0] || '/placeholder.jpg'} 
-                        alt={prop.title} 
-                        className="w-full h-28 sm:h-40 object-cover transition-transform duration-300 group-hover:scale-105" 
+                    <div className="relative overflow-hidden rounded-lg mb-2 sm:mb-4 shadow-sm border-2 border-transparent group-hover:border-[#C26E5A] transition-colors">
+                      {hasDiscount(prop) && (
+                        <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-1 text-xs font-bold leading-none text-white shadow">
+                          -{getDiscountPercent(prop)}%
+                        </span>
+                      )}
+
+                      <img
+                        src={prop.images?.[0] || FALLBACK_COMPARE_IMAGE}
+                        alt={prop.title}
+                        className="w-full h-28 sm:h-40 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                     {/* Resaltamos el precio más bajo en color verde */}
@@ -162,13 +217,15 @@ export function CompareTable({ properties, selectedIds, selectedCurrency, onCurr
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Garajes</td>
               {selectedProperties.map(prop => (
-                <td key={`garage-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.garajes || '—'}</td>
+                <td key={`garage-${prop.id}`} className={`p-3 sm:p-6 border-r border-gray-100 ${prop.garajes === maxGarages && maxGarages > 0 ? 'font-bold text-[#00c087] bg-green-50/30' : 'text-gray-800 font-medium'}`}>
+                  {prop.garajes || '—'}</td>
               ))}
             </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
               <td className="sticky left-0 z-10 p-3 sm:p-6 font-bold text-[11px] sm:text-sm text-gray-500 bg-slate-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Plantas / Pisos</td>
               {selectedProperties.map(prop => (
-                <td key={`floors-${prop.id}`} className="p-3 sm:p-6 text-gray-800 font-medium border-r border-gray-100">{prop.floors || '—'}</td>
+                <td key={`floors-${prop.id}`} className={`p-3 sm:p-6 border-r border-gray-100 ${prop.floors === maxFloors && maxFloors > 0 ? 'font-bold text-[#00c087] bg-green-50/30' : 'text-gray-800 font-medium'}`}>
+                  {prop.floors || '—'}</td>
               ))}
             </tr>
             <tr className="border-b border-gray-100 hover:bg-gray-50/50">
