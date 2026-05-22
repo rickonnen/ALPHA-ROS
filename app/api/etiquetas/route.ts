@@ -19,6 +19,7 @@ export async function GET() {
       select: {
         id_caracteristica: true,
         nombre_caracteristica: true,
+        color: true,
         _count: {
           select: {
             PublicacionCaracteristica: true,
@@ -27,9 +28,14 @@ export async function GET() {
       },
     });
 
+    const caracteristicasConColor = caracteristicas.map((caracteristica) => ({
+      ...caracteristica,
+      color: caracteristica.color ?? "#6B7280",
+    }));
+
     return NextResponse.json({
       success: true,
-      caracteristicas,
+      caracteristicas: caracteristicasConColor,
     });
   } catch (error) {
     console.error("Error al obtener características:", error);

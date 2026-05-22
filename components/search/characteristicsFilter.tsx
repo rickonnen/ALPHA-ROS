@@ -18,6 +18,7 @@ interface AdvancedFiltersValues {
 interface CaracteristicaOption {
   id_caracteristica: number;
   nombre_caracteristica: string;
+  color?: string | null;
 }
 
 interface Props {
@@ -130,6 +131,8 @@ export default function CharacteristicsFilter({
                   caracteristica.id_caracteristica,
                 );
 
+                const tagColor = caracteristica.color ?? "#6B7280";
+
                 return (
                   <button
                     key={caracteristica.id_caracteristica}
@@ -138,11 +141,15 @@ export default function CharacteristicsFilter({
                       toggleCaracteristica(caracteristica.id_caracteristica)
                     }
                     className={cn(
-                      "rounded-xl border-2 px-3 py-3 text-center text-xs font-bold uppercase transition",
+                      "rounded-xl border-2 px-3 py-3 text-center text-xs font-bold uppercase transition hover:opacity-90",
                       isSelected
-                        ? "border-[#1F3A4D] bg-[#1F3A4D] text-white shadow-md"
-                        : "border-[#D8D2C8] bg-white text-[#2E2E2E] hover:border-[#C26E5A] hover:bg-[#FFF7F3]",
+                        ? "text-white shadow-md"
+                        : "bg-white text-[#2E2E2E]",
                     )}
+                    style={{
+                      borderColor: tagColor,
+                      backgroundColor: isSelected ? tagColor : "white",
+                    }}
                   >
                     {caracteristica.nombre_caracteristica}
                   </button>
@@ -175,7 +182,7 @@ export default function CharacteristicsFilter({
         <div>
           <h3 className="text-sm font-bold text-[#2E2E2E]">Etiquetas</h3>
           <p className="text-xs text-[#7A746D]">
-            Selecciona atributos especiales del inmueble
+            Buscar por atributos especiales del inmueble
           </p>
         </div>
 
@@ -184,26 +191,33 @@ export default function CharacteristicsFilter({
           onClick={() => setIsModalOpen(true)}
           className="rounded-lg border border-[#C26E5A] bg-white px-3 py-1.5 text-xs font-semibold text-[#C26E5A] transition hover:bg-[#C26E5A] hover:text-white"
         >
-          + Añadir
+          + Seleccionar
         </button>
       </div>
 
       {selectedCharacteristics.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {selectedCharacteristics.map((caracteristica) => (
-            <button
-              key={caracteristica.id_caracteristica}
-              type="button"
-              onClick={() =>
-                removeCaracteristica(caracteristica.id_caracteristica)
-              }
-              className="flex items-center gap-1 rounded-full bg-[#E7E3DD] px-2.5 py-1 text-[10px] font-semibold uppercase text-[#2E2E2E] transition hover:bg-[#DDD7CD]"
-              title="Quitar etiqueta"
-            >
-              <span>{caracteristica.nombre_caracteristica}</span>
-              <X className="h-3 w-3" />
-            </button>
-          ))}
+          {selectedCharacteristics.map((caracteristica) => {
+            const tagColor = caracteristica.color ?? "#6B7280";
+
+            return (
+              <button
+                key={caracteristica.id_caracteristica}
+                type="button"
+                onClick={() =>
+                  removeCaracteristica(caracteristica.id_caracteristica)
+                }
+                className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase text-white shadow-sm transition hover:opacity-90"
+                style={{
+                  backgroundColor: tagColor,
+                }}
+                title="Quitar etiqueta"
+              >
+                <span>{caracteristica.nombre_caracteristica}</span>
+                <X className="h-3 w-3" />
+              </button>
+            );
+          })}
         </div>
       ) : (
         <p className="text-xs text-[#7A746D]">
