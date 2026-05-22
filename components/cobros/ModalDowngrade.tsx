@@ -38,7 +38,7 @@ export function ModalDowngrade({ isOpen, onClose, onConfirm }: Props) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px] rounded-2xl p-8 bg-card text-foreground shadow-2xl border border-border">
+      <DialogContent className="sm:max-w-[425px] rounded-2xl p-8 bg-[#f9f5f1] dark:bg-[#474747] text-foreground shadow-2xl border border-border">
         {paso === 1 ? (
           <>
             <DialogHeader className="p-0 space-y-2">
