@@ -869,6 +869,7 @@ model PreferenciaNotificacionCanal {
   Telefono            Telefono? @relation(fields: [id_telefono], references: [id_telefono], onDelete: NoAction, onUpdate: NoAction, map: "fk_preferencia_telefono")
 
   @@unique([id_usuario, canal], map: "preferencia_usuario_canal_unique")
+  @@unique([id_usuario, canal], map: "uq_preferencia_usuario_canal")
   @@schema("public")
 }
 
@@ -920,6 +921,7 @@ model Publicacion {
   fecha_creacion            DateTime?                   @default(now()) @db.Timestamptz(6)
   gratuito                  Boolean                     @default(false)
   prioridad                 Boolean?
+  precio_anterior           Decimal?                    @db.Decimal(10, 2)
   DetallePago               DetallePago[]
   EstadisticaPublicacion    EstadisticaPublicacion[]
   Favorito                  Favorito[]
@@ -1063,6 +1065,27 @@ model Sesion {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model SesionDispositivo {
+  id_sesion_dispositivo String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usuario            String   @db.Uuid
+  ip                    String   @db.VarChar(45)
+  ciudad                String?  @db.VarChar(128)
+  pais                  String?  @db.VarChar(128)
+  dispositivo           String   @default("desktop") @db.VarChar(20)
+  navegador             String?  @db.VarChar(128)
+  app_name              String?  @db.VarChar(128)
+  token_hash            String?  @db.VarChar(255)
+  ultimo_acceso         DateTime @default(now()) @db.Timestamptz(6)
+  creado_en             DateTime @default(now()) @db.Timestamptz(6)
+  Usuario               Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([token_hash], map: "idx_sd_token")
+  @@index([ultimo_acceso(sort: Desc)], map: "idx_sd_ultimo_acceso")
+  @@index([id_usuario], map: "idx_sd_usuario")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model SnapshotInteraccion {
   id_snapshot       BigInt   @id(map: "snapshotinteraccion_pkey") @default(autoincrement())
   id_interaccion    BigInt
@@ -1109,6 +1132,7 @@ model Telefono {
   PreferenciaNotificacionCanal PreferenciaNotificacionCanal[]
   UsuarioTelefono              UsuarioTelefono[]
 
+  @@unique([codigo_pais, nro_telefono], map: "uq_telefono_numero")
   @@schema("public")
 }
 
@@ -1193,6 +1217,7 @@ model Usuario {
   Recuperacion_password        Recuperacion_password[]
   RedesVinculadas              RedesVinculadas[]
   Sesion                       Sesion[]
+  SesionDispositivo            SesionDispositivo[]
   Suscripcion                  Suscripcion?
   users                        users                   @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_auth_users")
   Pais                         Pais?                   @relation(fields: [id_pais], references: [id_pais], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pais")
@@ -1211,6 +1236,7 @@ model UsuarioTelefono {
   Telefono    Telefono @relation(fields: [id_telefono], references: [id_telefono], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_telefono")
   Usuario     Usuario  @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuariotelefono_usuario")
 
+  @@unique([id_usuario, id_telefono], map: "uq_usuario_telefono")
   @@schema("public")
 }
 
