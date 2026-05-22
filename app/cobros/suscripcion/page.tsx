@@ -171,7 +171,6 @@ export default function SuscripcionPage() {
             </div>
 
             <div className="flex items-center gap-2 text-white/60 mb-4">
-              <Crown className="w-4 h-4" />
               <span className="text-xs uppercase tracking-[0.2em]">
                 Plan actual
               </span>
@@ -185,7 +184,7 @@ export default function SuscripcionPage() {
               <p className="text-sm text-white/60">
                 {isFree
                   ? "Acceso limitado a funciones básicas."
-                  : "Tu suscripción premium está activa actualmente."}
+                  : "Tu suscripción está activa actualmente."}
               </p>
             </div>
           </div>
@@ -266,23 +265,23 @@ export default function SuscripcionPage() {
                 </button>
               </AlertDialogTrigger>
 
-              <AlertDialogContent className="bg-background border-border max-w-md py-8 px-6 rounded-xl">
-                <AlertDialogHeader className="flex flex-col items-center text-center space-y-3">
-                  <div className="bg-destructive/10 p-3 rounded-full">
+              <AlertDialogContent className="bg-background border-border max-w-md py-8 px-6 rounded-xl flex flex-col items-center">
+                <AlertDialogHeader className="flex flex-col items-center text-center space-y-3 w-full">
+                  <div className="bg-destructive/10 p-3 rounded-full flex items-center justify-center mx-auto">
                     <TriangleAlert className="text-destructive w-8 h-8" />
                   </div>
 
-                  <AlertDialogTitle className="text-xl text-primary font-bold">
+                  <AlertDialogTitle className="text-xl text-primary font-bold text-center w-full">
                     ¿Seguro que deseas cancelar?
                   </AlertDialogTitle>
 
-                  <AlertDialogDescription className="text-sm text-muted-foreground">
+                  <AlertDialogDescription className="text-sm text-muted-foreground text-center w-full">
                     Al cancelar tu plan, dejarás de acceder a sus beneficios y
                     tu cuenta pasará automáticamente al plan gratuito.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <div className="flex justify-center gap-3 mt-6">
+                <div className="flex justify-center gap-3 mt-6 w-full">
                   <AlertDialogCancel className="bg-background border border-border text-foreground hover:bg-muted px-6 h-10 rounded-md">
                     Salir
                   </AlertDialogCancel>
