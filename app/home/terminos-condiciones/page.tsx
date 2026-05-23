@@ -144,7 +144,7 @@ export default function TermsAndConditionsPage() {
               </h1>
 
               <p className="mt-6 max-w-3xl text-base leading-8 text-primary-foreground/80">
-                Versión 2.0 – Proyecto Académico ALPHA-ROS. El acceso,
+                Proyecto Académico ALPHA-ROS. El acceso,
                 navegación y uso de PropBol implica la aceptación de las
                 condiciones de uso de la plataforma.
               </p>
