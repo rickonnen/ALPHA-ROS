@@ -3,6 +3,7 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTracking } from "@/components/hooks/useTracking";
 
 interface SurfaceRangeDropdownProps {
   minValue: string;
@@ -19,6 +20,7 @@ export default function SurfaceRangeDropdown({
   onMaxChange,
   onClear,
 }: SurfaceRangeDropdownProps) {
+  const { trackSearch } = useTracking();
   const [open, setOpen] = React.useState(false);
   const [surfaceError, setSurfaceError] = React.useState<string | null>(null);
 
@@ -76,6 +78,15 @@ export default function SurfaceRangeDropdown({
     }
 
     setSurfaceError(null);
+
+    // Track search with surface range
+    if (parsedMin !== undefined || parsedMax !== undefined) {
+      trackSearch({
+        superficie_min: parsedMin,
+        superficie_max: parsedMax,
+      });
+    }
+
     return true;
   };
 
@@ -142,7 +153,12 @@ export default function SurfaceRangeDropdown({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          setOpen((prev) => !prev);
+          if (!open) {
+            trackSearch({ superficie_min: undefined, superficie_max: undefined });
+          }
+        }}
         className={cn(
           "flex w-full items-center justify-between rounded-lg border border-[#B9B1A5] bg-[#E7E3DD] px-4 py-3 text-sm text-[#2E2E2E] shadow-sm transition"
         )}
@@ -155,6 +171,11 @@ export default function SurfaceRangeDropdown({
               onClick={(e) => {
                 e.stopPropagation();
                 setSurfaceError(null);
+                // Track search with cleared surface range
+                trackSearch({
+                  superficie_min: undefined,
+                  superficie_max: undefined,
+                });
                 onClear();
               }}
               className="p-1 rounded-full hover:bg-[#DEDAD3] transition-colors cursor-pointer flex items-center justify-center"
