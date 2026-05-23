@@ -187,4 +187,56 @@
       filter: brightness(0) invert(1);
     }
   }
+  /* ==========================================
+   ESTILOS EXCLUSIVOS DE IMPRESIÓN (AISLAMIENTO TOTAL)
+   ========================================== */
+@media print {
+  /* 1. Ocultar absolutamente TODO el cuerpo de la página (Navbars, Footers, Burbujas del Dólar, etc.) */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Hacer visible ÚNICAMENTE el contenedor principal del artículo y sus hijos */
+  main,
+  main * {
+    visibility: visible;
+  }
+
+  /* 3. Forzar el ocultamiento de lo que marcamos explícitamente como "no-print" (Botones, comentarios, compartir) */
+  .no-print,
+  .no-print *,
+  button.no-print,
+  div.no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 4. Posicionar el contenido limpio al inicio absoluto de la hoja */
+  main {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* 5. Asegurar contraste y tipografía limpia de papel */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  /* 6. Evitar cortes feos en imágenes */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  }
 }
