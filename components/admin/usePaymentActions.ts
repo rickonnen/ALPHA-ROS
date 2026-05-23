@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PaymentRecord } from "./paymentTypes";
 import { useAuth } from "@/app/auth/AuthContext";
-
+// deploy
 export function usePaymentActions(onPaymentUpdated?: () => void) {
   const { user } = useAuth();
   const [bolShowAcceptModal, setBolShowAcceptModal] = useState<boolean>(false);
@@ -17,7 +17,7 @@ export function usePaymentActions(onPaymentUpdated?: () => void) {
 
   const updatePaymentStatus = async (strNewStatus: 'Aceptado' | 'Rechazado', strReason?: string) => {
     if (!objSelectedPayment || bolIsProcessing) return;
-    
+
     setBolIsProcessing(true);
     try {
       const objResponse = await fetch('/api/cobros/verificacion-pagos', {
@@ -40,6 +40,18 @@ export function usePaymentActions(onPaymentUpdated?: () => void) {
               decision: strNewStatus === 'Aceptado' ? 'ACEPTAR' : 'RECHAZAR',
               motivo_rechazo: strReason || null,
               id_admin_ejecutor: user?.id
+            }),
+          });
+
+          await fetch('/api/whatsapp/pagos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              id_detalle: objSelectedPayment.intId,
+              estado: strNewStatus,
+              motivo_rechazo: strReason || null
             }),
           });
         } catch (errorNotif) {
