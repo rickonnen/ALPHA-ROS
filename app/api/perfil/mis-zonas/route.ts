@@ -1,26 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { verify } from "jsonwebtoken";
+import {
+  getZoneSpanError,
+  isValidCoordinatePair,
+  MAX_ZONE_POINTS,
+  MIN_ZONE_POINTS,
+} from "@/lib/mapValidation";
 
 const prisma = new PrismaClient();
 const ZONE_NAME_PATTERN = /^[A-Za-z0-9]+$/;
 const ZONE_NAME_MAX_LENGTH = 50;
-const MIN_ZONE_POINTS = 4;
-const MAX_ZONE_POINTS = 10;
 
 function normalizeZoneName(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function isValidCoordinatePair(value: unknown): value is [number, number] {
-  return (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    typeof value[0] === "number" &&
-    typeof value[1] === "number" &&
-    Number.isFinite(value[0]) &&
-    Number.isFinite(value[1])
-  );
 }
 
 function getPolygonSignature(coordinates: [number, number][]): string {
@@ -114,6 +107,11 @@ export async function POST(req: NextRequest) {
         { error: "Las coordenadas de la zona no son válidas." },
         { status: 400 },
       );
+    }
+
+    const zoneSpanError = getZoneSpanError(coordenadas);
+    if (zoneSpanError) {
+      return NextResponse.json({ error: zoneSpanError }, { status: 400 });
     }
 
     const existingZones = await prisma.misZonas.findMany({
@@ -281,6 +279,11 @@ export async function PATCH(req: NextRequest) {
           { error: "Las coordenadas de la zona no son vÃ¡lidas." },
           { status: 400 },
         );
+      }
+
+      const zoneSpanError = getZoneSpanError(coordenadas);
+      if (zoneSpanError) {
+        return NextResponse.json({ error: zoneSpanError }, { status: 400 });
       }
 
       const existingZones = await prisma.misZonas.findMany({

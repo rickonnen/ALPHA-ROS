@@ -30,7 +30,7 @@ export function NotificationHeader({
     <div className="flex items-center justify-between px-3 md:px-4 py-1.5 md:py-2 bg-[#2C4A5A] text-white rounded-t-md min-h-10 md:min-h-11 flex-wrap gap-1.5 md:gap-2">
       <h4 className="text-[14px] md:text-[20px] font-normal leading-[120%] tracking-normal flex-1 min-w-max">
         {hasSelected
-          ? `${selectedIds.length} sel.`
+          ? `${selectedIds.length} seleccionadas`
           : "NOTIFICACIONES"}
       </h4>
 

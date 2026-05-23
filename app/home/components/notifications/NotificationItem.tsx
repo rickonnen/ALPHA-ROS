@@ -14,7 +14,7 @@ type Props = {
   onRead: (id: string) => void;
   isInTrash?: boolean;
   onRestore?: (id: string) => void;
-  isSelected?: boolean;
+ isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   selectionMode?: boolean;
   hideCheckbox?: boolean;
@@ -62,7 +62,7 @@ function getTypeColor(type: string | number | undefined) {
   switch (typeStr) {
     case "gmail":    return "bg-red-500";
     case "whatsapp": return "bg-green-500";
-    case "general":  return "bg-blue-500";
+    case "general":  return "bg-[#2C4A5A]";
     default:         return "bg-gray-500";
   }
 }
@@ -163,7 +163,7 @@ export function NotificationItem({
         {isTruncated && (
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded((prev) => !prev); }}
-            className="text-blue-500 text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
+            className="text-[#2C4A5A] text-[10px] md:text-[12px] font-medium text-left hover:underline w-fit mt-0.5"
           >
             {expanded ? "Ocultar" : "Ver más"}
           </button>

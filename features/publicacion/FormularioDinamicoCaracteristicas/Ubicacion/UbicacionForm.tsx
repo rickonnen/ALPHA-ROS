@@ -8,6 +8,7 @@ import { useUbicacionForm }            from './useUbicacionForm'
 import {
   DEPARTAMENTOS,
   MAX_ZONA,
+  MAX_PUNTOS_INTERES,
   type PuntoInteresForm,
   type PuntoInteresTipoOption,
 } from './useUbicacionTypes'
@@ -512,7 +513,7 @@ export function UbicacionForm({ onNext, submitRef }: UbicacionFormProps) {
                 !values.direccion.trim() ||
                 poiLoading ||
                 poiTypes.length === 0 ||
-                values.puntosInteres.length >= 10
+                values.puntosInteres.length >= MAX_PUNTOS_INTERES
               }
               className="rounded-md border border-[#C26E5A] px-3 py-1.5 text-xs font-semibold text-[#C26E5A] transition-colors hover:bg-[#C26E5A]/10 disabled:cursor-not-allowed disabled:border-[#D4B8AE] disabled:text-[#D4B8AE]"
             >
@@ -534,9 +535,9 @@ export function UbicacionForm({ onNext, submitRef }: UbicacionFormProps) {
             <span className="text-xs text-red-500">{poiError}</span>
           )}
 
-          {values.puntosInteres.length >= 10 && (
+          {values.puntosInteres.length >= MAX_PUNTOS_INTERES && (
             <span className="text-xs text-[#C26E5A]">
-              Alcanzaste el mÃ¡ximo de 10 puntos de interÃ©s por publicaciÃ³n.
+              Alcanzaste el máximo de {MAX_PUNTOS_INTERES} puntos de interés por publicación.
             </span>
           )}
 

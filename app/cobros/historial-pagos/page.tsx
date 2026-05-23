@@ -61,7 +61,7 @@ function HistorialPagosContent() {
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-[135px] justify-between text-left font-normal bg-[#f4efe6] border-[#d6cfc3] text-[#2e2e2e] h-8 px-3 hover:bg-[#e7e1d7] text-xs rounded-md transition-colors">
+                    <Button variant={"outline"} className="w-135px justify-between text-left font-normal bg-[#f4efe6] border-[#d6cfc3] text-[#2e2e2e] h-8 px-3 hover:bg-[#e7e1d7] text-xs rounded-md transition-colors">
                       <div className="flex items-center gap-2">
                         <CalendarIcon className="h-3.5 w-3.5 text-[#7a756d]" />
                         {fechaFiltro ? format(fechaFiltro, "dd/MM/yyyy", { locale: es }) : <span>Seleccionar</span>}

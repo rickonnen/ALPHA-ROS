@@ -145,7 +145,7 @@ export default function PaymentVerificationPage() {
           <div className="sm:hidden mb-6 relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full bg-card border border-border text-foreground text-sm font-semibold rounded-lg p-3.5 shadow-sm flex justify-between items-center outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-background border border-border text-foreground text-sm font-semibold rounded-lg p-3.5 shadow-sm flex justify-between items-center outline-none focus:ring-2 focus:ring-primary"
             >
               {/* Muestra el nombre de la pestaña activa */}
               {activeTab === 'pending' ? 'Pagos Pendientes' : activeTab === 'accepted' ? 'Pagos Aceptados' : 'Pagos Rechazados'}
@@ -161,7 +161,7 @@ export default function PaymentVerificationPage() {
 
             {/* Opciones del menú  */}
             {isDropdownOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+              <div className="absolute z-50 w-full mt-2 bg-background border border-border rounded-lg shadow-lg overflow-hidden">
                 <button
                   onClick={() => { setActiveTab('pending'); setIsDropdownOpen(false); }}
                   className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 ${activeTab === 'pending' ? 'text-primary bg-muted/20' : 'text-muted-foreground'}`}

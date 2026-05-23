@@ -2,8 +2,9 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import type { Location as MapLocation } from "@/lib/locations"
 import { useState } from "react"
-import { locations, Location } from "@/lib/locations-placeholder-data"
+import { locations } from "@/lib/locations-placeholder-data"
 import { Button } from "@/components/ui/button"
 import PropertyCard from "./components/PropertyCard"
 
@@ -20,6 +21,21 @@ export default function MapClient() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [hoveredPos, setHoveredPos] = useState<[number, number] | null>(null);
+  const mapLocations: MapLocation[] = locations.map((loc) => ({
+    id: loc.id,
+    direccion: loc.direccion,
+    zona: loc.zona,
+    lat: loc.lat,
+    lng: loc.lng,
+    precio: loc.precio,
+    title: loc.direccion,
+    type: "Propiedad destacada",
+    location: `${loc.direccion}, ${loc.zona}`,
+    terrainArea: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    images: [],
+  }));
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -62,7 +78,7 @@ export default function MapClient() {
       {/* MAPA (HU2) */}
       <div className="w-[45%] shrink-0 relative">
         <PropertyMap
-          locations={locations}
+          locations={mapLocations}
           hoveredId={hoveredId}
           selectedPos={selectedPos}
           hoveredPos={hoveredPos}

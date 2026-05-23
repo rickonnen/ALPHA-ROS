@@ -51,16 +51,16 @@ export default async function ResumenPublicacion({ idPublicacion }: Props) {
 
       <div className="p-5 sm:w-3/5 flex flex-col justify-between flex-grow">
         <div>
-          <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start mb-2 gap-2">
-            <h3 className="font-bold text-lg text-foreground line-clamp-2">
+          <div className="flex flex-col xl:flex-row  xl:justify-between xl:items-start mb-2 gap-2">
+            <h3 className="font-bold text-lg text-[#1e3a5f] line-clamp-2">
               {publicacion.titulo}
             </h3>
-            <p className="text-xl font-black text-[#1D3547] xl:ml-4 whitespace-nowrap">
+            <p className="text-xl font-black text-[#1e3a5f] xl:ml-4 whitespace-nowrap">
               {simboloMoneda} {Number(publicacion.precio).toLocaleString("es-ES")}
             </p>
           </div>
           
-          <div className="flex items-start text-muted-foreground text-sm mb-4">
+          <div className="flex items-start text-[#1e3a5f] text-sm mb-4">
             <MapPin size={16} className="mr-1 mt-0.5 flex-shrink-0" />
             <span className="line-clamp-2">
               {publicacion.Ubicacion?.direccion}, 
