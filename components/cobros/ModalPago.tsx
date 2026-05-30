@@ -10,19 +10,26 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useState, useRef } from "react";
+import Image from "next/image";
 
 type EstadoModal =
   | "cerrado"
-  | "confirmacion"
-  | "verificando"
-  | "procesando"
-  | "ya_pendiente";
+  | "confirmacion_pago" 
+  | "verificando_pago" 
+  | "pendiente_pago"
+  | "pago_completado" 
+  | "pago_rechazado";   
 
 interface Props {
   estadoModal: EstadoModal;
   setEstadoModal: (estado: EstadoModal) => void;
   manejarAceptarPago: () => void;
   irAlPerfil: () => void;
+  manejarDescarga: () => void;
+  nombrePlan: string;
+  archivoSeleccionado: File | null;
+  setArchivoSeleccionado: (file: File | null) => void;
 }
 
 export default function PagoModal({
@@ -30,7 +37,20 @@ export default function PagoModal({
   setEstadoModal,
   manejarAceptarPago,
   irAlPerfil,
+  manejarDescarga,
+  nombrePlan,
+  archivoSeleccionado,
+  setArchivoSeleccionado,
 }: Props) {
+
+const fileInputRef = useRef<HTMLInputElement>(null);
+const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files[0]) {
+    setArchivoSeleccionado(e.target.files[0]);
+  }
+};
+const [loading, setLoading] = useState(false);
+
   return (
       <AlertDialog
         open={estadoModal !== "cerrado"}
@@ -39,21 +59,35 @@ export default function PagoModal({
         }}
       >
         <AlertDialogContent>
-          {/* 3. FIX DE ACCESIBILIDAD PARA RADIX UI */}
           {estadoModal === "cerrado" && (
             <AlertDialogTitle className="sr-only">
               Cerrando diálogo...
             </AlertDialogTitle>
           )}
 
-          {estadoModal === "verificando" && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <AlertDialogTitle>Verificando</AlertDialogTitle>
-            </div>
+          {estadoModal === "verificando_pago" && (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Verificando pago
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Este proceso puede durar algunas horas. 
+                  Puedes revisar el estado de tu pago en tu perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                  cerrar
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={irAlPerfil}> 
+                  ir a mi perfil
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
           )}
 
-          {estadoModal === "confirmacion" && (
+          {estadoModal === "confirmacion_pago" && (
             <>
               <AlertDialogHeader>
                 <AlertDialogTitle>
@@ -65,28 +99,38 @@ export default function PagoModal({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
+                <AlertDialogCancel 
+                  disabled={loading}
+                  onClick={() => setEstadoModal("cerrado")}>
                   Rechazar
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={(e) => {
+                  disabled={loading}
+                  onClick={async (e) => {
                     e.preventDefault();
-                    manejarAceptarPago();
+                    setLoading(true);
+
+                    await manejarAceptarPago(); // importante que sea async
+
+                    setEstadoModal("verificando_pago");
+                    setLoading(false);
                   }}
                 >
-                  Aceptar
+                  {loading ? "Procesando..." : "Aceptar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>
           )}
 
-          {estadoModal === "procesando" && (
+          {estadoModal === "pendiente_pago" && (
             <>
               <AlertDialogHeader>
-                <AlertDialogTitle>Verificando pago</AlertDialogTitle>
+                <AlertDialogTitle>Ya tienes una solicitud pendiente</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Este proceso puede durar algunas horas. Puedes revisar el
-                  estado de tu pago en tu perfil.
+                  Estamos verificando un comprobante para este plan. 
+                  No es necesario realizar otro pago. Te 
+                  notificaremos en cuanto el administrador valide 
+                  la transacción.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -100,25 +144,65 @@ export default function PagoModal({
             </>
           )}
 
-          {estadoModal === "ya_pendiente" && (
+          {estadoModal === "pago_completado" && (
             <>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Pago en proceso</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Ya tienes un pago pendiente de verificación. Por favor, espera
-                  a que se complete o revisa el estado en tu perfil.
+              <div className="flex flex-col items-center text-center gap-2 pt-2">
+                <Image
+                  src="/logo-pagoCompletado.png"
+                  alt="Alerta"
+                  width={48}
+                  height={48}
+                  className="h-18 w-18"
+                />
+                <AlertDialogTitle className="text-lg font-semibold">
+                  Pago confirmado
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  Hemos recibido tu pago correctamente.
                 </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setEstadoModal("cerrado")}>
-                  Cerrar
-                </AlertDialogCancel>
-                <AlertDialogAction onClick={irAlPerfil}>
+              </div>
+              <AlertDialogFooter className="flex justify-center mt-2">
+                <AlertDialogAction
+                  onClick={() => {
+                    setEstadoModal("cerrado");
+                    irAlPerfil();
+                  }}
+                  className="!mx-auto text-sm px-6 !bg-primary !text-primary-foreground hover:!bg-primary/90 hover:!text-primary-foreground border-0"
+                >
                   Ir a mi perfil
                 </AlertDialogAction>
               </AlertDialogFooter>
             </>
           )}
+
+          {estadoModal === "pago_rechazado" && (
+            <>
+              <div className="flex flex-col items-center text-center gap-2 pt-2">
+                <Image
+                  src="/logo-rechazado-modal.png"
+                  alt="Alerta"
+                  width={48}
+                  height={48}
+                  className="h-16 w-16"
+                />
+                <AlertDialogTitle className="text-lg font-semibold">
+                  Pago no completado
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm text-muted-foreground">
+                  No hemos podido confirmar tu pago.
+                </AlertDialogDescription>
+              </div>
+              <AlertDialogFooter className="flex justify-center mt-2">
+                <AlertDialogCancel
+                  onClick={() => setEstadoModal("cerrado")}
+                  className="!mx-auto text-sm px-6 bg-red-500 text-white hover:bg-red-600 border-0"
+                >
+                  Salir
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
+
         </AlertDialogContent>
       </AlertDialog>
   );

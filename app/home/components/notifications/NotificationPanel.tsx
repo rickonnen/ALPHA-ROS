@@ -1,19 +1,26 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useTrash } from "@/components/hooks/useTrash";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationTabs } from "./NotificationTabs";
 import { NotificationItem } from "./NotificationItem";
+import { SettingsPanel } from "./SettingsPanel";
+import { ConfirmModal } from "./ConfirmModal";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+import { useAuth } from "@/app/auth/AuthContext";
+import { createClient } from "@supabase/supabase-js";
 import { BellOff } from "lucide-react";
-import { useAuth } from "@/app/auth/AuthContext"; //NUEVO
+import { useEmailNotificationStatus } from "@/components/hooks/useEmailNotificationStatus";
 
 type Notification = {
-  id: number;
+  id: string;
   title: string;
   description: string;
   read: boolean;
   time?: string;
   createdAt?: string | null;
+  type?: string | number;
 };
 
 function formatRelativeTime(isoString: string): string {
@@ -27,37 +34,77 @@ function formatRelativeTime(isoString: string): string {
   return `hace ${days} d`;
 }
 
-export function NotificationPanel() {
-  const { user } = useAuth(); //NUEVO - obtiene el usuario logueado
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+const updateUnreadCountBadge = (count: number) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("notification_unread_count", count.toString());
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+  }
+};
+
+interface NotificationPanelProps {
+  onClose?: () => void;
+  onVerTodas?: () => void;
+}
+
+export function NotificationPanel({ onClose, onVerTodas }: NotificationPanelProps) {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const { gmailEnabled, toggleGmail } = useEmailNotificationStatus(user?.id);
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { trashIds, addToTrash, removeFromTrash, emptyTrash } = useTrash(user?.id);
+
+const trash = useMemo(
+  () =>
+    trashIds
+      .map((entry) => {
+        const notif = notifications.find((n) => n.id === entry.id);
+        return notif ? { ...notif, read: entry.read } : null;
+      })
+      .filter(Boolean) as Notification[],
+  [trashIds, notifications]
+);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [pendingBulkIds, setPendingBulkIds] = useState<string[]>([]);
 
   useEffect(() => {
+    const userId = user?.id ?? "guest";
+    const savedWhatsapp = localStorage.getItem(`whatsapp_enabled_${userId}`);
+    if (savedWhatsapp !== null) setWhatsappEnabled(savedWhatsapp === "true");
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
     const fetchNotifications = async () => {
       try {
-        //NUEVO - clave única por usuario
-        const userId = user?.id ?? "guest";
-        const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-        const localDeletedIds: number[] = stored ? JSON.parse(stored) : [];
-
-        const res = await fetch("/api/notifications");
-        const data = await res.json();
-        const mapped = data.map((n: any) => ({
-          id: n.id,
-          title: n.title,
-          description: n.message,
-          read: n.read,
-          createdAt: n.createdAt ?? null,   // ← agrega esta línea
-          time: n.createdAt ? formatRelativeTime(n.createdAt) : "ahora",
+        const { data, error } = await supabase
+          .from("Notificacion")
+          .select("*")
+          .eq("id_usuario", user.id)
+          .order("creado_en", { ascending: false });
+        if (error) throw error;
+        const mapped = (data ?? []).map((n: any) => ({
+          id: n.id_notificacion,
+          title: n.titulo,
+          description: n.mensaje,
+          read: n.leido,
+          createdAt: n.creado_en ?? null,
+          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
+          type: "general",
         }));
-        
-        const sorted = mapped.sort((a: any, b: any) =>
-          new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()  // ← cambia esta línea
-        );
-        
-        setNotifications(sorted.filter((n: any) => !localDeletedIds.includes(n.id)));
+        setNotifications(mapped);
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
         setHasError(true);
@@ -65,116 +112,270 @@ export function NotificationPanel() {
         setIsLoading(false);
       }
     };
-
     fetchNotifications();
-  }, [user]); //NUEVO - se ejecuta cuando el usuario está disponible
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.read).length,
-    [notifications]
+    const channel = supabase
+      .channel(`notificaciones-panel-${user.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, (payload) => {
+        const n = payload.new as any;
+        setNotifications((prev) => [{
+          id: n.id_notificacion,
+          title: n.titulo,
+          description: n.mensaje,
+          read: n.leido,
+          createdAt: n.creado_en ?? null,
+          time: n.creado_en ? formatRelativeTime(n.creado_en) : "ahora",
+          type: "general",
+        }, ...prev]);
+      })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, (payload) => {
+        const n = payload.new as any;
+        setNotifications((prev) => prev.map((notif) => 
+          notif.id === n.id_notificacion 
+            ? { ...notif, read: n.leido }
+            : notif
+        ));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
+  useEffect(() => { setSelectedIds([]); }, [activeTab]);
+
+  const notInTrash = useMemo(() =>
+    notifications.filter((n) => !trash.some((t) => t.id === n.id)),
+    [notifications, trash]
   );
 
+  const unreadCount = useMemo(() => notInTrash.filter((n) => !n.read).length, [notInTrash]);
+  const totalCount = useMemo(() => notInTrash.length, [notInTrash]);
+
+  useEffect(() => { updateUnreadCountBadge(unreadCount); }, [unreadCount]);
+
   const visibleNotifications = useMemo(() => {
-    if (activeTab === "unread") return notifications.filter((n) => !n.read);
-    return notifications;
-  }, [notifications, activeTab]);
+    if (activeTab === "trash") return trash;
+    let filtered = notInTrash;
+    if (activeFilter === "gmail") filtered = filtered.filter((n) => n.type === 1 || n.type === "gmail");
+    else if (activeFilter === "whatsapp") filtered = filtered.filter((n) => n.type === 2 || n.type === "whatsapp");
+    else if (activeTab === "unread") filtered = filtered.filter((n) => !n.read);
+    return filtered;
+  }, [notInTrash, activeTab, activeFilter, trash]);
 
-  const handleDelete = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-
-    //NUEVO - guarda con clave única por usuario
-    const userId = user?.id ?? "guest";
-    const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-    const current: number[] = stored ? JSON.parse(stored) : [];
-    localStorage.setItem(`deletedNotificationIds_${userId}`, JSON.stringify([...current, id]));
+  const handleDelete = (id: string) => {
+    const notif = notifications.find((n) => n.id === id);
+    if (!notif) return;
+    addToTrash({ id, read: notif.read });
   };
 
-  const handleRead = async (id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-    try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAsRead", notificationId: id }),
-      });
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-    } catch (error) {
-      console.error("Error al marcar como leída:", error);
+  const handleRestore = (id: string) => {
+    removeFromTrash(id);
+  };
+
+  const handleEmptyTrash = async () => {
+    const ids = trash.map((n) => n.id);
+    emptyTrash();
+    setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+    setShowConfirmModal(false);
+    if (ids.length > 0) {
+      await supabase.from("Notificacion").delete().in("id_notificacion", ids);
     }
+  };
+
+  const handleRead = async (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    await supabase.from("Notificacion").update({ leido: true }).eq("id_notificacion", id);
+    window.dispatchEvent(new Event("notifications-updated"));
   };
 
   const handleMarkAll = async () => {
+    if (!user?.id) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    try {
-      await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "markAllAsRead" }),
-      });
-      window.dispatchEvent(new Event("refresh-notification-badge"));
-    } catch (error) {
-      console.error("Error al marcar todas como leídas:", error);
-    }
+    await supabase.from("Notificacion").update({ leido: true }).eq("id_usuario", user.id);
+    window.dispatchEvent(new Event("notifications-updated"));
   };
 
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => setSelectedIds(visibleNotifications.map((n) => n.id));
+  const handleDeselectAll = () => setSelectedIds([]);
+
+  const handleBulkDelete = () => {
+    selectedIds.forEach((id) => handleDelete(id));
+    setSelectedIds([]);
+  };
+
+  const handleBulkMarkRead = async () => {
+    setNotifications((prev) =>
+      prev.map((n) => selectedIds.includes(n.id) ? { ...n, read: true } : n)
+    );
+    await supabase.from("Notificacion").update({ leido: true }).in("id_notificacion", selectedIds);
+    window.dispatchEvent(new Event("notifications-updated"));
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+    setSelectedIds([]);
+  };
+
+  const handleBulkRestore = () => {
+    selectedIds.forEach((id) => handleRestore(id));
+    setSelectedIds([]);
+  };
+
+  const handleBulkDeleteFromTrash = () => {
+    setPendingBulkIds([...selectedIds]);
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDeleteFromTrash = async () => {
+    const ids = [...pendingBulkIds];
+    setSelectedIds([]);
+    setPendingBulkIds([]);
+    setShowBulkDeleteModal(false);
+    setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+    ids.forEach((id) => removeFromTrash(id));
+    await supabase.from("Notificacion").delete().in("id_notificacion", ids);
+  };
+
+  const handleGmailToggle = (enabled: boolean) => {
+  toggleGmail(enabled);
+ };
+
+  const handleWhatsappToggle = (enabled: boolean) => {
+    setWhatsappEnabled(enabled);
+    localStorage.setItem(`whatsapp_enabled_${user?.id ?? "guest"}`, enabled.toString());
+  };
+
+  const isTrashTab = activeTab === "trash";
+
   return (
-<div className="fixed top-20 left-1/2 -translate-x-1/2 z-[110] w-[90vw] max-w-[400px] h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">     
- <NotificationHeader total={notifications.length} />
-
-      <div className="p-2">
-        <NotificationTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          unreadCount={unreadCount}
-          onMarkAll={handleMarkAll}
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-110 w-[90vw] max-w-96 h-auto max-h-[54vh] md:max-h-[80vh] rounded-2xl shadow-lg bg-white flex flex-col overflow-hidden md:absolute md:top-full md:mt-8 md:left-auto md:right-0 md:translate-x-0">
+      {showSettings ? (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+          gmailEnabled={gmailEnabled}
+          whatsappEnabled={whatsappEnabled}
+          onGmailToggle={handleGmailToggle}
+          onWhatsappToggle={handleWhatsappToggle}
         />
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
-          Cargando notificaciones...
-        </div>
-      ) : hasError ? (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-          <BellOff size={22} />
-        </div>
-        <p className="text-gray-500 text-sm font-medium">
-          No fue posible cargar las notificaciones.
-        </p>
-      </div>
-      ) : visibleNotifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-            <BellOff size={22} />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">
-            {activeTab === "unread"
-              ? "No tienes notificaciones no leídas."
-              : "No tienes notificaciones por el momento."}
-          </p>
-        </div>
       ) : (
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-2">
-            {visibleNotifications.map((n) => (
-              <NotificationItem
-                key={n.id}
-                id={n.id}
-                title={n.title}
-                description={n.description}
-                read={n.read}
-                time={n.time}
-                onDelete={handleDelete}
-                onRead={handleRead}
-              />
-            ))}
+        <>
+          <NotificationHeader
+            totalCount={totalCount}
+          />
+
+          <div className="px-4 py-3">
+            <NotificationTabs
+              activeTab={activeTab}
+              onTabChange={(tab) => {
+                setActiveTab(tab);
+                setActiveFilter("all");
+              }}
+              unreadCount={unreadCount}
+              trashCount={trash.length}
+              onMarkAll={handleMarkAll}
+              onOpenSettings={() => setShowSettings(true)}
+              onTrashClick={() => setActiveTab("trash")}
+            />
           </div>
-          <ScrollBar orientation="vertical" />
-        </ScrollArea>
+
+          {isTrashTab && trash.length > 0 && (
+            <div className="flex justify-end px-4 py-2">
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                className="text-xs text-red-500 hover:text-red-700 hover:underline transition"
+              >
+                Vaciar papelera
+              </button>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400 text-sm">
+              Cargando notificaciones...
+            </div>
+          ) : hasError ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <BellOff size={22} />
+              </div>
+              <p className="text-gray-500 text-sm font-medium">
+                No fue posible cargar las notificaciones.
+              </p>
+            </div>
+          ) : visibleNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <BellOff size={22} />
+              </div>
+              <p className="text-gray-500 text-sm font-medium">
+                {activeTab === "unread"
+                  ? "No tienes notificaciones no leídas."
+                  : isTrashTab
+                    ? "La papelera está vacía."
+                    : "No tienes notificaciones por el momento."}
+              </p>
+            </div>
+          ) : (
+            <ScrollArea className="flex-1 overflow-y-auto">
+              <div className="px-4 py-3 space-y-2.5">
+                {visibleNotifications.map((n) => (
+                  <NotificationItem
+                    key={n.id}
+                    id={n.id}
+                    title={n.title}
+                    description={n.description}
+                    read={n.read}
+                    time={n.time}
+                    type={n.type}
+                    onDelete={handleDelete}
+                    onRead={handleRead}
+                    isInTrash={isTrashTab}
+                    onRestore={handleRestore}
+                    hideCheckbox={true}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
+          )}
+        </>
       )}
+
+      {!showSettings && (
+        <div className="px-4 py-3.5 border-t border-gray-100">
+          <button
+            onClick={() => { onVerTodas?.(); }}
+            className="w-full py-2.5 text-sm font-medium text-center bg-[#2C4A5A] text-white hover:bg-[#1e3a4a] rounded-xl transition"
+          >
+            Ver todas las notificaciones
+          </button>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onConfirm={handleEmptyTrash}
+        onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showBulkDeleteModal}
+        onConfirm={confirmBulkDeleteFromTrash}
+        onCancel={() => { setShowBulkDeleteModal(false); setPendingBulkIds([]); }}
+      />
     </div>
   );
 }

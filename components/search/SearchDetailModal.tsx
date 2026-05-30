@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
   X,
@@ -23,6 +23,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PublicacionDetalleBusqueda } from '@/features/search/search-services';
+import { useTracking } from '@/components/hooks/useTracking';
 
 type Currency = "USD" | "BS";
 
@@ -50,14 +51,9 @@ export default function SearchDetailModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { trackEvent } = useTracking();
 
-  useEffect(() => {
-    if (isOpen && publicacionId) {
-      cargarDatos();
-    }
-  }, [isOpen, publicacionId]);
-
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -66,24 +62,32 @@ export default function SearchDetailModal({
       const response: ApiResponse = await res.json();
 
       if (!response.ok) {
-        setError(response.mensaje || 'Error al cargar');
+        setError(response.mensaje || "Error al cargar");
         return;
       }
 
       setData(response.datos || null);
       setCurrentImageIndex(0);
     } catch (err) {
-      console.error('Error:', err);
-      setError('Error al cargar la publicación');
+      console.error("Error:", err);
+      setError("Error al cargar la publicación");
     } finally {
       setLoading(false);
     }
-  };
+  }, [publicacionId]);
+
+  useEffect(() => {
+    if (isOpen && publicacionId) {
+      trackEvent(publicacionId, 'detalle');
+      const id = setTimeout(() => void cargarDatos(), 0);
+      return () => clearTimeout(id);
+    }
+  }, [cargarDatos, isOpen, publicacionId, trackEvent]);
 
   const imagenes = data?.imagenes || [];
   const actualImage = imagenes[currentImageIndex]?.url_imagen;
 
-  // Convertir precio según moneda seleccionada
+  // Convertir precio segÃºn moneda seleccionada
   const exchangeRate = 6.96;
   const convertedPrice = data
     ? selectedCurrency === "USD"
@@ -100,7 +104,7 @@ export default function SearchDetailModal({
     setCurrentImageIndex((prev) => (prev === imagenes.length - 1 ? 0 : prev + 1));
   };
 
-  // Generar enlace WhatsApp con el número del usuario
+  // Generar enlace WhatsApp con el nÃºmero del usuario
   const whatsappLink = data?.usuario?.telefono
     ? `https://wa.me/${data.usuario.telefono.replace(/\D/g, '')}`
     : null;
@@ -140,7 +144,7 @@ export default function SearchDetailModal({
 
           {data && !loading && (
             <>
-              {/* Galería */}
+              {/* GalerÃ­a */}
               {imagenes.length > 0 && (
                 <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden">
                   <div className="relative w-full h-64 sm:h-80">
@@ -190,7 +194,7 @@ export default function SearchDetailModal({
                 </p>
               </div>
 
-              {/* Grid Rápido */}
+              {/* Grid RÃ¡pido */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {data.habitaciones !== undefined && (
                   <Card>
@@ -208,7 +212,7 @@ export default function SearchDetailModal({
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-gray-600 mb-2">
                         <Bath className="w-4 h-4" />
-                        <span className="text-xs font-medium">Baños</span>
+                        <span className="text-xs font-medium">BaÃ±os</span>
                       </div>
                       <p className="text-lg font-bold">{data.banos}</p>
                     </CardContent>
@@ -219,10 +223,10 @@ export default function SearchDetailModal({
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-gray-600 mb-2">
                         <Square className="w-4 h-4" />
-                        <span className="text-xs font-medium">Área</span>
+                        <span className="text-xs font-medium">Ãrea</span>
                       </div>
                       <p className="text-lg font-bold">
-                        {Number(data.superficie).toLocaleString('es-BO')} m²
+                        {Number(data.superficie).toLocaleString('es-BO')} mÂ²
                       </p>
                     </CardContent>
                   </Card>
@@ -240,7 +244,7 @@ export default function SearchDetailModal({
                 )}
               </div>
 
-              {/* Información General */}
+              {/* InformaciÃ³n General */}
               <Card>
                 <CardContent className="pt-6 space-y-3">
                   {data.tipo_inmueble && (
@@ -251,7 +255,7 @@ export default function SearchDetailModal({
                   )}
                   {data.tipo_operacion && (
                     <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600 font-medium text-sm">Operación:</span>
+                      <span className="text-gray-600 font-medium text-sm">OperaciÃ³n:</span>
                       <span className="text-sm">{data.tipo_operacion}</span>
                     </div>
                   )}
@@ -264,11 +268,11 @@ export default function SearchDetailModal({
                 </CardContent>
               </Card>
 
-              {/* Descripción */}
+              {/* DescripciÃ³n */}
               {data.descripcion && (
                 <Card>
                   <CardContent className="pt-6">
-                    <h3 className="font-bold mb-3 text-sm">Descripción</h3>
+                    <h3 className="font-bold mb-3 text-sm">DescripciÃ³n</h3>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                       {data.descripcion}
                     </p>
@@ -276,11 +280,11 @@ export default function SearchDetailModal({
                 </Card>
               )}
 
-              {/* Ubicación */}
+              {/* UbicaciÃ³n */}
               {data.ubicacion && (
                 <Card>
                   <CardContent className="pt-6 space-y-3">
-                    <h3 className="font-bold text-sm">Ubicación</h3>
+                    <h3 className="font-bold text-sm">UbicaciÃ³n</h3>
                     {data.ubicacion.direccion && (
                       <div className="flex gap-3 items-start">
                         <MapPin className="w-4 h-4 text-[#a67c52] mt-1 shrink-0" />
@@ -295,24 +299,24 @@ export default function SearchDetailModal({
                         </div>
                       </div>
                     )}
-                    {/* Espacio reservado para mapa - Otro equipo está trabajando en esto */}
+                    {/* Espacio reservado para mapa - Otro equipo estÃ¡ trabajando en esto */}
                     {data.ubicacion.latitud && data.ubicacion.longitud && (
                       <div className="bg-gray-50 border border-gray-200 rounded p-4 text-center text-sm text-gray-600">
                         <p className="text-xs">
                           Coordenadas: {data.ubicacion.latitud}, {data.ubicacion.longitud}
                         </p>
-                        <p className="text-xs mt-2 text-gray-500">[Mapa integrado próximamente]</p>
+                        <p className="text-xs mt-2 text-gray-500">[Mapa integrado prÃ³ximamente]</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
               )}
 
-              {/* Características */}
+              {/* CaracterÃ­sticas */}
               {data.caracteristicas && data.caracteristicas.length > 0 && (
                 <Card>
                   <CardContent className="pt-6">
-                    <h3 className="font-bold mb-3 text-sm">Características</h3>
+                    <h3 className="font-bold mb-3 text-sm">CaracterÃ­sticas</h3>
                     <div className="flex flex-wrap gap-2">
                       {data.caracteristicas.map((car, idx) => (
                         <Badge key={idx} variant="secondary">
@@ -357,6 +361,7 @@ export default function SearchDetailModal({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-center gap-2"
+                            onClick={() => trackEvent(publicacionId, "contacto")}
                           >
                             WhatsApp
                           </a>
@@ -371,6 +376,7 @@ export default function SearchDetailModal({
                           <a
                             href={`mailto:${data.usuario.email}`}
                             className="flex items-center justify-center gap-2"
+                            onClick={() => trackEvent(publicacionId, "contacto")}
                           >
                             <Mail className="w-4 h-4" />
                             Email

@@ -1,46 +1,83 @@
 "use client";
+
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Trash2 } from "lucide-react";
 
 type Props = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   unreadCount: number;
+  trashCount: number;
   onMarkAll: () => void;
+  onOpenSettings: () => void;
+  onTrashClick?: () => void;
 };
 
 export function NotificationTabs({
   activeTab,
   onTabChange,
   unreadCount,
+  trashCount,
   onMarkAll,
+  onOpenSettings,
+  onTrashClick,
 }: Props) {
   return (
-    <div className="flex items-center justify-between">
-      <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList className="bg-blue-100 p-0.5 rounded-md inline-flex h-auto">
+    <div className="flex items-center justify-between gap-2">
+
+      {/* Izquierda: tabs */}
+      <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 min-w-0">
+        <TabsList className="bg-gray-200 p-1.5 rounded-xl inline-flex h-auto">
           <TabsTrigger
             value="all"
-            className="text-sm font-medium leading-5 text-slate-900 px-2 py-1 rounded-sm data-[state=active]:bg-white"
+            className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-lg data-[state=active]:bg-white"
           >
             Todas
           </TabsTrigger>
           <TabsTrigger
             value="unread"
-            className="text-sm font-medium leading-5 text-slate-900 px-2 py-1 rounded-sm data-[state=active]:bg-white"
+            className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-lg data-[state=active]:bg-white"
           >
             No leídas {unreadCount > 0 ? `(${unreadCount})` : ""}
           </TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {activeTab === "unread" && unreadCount > 0 && (
+      {/* Derecha: marcar todas + papelera + tuerca */}
+      <div className="flex items-center gap-0.5 shrink-0 min-w-[80px] justify-end">
+        {activeTab === "unread" && unreadCount > 0 && (
+          <button
+            onClick={onMarkAll}
+            className="text-[10px] md:text-xs text-gray-500 hover:text-black whitespace-nowrap"
+          >
+            Marcar todas
+          </button>
+        )}
+
         <button
-          onClick={onMarkAll}
-          className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md hover:bg-blue-100 transition"
+          onClick={onTrashClick}
+          className={`flex items-center gap-0.5 px-1.5 py-1.5 rounded-md transition ${
+            activeTab === "trash" ? "bg-gray-200" : "hover:bg-gray-200"
+          }`}
+          type="button"
+          title={`Papelera ${trashCount > 0 ? `(${trashCount})` : ""}`}
         >
-          Marcar todas
+          <Trash2 size={15} />
+          {trashCount > 0 && (
+            <span className="text-[9px] md:text-xs text-gray-600">{trashCount}</span>
+          )}
         </button>
-      )}
+
+        <button
+          onClick={onOpenSettings}
+          className="p-1.5 rounded-md hover:bg-gray-200 transition"
+          type="button"
+          title="Configuración"
+        >
+          <Settings size={15} />
+        </button>
+      </div>
+
     </div>
   );
 }

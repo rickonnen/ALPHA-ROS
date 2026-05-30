@@ -1,15 +1,19 @@
 /**
  * Dev: Rodrigo Saul Zarate Villarroel      Fecha: 03/04/2026
+ * Dev: Oliver                               Fecha: 18/04/2026
  * Hook con protección de estado de carga para evitar ejecuciones sin sesión válida.
+ * HU7: Distingue entre límite gratuito y límite de plan activo.
  */
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { verificarEstadoPublicacion } from "@/features/publicacion/modal/action";
+import { PUBLICACION_REQUISITOS_ROUTE } from "@/app/publicacion/requisitos/requisitos.constants";
 
 interface UsePublicarAccionProps {
-  objUser: any;
+  objUser: { id?: string | null } | null;
   onShowProtected: () => void;
   onShowLimit: () => void;
+  onShowLimitPlan: () => void;
   onCloseMobileMenu: () => void;
   bolIsAuthLoading?: boolean;
 }
@@ -18,6 +22,7 @@ export const usePublicarAccion = ({
   objUser,
   onShowProtected,
   onShowLimit,
+  onShowLimitPlan,
   onCloseMobileMenu,
   bolIsAuthLoading = false
 }: UsePublicarAccionProps) => {
@@ -25,10 +30,8 @@ export const usePublicarAccion = ({
   const objRouter = useRouter();
 
   const handlePublicar = useCallback(async () => {
-    // si la autenticación aún está cargando, no hacemos nada
     if (bolIsAuthLoading) return;
 
-    // si definitivamente no hay usuario tras cargar, mostramos modal
     if (!objUser) {
       onShowProtected();
       onCloseMobileMenu();
@@ -37,29 +40,31 @@ export const usePublicarAccion = ({
 
     setBolIsChecking(true);
     try {
-      // verificación de seguridad: si objUser existe pero no tiene ID, abortamos
       if (!objUser.id) throw new Error("ID de usuario no disponible");
 
       const objEstado = await verificarEstadoPublicacion(objUser.id);
-      
+
       if (objEstado?.bolLimiteAlcanzado) {
-        onShowLimit();
+        if (objEstado.strTipoLimite === "plan") {
+          onShowLimitPlan(); 
+        } else {
+          onShowLimit();
+        }
       } else {
-        objRouter.push("/publicacion/informacion-comercial");
+        objRouter.push(PUBLICACION_REQUISITOS_ROUTE);
       }
     } catch (error) {
       console.error("Error en validación:", error);
-      // si falla la API o el JSON, mandamos a login por seguridad si no hay ID
       if (!objUser?.id) {
         onShowProtected();
       } else {
-        objRouter.push("/publicacion/informacion-comercial");
+        objRouter.push(PUBLICACION_REQUISITOS_ROUTE);
       }
     } finally {
       setBolIsChecking(false);
       onCloseMobileMenu();
     }
-  }, [objUser, objRouter, onShowProtected, onShowLimit, onCloseMobileMenu, bolIsAuthLoading]);
+  }, [objUser, objRouter, onShowProtected, onShowLimit, onShowLimitPlan, onCloseMobileMenu, bolIsAuthLoading]);
 
   return { handlePublicar, bolIsChecking };
 };

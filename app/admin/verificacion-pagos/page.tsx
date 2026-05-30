@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PaymentDataTable } from "@/components/admin/PaymentDataTable"
 import { PaymentRecord } from "@/components/admin/paymentTypes"
 import { AccessDenied } from "@/components/admin/AccessDenied"
+import { PaymentEvidenceModal } from "@/components/admin/PaymentEvidenceModal"
+import { calculateValidUntil } from "@/components/admin/paymentUtils"
 
 /**
  * Dev: René Gabriel Vera Portanda
@@ -22,11 +24,18 @@ export default function PaymentVerificationPage() {
   const [bolIsAuthorized, setBolIsAuthorized] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [bolShowReceiptModal, setBolShowReceiptModal] = useState<boolean>(false);
+  const [strSelectedReceipt, setStrSelectedReceipt] = useState<string | null>(null);
   const formatData = useCallback((arrDatabaseData: any[]): PaymentRecord[] => {
 
     if (!arrDatabaseData || !Array.isArray(arrDatabaseData)) return [];
-    return arrDatabaseData.map(objPayment => ({
-      intId: objPayment.id_detalle,
+
+    return arrDatabaseData.map(objPayment => {
+      const bolEsPromocion = objPayment.PlanPublicacion?.tipo === false;
+      const intQuota = objPayment.PlanPublicacion?.cant_publicaciones || 0;
+      
+      return {
+        intId: objPayment.id_detalle,
       strClientName: objPayment.Usuario 
         ? `${objPayment.Usuario.nombres} ${objPayment.Usuario.apellidos ?? ""}`.trim() 
         : 'Sin nombre',
@@ -41,9 +50,20 @@ export default function PaymentVerificationPage() {
       hour12: false 
     }) 
   : 'Sin fecha',
+      strValidUntil: calculateValidUntil(
+        objPayment.fecha_detalle, 
+        objPayment.tiempo_pago, 
+        bolEsPromocion, 
+        intQuota,
+        objPayment.id_plan, 
+        objPayment.Usuario?.Suscripcion 
+      ),
       strPaymentMethod: objPayment.metodo_pago || 'No especificado',
+      strReceiptUrl: objPayment.comprobante_url || null,
+      strReason: objPayment.razon_rechazo || null,
       intStatus: objPayment.estado
-    }));
+      };
+    });
   }, []);
 
   /**
@@ -105,6 +125,11 @@ export default function PaymentVerificationPage() {
     ]).finally(() => setBolIsLoading(false));
   };
 
+  const handleViewReceipt = (strUrl: string) => {
+    setStrSelectedReceipt(strUrl);
+    setBolShowReceiptModal(true);
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-10 lg:p-14 bg-background">
       <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground mb-8 sm:mb-12 tracking-tight">
@@ -120,7 +145,7 @@ export default function PaymentVerificationPage() {
           <div className="sm:hidden mb-6 relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full bg-card border border-border text-foreground text-sm font-semibold rounded-lg p-3.5 shadow-sm flex justify-between items-center outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-background border border-border text-foreground text-sm font-semibold rounded-lg p-3.5 shadow-sm flex justify-between items-center outline-none focus:ring-2 focus:ring-primary"
             >
               {/* Muestra el nombre de la pestaña activa */}
               {activeTab === 'pending' ? 'Pagos Pendientes' : activeTab === 'accepted' ? 'Pagos Aceptados' : 'Pagos Rechazados'}
@@ -136,7 +161,7 @@ export default function PaymentVerificationPage() {
 
             {/* Opciones del menú  */}
             {isDropdownOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+              <div className="absolute z-50 w-full mt-2 bg-background border border-border rounded-lg shadow-lg overflow-hidden">
                 <button
                   onClick={() => { setActiveTab('pending'); setIsDropdownOpen(false); }}
                   className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 ${activeTab === 'pending' ? 'text-primary bg-muted/20' : 'text-muted-foreground'}`}
@@ -178,37 +203,49 @@ export default function PaymentVerificationPage() {
             <TabsContent value="pending" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.pending.data} 
+                strStatus="Pendiente"
                 bolShowActions={true} 
                 onPaymentUpdated={handlePaymentUpdated} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.pending.page}
                 intTotalPages={paymentsData.pending.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Pendiente', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
             <TabsContent value="accepted" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.accepted.data} 
+                strStatus="Aceptado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.accepted.page}
                 intTotalPages={paymentsData.accepted.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Aceptado', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
             <TabsContent value="rejected" className="m-0 focus-visible:outline-none">
               <PaymentDataTable 
                 arrData={paymentsData.rejected.data} 
+                strStatus="Rechazado"
                 bolShowActions={false} 
                 bolIsLoading={bolIsLoading}
                 intCurrentPage={paymentsData.rejected.page}
                 intTotalPages={paymentsData.rejected.totalPages}
                 onPageChange={(intNewPage) => handlePageChange('Rechazado', intNewPage)}
+                onViewReceipt={handleViewReceipt}
               />
             </TabsContent>
           </div>
         </Tabs>
       )}
+      {/* esto va aquí o en datatable? por ahora se queda aquí */}
+      <PaymentEvidenceModal 
+        bolIsOpen={bolShowReceiptModal} 
+        onOpenChange={setBolShowReceiptModal} 
+        strUrl={strSelectedReceipt} 
+      />
     </div>
   )
 }

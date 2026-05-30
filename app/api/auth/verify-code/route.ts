@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sign } from "jsonwebtoken";
 import { verifyCode } from "@/lib/verificationCodes";
+import { enviarBienvenida } from "@/lib/email/emailService";
+import { crearNotificacion } from "@/lib/notifications/notificationService";
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -86,6 +88,16 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    await enviarBienvenida(normalizedEmail, nombre);
+      try {
+      await crearNotificacion({
+      id_usuario: authData.user.id,
+      titulo: "Bienvenido a PROBOL",
+      mensaje: `¡Hola ${nombre}! Tu cuenta ha sido creada exitosamente. Bienvenido a la plataforma.`,
+      id_categoria: 1,
+    });
+} catch (notifError) {
+}
     return response;
   } catch (error: any) {
     console.error("Error:", error);
