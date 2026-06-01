@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verify } from "jsonwebtoken";  // Para validar JWT
-import { createClient } from "@supabase/supabase-js"; 
+import { createClient } from "@supabase/supabase-js";
+import { registrarSesionDispositivo } from "@/lib/sesion-dispositivo";
 
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -12,11 +13,45 @@ export async function GET(request: NextRequest) {
     const authToken = request.cookies.get("auth_token")?.value;
 
     if (!authToken) {
-      console.log("[AUTH/ME] No hay token en cookies");
-      return NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      );
+      const { getServerSession } = await import("next-auth")
+      const { authOptions } = await import("@/app/api/auth/[...nextauth]/route")
+      const session = await getServerSession(authOptions)
+
+      if (!session?.user?.email) {
+        return NextResponse.json(
+          { error: "No autenticado" },
+          { status: 401 }
+        );
+      }
+
+      const { data: userData, error } = await supabaseAdmin
+        .from("Usuario")
+        .select("id_usuario, nombres, email, rol, estado")
+        .eq("email", session.user.email)
+        .maybeSingle();
+
+      if (error || !userData) {
+        return NextResponse.json(
+          { error: "Usuario no encontrado" },
+          { status: 404 }
+        );
+      }
+
+      if (userData.estado === 0) {
+        return NextResponse.json(
+          { error: "Cuenta desactivada" },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.json({
+        user: {
+          id: userData.id_usuario,
+          name: userData.nombres,
+          email: userData.email,
+          rol: userData.rol,
+        }
+      }, { status: 200 });
     }
 
     console.log("[AUTH/ME] Token encontrado, verificando...");
@@ -29,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const { data: userData, error } = await supabaseAdmin
       .from("Usuario")
-      .select("id_usuario, nombres, email, rol")
+      .select("id_usuario, nombres, email, rol, estado")
       .eq("id_usuario", decoded.userId) 
       .maybeSingle();
 
@@ -41,6 +76,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // HU-04 CA-3: si la cuenta está desactivada, rechazar la sesión
+if (userData.estado === 0) {
+  const response = NextResponse.json(
+    { error: "Cuenta desactivada" },
+    { status: 403 }
+  );
+  response.cookies.delete("auth_token");
+  return response;
+}
+    
+
+
+
     const user = {
       id: userData.id_usuario,
       name: userData.nombres,
@@ -49,6 +97,25 @@ export async function GET(request: NextRequest) {
     };
 
     console.log("[AUTH/ME] ✅ Usuario autenticado:", user.email);
+
+    // Registrar sesión del dispositivo
+    try {
+      const sessionId = request.cookies.get("session_id")?.value ?? "";
+      const userAgent = request.headers.get("user-agent");
+      const ip = request.headers.get("x-forwarded-for") || 
+                 request.headers.get("x-client-ip") || 
+                 "unknown";
+
+      await registrarSesionDispositivo({
+        id_usuario: userData.id_usuario,
+        token_hash: sessionId,
+        ip,
+        user_agent: userAgent,
+      });
+    } catch (sessionError) {
+      console.error("[AUTH/ME] Error registrando sesión:", sessionError);
+      // No bloqueamos el login si falla el registro de sesión
+    }
 
     return NextResponse.json({ user }, { status: 200 });
 

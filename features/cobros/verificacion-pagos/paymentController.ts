@@ -1,5 +1,9 @@
 // app/backend/cobros/controllers/paymentController.ts
 import { prisma } from '@/lib/prisma';
+import { syncUserPublicationsAndQuota } from './services/publicationService';
+import { upsertUserSubscription } from './services/subscriptionService';
+import { activatePromotion } from './services/promotionService';
+
 // Mapeo de estados según la lógica acordada
 const objStatuses = {
   intPending: 1,
@@ -35,10 +39,11 @@ export const getPaymentsByStatus = async (
       where: { estado: intStatusId },
       include: {
         Usuario: {
-          select: { nombres: true, apellidos: true, email: true }
+          select: { nombres: true, apellidos: true, email: true, Suscripcion: {
+              select: { id_plan: true, fecha_fin: true } }}
         },
         PlanPublicacion: {
-          select: { nombre_plan: true }
+          select: { nombre_plan: true, tipo: true, cant_publicaciones: true }
         }
       },
       skip: intSkip,
@@ -65,7 +70,7 @@ export const getPaymentsByStatus = async (
  * @param {string} strNewStatusName - El nuevo nombre de estado.
  * @return {object} objUpdatedPayment - El registro actualizado de la base de datos de pagos.
  */
-export const updatePaymentStatus = async (intId: number, strNewStatusName: string) => {
+export const updatePaymentStatus = async (intId: number, strNewStatusName: string, strReason?: string) => {
   const objStatusMap: Record<string, number> = {
     'Aceptado': objStatuses.intAccepted,
     'Rechazado': objStatuses.intRejected
@@ -78,17 +83,55 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
   }
 
   try {
-    // Prisma actualizará el estado. 
-    // Si cambia de 1 (Pendiente) a 2 (Aceptado), el Trigger trg_pago_aprobado_update 
-    // en Supabase se disparará de forma invisible y sumará las publicaciones al usuario.
-    const objUpdatedPayment = await prisma.detallePago.update({
-      where: { id_detalle: intId },
-      data: {
-        estado: intNewStatus,
-      },
+    const objUpdatedPayment = await prisma.$transaction(async (tx) => {
+      const objCurrentPayment = await tx.detallePago.findUnique({
+        where: { id_detalle: intId },
+        include: { PlanPublicacion: true }
+      });
+
+      if (!objCurrentPayment) {
+        throw new Error(`No se encontró el pago con id ${intId}`);
+      }
+
+      if (objCurrentPayment.estado !== objStatuses.intPending) {
+        throw new Error(`CONCURRENCY_ERROR: El pago #${intId} ya fue procesado previamente y no está pendiente.`);
+      }
+
+      const objPaymentResult = await tx.detallePago.update({
+        where: { id_detalle: intId },
+        data: {
+          estado: intNewStatus,
+          razon_rechazo: strNewStatusName === 'Rechazado' ? strReason : null,
+        },
+      });
+
+      if (strNewStatusName === 'Aceptado') {
+        
+        const intNewQuota = objCurrentPayment.PlanPublicacion?.cant_publicaciones || 0;
+        const strUserId = objCurrentPayment.id_usuario;
+        const intPlanId = objCurrentPayment.id_plan;
+
+        const bolEsPromocion = objCurrentPayment.PlanPublicacion?.tipo === false;
+        if (strUserId && intPlanId) {
+         if (bolEsPromocion) {
+            const intPublicacionId = objCurrentPayment.id_publicacion;
+            
+            if (!intPublicacionId) {
+              throw new Error("No se puede activar la promoción porque el pago no tiene un id_publicacion asociado.");
+            }
+            await activatePromotion(tx, strUserId, intPublicacionId, intNewQuota);
+          } else {
+            // lo de la hu6 (suspender publicaciones) y el cambio de cantidad de publicaciones
+            await syncUserPublicationsAndQuota(tx, strUserId, intNewQuota);
+            // lo de la creación o actualización de la tabla suscripción
+            await upsertUserSubscription(tx, strUserId, intPlanId, objCurrentPayment.tiempo_pago);
+          } 
+        }
+      }
+      return objPaymentResult;
     });
 
-    console.log(`Estado del pago ${intId} actualizado a ${strNewStatusName}.`);
+    console.log(`Pago ${intId} procesado: Cupo actualizado a ${strNewStatusName}.`);
     return objUpdatedPayment;
 
   } catch (error: any) {
@@ -99,5 +142,5 @@ export const updatePaymentStatus = async (intId: number, strNewStatusName: strin
     console.error("Error al actualizar el estado del pago:", error);
     throw error;
   }
-  
+
 };

@@ -1,0 +1,83 @@
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton"
+
+/**
+ * Dev: Nicole Belen Arias Murillo
+ * Funcionalidad: Modal para previsualizar la imagen del comprobante de pago.
+ */
+interface PaymentEvidenceModalProps {
+  bolIsOpen: boolean;
+  onOpenChange: (bolOpen: boolean) => void;
+  strUrl: string | null;
+}
+
+export function PaymentEvidenceModal({
+  bolIsOpen,
+  onOpenChange,
+  strUrl
+}: PaymentEvidenceModalProps) {
+  const [bolIsLoading, setBolIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (bolIsOpen) {
+      setBolIsLoading(true);
+    }
+  }, [bolIsOpen, strUrl]);
+  return (
+    <AlertDialog open={bolIsOpen} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="max-w-md w-[90vw] md:w-[500px] p-0 overflow-hidden border-none rounded-2xl shadow-2xl border border-white/20 [&>button]:hidden">
+        <VisuallyHidden>
+          <AlertDialogTitle>Comprobante de Pago</AlertDialogTitle>
+        </VisuallyHidden>
+
+        <div className="flex flex-col items-center">
+          {/* Cabecera del Modal */}
+          <div className="w-full py-4 border-b border-border">
+            <h3 className="text-center font-bold text-lg text-foreground uppercase tracking-tight">
+              Comprobante de Pago
+            </h3>
+          </div>
+
+          {/* Área de la Imagen */}
+          <div className="w-full p-6 flex justify-center min-h-[300px]">
+            {strUrl ? (
+              <>
+                {/*Ya no es una rayita */}
+                {bolIsLoading && (
+                  <Skeleton className="w-full h-[300px] md:h-[400px] rounded-lg" />
+                )}
+                <img 
+                  src={strUrl} 
+                  alt="Comprobante de transferencia" 
+                  onLoad={() => setBolIsLoading(false)}
+                  className={`w-auto h-auto max-w-full max-h-[50vh] md:max-h-[60vh] object-contain rounded-lg shadow-sm border border-gray-100 ${bolIsLoading ? 'hidden' : 'block'}`}
+                />
+              </>
+            ) : (
+              <div className="flex items-center justify-center text-muted-foreground italic">
+                No se pudo cargar la imagen del comprobante.
+              </div>
+            )}
+          </div>
+            {/*Solo se agregó "cursor-pointer mt-1", parece que el botón se queda... */}
+          {/* Botón Volver*/}
+          <div className="w-1 p-3 flex justify-center border-t">
+            <Button
+              onClick={() => onOpenChange(false)}
+              variant="default"
+              className="bg-[#1F3A4D] hover:bg-[#374151] text-white font-bold px-4 sm:px-6 rounded-xl py-5 sm:py-4 transition-all active:scale-95 text-sm cursor-pointer mt-1">
+              Volver
+            </Button>
+          </div> 
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}

@@ -1,0 +1,86 @@
+"use client";
+
+/**
+ * @Dev: jimmyP / Oliver
+ * @Fecha: 18/04/2026
+ * @Funcionalidad: Modal HU7. Se muestra cuando el usuario con plan activo
+ * ha agotado el límite de publicaciones permitidas por su plan.
+ */
+/**
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-white → bg-card-bg, text-[#1a1a1a] → text-foreground,
+ *      text-[#2E2E2E]/70 → text-muted-foreground, border-[#C26E5A] → border-secondary,
+ *      text-[#C26E5A] → text-secondary, hover:bg-[#C26E5A]/10 → hover:bg-secondary/10,
+ *      hover:text-[#C26E5A] → hover:text-secondary
+ */
+
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface PlanLimitModalProps {
+  bolOpen: boolean;
+  onBack: () => void;
+  strPlansHref?: string;
+}
+
+export default function PlanLimitModal({
+  bolOpen,
+  onBack,
+  strPlansHref = "/cobros/planes",
+}: PlanLimitModalProps) {
+
+  const router = useRouter();
+
+  return (
+    <Dialog open={bolOpen} onOpenChange={(open) => { if (!open) onBack(); }}>
+      <DialogContent
+        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-card-bg"
+        style={{ fontFamily: "var(--font-geist-sans)" }}
+      >
+        <DialogHeader className="text-center space-y-3">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight text-foreground">
+            Límite de publicaciones alcanzado
+          </DialogTitle>
+          <DialogDescription className="text-sm sm:text-base text-muted-foreground text-center leading-relaxed">
+            Has utilizado la cantidad de publicaciones incluidas en tu plan
+            actual. Para seguir publicando, mejora tu suscripción o adquiere
+            un paquete adicional.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="mt-6 flex !flex-row items-center justify-between gap-3 sm:gap-4 bg-transparent border-none">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onBack}
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
+          >
+            {"< Atrás"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
+            onClick={() => {
+              onBack();
+              router.push(strPlansHref);
+            }}
+          >
+            {"Ver Planes →"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

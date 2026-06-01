@@ -27,13 +27,22 @@
     Funcionalidad: FIX bd y cambios en Telefono
 */
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 
-function DetailBlock({ label, value }: { label: string; value: string }) {
+function DetailBlock({ label, value, switchNode }: { 
+  label: string; 
+  value: string; 
+  switchNode?: React.ReactNode; 
+}) {
   return (
     <div className="group flex flex-col transition-all duration-300 ease-out hover:-translate-y-1 cursor-default border-b border-white/10 pb-4">
-      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 transition-colors duration-300 group-hover:text-white/80">
-        {label}
-      </label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 transition-colors duration-300 group-hover:text-white/80">
+          {label}
+        </label>
+        {switchNode}
+      </div>
       <p className="text-base md:text-lg font-semibold tracking-tight transition-all duration-300 group-hover:text-white group-hover:scale-[1.02] origin-left">
         {value}
       </p>
@@ -48,6 +57,9 @@ interface PerfilViewProps {
     apellidos?: string | null;
     email?: string | null;
     direccion?: string | null;
+    estado_civil?: string | null;
+    genero?: string | null;
+    fecha_nac?: string | null;
     url_foto_perfil?: string | null;
     Pais?: {
       nombre_pais?: string | null;
@@ -65,6 +77,44 @@ interface PerfilViewProps {
 }
 
 export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
+  const { user, logout } = useAuth();
+  const userId = user?.id ?? "";
+  const getGenero = (sigla: string | null | undefined) => {
+    const mapa: Record<string, string> = {
+      'M': 'Masculino',
+      'F': 'Femenino',
+      'O': 'Otro'
+    }
+    return sigla ? (mapa[sigla.toUpperCase()] || 'No registrado') : 'No registrado';
+  }
+  const formatFecha = (fechaISO: string | null | undefined) => {
+    if (!fechaISO) return "Sin fecha";
+
+    const soloFecha = fechaISO.split('T')[0]; 
+    const partes = soloFecha.split('-'); 
+    if (partes.length !== 3) return fechaISO;
+    const [anio, mes, dia] = partes;
+    return `${dia}/${mes}/${anio}`;
+  };
+  const [privacidad, setPrivacidad] = useState({
+    direccion: false, genero: false, fecha_nacimiento: false, estado_civil: false,
+  });
+  useEffect(() => {
+    fetch(`/api/perfil/getPrivacidad?id_usuario=${userId}`)
+      .then(r => r.json())
+      .then(j => setPrivacidad(j.data ?? {}))
+      .catch(() => {});
+  }, [userId]);
+  
+  const toggleCampo = async (campo: string, valor: boolean) => {
+    setPrivacidad(prev => ({ ...prev, [campo]: valor }));
+    await fetch("/api/perfil/getPrivacidad", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_usuario: userId, [campo]: valor }),
+    });
+  };
+  
   return (
     <Card className="border-none bg-transparent shadow-none text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
       <CardHeader className="px-6 md:px-8">
@@ -97,15 +147,51 @@ export default function PerfilView({ usuario, telefonos }: PerfilViewProps) {
             label="Nombre y Apellido"
             value={`${usuario.nombres ?? ""} ${usuario.apellidos ?? ""}`.trim() || "-"}
           />
-          <DetailBlock label="Dirección" value={usuario.direccion ?? "-"} />
+          <DetailBlock label="Dirección" value={usuario.direccion ?? "-"}
+            switchNode={<PrivSwitch campo="direccion" valor={privacidad.direccion} onChange={toggleCampo} />}
+          />
+          <DetailBlock label="Género" value={getGenero(usuario.genero)}
+            switchNode={<PrivSwitch campo="genero" valor={privacidad.genero} onChange={toggleCampo} />}
+          />
+          <DetailBlock label="Fecha de Nacimiento" value={formatFecha(usuario.fecha_nac)}
+            switchNode={<PrivSwitch campo="fecha_nacimiento" valor={privacidad.fecha_nacimiento} onChange={toggleCampo} />}
+          />
         </div>
         <div className="flex flex-col gap-6">
           <DetailBlock label="Email" value={usuario.email ?? "-"} />
           <DetailBlock label="Teléfono 1" value={telefonos[0] ?? "No registrado"} />
           <DetailBlock label="Teléfono 2" value={telefonos[1] ?? "No registrado"} />
           <DetailBlock label="Teléfono 3" value={telefonos[2] ?? "No registrado"} />
+          <DetailBlock label="Estado Civil" value={usuario.estado_civil ?? "No registrado"}
+            switchNode={<PrivSwitch campo="estado_civil" valor={privacidad.estado_civil} onChange={toggleCampo} />}
+          />
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function PrivSwitch({ campo, valor, onChange }: {
+  campo: string; valor: boolean; onChange: (campo: string, v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 ml-auto">
+      <span className="text-[10px] text-slate-400">{valor ? "Público" : "Privado"}</span>
+      <button
+        onClick={() => onChange(campo, !valor)}
+        /* 
+           CAMBIOS REALIZADOS:
+           1. Agregamos 'border-white/20' para un borde sutil que combine con tus separadores.
+           2. Aseguramos que 'border' sea de 1px.
+        */
+        className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border border-white/30 transition-colors duration-200 focus:outline-none ${
+          valor ? "bg-[var(--secondary)]" : "bg-slate-800" 
+        }`}
+      >
+        <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ${
+          valor ? "translate-x-4" : "translate-x-0"
+        }`} />
+      </button>
+    </div>
   );
 }

@@ -1,0 +1,229 @@
+"use client";
+/**
+ * dev: Rodrigo Saul Zarate Villarroel       fecha: 04/05/2026
+ * funcionalidad: renderiza un cajón flotante (drawer) interactivo que muestra la lista completa de comentarios,
+ * gestiona el estado de carga y coordina la acción de responder entre los comentarios y el formulario de entrada
+ */
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { X, SlidersHorizontal, Loader2 } from "lucide-react";
+import CommentInput from "./CommentInput";
+import CommentItem, { CommentData } from "./CommentItem";
+import CommentSortModal from "./CommentSortModal";
+
+export default function CommentsDrawer({ blogId, isOpen, onClose, onNewUserComment, onCommentDeleted, isAuthenticated }: any) {
+  const [comments, setComments] = useState<CommentData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [replyingTo, setReplyingTo] = useState<CommentData | null>(null);
+  const [activeRootId, setActiveRootId] = useState<number | null>(null); 
+  const [latestReply, setLatestReply] = useState<{parentId: number, comment: CommentData} | null>(null);
+  const [vvHeight, setVvHeight] = useState<number | undefined>(undefined);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [StrCurrentSort, setStrCurrentSort] = useState("popular");
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
+  const [isSorting, setIsSorting] = useState(false);
+  
+  const fetchComments = useCallback(async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) setIsLoading(true);
+    
+    try {
+      const res = await fetch(`/api/home/blogs/${blogId}/comments?sort=relevante`, {
+        cache: 'no-store' 
+      });
+      if (res.ok) setComments(await res.json());
+    } catch (error) {
+      console.error("Error al refrescar comentarios", error);
+    } finally { 
+      if (!isBackgroundRefresh) setIsLoading(false); 
+    }
+  }, [blogId]);
+
+  const handleInternalDeleteSuccess = () => {
+    fetchComments(true);
+    if (onCommentDeleted) onCommentDeleted();
+  };
+
+  useEffect(() => { 
+    if (isOpen) {
+      const hasComments = comments.length > 0;
+      fetchComments(hasComments); 
+      
+      setReplyingTo(null); 
+      setActiveRootId(null);
+    } 
+  }, [isOpen, fetchComments]);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        setVvHeight(window.visualViewport.height);
+        setIsKeyboardOpen(window.visualViewport.height < window.innerHeight * 0.8);
+      }
+    };
+
+    window.visualViewport?.addEventListener("resize", handleResize);
+    handleResize();
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleResize);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+    setActiveRootId(null);
+  };
+
+  const handleOptimisticSubmit = (tempComment: CommentData) => {
+    if (!replyingTo || !activeRootId) {
+      setComments(prev => [tempComment, ...prev]);
+      if (onNewUserComment) onNewUserComment(tempComment);
+    } else {
+      setLatestReply({ parentId: activeRootId, comment: tempComment });
+    }
+  };
+
+  const handleCommentAdded = (newComment: CommentData, tempId: number, parentId: number | null) => {
+    if (!activeRootId) {
+      setComments(prev => prev.map(c => c.IntIdCom === tempId ? newComment : c));
+      if (onNewUserComment) onNewUserComment(newComment);
+    } else {
+      setLatestReply({ parentId: activeRootId, comment: newComment });
+      setComments(prev => prev.map(c => 
+        c.IntIdCom === activeRootId ? { ...c, IntRepliesCount: c.IntRepliesCount + 1 } : c
+      ));
+    }
+  };
+
+  // Lógica de ordenamiento frontend
+  const handleSortChange = (newSort: string) => {
+    setIsSortModalOpen(false);
+    if (newSort === StrCurrentSort) return;
+
+    setIsSorting(true);
+    setStrCurrentSort(newSort);
+    
+    setTimeout(() => {
+      setIsSorting(false);
+      if (onCommentDeleted) onCommentDeleted();
+    }, 400);
+  };
+
+  const ArrDisplayedComments = useMemo(() => {
+    const arrCopy = [...comments];
+    switch (StrCurrentSort) {
+      case "reciente":
+        return arrCopy.sort((a, b) => {
+          if (a.isOptimistic) return -1;
+          if (b.isOptimistic) return 1;
+          return b.IntIdCom - a.IntIdCom; 
+        });
+      case "antiguo":
+        return arrCopy.sort((a, b) => {
+          if (a.isOptimistic) return 1;
+          if (b.isOptimistic) return -1;
+          return a.IntIdCom - b.IntIdCom;
+        });
+      case "mis_comentarios":
+        return arrCopy.sort((a, b) => {
+          if (a.BolIsOwner && !b.BolIsOwner) return -1;
+          if (!a.BolIsOwner && b.BolIsOwner) return 1;
+          return 0;
+        });
+      case "popular":
+      default:
+        return arrCopy;
+    }
+  }, [comments, StrCurrentSort]);
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-50 flex flex-col justify-end items-center pointer-events-none px-0 sm:px-4"
+        style={{ height: vvHeight ? `${vvHeight}px` : '100%' }}
+      >
+        <div 
+          className="w-full sm:max-w-xl bg-card-bg sm:rounded-2xl rounded-t-2xl flex flex-col pointer-events-auto overflow-hidden shadow-2xl transition-[height] duration-200 ease-out animate-in slide-in-from-bottom-10 sm:zoom-in-95"
+          style={{ height: isKeyboardOpen ? '100%' : '85%' }}
+        >
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 border-b border-card-border sticky top-0 bg-card-bg z-10">
+            <div className="w-8"></div>
+            {/* Botón de ordenamiento */}
+            <div className="relative flex justify-center items-center">
+              <button 
+                onClick={() => setIsSortModalOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 font-bold text-[15px] text-foreground hover:opacity-80 transition-opacity focus:outline-none"
+                aria-label="Cambiar orden de comentarios"
+              >
+                {comments.length} comentarios
+                <SlidersHorizontal className="w-4 h-4" strokeWidth={2.5} />
+              </button>
+              {/* Modal de Ordenamiento */}
+              <CommentSortModal 
+                isOpen={isSortModalOpen} 
+                onClose={() => setIsSortModalOpen(false)} 
+                currentSort={StrCurrentSort}
+                onSortChange={handleSortChange}
+              />
+            </div>
+
+            <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary-fund transition-colors text-foreground">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto px-4 py-5 scrollbar-custom overscroll-contain">
+            {isLoading || isSorting ? (
+              <div className="flex justify-center mt-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : ArrDisplayedComments.length === 0 ? (
+              <p className="text-center text-foreground/50 mt-10 italic">Sé el primero en comentar.</p>
+            ) : (
+              ArrDisplayedComments.map((comment) => (
+                <CommentItem 
+                  key={comment.IntIdCom} 
+                  comment={comment} 
+                  blogId={blogId}
+                  isAuthenticated={isAuthenticated}
+                  onReply={(cmt: CommentData, rootId: number) => {
+                    setReplyingTo(cmt);
+                    setActiveRootId(rootId);
+                  }} 
+                  onDeleteSuccess={handleInternalDeleteSuccess}
+                  latestReply={latestReply}
+                />
+              ))
+            )}
+          </div>
+          
+          {isAuthenticated ? (
+            <div className="flex-shrink-0 border-t border-card-border bg-card-bg">
+              <CommentInput 
+                blogId={blogId} 
+                onCommentAdded={handleCommentAdded} 
+                replyingTo={replyingTo} 
+                onCancelReply={handleCancelReply}
+                onOptimisticSubmit={handleOptimisticSubmit} 
+              />
+            </div>
+          ) : (
+            <div className="flex-shrink-0 p-5 border-t border-card-border bg-secondary-fund text-center">
+              <p className="text-[14px] text-foreground/70 font-medium">
+                Inicia sesión para dejar un comentario.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

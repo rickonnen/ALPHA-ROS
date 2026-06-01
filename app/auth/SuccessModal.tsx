@@ -35,8 +35,8 @@ export default function SuccessModal({
       <div className="relative bg-[#EAE3D9] rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center">
         {/* Icono de éxito */}
         <div className="flex justify-center mb-4">
-          <div className="bg-[#B47B65] rounded-full p-3">
-            <Check size={32} className="text-white" />
+          <div className="border-2 border-green-500 rounded-full p-3">
+            <Check size={32} className="text-green-500" />
           </div>
         </div>
 

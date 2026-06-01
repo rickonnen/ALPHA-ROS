@@ -6,175 +6,261 @@
  * @return Privacy policy page content.
  */
 export default function PrivacyPolicyPage() {
+  const dataSources = [
+    {
+      title: "Registro directo y OAuth",
+      description:
+        "Capturamos correo electrónico e identificadores únicos mediante Google, Discord, LinkedIn y Facebook.",
+    },
+    {
+      title: "Datos de perfil",
+      description:
+        "Se puede almacenar nombre, apellidos, teléfono y, opcionalmente, género y estado civil.",
+    },
+    {
+      title: "Geolocalización",
+      description:
+        "Utilizamos OpenStreetMap y Leaflet. Si el usuario concede permisos, se puede capturar latitud y longitud para funciones de mapa.",
+    },
+  ];
+
+  const sections = [
+    {
+      title: "1. Recolección de información",
+      content: [
+        "Nuestra arquitectura interactúa con datos reales mediante registro directo, autenticación OAuth, formularios de perfil, publicaciones de inmuebles y servicios de geolocalización.",
+        "Cuando el usuario inicia sesión o utiliza funciones de la plataforma, pueden registrarse datos técnicos como dirección IP, fecha, hora, navegador, identificadores de dispositivo y actividad básica de navegación.",
+      ],
+    },
+    {
+      title: "2. Uso y finalidad del tratamiento",
+      content: [
+        "Los datos no se venden a terceros. Se procesan internamente para operar, proteger y mejorar la plataforma.",
+      ],
+      items: [
+        "Algoritmos de recomendación basados en historial de búsqueda y etiquetas de interés.",
+        "Sugerencias de inmuebles en el Home Page.",
+        "Mensajes de bienvenida, confirmaciones de pago y alertas de seguridad vía Gmail y WhatsApp.",
+        "Registro de IP y geolocalización para auditoría en caso de reportes de estafa o contenido indebido.",
+      ],
+    },
+    {
+      title: "3. Almacenamiento y retención",
+      content: [
+        "Para garantizar la integridad referencial de la base de datos, ciertas entidades no se eliminan físicamente de inmediato.",
+        "Las publicaciones y comentarios pueden aplicar una política de Soft Delete, es decir, se marcan como inactivos u ocultos sin eliminarse de forma inmediata.",
+      ],
+    },
+    {
+      title: "4. Baja o desactivación de cuenta",
+      content: [
+        "No existe eliminación total instantánea. El usuario puede desactivar su cuenta, lo cual restringe el acceso y oculta su información del dominio público.",
+        "Algunos registros históricos pueden conservarse por razones de seguridad técnica, auditoría, prevención de fraude o integridad del sistema.",
+      ],
+    },
+    {
+      title: "5. Local Storage y tecnologías similares",
+      content: [
+        "Utilizamos almacenamiento local del navegador para persistir actividad del usuario, mejorar la velocidad de carga y mantener ciertas preferencias sin depender exclusivamente de cookies.",
+      ],
+    },
+    {
+      title: "6. Compartición de información",
+      content: [
+        "PropBol no vende datos personales. Sin embargo, puede compartir información mínima necesaria con proveedores tecnológicos que apoyan la operación de la plataforma, como hosting, infraestructura, seguridad, correo, analítica o servicios de mapas.",
+        "También podrán compartirse datos con autoridades competentes en caso de investigaciones por fraude inmobiliario o requerimientos legales válidos.",
+      ],
+    },
+    {
+      title: "7. Moderación y sanciones",
+      content: [
+        "La plataforma cuenta con sistema de reportes. El Administrador puede tomar medidas cuando existan indicios de fraude, uso indebido, contenido ofensivo o vulneración de derechos.",
+      ],
+      items: [
+        "Suspender cuentas por 7 días, 30 días o de forma permanente.",
+        "Eliminar comentarios ofensivos o publicaciones indebidas.",
+        "Restringir funciones de usuarios reportados.",
+        "Compartir datos de contacto con autoridades competentes cuando corresponda.",
+      ],
+    },
+    {
+      title: "8. Derechos del titular",
+      content: [
+        "El usuario puede actualizar su información desde el apartado Mi Perfil, desactivar notificaciones automáticas y solicitar soporte técnico en caso de vulneración o dudas sobre sus datos.",
+      ],
+    },
+    {
+      title: "9. Seguridad",
+      content: [
+        "PropBol adopta medidas razonables de seguridad administrativas, técnicas y organizativas para proteger la información frente a accesos no autorizados, pérdida, alteración o divulgación indebida.",
+        "Ningún sistema digital es absolutamente infalible, por lo que el usuario también debe cuidar sus credenciales y verificar la información antes de realizar operaciones inmobiliarias.",
+      ],
+    },
+    {
+      title: "10. Cambios a esta política",
+      content: [
+        "PropBol podrá modificar esta Política de Privacidad cuando sea necesario. La versión vigente será la publicada en esta sección.",
+      ],
+    },
+    {
+      title: "11. Contacto",
+      content: [
+        "Para consultas relacionadas con privacidad, tratamiento de datos o soporte técnico, el usuario podrá comunicarse mediante los canales habilitados por la plataforma.",
+      ],
+    },
+  ];
+
   return (
-    <section className="w-full bg-[#F4EFE6] px-6 py-14 md:px-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-10 max-w-4xl">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-[#C26E5A]">
-            PROPBOL
-          </p>
+    <section className="w-full bg-background px-4 py-8 text-foreground sm:px-6 md:px-10 md:py-14">
+      <div className="mx-auto max-w-7xl">
+        {/* HERO */}
+        <div className="overflow-hidden rounded-[2rem] bg-card-bg shadow-sm ring-1 ring-card-border">
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="p-6 md:p-10 lg:p-12">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-secondary sm:text-sm">
+                PROPBOL · Protección de datos
+              </p>
 
-          <h1 className="mb-4 text-5xl font-bold tracking-tight text-[#1F3A4D]">
-            Políticas de Privacidad
-          </h1>
+              <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl md:text-6xl">
+                Políticas de Privacidad
+              </h1>
 
-          <p className="max-w-3xl text-base leading-8 text-[#4E4E4E]">
-            En PROPBOL respetamos la privacidad de nuestros usuarios y
-            procuramos tratar la información personal de forma responsable,
-            informada y segura.
-          </p>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-foreground/80">
+                En PropBol respetamos la privacidad de nuestros usuarios y
+                tratamos la información personal de forma responsable, informada
+                y segura.
+              </p>
+
+              <div className="mt-8 rounded-3xl bg-background p-5 ring-1 ring-card-border">
+                <p className="text-sm font-semibold text-secondary">
+                  Compromiso de protección de datos
+                </p>
+                <p className="mt-2 text-sm leading-7 text-foreground/75">
+                  La plataforma procesa datos reales únicamente para operar,
+                  proteger, recomendar, notificar y mejorar la experiencia
+                  inmobiliaria del usuario.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-primary p-6 text-primary-foreground md:p-10 lg:p-12">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary-foreground/70">
+                Principios
+              </p>
+
+              <div className="mt-8 grid gap-4">
+                {["No vendemos datos", "Soft Delete", "Seguridad", "Control del usuario"].map(
+                  (item, index) => (
+                    <div
+                      key={item}
+                      className="rounded-3xl bg-background p-5 text-primary ring-1 ring-card-border"
+                    >
+                      <p className="text-sm font-bold text-secondary">
+                        0{index + 1}
+                      </p>
+                      <h2 className="mt-2 text-xl font-bold">{item}</h2>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-[28px] bg-[#EEE8DE] p-8 shadow-sm ring-1 ring-[#DDD5C9] md:p-12">
-          <div className="space-y-8">
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                1. Información que recopilamos
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                Podemos recopilar información que el usuario proporciona
-                directamente, como nombre, correo electrónico, número de
-                teléfono, datos de cuenta, mensajes enviados por formularios y
-                datos incluidos en publicaciones de inmuebles.
-              </p>
-              <p className="mt-4 text-base leading-8 text-[#4E4E4E]">
-                También podemos recopilar información técnica de navegación,
-                como dirección IP, tipo de navegador, páginas visitadas, fecha y
-                hora de acceso, identificadores de dispositivo y otros datos
-                necesarios para la seguridad, estabilidad y análisis básico del
-                funcionamiento de la plataforma.
-              </p>
-            </section>
+        {/* DATA SOURCES */}
+        <div className="mt-10">
+          <div className="mb-6">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-secondary">
+              Fuentes de información
+            </p>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                2. Finalidades del tratamiento
-              </h2>
-              <p className="mb-4 text-base leading-8 text-[#4E4E4E]">
-                La información podrá ser utilizada para:
-              </p>
-              <ul className="list-disc space-y-2 pl-6 text-base leading-8 text-[#4E4E4E]">
-                <li>crear y administrar cuentas de usuario;</li>
-                <li>permitir la publicación y visualización de inmuebles;</li>
-                <li>facilitar el contacto entre usuarios;</li>
-                <li>responder consultas, solicitudes o reclamos;</li>
-                <li>mejorar la seguridad y funcionamiento de la plataforma;</li>
-                <li>
-                  cumplir obligaciones legales o requerimientos válidos de
-                  autoridad competente.
-                </li>
-              </ul>
-            </section>
+            <h2 className="text-3xl font-bold tracking-tight text-primary md:text-4xl">
+              Qué datos puede recopilar la plataforma
+            </h2>
+          </div>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                3. Base de tratamiento
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                PROPBOL trata los datos en la medida necesaria para prestar sus
-                servicios, atender interacciones solicitadas por el usuario,
-                gestionar la seguridad de la plataforma y, cuando corresponda,
-                sobre la base del consentimiento del titular.
-              </p>
-            </section>
+          <div className="grid gap-5 md:grid-cols-3">
+            {dataSources.map((source) => (
+              <article
+                key={source.title}
+                className="rounded-[2rem] bg-card-bg p-6 shadow-sm ring-1 ring-card-border"
+              >
+                <h3 className="text-xl font-bold text-primary">
+                  {source.title}
+                </h3>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                4. Compartición de información
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                PROPBOL no vende datos personales. Sin embargo, cierta
-                información puede ser compartida con proveedores tecnológicos
-                que apoyan la operación de la plataforma, tales como servicios
-                de hosting, infraestructura, seguridad, correo o analítica,
-                únicamente en la medida necesaria para la prestación del
-                servicio.
-              </p>
-            </section>
+                <p className="mt-4 text-sm leading-7 text-foreground/75">
+                  {source.description}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                5. Hosting e infraestructura
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                La plataforma puede operar sobre infraestructura tecnológica de
-                terceros, incluido Vercel. En consecuencia, determinados datos
-                técnicos o personales pueden ser almacenados, procesados o
-                transmitidos fuera de Bolivia, de acuerdo con las condiciones
-                técnicas del proveedor y las medidas de seguridad aplicables.
-              </p>
-            </section>
+        {/* CONTENT */}
+        <div className="mt-10 grid gap-8 lg:grid-cols-[280px_1fr] lg:items-start">
+          <aside className="rounded-[2rem] bg-card-bg p-5 shadow-sm ring-1 ring-card-border lg:sticky lg:top-24">
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-secondary">
+              Índice
+            </p>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                6. Conservación de datos
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                Conservaremos la información personal durante el tiempo
-                necesario para cumplir las finalidades descritas en esta
-                política, atender obligaciones legales, resolver controversias y
-                mantener la seguridad e integridad de la plataforma.
-              </p>
-            </section>
+            <nav className="space-y-2">
+              {sections.map((section) => (
+                <a
+                  key={section.title}
+                  href={`#${section.title
+                    .toLowerCase()
+                    .replaceAll(" ", "-")
+                    .replaceAll(".", "")
+                    .replaceAll(",", "")}`}
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-foreground/70 transition hover:bg-background hover:text-primary"
+                >
+                  {section.title}
+                </a>
+              ))}
+            </nav>
+          </aside>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                7. Derechos del usuario
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                El titular de los datos podrá solicitar, cuando corresponda,
-                acceso, corrección, actualización o eliminación de su
-                información personal, así como formular observaciones sobre el
-                tratamiento de sus datos mediante los canales de contacto
-                habilitados por PROPBOL.
-              </p>
-            </section>
+          <div className="space-y-5">
+            {sections.map((section) => (
+              <section
+                key={section.title}
+                id={section.title
+                  .toLowerCase()
+                  .replaceAll(" ", "-")
+                  .replaceAll(".", "")
+                  .replaceAll(",", "")}
+                className="scroll-mt-28 rounded-[2rem] bg-card-bg p-6 shadow-sm ring-1 ring-card-border md:p-8"
+              >
+                <h2 className="text-2xl font-bold tracking-tight text-primary md:text-3xl">
+                  {section.title}
+                </h2>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                8. Seguridad
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                PROPBOL adopta medidas razonables de seguridad administrativas,
-                técnicas y organizativas para proteger la información frente a
-                accesos no autorizados, pérdida, alteración o divulgación
-                indebida. No obstante, ningún sistema es absolutamente
-                infalible.
-              </p>
-            </section>
+                <div className="mt-5 space-y-4">
+                  {section.content.map((paragraph) => (
+                    <p
+                      key={paragraph}
+                      className="text-base leading-8 text-foreground/80"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
 
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                9. Cookies y tecnologías similares
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                La plataforma puede utilizar cookies o tecnologías similares
-                para recordar preferencias, mantener sesiones activas, mejorar
-                la experiencia del usuario y obtener información estadística o
-                técnica sobre el uso del sitio.
-              </p>
-            </section>
-
-            <section className="border-b border-[#D8D3CC] pb-6 last:border-b-0 last:pb-0">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                10. Cambios a esta política
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                PROPBOL podrá modificar esta Política de Privacidad en cualquier
-                momento. La versión vigente será la publicada en esta sección.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#1F3A4D]">
-                11. Contacto
-              </h2>
-              <p className="text-base leading-8 text-[#4E4E4E]">
-                Para consultas relacionadas con privacidad o tratamiento de
-                datos, el usuario podrá contactarse a través de los canales de
-                atención habilitados por la plataforma.
-              </p>
-            </section>
+                {section.items && (
+                  <ul className="mt-5 grid gap-3">
+                    {section.items.map((item) => (
+                      <li
+                        key={item}
+                        className="rounded-2xl bg-background px-4 py-3 text-sm leading-7 text-foreground/75 ring-1 ring-card-border"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ))}
           </div>
         </div>
       </div>

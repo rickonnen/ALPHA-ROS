@@ -11,6 +11,9 @@ export function GlobalShortcut() {
     const pressedKeys = new Set<string>();
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // COMPROBACIÓN DE SEGURIDAD: Ignorar eventos sin una propiedad 'key' válida
+      if (!e.key) return;
+
       // No se activa si se escribe dentro de un input o textarea
       const activeTag = document.activeElement?.tagName;
       if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT") {
@@ -35,6 +38,9 @@ export function GlobalShortcut() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // 2. COMPROBACIÓN DE SEGURIDAD: Ignorar eventos sin una propiedad 'key' válida
+      if (!e.key) return;
+      
       // Cuando se suelta la tecla, se saca de la lista
       pressedKeys.delete(e.key.toLowerCase());
     };

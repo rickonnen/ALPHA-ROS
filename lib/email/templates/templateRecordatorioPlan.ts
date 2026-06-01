@@ -1,0 +1,69 @@
+export function templateRecordatorioPlan(
+  nombre: string,
+  plan: string,
+  tipo: '7D' | '48H'
+): string {
+  const fecha = new Date().toLocaleDateString("es-BO", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+
+  const config = {
+    '7D': { 
+      titulo: "¡Aviso de Vencimiento!", 
+      sub: "Tu plan vence en 7 días", 
+      color: "#1F3A4D",
+      mensajePersonalizado: `Su plan ${plan} vence en 7 días. Por favor, realice el pago antes de que expire.`
+    },
+    '48H': { 
+      titulo: "Recordatorio de Pago", 
+      sub: "Faltan solo 5 días", 
+      color: "#D97706",
+      mensajePersonalizado: `Su plan ${plan} vence en 5 días. Por favor, realice el pago antes de que expire.`
+    }
+  };
+
+  const { titulo, sub, color, mensajePersonalizado } = config[tipo];
+
+  return `
+    <!DOCTYPE html>
+    <html lang="es" style="margin:0;padding:0">
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Arial,sans-serif">
+      <div style="max-width:600px;margin:0 auto;background:white">
+
+        <div style="padding:30px 0 24px 0;text-align:center">
+          <img src="https://res.cloudinary.com/dxy43tgpy/image/upload/f_auto,q_auto/logo-principal_jxkvja"
+               alt="PROPBOL" style="height:60px;vertical-align:middle" />
+          <span style="font-size:26px;font-weight:800;color:#1F3A4D;vertical-align:middle;margin-left:10px">Propbol</span>
+        </div>
+
+        <div style="background:${color};padding:28px 24px;text-align:center;color:white;border-radius:10px;margin:0 24px">
+          <h1 style="margin:0;font-size:22px;font-weight:700">${titulo}</h1>
+          <p style="margin:8px 0 0 0;font-size:13px;opacity:0.9">${sub}</p>
+        </div>
+
+        <div style="padding:32px 48px;color:#333">
+          <p style="margin:0 0 24px 0;font-size:15px">Hola, <strong>${nombre}</strong> 👋</p>
+        
+          <div style="background:#f0f4f8;padding:16px;border-radius:8px;margin:20px 0;border-left:4px solid ${color}">
+             <p style="margin:0;font-size:14px;color:#333">
+               ${mensajePersonalizado}
+             </p>
+          </div>
+
+          <div style="text-align:center;padding:16px 0">
+            <a href="https://alpha-ros-deploy.vercel.app/cobros/planes"
+               style="display:inline-block;background:${color};color:white;padding:12px 32px;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
+              Ir a mi cuenta
+            </a>
+          </div>
+
+        <p style="margin:0;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;text-align:left">
+           Si tienes preguntas, contacta a soporte: <a href="mailto:soportepropbol@gmail.com" style="color:#1F3A4D;text-decoration:none;font-weight:600">soportepropbol@gmail.com</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}

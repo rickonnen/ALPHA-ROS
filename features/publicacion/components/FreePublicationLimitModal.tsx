@@ -1,29 +1,34 @@
 "use client";
+
 /**
  * @Dev: jimmyP
  * @Fecha: 29/03/2026
- * @Funcionalidad: Modal de la HU5. Controlado externamente por bolOpen.
- * Solo se muestra cuando PropertyActions confirma límite alcanzado
- * y activa bolOpen=true. Nunca se abre solo al montar.
- * @param {FreePublicationLimitModalProps} props - Callback, estado y textos del modal.
- * @return {JSX.Element | null} AlertDialog controlado o null si bolOpen es false.
+ * @Funcionalidad: Modal HU5. Se muestra cuando el usuario gratuito
+ * ha agotado sus 2 publicaciones gratuitas.
+ */
+/**
+ * Dev: Dylan Coca Beltran - xdev/sow-dylanc
+ * Fecha: 26/04/2026
+ * Fix: Reemplazo de colores hardcodeados por variables CSS del sistema para soporte de modo oscuro:
+ *      bg-white → bg-card-bg, text-[#1a1a1a] → text-foreground,
+ *      text-[#2E2E2E]/70 → text-muted-foreground, border-[#C26E5A] → border-secondary,
+ *      text-[#C26E5A] → text-secondary, hover:bg-[#C26E5A]/10 → hover:bg-secondary/10,
+ *      hover:text-[#C26E5A] → hover:text-secondary
  */
 
-// 1. IMPORTACIÓN CORREGIDA PARA NAVEGACIÓN (Solución a RM5-01)
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-// PascalCase para la interfaz - Estándar Alpha-Ros
 interface FreePublicationLimitModalProps {
-  bolOpen: boolean;   // controla si el modal está visible
+  bolOpen: boolean;
   onBack: () => void;
   strPlansHref?: string;
   strTitle?: string;
@@ -37,58 +42,47 @@ export default function FreePublicationLimitModal({
   strTitle = "Has excedido tus publicaciones gratuitas",
   strDescription = "Tu plan gratuito te concede 2 publicaciones gratuitas, cambia a un plan de pago para hacer más publicaciones",
 }: FreePublicationLimitModalProps) {
-  
-  // Instanciamos el enrutador de Next.js
-  const router = useRouter(); 
 
-  // No renderizar nada si el modal está cerrado
-  if (!bolOpen) return null;
+  const router = useRouter();
 
   return (
-    <AlertDialog open={bolOpen}>
-      <AlertDialogContent
-        // Añadido bg-white para evitar colores de fondo heredados
-        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-white" 
-        style={{ fontFamily: 'var(--font-geist-sans)' }}
+    <Dialog open={bolOpen} onOpenChange={(open) => { if (!open) onBack(); }}>
+      <DialogContent
+        className="w-[92vw] max-w-sm sm:max-w-md rounded-2xl p-6 sm:p-8 bg-card-bg"
+        style={{ fontFamily: "var(--font-geist-sans)" }}
       >
-        <AlertDialogHeader className="text-center space-y-3">
-          <AlertDialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight">
+        <DialogHeader className="text-center space-y-3">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold text-center leading-tight text-foreground">
             {strTitle}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm sm:text-base text-[#2E2E2E]/70 text-center leading-relaxed">
+          </DialogTitle>
+          <DialogDescription className="text-sm sm:text-base text-muted-foreground text-center leading-relaxed">
             {strDescription}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Añadido bg-transparent para evitar el fondo raro reportado en RM5-04 */}
-        <AlertDialogFooter className="mt-6 flex flex-row items-center justify-between gap-3 sm:gap-4 bg-transparent border-none">
-          
-          {/* BOTÓN ATRÁS */}
+        <DialogFooter className="mt-6 flex !flex-row items-center justify-between gap-3 sm:gap-4 bg-transparent border-none">
           <Button
             type="button"
-            variant="outline" // RM5-02 y RM5-07: Ambos botones ahora usan el mismo variante base
+            variant="outline"
             onClick={onBack}
-            // RM5-03: cursor-pointer explícito. Mismas clases exactas para ambos botones
-            className="flex-1 border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 hover:text-[#C26E5A] font-semibold cursor-pointer"
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
           >
             {"< Atrás"}
           </Button>
 
-          {/* BOTÓN VER PLANES */}
           <Button
             type="button"
-            variant="outline" // RM5-02 y RM5-07: Unificados
-            className="flex-1 border-[#C26E5A] text-[#C26E5A] bg-transparent hover:bg-[#C26E5A]/10 hover:text-[#C26E5A] font-semibold cursor-pointer"
+            variant="outline"
+            className="flex-1 border-secondary text-secondary bg-transparent hover:bg-secondary/10 hover:text-secondary font-semibold cursor-pointer"
             onClick={() => {
-              onBack(); // Primero cerramos el modal limpiamente
-              router.push(strPlansHref); // RM5-01: Navegación nativa de Next.js sin crashear la página
+              onBack();
+              router.push(strPlansHref);
             }}
           >
             {"Ver Planes →"}
           </Button>
-
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,125 +1,142 @@
 "use client";
-import Link from "next/link";
-import { PlanPublicacion } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/app/auth/AuthContext";
-import { useEffect } from "react";
 import { usePagoCliente } from "@/components/hooks/usePagoCliente";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import ModalPago from "@/components/cobros/ModalPago";
+import { ResumenPago } from "./ResumenPago";
+import { AccionesPago } from "./AccionesPago";
+import { PrevisualizacionFoto } from "./PrevisualizacionFoto";
 
-interface Props {
-  plan: Omit<PlanPublicacion, "precio_plan"> & { precio_plan: number };
-  planId: string;
+interface DatosPago {
+  titulo: string;
+  descripcion: string;
+  detalleItems: string[];
+  precio: number;
+  idReferencia: string;
+  modalidad: string;
+  tipoPlan: number;
+  idPublicacion: string | null;
 }
 
+interface Props {
+  datos: DatosPago;
+  backUrl: string;
+  resumenPublicacionNode?: React.ReactNode; 
+}
 
-export default function PagoCliente({ plan, planId }: Props) {
-  
+export default function PagoCliente({ datos, backUrl, resumenPublicacionNode }: Props) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [verFoto, setVerFoto] = useState(false);
+  const [tipoPagoSeleccionado, setTipoPagoSeleccionado] = useState<"qr" | "virtual">("qr");
 
+  //para planes
   const {
-    qrUrl,
-    generandoQr,
-    estadoModal,
-    setEstadoModal,
+    qrUrl, 
+    generandoQr, 
+    estadoModal, 
+    setEstadoModal, 
     manejarAceptarPago,
-    alDarClickEnVerificarPrincipal,
+    manejarDescarga, 
+    alDarClickEnVerificarPrincipal, 
     irAlPerfil,
-  } = usePagoCliente(plan, planId);
+    archivoSeleccionado, 
+    setArchivoSeleccionado, 
+    previewUrl, 
+    setPreviewUrl,
+    manejarSeleccionArchivo, 
+    fileInputRef, 
+    tienePagoPendiente, 
+    estaCargandoEstado, 
+    datosCrypto,      
+    cargandoCrypto,   
+    iniciarPagoCrypto
+  } = usePagoCliente(datos.idReferencia, datos.modalidad, datos.idPublicacion);
 
-  // por si no es un usuario logueado mostrar ese return
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/cobros/planes?auth_required=true");
+    // Solo se dispara una vez cuando el usuario carga la página y está logueado
+    if (user?.id && !datosCrypto && !cargandoCrypto) {
+      iniciarPagoCrypto(datos.precio, datos.idReferencia);
     }
-  }, [user, isLoading, router]);
+  }, [user?.id, datos.idReferencia]);
 
- 
+
+  if (isLoading || !user) return <div className="flex min-h-screen items-center justify-center">Cargando...</div>;
+
+  const manejarSeleccionYAbrir = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    if (file && file.size > 10 * 1024 * 1024) { // Límite de 10MB
+      alert("La imagen es muy pesada. Por favor, sube una menor a 10MB o toma una captura de pantalla.");
+      e.target.value = ""; 
+      return;
+    }
+
+    manejarSeleccionArchivo(e);
+    setVerFoto(true); 
+};
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-background">
-      {/* Columna Izquierda */}
-      <div className="flex w-full flex-col justify-between bg-muted/30 p-10 md:w-1/2 lg:p-16">
-        <div>
-          <h1 className="mb-8 text-4xl font-extrabold tracking-tight text-foreground md:text-5xl uppercase">
-            {plan.nombre_plan}
-          </h1>
-          <h2 className="mb-4 text-xl font-bold text-foreground">
-            Descripción
-          </h2>
-          <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
-            Adquiere {plan.cant_publicaciones} cupos por un precio especial.
-          </div>
-        </div>
+    <div className="flex min-h-screen flex-col md:flex-row">
+      <div className="flex w-full flex-col bg-muted/30 md:w-1/2 border-r border-border/50">
+        <div className="p-10 lg:p-16 flex flex-col h-full w-full">
+           
+           {/* Eliminamos el card de aquí arriba y se lo pasamos como prop al ResumenPago */}
+           <ResumenPago 
+             titulo={datos.titulo} descripcion={datos.descripcion} 
+             detalles={datos.detalleItems} monto={datos.precio} backUrl={backUrl} 
+             tipoPago={tipoPagoSeleccionado}
+             tipoPlan={datos.tipoPlan}
+             resumenPublicacionNode={resumenPublicacionNode} 
+           />
 
-        <div className="mt-12">
-          <Link href={`/cobros/planes?id=${user?.id}`}>
-            <Button variant="default">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Volver
-            </Button>
-          </Link>
         </div>
       </div>
 
-
-      {/* Columna Derecha */}
-      <div className="flex w-full flex-col items-center justify-center p-10 md:w-1/2 lg:p-16">
-        <div className="flex flex-col items-center w-full max-w-sm">
-          <h2 className="text-2xl font-medium text-muted-foreground mb-2">
-            Total a pagar
-          </h2>
-          <div className="text-3xl mb-10 text-foreground font-semibold">
-            $ {Number(plan.precio_plan).toLocaleString("es-ES")}
-          </div>
-
-          <div className="mb-10 flex h-80 w-80 items-center justify-center rounded-md border border-border shadow-sm bg-white p-6">
-            {generandoQr ? (
-              <Skeleton className="h-[300px] w-[300px]" />
-            ) : qrUrl ? (
-              <img
-                src={qrUrl}
-                alt="Código QR de Pago"
-                width={300}
-                height={300}
-                className="h-[300px] w-[300px] block object-contain" 
-              />
-            ) : (
-              <span className="text-sm uppercase text-muted-foreground font-medium text-center">
-                Error al cargar QR
-              </span>
-            )}
-          </div>
-
-          <div className="flex w-full flex-col gap-4">
-            <Button
-              variant="default"
-              size="lg"
-              className="w-full font-semibold text-lg py-6 shadow-md"
-              onClick={alDarClickEnVerificarPrincipal}
-            >
-              Verificar Pago
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-full font-bold text-lg py-6 shadow-md transition-colors"
-              //onClick={manejarDescarga}
-            >
-              DESCARGAR QR
-            </Button>
-          </div>
-        </div>
-      </div>
-      <ModalPago
-        estadoModal={estadoModal}
+      <AccionesPago 
+        idUsuario={user.id}
+        precio={datos.precio} 
+        generandoQr={generandoQr} 
+        qrUrl={qrUrl}
+        archivoSeleccionado={archivoSeleccionado} 
+        tienePagoPendiente={tienePagoPendiente}
+        estaCargandoEstado={estaCargandoEstado} 
+        fileInputRef={fileInputRef}
+        onVerificar={alDarClickEnVerificarPrincipal} 
+        onDescargar={manejarDescarga}
+        onSeleccionarArchivo={manejarSeleccionYAbrir} 
+        onQuitarArchivo={() => {
+          setArchivoSeleccionado(null);
+          setPreviewUrl(null); 
+          setVerFoto(false);  
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ""; 
+          }
+        }}
+        onVerFoto={() => setVerFoto(true)}
+        datosCrypto={datosCrypto}
+        cargandoCrypto={cargandoCrypto}
+        iniciarPagoCrypto={iniciarPagoCrypto}
+        idReferencia={datos.idReferencia}
+        tipoPagoSeleccionado={tipoPagoSeleccionado}
+        onTabChange={setTipoPagoSeleccionado}
         setEstadoModal={setEstadoModal}
-        manejarAceptarPago={manejarAceptarPago}
-        irAlPerfil={irAlPerfil}
-      />                                  
+      />
+
+      {verFoto && previewUrl && (
+        <PrevisualizacionFoto 
+          url={previewUrl} 
+          onClose={() => setVerFoto(false)}
+        />
+      )}
+
+      <ModalPago 
+        estadoModal={estadoModal} setEstadoModal={setEstadoModal} 
+        manejarDescarga={manejarDescarga} manejarAceptarPago={manejarAceptarPago}
+        irAlPerfil={irAlPerfil} nombrePlan={datos.titulo} 
+        archivoSeleccionado={archivoSeleccionado} setArchivoSeleccionado={setArchivoSeleccionado}
+      />
     </div>
   );
 }

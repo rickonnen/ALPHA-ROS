@@ -16,7 +16,7 @@ export function useCarousel({ intTotalItems, intAutoPlayDelay }: UseCarouselProp
   const [intCurrentIndex, setIntCurrentIndex] = useState<number>(0);
   const [bolIsVisible, setBolIsVisible] = useState<boolean>(true);
 
-  const objBannerRef = useRef<HTMLElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const objTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fltTouchStart = useRef<number | null>(null);
   const fltTouchEnd = useRef<number | null>(null);
@@ -84,8 +84,8 @@ export function useCarousel({ intTotalItems, intAutoPlayDelay }: UseCarouselProp
       { threshold: 0.1 },
     );
 
-    if (objBannerRef.current) {
-      objObserver.observe(objBannerRef.current);
+    if (containerRef.current) {
+      objObserver.observe(containerRef.current);
     }
 
     return () => {
@@ -108,7 +108,7 @@ export function useCarousel({ intTotalItems, intAutoPlayDelay }: UseCarouselProp
 
   return {
     intCurrentIndex,
-    objBannerRef,
+    containerRef,
     bolShowControls,
     goToNextImage,
     goToPreviousImage,

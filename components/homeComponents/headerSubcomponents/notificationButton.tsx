@@ -9,11 +9,12 @@
  */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { NotificationBadge } from "@/app/home/components/notifications/NotificationBadge";
 import { NotificationPanel } from "@/app/home/components/notifications/NotificationPanel";
-import { useClickOutside } from "../../hooks/useClickOutside"; // Ajusta la ruta relativa a tus hooks
+import { useClickOutside } from "../../hooks/useClickOutside";
+import { useRouter } from "next/navigation";
 
 interface NotificationButtonProps {
   objUser: any;
@@ -29,13 +30,26 @@ export const NotificationButton = ({
   strButtonClasses,
 }: NotificationButtonProps) => {
   const [bolShowNotifications, setBolShowNotifications] = useState(false);
+  const [showTodasNotif, setShowTodasNotif] = useState(false);
+  const router = useRouter();
   const refContainer = useRef<HTMLDivElement | null>(null);
 
   useClickOutside(
     [refContainer],
     () => setBolShowNotifications(false),
-    bolShowNotifications
+    { enabled: bolShowNotifications }
   );
+
+ // Carga el conteo inicial al montar (sin canal realtime extra)
+useEffect(() => {
+  if (!objUser?.id) return;
+
+  const stored = localStorage.getItem("notification_unread_count");
+  if (!stored) {
+    // Si no hay nada en localStorage, fuerza una carga inicial
+    window.dispatchEvent(new Event("refresh-notification-badge"));
+  }
+}, [objUser?.id]);
 
   const handleToggleNotifications = () => {
     // si hay usuario logueado alternamos el panel, sino mostramos el modal de Auth
@@ -58,7 +72,7 @@ export const NotificationButton = ({
           alt="Notificaciones"
           width={24}
           height={24}
-          className="w-6 h-6 object-contain"
+          className="w-6 h-6 object-contain svg-theme-invert"
         />
         <NotificationBadge count={unreadCount} />
       </button>
@@ -66,7 +80,13 @@ export const NotificationButton = ({
       {/* renderizado condicional del panel solo si está abierto y hay sesión */}
       {objUser && bolShowNotifications && (
         <div className="absolute right-[-15px] top-full mt-0 z-50">
-          <NotificationPanel />
+          <NotificationPanel
+            onClose={() => setBolShowNotifications(false)}
+            onVerTodas={() => {
+              setBolShowNotifications(false);
+              router.push("/notification");
+            }}
+          />
         </div>
       )}
     </div>

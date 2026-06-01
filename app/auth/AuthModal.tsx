@@ -2,7 +2,14 @@
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import { useState, useEffect } from "react";
+import ForgotPasswordForm from "./ForgotPasswordForm";
+import ResetCodeForm from "./ResetCodeForm";
+import NewPasswordForm from "./NewPasswordForm";
+import SuccessModal from "./SuccessModal";
+import { useResetFlow } from "./useResetFlow";
 import { X } from "lucide-react";
+import { useMagicLinkFlow } from "./useMagicLinkFlow";
+import ReactivacionCuentaForm from "./ReactivacionCuentaForm";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,57 +19,129 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(initialMode === "login");
+  const { screen, setScreen, forgotEmail, setForgotEmail, clearResetFlow } = useResetFlow();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const magicLink = useMagicLinkFlow();
+  const [emailReactivacion, setEmailReactivacion] = useState("");
 
   useEffect(() => {
     setIsLogin(initialMode === "login");
   }, [initialMode]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+  
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (magicLink.isActive) return;
+  
+      if (screen === "reactivacion") setScreen("auth");
+      else if (screen === "forgot")  setScreen("auth");
+      else if (screen === "code")    setScreen("forgot");
+      else if (screen === "newpass") setScreen("code");
+      else onClose(); // pantalla principal → cierra el modal
+    }
+  
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, screen, magicLink.isActive, onClose, setScreen]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
-      {/* Fondo desenfocado (Backdrop) - Cierra al hacer clic */}
-      <div 
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm" 
-        onClick={onClose} 
-      />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       
-      {/* Panel Lateral Deslizable (Color de fondo de tu diseño: #EAE3D9) */}
-      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] shadow-2xl p-10 flex flex-col">
-        
-        {/* Botón de cierre superior (Volver al inicio) */}
-        <button 
-          onClick={onClose} 
-          className="self-end text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline"
-        >
-          <X size={16} /> Volver al inicio
-        </button>
-        
-        {/* Tabs de Selección */}
-        <div className="flex gap-4 mt-12 mb-8 justify-center bg-white p-1 rounded-full shadow-sm">
-          <button 
-            onClick={() => setIsLogin(true)}
-            className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#0F172A] text-white' : 'text-gray-400'}`}
-          >
-            Iniciar sesión
-          </button>
-          <button 
-            onClick={() => setIsLogin(false)}
-            className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#0F172A] text-white' : 'text-gray-400'}`}
-          >
-            Crear cuenta
+      <div className="relative w-full max-w-[480px] h-full bg-[#EAE3D9] dark:bg-[#2b2b2b] shadow-2xl p-6 flex flex-col">
+      {screen !== "reactivacion" && (
+        <div className="flex justify-between items-center mb-4">
+          {screen === "forgot" ? (
+            <button onClick={() => setScreen("auth")} className="text-[#B47B65] font-bold text-sm flex items-center gap-1 hover:underline">
+              ← Login
+            </button>
+          ) : (
+            <magicLink.BackButton />
+          )}
+          <button onClick={onClose} className="text-[#B47B65] font-bold flex items-center gap-1 hover:underline" style={{ fontSize: "13px" }}>
+            <X size={14} /> Volver al inicio
           </button>
         </div>
+      )}
 
-        {/* Que formulario mostrar */}
+        <magicLink.Screen />
+
+
+        {!magicLink.isActive && (
+          <>
+
+
+        {screen === "auth" && (
+          <div className="flex gap-4 mt-12 mb-8 justify-center bg-white dark:bg-[#3a3a3a] p-1 rounded-full shadow-sm">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`px-8 py-2 rounded-full font-bold transition ${isLogin ? 'bg-[#1C3445] text-white dark:bg-[#C26E5A] dark:text-white' : 'text-gray-400 dark:text-slate-300'}`}
+            >
+              Iniciar sesión
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`px-8 py-2 rounded-full font-bold transition ${!isLogin ? 'bg-[#1C3445] text-white dark:bg-[#C26E5A] dark:text-white' : 'text-gray-400 dark:text-slate-300'}`}
+            >
+              Crear cuenta
+            </button>
+          </div>
+        )}
+
         <div className="overflow-y-auto pr-2">
-          {isLogin ? (
-            <LoginForm onSwitchToRegister={() => setIsLogin(false)} onClose={onClose} />
+          {screen === "forgot" ? (
+          <ForgotPasswordForm
+          onBack={() => setScreen("auth")}
+          onCodeSent={(email) => { setForgotEmail(email); setScreen("code"); }}
+        />
+          ) : screen === "code" ? (
+            <ResetCodeForm
+              email={forgotEmail}
+              onBack={() => setScreen("forgot")}
+              onCodeVerified={() => setScreen("newpass")}
+            />
+          ) : screen === "newpass" ? (
+            <NewPasswordForm
+              email={forgotEmail}
+              onBack={() => setScreen("code")}
+              onSuccess={() => { clearResetFlow(); setShowSuccess(true); setIsLogin(true); }}
+            />
+          ) : screen === "reactivacion" ? (
+            
+            <ReactivacionCuentaForm
+              onBack={() => setScreen("auth")}
+              onHome={onClose}
+              emailPrellenado={emailReactivacion}
+            />
+          ) : isLogin ? (
+            <LoginForm
+              onSwitchToRegister={() => setIsLogin(false)}
+              onClose={onClose}
+              onForgotPassword={() => setScreen("forgot")}
+              onMagicLink={magicLink.open}
+              onReactivarCuenta={(email) => {
+                setEmailReactivacion(email || "");
+                setScreen("reactivacion");
+              }}
+            />
           ) : (
-            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} />
+            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} onClose={onClose} onMagicLink={magicLink.open} />
           )}
         </div>
+         </>
+        )}
       </div>
+
+      <SuccessModal
+        isOpen={showSuccess}
+        message="¡Tu contraseña fue actualizada correctamente!"
+        onClose={() => { setShowSuccess(false); onClose(); }}
+        autoCloseDuration={2000}
+      />
     </div>
   );
 }

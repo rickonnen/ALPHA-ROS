@@ -1,47 +1,73 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export function useUnreadCount(user: any) {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchUnreadCount = useCallback(async () => {
-    if (!user) {
+  useEffect(() => {
+    if (!user?.id) {
       setUnreadCount(0);
+      setLoading(false);
       return;
     }
-    
-    try {
-      const response = await fetch("/api/notifications");
-      const data = await response.json();
-      const userId = user?.id ?? "guest";
-      const stored = localStorage.getItem(`deletedNotificationIds_${userId}`);
-      const deletedIds: number[] = stored ? JSON.parse(stored) : [];
-      const filtered = data.filter((n: any) => !deletedIds.includes(n.id));
-      setUnreadCount(filtered.filter((n: any) => !n.read).length);
-    } catch (error) {
-      console.error(error);
-    }
-  }, [user]);
 
-  useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
-    }
-  }, [user]);
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from("Notificacion")
+        .select("*", { count: "exact", head: true })
+        .eq("id_usuario", user.id)
+        .eq("leido", false);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchUnreadCount();
-  }, [fetchUnreadCount, user]);
-  
-  useEffect(() => {
-    if (!user) return;
-    
-    const handleRefresh = () => fetchUnreadCount();
-    window.addEventListener("refresh-notification-badge", handleRefresh);
-    
-    return () => window.removeEventListener("refresh-notification-badge", handleRefresh);
-  }, [fetchUnreadCount, user]);
+      const trashRaw = localStorage.getItem(`trash_notif_ids_${user.id}`);
+      const trashIds: string[] = trashRaw
+        ? JSON.parse(trashRaw).map((t: any) => (typeof t === "string" ? t : t.id))
+        : [];
 
-  return unreadCount;
+      const real = Math.max(0, (count ?? 0) - trashIds.length);
+      setUnreadCount(real);
+      localStorage.setItem("notification_unread_count", real.toString());
+      setLoading(false);
+    };
+
+    fetchCount();
+
+    // Realtime: escucha INSERT en Notificacion
+    const channel = supabase
+      .channel(`unread-count-${user.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, () => {
+        fetchCount();
+      })
+      .on("postgres_changes", {
+        event: "UPDATE",
+        schema: "public",
+        table: "Notificacion",
+        filter: `id_usuario=eq.${user.id}`,
+      }, () => {
+        fetchCount();
+      })
+      .subscribe();
+
+    // También escucha cuando el panel marca como leído
+    window.addEventListener("refresh-notification-badge", fetchCount);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("refresh-notification-badge", fetchCount);
+    };
+  }, [user?.id]);
+
+  return { unreadCount, loading };
 }

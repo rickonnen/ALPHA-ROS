@@ -1,0 +1,242 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  /* Mapeo de fuentes para conectarlas con el layout.tsx */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+
+  /* Mapeo exclusivo de tus colores personalizados a las clases utilitarias de Tailwind */
+  --color-background: var(--background);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border); /* Mapeo del nuevo color de borde */
+  --color-secondary-fund: var(--secondary-fund);
+
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Valores básicos necesarios para evitar errores en componentes base */
+  --radius: 0.5rem;
+  --color-border: var(--card-border); /* Sincronizado con el nuevo borde */
+  --color-ring: var(--primary);
+
+  /* Escala tipográfica personalizada */
+  --text-main-title: var(--text-3xl);
+  --text-subtitle: var(--text-xl);
+  --text-body-info: var(--text-base);
+}
+
+/* ==========================================
+   TEMA CLARO (DEFAULT)
+   ========================================== */
+
+:root {
+  /* Fondo principal */
+  --background: #f4efe6;
+
+  /* Tarjetas */
+  --card-bg: #f9f5f1;
+  --card-border: #d6cfc3;
+
+  /* Fondo secundario */
+  --secondary-fund: #e7e1d7;
+
+  /* Texto */
+  --foreground: #2e2e2e;
+
+  /* Primario */
+  --primary: #1f3a4d;
+  --primary-foreground: #f4efe6;
+
+  /* Secundario */
+  --secondary: #c26e5a;
+  --secondary-foreground: #f4efe6;
+
+  /* Estados */
+  --destructive: #ff193f;
+  --destructive-foreground: #f4efe6;
+
+  --success: #4a7c59;
+  --success-foreground: #f4efe6;
+
+  --warning: #d4a373;
+  --warning-foreground: #2e2e2e;
+
+  /* Muted */
+  --muted: #e7e1d7;
+  --muted-foreground: #7a756d;
+
+  /* Escala tipográfica */
+  --text-3xl: 1.8rem;
+  --text-xl: 1.3rem;
+  --text-base: 1rem;
+}
+
+/* ==========================================
+   TEMA OSCURO AUTOMÁTICO
+   ========================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #333333;
+
+    --card-bg: #474747;
+    --card-border: #1f1f1f;
+
+    --secondary-fund: #292929;
+
+    --foreground: #ebebeb;
+
+    --primary: #294d66;
+    --primary-foreground: #ebebeb;
+
+    --secondary: #c26e5a;
+    --secondary-foreground: #333333;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --success: #528a63;
+    --success-foreground: #ffffff;
+
+    --warning: #e2b07e;
+    --warning-foreground: #1a1a1a;
+
+    --muted: #3d3d3d;
+    --muted-foreground: #a3a3a3;
+
+    --text-3xl: 1.8rem;
+    --text-xl: 1.3rem;
+    --text-base: 1rem;
+  }
+}
+
+/* ==========================================
+   BASE
+   ========================================== */
+
+@layer base {
+  * {
+    @apply border-card-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+
+    font-size: var(--text-base);
+
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+}
+
+/* ==========================================
+   UTILIDADES
+   ========================================== */
+
+@layer utilities {
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-card-border) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-card-border rounded-full transition-colors;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+
+  /* SVG invertido automáticamente en dark mode */
+  @media (prefers-color-scheme: dark) {
+    .svg-theme-invert {
+      filter: brightness(0) invert(1);
+    }
+  }
+  /* ==========================================
+   ESTILOS EXCLUSIVOS DE IMPRESIÓN (AISLAMIENTO TOTAL)
+   ========================================== */
+@media print {
+  /* 1. Ocultar absolutamente TODO el cuerpo de la página (Navbars, Footers, Burbujas del Dólar, etc.) */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Hacer visible ÚNICAMENTE el contenedor principal del artículo y sus hijos */
+  main,
+  main * {
+    visibility: visible;
+  }
+
+  /* 3. Forzar el ocultamiento de lo que marcamos explícitamente como "no-print" (Botones, comentarios, compartir) */
+  .no-print,
+  .no-print *,
+  button.no-print,
+  div.no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 4. Posicionar el contenido limpio al inicio absoluto de la hoja */
+  main {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* 5. Asegurar contraste y tipografía limpia de papel */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  /* 6. Evitar cortes feos en imágenes */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  }
+}

@@ -1,28 +1,66 @@
 /**
  * Dev: Marcela C.
- * Date: 27/03/2026
- * Funcionalidad: Vista mobile de detalles del inmueble en lista vertical
- *                (HU4 - Tasks 4.6, 4.7, 4.12)
- * @param objInfo - Objeto con los datos del inmueble (ver PropertyDetails)
- * @return JSX con lista de detalles visible solo en mobile
+ * Date: 17/04/2026
+ * Funcionalidad: Vista mobile de detalles separados en Datos Generales y
+ *                Datos Específicos con renderizado condicional por tipo de
+ *                inmueble 
+ * @param objInfo - Objeto extendido con datos generales, específicos y características
+ * @return JSX con dos secciones diferenciadas visibles solo en mobile
  */
 import React from "react";
-import { PerfilDetallesProps, DetalleItem } from "./PropertyDetails";
+import { PerfilDetallesProps, DetalleItem, CaracteristicaCard } from "./PropertyDetails";
 
-export const PropertyDetailsMobile = ({ objInfo }: PerfilDetallesProps) => (
-  <section className="block md:hidden bg-white/60 rounded-2xl p-5 border border-black/5">
-    <h2 className="text-xl font-bold mb-6 text-[#1F3A4D]">
-      Detalles técnicos
-    </h2>
-    <div className="flex flex-col gap-y-2">
-      <DetalleItem strLabel="Propiedad"    strValor={objInfo.strTipoInmueble} />
-      <DetalleItem strLabel="Operación"    strValor={objInfo.strTipoOperacion} />
-      <DetalleItem strLabel="Ubicación"    strValor={objInfo.strDepartamento} />
-      <DetalleItem strLabel="Zona"         strValor={objInfo.strZona} />
-      <DetalleItem strLabel="Hab."         strValor={objInfo.intHabitaciones} />
-      <DetalleItem strLabel="Baños"        strValor={objInfo.intBanos} />
-      <DetalleItem strLabel="Plantas"      strValor={objInfo.intPlantas} />
-      <DetalleItem strLabel="Garajes"      strValor={objInfo.intGarajes} />
+export const PropertyDetailsMobile = ({ objInfo }: PerfilDetallesProps) => {
+  const bolEsTerreno            = objInfo.strTipoInmueble === "Terreno";
+  const bolTieneCaracteristicas = objInfo.arrCaracteristicas.length > 0;
+
+  return (
+    <div className="flex md:hidden flex-col gap-4">
+
+      {/* ── DATOS GENERALES ── */}
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm">
+        <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
+          Datos Generales
+        </h2>
+        <div className="flex flex-col gap-y-2">
+          <DetalleItem strLabel="Estado Construcción" strValor={objInfo.strEstadoConstruccion} />
+          <DetalleItem strLabel="Departamento"        strValor={objInfo.strDepartamento} />
+          <DetalleItem strLabel="Propiedad"           strValor={objInfo.strTipoInmueble} />
+          <DetalleItem strLabel="Zona"                strValor={objInfo.strZona} />
+          <DetalleItem strLabel="Operación"           strValor={objInfo.strTipoOperacion} />
+        </div>
+      </section>
+
+      {/* ── DATOS ESPECÍFICOS — condicional por tipo ── */}
+      {(!bolEsTerreno || bolTieneCaracteristicas) && (
+        <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-6 border border-black/5 shadow-sm">
+          <h2 className="text-2xl font-bold mb-6 text-[#1F3A4D] border-b border-[#2E2E2E]/5 pb-2">
+            Datos Específicos
+          </h2>
+          {/* Métricas base — solo para construidos */}
+          {!bolEsTerreno && (
+            <div className="flex flex-col gap-y-2 mb-4">
+              <DetalleItem strLabel="Hab."    strValor={objInfo.intHabitaciones} />
+              <DetalleItem strLabel="Baños"   strValor={objInfo.intBanos} />
+              <DetalleItem strLabel="Plantas" strValor={objInfo.intPlantas} />
+              <DetalleItem strLabel="Garajes" strValor={objInfo.intGarajes} />
+            </div>
+          )}
+
+          {/* Características adicionales */}
+          {bolTieneCaracteristicas && (
+            <div className="grid grid-cols-2 gap-3">
+              {objInfo.arrCaracteristicas.map((item) => (
+                <CaracteristicaCard
+                  key={item.strNombre}
+                  strNombre={item.strNombre}
+                  strDetalle={item.strDetalle}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
-  </section>
-);
+  );
+};
